@@ -394,7 +394,16 @@
       "playerIntent": false,
       "enemyIntent": true
     },
+    "groundShadow": {
+      "enabled": true,
+      "widthPercent": 55,
+      "heightPercent": 7,
+      "opacity": 0.4,
+      "color": "#000000",
+      "anchorXFraction": 0.5
+    },
     "scene": {
+      "groundContactDepthFraction": 0.3,
       "actorBaselinePercent": 66.667,
       "actorHeightFraction": 0.72,
       "actorSlotPadding": 1,

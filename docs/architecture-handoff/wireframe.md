@@ -20988,7 +20988,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 - [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/1b72522d010f305d642309c26f664defb06b8ec0/src/ui/components/combatantOverhead.js#L1) — Documentation dev baseline
 - [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
+**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
 
@@ -21281,7 +21281,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 - [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/1b72522d010f305d642309c26f664defb06b8ec0/src/ui/components/combatantOverhead.js#L1) — Documentation dev baseline
 - [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
+**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
 
@@ -21552,7 +21552,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 - [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/1b72522d010f305d642309c26f664defb06b8ec0/src/ui/components/combatantOverhead.js#L1) — Documentation dev baseline
 - [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
+**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
 
@@ -21831,7 +21831,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 - [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/1b72522d010f305d642309c26f664defb06b8ec0/src/ui/components/combatantOverhead.js#L1) — Documentation dev baseline
 - [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
+**Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
 
@@ -23940,7 +23940,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -24315,7 +24324,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -24726,7 +24744,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -25128,7 +25155,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -25526,7 +25562,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -25902,7 +25947,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -26290,7 +26344,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -26665,7 +26728,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -27069,7 +27141,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -27469,7 +27550,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -27856,7 +27946,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -28252,7 +28351,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -28623,7 +28731,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -29006,7 +29123,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -29373,7 +29499,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -29781,7 +29916,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -30148,7 +30292,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -30520,7 +30673,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -30892,7 +31054,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -31259,7 +31430,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -31626,7 +31806,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -31998,7 +32187,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -32267,7 +32465,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 - [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
 - [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4)
+**Referenced components:** [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5)
 
 **Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
 
@@ -32299,6 +32497,10 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     {
       "componentId": "WCO4",
       "modelRef": "model:WCO4"
+    },
+    {
+      "componentId": "WCO5",
+      "modelRef": "model:WCO5"
     }
   ],
   "configRef": "componentCompletionDefaults",
@@ -32398,7 +32600,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -32773,7 +32984,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -33144,7 +33364,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -33528,7 +33757,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -33912,7 +34150,405 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
+    "actorBaselinePercent": 66.667,
+    "actorHeightFraction": 0.72,
+    "actorSlotPadding": 1,
+    "actorWidthRem": 12,
+    "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+    "floorHeightPercent": 45,
+    "playerWidthPercent": 25,
+    "enemyWidthPercent": 65,
+    "playerCount": 1,
+    "enemyCount": 2,
+    "skyline": true,
+    "floor": true
+  },
+  "hand": {
+    "cardWidthRem": 7,
+    "cardAspectRatio": "5 / 8",
+    "gapRem": 0.2,
+    "fixtureIds": [
+      "WC1a",
+      "WC1b",
+      "WC1c"
+    ]
+  },
+  "tooltip": {
+    "widthRem": 18,
+    "maxWidthPercent": 95
+  },
+  "map": {
+    "viewBox": "0 0 100 100",
+    "selectedNode": "town",
+    "nodeSizeRem": 2.75
+  },
+  "dialogue": {
+    "speakingId": "keeper",
+    "autoAdvance": false,
+    "currentBeat": "welcome"
+  },
+  "samples": {
+    "health": {
+      "label": "HP",
+      "current": 32,
+      "maximum": 40
+    },
+    "resource": {
+      "label": "Mana",
+      "current": 6,
+      "maximum": 10
+    },
+    "buildup": {
+      "label": "Burn buildup",
+      "current": 65,
+      "maximum": 100
+    },
+    "stance": {
+      "label": "Aggressive",
+      "active": true
+    },
+    "intent": {
+      "label": "Attack",
+      "icon": "⚔",
+      "amount": 12,
+      "active": true
+    },
+    "defense": {
+      "label": "Block",
+      "icon": "◇",
+      "amount": 8,
+      "active": true
+    },
+    "footer": {
+      "actions": 3,
+      "draw": 12,
+      "discard": 4,
+      "exhaust": 1,
+      "potions": 2
+    },
+    "statuses": [
+      {
+        "id": "regen",
+        "icon": "✚",
+        "name": "Regeneration",
+        "detail": "2 stacks · 3 turns"
+      },
+      {
+        "id": "poison",
+        "icon": "☠",
+        "name": "Poison",
+        "detail": "3 stacks · 2 turns"
+      },
+      {
+        "id": "weak",
+        "icon": "↓",
+        "name": "Weakened",
+        "detail": "1 stack · 1 turn"
+      }
+    ],
+    "mapNodes": [
+      {
+        "id": "start",
+        "label": "Visited",
+        "icon": "●",
+        "x": 50,
+        "y": 82,
+        "state": "visited"
+      },
+      {
+        "id": "combat",
+        "label": "Combat",
+        "icon": "⚔",
+        "x": 25,
+        "y": 53,
+        "state": "reachable"
+      },
+      {
+        "id": "town",
+        "label": "Town",
+        "icon": "⌂",
+        "x": 73,
+        "y": 53,
+        "state": "reachable"
+      },
+      {
+        "id": "unknown",
+        "label": "Unknown",
+        "icon": "?",
+        "x": 50,
+        "y": 18,
+        "state": "blocked"
+      }
+    ],
+    "mapEdges": [
+      [
+        "start",
+        "combat"
+      ],
+      [
+        "start",
+        "town"
+      ],
+      [
+        "combat",
+        "unknown"
+      ],
+      [
+        "town",
+        "unknown"
+      ]
+    ],
+    "beats": [
+      {
+        "id": "welcome",
+        "speaker": "The Keeper",
+        "text": "The forge is still warm. What brings you here?"
+      },
+      {
+        "id": "offer",
+        "speaker": "The Keeper",
+        "text": "I can mend what the ash has taken.",
+        "choices": [
+          "Ask about the forge",
+          "Leave the forge"
+        ]
+      }
+    ]
+  }
+}
+```
+
+</details>
+<!-- reference-metadata:end -->
+## Wireframe WCO5: Ground shadow
+
+**Parent: WCO0.** Use cases: Shared sprite foot pivot. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+    sprite feet
+───────┼─────── ground contact
+     (shadow)
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO5.root | config.groundShadow.widthPercent of sprite width | config.groundShadow.heightPercent of sprite height | owning component slot | beneath artwork; center on ground contact | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+    sprite feet
+───────┼─────── ground contact
+     (shadow)
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO5.root | config.groundShadow.widthPercent of sprite width | config.groundShadow.heightPercent of sprite height | owning component slot | beneath artwork; center on ground contact | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+    sprite feet
+───────┼─────── ground contact
+     (shadow)
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO5.root | config.groundShadow.widthPercent of sprite width | config.groundShadow.heightPercent of sprite height | owning component slot | beneath artwork; center on ground contact | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+    sprite feet
+───────┼─────── ground contact
+     (shadow)
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO5.root | config.groundShadow.widthPercent of sprite width | config.groundShadow.heightPercent of sprite height | owning component slot | beneath artwork; center on ground contact | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+// Load and validate pseudocode-config.json once; inject config into this component.
+// Config entries carry units; convert through the shared layout adapter.
+// Wireframe IDs are identifiers. Domain facts come from the model, not config.
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Render a noninteractive ellipse beneath sprite artwork. Its center is the shared ground-contact anchor. Resolve config.groundShadow dimensions and opacity. Preserve this anchor when status rows change; hidden shadow retains its logical pivot.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+
+<!-- reference-metadata:start -->
+**Source description and inheritance**
+
+Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
+
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+
+**Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
+
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+
+Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
+
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+
+<details><summary>Model JSON</summary>
+
+```json
+{
+  "id": "WCO5",
+  "contextRef": "sample:overlay",
+  "active": true,
+  "selected": false,
+  "children": [
+    {
+      "componentId": "WCI2",
+      "modelRef": "model:WCI2"
+    }
+  ],
+  "configRef": "componentCompletionDefaults",
+  "dataSource": "immutable snapshot and knowledge-filtered registered providers",
+  "sampleDataRef": "componentCompletionDefaults.samples"
+}
+```
+
+</details>
+
+<details><summary>Configuration defaults JSON</summary>
+
+```json
+{
+  "buttonWidths": {
+    "standardHeight": "2.75rem",
+    "heightMultipliers": {
+      "standard": 1,
+      "tall": 1.5,
+      "double": 2
+    },
+    "sizes": {
+      "third-standard": {
+        "width": "third",
+        "height": "standard"
+      },
+      "third-tall": {
+        "width": "third",
+        "height": "tall"
+      },
+      "third-double": {
+        "width": "third",
+        "height": "double"
+      },
+      "half-standard": {
+        "width": "half",
+        "height": "standard"
+      },
+      "half-tall": {
+        "width": "half",
+        "height": "tall"
+      },
+      "half-double": {
+        "width": "half",
+        "height": "double"
+      },
+      "full-standard": {
+        "width": "full",
+        "height": "standard"
+      },
+      "full-tall": {
+        "width": "full",
+        "height": "tall"
+      },
+      "full-double": {
+        "width": "full",
+        "height": "double"
+      }
+    },
+    "presets": {
+      "quarter": 25,
+      "third": 30,
+      "half": 50,
+      "full": 100
+    },
+    "choice": "half",
+    "minimumReadable": "8rem",
+    "iconSize": "2.75rem",
+    "footer": "equalSharesAfterGaps",
+    "singleFooter": "full"
+  },
+  "spacing": {
+    "gapRem": 0.2,
+    "insetRem": 0.75,
+    "sectionGapRem": 0.75
+  },
+  "target": {
+    "minRem": 2.75,
+    "iconRem": 1.575,
+    "largeRem": 3.4,
+    "smallRem": 2.75
+  },
+  "meter": {
+    "healthHeightRem": 1.4,
+    "secondaryHeightRatio": 0.5,
+    "stanceHeightRatio": 1,
+    "maxRows": 5
+  },
+  "selection": {
+    "revealDelayMs": 1000,
+    "tooltipDelayMs": 1000,
+    "liftRem": 0.25
+  },
+  "overlay": {
+    "defenseAnchorRatio": 0.5,
+    "defenseGapRem": 0.5,
+    "playerIntent": false,
+    "enemyIntent": true
+  },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
+  "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -34292,7 +34928,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -34675,7 +35320,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -35071,7 +35725,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -35467,7 +36130,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -35851,7 +36523,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -36231,7 +36912,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -36607,7 +37297,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -36983,7 +37682,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -37372,7 +38080,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -37744,7 +38461,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -38117,7 +38843,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -38490,7 +39225,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -38863,7 +39607,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -39252,7 +40005,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -42137,7 +42899,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -42528,7 +43299,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -42910,7 +43690,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -43281,7 +44070,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -43664,7 +44462,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -44030,7 +44837,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -44401,7 +45217,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -44772,7 +45597,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -46422,7 +47256,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -46815,7 +47658,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -47192,7 +48044,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -47569,7 +48430,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -47950,7 +48820,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -48322,7 +49201,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -48695,7 +49583,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -49068,7 +49965,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -49441,7 +50347,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -49837,7 +50752,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -50233,7 +51157,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -50617,7 +51550,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -50989,7 +51931,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -51369,7 +52320,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -51741,7 +52701,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -52124,7 +53093,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,
@@ -52569,7 +53547,16 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "playerIntent": false,
     "enemyIntent": true
   },
+  "groundShadow": {
+    "enabled": true,
+    "widthPercent": 55,
+    "heightPercent": 7,
+    "opacity": 0.4,
+    "color": "#000000",
+    "anchorXFraction": 0.5
+  },
   "scene": {
+    "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
     "actorSlotPadding": 1,

@@ -448,7 +448,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -740,7 +749,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -1041,7 +1059,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -1340,7 +1367,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -1639,7 +1675,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -1938,7 +1983,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -2235,7 +2289,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -2527,7 +2590,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -2825,7 +2897,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -3122,7 +3203,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -3414,7 +3504,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -3710,7 +3809,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -4002,7 +4110,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -4294,7 +4411,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -4586,7 +4712,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -4885,7 +5020,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -5177,7 +5321,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -5471,7 +5624,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -5765,7 +5927,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -6057,7 +6228,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -6349,7 +6529,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -6643,7 +6832,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -6817,7 +7015,8 @@
       "WCO1",
       "WCO2",
       "WCO3",
-      "WCO4"
+      "WCO4",
+      "WCO5"
     ],
     "implementation": {
       "renderer": "renderCompletedComponent",
@@ -6940,7 +7139,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -7232,7 +7440,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -7524,7 +7741,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -7818,7 +8044,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -8112,7 +8347,319 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
+        "actorBaselinePercent": 66.667,
+        "actorHeightFraction": 0.72,
+        "actorSlotPadding": 1,
+        "actorWidthRem": 12,
+        "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+        "floorHeightPercent": 45,
+        "playerWidthPercent": 25,
+        "enemyWidthPercent": 65,
+        "playerCount": 1,
+        "enemyCount": 2,
+        "skyline": true,
+        "floor": true
+      },
+      "hand": {
+        "cardWidthRem": 7,
+        "cardAspectRatio": "5 / 8",
+        "gapRem": 0.2,
+        "fixtureIds": [
+          "WC1a",
+          "WC1b",
+          "WC1c"
+        ]
+      },
+      "tooltip": {
+        "widthRem": 18,
+        "maxWidthPercent": 95
+      },
+      "map": {
+        "viewBox": "0 0 100 100",
+        "selectedNode": "town",
+        "nodeSizeRem": 2.75
+      },
+      "dialogue": {
+        "speakingId": "keeper",
+        "autoAdvance": false,
+        "currentBeat": "welcome"
+      },
+      "samples": {
+        "health": {
+          "label": "HP",
+          "current": 32,
+          "maximum": 40
+        },
+        "resource": {
+          "label": "Mana",
+          "current": 6,
+          "maximum": 10
+        },
+        "buildup": {
+          "label": "Burn buildup",
+          "current": 65,
+          "maximum": 100
+        },
+        "stance": {
+          "label": "Aggressive",
+          "active": true
+        },
+        "intent": {
+          "label": "Attack",
+          "icon": "⚔",
+          "amount": 12,
+          "active": true
+        },
+        "defense": {
+          "label": "Block",
+          "icon": "◇",
+          "amount": 8,
+          "active": true
+        },
+        "footer": {
+          "actions": 3,
+          "draw": 12,
+          "discard": 4,
+          "exhaust": 1,
+          "potions": 2
+        },
+        "statuses": [
+          {
+            "id": "regen",
+            "icon": "✚",
+            "name": "Regeneration",
+            "detail": "2 stacks · 3 turns"
+          },
+          {
+            "id": "poison",
+            "icon": "☠",
+            "name": "Poison",
+            "detail": "3 stacks · 2 turns"
+          },
+          {
+            "id": "weak",
+            "icon": "↓",
+            "name": "Weakened",
+            "detail": "1 stack · 1 turn"
+          }
+        ],
+        "mapNodes": [
+          {
+            "id": "start",
+            "label": "Visited",
+            "icon": "●",
+            "x": 50,
+            "y": 82,
+            "state": "visited"
+          },
+          {
+            "id": "combat",
+            "label": "Combat",
+            "icon": "⚔",
+            "x": 25,
+            "y": 53,
+            "state": "reachable"
+          },
+          {
+            "id": "town",
+            "label": "Town",
+            "icon": "⌂",
+            "x": 73,
+            "y": 53,
+            "state": "reachable"
+          },
+          {
+            "id": "unknown",
+            "label": "Unknown",
+            "icon": "?",
+            "x": 50,
+            "y": 18,
+            "state": "blocked"
+          }
+        ],
+        "mapEdges": [
+          [
+            "start",
+            "combat"
+          ],
+          [
+            "start",
+            "town"
+          ],
+          [
+            "combat",
+            "unknown"
+          ],
+          [
+            "town",
+            "unknown"
+          ]
+        ],
+        "beats": [
+          {
+            "id": "welcome",
+            "speaker": "The Keeper",
+            "text": "The forge is still warm. What brings you here?"
+          },
+          {
+            "id": "offer",
+            "speaker": "The Keeper",
+            "text": "I can mend what the ash has taken.",
+            "choices": [
+              "Ask about the forge",
+              "Leave the forge"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "WCO5",
+    "children": [
+      "WCI2"
+    ],
+    "implementation": {
+      "renderer": "renderCompletedComponent",
+      "source": [
+        "component-completion-client.js",
+        "component-completion.mjs",
+        "button-widths.mjs"
+      ],
+      "styles": [
+        "component-completion.css",
+        "exit-component.css"
+      ]
+    },
+    "references": [
+      {
+        "file": "src/ui/screens/combat.js",
+        "line": 1,
+        "url": "https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/combat.js#L1",
+        "revision": "3c70be9014063e2a6216d4e3196d2a04d4438229",
+        "sourceSnapshot": "Current owner checkout (including inspected local edits)"
+      },
+      {
+        "file": "src/ui/components/combatantFrame.js",
+        "line": 1,
+        "url": "https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/components/combatantFrame.js#L1",
+        "revision": "3c70be9014063e2a6216d4e3196d2a04d4438229",
+        "sourceSnapshot": "Current owner checkout (including inspected local edits)"
+      },
+      {
+        "file": "styles/combat.css",
+        "line": 1,
+        "url": "https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/styles/combat.css#L1",
+        "revision": "3c70be9014063e2a6216d4e3196d2a04d4438229",
+        "sourceSnapshot": "Current owner checkout (including inspected local edits)"
+      }
+    ],
+    "defaults": {
+      "buttonWidths": {
+        "standardHeight": "2.75rem",
+        "heightMultipliers": {
+          "standard": 1,
+          "tall": 1.5,
+          "double": 2
+        },
+        "sizes": {
+          "third-standard": {
+            "width": "third",
+            "height": "standard"
+          },
+          "third-tall": {
+            "width": "third",
+            "height": "tall"
+          },
+          "third-double": {
+            "width": "third",
+            "height": "double"
+          },
+          "half-standard": {
+            "width": "half",
+            "height": "standard"
+          },
+          "half-tall": {
+            "width": "half",
+            "height": "tall"
+          },
+          "half-double": {
+            "width": "half",
+            "height": "double"
+          },
+          "full-standard": {
+            "width": "full",
+            "height": "standard"
+          },
+          "full-tall": {
+            "width": "full",
+            "height": "tall"
+          },
+          "full-double": {
+            "width": "full",
+            "height": "double"
+          }
+        },
+        "presets": {
+          "quarter": 25,
+          "third": 30,
+          "half": 50,
+          "full": 100
+        },
+        "choice": "half",
+        "minimumReadable": "8rem",
+        "iconSize": "2.75rem",
+        "footer": "equalSharesAfterGaps",
+        "singleFooter": "full"
+      },
+      "spacing": {
+        "gapRem": 0.2,
+        "insetRem": 0.75,
+        "sectionGapRem": 0.75
+      },
+      "target": {
+        "minRem": 2.75,
+        "iconRem": 1.575,
+        "largeRem": 3.4,
+        "smallRem": 2.75
+      },
+      "meter": {
+        "healthHeightRem": 1.4,
+        "secondaryHeightRatio": 0.5,
+        "stanceHeightRatio": 1,
+        "maxRows": 5
+      },
+      "selection": {
+        "revealDelayMs": 1000,
+        "tooltipDelayMs": 1000,
+        "liftRem": 0.25
+      },
+      "overlay": {
+        "defenseAnchorRatio": 0.5,
+        "defenseGapRem": 0.5,
+        "playerIntent": false,
+        "enemyIntent": true
+      },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
+      "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -8406,7 +8953,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -8698,7 +9254,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -8995,7 +9560,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -9292,7 +9866,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -9586,7 +10169,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -9880,7 +10472,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -10174,7 +10775,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -10468,7 +11078,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -10773,7 +11392,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -11072,7 +11700,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -11373,7 +12010,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -11674,7 +12320,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -11975,7 +12630,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -12277,7 +12941,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -14004,7 +14677,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -14292,7 +14974,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -14577,7 +15268,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -14864,7 +15564,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -15151,7 +15860,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -15436,7 +16154,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -15723,7 +16450,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -16010,7 +16746,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -16817,7 +17562,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -17120,7 +17874,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -17421,7 +18184,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -17722,7 +18494,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -18023,7 +18804,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -18322,7 +19112,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -18623,7 +19422,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -18924,7 +19732,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -19225,7 +20042,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -19520,7 +20346,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -19815,7 +20650,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -20109,7 +20953,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -20403,7 +21256,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -20698,7 +21560,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -20992,7 +21863,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -21284,7 +22164,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -21576,7 +22465,16 @@
         "playerIntent": false,
         "enemyIntent": true
       },
+      "groundShadow": {
+        "enabled": true,
+        "widthPercent": 55,
+        "heightPercent": 7,
+        "opacity": 0.4,
+        "color": "#000000",
+        "anchorXFraction": 0.5
+      },
       "scene": {
+        "groundContactDepthFraction": 0.3,
         "actorBaselinePercent": 66.667,
         "actorHeightFraction": 0.72,
         "actorSlotPadding": 1,
@@ -31016,6 +31914,7 @@
       "WCO2",
       "WCO3",
       "WCO4",
+      "WCO5",
       "WCB1",
       "WCF3",
       "W1w"
@@ -31091,6 +31990,7 @@
       "WCO2",
       "WCO3",
       "WCO4",
+      "WCO5",
       "WCB1",
       "WCF3",
       "W1w"
@@ -31166,6 +32066,7 @@
       "WCO2",
       "WCO3",
       "WCO4",
+      "WCO5",
       "WCB1",
       "WCF3",
       "W1w"
@@ -31241,6 +32142,7 @@
       "WCO2",
       "WCO3",
       "WCO4",
+      "WCO5",
       "WCB1",
       "WCF3",
       "W1w"

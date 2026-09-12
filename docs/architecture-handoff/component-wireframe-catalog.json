@@ -330,6 +330,17 @@
     ]
   },
   {
+    "id": "WCO5",
+    "name": "Ground shadow",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
     "id": "WCT0",
     "name": "Tooltip components",
     "parent": null,
