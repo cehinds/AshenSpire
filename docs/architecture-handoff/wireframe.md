@@ -6191,7 +6191,14 @@ model.context = HandAndTargetingProjection()
 model.footerPlacement = packedCombat
 model.actions = [ActionsRemaining, DrawPile, EndTurn, DiscardExhaust, Potions]
 model.footerSizes = large(ActionsRemaining, EndTurn, Potions), small(pileButtons)
-RenderWithW4(model); CenterGroupWithMinimalSharedGapsInEveryMode()
+ComposeW4Regions(
+    WGS2.SharedHUD(model.hud),
+    WGC1.Battlefield(model.battlefield),
+    WGC5.Hand(model.hand),
+    WGC6.CombatFooter(model.footer)
+)
+// Standalone previews and W4a call the same HUD/footer renderers.
+CenterGroupWithMinimalSharedGapsInEveryMode()
 EmptyResourceOrPileIndicatorsFade(); EndTurnNeverUsesEmptyFade()
 EndTurnGreen = canEndTurn AND (NoActionsRemain(actionsRemaining) OR highlightedEndTurn)
 ON DrawPile: OpenReadOnlyDrawViewer()
