@@ -95,6 +95,8 @@ shop.back,common.back,,Return to the merchant's shelves.,
 shop.weaponArt.eyebrow,,Weapon art,,
 shop.buy.confirm,,BUY IT,Spend the cinders and take it now.,
 shop.burn.confirm,,BURN IT,Spend the cinders and remove the card for good.,
+shop.burn.idle,,SELECT A CARD,Tap a card to light it; this button burns the one you light.,
+shop.burn.ready,,BURN {name} ({cost}),Take {name} out of the deck for good for {cost} cinders.,
 shop.sell.confirm,,SELL IT,Hand it over for cinders.,
 # ---- the custom climb -----------------------------------------------------
 customRun.seat.group,,First seat,Which seat the climb opens in.,

@@ -228,34 +228,81 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         grid.style.flexWrap = 'wrap';
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
+        // THE BURN IS TWO BEATS AND THREE DOORS (Constantine, 2026-09-12).
+        // The first tap on a card HIGHLIGHTS it and reveals its `i`; nothing
+        // is armed and nothing is spent. The second beat is the burn, and it
+        // can arrive three ways, all of them the same `shopRemove` row:
+        //   · a second tap on the highlighted card  → the review modal
+        //   · a press-and-hold on it                → commits, fill and all
+        //   · the button below, green once a card is lit → the review modal
+        // The button is the beat a thumb can find without knowing the gesture,
+        // and it is the same primary-greens-on-selection shape the reward
+        // chooser and the Smith already use.
+        //
+        // ONE SELECTION, READ OFF THE SHARED EVENT. `cardinspectionselect`
+        // bubbles from whichever card the first tap lit (cardInspection.js),
+        // so this grid never keeps a second idea of what is selected — the
+        // highlight a player can see IS the button's subject.
+        let burning = null;
+        const burnCost = () => stock.removeCost;
+        const burnConfirm = button({
+          label: t('shop.burn.idle'), weight: 'primary', className: 'shop-burn-confirm', disabled: true,
+        });
+        burnConfirm.dataset.burnState = 'unselected';
+        const dressBurnConfirm = () => {
+          const ready = !!burning && run.cinders >= burnCost();
+          burnConfirm.disabled = !ready;
+          burnConfirm.dataset.burnState = !burning ? 'unselected' : (ready ? 'actionable' : 'blocked');
+          burnConfirm.textContent = burning
+            ? t('shop.burn.ready', { name: burning.def.name, cost: burnCost() })
+            : t('shop.burn.idle');
+        };
+        const commitBurn = () => {
+          if (!burning || run.cinders < burnCost()) return;
+          if (!removeDeckCard(run, burning.inst.instanceId, { keepOne: true })) return;
+          run.cinders -= burnCost();
+          run.removesPurchased = (run.removesPurchased || 0) + 1;
+          stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
+          sfx.play('buy');
+          onChanged();
+          render();
+        };
+        const burnQuestion = () => (burning
+          ? `Burn ${burning.def.name} out of the deck? ${burnCost()} cinders, and the card is gone.`
+          : 'Burn a card out of the deck?');
         run.deck.forEach((inst) => {
           // Basic attacks are run-owned even when equipment supplies their face.
           if (!canRemoveDeckCard(inst)) return;
-          // The card IS the control the burn is armed on (arm(el, …) below),
-          // so it owns its touch: one tap opens the review, as one click does,
-          // instead of the third (holdconfirm, 2026-09-11: three taps).
-          const el = renderCard(registries, inst, { small: true, actionOwnsTouch: true });
+          const el = renderCard(registries, inst, { small: true });
           const def = registries.cards.get(inst.cardId);
           // Same fixed box, same host: the hold hint stands under the card.
           const wrap = document.createElement('div');
           wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
           wrap.appendChild(el);
+          el.addEventListener('cardinspectionselect', () => {
+            burning = { inst, def };
+            dressBurnConfirm();
+          });
           arm(el, 'shopRemove', {
             hintHost: wrap,
-            question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
+            // The card's own beat always speaks for the card under the finger,
+            // whatever the grid last highlighted.
+            question: () => `Burn ${def.name} out of the deck? ${burnCost()} cinders, and the card is gone.`,
             confirmLabel: t('shop.burn.confirm'),
             onConfirm: () => {
-              if (run.cinders < stock.removeCost || !removeDeckCard(run, inst.instanceId, { keepOne: true })) return;
-              run.cinders -= stock.removeCost;
-              run.removesPurchased = (run.removesPurchased || 0) + 1;
-              stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
-              sfx.play('buy');
-              onChanged();
-              render();
+              burning = { inst, def };
+              commitBurn();
             },
           });
           grid.appendChild(wrap);
         });
+        arm(burnConfirm, 'shopRemove', {
+          question: burnQuestion,
+          confirmLabel: t('shop.burn.confirm'),
+          onConfirm: commitBurn,
+        });
+        grid.after(burnConfirm);
+        dressBurnConfirm();
       });
     }
 
