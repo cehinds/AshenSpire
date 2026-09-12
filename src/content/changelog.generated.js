@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-993",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Levelling and the merchant catch up with the tripled cinders",
+    "detail": "Cinder rewards were tripled a week ago and nothing else moved, so levels at the shrine had become far too cheap — a simulated climb bought 27 of them where the design asks for 10 to 20 — and every price at the merchant was effectively a third of what it was meant to be. A level now starts at 50 cinders and rises by 10 each time, which a 40-run simulation puts back at 15 levels a climb; armaments, weapon arts, cards, relics, flasks and card removal all cost three times what they did, which is exactly the number of fights per purchase they were tuned to before. Selling prices follow automatically, and nothing about how much you earn has changed.",
+    "build": "0.7.1.7",
+    "pullRequest": 993,
+    "url": "https://github.com/cehinds/AshenSpire/pull/993"
+  },
+  {
     "id": "pr-991",
     "date": "2026-09-11",
     "group": "2026-09-11",
