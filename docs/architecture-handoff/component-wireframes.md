@@ -2,6 +2,374 @@
 
 WP identifiers describe composable parts, not additional screen families. Every part receives an immutable view model and owner interaction state. WC0/WC4 and W1w compose these same components; context controls visibility and placement. Dimensions are shared configurable proposals.
 
+## Wireframe W1x: Proficiencies
+
+**Parent: W1.** Use cases: Character profile and post-combat progression review. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+┌──────────────────────────────────────────────┐
+│ Proficiencies                             [×] │
+├──────────┬────────────┬───────────────────────┤
+│ Weapons  │ Swords  3  │ Swords · Rank 3       │
+│ Skills   │ Bows    2  │ [Progress──────────]  │
+│          │            │ Next benefit          │
+│          │            │ Known techniques      │
+│          │            │ Recent practice       │
+├──────────┴────────────┴───────────────────────┤
+│ [                  Back                   ] │
+└──────────────────────────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x.root | config.progression.layout.width | config.progression.layout.height | owning component slot | W0 title/exit/footer anchors | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x.root | config.progression.layout.width | config.progression.layout.height | owning component slot | W0 title/exit/footer anchors | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x.root | config.progression.layout.width | config.progression.layout.height | owning component slot | W0 title/exit/footer anchors | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x.root | config.progression.layout.width | config.progression.layout.height | owning component slot | W0 title/exit/footer anchors | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT character knowledge, progression projection, config.progression
+// Category and proficiency selection are presentation state, not progression mutations.
+category = ResolveCategoryOrDefault(config.progression.categories, config.progression.defaultCategory)
+entries = ProjectKnownProficiencies(character, category)
+selected = ResolveStableSelection(entries)
+ComposeW1Shell(title=config.progression.labels.title)
+Compose(WGP1, entries); Compose(WGP2, selected); Compose(WGP3, selected); Compose(WGP4, selected)
+// Compact hosts replace navigation columns with dropdowns; retain the same selected ID.
+AdaptNavigationToHost(config.progression.layout.compactBreakpoint)
+RenderOnlyKnownBenefitsAndTechniques(character.knowledge)
+If config.progression.showHistory: RenderOrderedPracticeEvents(selected)
+// Back is the sole production footer command and therefore fills the footer.
+Compose(WCB4, width=AvailableFooterWidth())
+// Preview award is outside the game frame and changes only cloned fixture state.
+If config.progression.allowPreviewAward: ExposePreviewAward(config.progression.previewAward)
+// Each viewport gets isolated preview state; controls stay outside the game frame.
+instance = ClonePresentationState(config.progression)
+ExposeInstanceControls(instance.showLockedTechniques, instance.showHistory, instance.previewAward)
+OnPreviewControlChange: ReprojectOnlyThisInstance(instance)
+OnResetPreview: RestoreThisInstanceDefaults(config.progression)
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe W1x1: Weapon proficiency
+
+**Parent: W1x.** Use cases: Weapons category; same workspace model. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+┌──────────────────────────────────────────────┐
+│ Proficiencies                             [×] │
+├──────────┬────────────┬───────────────────────┤
+│ Weapons  │ Swords  3  │ Swords · Rank 3       │
+│ Skills   │ Bows    2  │ [Progress──────────]  │
+│          │            │ Next benefit          │
+│          │            │ Known techniques      │
+│          │            │ Recent practice       │
+├──────────┴────────────┴───────────────────────┤
+│ [                  Back                   ] │
+└──────────────────────────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x1.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x1.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x1.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x1.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT character knowledge, progression projection, config.progression
+// Category and proficiency selection are presentation state, not progression mutations.
+category = ResolveCategoryOrDefault(config.progression.categories, config.progression.defaultCategory)
+entries = ProjectKnownProficiencies(character, category)
+selected = ResolveStableSelection(entries)
+ComposeW1Shell(title=config.progression.labels.title)
+Compose(WGP1, entries); Compose(WGP2, selected); Compose(WGP3, selected); Compose(WGP4, selected)
+// Compact hosts replace navigation columns with dropdowns; retain the same selected ID.
+AdaptNavigationToHost(config.progression.layout.compactBreakpoint)
+RenderOnlyKnownBenefitsAndTechniques(character.knowledge)
+If config.progression.showHistory: RenderOrderedPracticeEvents(selected)
+// Back is the sole production footer command and therefore fills the footer.
+Compose(WCB4, width=AvailableFooterWidth())
+// Preview award is outside the game frame and changes only cloned fixture state.
+If config.progression.allowPreviewAward: ExposePreviewAward(config.progression.previewAward)
+// Each viewport gets isolated preview state; controls stay outside the game frame.
+instance = ClonePresentationState(config.progression)
+ExposeInstanceControls(instance.showLockedTechniques, instance.showHistory, instance.previewAward)
+OnPreviewControlChange: ReprojectOnlyThisInstance(instance)
+OnResetPreview: RestoreThisInstanceDefaults(config.progression)
+SelectCategory(config.progression.categoryIds.weapons) // Bind configured category ID, not a mechanics rule.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe W1x2: Skill proficiency
+
+**Parent: W1x.** Use cases: Skills category; same workspace model. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+┌──────────────────────────────────────────────┐
+│ Proficiencies                             [×] │
+├──────────┬────────────┬───────────────────────┤
+│ Weapons  │ Swords  3  │ Swords · Rank 3       │
+│ Skills   │ Bows    2  │ [Progress──────────]  │
+│          │            │ Next benefit          │
+│          │            │ Known techniques      │
+│          │            │ Recent practice       │
+├──────────┴────────────┴───────────────────────┤
+│ [                  Back                   ] │
+└──────────────────────────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x2.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x2.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x2.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌───────────────────────────┐
+│ Proficiencies          [×] │
+│ [Weapons ▾]  [Swords ▾]   │
+├───────────────────────────┤
+│ Swords · Rank 3           │
+│ [Progress──────────────]  │
+│ Next benefit              │
+│ Known techniques          │
+│ Recent practice           │
+├───────────────────────────┤
+│ [         Back          ] │
+└───────────────────────────┘
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| W1x2.root | parent body width | parent body height | owning component slot | W1x active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT character knowledge, progression projection, config.progression
+// Category and proficiency selection are presentation state, not progression mutations.
+category = ResolveCategoryOrDefault(config.progression.categories, config.progression.defaultCategory)
+entries = ProjectKnownProficiencies(character, category)
+selected = ResolveStableSelection(entries)
+ComposeW1Shell(title=config.progression.labels.title)
+Compose(WGP1, entries); Compose(WGP2, selected); Compose(WGP3, selected); Compose(WGP4, selected)
+// Compact hosts replace navigation columns with dropdowns; retain the same selected ID.
+AdaptNavigationToHost(config.progression.layout.compactBreakpoint)
+RenderOnlyKnownBenefitsAndTechniques(character.knowledge)
+If config.progression.showHistory: RenderOrderedPracticeEvents(selected)
+// Back is the sole production footer command and therefore fills the footer.
+Compose(WCB4, width=AvailableFooterWidth())
+// Preview award is outside the game frame and changes only cloned fixture state.
+If config.progression.allowPreviewAward: ExposePreviewAward(config.progression.previewAward)
+// Each viewport gets isolated preview state; controls stay outside the game frame.
+instance = ClonePresentationState(config.progression)
+ExposeInstanceControls(instance.showLockedTechniques, instance.showHistory, instance.previewAward)
+OnPreviewControlChange: ReprojectOnlyThisInstance(instance)
+OnResetPreview: RestoreThisInstanceDefaults(config.progression)
+SelectCategory(config.progression.categoryIds.skills) // Bind configured category ID, not a mechanics rule.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
 ## Wireframe WCB0: Buttons and inspection
 
 **Parent: none.** Use cases: Buttons and inspection reusable component family. Owner selection propagates to the component; no duplicated selected state.
@@ -9,7 +377,10 @@ WP identifiers describe composable parts, not additional screen families. Every 
 **Wide**
 
 ```text
-{Shared family components}
+Header  Title                         [×]
+Owner               (i)
+Footer  [Back]                   [Confirm]
+Selected card       [Context action]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -19,7 +390,10 @@ WP identifiers describe composable parts, not additional screen families. Every 
 **Compact**
 
 ```text
-{Shared family components}
+Header  Title                         [×]
+Owner               (i)
+Footer  [Back]                   [Confirm]
+Selected card       [Context action]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -32,7 +406,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Header  Title                         [×]
+Owner               (i)
+Footer  [Back]                   [Confirm]
+Selected card       [Context action]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -46,7 +423,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Header  Title                         [×]
+Owner               (i)
+Footer  [Back]                   [Confirm]
+Selected card       [Context action]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -57,7 +437,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve every control through the shared action contract. Keep footer actions inline; sole action spans its footer. Inherit focus, disabled, busy, selected, and semantic role tokens.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -69,8 +458,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-             (i)
-        {Owning card}
+              (i)
+               │ center anchor
+         selected owner
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -80,8 +470,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-             (i)
-        {Owning card}
+              (i)
+               │ center anchor
+         selected owner
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -94,8 +485,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-             (i)
-        {Owning card}
+              (i)
+               │ center anchor
+         selected owner
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -109,8 +501,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-             (i)
-        {Owning card}
+              (i)
+               │ center anchor
+         selected owner
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -121,7 +514,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-On continuous selection schedule reveal after1000ms. Cancel on deselect/disposal. On activation stop propagation and open W1w with entity reference and context. Restore origin focus. Read-only inspector previews omit nested inspect.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Schedule visibility with config.selection.revealDelayMs. Open knowledge-filtered W1w on activation; stop owner activation propagation and restore source focus on dismissal.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -133,7 +535,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[          Use            ]
+          selected card
+           [ Use ] ← outside card footer
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -143,7 +546,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[          Use            ]
+          selected card
+           [ Use ] ← outside card footer
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -156,7 +560,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[          Use            ]
+          selected card
+           [ Use ] ← outside card footer
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -170,7 +575,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[          Use            ]
+          selected card
+           [ Use ] ← outside card footer
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -181,7 +587,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Project available domain intent. Required target gates readiness. Commit revalidates state once. No generic eligible-target button in production.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project domain action and readiness. Omit absent actions. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -193,7 +608,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[ Confirm ]
+Footer right      [Confirm]
+Sole action       [       Confirm       ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -203,7 +619,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[ Confirm ]
+Footer right      [Confirm]
+Sole action       [       Confirm       ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -216,7 +633,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[ Confirm ]
+Footer right      [Confirm]
+Sole action       [       Confirm       ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -230,7 +648,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[ Confirm ]
+Footer right      [Confirm]
+Sole action       [       Confirm       ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -241,7 +660,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Receive label, command intent, readiness and busy state. Green when ready/highlighted; disabled/busy wins. Emit one semantic intent; domain revalidates. Destructive role uses danger override.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Bind model.label and model.intent. Ready and focused primary uses configured green; disabled and busy states take precedence. Revalidate command at activation.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -253,7 +681,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[ Back ]
+Footer left [Back]        [Primary]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -263,7 +691,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[ Back ]
+Footer left [Back]        [Primary]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -276,7 +704,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[ Back ]
+Footer left [Back]        [Primary]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -290,7 +718,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[ Back ]
+Footer left [Back]        [Primary]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -301,7 +729,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Inherit action primitive. Highlight danger color on focus/hover. Cancel only current presentation flow; restore origin focus.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Apply shared action contract with dismissal role. Use configured danger highlight on focus and pointer hover. Cancel presentation state and restore originating focus.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -313,7 +750,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[ × ]
+Title                     [×] ← top-right
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -323,7 +760,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[ × ]
+Title                     [×] ← top-right
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -336,7 +773,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[ × ]
+Title                     [×] ← top-right
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -350,7 +787,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[ × ]
+Title                     [×] ← top-right
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -361,7 +798,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Use accessible Close label and inherited dismissal policy. Danger highlight; do not commit pending domain actions.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Use Close accessible label and shared dismissal policy. Respect pending modal decisions. Keep aligned to the header inset.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -373,7 +819,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+MODEL → CONTRACT → VIEW
+                ↘ Selection / active stack / inspector facts
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -383,7 +830,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+MODEL → CONTRACT → VIEW
+                ↘ Selection / active stack / inspector facts
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -396,7 +844,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+MODEL → CONTRACT → VIEW
+                ↘ Selection / active stack / inspector facts
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -410,7 +859,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+MODEL → CONTRACT → VIEW
+                ↘ Selection / active stack / inspector facts
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -421,7 +871,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project immutable values; validate registered component; compose contract, state projection, selection, and facts.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -433,7 +892,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Immutable model} → [View] → Intent
+Immutable model ──► validated component
+Owner state ──────► presentation
+Activation ───────► semantic intent
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -443,7 +904,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Immutable model} → [View] → Intent
+Immutable model ──► validated component
+Owner state ──────► presentation
+Activation ───────► semantic intent
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -456,7 +919,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Immutable model} → [View] → Intent
+Immutable model ──► validated component
+Owner state ──────► presentation
+Activation ───────► semantic intent
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -470,7 +935,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Immutable model} → [View] → Intent
+Immutable model ──► validated component
+Owner state ──────► presentation
+Activation ───────► semantic intent
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -481,7 +948,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Validate model; resolve inherited tokens; render only if active; dispose subscriptions.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Validate required identity and provider fields. Resolve inherited tokens. Render only active providers. Dispatch semantic intents without changing domain state.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -493,11 +969,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[HP]
-[Resource if active]
-[Buildup if admitted]
-[Stance if active]
-[Icons ... +N]
+HP        [████████░░]
+Resource  [██████░░░░]  if active
+Buildup   [██████░░░░]  if budget admits
+Stance    [Aggressive]  if active
+Effects   [✚][☠][↓][+N] if present
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -507,11 +983,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[HP]
-[Resource if active]
-[Buildup if admitted]
-[Stance if active]
-[Icons ... +N]
+HP        [████████░░]
+Resource  [██████░░░░]  if active
+Buildup   [██████░░░░]  if budget admits
+Stance    [Aggressive]  if active
+Effects   [✚][☠][↓][+N] if present
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -524,11 +1000,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP]
-[Resource if active]
-[Buildup if admitted]
-[Stance if active]
-[Icons ... +N]
+HP        [████████░░]
+Resource  [██████░░░░]  if active
+Buildup   [██████░░░░]  if budget admits
+Stance    [Aggressive]  if active
+Effects   [✚][☠][↓][+N] if present
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -542,11 +1018,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP]
-[Resource if active]
-[Buildup if admitted]
-[Stance if active]
-[Icons ... +N]
+HP        [████████░░]
+Resource  [██████░░░░]  if active
+Buildup   [██████░░░░]  if budget admits
+Stance    [Aggressive]  if active
+Effects   [✚][☠][↓][+N] if present
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -557,7 +1033,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Filter inactive components before ordering. Reserve HP and present stance/icon rows. Admit priority bars within remaining budget. Convert excess buildup to icons. Use shared0.2rem gap, no empty rows.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Filter inactive providers before sorting by configured order. Reserve HP, present stance and icon row. Admit optional bars within config.meter.maxRows. Convert excess buildup to progress icons; collapse absent rows and gaps.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -569,7 +1054,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{ Glow around complete owner }
+              (i) ← delayed reveal
+  glow ╭────────────────────╮
+       │ entire owner       │
+       │ art + name + parts │
+       ╰────────────────────╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -579,7 +1068,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{ Glow around complete owner }
+              (i) ← delayed reveal
+  glow ╭────────────────────╮
+       │ entire owner       │
+       │ art + name + parts │
+       ╰────────────────────╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -592,7 +1085,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{ Glow around complete owner }
+              (i) ← delayed reveal
+  glow ╭────────────────────╮
+       │ entire owner       │
+       │ art + name + parts │
+       ╰────────────────────╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -606,7 +1103,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{ Glow around complete owner }
+              (i) ← delayed reveal
+  glow ╭────────────────────╮
+       │ entire owner       │
+       │ art + name + parts │
+       ╰────────────────────╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -617,7 +1118,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Observe owner selected state. Apply one shared glow to complete visible assembly; no nested additive glow. Preserve position and omit hidden parts.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Observe owner selection once. Apply inherited glow to the entire visible assembly. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -629,8 +1139,12 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Label          Value
-Label          Value
+HP 32/40   Intent Attack 12   Defense 8
+Current state   Mana 6/10 · Aggressive
+Previous actions  Attack → Defend
+Known abilities   Cleave
+Known traits      Fire weakness
+Lore              Knowledge-filtered prose
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -640,8 +1154,12 @@ Label          Value
 **Compact**
 
 ```text
-Label          Value
-Label          Value
+HP 32/40   Intent Attack 12   Defense 8
+Current state   Mana 6/10 · Aggressive
+Previous actions  Attack → Defend
+Known abilities   Cleave
+Known traits      Fire weakness
+Lore              Knowledge-filtered prose
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -654,8 +1172,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Label          Value
-Label          Value
+HP 32/40   Intent Attack 12   Defense 8
+Current state   Mana 6/10 · Aggressive
+Previous actions  Attack → Defend
+Known abilities   Cleave
+Known traits      Fire weakness
+Lore              Knowledge-filtered prose
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -669,8 +1191,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Label          Value
-Label          Value
+HP 32/40   Intent Attack 12   Defense 8
+Current state   Mana 6/10 · Aggressive
+Previous actions  Attack → Defend
+Known abilities   Cleave
+Known traits      Fire weakness
+Lore              Knowledge-filtered prose
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -681,7 +1207,16 @@ Label          Value
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Project knowledge-filtered snapshot through registered providers. Order HP/intent/defense, current state, history, abilities, traits, lore. Use shared label/value columns; right pane scrolls.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project known values using registered detail providers. Render shared label/value columns in declared section order. Unknown is distinct from absent. Preserve one independently scrolling details pane.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -693,7 +1228,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+Name
+┌──────── Artwork ────────┐
+│    intrinsic ratio     │
+└────────────────────────┘
+Rarity             Owned
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -703,7 +1242,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+Name
+┌──────── Artwork ────────┐
+│    intrinsic ratio     │
+└────────────────────────┘
+Rarity             Owned
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -716,7 +1259,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Name
+┌──────── Artwork ────────┐
+│    intrinsic ratio     │
+└────────────────────────┘
+Rarity             Owned
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -730,7 +1277,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Name
+┌──────── Artwork ────────┐
+│    intrinsic ratio     │
+└────────────────────────┘
+Rarity             Owned
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -741,7 +1292,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose identity, contained artwork, and metadata only where the owner contract provides their slots. Do not copy the owner domain model into leaf state.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -753,7 +1313,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-       {Entity name}
+       Ashen Sentinel
+       [ HP 32 / 40 ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -763,7 +1324,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-       {Entity name}
+       Ashen Sentinel
+       [ HP 32 / 40 ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -776,7 +1338,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-       {Entity name}
+       Ashen Sentinel
+       [ HP 32 / 40 ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -790,7 +1353,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-       {Entity name}
+       Ashen Sentinel
+       [ HP 32 / 40 ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -801,7 +1365,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve localized display name once. Render text, never HTML. Follow context anchor; inherit owner selected glow.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve localized display name from the identity provider; render text safely. Anchor to owner name slot immediately above HP for combatants.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -813,7 +1386,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-       [Artwork]
+     ╭─ sprite bounds ─╮
+     │      ◯          │
+     │     ╱│╲         │
+     │     ╱ ╲         │
+     ╰──── baseline ───╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -823,7 +1400,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-       [Artwork]
+     ╭─ sprite bounds ─╮
+     │      ◯          │
+     │     ╱│╲         │
+     │     ╱ ╲         │
+     ╰──── baseline ───╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -836,7 +1417,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-       [Artwork]
+     ╭─ sprite bounds ─╮
+     │      ◯          │
+     │     ╱│╲         │
+     │     ╱ ╲         │
+     ╰──── baseline ───╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -850,7 +1435,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-       [Artwork]
+     ╭─ sprite bounds ─╮
+     │      ◯          │
+     │     ╱│╲         │
+     │     ╱ ╲         │
+     ╰──── baseline ───╯
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -861,7 +1450,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered asset and pose. Contain intrinsic aspect ratio. Mirror art only by facing. No independent entity facts.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve asset and pose from the registry. Preserve intrinsic aspect ratio in allocated bounds. Mirror artwork for facing; do not mirror text or controls.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -873,7 +1471,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Rarity               Owned: n
+Common                     Owned: 1
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -883,7 +1481,7 @@ Rarity               Owned: n
 **Compact**
 
 ```text
-Rarity               Owned: n
+Common                     Owned: 1
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -896,7 +1494,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Rarity               Owned: n
+Common                     Owned: 1
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -910,7 +1508,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Rarity               Owned: n
+Common                     Owned: 1
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -921,7 +1519,16 @@ Rarity               Owned: n
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Render applicable registered metadata left/right. Omit unsupported values. No Use/Play button in footer.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project applicable metadata. Place rarity at start and ownership at end of the card metadata band. No domain action belongs in this band.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -933,7 +1540,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+HP      [████████░░] 32/40
+Mana    [██████░░░░]  6/10
+Buildup [██████░░░░] 65/100
+Stance  [  Aggressive  ]
+Icons   [✚][☠][↓][+N]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -943,7 +1554,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+HP      [████████░░] 32/40
+Mana    [██████░░░░]  6/10
+Buildup [██████░░░░] 65/100
+Stance  [  Aggressive  ]
+Icons   [✚][☠][↓][+N]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -956,7 +1571,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+HP      [████████░░] 32/40
+Mana    [██████░░░░]  6/10
+Buildup [██████░░░░] 65/100
+Stance  [  Aggressive  ]
+Icons   [✚][☠][↓][+N]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -970,7 +1589,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+HP      [████████░░] 32/40
+Mana    [██████░░░░]  6/10
+Buildup [██████░░░░] 65/100
+Stance  [  Aggressive  ]
+Icons   [✚][☠][↓][+N]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -981,7 +1604,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose the same meter primitive for health, resource and buildup with semantic model metadata. Stance and icons use shared tokens and active filtering.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -993,7 +1625,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[HP ================= 32/40]
+[HP ████████░░ 32 / 40]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1003,7 +1635,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[HP ================= 32/40]
+[HP ████████░░ 32 / 40]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1016,7 +1648,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP ================= 32/40]
+[HP ████████░░ 32 / 40]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1030,7 +1662,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HP ================= 32/40]
+[HP ████████░░ 32 / 40]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1041,7 +1673,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Project HP/current maximum. Render label and accessible meter. HP persists; clamp visual fill only, never mutate value.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Read model.current and model.maximum. Clamp visual fill to valid display range, preserve original domain values. Provide accessible current and maximum labels.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1053,7 +1694,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Resource =========== 6/10]
+[Mana ██████░░░░ 6 / 10]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1063,7 +1704,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Resource =========== 6/10]
+[Mana ██████░░░░ 6 / 10]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1076,7 +1717,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Resource =========== 6/10]
+[Mana ██████░░░░ 6 / 10]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1090,7 +1731,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Resource =========== 6/10]
+[Mana ██████░░░░ 6 / 10]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1101,7 +1742,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Filter with domain activity predicate. Project resource metadata/current/max. Use registered semantic color. Reserve available row by configured priority.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Render only active resource providers in configured priority. Set height to config.meter.secondaryHeightRatio times HP height. Reuse meter semantics and color registry.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1113,7 +1763,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Buildup ============ 65/100]
+[Burn buildup ██████░░░░ 65 / 100]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1123,7 +1773,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Buildup ============ 65/100]
+[Burn buildup ██████░░░░ 65 / 100]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1136,7 +1786,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Buildup ============ 65/100]
+[Burn buildup ██████░░░░ 65 / 100]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1150,7 +1800,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Buildup ============ 65/100]
+[Burn buildup ██████░░░░ 65 / 100]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1161,7 +1811,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Project buildup and threshold. If optional row budget exhausted, emit progress-icon model instead. Never treat buildup as active status duration.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Use threshold progress model distinct from status duration. Render admitted bars at configured secondary height; otherwise project a progress icon with stable identity.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1173,7 +1832,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[       {Stance}          ]
+[          Aggressive          ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1183,7 +1842,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[       {Stance}          ]
+[          Aggressive          ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1196,7 +1855,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[       {Stance}          ]
+[          Aggressive          ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1210,7 +1869,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[       {Stance}          ]
+[          Aggressive          ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1221,7 +1880,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Render active stance only with uniform dimensions. Localize label and tooltip. No stance command from informational activation.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Show active stance only. Set width equal to HP and height from config.meter.stanceHeightRatio. The informational strip does not issue a stance change.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1233,7 +1901,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[◆]
+[☠]  ← icon only; details in tooltip
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1243,7 +1911,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[◆]
+[☠]  ← icon only; details in tooltip
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1256,7 +1924,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[◆]
+[☠]  ← icon only; details in tooltip
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1270,7 +1938,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[◆]
+[☠]  ← icon only; details in tooltip
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1281,7 +1949,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Render icon only. Accessible name and tooltip contain stacks/duration/progress. Subscribe to owner selection rather than local duplicate state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Use configured square icon size, icon asset and accessible name. Schedule shared tooltip for stacks, duration and effect description. Do not print extra counters inside icon boxes.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1293,7 +1970,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[◆] [☠] [+4]
+[✚][☠][↓][+N] ← final reserved tile
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1303,7 +1980,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[◆] [☠] [+4]
+[✚][☠][↓][+N] ← final reserved tile
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1316,7 +1993,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[◆] [☠] [+4]
+[✚][☠][↓][+N] ← final reserved tile
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1330,7 +2007,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[◆] [☠] [+4]
+[✚][☠][↓][+N] ← final reserved tile
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1341,7 +2018,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Measure available width. Reserve last slot if all icons cannot fit. N equals hidden entries. Activate opens complete status list in W1w. Recompute on resize/model update.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Measure available inline width and configured icon size and gap. If overflow exists, reserve final tile; N equals hidden count. Open complete inspector status section; never wrap into another row.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1353,7 +2039,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+         Intent
+      ┌─ aura ───┐
+      │ sprite  │  Defense ← midpoint
+      │ + buff  │
+      └─────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1363,7 +2053,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+         Intent
+      ┌─ aura ───┐
+      │ sprite  │  Defense ← midpoint
+      │ + buff  │
+      └─────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1376,7 +2070,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+         Intent
+      ┌─ aura ───┐
+      │ sprite  │  Defense ← midpoint
+      │ + buff  │
+      └─────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1390,7 +2088,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+         Intent
+      ┌─ aura ───┐
+      │ sprite  │  Defense ← midpoint
+      │ + buff  │
+      └─────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1401,7 +2103,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose active layers around a shared sprite rectangle. Keep effect layers noninteractive and controls above effects. Resolve role-facing placement from configuration.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1413,7 +2124,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[⚔ Attack · 12]
+       (i)
+   [⚔ Attack · 12]
+      sprite
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1423,7 +2136,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[⚔ Attack · 12]
+       (i)
+   [⚔ Attack · 12]
+      sprite
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1436,7 +2151,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[⚔ Attack · 12]
+       (i)
+   [⚔ Attack · 12]
+      sprite
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1450,7 +2167,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[⚔ Attack · 12]
+       (i)
+   [⚔ Attack · 12]
+      sprite
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1461,7 +2180,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Require active domain intent AND role visibility; default player false, enemy true. Project action preview. No duplicate AI logic.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Require active announced intent and configured role visibility. Project preview supplied by domain; never reproduce AI calculations. Place below inspect above sprite.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1473,7 +2201,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[◇ 8]
+ sprite             [◇ 8]
+         ← gap →    midpoint
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1483,7 +2212,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[◇ 8]
+ sprite             [◇ 8]
+         ← gap →    midpoint
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1496,7 +2226,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[◇ 8]
+ sprite             [◇ 8]
+         ← gap →    midpoint
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1510,7 +2241,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[◇ 8]
+ sprite             [◇ 8]
+         ← gap →    midpoint
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1521,7 +2253,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Render active defense value. Place outside sprite with0.5rem gap and center vertically. Inspector uses facts instead of overlay.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Show active defense only. Anchor at config.overlay.defenseAnchorRatio of sprite height with config.overlay.defenseGapRem external gap. Player right, enemy left.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1533,7 +2274,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{ Aura behind sprite }
+┌── full sprite bounds ──┐
+│ aura behind artwork   │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1543,7 +2287,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{ Aura behind sprite }
+┌── full sprite bounds ──┐
+│ aura behind artwork   │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1556,7 +2303,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{ Aura behind sprite }
+┌── full sprite bounds ──┐
+│ aura behind artwork   │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1570,7 +2320,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{ Aura behind sprite }
+┌── full sprite bounds ──┐
+│ aura behind artwork   │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1581,7 +2334,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Match active visual-effect tags to allowlisted provider. Paint full bounds without pointer events. Never create gameplay state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve active effect provider. Fill complete sprite bounds behind artwork. Omit absent effect; never intercept pointer input or create domain buffs.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1593,7 +2355,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{ Buff over sprite }
+┌── full sprite bounds ──┐
+│ buff above artwork    │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1603,7 +2368,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{ Buff over sprite }
+┌── full sprite bounds ──┐
+│ buff above artwork    │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1616,7 +2384,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{ Buff over sprite }
+┌── full sprite bounds ──┐
+│ buff above artwork    │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1630,7 +2401,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{ Buff over sprite }
+┌── full sprite bounds ──┐
+│ buff above artwork    │
+│                       │
+└───────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1641,7 +2415,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Reuse effect lifecycle; paint above art below controls. Omit in inspector. Respect reduced motion.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve active buff visual provider. Cover full sprite height above artwork beneath controls. Respect reduced motion and disposal lifecycle.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1653,7 +2436,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+[ Trigger ] ── delay ──► ┌ Tooltip ┐
+                         │ detail  │
+                         └────▽────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1663,7 +2448,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+[ Trigger ] ── delay ──► ┌ Tooltip ┐
+                         │ detail  │
+                         └────▽────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1676,7 +2463,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+[ Trigger ] ── delay ──► ┌ Tooltip ┐
+                         │ detail  │
+                         └────▽────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1690,7 +2479,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+[ Trigger ] ── delay ──► ┌ Tooltip ┐
+                         │ detail  │
+                         └────▽────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1701,7 +2492,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Reuse one tooltip presenter with configured size variant and placement policy. Keep tooltips in current modal overlay layer.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1713,9 +2513,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Title / explanation]
-          ▽
-       [Trigger]
+┌ Poison ────────────────────┐
+│ Damage over time.          │
+│ 3 stacks · 2 turns         │
+└────────────▽───────────────┘
+             [☠]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1725,9 +2527,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Title / explanation]
-          ▽
-       [Trigger]
+┌ Poison ────────────────────┐
+│ Damage over time.          │
+│ 3 stacks · 2 turns         │
+└────────────▽───────────────┘
+             [☠]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1740,9 +2544,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Title / explanation]
-          ▽
-       [Trigger]
+┌ Poison ────────────────────┐
+│ Damage over time.          │
+│ 3 stacks · 2 turns         │
+└────────────▽───────────────┘
+             [☠]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1756,9 +2562,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Title / explanation]
-          ▽
-       [Trigger]
+┌ Poison ────────────────────┐
+│ Damage over time.          │
+│ 3 stacks · 2 turns         │
+└────────────▽───────────────┘
+             [☠]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1769,7 +2577,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Delay1000ms; cancel stale timers. Keep open across trigger-to-tooltip transition. Escape/outside tap dismiss. Reuse active modal overlay root.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// On hover or focus schedule after config.selection.tooltipDelayMs. Cancel stale requests, flip and shift to viewport bounds, dismiss on Escape or outside activation.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1781,7 +2598,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+Shared HUD
+Battlefield: player →   ← enemies
+Hand: [card] [card] [card]
+(A)[Draw][End turn][Discard](P)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1791,7 +2611,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+Shared HUD
+Battlefield: player →   ← enemies
+Hand: [card] [card] [card]
+(A)[Draw][End turn][Discard](P)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1804,7 +2627,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Shared HUD
+Battlefield: player →   ← enemies
+Hand: [card] [card] [card]
+(A)[Draw][End turn][Discard](P)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1818,7 +2644,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Shared HUD
+Battlefield: player →   ← enemies
+Hand: [card] [card] [card]
+(A)[Draw][End turn][Discard](P)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1829,7 +2658,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose shared HUD, stage, hand and footer using scene band config. Child modules receive the same immutable snapshot and emit domain intents through the host dispatcher.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1841,7 +2679,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Battlefield stage]
+┌ Skyline / floor ──────────────┐
+│                              │
+│ Player →      ← Foe  ← Foe   │
+└──────── shared baseline ─────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1851,7 +2692,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Battlefield stage]
+┌ Skyline / floor ──────────────┐
+│                              │
+│ Player →      ← Foe  ← Foe   │
+└──────── shared baseline ─────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1864,7 +2708,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Battlefield stage]
+┌ Skyline / floor ──────────────┐
+│                              │
+│ Player →      ← Foe  ← Foe   │
+└──────── shared baseline ─────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1878,7 +2725,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Battlefield stage]
+┌ Skyline / floor ──────────────┐
+│                              │
+│ Player →      ← Foe  ← Foe   │
+└──────── shared baseline ─────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1889,7 +2739,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-shared baseline and authored slots; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances on the same baseline above background with target overlay.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1901,7 +2760,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Player placement]
+Player slot →
+   sprite          defense
+   name
+   HP / active stack
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1911,7 +2773,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Player placement]
+Player slot →
+   sprite          defense
+   name
+   HP / active stack
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1924,7 +2789,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Player placement]
+Player slot →
+   sprite          defense
+   name
+   HP / active stack
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1938,7 +2806,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Player placement]
+Player slot →
+   sprite          defense
+   name
+   HP / active stack
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1949,7 +2820,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-place player facing right; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Allocate the player slot and render shared combatant card with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -1961,7 +2841,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Enemy placements]
+       ← Enemy       ← Enemy
+       sprite        sprite
+       name / HP     name / HP
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1971,7 +2853,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Enemy placements]
+       ← Enemy       ← Enemy
+       sprite        sprite
+       name / HP     name / HP
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1984,7 +2868,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Enemy placements]
+       ← Enemy       ← Enemy
+       sprite        sprite
+       name / HP     name / HP
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -1998,7 +2884,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Enemy placements]
+       ← Enemy       ← Enemy
+       sprite        sprite
+       name / HP     name / HP
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2009,7 +2897,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-stable IDs, spacing, authored baseline; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project stable enemy IDs to authored slots. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2021,7 +2918,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Target layer]
+Player       [eligible enemy]   unavailable
+                    ↑ active target outline
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2031,7 +2929,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Target layer]
+Player       [eligible enemy]   unavailable
+                    ↑ active target outline
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2044,7 +2943,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Target layer]
+Player       [eligible enemy]   unavailable
+                    ↑ active target outline
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2058,7 +2958,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Target layer]
+Player       [eligible enemy]   unavailable
+                    ↑ active target outline
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2069,7 +2970,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-domain-eligible targets only; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Use domain-eligible entity IDs for hit regions and keyboard navigation. Highlight eligible and selected targets without selecting impossible targets. Clear stale selection on model change.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2081,7 +2991,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Hand region]
+[Attack] [Skill] [Power]
+    proportional cards, shared selection
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2091,7 +3002,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Hand region]
+[Attack] [Skill] [Power]
+    proportional cards, shared selection
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2104,7 +3016,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Hand region]
+[Attack] [Skill] [Power]
+    proportional cards, shared selection
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2118,7 +3031,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Hand region]
+[Attack] [Skill] [Power]
+    proportional cards, shared selection
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2129,7 +3043,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-stable card IDs; preserve targeting and hit areas; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project stable hand cards through the shared WC1 renderer. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2141,7 +3064,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Packed action footer]
+(Actions)[Draw][ End turn ][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2151,7 +3074,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Packed action footer]
+(Actions)[Draw][ End turn ][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2164,7 +3087,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Packed action footer]
+(Actions)[Draw][ End turn ][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2178,7 +3101,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Packed action footer]
+(Actions)[Draw][ End turn ][Discard](Potions)
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2189,7 +3112,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-actions draw endTurn discard potions; uniform minimal gaps; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose controls in configured order as one tightly packed centered group. Large outer circles and center control share size token; empty non-End-turn controls fade.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2201,7 +3133,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Actions remaining]
+  ( 3 )
+ Actions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2211,7 +3144,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Actions remaining]
+  ( 3 )
+ Actions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2224,7 +3158,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Actions remaining]
+  ( 3 )
+ Actions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2238,7 +3173,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Actions remaining]
+  ( 3 )
+ Actions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2249,7 +3185,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-domain count; fade when empty; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Read remaining actions from snapshot. Use large circular control size. Empty state fades and is announced accessibly; display does not spend actions.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2261,7 +3206,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Draw pile button]
+[Draw · 12] → shared pile workspace
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2271,7 +3216,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Draw pile button]
+[Draw · 12] → shared pile workspace
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2284,7 +3229,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Draw pile button]
+[Draw · 12] → shared pile workspace
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2298,7 +3243,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Draw pile button]
+[Draw · 12] → shared pile workspace
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2309,7 +3254,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-open pile viewer; no invented draw command; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Open draw pile inspector on activation. Use current pile count; no invented draw-card command. Empty state follows configured faded styling.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2321,7 +3275,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[End turn button]
+[ End turn ]  ← center / large
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2331,7 +3285,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[End turn button]
+[ End turn ]  ← center / large
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2344,7 +3298,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[End turn button]
+[ End turn ]  ← center / large
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2358,7 +3312,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[End turn button]
+[ End turn ]  ← center / large
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2369,7 +3323,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-revalidate turn; green legal no-actions or highlighted; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project turn readiness. Highlight green when legal and remaining actions exhausted or selected. Never fade solely because actions are empty. Revalidate end-turn command on activation.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2381,7 +3344,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Discard/exhaust button]
+[Discard · 4 / Exhaust · 1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2391,7 +3354,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Discard/exhaust button]
+[Discard · 4 / Exhaust · 1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2404,7 +3367,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Discard/exhaust button]
+[Discard · 4 / Exhaust · 1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2418,7 +3381,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Discard/exhaust button]
+[Discard · 4 / Exhaust · 1]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2429,7 +3392,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-open category workspace; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Open shared categorized pile workspace with selected category. Counts come from snapshot; preserve one control between End turn and Potions.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2441,7 +3413,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Potion control]
+ ( 2 )
+Potions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2451,7 +3424,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Potion control]
+ ( 2 )
+Potions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2464,7 +3438,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Potion control]
+ ( 2 )
+Potions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2478,7 +3453,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Potion control]
+ ( 2 )
+Potions
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2489,34 +3465,49 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-choose owned usable potion; target through domain; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Open owned potion selection. Resolve selected item action and target through domain. Use the shared large circular footer control and fade empty state.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
-## Wireframe WGH0: HUD composition
+## Wireframe WGH0: HUD composition contract
 
-**Parent: none.** Use cases: HUD composition reusable component family. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCF2.** Use cases: WGH4 concrete composition; WGS2 shared scene slot. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-{Shared family components}
+[WGH7 Run header]
+[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
+[WGH6 Relics / potions rail]
+[WGH5 Experience strip when configured]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH0.root | 100% host width | content-fit within configured scene band | owning component slot | scene top; shared parent bounds | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-{Shared family components}
+[WGH7 Run header]
+[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
+[WGH6 Relics / potions rail]
+[WGH5 Experience strip when configured]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH0.root | 100% host width | content-fit within configured scene band | owning component slot | scene top; shared parent bounds | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2524,12 +3515,15 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+[WGH7 Run header]
+[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
+[WGH6 Relics / potions rail]
+[WGH5 Experience strip when configured]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH0.root | 100% host width | content-fit within configured scene band | owning component slot | scene top; shared parent bounds | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -2538,53 +3532,65 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+[WGH7 Run header]
+[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]
+[WGH6 Relics / potions rail]
+[WGH5 Experience strip when configured]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH0.root | 100% host width | content-fit within configured scene band | owning component slot | scene top; shared parent bounds | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT snapshot, context, config, commandRegistry
+// This is a reference projection. Never award XP or spend inventory in a view.
+model = ProjectKnownHudFields(snapshot, config.sample)
+visible = FilterConfiguredActiveLayers(model, config.layers)
+// Collapsed layers leave no reserved row or gap.
+ComposeHeader(visible.class, visible.cinders, visible.position)
+ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+ComposeDetachedRail(visible.relics, visible.potions)
+IF visible.experience AND context IN config.experience.contexts
+  RenderExperienceStrip(model.experience, config.experience)
+// XP animation consumes an authoritative before/after settlement event.
+ON combatSettled(event): AnimateProjectedFill(event.before, event.after, config.experience.animationMs)
+ON action(intent): commandRegistry.dispatch(intent)
+ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
 ## Wireframe WGH1: Vitality HUD
 
-**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCF2.** Use cases: WGH4; WGS2; combat and map HUD. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-┌──────────────────────────────────────┐
-│ [Portrait]  Ashen Sentinel   Lv. 4    │
-│             HP [████████░░] 32 / 40  │
-│             XP [████░░░░░░] 40 / 100 │
-└──────────────────────────────────────┘
+[HP       ████████░░ 32/40]
+[Mana     ██████░░░░  6/10]
+[Stamina  ███████░░░  8/12]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH1.root | remaining primary row width | active meters × config.layout.meterHeightRem | owning component slot | primary row left; align meter edges | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-┌──────────────────────────────────────┐
-│ [Portrait]  Ashen Sentinel   Lv. 4    │
-│             HP [████████░░] 32 / 40  │
-│             XP [████░░░░░░] 40 / 100 │
-└──────────────────────────────────────┘
+[HP       ████████░░ 32/40]
+[Mana     ██████░░░░  6/10]
+[Stamina  ███████░░░  8/12]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH1.root | remaining primary row width | active meters × config.layout.meterHeightRem | owning component slot | primary row left; align meter edges | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2592,16 +3598,14 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────────────┐
-│ [Portrait]  Ashen Sentinel   Lv. 4    │
-│             HP [████████░░] 32 / 40  │
-│             XP [████░░░░░░] 40 / 100 │
-└──────────────────────────────────────┘
+[HP       ████████░░ 32/40]
+[Mana     ██████░░░░  6/10]
+[Stamina  ███████░░░  8/12]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH1.root | remaining primary row width | active meters × config.layout.meterHeightRem | owning component slot | primary row left; align meter edges | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -2610,55 +3614,60 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────────────┐
-│ [Portrait]  Ashen Sentinel   Lv. 4    │
-│             HP [████████░░] 32 / 40  │
-│             XP [████░░░░░░] 40 / 100 │
-└──────────────────────────────────────┘
+[HP       ████████░░ 32/40]
+[Mana     ██████░░░░  6/10]
+[Stamina  ███████░░░  8/12]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH1.root | configured fraction | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH1.root | remaining primary row width | active meters × config.layout.meterHeightRem | owning component slot | primary row left; align meter edges | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-compose identity and health/resource meter components from player model; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT snapshot, context, config, commandRegistry
+// This is a reference projection. Never award XP or spend inventory in a view.
+model = ProjectKnownHudFields(snapshot, config.sample)
+visible = FilterConfiguredActiveLayers(model, config.layers)
+// Collapsed layers leave no reserved row or gap.
+ComposeHeader(visible.class, visible.cinders, visible.position)
+ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+ComposeDetachedRail(visible.relics, visible.potions)
+IF visible.experience AND context IN config.experience.contexts
+  RenderExperienceStrip(model.experience, config.experience)
+// XP animation consumes an authoritative before/after settlement event.
+ON combatSettled(event): AnimateProjectedFill(event.before, event.after, config.experience.animationMs)
+ON action(intent): commandRegistry.dispatch(intent)
+ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
-## Wireframe WGH2: Armament HUD
+## Wireframe WGH2: Armoury control
 
-**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCB2.** Use cases: WGH4 primary row; equipment workspace. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-┌──────────────────────────────────────┐
-│ [Weapon] [Armor] [Relic]              │
-│ Iron blade  ·  Equipped loadout       │
-└──────────────────────────────────────┘
+[ ⚔ Armoury ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH2.root | content-fit | config.layout.actionHeightRem | owning component slot | right of vitality; before Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-┌──────────────────────────────────────┐
-│ [Weapon] [Armor] [Relic]              │
-│ Iron blade  ·  Equipped loadout       │
-└──────────────────────────────────────┘
+[ ⚔ Armoury ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH2.root | content-fit | config.layout.actionHeightRem | owning component slot | right of vitality; before Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2666,15 +3675,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────────────┐
-│ [Weapon] [Armor] [Relic]              │
-│ Iron blade  ·  Equipped loadout       │
-└──────────────────────────────────────┘
+[ ⚔ Armoury ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH2.root | content-fit | config.layout.actionHeightRem | owning component slot | right of vitality; before Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -2683,52 +3689,45 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────────────┐
-│ [Weapon] [Armor] [Relic]              │
-│ Iron blade  ·  Equipped loadout       │
-└──────────────────────────────────────┘
+[ ⚔ Armoury ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH2.root | configured fraction | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH2.root | content-fit | config.layout.actionHeightRem | owning component slot | right of vitality; before Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-compose active loadout slots; links to equipment cards and armament workspace; read configuration from gameplay-config.json. Emit semantic intents only.
+// Reuse WCB2. Project armoury command readiness; dispatch openArmoury intent. No loadout mutation in this control.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
-## Wireframe WGH3: Menu HUD
+## Wireframe WGH3: Menu control
 
-**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCB2.** Use cases: WGH4 primary row; quick menu. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-┌──────────────────────────────────────┐
-│ Gold: 120       [Profile] [Menu]      │
-└──────────────────────────────────────┘
+[ ☰ Menu ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH3.root | content-fit | config.layout.actionHeightRem | owning component slot | primary row far right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-┌──────────────────────────────────────┐
-│ Gold: 120       [Profile] [Menu]      │
-└──────────────────────────────────────┘
+[ ☰ Menu ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH3.root | content-fit | config.layout.actionHeightRem | owning component slot | primary row far right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2736,14 +3735,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────────────┐
-│ Gold: 120       [Profile] [Menu]      │
-└──────────────────────────────────────┘
+[ ☰ Menu ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH3.root | content-fit | config.layout.actionHeightRem | owning component slot | primary row far right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -2752,55 +3749,61 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌──────────────────────────────────────┐
-│ Gold: 120       [Profile] [Menu]      │
-└──────────────────────────────────────┘
+[ ☰ Menu ]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH3.root | content-fit | HUD inner height | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH3.root | content-fit | config.layout.actionHeightRem | owning component slot | primary row far right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-compose shared menu/exit action primitives; read configuration from gameplay-config.json. Emit semantic intents only.
+// Reuse WCB2. Dispatch openMenu; focus first available menu control and restore trigger on dismissal.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
 ## Wireframe WGH4: Total HUD
 
-**Parent: WGS2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCF2.** Use cases: W4a W4b; WGS2 aliases this composition. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
-│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
-│ Name · Level XP │ Equipped loadout   │                  │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ Class: Warden       Cinders: 120       Act 1 Floor 4 │
+│ HP      ████████░░ 32/40     [Armoury] [Menu]        │
+│ Mana    ██████░░░░  6/10                            │
+│ Stamina ███████░░░  8/12                            │
+├─────────────────────────────────────────────────────┤
+│ [Ash seal] [Ember charm]       [Crimson ×2][Azure ×1]│
+└─────────────────────────────────────────────────────┘
+████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH4.root | 100% host / 100vw in full-screen scene | content-fit within configured scene HUD band | owning component slot | top full-width; XP directly below entire HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
-│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
-│ Name · Level XP │ Equipped loadout   │                  │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│ Class: Warden       Cinders: 120       Act 1 Floor 4 │
+│ HP      ████████░░ 32/40     [Armoury] [Menu]        │
+│ Mana    ██████░░░░  6/10                            │
+│ Stamina ███████░░░  8/12                            │
+├─────────────────────────────────────────────────────┤
+│ [Ash seal] [Ember charm]       [Crimson ×2][Azure ×1]│
+└─────────────────────────────────────────────────────┘
+████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH4.root | 100% host / 100vw in full-screen scene | content-fit within configured scene HUD band | owning component slot | top full-width; XP directly below entire HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2808,16 +3811,19 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
-│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
-│ Name · Level XP │ Equipped loadout   │                  │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────┐
+│ Warden    ⛁120    Act1 Floor4│
+│ HP  █████░░ 32/40 [⚔] [☰]   │
+│ MP  ███░░░░  6/10           │
+│ STA ████░░░  8/12           │
+│ [Relics]      [Red2][Blue1]  │
+└──────────────────────────────┘
+████████████░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH4.root | 100% host / 100vw in full-screen scene | content-fit within configured scene HUD band | owning component slot | top full-width; XP directly below entire HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -2826,22 +3832,353 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-┌─────────────────────────────────────────────────────────┐
-│ WGH1 Vitality    │ WGH2 Armament       │ WGH3 Menu        │
-│ Portrait · HP   │ Weapon Armor Relic │ Gold Profile Menu│
-│ Name · Level XP │ Equipped loadout   │                  │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────┐
+│ Warden    ⛁120    Act1 Floor4│
+│ HP  █████░░ 32/40 [⚔] [☰]   │
+│ MP  ███░░░░  6/10           │
+│ STA ████░░░  8/12           │
+│ [Relics]      [Red2][Blue1]  │
+└──────────────────────────────┘
+████████████░░░░░░░░░░░░░░░░░░
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGH4.root | 100% host | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGH4.root | 100% host / 100vw in full-screen scene | content-fit within configured scene HUD band | owning component slot | top full-width; XP directly below entire HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-compose WGH1 vitality, WGH2 armament, WGH3 menu; one shared snapshot; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT snapshot, context, config, commandRegistry
+// This is a reference projection. Never award XP or spend inventory in a view.
+model = ProjectKnownHudFields(snapshot, config.sample)
+visible = FilterConfiguredActiveLayers(model, config.layers)
+// Collapsed layers leave no reserved row or gap.
+ComposeHeader(visible.class, visible.cinders, visible.position)
+ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+ComposeDetachedRail(visible.relics, visible.potions)
+IF visible.experience AND context IN config.experience.contexts
+  RenderExperienceStrip(model.experience, config.experience)
+// XP animation consumes an authoritative before/after settlement event.
+ON combatSettled(event): AnimateProjectedFill(event.before, event.after, config.experience.animationMs)
+ON action(intent): commandRegistry.dispatch(intent)
+ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH5: Experience strip
+
+**Parent: WCM2.** Use cases: WGH4 below detached rail; combat-only default. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue fill / full host width / no permanent caption
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH5.root | 100% host; 100vw when host is viewport | config.experience.heightRem | owning component slot | below total HUD; left-to-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue fill / full host width / no permanent caption
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH5.root | 100% host; 100vw when host is viewport | config.experience.heightRem | owning component slot | below total HUD; left-to-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue fill / full host width / no permanent caption
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH5.root | 100% host; 100vw when host is viewport | config.experience.heightRem | owning component slot | below total HUD; left-to-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+████████████████░░░░░░░░░░░░░░░░░░░░░░░░░░
+Blue fill / full host width / no permanent caption
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH5.root | 100% host; 100vw when host is viewport | config.experience.heightRem | owning component slot | below total HUD; left-to-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+// Proposed owner extension; not existing game XP rules.
+IF config.layers.experience AND context IN config.experience.contexts
+  ratio = SafeNormalizedProgress(snapshot.experience)
+  RenderMeter(ratio, config.experience.color, config.experience.heightRem)
+ON authoritativeCombatSettlement(event)
+  AnimateFill(event.previousProgress, event.currentProgress, config.experience.animationMs)
+// Announce progress through accessible meter label; level thresholds come from domain.
+// Ignore duplicate settlement IDs; reduced-motion uses immediate final projection.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH6: Inventory rail
+
+**Parent: WCF2.** Use cases: WGH4; separate source inventoryBelt model. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Relic: Ash seal] [Relic: Ember charm]    [Crimson ×2] [Azure ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH6.root | 100% usable HUD width | content-fit | owning component slot | below primary row; relics left / potions right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+// Filter config layers, project actual inventory entries, preserve stable entity IDs. Reuse card/slot views. Emit inspect or potion-use intent through command registry; never duplicate resource flask ownership.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH7: Run header strip
+
+**Parent: WCF2.** Use cases: WGH4; map/combat run header. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+Class: Warden           Cinders: 120           Act 1 · Floor 4
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH7.root | 100% usable HUD width | content-fit | owning component slot | top baseline; left / center / right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+Class: Warden           Cinders: 120           Act 1 · Floor 4
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH7.root | 100% usable HUD width | content-fit | owning component slot | top baseline; left / center / right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Class: Warden           Cinders: 120           Act 1 · Floor 4
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH7.root | 100% usable HUD width | content-fit | owning component slot | top baseline; left / center / right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Class: Warden           Cinders: 120           Act 1 · Floor 4
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH7.root | 100% usable HUD width | content-fit | owning component slot | top baseline; left / center / right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+// Project class, Cinders, Act and Floor from run snapshot. Filter config layers before arranging tracks. Use localization and semantic fields, not parsed text.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH8: Charge flask controls
+
+**Parent: WCB2.** Use cases: Current-checkout quick access 2×2 grid; separate from resource meters and carried potions. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[HP flask ×2] [MP flask ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[HP flask ×2] [MP flask ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HP flask ×2] [MP flask ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HP flask ×2] [MP flask ×1]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH8.root | quick access group width | config.layout.actionHeightRem | owning component slot | beneath Armoury/Menu | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+// Current source renders HP and MP charge controls, not duplicate health meters.
+ProjectFlaskReadiness(snapshot, config.layers.chargeFlasks)
+OnActivate: EmitRegisteredFlaskIntent(); DomainRevalidatesCharges()
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGH9: HUD mode grip
+
+**Parent: WCB2.** Use cases: Current-checkout expanded/compact HUD model. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[⌃ Compact HUD / ⌄ Expand HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[⌃ Compact HUD / ⌄ Expand HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[⌃ Compact HUD / ⌄ Expand HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[⌃ Compact HUD / ⌄ Expand HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+// Compatibility reference to current checkout HudModeModel.
+ProjectNextMode(config.hudMode)
+OnActivate: SetPresentationMode(nextMode); RecomposeActiveLayers()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2853,7 +4190,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+Shared HUD
+Map viewport: connected node graph
+Selected node: known details
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2863,7 +4203,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+Shared HUD
+Map viewport: connected node graph
+Selected node: known details
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2876,7 +4219,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Shared HUD
+Map viewport: connected node graph
+Selected node: known details
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2890,7 +4236,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Shared HUD
+Map viewport: connected node graph
+Selected node: known details
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2901,7 +4250,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose shared HUD, camera viewport, selected-node details and inline footer. Use configured map bands; selection projects details and never enters a node immediately.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2913,7 +4271,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Map viewport]
+         [?]
+        /   \
+   [Combat] [Town]
+        \   /
+       [Visited]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2923,7 +4285,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Map viewport]
+         [?]
+        /   \
+   [Combat] [Town]
+        \   /
+       [Visited]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2936,7 +4302,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Map viewport]
+         [?]
+        /   \
+   [Combat] [Town]
+        \   /
+       [Visited]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2950,7 +4320,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Map viewport]
+         [?]
+        /   \
+   [Combat] [Town]
+        \   /
+       [Visited]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2961,7 +4335,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-pan/zoom/recenter preserve node identity; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Render graph paths and buttons in a shared camera coordinate space. Preserve node identity during pan/zoom. Apply knowledge filtering before rendering unknown node labels.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2973,7 +4356,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Map paths]
+      ●
+     / \
+    ●   ●
+     \ /
+      ●
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2983,7 +4370,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Map paths]
+      ●
+     / \
+    ●   ●
+     \ /
+      ●
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2996,7 +4387,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Map paths]
+      ●
+     / \
+    ●   ●
+     \ /
+      ●
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3010,7 +4405,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Map paths]
+      ●
+     / \
+    ●   ●
+     \ /
+      ●
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3021,7 +4420,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-noninteractive links from map graph; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Read graph edges and registered node positions. Render noninteractive SVG paths beneath buttons; expose graph connections in accessible node descriptions.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3033,7 +4441,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Node button]
+Visited ●   Reachable [⌂]   Blocked [?]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3043,7 +4451,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Node button]
+Visited ●   Reachable [⌂]   Blocked [?]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3056,7 +4464,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Node button]
+Visited ●   Reachable [⌂]   Blocked [?]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3070,7 +4478,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Node button]
+Visited ●   Reachable [⌂]   Blocked [?]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3081,7 +4489,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-current/reachable/visited/blocked states; selection does not enter; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Render node state from knowledge-filtered graph. Selection only updates preview state. Blocked nodes explain unavailable reason without permitting entry.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3093,7 +4510,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Node details]
+Town · Reachable
+Services   Smith · Merchant · Rest
+Risk       Known safe
+Entry      Select Enter town to travel
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3103,7 +4523,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Node details]
+Town · Reachable
+Services   Smith · Merchant · Rest
+Risk       Known safe
+Entry      Select Enter town to travel
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3116,7 +4539,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Node details]
+Town · Reachable
+Services   Smith · Merchant · Rest
+Risk       Known safe
+Entry      Select Enter town to travel
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3130,7 +4556,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Node details]
+Town · Reachable
+Services   Smith · Merchant · Rest
+Risk       Known safe
+Entry      Select Enter town to travel
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3141,7 +4570,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-project selected node known facts; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project known selected-node identity, services, risk and entry reason. Use aligned label/value rows. Do not disclose unseen or unprovided node data.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3153,7 +4591,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Region selector]
+Region [Ashen March ▾]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3163,7 +4601,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Region selector]
+Region [Ashen March ▾]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3176,7 +4614,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Region selector]
+Region [Ashen March ▾]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3190,7 +4628,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Region selector]
+Region [Ashen March ▾]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3201,7 +4639,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-switch available region; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Populate available regions from model. Selecting changes the local map view while preserving run location; no travel command is emitted.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3213,7 +4660,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Recenter button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3223,7 +4670,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Recenter button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3236,7 +4683,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Recenter button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3250,7 +4697,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Recenter button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3261,7 +4708,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-reset camera to current node; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Emit local camera recenter intent for current node. Reset view transform without changing selected destination or run graph.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3273,7 +4729,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Enter node button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3283,7 +4739,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Enter node button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3296,7 +4752,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Enter node button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3310,7 +4766,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Enter node button]
+[Recenter]                 [Enter town]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3321,7 +4777,360 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-revalidate reachable selected node then enter; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project node-specific label and readiness. Revalidate reachability and entry command against latest domain state before transition.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGP0: Progression components
+
+**Parent: WCF0.** Use cases: Shared weapon and skill progression. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[WGP1 list] → [WGP2 progress]
+               [WGP4 next benefit]
+               [WGP3 techniques]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP0.root | available width | content fit | owning component slot | W1 active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[WGP1 list] → [WGP2 progress]
+               [WGP4 next benefit]
+               [WGP3 techniques]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP0.root | available width | content fit | owning component slot | W1 active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[WGP1 list] → [WGP2 progress]
+               [WGP4 next benefit]
+               [WGP3 techniques]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP0.root | available width | content fit | owning component slot | W1 active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[WGP1 list] → [WGP2 progress]
+               [WGP4 next benefit]
+               [WGP3 techniques]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP0.root | available width | content fit | owning component slot | W1 active body | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT projection, config.progression
+// Children consume the same selected proficiency ID.
+ComposeRegisteredChildren(projection, config.progression.layout)
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGP1: Proficiency list row
+
+**Parent: WCF1.** Use cases: Weapon and skill navigation; links WCI1, WGP2. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Name                         Rank]
+[Progress────────────────────────]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Name                         Rank]
+[Progress────────────────────────]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Name                         Rank]
+[Progress────────────────────────]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Name                         Rank]
+[Progress────────────────────────]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT proficiency summary, selected ID, config.progression
+// Preserve stable selection across categories and host sizes.
+RenderNameAndRank(WCI1, summary); Compose(WGP2, summary)
+OnActivate: SelectProficiency(summary.id)
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGP2: Proficiency progress
+
+**Parent: WCM2.** Use cases: List rows, details and award preview; shared meter model. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+Practice 42 / 100
+[████████░░░░░░░░░░░░]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+Practice 42 / 100
+[████████░░░░░░░░░░░░]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Practice 42 / 100
+[████████░░░░░░░░░░░░]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Practice 42 / 100
+[████████░░░░░░░░░░░░]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT accumulated practice, threshold, config.progression
+// Domain projection supplies values; renderer does not award progression.
+fraction = SafeProgressFraction(accumulatedPractice, threshold)
+RenderSharedMeter(WCM2, fraction, config.progression.colors.progress)
+ProvideAccessibleValueText(accumulatedPractice, threshold)
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGP3: Known techniques
+
+**Parent: WCF4.** Use cases: Knowledge-filtered proficiency details. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+Known techniques
+Measured cut       Available
+Guard break        Undiscovered
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP3.root | available detail width | content fit | owning component slot | aligned label/value columns | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+Known techniques
+Measured cut       Available
+Guard break        Undiscovered
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP3.root | available detail width | content fit | owning component slot | aligned label/value columns | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Known techniques
+Measured cut       Available
+Guard break        Undiscovered
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP3.root | available detail width | content fit | owning component slot | aligned label/value columns | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Known techniques
+Measured cut       Available
+Guard break        Undiscovered
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP3.root | available detail width | content fit | owning component slot | aligned label/value columns | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT technique unlock projection, knowledge, config.progression
+// Unknown mechanics must not leak through tooltips or source-backed view data.
+rows = ApplyKnowledgeFilter(techniques, knowledge)
+If config.progression.showLockedTechniques: AppendGenericUnknownRows()
+RenderFactRows(WCF4, rows)
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGP4: Next proficiency benefit
+
+**Parent: WCF4.** Use cases: Weapon and skill progression details. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+Next benefit
+{Known benefit or undiscovered}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP4.root | available detail width | content fit | owning component slot | start aligned in detail stack | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+Next benefit
+{Known benefit or undiscovered}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP4.root | available detail width | content fit | owning component slot | start aligned in detail stack | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Next benefit
+{Known benefit or undiscovered}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP4.root | available detail width | content fit | owning component slot | start aligned in detail stack | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Next benefit
+{Known benefit or undiscovered}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGP4.root | available detail width | content fit | owning component slot | start aligned in detail stack | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+INPUT next threshold projection, knowledge, config.progression
+// Threshold effects are data references; avoid invented growth formulas.
+benefit = ProjectKnownBenefitOrUnknown(nextThreshold, knowledge)
+RenderFactRows(WCF4, benefit)
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3333,7 +5142,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+Player portrait      NPC portrait
+Speaker: short current caption
+[Available authored choices]
+[Back]       [Skip speech]       [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3343,7 +5155,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+Player portrait      NPC portrait
+Speaker: short current caption
+[Available authored choices]
+[Back]       [Skip speech]       [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3356,7 +5171,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Player portrait      NPC portrait
+Speaker: short current caption
+[Available authored choices]
+[Back]       [Skip speech]       [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3370,7 +5188,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Player portrait      NPC portrait
+Speaker: short current caption
+[Available authored choices]
+[Back]       [Skip speech]       [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3381,7 +5202,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose scene portraits, current authored beat, progression controller and inline navigation. Keep quest effects behind explicit domain choice commit.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3393,7 +5223,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Dialogue scene]
+┌─────── authored scene ─────────┐
+│ Player →             ← Keeper │
+│ portrait              portrait│
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3403,7 +5236,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Dialogue scene]
+┌─────── authored scene ─────────┐
+│ Player →             ← Keeper │
+│ portrait              portrait│
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3416,7 +5252,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Dialogue scene]
+┌─────── authored scene ─────────┐
+│ Player →             ← Keeper │
+│ portrait              portrait│
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3430,7 +5269,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Dialogue scene]
+┌─────── authored scene ─────────┐
+│ Player →             ← Keeper │
+│ portrait              portrait│
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3441,7 +5283,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-authored scene art; never duplicate HUD facts; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve authored scene and speaker portraits. Preserve left/right roles and sprite proportions; apply speaking emphasis only to the current speaker.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3453,7 +5304,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Player portrait]
+Player →           NPC
+portrait           portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3463,7 +5315,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Player portrait]
+Player →           NPC
+portrait           portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3476,7 +5329,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Player portrait]
+Player →           NPC
+portrait           portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3490,7 +5344,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Player portrait]
+Player →           NPC
+portrait           portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3501,7 +5356,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-preserve art ratio; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Use the shared artwork component and player-facing context. Anchor left and baseline bottom; no portrait interaction duplicates dialogue choices.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3513,7 +5377,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[NPC portrait]
+Player         ← NPC speaking
+portrait         portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3523,7 +5388,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[NPC portrait]
+Player         ← NPC speaking
+portrait         portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3536,7 +5402,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[NPC portrait]
+Player         ← NPC speaking
+portrait         portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3550,7 +5417,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[NPC portrait]
+Player         ← NPC speaking
+portrait         portrait
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3561,7 +5429,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-preserve art ratio, speaking emphasis; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Use the shared artwork component with NPC asset and speaking state. Anchor right; mirror artwork only when authored facing requires it.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3573,7 +5450,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Caption/choice region]
+The Keeper
+The forge is still warm.
+[Ask about the forge] [Leave]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3583,7 +5462,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Caption/choice region]
+The Keeper
+The forge is still warm.
+[Ask about the forge] [Leave]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3596,7 +5477,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Caption/choice region]
+The Keeper
+The forge is still warm.
+[Ask about the forge] [Leave]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3610,7 +5493,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Caption/choice region]
+The Keeper
+The forge is still warm.
+[Ask about the forge] [Leave]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3621,7 +5506,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-short authored beats, knowledge-filtered choices; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project one short authored beat and only known eligible choices. Choice activation records selection; explicit Continue commits through domain. Keep text size readable and choices inline when they fit.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3633,7 +5527,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Speech progression]
+Idle → Playing → Ended → Next eligible beat
+                 ↘ Await choice
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3643,7 +5538,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Speech progression]
+Idle → Playing → Ended → Next eligible beat
+                 ↘ Await choice
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3656,7 +5552,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Speech progression]
+Idle → Playing → Ended → Next eligible beat
+                 ↘ Await choice
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3670,7 +5567,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Speech progression]
+Idle → Playing → Ended → Next eligible beat
+                 ↘ Await choice
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3681,7 +5579,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-audio-ended advances linear beats only; stale generation guard; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Subscribe to authored audio ended event with current generation token. Advance only linear eligible beats when config.dialogue.autoAdvance is enabled. Cancel stale events on skip/back/dispose; never invent audio timing.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3693,7 +5600,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Back button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3703,7 +5610,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Back button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3716,7 +5623,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Back button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3730,7 +5637,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Back button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3741,7 +5648,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-previous permitted beat without replaying effects; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Move to previous permitted caption without replaying domain effects. Disable when history does not allow navigation. Cancel current media generation.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3753,7 +5669,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Skip speech button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3763,7 +5679,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Skip speech button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3776,7 +5692,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Skip speech button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3790,7 +5706,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Skip speech button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3801,7 +5717,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-stop current clip and reveal caption; no quest skip; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Stop current media and reveal caption. Do not skip quest content or choose a response. Ignore stale audio ended events.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3813,7 +5738,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Continue button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3823,7 +5748,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Continue button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3836,7 +5761,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Continue button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3850,7 +5775,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Continue button]
+[Back]         [Skip speech]     [Continue]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3861,7 +5786,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-advance once or commit explicitly chosen response; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Advance once to next permitted beat or commit explicitly selected choice. Honor readiness; cancel prior media generation and reject duplicate activation.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3873,7 +5807,12 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-{Shared family components}
+Shared HUD
+┌ Skyline ─────────────────┐
+│ world scene              │
+├ Floor ───────────────────┤
+│ baseline / actors        │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3883,7 +5822,12 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-{Shared family components}
+Shared HUD
+┌ Skyline ─────────────────┐
+│ world scene              │
+├ Floor ───────────────────┤
+│ baseline / actors        │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3896,7 +5840,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Shared HUD
+┌ Skyline ─────────────────┐
+│ world scene              │
+├ Floor ───────────────────┤
+│ baseline / actors        │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3910,7 +5859,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-{Shared family components}
+Shared HUD
+┌ Skyline ─────────────────┐
+│ world scene              │
+├ Floor ───────────────────┤
+│ baseline / actors        │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3921,7 +5875,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose HUD once and background layers below. Apply visibility flags independently; shared domain facts remain owned by the HUD model.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3933,7 +5896,12 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Background composition]
+┌ Skyline · behind ────────┐
+│ distant sky and scenery  │
+│                         │
+├ Floor · bottom ──────────┤
+│ ground under actors      │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3943,7 +5911,12 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Background composition]
+┌ Skyline · behind ────────┐
+│ distant sky and scenery  │
+│                         │
+├ Floor · bottom ──────────┤
+│ ground under actors      │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3956,7 +5929,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Background composition]
+┌ Skyline · behind ────────┐
+│ distant sky and scenery  │
+│                         │
+├ Floor · bottom ──────────┤
+│ ground under actors      │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3970,7 +5948,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Background composition]
+┌ Skyline · behind ────────┐
+│ distant sky and scenery  │
+│                         │
+├ Floor · bottom ──────────┤
+│ ground under actors      │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3981,7 +5964,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-compose independently configured skyline and floor; neither captures input; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Resolve skyline and floor asset providers. Paint only enabled layers; floor height follows config.scene.floorHeightPercent and anchors bottom. Preserve shared actor baseline.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -3993,7 +5985,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Shared HUD]
+Class          Cinders          Act / Floor
+Resource meters               Armoury Menu
+Relic rail                      Potion rail
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4003,7 +5997,9 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Shared HUD]
+Class          Cinders          Act / Floor
+Resource meters               Armoury Menu
+Relic rail                      Potion rail
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4016,7 +6012,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Shared HUD]
+Class          Cinders          Act / Floor
+Resource meters               Armoury Menu
+Relic rail                      Potion rail
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4030,7 +6028,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Shared HUD]
+Class          Cinders          Act / Floor
+Resource meters               Armoury Menu
+Relic rail                      Potion rail
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4041,7 +6041,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-identity/resources/menu; one shared model; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Render the shared RunHud view model through WGH4. Toggle configured children before layout; never maintain separate combat and map HUD facts.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4053,7 +6062,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[HUD identity]
+Class            Cinders            Act / Floor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4063,7 +6072,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[HUD identity]
+Class            Cinders            Act / Floor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4076,7 +6085,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HUD identity]
+Class            Cinders            Act / Floor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4090,7 +6099,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HUD identity]
+Class            Cinders            Act / Floor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4101,7 +6110,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-player name/portrait from snapshot; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Project class identity and run metadata from RunHeaderModel. Reuse shared header renderer rather than adding portrait, XP or duplicate character facts.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4113,7 +6131,8 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[HUD resource strip]
+HP 32/40  [████████░░]
+Mana 6/10 [██████░░░░]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4123,7 +6142,8 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[HUD resource strip]
+HP 32/40  [████████░░]
+Mana 6/10 [██████░░░░]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4136,7 +6156,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HUD resource strip]
+HP 32/40  [████████░░]
+Mana 6/10 [██████░░░░]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4150,7 +6171,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HUD resource strip]
+HP 32/40  [████████░░]
+Mana 6/10 [██████░░░░]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4161,7 +6183,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-active resources only; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Read active resource plan and semantic order from resource providers. Reuse resourceBars main surface and shared meter primitive.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4173,7 +6204,7 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[HUD menu button]
+HUD right        [Armoury] [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4183,7 +6214,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[HUD menu button]
+HUD right        [Armoury] [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4196,7 +6227,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HUD menu button]
+HUD right        [Armoury] [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4210,7 +6241,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[HUD menu button]
+HUD right        [Armoury] [Menu]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4221,7 +6252,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-open menu, preserve simulation policy; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Compose shared menu action with accessible label and command intent. Opening a menu follows configured simulation/input policy.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4233,7 +6273,11 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Skyline layer]
+┌──────────────────────────┐
+│ sky · distant silhouettes│
+│       /    /          │
+│      /  __/           │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4243,7 +6287,11 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Skyline layer]
+┌──────────────────────────┐
+│ sky · distant silhouettes│
+│       /    /          │
+│      /  __/           │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4256,7 +6304,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Skyline layer]
+┌──────────────────────────┐
+│ sky · distant silhouettes│
+│       /    /          │
+│      /  __/           │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4270,7 +6322,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Skyline layer]
+┌──────────────────────────┐
+│ sky · distant silhouettes│
+│       /    /          │
+│      /  __/           │
+└──────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4281,7 +6337,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-distant sky and scenery; configurable asset/color; no input; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Paint configured distant-art asset across scene bounds with intrinsic crop policy. Layer behind floor and actors. Omit when config.scene.skyline is disabled.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4293,7 +6358,10 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-[Floor layer]
+                 scene top
+┌──────────────────────────┐
+│ floor at bottom          │
+└──────── actor baseline ──┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4303,7 +6371,10 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Floor layer]
+                 scene top
+┌──────────────────────────┐
+│ floor at bottom          │
+└──────── actor baseline ──┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4316,7 +6387,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Floor layer]
+                 scene top
+┌──────────────────────────┐
+│ floor at bottom          │
+└──────── actor baseline ──┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4330,7 +6404,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Floor layer]
+                 scene top
+┌──────────────────────────┐
+│ floor at bottom          │
+└──────── actor baseline ──┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4341,7 +6418,16 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-ground plane under actors; preserve stage baseline; read configuration from gameplay-config.json. Emit semantic intents only.
+INPUT: snapshot, knowledge, ownerState, context, config
+// Load shared tokens; numeric defaults live in componentCompletionDefaults.
+model = ProjectRegisteredModel(snapshot, knowledge, context)
+// Paint floor at scene bottom using config.scene.floorHeightPercent. Omit when config.scene.floor is disabled without shifting the actor placement model.
+FilterInactiveProviders(model)
+children = ResolveDeclaredChildReferences(model.children)
+RenderRegisteredComponent(model, children, config)
+// Local preview actions never mutate the game. Production host revalidates commands.
+On activation: DispatchSemanticIntent(model.intent, context)
+On disposal: ReleaseTimersObserversAndSubscriptions()
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```

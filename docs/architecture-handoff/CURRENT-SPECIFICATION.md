@@ -56,10 +56,20 @@ Every gallery entry exposes Actual reference code: shared renderer functions, ex
 
 Portrait reference profiles: iPhone SE3 at375×667 CSS px and Galaxy S24 at360×780 CSS px. Every entry has wide, compact and both portrait views. portrait-devices.json owns profile defaults. These are layout references, not native-resolution screenshots or a claim of on-device validation. Shared portrait structural layout resolves against each profile. Source reference: https://www.floow.design/free-tools/device-size-reference .
 
-Preview tabs: Wireframe shows structural schematic, Example shows documentation renderer, Live game embeds a configurable actual game-build URL. Live game starts only on Run game, keeps real game navigation, and is never claimed to implement a proposed wireframe. Browser embedding may be restricted; Open separately exposes the same build. No gameplay script is rewritten or auto-executed to simulate passing validation.
+Preview tabs: Wireframe shows the structural schematic; Example renders illustrative data; Component composition executes the shared reference component factories. It does not embed or modify the production game.
 
 W4a composition: WGS2 shared HUD + WGC1 battlefield + WGC5 hand + WGC6 packed action footer. WGS2 and WGC6 standalone examples call exactly the same reference renderers as the W4a example. Footer children reference WGC7–WGC11; scene component links navigate to each reusable definition.
 
-Third preview-tab correction: Component composition replaces Live game. It executes the reference composition from shared component parts and exposes links to their definitions. It does not embed the production game. W4a composition uses the shared HUD/footer renderers and scene model.
+
 
 HUD composition WGH0: WGH1 Vitality, WGH2 Armament, WGH3 Menu, WGH4 Total HUD. WGS2 uses the same total renderer; scene preview now composes WC4a combatants and WC1 playing-card renderers rather than chess-piece/card-box placeholders. Links expose referenced definitions. Reference composition scales components uniformly for diagram fit; production layout validation remains required.
+
+## Completed atlas and configurable progression
+
+The atlas contains 151 entries, each with Wide, Compact, iPhone SE and Galaxy S24 layouts. Every entry includes a model, defaults, commented pseudocode, dimensions, source/inheritance descriptions and actual reference code/styles. Component composition shares factories with the individual component examples. Current source anchors and baseline differences are recorded in CURRENT-SOURCE-AUDIT.md; they do not assert that proposed APIs already exist in the game.
+
+WGH0–WGH9 cover the HUD contract, vitality, armoury, menu, total HUD, XP, inventory rail, run header, charge controls and mode grip. Their playground exposes context, placement preset and layer toggles. WGH5 is a proposed blue full-width XP strip directly below the HUD, combat-only by default; sample combat awards animate its progress. Visibility, color, height, duration and sample award are configurable. Scene HUDs default the inventory rail, charge controls and stamina off; standalone HUD previews expose them. Nominal combat bands remain 10/40/35/15 percent, with a configurable 5.5rem HUD minimum for readability that can override the nominal share on small hosts.
+
+W1x, W1x1 and W1x2 reuse W1 for progression overview, weapons and skills. WGP0–WGP4 supply shared proficiency components. Practice, thresholds, unlocks and event history come from data; rank/progress are derived. The playground can preview awards and visibility without mutating game state. PROGRESSION-SPECIFICATION.md defines the proposed normalized schema and domain boundary. Exact mechanics require a separate SPEC.md change before implementation.
+
+Build the complete package with build-reference.mjs. reference-defaults.json and reference-coverage.json are generated alongside the atlas. Browser validation exercises every entry and all preview tabs; see VALIDATION.md for coverage and limits.

@@ -15,7 +15,7 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -32,26 +32,26 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC0.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC0.header` | 16vw | 4.096vh | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC0.header.title` | 9.36vw | 4.096vh | WC0.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC0.header.state` | 4.32vw | 4.096vh | WC0.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC0.art` | 16vw | 16.384vh | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC0.art.tags` | 14.4vw | 3.2768vh | WC0.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC0.body` | 16vw | 16.384vh | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC0.footer` | 16vw | 4.096vh | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC0.footer.metadata` | 14.4vw | 3.28vh | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC0.body.detail1` | 14.4vw | 6.96vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Registered content slots} |
-| `WC0.body.detail2` | 14.4vw | 6.96vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Availability / reason} |
-| `WC0.body.blocker` | 14.4vw | 2.46vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC0.selection.outline` | 16vw | 40.96vh | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC0.selection.info` | 4vw | 4vh | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC0.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC0.header | 100% card width | config.cards.geometry.bands.header% of card height | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC0.header.title | remaining header width | 100% header height | WC0.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC0.header.state | content-fit | 100% header height | WC0.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC0.art | 100% card width | config.cards.geometry.bands.art% of card height | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC0.art.tags | available art width minus shared inset | content-fit within art band | WC0.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC0.body | 100% card width | config.cards.geometry.bands.body% of card height | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC0.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC0.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC0.body.detail1 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Registered content slots} |
+| WC0.body.detail2 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Availability / reason} |
+| WC0.body.blocker | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC0.selection.outline | 100% card width | 100% card height | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC0.selection.info | config.components.target.minRem | config.components.target.minRem | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -68,21 +68,21 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC0.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC0.header` | 24vw | 4.800000000000001vh | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC0.header.title` | 14.56vw | 4.800000000000001vh | WC0.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC0.header.state` | 6.72vw | 4.800000000000001vh | WC0.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC0.art` | 24vw | 19.200000000000003vh | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC0.art.tags` | 22.4vw | 3.84vh | WC0.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC0.body` | 24vw | 19.200000000000003vh | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC0.footer` | 24vw | 4.800000000000001vh | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC0.footer.metadata` | 22.4vw | 3.84vh | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC0.body.detail1` | 22.4vw | 8.16vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Registered content slots} |
-| `WC0.body.detail2` | 22.4vw | 8.16vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Availability / reason} |
-| `WC0.body.blocker` | 22.4vw | 2.88vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC0.selection.outline` | 24vw | 48vh | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC0.selection.info` | 4vw | 4vh | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC0.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC0.header | 100% card width | config.cards.geometry.bands.header% of card height | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC0.header.title | remaining header width | 100% header height | WC0.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC0.header.state | content-fit | 100% header height | WC0.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC0.art | 100% card width | config.cards.geometry.bands.art% of card height | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC0.art.tags | available art width minus shared inset | content-fit within art band | WC0.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC0.body | 100% card width | config.cards.geometry.bands.body% of card height | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC0.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC0.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC0.body.detail1 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Registered content slots} |
+| WC0.body.detail2 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Availability / reason} |
+| WC0.body.blocker | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC0.selection.outline | 100% card width | 100% card height | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC0.selection.info | config.components.target.minRem | config.components.target.minRem | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -90,7 +90,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -108,21 +108,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC0.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC0.header` | 48vw | 3.84vh | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC0.header.title` | 30.16vw | 3.84vh | WC0.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC0.header.state` | 13.92vw | 3.84vh | WC0.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC0.art` | 48vw | 15.36vh | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC0.art.tags` | 46.4vw | 3.072vh | WC0.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC0.body` | 48vw | 15.36vh | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC0.footer` | 48vw | 3.84vh | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC0.footer.metadata` | 46.4vw | 3.07vh | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC0.body.detail1` | 46.4vw | 6.53vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Registered content slots} |
-| `WC0.body.detail2` | 46.4vw | 6.53vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Availability / reason} |
-| `WC0.body.blocker` | 46.4vw | 2.3vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC0.selection.outline` | 48vw | 38.4vh | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC0.selection.info` | 4vw | 4vh | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC0.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC0.header | 100% card width | config.cards.geometry.bands.header% of card height | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC0.header.title | remaining header width | 100% header height | WC0.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC0.header.state | content-fit | 100% header height | WC0.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC0.art | 100% card width | config.cards.geometry.bands.art% of card height | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC0.art.tags | available art width minus shared inset | content-fit within art band | WC0.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC0.body | 100% card width | config.cards.geometry.bands.body% of card height | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC0.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC0.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC0.body.detail1 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Registered content slots} |
+| WC0.body.detail2 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Availability / reason} |
+| WC0.body.blocker | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC0.selection.outline | 100% card width | 100% card height | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC0.selection.info | config.components.target.minRem | config.components.target.minRem | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -131,7 +131,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -149,21 +149,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC0.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC0.header` | 48vw | 3.84vh | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC0.header.title` | 30.16vw | 3.84vh | WC0.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC0.header.state` | 13.92vw | 3.84vh | WC0.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC0.art` | 48vw | 15.36vh | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC0.art.tags` | 46.4vw | 3.072vh | WC0.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC0.body` | 48vw | 15.36vh | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC0.footer` | 48vw | 3.84vh | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC0.footer.metadata` | 46.4vw | 3.07vh | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC0.body.detail1` | 46.4vw | 6.53vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Registered content slots} |
-| `WC0.body.detail2` | 46.4vw | 6.53vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Availability / reason} |
-| `WC0.body.blocker` | 46.4vw | 2.3vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC0.selection.outline` | 48vw | 38.4vh | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC0.selection.info` | 4vw | 4vh | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC0.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC0.header | 100% card width | config.cards.geometry.bands.header% of card height | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC0.header.title | remaining header width | 100% header height | WC0.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC0.header.state | content-fit | 100% header height | WC0.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC0.art | 100% card width | config.cards.geometry.bands.art% of card height | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC0.art.tags | available art width minus shared inset | content-fit within art band | WC0.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC0.body | 100% card width | config.cards.geometry.bands.body% of card height | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC0.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC0.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC0.body.detail1 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Registered content slots} |
+| WC0.body.detail2 | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | {Availability / reason} |
+| WC0.body.blocker | 100% usable body width | content-fit within body band | WC0.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC0.selection.outline | 100% card width | 100% card height | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC0.selection.info | config.components.target.minRem | config.components.target.minRem | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -236,7 +236,7 @@ Never branch on entity names or inject executable markup from tags.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -253,26 +253,26 @@ Never branch on entity names or inject executable markup from tags.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1.header` | 16vw | 4.096vh | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1.header.title` | 9.36vw | 4.096vh | WC1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1.header.state` | 4.32vw | 4.096vh | WC1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1.art` | 16vw | 16.384vh | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1.art.tags` | 14.4vw | 3.2768vh | WC1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1.body` | 16vw | 16.384vh | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1.footer` | 16vw | 4.096vh | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1.footer.metadata` | 14.4vw | 3.28vh | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1.body.detail1` | 14.4vw | 6.96vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Cost / targeting |
-| `WC1.body.detail2` | 14.4vw | 6.96vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effects / rules |
-| `WC1.body.blocker` | 14.4vw | 2.46vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1.selection.outline` | 16vw | 40.96vh | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1.selection.info` | 4vw | 4vh | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1.header.title | remaining header width | 100% header height | WC1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1.header.state | content-fit | 100% header height | WC1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1.art.tags | available art width minus shared inset | content-fit within art band | WC1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
+| WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1.selection.info | config.components.target.minRem | config.components.target.minRem | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -289,21 +289,21 @@ Never branch on entity names or inject executable markup from tags.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1.header` | 24vw | 4.800000000000001vh | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1.header.title` | 14.56vw | 4.800000000000001vh | WC1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1.header.state` | 6.72vw | 4.800000000000001vh | WC1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1.art` | 24vw | 19.200000000000003vh | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1.art.tags` | 22.4vw | 3.84vh | WC1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1.body` | 24vw | 19.200000000000003vh | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1.footer` | 24vw | 4.800000000000001vh | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1.footer.metadata` | 22.4vw | 3.84vh | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1.body.detail1` | 22.4vw | 8.16vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Cost / targeting |
-| `WC1.body.detail2` | 22.4vw | 8.16vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effects / rules |
-| `WC1.body.blocker` | 22.4vw | 2.88vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1.selection.outline` | 24vw | 48vh | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1.selection.info` | 4vw | 4vh | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1.header.title | remaining header width | 100% header height | WC1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1.header.state | content-fit | 100% header height | WC1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1.art.tags | available art width minus shared inset | content-fit within art band | WC1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
+| WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1.selection.info | config.components.target.minRem | config.components.target.minRem | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -311,7 +311,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -328,21 +328,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1.header` | 48vw | 3.84vh | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1.header.title` | 30.16vw | 3.84vh | WC1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1.header.state` | 13.92vw | 3.84vh | WC1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1.art` | 48vw | 15.36vh | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1.art.tags` | 46.4vw | 3.072vh | WC1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1.body` | 48vw | 15.36vh | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1.footer` | 48vw | 3.84vh | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1.footer.metadata` | 46.4vw | 3.07vh | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1.body.detail1` | 46.4vw | 6.53vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Cost / targeting |
-| `WC1.body.detail2` | 46.4vw | 6.53vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effects / rules |
-| `WC1.body.blocker` | 46.4vw | 2.3vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1.selection.outline` | 48vw | 38.4vh | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1.selection.info` | 4vw | 4vh | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1.header.title | remaining header width | 100% header height | WC1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1.header.state | content-fit | 100% header height | WC1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1.art.tags | available art width minus shared inset | content-fit within art band | WC1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
+| WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1.selection.info | config.components.target.minRem | config.components.target.minRem | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -351,7 +351,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -368,21 +368,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1.header` | 48vw | 3.84vh | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1.header.title` | 30.16vw | 3.84vh | WC1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1.header.state` | 13.92vw | 3.84vh | WC1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1.art` | 48vw | 15.36vh | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1.art.tags` | 46.4vw | 3.072vh | WC1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1.body` | 48vw | 15.36vh | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1.footer` | 48vw | 3.84vh | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1.footer.metadata` | 46.4vw | 3.07vh | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1.body.detail1` | 46.4vw | 6.53vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Cost / targeting |
-| `WC1.body.detail2` | 46.4vw | 6.53vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effects / rules |
-| `WC1.body.blocker` | 46.4vw | 2.3vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1.selection.outline` | 48vw | 38.4vh | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1.selection.info` | 4vw | 4vh | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1.header.title | remaining header width | 100% header height | WC1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1.header.state | content-fit | 100% header height | WC1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1.art.tags | available art width minus shared inset | content-fit within art band | WC1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
+| WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1.selection.info | config.components.target.minRem | config.components.target.minRem | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -422,7 +422,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -439,26 +439,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1a.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1a.header` | 16vw | 4.096vh | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1a.header.title` | 9.36vw | 4.096vh | WC1a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1a.header.state` | 4.32vw | 4.096vh | WC1a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1a.art` | 16vw | 16.384vh | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1a.art.tags` | 14.4vw | 3.2768vh | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1a.body` | 16vw | 16.384vh | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1a.footer` | 16vw | 4.096vh | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1a.footer.metadata` | 14.4vw | 3.28vh | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1a.body.detail1` | 14.4vw | 6.96vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / affected stat |
-| `WC1a.body.detail2` | 14.4vw | 6.96vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target and effect preview |
-| `WC1a.body.blocker` | 14.4vw | 2.46vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1a.selection.outline` | 16vw | 40.96vh | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1a.selection.info` | 4vw | 4vh | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1a.header.title | remaining header width | 100% header height | WC1a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1a.header.state | content-fit | 100% header height | WC1a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1a.art.tags | available art width minus shared inset | content-fit within art band | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
+| WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
+| WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1a.selection.outline | 100% card width | 100% card height | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1a.selection.info | config.components.target.minRem | config.components.target.minRem | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -475,21 +475,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1a.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1a.header` | 24vw | 4.800000000000001vh | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1a.header.title` | 14.56vw | 4.800000000000001vh | WC1a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1a.header.state` | 6.72vw | 4.800000000000001vh | WC1a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1a.art` | 24vw | 19.200000000000003vh | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1a.art.tags` | 22.4vw | 3.84vh | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1a.body` | 24vw | 19.200000000000003vh | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1a.footer` | 24vw | 4.800000000000001vh | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1a.footer.metadata` | 22.4vw | 3.84vh | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1a.body.detail1` | 22.4vw | 8.16vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / affected stat |
-| `WC1a.body.detail2` | 22.4vw | 8.16vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target and effect preview |
-| `WC1a.body.blocker` | 22.4vw | 2.88vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1a.selection.outline` | 24vw | 48vh | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1a.selection.info` | 4vw | 4vh | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1a.header.title | remaining header width | 100% header height | WC1a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1a.header.state | content-fit | 100% header height | WC1a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1a.art.tags | available art width minus shared inset | content-fit within art band | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
+| WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
+| WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1a.selection.outline | 100% card width | 100% card height | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1a.selection.info | config.components.target.minRem | config.components.target.minRem | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -497,7 +497,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -515,21 +515,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1a.header` | 48vw | 3.84vh | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1a.header.title` | 30.16vw | 3.84vh | WC1a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1a.header.state` | 13.92vw | 3.84vh | WC1a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1a.art` | 48vw | 15.36vh | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1a.art.tags` | 46.4vw | 3.072vh | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1a.body` | 48vw | 15.36vh | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1a.footer` | 48vw | 3.84vh | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1a.footer.metadata` | 46.4vw | 3.07vh | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1a.body.detail1` | 46.4vw | 6.53vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / affected stat |
-| `WC1a.body.detail2` | 46.4vw | 6.53vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target and effect preview |
-| `WC1a.body.blocker` | 46.4vw | 2.3vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1a.selection.outline` | 48vw | 38.4vh | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1a.selection.info` | 4vw | 4vh | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1a.header.title | remaining header width | 100% header height | WC1a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1a.header.state | content-fit | 100% header height | WC1a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1a.art.tags | available art width minus shared inset | content-fit within art band | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
+| WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
+| WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1a.selection.outline | 100% card width | 100% card height | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1a.selection.info | config.components.target.minRem | config.components.target.minRem | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -538,7 +538,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -556,21 +556,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1a.header` | 48vw | 3.84vh | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1a.header.title` | 30.16vw | 3.84vh | WC1a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1a.header.state` | 13.92vw | 3.84vh | WC1a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1a.art` | 48vw | 15.36vh | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1a.art.tags` | 46.4vw | 3.072vh | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1a.body` | 48vw | 15.36vh | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1a.footer` | 48vw | 3.84vh | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1a.footer.metadata` | 46.4vw | 3.07vh | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1a.body.detail1` | 46.4vw | 6.53vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / affected stat |
-| `WC1a.body.detail2` | 46.4vw | 6.53vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target and effect preview |
-| `WC1a.body.blocker` | 46.4vw | 2.3vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1a.selection.outline` | 48vw | 38.4vh | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1a.selection.info` | 4vw | 4vh | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1a.header.title | remaining header width | 100% header height | WC1a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1a.header.state | content-fit | 100% header height | WC1a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1a.art.tags | available art width minus shared inset | content-fit within art band | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
+| WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
+| WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1a.selection.outline | 100% card width | 100% card height | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1a.selection.info | config.components.target.minRem | config.components.target.minRem | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -610,7 +610,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -627,26 +627,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1b.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1b.header` | 16vw | 4.096vh | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1b.header.title` | 9.36vw | 4.096vh | WC1b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1b.header.state` | 4.32vw | 4.096vh | WC1b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1b.art` | 16vw | 16.384vh | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1b.art.tags` | 14.4vw | 3.2768vh | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1b.body` | 16vw | 16.384vh | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1b.footer` | 16vw | 4.096vh | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1b.footer.metadata` | 14.4vw | 3.28vh | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1b.body.detail1` | 14.4vw | 6.96vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / utility effects |
-| `WC1b.body.detail2` | 14.4vw | 6.96vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target / requirements |
-| `WC1b.body.blocker` | 14.4vw | 2.46vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1b.selection.outline` | 16vw | 40.96vh | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1b.selection.info` | 4vw | 4vh | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1b.header.title | remaining header width | 100% header height | WC1b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1b.header.state | content-fit | 100% header height | WC1b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1b.art.tags | available art width minus shared inset | content-fit within art band | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
+| WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
+| WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1b.selection.outline | 100% card width | 100% card height | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1b.selection.info | config.components.target.minRem | config.components.target.minRem | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -663,21 +663,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1b.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1b.header` | 24vw | 4.800000000000001vh | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1b.header.title` | 14.56vw | 4.800000000000001vh | WC1b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1b.header.state` | 6.72vw | 4.800000000000001vh | WC1b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1b.art` | 24vw | 19.200000000000003vh | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1b.art.tags` | 22.4vw | 3.84vh | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1b.body` | 24vw | 19.200000000000003vh | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1b.footer` | 24vw | 4.800000000000001vh | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1b.footer.metadata` | 22.4vw | 3.84vh | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1b.body.detail1` | 22.4vw | 8.16vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / utility effects |
-| `WC1b.body.detail2` | 22.4vw | 8.16vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target / requirements |
-| `WC1b.body.blocker` | 22.4vw | 2.88vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1b.selection.outline` | 24vw | 48vh | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1b.selection.info` | 4vw | 4vh | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1b.header.title | remaining header width | 100% header height | WC1b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1b.header.state | content-fit | 100% header height | WC1b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1b.art.tags | available art width minus shared inset | content-fit within art band | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
+| WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
+| WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1b.selection.outline | 100% card width | 100% card height | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1b.selection.info | config.components.target.minRem | config.components.target.minRem | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -685,7 +685,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -703,21 +703,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1b.header` | 48vw | 3.84vh | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1b.header.title` | 30.16vw | 3.84vh | WC1b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1b.header.state` | 13.92vw | 3.84vh | WC1b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1b.art` | 48vw | 15.36vh | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1b.art.tags` | 46.4vw | 3.072vh | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1b.body` | 48vw | 15.36vh | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1b.footer` | 48vw | 3.84vh | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1b.footer.metadata` | 46.4vw | 3.07vh | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1b.body.detail1` | 46.4vw | 6.53vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / utility effects |
-| `WC1b.body.detail2` | 46.4vw | 6.53vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target / requirements |
-| `WC1b.body.blocker` | 46.4vw | 2.3vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1b.selection.outline` | 48vw | 38.4vh | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1b.selection.info` | 4vw | 4vh | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1b.header.title | remaining header width | 100% header height | WC1b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1b.header.state | content-fit | 100% header height | WC1b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1b.art.tags | available art width minus shared inset | content-fit within art band | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
+| WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
+| WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1b.selection.outline | 100% card width | 100% card height | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1b.selection.info | config.components.target.minRem | config.components.target.minRem | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -726,7 +726,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -744,21 +744,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1b.header` | 48vw | 3.84vh | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1b.header.title` | 30.16vw | 3.84vh | WC1b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1b.header.state` | 13.92vw | 3.84vh | WC1b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1b.art` | 48vw | 15.36vh | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1b.art.tags` | 46.4vw | 3.072vh | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1b.body` | 48vw | 15.36vh | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1b.footer` | 48vw | 3.84vh | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1b.footer.metadata` | 46.4vw | 3.07vh | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1b.body.detail1` | 46.4vw | 6.53vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / utility effects |
-| `WC1b.body.detail2` | 46.4vw | 6.53vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target / requirements |
-| `WC1b.body.blocker` | 46.4vw | 2.3vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1b.selection.outline` | 48vw | 38.4vh | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1b.selection.info` | 4vw | 4vh | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1b.header.title | remaining header width | 100% header height | WC1b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1b.header.state | content-fit | 100% header height | WC1b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1b.art.tags | available art width minus shared inset | content-fit within art band | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
+| WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
+| WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1b.selection.outline | 100% card width | 100% card height | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1b.selection.info | config.components.target.minRem | config.components.target.minRem | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -798,7 +798,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -815,26 +815,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1c.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1c.header` | 16vw | 4.096vh | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1c.header.title` | 9.36vw | 4.096vh | WC1c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1c.header.state` | 4.32vw | 4.096vh | WC1c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1c.art` | 16vw | 16.384vh | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1c.art.tags` | 14.4vw | 3.2768vh | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1c.body` | 16vw | 16.384vh | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1c.footer` | 16vw | 4.096vh | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1c.footer.metadata` | 14.4vw | 3.28vh | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1c.body.detail1` | 14.4vw | 6.96vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Persistent effect |
-| `WC1c.body.detail2` | 14.4vw | 6.96vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger / duration |
-| `WC1c.body.blocker` | 14.4vw | 2.46vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1c.selection.outline` | 16vw | 40.96vh | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1c.selection.info` | 4vw | 4vh | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1c.header.title | remaining header width | 100% header height | WC1c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1c.header.state | content-fit | 100% header height | WC1c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1c.art.tags | available art width minus shared inset | content-fit within art band | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
+| WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
+| WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1c.selection.outline | 100% card width | 100% card height | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1c.selection.info | config.components.target.minRem | config.components.target.minRem | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -851,21 +851,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1c.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1c.header` | 24vw | 4.800000000000001vh | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1c.header.title` | 14.56vw | 4.800000000000001vh | WC1c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1c.header.state` | 6.72vw | 4.800000000000001vh | WC1c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1c.art` | 24vw | 19.200000000000003vh | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1c.art.tags` | 22.4vw | 3.84vh | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1c.body` | 24vw | 19.200000000000003vh | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1c.footer` | 24vw | 4.800000000000001vh | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1c.footer.metadata` | 22.4vw | 3.84vh | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1c.body.detail1` | 22.4vw | 8.16vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Persistent effect |
-| `WC1c.body.detail2` | 22.4vw | 8.16vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger / duration |
-| `WC1c.body.blocker` | 22.4vw | 2.88vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1c.selection.outline` | 24vw | 48vh | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1c.selection.info` | 4vw | 4vh | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1c.header.title | remaining header width | 100% header height | WC1c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1c.header.state | content-fit | 100% header height | WC1c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1c.art.tags | available art width minus shared inset | content-fit within art band | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
+| WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
+| WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1c.selection.outline | 100% card width | 100% card height | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1c.selection.info | config.components.target.minRem | config.components.target.minRem | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -873,7 +873,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -890,21 +890,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1c.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1c.header` | 48vw | 3.84vh | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1c.header.title` | 30.16vw | 3.84vh | WC1c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1c.header.state` | 13.92vw | 3.84vh | WC1c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1c.art` | 48vw | 15.36vh | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1c.art.tags` | 46.4vw | 3.072vh | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1c.body` | 48vw | 15.36vh | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1c.footer` | 48vw | 3.84vh | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1c.footer.metadata` | 46.4vw | 3.07vh | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1c.body.detail1` | 46.4vw | 6.53vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Persistent effect |
-| `WC1c.body.detail2` | 46.4vw | 6.53vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger / duration |
-| `WC1c.body.blocker` | 46.4vw | 2.3vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1c.selection.outline` | 48vw | 38.4vh | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1c.selection.info` | 4vw | 4vh | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1c.header.title | remaining header width | 100% header height | WC1c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1c.header.state | content-fit | 100% header height | WC1c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1c.art.tags | available art width minus shared inset | content-fit within art band | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
+| WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
+| WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1c.selection.outline | 100% card width | 100% card height | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1c.selection.info | config.components.target.minRem | config.components.target.minRem | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -913,7 +913,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -930,21 +930,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1c.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1c.header` | 48vw | 3.84vh | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1c.header.title` | 30.16vw | 3.84vh | WC1c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1c.header.state` | 13.92vw | 3.84vh | WC1c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1c.art` | 48vw | 15.36vh | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1c.art.tags` | 46.4vw | 3.072vh | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1c.body` | 48vw | 15.36vh | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1c.footer` | 48vw | 3.84vh | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1c.footer.metadata` | 46.4vw | 3.07vh | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1c.body.detail1` | 46.4vw | 6.53vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Persistent effect |
-| `WC1c.body.detail2` | 46.4vw | 6.53vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger / duration |
-| `WC1c.body.blocker` | 46.4vw | 2.3vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1c.selection.outline` | 48vw | 38.4vh | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1c.selection.info` | 4vw | 4vh | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1c.header.title | remaining header width | 100% header height | WC1c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1c.header.state | content-fit | 100% header height | WC1c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1c.art.tags | available art width minus shared inset | content-fit within art band | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
+| WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
+| WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1c.selection.outline | 100% card width | 100% card height | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1c.selection.info | config.components.target.minRem | config.components.target.minRem | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -984,7 +984,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -1001,26 +1001,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1d.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1d.header` | 16vw | 4.096vh | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1d.header.title` | 9.36vw | 4.096vh | WC1d.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1d.header.state` | 4.32vw | 4.096vh | WC1d.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1d.art` | 16vw | 16.384vh | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1d.art.tags` | 14.4vw | 3.2768vh | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1d.body` | 16vw | 16.384vh | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1d.footer` | 16vw | 4.096vh | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1d.footer.metadata` | 14.4vw | 3.28vh | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1d.body.detail1` | 14.4vw | 6.96vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Penalty / consequence |
-| `WC1d.body.detail2` | 14.4vw | 6.96vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1d.body.blocker` | 14.4vw | 2.46vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1d.selection.outline` | 16vw | 40.96vh | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1d.selection.info` | 4vw | 4vh | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1d.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1d.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1d.header.title | remaining header width | 100% header height | WC1d.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1d.header.state | content-fit | 100% header height | WC1d.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1d.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1d.art.tags | available art width minus shared inset | content-fit within art band | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
+| WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1d.selection.outline | 100% card width | 100% card height | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1d.selection.info | config.components.target.minRem | config.components.target.minRem | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -1037,21 +1037,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1d.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1d.header` | 24vw | 4.800000000000001vh | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1d.header.title` | 14.56vw | 4.800000000000001vh | WC1d.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1d.header.state` | 6.72vw | 4.800000000000001vh | WC1d.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1d.art` | 24vw | 19.200000000000003vh | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1d.art.tags` | 22.4vw | 3.84vh | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1d.body` | 24vw | 19.200000000000003vh | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1d.footer` | 24vw | 4.800000000000001vh | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1d.footer.metadata` | 22.4vw | 3.84vh | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1d.body.detail1` | 22.4vw | 8.16vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Penalty / consequence |
-| `WC1d.body.detail2` | 22.4vw | 8.16vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1d.body.blocker` | 22.4vw | 2.88vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1d.selection.outline` | 24vw | 48vh | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1d.selection.info` | 4vw | 4vh | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1d.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1d.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1d.header.title | remaining header width | 100% header height | WC1d.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1d.header.state | content-fit | 100% header height | WC1d.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1d.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1d.art.tags | available art width minus shared inset | content-fit within art band | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
+| WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1d.selection.outline | 100% card width | 100% card height | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1d.selection.info | config.components.target.minRem | config.components.target.minRem | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -1059,7 +1059,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1077,21 +1077,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1d.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1d.header` | 48vw | 3.84vh | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1d.header.title` | 30.16vw | 3.84vh | WC1d.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1d.header.state` | 13.92vw | 3.84vh | WC1d.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1d.art` | 48vw | 15.36vh | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1d.art.tags` | 46.4vw | 3.072vh | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1d.body` | 48vw | 15.36vh | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1d.footer` | 48vw | 3.84vh | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1d.footer.metadata` | 46.4vw | 3.07vh | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1d.body.detail1` | 46.4vw | 6.53vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Penalty / consequence |
-| `WC1d.body.detail2` | 46.4vw | 6.53vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1d.body.blocker` | 46.4vw | 2.3vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1d.selection.outline` | 48vw | 38.4vh | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1d.selection.info` | 4vw | 4vh | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1d.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1d.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1d.header.title | remaining header width | 100% header height | WC1d.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1d.header.state | content-fit | 100% header height | WC1d.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1d.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1d.art.tags | available art width minus shared inset | content-fit within art band | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
+| WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1d.selection.outline | 100% card width | 100% card height | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1d.selection.info | config.components.target.minRem | config.components.target.minRem | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -1100,7 +1100,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1118,21 +1118,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1d.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1d.header` | 48vw | 3.84vh | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1d.header.title` | 30.16vw | 3.84vh | WC1d.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1d.header.state` | 13.92vw | 3.84vh | WC1d.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1d.art` | 48vw | 15.36vh | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1d.art.tags` | 46.4vw | 3.072vh | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1d.body` | 48vw | 15.36vh | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1d.footer` | 48vw | 3.84vh | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1d.footer.metadata` | 46.4vw | 3.07vh | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1d.body.detail1` | 46.4vw | 6.53vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Penalty / consequence |
-| `WC1d.body.detail2` | 46.4vw | 6.53vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1d.body.blocker` | 46.4vw | 2.3vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1d.selection.outline` | 48vw | 38.4vh | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1d.selection.info` | 4vw | 4vh | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1d.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1d.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1d.header.title | remaining header width | 100% header height | WC1d.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1d.header.state | content-fit | 100% header height | WC1d.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1d.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1d.art.tags | available art width minus shared inset | content-fit within art band | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
+| WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1d.selection.outline | 100% card width | 100% card height | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1d.selection.info | config.components.target.minRem | config.components.target.minRem | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -1172,7 +1172,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -1189,26 +1189,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1e.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1e.header` | 16vw | 4.096vh | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1e.header.title` | 9.36vw | 4.096vh | WC1e.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1e.header.state` | 4.32vw | 4.096vh | WC1e.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1e.art` | 16vw | 16.384vh | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1e.art.tags` | 14.4vw | 3.2768vh | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1e.body` | 16vw | 16.384vh | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1e.footer` | 16vw | 4.096vh | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1e.footer.metadata` | 14.4vw | 3.28vh | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1e.body.detail1` | 14.4vw | 6.96vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Status effect / duration |
-| `WC1e.body.detail2` | 14.4vw | 6.96vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1e.body.blocker` | 14.4vw | 2.46vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1e.selection.outline` | 16vw | 40.96vh | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1e.selection.info` | 4vw | 4vh | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1e.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1e.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1e.header.title | remaining header width | 100% header height | WC1e.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1e.header.state | content-fit | 100% header height | WC1e.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1e.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1e.art.tags | available art width minus shared inset | content-fit within art band | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
+| WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1e.selection.outline | 100% card width | 100% card height | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1e.selection.info | config.components.target.minRem | config.components.target.minRem | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -1225,21 +1225,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1e.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1e.header` | 24vw | 4.800000000000001vh | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1e.header.title` | 14.56vw | 4.800000000000001vh | WC1e.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1e.header.state` | 6.72vw | 4.800000000000001vh | WC1e.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1e.art` | 24vw | 19.200000000000003vh | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1e.art.tags` | 22.4vw | 3.84vh | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1e.body` | 24vw | 19.200000000000003vh | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1e.footer` | 24vw | 4.800000000000001vh | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1e.footer.metadata` | 22.4vw | 3.84vh | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1e.body.detail1` | 22.4vw | 8.16vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Status effect / duration |
-| `WC1e.body.detail2` | 22.4vw | 8.16vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1e.body.blocker` | 22.4vw | 2.88vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1e.selection.outline` | 24vw | 48vh | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1e.selection.info` | 4vw | 4vh | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1e.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1e.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1e.header.title | remaining header width | 100% header height | WC1e.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1e.header.state | content-fit | 100% header height | WC1e.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1e.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1e.art.tags | available art width minus shared inset | content-fit within art band | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
+| WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1e.selection.outline | 100% card width | 100% card height | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1e.selection.info | config.components.target.minRem | config.components.target.minRem | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -1247,7 +1247,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1265,21 +1265,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1e.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1e.header` | 48vw | 3.84vh | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1e.header.title` | 30.16vw | 3.84vh | WC1e.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1e.header.state` | 13.92vw | 3.84vh | WC1e.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1e.art` | 48vw | 15.36vh | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1e.art.tags` | 46.4vw | 3.072vh | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1e.body` | 48vw | 15.36vh | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1e.footer` | 48vw | 3.84vh | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1e.footer.metadata` | 46.4vw | 3.07vh | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1e.body.detail1` | 46.4vw | 6.53vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Status effect / duration |
-| `WC1e.body.detail2` | 46.4vw | 6.53vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1e.body.blocker` | 46.4vw | 2.3vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1e.selection.outline` | 48vw | 38.4vh | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1e.selection.info` | 4vw | 4vh | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1e.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1e.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1e.header.title | remaining header width | 100% header height | WC1e.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1e.header.state | content-fit | 100% header height | WC1e.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1e.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1e.art.tags | available art width minus shared inset | content-fit within art band | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
+| WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1e.selection.outline | 100% card width | 100% card height | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1e.selection.info | config.components.target.minRem | config.components.target.minRem | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -1288,7 +1288,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1306,21 +1306,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC1e.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC1e.header` | 48vw | 3.84vh | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC1e.header.title` | 30.16vw | 3.84vh | WC1e.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC1e.header.state` | 13.92vw | 3.84vh | WC1e.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC1e.art` | 48vw | 15.36vh | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC1e.art.tags` | 46.4vw | 3.072vh | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC1e.body` | 48vw | 15.36vh | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC1e.footer` | 48vw | 3.84vh | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC1e.footer.metadata` | 46.4vw | 3.07vh | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC1e.body.detail1` | 46.4vw | 6.53vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Status effect / duration |
-| `WC1e.body.detail2` | 46.4vw | 6.53vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
-| `WC1e.body.blocker` | 46.4vw | 2.3vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC1e.selection.outline` | 48vw | 38.4vh | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC1e.selection.info` | 4vw | 4vh | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC1e.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC1e.header | 100% card width | config.cards.geometry.bands.header% of card height | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC1e.header.title | remaining header width | 100% header height | WC1e.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC1e.header.state | content-fit | 100% header height | WC1e.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC1e.art | 100% card width | config.cards.geometry.bands.art% of card height | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC1e.art.tags | available art width minus shared inset | content-fit within art band | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
+| WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
+| WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC1e.selection.outline | 100% card width | 100% card height | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC1e.selection.info | config.components.target.minRem | config.components.target.minRem | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -1360,7 +1360,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -1377,26 +1377,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2.header` | 16vw | 4.096vh | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2.header.title` | 9.36vw | 4.096vh | WC2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2.header.state` | 4.32vw | 4.096vh | WC2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2.art` | 16vw | 16.384vh | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2.art.tags` | 14.4vw | 3.2768vh | WC2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2.body` | 16vw | 16.384vh | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2.footer` | 16vw | 4.096vh | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2.footer.metadata` | 14.4vw | 3.28vh | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2.body.detail1` | 14.4vw | 6.96vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Ownership / quantity |
-| `WC2.body.detail2` | 14.4vw | 6.96vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Capabilities / requirements |
-| `WC2.body.blocker` | 14.4vw | 2.46vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2.selection.outline` | 16vw | 40.96vh | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2.selection.info` | 4vw | 4vh | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2.header.title | remaining header width | 100% header height | WC2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2.header.state | content-fit | 100% header height | WC2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2.art.tags | available art width minus shared inset | content-fit within art band | WC2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2.body.detail1 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Ownership / quantity |
+| WC2.body.detail2 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Capabilities / requirements |
+| WC2.body.blocker | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2.selection.outline | 100% card width | 100% card height | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -1414,21 +1414,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2.header` | 24vw | 4.800000000000001vh | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2.header.title` | 14.56vw | 4.800000000000001vh | WC2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2.header.state` | 6.72vw | 4.800000000000001vh | WC2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2.art` | 24vw | 19.200000000000003vh | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2.art.tags` | 22.4vw | 3.84vh | WC2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2.body` | 24vw | 19.200000000000003vh | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2.footer` | 24vw | 4.800000000000001vh | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2.footer.metadata` | 22.4vw | 3.84vh | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2.body.detail1` | 22.4vw | 8.16vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Ownership / quantity |
-| `WC2.body.detail2` | 22.4vw | 8.16vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Capabilities / requirements |
-| `WC2.body.blocker` | 22.4vw | 2.88vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2.selection.outline` | 24vw | 48vh | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2.selection.info` | 4vw | 4vh | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2.header.title | remaining header width | 100% header height | WC2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2.header.state | content-fit | 100% header height | WC2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2.art.tags | available art width minus shared inset | content-fit within art band | WC2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2.body.detail1 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Ownership / quantity |
+| WC2.body.detail2 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Capabilities / requirements |
+| WC2.body.blocker | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2.selection.outline | 100% card width | 100% card height | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -1436,7 +1436,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1454,21 +1454,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2.header` | 48vw | 3.84vh | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2.header.title` | 30.16vw | 3.84vh | WC2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2.header.state` | 13.92vw | 3.84vh | WC2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2.art` | 48vw | 15.36vh | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2.art.tags` | 46.4vw | 3.072vh | WC2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2.body` | 48vw | 15.36vh | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2.footer` | 48vw | 3.84vh | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2.footer.metadata` | 46.4vw | 3.07vh | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2.body.detail1` | 46.4vw | 6.53vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Ownership / quantity |
-| `WC2.body.detail2` | 46.4vw | 6.53vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Capabilities / requirements |
-| `WC2.body.blocker` | 46.4vw | 2.3vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2.selection.outline` | 48vw | 38.4vh | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2.selection.info` | 4vw | 4vh | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2.header.title | remaining header width | 100% header height | WC2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2.header.state | content-fit | 100% header height | WC2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2.art.tags | available art width minus shared inset | content-fit within art band | WC2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2.body.detail1 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Ownership / quantity |
+| WC2.body.detail2 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Capabilities / requirements |
+| WC2.body.blocker | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2.selection.outline | 100% card width | 100% card height | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -1477,7 +1477,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1495,21 +1495,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2.header` | 48vw | 3.84vh | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2.header.title` | 30.16vw | 3.84vh | WC2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2.header.state` | 13.92vw | 3.84vh | WC2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2.art` | 48vw | 15.36vh | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2.art.tags` | 46.4vw | 3.072vh | WC2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2.body` | 48vw | 15.36vh | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2.footer` | 48vw | 3.84vh | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2.footer.metadata` | 46.4vw | 3.07vh | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2.body.detail1` | 46.4vw | 6.53vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Ownership / quantity |
-| `WC2.body.detail2` | 46.4vw | 6.53vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Capabilities / requirements |
-| `WC2.body.blocker` | 46.4vw | 2.3vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2.selection.outline` | 48vw | 38.4vh | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2.selection.info` | 4vw | 4vh | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2.header.title | remaining header width | 100% header height | WC2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2.header.state | content-fit | 100% header height | WC2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2.art.tags | available art width minus shared inset | content-fit within art band | WC2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2.body.detail1 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Ownership / quantity |
+| WC2.body.detail2 | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Capabilities / requirements |
+| WC2.body.blocker | 100% usable body width | content-fit within body band | WC2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2.selection.outline | 100% card width | 100% card height | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -1549,7 +1549,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -1566,26 +1566,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a.header` | 16vw | 4.096vh | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a.header.title` | 9.36vw | 4.096vh | WC2a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a.header.state` | 4.32vw | 4.096vh | WC2a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a.art` | 16vw | 16.384vh | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a.art.tags` | 14.4vw | 3.2768vh | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a.body` | 16vw | 16.384vh | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a.footer` | 16vw | 4.096vh | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a.footer.metadata` | 14.4vw | 3.28vh | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a.body.detail1` | 14.4vw | 6.96vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Slot / requirements |
-| `WC2a.body.detail2` | 14.4vw | 6.96vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Equipped comparison |
-| `WC2a.body.blocker` | 14.4vw | 2.46vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a.selection.outline` | 16vw | 40.96vh | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a.selection.info` | 4vw | 4vh | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a.header.title | remaining header width | 100% header height | WC2a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a.header.state | content-fit | 100% header height | WC2a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a.art.tags | available art width minus shared inset | content-fit within art band | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a.body.detail1 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Slot / requirements |
+| WC2a.body.detail2 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Equipped comparison |
+| WC2a.body.blocker | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a.selection.outline | 100% card width | 100% card height | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -1602,21 +1602,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a.header` | 24vw | 4.800000000000001vh | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a.header.title` | 14.56vw | 4.800000000000001vh | WC2a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a.header.state` | 6.72vw | 4.800000000000001vh | WC2a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a.art` | 24vw | 19.200000000000003vh | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a.art.tags` | 22.4vw | 3.84vh | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a.body` | 24vw | 19.200000000000003vh | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a.footer` | 24vw | 4.800000000000001vh | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a.footer.metadata` | 22.4vw | 3.84vh | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a.body.detail1` | 22.4vw | 8.16vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Slot / requirements |
-| `WC2a.body.detail2` | 22.4vw | 8.16vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Equipped comparison |
-| `WC2a.body.blocker` | 22.4vw | 2.88vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a.selection.outline` | 24vw | 48vh | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a.selection.info` | 4vw | 4vh | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a.header.title | remaining header width | 100% header height | WC2a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a.header.state | content-fit | 100% header height | WC2a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a.art.tags | available art width minus shared inset | content-fit within art band | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a.body.detail1 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Slot / requirements |
+| WC2a.body.detail2 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Equipped comparison |
+| WC2a.body.blocker | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a.selection.outline | 100% card width | 100% card height | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -1624,7 +1624,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1641,21 +1641,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a.header` | 48vw | 3.84vh | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a.header.title` | 30.16vw | 3.84vh | WC2a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a.header.state` | 13.92vw | 3.84vh | WC2a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a.art` | 48vw | 15.36vh | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a.art.tags` | 46.4vw | 3.072vh | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a.body` | 48vw | 15.36vh | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a.footer` | 48vw | 3.84vh | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a.footer.metadata` | 46.4vw | 3.07vh | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a.body.detail1` | 46.4vw | 6.53vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Slot / requirements |
-| `WC2a.body.detail2` | 46.4vw | 6.53vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Equipped comparison |
-| `WC2a.body.blocker` | 46.4vw | 2.3vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a.selection.outline` | 48vw | 38.4vh | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a.selection.info` | 4vw | 4vh | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a.header.title | remaining header width | 100% header height | WC2a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a.header.state | content-fit | 100% header height | WC2a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a.art.tags | available art width minus shared inset | content-fit within art band | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a.body.detail1 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Slot / requirements |
+| WC2a.body.detail2 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Equipped comparison |
+| WC2a.body.blocker | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a.selection.outline | 100% card width | 100% card height | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -1664,7 +1664,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1681,21 +1681,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a.header` | 48vw | 3.84vh | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a.header.title` | 30.16vw | 3.84vh | WC2a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a.header.state` | 13.92vw | 3.84vh | WC2a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a.art` | 48vw | 15.36vh | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a.art.tags` | 46.4vw | 3.072vh | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a.body` | 48vw | 15.36vh | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a.footer` | 48vw | 3.84vh | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a.footer.metadata` | 46.4vw | 3.07vh | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a.body.detail1` | 46.4vw | 6.53vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Slot / requirements |
-| `WC2a.body.detail2` | 46.4vw | 6.53vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Equipped comparison |
-| `WC2a.body.blocker` | 46.4vw | 2.3vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a.selection.outline` | 48vw | 38.4vh | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a.selection.info` | 4vw | 4vh | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a.header.title | remaining header width | 100% header height | WC2a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a.header.state | content-fit | 100% header height | WC2a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a.art.tags | available art width minus shared inset | content-fit within art band | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a.body.detail1 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Slot / requirements |
+| WC2a.body.detail2 | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Equipped comparison |
+| WC2a.body.blocker | 100% usable body width | content-fit within body band | WC2a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a.selection.outline | 100% card width | 100% card height | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -1735,7 +1735,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -1753,27 +1753,27 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a1.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a1.header` | 16vw | 4.096vh | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a1.header.title` | 9.36vw | 4.096vh | WC2a1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a1.header.state` | 4.32vw | 4.096vh | WC2a1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a1.art` | 16vw | 16.384vh | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a1.art.tags` | 14.4vw | 3.2768vh | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a1.body` | 16vw | 16.384vh | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a1.footer` | 16vw | 4.096vh | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a1.footer.metadata` | 14.4vw | 3.28vh | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a1.body.detail1` | 14.4vw | 4.64vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / scaling |
-| `WC2a1.body.detail2` | 14.4vw | 4.64vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Hand / requirements |
-| `WC2a1.body.detail3` | 14.4vw | 4.64vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted card package |
-| `WC2a1.body.blocker` | 14.4vw | 2.46vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a1.selection.outline` | 16vw | 40.96vh | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a1.selection.info` | 4vw | 4vh | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a1.header.title | remaining header width | 100% header height | WC2a1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a1.header.state | content-fit | 100% header height | WC2a1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a1.art.tags | available art width minus shared inset | content-fit within art band | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a1.body.detail1 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / scaling |
+| WC2a1.body.detail2 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Hand / requirements |
+| WC2a1.body.detail3 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted card package |
+| WC2a1.body.blocker | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a1.selection.outline | 100% card width | 100% card height | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -1791,22 +1791,22 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a1.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a1.header` | 24vw | 4.800000000000001vh | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a1.header.title` | 14.56vw | 4.800000000000001vh | WC2a1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a1.header.state` | 6.72vw | 4.800000000000001vh | WC2a1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a1.art` | 24vw | 19.200000000000003vh | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a1.art.tags` | 22.4vw | 3.84vh | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a1.body` | 24vw | 19.200000000000003vh | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a1.footer` | 24vw | 4.800000000000001vh | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a1.footer.metadata` | 22.4vw | 3.84vh | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a1.body.detail1` | 22.4vw | 5.44vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / scaling |
-| `WC2a1.body.detail2` | 22.4vw | 5.44vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Hand / requirements |
-| `WC2a1.body.detail3` | 22.4vw | 5.44vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted card package |
-| `WC2a1.body.blocker` | 22.4vw | 2.88vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a1.selection.outline` | 24vw | 48vh | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a1.selection.info` | 4vw | 4vh | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a1.header.title | remaining header width | 100% header height | WC2a1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a1.header.state | content-fit | 100% header height | WC2a1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a1.art.tags | available art width minus shared inset | content-fit within art band | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a1.body.detail1 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / scaling |
+| WC2a1.body.detail2 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Hand / requirements |
+| WC2a1.body.detail3 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted card package |
+| WC2a1.body.blocker | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a1.selection.outline | 100% card width | 100% card height | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -1814,7 +1814,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1832,22 +1832,22 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a1.header` | 48vw | 3.84vh | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a1.header.title` | 30.16vw | 3.84vh | WC2a1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a1.header.state` | 13.92vw | 3.84vh | WC2a1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a1.art` | 48vw | 15.36vh | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a1.art.tags` | 46.4vw | 3.072vh | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a1.body` | 48vw | 15.36vh | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a1.footer` | 48vw | 3.84vh | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a1.footer.metadata` | 46.4vw | 3.07vh | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a1.body.detail1` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / scaling |
-| `WC2a1.body.detail2` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Hand / requirements |
-| `WC2a1.body.detail3` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted card package |
-| `WC2a1.body.blocker` | 46.4vw | 2.3vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a1.selection.outline` | 48vw | 38.4vh | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a1.selection.info` | 4vw | 4vh | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a1.header.title | remaining header width | 100% header height | WC2a1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a1.header.state | content-fit | 100% header height | WC2a1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a1.art.tags | available art width minus shared inset | content-fit within art band | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a1.body.detail1 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / scaling |
+| WC2a1.body.detail2 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Hand / requirements |
+| WC2a1.body.detail3 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted card package |
+| WC2a1.body.blocker | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a1.selection.outline | 100% card width | 100% card height | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -1856,7 +1856,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -1874,22 +1874,22 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a1.header` | 48vw | 3.84vh | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a1.header.title` | 30.16vw | 3.84vh | WC2a1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a1.header.state` | 13.92vw | 3.84vh | WC2a1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a1.art` | 48vw | 15.36vh | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a1.art.tags` | 46.4vw | 3.072vh | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a1.body` | 48vw | 15.36vh | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a1.footer` | 48vw | 3.84vh | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a1.footer.metadata` | 46.4vw | 3.07vh | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a1.body.detail1` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / scaling |
-| `WC2a1.body.detail2` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Hand / requirements |
-| `WC2a1.body.detail3` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted card package |
-| `WC2a1.body.blocker` | 46.4vw | 2.3vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a1.selection.outline` | 48vw | 38.4vh | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a1.selection.info` | 4vw | 4vh | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a1.header.title | remaining header width | 100% header height | WC2a1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a1.header.state | content-fit | 100% header height | WC2a1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a1.art.tags | available art width minus shared inset | content-fit within art band | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a1.body.detail1 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / scaling |
+| WC2a1.body.detail2 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Hand / requirements |
+| WC2a1.body.detail3 | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted card package |
+| WC2a1.body.blocker | 100% usable body width | content-fit within body band | WC2a1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a1.selection.outline | 100% card width | 100% card height | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -1930,7 +1930,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -1948,27 +1948,27 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a2.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a2.header` | 16vw | 4.096vh | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a2.header.title` | 9.36vw | 4.096vh | WC2a2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a2.header.state` | 4.32vw | 4.096vh | WC2a2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a2.art` | 16vw | 16.384vh | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a2.art.tags` | 14.4vw | 3.2768vh | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a2.body` | 16vw | 16.384vh | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a2.footer` | 16vw | 4.096vh | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a2.footer.metadata` | 14.4vw | 3.28vh | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a2.body.detail1` | 14.4vw | 4.64vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / resistance |
-| `WC2a2.body.detail2` | 14.4vw | 4.64vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Weight / requirements |
-| `WC2a2.body.detail3` | 14.4vw | 4.64vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted modifiers |
-| `WC2a2.body.blocker` | 14.4vw | 2.46vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a2.selection.outline` | 16vw | 40.96vh | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a2.selection.info` | 4vw | 4vh | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a2.header.title | remaining header width | 100% header height | WC2a2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a2.header.state | content-fit | 100% header height | WC2a2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a2.art.tags | available art width minus shared inset | content-fit within art band | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a2.body.detail1 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / resistance |
+| WC2a2.body.detail2 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Weight / requirements |
+| WC2a2.body.detail3 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted modifiers |
+| WC2a2.body.blocker | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a2.selection.outline | 100% card width | 100% card height | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -1986,22 +1986,22 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a2.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a2.header` | 24vw | 4.800000000000001vh | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a2.header.title` | 14.56vw | 4.800000000000001vh | WC2a2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a2.header.state` | 6.72vw | 4.800000000000001vh | WC2a2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a2.art` | 24vw | 19.200000000000003vh | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a2.art.tags` | 22.4vw | 3.84vh | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a2.body` | 24vw | 19.200000000000003vh | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a2.footer` | 24vw | 4.800000000000001vh | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a2.footer.metadata` | 22.4vw | 3.84vh | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a2.body.detail1` | 22.4vw | 5.44vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / resistance |
-| `WC2a2.body.detail2` | 22.4vw | 5.44vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Weight / requirements |
-| `WC2a2.body.detail3` | 22.4vw | 5.44vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted modifiers |
-| `WC2a2.body.blocker` | 22.4vw | 2.88vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a2.selection.outline` | 24vw | 48vh | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a2.selection.info` | 4vw | 4vh | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a2.header.title | remaining header width | 100% header height | WC2a2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a2.header.state | content-fit | 100% header height | WC2a2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a2.art.tags | available art width minus shared inset | content-fit within art band | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a2.body.detail1 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / resistance |
+| WC2a2.body.detail2 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Weight / requirements |
+| WC2a2.body.detail3 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted modifiers |
+| WC2a2.body.blocker | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a2.selection.outline | 100% card width | 100% card height | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2009,7 +2009,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2027,22 +2027,22 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a2.header` | 48vw | 3.84vh | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a2.header.title` | 30.16vw | 3.84vh | WC2a2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a2.header.state` | 13.92vw | 3.84vh | WC2a2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a2.art` | 48vw | 15.36vh | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a2.art.tags` | 46.4vw | 3.072vh | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a2.body` | 48vw | 15.36vh | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a2.footer` | 48vw | 3.84vh | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a2.footer.metadata` | 46.4vw | 3.07vh | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a2.body.detail1` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / resistance |
-| `WC2a2.body.detail2` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Weight / requirements |
-| `WC2a2.body.detail3` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted modifiers |
-| `WC2a2.body.blocker` | 46.4vw | 2.3vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a2.selection.outline` | 48vw | 38.4vh | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a2.selection.info` | 4vw | 4vh | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a2.header.title | remaining header width | 100% header height | WC2a2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a2.header.state | content-fit | 100% header height | WC2a2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a2.art.tags | available art width minus shared inset | content-fit within art band | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a2.body.detail1 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / resistance |
+| WC2a2.body.detail2 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Weight / requirements |
+| WC2a2.body.detail3 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted modifiers |
+| WC2a2.body.blocker | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a2.selection.outline | 100% card width | 100% card height | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -2051,7 +2051,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2069,22 +2069,22 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2a2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2a2.header` | 48vw | 3.84vh | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2a2.header.title` | 30.16vw | 3.84vh | WC2a2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2a2.header.state` | 13.92vw | 3.84vh | WC2a2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2a2.art` | 48vw | 15.36vh | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2a2.art.tags` | 46.4vw | 3.072vh | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2a2.body` | 48vw | 15.36vh | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2a2.footer` | 48vw | 3.84vh | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2a2.footer.metadata` | 46.4vw | 3.07vh | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2a2.body.detail1` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / resistance |
-| `WC2a2.body.detail2` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Weight / requirements |
-| `WC2a2.body.detail3` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted modifiers |
-| `WC2a2.body.blocker` | 46.4vw | 2.3vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2a2.selection.outline` | 48vw | 38.4vh | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2a2.selection.info` | 4vw | 4vh | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2a2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2a2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2a2.header.title | remaining header width | 100% header height | WC2a2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2a2.header.state | content-fit | 100% header height | WC2a2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2a2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2a2.art.tags | available art width minus shared inset | content-fit within art band | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2a2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2a2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2a2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2a2.body.detail1 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / resistance |
+| WC2a2.body.detail2 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Weight / requirements |
+| WC2a2.body.detail3 | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted modifiers |
+| WC2a2.body.blocker | 100% usable body width | content-fit within body band | WC2a2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2a2.selection.outline | 100% card width | 100% card height | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2a2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -2125,7 +2125,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -2142,26 +2142,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b.header` | 16vw | 4.096vh | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b.header.title` | 9.36vw | 4.096vh | WC2b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b.header.state` | 4.32vw | 4.096vh | WC2b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b.art` | 16vw | 16.384vh | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b.art.tags` | 14.4vw | 3.2768vh | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b.body` | 16vw | 16.384vh | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b.footer` | 16vw | 4.096vh | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b.footer.metadata` | 14.4vw | 3.28vh | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b.body.detail1` | 14.4vw | 6.96vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Relic effect |
-| `WC2b.body.detail2` | 14.4vw | 6.96vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Acquisition / equip state |
-| `WC2b.body.blocker` | 14.4vw | 2.46vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b.selection.outline` | 16vw | 40.96vh | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b.selection.info` | 4vw | 4vh | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b.header.title | remaining header width | 100% header height | WC2b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b.header.state | content-fit | 100% header height | WC2b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b.art.tags | available art width minus shared inset | content-fit within art band | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b.body.detail1 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Relic effect |
+| WC2b.body.detail2 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Acquisition / equip state |
+| WC2b.body.blocker | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b.selection.outline | 100% card width | 100% card height | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -2178,21 +2178,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b.header` | 24vw | 4.800000000000001vh | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b.header.title` | 14.56vw | 4.800000000000001vh | WC2b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b.header.state` | 6.72vw | 4.800000000000001vh | WC2b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b.art` | 24vw | 19.200000000000003vh | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b.art.tags` | 22.4vw | 3.84vh | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b.body` | 24vw | 19.200000000000003vh | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b.footer` | 24vw | 4.800000000000001vh | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b.footer.metadata` | 22.4vw | 3.84vh | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b.body.detail1` | 22.4vw | 8.16vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Relic effect |
-| `WC2b.body.detail2` | 22.4vw | 8.16vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Acquisition / equip state |
-| `WC2b.body.blocker` | 22.4vw | 2.88vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b.selection.outline` | 24vw | 48vh | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b.selection.info` | 4vw | 4vh | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b.header.title | remaining header width | 100% header height | WC2b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b.header.state | content-fit | 100% header height | WC2b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b.art.tags | available art width minus shared inset | content-fit within art band | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b.body.detail1 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Relic effect |
+| WC2b.body.detail2 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Acquisition / equip state |
+| WC2b.body.blocker | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b.selection.outline | 100% card width | 100% card height | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2200,7 +2200,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2218,21 +2218,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b.header` | 48vw | 3.84vh | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b.header.title` | 30.16vw | 3.84vh | WC2b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b.header.state` | 13.92vw | 3.84vh | WC2b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b.art` | 48vw | 15.36vh | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b.art.tags` | 46.4vw | 3.072vh | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b.body` | 48vw | 15.36vh | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b.footer` | 48vw | 3.84vh | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b.footer.metadata` | 46.4vw | 3.07vh | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b.body.detail1` | 46.4vw | 6.53vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Relic effect |
-| `WC2b.body.detail2` | 46.4vw | 6.53vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Acquisition / equip state |
-| `WC2b.body.blocker` | 46.4vw | 2.3vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b.selection.outline` | 48vw | 38.4vh | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b.selection.info` | 4vw | 4vh | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b.header.title | remaining header width | 100% header height | WC2b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b.header.state | content-fit | 100% header height | WC2b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b.art.tags | available art width minus shared inset | content-fit within art band | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b.body.detail1 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Relic effect |
+| WC2b.body.detail2 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Acquisition / equip state |
+| WC2b.body.blocker | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b.selection.outline | 100% card width | 100% card height | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -2241,7 +2241,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2259,21 +2259,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b.header` | 48vw | 3.84vh | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b.header.title` | 30.16vw | 3.84vh | WC2b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b.header.state` | 13.92vw | 3.84vh | WC2b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b.art` | 48vw | 15.36vh | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b.art.tags` | 46.4vw | 3.072vh | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b.body` | 48vw | 15.36vh | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b.footer` | 48vw | 3.84vh | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b.footer.metadata` | 46.4vw | 3.07vh | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b.body.detail1` | 46.4vw | 6.53vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Relic effect |
-| `WC2b.body.detail2` | 46.4vw | 6.53vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Acquisition / equip state |
-| `WC2b.body.blocker` | 46.4vw | 2.3vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b.selection.outline` | 48vw | 38.4vh | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b.selection.info` | 4vw | 4vh | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b.header.title | remaining header width | 100% header height | WC2b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b.header.state | content-fit | 100% header height | WC2b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b.art.tags | available art width minus shared inset | content-fit within art band | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b.body.detail1 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Relic effect |
+| WC2b.body.detail2 | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Acquisition / equip state |
+| WC2b.body.blocker | 100% usable body width | content-fit within body band | WC2b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b.selection.outline | 100% card width | 100% card height | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -2313,7 +2313,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -2330,26 +2330,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b1.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b1.header` | 16vw | 4.096vh | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b1.header.title` | 9.36vw | 4.096vh | WC2b1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b1.header.state` | 4.32vw | 4.096vh | WC2b1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b1.art` | 16vw | 16.384vh | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b1.art.tags` | 14.4vw | 3.2768vh | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b1.body` | 16vw | 16.384vh | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b1.footer` | 16vw | 4.096vh | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b1.footer.metadata` | 14.4vw | 3.28vh | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b1.body.detail1` | 14.4vw | 6.96vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Passive modifiers |
-| `WC2b1.body.detail2` | 14.4vw | 6.96vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Affected resources / stats |
-| `WC2b1.body.blocker` | 14.4vw | 2.46vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b1.selection.outline` | 16vw | 40.96vh | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b1.selection.info` | 4vw | 4vh | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b1.header.title | remaining header width | 100% header height | WC2b1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b1.header.state | content-fit | 100% header height | WC2b1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b1.art.tags | available art width minus shared inset | content-fit within art band | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b1.body.detail1 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Passive modifiers |
+| WC2b1.body.detail2 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Affected resources / stats |
+| WC2b1.body.blocker | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b1.selection.outline | 100% card width | 100% card height | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -2366,21 +2366,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b1.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b1.header` | 24vw | 4.800000000000001vh | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b1.header.title` | 14.56vw | 4.800000000000001vh | WC2b1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b1.header.state` | 6.72vw | 4.800000000000001vh | WC2b1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b1.art` | 24vw | 19.200000000000003vh | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b1.art.tags` | 22.4vw | 3.84vh | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b1.body` | 24vw | 19.200000000000003vh | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b1.footer` | 24vw | 4.800000000000001vh | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b1.footer.metadata` | 22.4vw | 3.84vh | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b1.body.detail1` | 22.4vw | 8.16vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Passive modifiers |
-| `WC2b1.body.detail2` | 22.4vw | 8.16vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Affected resources / stats |
-| `WC2b1.body.blocker` | 22.4vw | 2.88vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b1.selection.outline` | 24vw | 48vh | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b1.selection.info` | 4vw | 4vh | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b1.header.title | remaining header width | 100% header height | WC2b1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b1.header.state | content-fit | 100% header height | WC2b1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b1.art.tags | available art width minus shared inset | content-fit within art band | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b1.body.detail1 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Passive modifiers |
+| WC2b1.body.detail2 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Affected resources / stats |
+| WC2b1.body.blocker | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b1.selection.outline | 100% card width | 100% card height | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2388,7 +2388,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2406,21 +2406,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b1.header` | 48vw | 3.84vh | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b1.header.title` | 30.16vw | 3.84vh | WC2b1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b1.header.state` | 13.92vw | 3.84vh | WC2b1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b1.art` | 48vw | 15.36vh | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b1.art.tags` | 46.4vw | 3.072vh | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b1.body` | 48vw | 15.36vh | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b1.footer` | 48vw | 3.84vh | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b1.footer.metadata` | 46.4vw | 3.07vh | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b1.body.detail1` | 46.4vw | 6.53vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Passive modifiers |
-| `WC2b1.body.detail2` | 46.4vw | 6.53vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Affected resources / stats |
-| `WC2b1.body.blocker` | 46.4vw | 2.3vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b1.selection.outline` | 48vw | 38.4vh | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b1.selection.info` | 4vw | 4vh | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b1.header.title | remaining header width | 100% header height | WC2b1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b1.header.state | content-fit | 100% header height | WC2b1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b1.art.tags | available art width minus shared inset | content-fit within art band | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b1.body.detail1 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Passive modifiers |
+| WC2b1.body.detail2 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Affected resources / stats |
+| WC2b1.body.blocker | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b1.selection.outline | 100% card width | 100% card height | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -2429,7 +2429,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2447,21 +2447,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b1.header` | 48vw | 3.84vh | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b1.header.title` | 30.16vw | 3.84vh | WC2b1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b1.header.state` | 13.92vw | 3.84vh | WC2b1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b1.art` | 48vw | 15.36vh | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b1.art.tags` | 46.4vw | 3.072vh | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b1.body` | 48vw | 15.36vh | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b1.footer` | 48vw | 3.84vh | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b1.footer.metadata` | 46.4vw | 3.07vh | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b1.body.detail1` | 46.4vw | 6.53vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Passive modifiers |
-| `WC2b1.body.detail2` | 46.4vw | 6.53vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Affected resources / stats |
-| `WC2b1.body.blocker` | 46.4vw | 2.3vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b1.selection.outline` | 48vw | 38.4vh | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b1.selection.info` | 4vw | 4vh | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b1.header.title | remaining header width | 100% header height | WC2b1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b1.header.state | content-fit | 100% header height | WC2b1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b1.art.tags | available art width minus shared inset | content-fit within art band | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b1.body.detail1 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Passive modifiers |
+| WC2b1.body.detail2 | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Affected resources / stats |
+| WC2b1.body.blocker | 100% usable body width | content-fit within body band | WC2b1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b1.selection.outline | 100% card width | 100% card height | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -2501,7 +2501,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -2518,26 +2518,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b2.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b2.header` | 16vw | 4.096vh | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b2.header.title` | 9.36vw | 4.096vh | WC2b2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b2.header.state` | 4.32vw | 4.096vh | WC2b2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b2.art` | 16vw | 16.384vh | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b2.art.tags` | 14.4vw | 3.2768vh | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b2.body` | 16vw | 16.384vh | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b2.footer` | 16vw | 4.096vh | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b2.footer.metadata` | 14.4vw | 3.28vh | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b2.body.detail1` | 14.4vw | 6.96vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger condition |
-| `WC2b2.body.detail2` | 14.4vw | 6.96vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effect / limit / cooldown |
-| `WC2b2.body.blocker` | 14.4vw | 2.46vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b2.selection.outline` | 16vw | 40.96vh | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b2.selection.info` | 4vw | 4vh | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b2.header.title | remaining header width | 100% header height | WC2b2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b2.header.state | content-fit | 100% header height | WC2b2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b2.art.tags | available art width minus shared inset | content-fit within art band | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b2.body.detail1 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger condition |
+| WC2b2.body.detail2 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effect / limit / cooldown |
+| WC2b2.body.blocker | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b2.selection.outline | 100% card width | 100% card height | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -2554,21 +2554,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b2.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b2.header` | 24vw | 4.800000000000001vh | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b2.header.title` | 14.56vw | 4.800000000000001vh | WC2b2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b2.header.state` | 6.72vw | 4.800000000000001vh | WC2b2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b2.art` | 24vw | 19.200000000000003vh | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b2.art.tags` | 22.4vw | 3.84vh | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b2.body` | 24vw | 19.200000000000003vh | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b2.footer` | 24vw | 4.800000000000001vh | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b2.footer.metadata` | 22.4vw | 3.84vh | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b2.body.detail1` | 22.4vw | 8.16vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger condition |
-| `WC2b2.body.detail2` | 22.4vw | 8.16vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effect / limit / cooldown |
-| `WC2b2.body.blocker` | 22.4vw | 2.88vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b2.selection.outline` | 24vw | 48vh | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b2.selection.info` | 4vw | 4vh | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b2.header.title | remaining header width | 100% header height | WC2b2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b2.header.state | content-fit | 100% header height | WC2b2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b2.art.tags | available art width minus shared inset | content-fit within art band | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b2.body.detail1 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger condition |
+| WC2b2.body.detail2 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effect / limit / cooldown |
+| WC2b2.body.blocker | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b2.selection.outline | 100% card width | 100% card height | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2576,7 +2576,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2594,21 +2594,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b2.header` | 48vw | 3.84vh | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b2.header.title` | 30.16vw | 3.84vh | WC2b2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b2.header.state` | 13.92vw | 3.84vh | WC2b2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b2.art` | 48vw | 15.36vh | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b2.art.tags` | 46.4vw | 3.072vh | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b2.body` | 48vw | 15.36vh | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b2.footer` | 48vw | 3.84vh | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b2.footer.metadata` | 46.4vw | 3.07vh | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b2.body.detail1` | 46.4vw | 6.53vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger condition |
-| `WC2b2.body.detail2` | 46.4vw | 6.53vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effect / limit / cooldown |
-| `WC2b2.body.blocker` | 46.4vw | 2.3vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b2.selection.outline` | 48vw | 38.4vh | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b2.selection.info` | 4vw | 4vh | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b2.header.title | remaining header width | 100% header height | WC2b2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b2.header.state | content-fit | 100% header height | WC2b2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b2.art.tags | available art width minus shared inset | content-fit within art band | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b2.body.detail1 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger condition |
+| WC2b2.body.detail2 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effect / limit / cooldown |
+| WC2b2.body.blocker | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b2.selection.outline | 100% card width | 100% card height | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -2617,7 +2617,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2635,21 +2635,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2b2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2b2.header` | 48vw | 3.84vh | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2b2.header.title` | 30.16vw | 3.84vh | WC2b2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2b2.header.state` | 13.92vw | 3.84vh | WC2b2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2b2.art` | 48vw | 15.36vh | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2b2.art.tags` | 46.4vw | 3.072vh | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2b2.body` | 48vw | 15.36vh | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2b2.footer` | 48vw | 3.84vh | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2b2.footer.metadata` | 46.4vw | 3.07vh | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2b2.body.detail1` | 46.4vw | 6.53vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger condition |
-| `WC2b2.body.detail2` | 46.4vw | 6.53vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effect / limit / cooldown |
-| `WC2b2.body.blocker` | 46.4vw | 2.3vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2b2.selection.outline` | 48vw | 38.4vh | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2b2.selection.info` | 4vw | 4vh | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2b2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2b2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2b2.header.title | remaining header width | 100% header height | WC2b2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2b2.header.state | content-fit | 100% header height | WC2b2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2b2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2b2.art.tags | available art width minus shared inset | content-fit within art band | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2b2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2b2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2b2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2b2.body.detail1 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger condition |
+| WC2b2.body.detail2 | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effect / limit / cooldown |
+| WC2b2.body.blocker | 100% usable body width | content-fit within body band | WC2b2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2b2.selection.outline | 100% card width | 100% card height | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2b2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -2689,7 +2689,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -2706,26 +2706,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c.header` | 16vw | 4.096vh | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c.header.title` | 9.36vw | 4.096vh | WC2c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c.header.state` | 4.32vw | 4.096vh | WC2c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c.art` | 16vw | 16.384vh | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c.art.tags` | 14.4vw | 3.2768vh | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c.body` | 16vw | 16.384vh | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c.footer` | 16vw | 4.096vh | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c.footer.metadata` | 14.4vw | 3.28vh | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c.body.detail1` | 14.4vw | 6.96vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / quantity |
-| `WC2c.body.detail2` | 14.4vw | 6.96vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Use effect / eligibility |
-| `WC2c.body.blocker` | 14.4vw | 2.46vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c.selection.outline` | 16vw | 40.96vh | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c.selection.info` | 4vw | 4vh | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c.header.title | remaining header width | 100% header height | WC2c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c.header.state | content-fit | 100% header height | WC2c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c.art.tags | available art width minus shared inset | content-fit within art band | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c.body.detail1 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / quantity |
+| WC2c.body.detail2 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Use effect / eligibility |
+| WC2c.body.blocker | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c.selection.outline | 100% card width | 100% card height | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -2742,21 +2742,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c.header` | 24vw | 4.800000000000001vh | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c.header.title` | 14.56vw | 4.800000000000001vh | WC2c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c.header.state` | 6.72vw | 4.800000000000001vh | WC2c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c.art` | 24vw | 19.200000000000003vh | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c.art.tags` | 22.4vw | 3.84vh | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c.body` | 24vw | 19.200000000000003vh | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c.footer` | 24vw | 4.800000000000001vh | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c.footer.metadata` | 22.4vw | 3.84vh | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c.body.detail1` | 22.4vw | 8.16vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / quantity |
-| `WC2c.body.detail2` | 22.4vw | 8.16vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Use effect / eligibility |
-| `WC2c.body.blocker` | 22.4vw | 2.88vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c.selection.outline` | 24vw | 48vh | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c.selection.info` | 4vw | 4vh | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c.header.title | remaining header width | 100% header height | WC2c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c.header.state | content-fit | 100% header height | WC2c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c.art.tags | available art width minus shared inset | content-fit within art band | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c.body.detail1 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / quantity |
+| WC2c.body.detail2 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Use effect / eligibility |
+| WC2c.body.blocker | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c.selection.outline | 100% card width | 100% card height | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2764,7 +2764,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2781,21 +2781,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c.header` | 48vw | 3.84vh | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c.header.title` | 30.16vw | 3.84vh | WC2c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c.header.state` | 13.92vw | 3.84vh | WC2c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c.art` | 48vw | 15.36vh | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c.art.tags` | 46.4vw | 3.072vh | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c.body` | 48vw | 15.36vh | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c.footer` | 48vw | 3.84vh | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c.footer.metadata` | 46.4vw | 3.07vh | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c.body.detail1` | 46.4vw | 6.53vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / quantity |
-| `WC2c.body.detail2` | 46.4vw | 6.53vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Use effect / eligibility |
-| `WC2c.body.blocker` | 46.4vw | 2.3vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c.selection.outline` | 48vw | 38.4vh | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c.selection.info` | 4vw | 4vh | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c.header.title | remaining header width | 100% header height | WC2c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c.header.state | content-fit | 100% header height | WC2c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c.art.tags | available art width minus shared inset | content-fit within art band | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c.body.detail1 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / quantity |
+| WC2c.body.detail2 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Use effect / eligibility |
+| WC2c.body.blocker | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c.selection.outline | 100% card width | 100% card height | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -2804,7 +2804,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2821,21 +2821,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c.header` | 48vw | 3.84vh | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c.header.title` | 30.16vw | 3.84vh | WC2c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c.header.state` | 13.92vw | 3.84vh | WC2c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c.art` | 48vw | 15.36vh | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c.art.tags` | 46.4vw | 3.072vh | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c.body` | 48vw | 15.36vh | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c.footer` | 48vw | 3.84vh | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c.footer.metadata` | 46.4vw | 3.07vh | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c.body.detail1` | 46.4vw | 6.53vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / quantity |
-| `WC2c.body.detail2` | 46.4vw | 6.53vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Use effect / eligibility |
-| `WC2c.body.blocker` | 46.4vw | 2.3vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c.selection.outline` | 48vw | 38.4vh | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c.selection.info` | 4vw | 4vh | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c.header.title | remaining header width | 100% header height | WC2c.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c.header.state | content-fit | 100% header height | WC2c.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c.art.tags | available art width minus shared inset | content-fit within art band | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c.body.detail1 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / quantity |
+| WC2c.body.detail2 | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Use effect / eligibility |
+| WC2c.body.blocker | 100% usable body width | content-fit within body band | WC2c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c.selection.outline | 100% card width | 100% card height | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -2875,7 +2875,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -2892,26 +2892,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c1.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c1.header` | 16vw | 4.096vh | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c1.header.title` | 9.36vw | 4.096vh | WC2c1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c1.header.state` | 4.32vw | 4.096vh | WC2c1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c1.art` | 16vw | 16.384vh | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c1.art.tags` | 14.4vw | 3.2768vh | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c1.body` | 16vw | 16.384vh | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c1.footer` | 16vw | 4.096vh | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c1.footer.metadata` | 14.4vw | 3.28vh | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c1.body.detail1` | 14.4vw | 6.96vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Healing preview |
-| `WC2c1.body.detail2` | 14.4vw | 6.96vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c1.body.blocker` | 14.4vw | 2.46vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c1.selection.outline` | 16vw | 40.96vh | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c1.selection.info` | 4vw | 4vh | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c1.header.title | remaining header width | 100% header height | WC2c1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c1.header.state | content-fit | 100% header height | WC2c1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c1.art.tags | available art width minus shared inset | content-fit within art band | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c1.body.detail1 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Healing preview |
+| WC2c1.body.detail2 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c1.body.blocker | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c1.selection.outline | 100% card width | 100% card height | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -2928,21 +2928,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c1.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c1.header` | 24vw | 4.800000000000001vh | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c1.header.title` | 14.56vw | 4.800000000000001vh | WC2c1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c1.header.state` | 6.72vw | 4.800000000000001vh | WC2c1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c1.art` | 24vw | 19.200000000000003vh | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c1.art.tags` | 22.4vw | 3.84vh | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c1.body` | 24vw | 19.200000000000003vh | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c1.footer` | 24vw | 4.800000000000001vh | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c1.footer.metadata` | 22.4vw | 3.84vh | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c1.body.detail1` | 22.4vw | 8.16vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Healing preview |
-| `WC2c1.body.detail2` | 22.4vw | 8.16vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c1.body.blocker` | 22.4vw | 2.88vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c1.selection.outline` | 24vw | 48vh | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c1.selection.info` | 4vw | 4vh | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c1.header.title | remaining header width | 100% header height | WC2c1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c1.header.state | content-fit | 100% header height | WC2c1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c1.art.tags | available art width minus shared inset | content-fit within art band | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c1.body.detail1 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Healing preview |
+| WC2c1.body.detail2 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c1.body.blocker | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c1.selection.outline | 100% card width | 100% card height | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -2950,7 +2950,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -2967,21 +2967,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c1.header` | 48vw | 3.84vh | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c1.header.title` | 30.16vw | 3.84vh | WC2c1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c1.header.state` | 13.92vw | 3.84vh | WC2c1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c1.art` | 48vw | 15.36vh | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c1.art.tags` | 46.4vw | 3.072vh | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c1.body` | 48vw | 15.36vh | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c1.footer` | 48vw | 3.84vh | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c1.footer.metadata` | 46.4vw | 3.07vh | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c1.body.detail1` | 46.4vw | 6.53vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Healing preview |
-| `WC2c1.body.detail2` | 46.4vw | 6.53vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c1.body.blocker` | 46.4vw | 2.3vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c1.selection.outline` | 48vw | 38.4vh | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c1.selection.info` | 4vw | 4vh | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c1.header.title | remaining header width | 100% header height | WC2c1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c1.header.state | content-fit | 100% header height | WC2c1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c1.art.tags | available art width minus shared inset | content-fit within art band | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c1.body.detail1 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Healing preview |
+| WC2c1.body.detail2 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c1.body.blocker | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c1.selection.outline | 100% card width | 100% card height | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -2990,7 +2990,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3007,21 +3007,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c1.header` | 48vw | 3.84vh | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c1.header.title` | 30.16vw | 3.84vh | WC2c1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c1.header.state` | 13.92vw | 3.84vh | WC2c1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c1.art` | 48vw | 15.36vh | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c1.art.tags` | 46.4vw | 3.072vh | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c1.body` | 48vw | 15.36vh | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c1.footer` | 48vw | 3.84vh | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c1.footer.metadata` | 46.4vw | 3.07vh | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c1.body.detail1` | 46.4vw | 6.53vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Healing preview |
-| `WC2c1.body.detail2` | 46.4vw | 6.53vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c1.body.blocker` | 46.4vw | 2.3vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c1.selection.outline` | 48vw | 38.4vh | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c1.selection.info` | 4vw | 4vh | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c1.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c1.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c1.header.title | remaining header width | 100% header height | WC2c1.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c1.header.state | content-fit | 100% header height | WC2c1.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c1.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c1.art.tags | available art width minus shared inset | content-fit within art band | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c1.body.detail1 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Healing preview |
+| WC2c1.body.detail2 | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c1.body.blocker | 100% usable body width | content-fit within body band | WC2c1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c1.selection.outline | 100% card width | 100% card height | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c1.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -3061,7 +3061,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -3078,26 +3078,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c2.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c2.header` | 16vw | 4.096vh | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c2.header.title` | 9.36vw | 4.096vh | WC2c2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c2.header.state` | 4.32vw | 4.096vh | WC2c2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c2.art` | 16vw | 16.384vh | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c2.art.tags` | 14.4vw | 3.2768vh | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c2.body` | 16vw | 16.384vh | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c2.footer` | 16vw | 4.096vh | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c2.footer.metadata` | 14.4vw | 3.28vh | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c2.body.detail1` | 14.4vw | 6.96vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Resource restoration |
-| `WC2c2.body.detail2` | 14.4vw | 6.96vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c2.body.blocker` | 14.4vw | 2.46vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c2.selection.outline` | 16vw | 40.96vh | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c2.selection.info` | 4vw | 4vh | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c2.header.title | remaining header width | 100% header height | WC2c2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c2.header.state | content-fit | 100% header height | WC2c2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c2.art.tags | available art width minus shared inset | content-fit within art band | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c2.body.detail1 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Resource restoration |
+| WC2c2.body.detail2 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c2.body.blocker | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c2.selection.outline | 100% card width | 100% card height | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -3114,21 +3114,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c2.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c2.header` | 24vw | 4.800000000000001vh | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c2.header.title` | 14.56vw | 4.800000000000001vh | WC2c2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c2.header.state` | 6.72vw | 4.800000000000001vh | WC2c2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c2.art` | 24vw | 19.200000000000003vh | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c2.art.tags` | 22.4vw | 3.84vh | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c2.body` | 24vw | 19.200000000000003vh | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c2.footer` | 24vw | 4.800000000000001vh | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c2.footer.metadata` | 22.4vw | 3.84vh | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c2.body.detail1` | 22.4vw | 8.16vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Resource restoration |
-| `WC2c2.body.detail2` | 22.4vw | 8.16vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c2.body.blocker` | 22.4vw | 2.88vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c2.selection.outline` | 24vw | 48vh | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c2.selection.info` | 4vw | 4vh | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c2.header.title | remaining header width | 100% header height | WC2c2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c2.header.state | content-fit | 100% header height | WC2c2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c2.art.tags | available art width minus shared inset | content-fit within art band | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c2.body.detail1 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Resource restoration |
+| WC2c2.body.detail2 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c2.body.blocker | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c2.selection.outline | 100% card width | 100% card height | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -3136,7 +3136,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3153,21 +3153,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c2.header` | 48vw | 3.84vh | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c2.header.title` | 30.16vw | 3.84vh | WC2c2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c2.header.state` | 13.92vw | 3.84vh | WC2c2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c2.art` | 48vw | 15.36vh | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c2.art.tags` | 46.4vw | 3.072vh | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c2.body` | 48vw | 15.36vh | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c2.footer` | 48vw | 3.84vh | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c2.footer.metadata` | 46.4vw | 3.07vh | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c2.body.detail1` | 46.4vw | 6.53vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Resource restoration |
-| `WC2c2.body.detail2` | 46.4vw | 6.53vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c2.body.blocker` | 46.4vw | 2.3vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c2.selection.outline` | 48vw | 38.4vh | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c2.selection.info` | 4vw | 4vh | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c2.header.title | remaining header width | 100% header height | WC2c2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c2.header.state | content-fit | 100% header height | WC2c2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c2.art.tags | available art width minus shared inset | content-fit within art band | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c2.body.detail1 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Resource restoration |
+| WC2c2.body.detail2 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c2.body.blocker | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c2.selection.outline | 100% card width | 100% card height | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -3176,7 +3176,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3193,21 +3193,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c2.header` | 48vw | 3.84vh | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c2.header.title` | 30.16vw | 3.84vh | WC2c2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c2.header.state` | 13.92vw | 3.84vh | WC2c2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c2.art` | 48vw | 15.36vh | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c2.art.tags` | 46.4vw | 3.072vh | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c2.body` | 48vw | 15.36vh | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c2.footer` | 48vw | 3.84vh | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c2.footer.metadata` | 46.4vw | 3.07vh | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c2.body.detail1` | 46.4vw | 6.53vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Resource restoration |
-| `WC2c2.body.detail2` | 46.4vw | 6.53vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
-| `WC2c2.body.blocker` | 46.4vw | 2.3vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c2.selection.outline` | 48vw | 38.4vh | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c2.selection.info` | 4vw | 4vh | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c2.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c2.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c2.header.title | remaining header width | 100% header height | WC2c2.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c2.header.state | content-fit | 100% header height | WC2c2.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c2.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c2.art.tags | available art width minus shared inset | content-fit within art band | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c2.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c2.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c2.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c2.body.detail1 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Resource restoration |
+| WC2c2.body.detail2 | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Charges / availability |
+| WC2c2.body.blocker | 100% usable body width | content-fit within body band | WC2c2.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c2.selection.outline | 100% card width | 100% card height | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c2.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -3247,7 +3247,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -3264,26 +3264,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c3.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c3.header` | 16vw | 4.096vh | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c3.header.title` | 9.36vw | 4.096vh | WC2c3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c3.header.state` | 4.32vw | 4.096vh | WC2c3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c3.art` | 16vw | 16.384vh | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c3.art.tags` | 14.4vw | 3.2768vh | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c3.body` | 16vw | 16.384vh | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c3.footer` | 16vw | 4.096vh | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c3.footer.metadata` | 14.4vw | 3.28vh | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c3.body.detail1` | 14.4vw | 6.96vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Utility effect / target |
-| `WC2c3.body.detail2` | 14.4vw | 6.96vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Quantity / availability |
-| `WC2c3.body.blocker` | 14.4vw | 2.46vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c3.selection.outline` | 16vw | 40.96vh | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c3.selection.info` | 4vw | 4vh | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c3.header.title | remaining header width | 100% header height | WC2c3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c3.header.state | content-fit | 100% header height | WC2c3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c3.art.tags | available art width minus shared inset | content-fit within art band | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c3.body.detail1 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Utility effect / target |
+| WC2c3.body.detail2 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Quantity / availability |
+| WC2c3.body.blocker | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c3.selection.outline | 100% card width | 100% card height | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c3.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -3300,21 +3300,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c3.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c3.header` | 24vw | 4.800000000000001vh | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c3.header.title` | 14.56vw | 4.800000000000001vh | WC2c3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c3.header.state` | 6.72vw | 4.800000000000001vh | WC2c3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c3.art` | 24vw | 19.200000000000003vh | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c3.art.tags` | 22.4vw | 3.84vh | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c3.body` | 24vw | 19.200000000000003vh | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c3.footer` | 24vw | 4.800000000000001vh | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c3.footer.metadata` | 22.4vw | 3.84vh | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c3.body.detail1` | 22.4vw | 8.16vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Utility effect / target |
-| `WC2c3.body.detail2` | 22.4vw | 8.16vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Quantity / availability |
-| `WC2c3.body.blocker` | 22.4vw | 2.88vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c3.selection.outline` | 24vw | 48vh | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c3.selection.info` | 4vw | 4vh | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c3.header.title | remaining header width | 100% header height | WC2c3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c3.header.state | content-fit | 100% header height | WC2c3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c3.art.tags | available art width minus shared inset | content-fit within art band | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c3.body.detail1 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Utility effect / target |
+| WC2c3.body.detail2 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Quantity / availability |
+| WC2c3.body.blocker | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c3.selection.outline | 100% card width | 100% card height | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c3.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -3322,7 +3322,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3339,21 +3339,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c3.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c3.header` | 48vw | 3.84vh | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c3.header.title` | 30.16vw | 3.84vh | WC2c3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c3.header.state` | 13.92vw | 3.84vh | WC2c3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c3.art` | 48vw | 15.36vh | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c3.art.tags` | 46.4vw | 3.072vh | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c3.body` | 48vw | 15.36vh | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c3.footer` | 48vw | 3.84vh | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c3.footer.metadata` | 46.4vw | 3.07vh | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c3.body.detail1` | 46.4vw | 6.53vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Utility effect / target |
-| `WC2c3.body.detail2` | 46.4vw | 6.53vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Quantity / availability |
-| `WC2c3.body.blocker` | 46.4vw | 2.3vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c3.selection.outline` | 48vw | 38.4vh | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c3.selection.info` | 4vw | 4vh | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c3.header.title | remaining header width | 100% header height | WC2c3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c3.header.state | content-fit | 100% header height | WC2c3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c3.art.tags | available art width minus shared inset | content-fit within art band | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c3.body.detail1 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Utility effect / target |
+| WC2c3.body.detail2 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Quantity / availability |
+| WC2c3.body.blocker | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c3.selection.outline | 100% card width | 100% card height | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c3.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -3362,7 +3362,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3379,21 +3379,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC2c3.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC2c3.header` | 48vw | 3.84vh | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC2c3.header.title` | 30.16vw | 3.84vh | WC2c3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC2c3.header.state` | 13.92vw | 3.84vh | WC2c3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC2c3.art` | 48vw | 15.36vh | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC2c3.art.tags` | 46.4vw | 3.072vh | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC2c3.body` | 48vw | 15.36vh | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC2c3.footer` | 48vw | 3.84vh | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC2c3.footer.metadata` | 46.4vw | 3.07vh | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC2c3.body.detail1` | 46.4vw | 6.53vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Utility effect / target |
-| `WC2c3.body.detail2` | 46.4vw | 6.53vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Quantity / availability |
-| `WC2c3.body.blocker` | 46.4vw | 2.3vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC2c3.selection.outline` | 48vw | 38.4vh | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC2c3.selection.info` | 4vw | 4vh | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC2c3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC2c3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC2c3.header.title | remaining header width | 100% header height | WC2c3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC2c3.header.state | content-fit | 100% header height | WC2c3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC2c3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC2c3.art.tags | available art width minus shared inset | content-fit within art band | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC2c3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC2c3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC2c3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC2c3.body.detail1 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Utility effect / target |
+| WC2c3.body.detail2 | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Quantity / availability |
+| WC2c3.body.blocker | 100% usable body width | content-fit within body band | WC2c3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC2c3.selection.outline | 100% card width | 100% card height | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC2c3.selection.info | config.components.target.minRem | config.components.target.minRem | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -3433,7 +3433,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -3451,26 +3451,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3.header` | 16vw | 4.096vh | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3.header.title` | 9.36vw | 4.096vh | WC3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3.header.state` | 4.32vw | 4.096vh | WC3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3.art` | 16vw | 16.384vh | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3.art.tags` | 14.4vw | 3.2768vh | WC3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3.body` | 16vw | 16.384vh | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3.footer` | 16vw | 4.096vh | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3.footer.metadata` | 14.4vw | 3.28vh | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3.body.detail1` | 14.4vw | 6.96vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Choice summary |
-| `WC3.body.detail2` | 14.4vw | 6.96vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Current selection / eligibility |
-| `WC3.body.blocker` | 14.4vw | 2.46vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3.selection.outline` | 16vw | 40.96vh | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3.selection.info` | 4vw | 4vh | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3.header.title | remaining header width | 100% header height | WC3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3.header.state | content-fit | 100% header height | WC3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3.art.tags | available art width minus shared inset | content-fit within art band | WC3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3.body.detail1 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Choice summary |
+| WC3.body.detail2 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Current selection / eligibility |
+| WC3.body.blocker | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3.selection.outline | 100% card width | 100% card height | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3.selection.info | config.components.target.minRem | config.components.target.minRem | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -3488,21 +3488,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3.header` | 24vw | 4.800000000000001vh | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3.header.title` | 14.56vw | 4.800000000000001vh | WC3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3.header.state` | 6.72vw | 4.800000000000001vh | WC3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3.art` | 24vw | 19.200000000000003vh | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3.art.tags` | 22.4vw | 3.84vh | WC3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3.body` | 24vw | 19.200000000000003vh | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3.footer` | 24vw | 4.800000000000001vh | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3.footer.metadata` | 22.4vw | 3.84vh | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3.body.detail1` | 22.4vw | 8.16vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Choice summary |
-| `WC3.body.detail2` | 22.4vw | 8.16vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Current selection / eligibility |
-| `WC3.body.blocker` | 22.4vw | 2.88vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3.selection.outline` | 24vw | 48vh | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3.selection.info` | 4vw | 4vh | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3.header.title | remaining header width | 100% header height | WC3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3.header.state | content-fit | 100% header height | WC3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3.art.tags | available art width minus shared inset | content-fit within art band | WC3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3.body.detail1 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Choice summary |
+| WC3.body.detail2 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Current selection / eligibility |
+| WC3.body.blocker | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3.selection.outline | 100% card width | 100% card height | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3.selection.info | config.components.target.minRem | config.components.target.minRem | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -3510,7 +3510,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3528,21 +3528,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3.header` | 48vw | 3.84vh | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3.header.title` | 30.16vw | 3.84vh | WC3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3.header.state` | 13.92vw | 3.84vh | WC3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3.art` | 48vw | 15.36vh | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3.art.tags` | 46.4vw | 3.072vh | WC3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3.body` | 48vw | 15.36vh | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3.footer` | 48vw | 3.84vh | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3.footer.metadata` | 46.4vw | 3.07vh | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3.body.detail1` | 46.4vw | 6.53vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Choice summary |
-| `WC3.body.detail2` | 46.4vw | 6.53vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Current selection / eligibility |
-| `WC3.body.blocker` | 46.4vw | 2.3vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3.selection.outline` | 48vw | 38.4vh | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3.selection.info` | 4vw | 4vh | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3.header.title | remaining header width | 100% header height | WC3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3.header.state | content-fit | 100% header height | WC3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3.art.tags | available art width minus shared inset | content-fit within art band | WC3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3.body.detail1 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Choice summary |
+| WC3.body.detail2 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Current selection / eligibility |
+| WC3.body.blocker | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3.selection.outline | 100% card width | 100% card height | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3.selection.info | config.components.target.minRem | config.components.target.minRem | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -3551,7 +3551,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3569,21 +3569,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3.header` | 48vw | 3.84vh | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3.header.title` | 30.16vw | 3.84vh | WC3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3.header.state` | 13.92vw | 3.84vh | WC3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3.art` | 48vw | 15.36vh | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3.art.tags` | 46.4vw | 3.072vh | WC3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3.body` | 48vw | 15.36vh | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3.footer` | 48vw | 3.84vh | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3.footer.metadata` | 46.4vw | 3.07vh | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3.body.detail1` | 46.4vw | 6.53vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Choice summary |
-| `WC3.body.detail2` | 46.4vw | 6.53vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Current selection / eligibility |
-| `WC3.body.blocker` | 46.4vw | 2.3vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3.selection.outline` | 48vw | 38.4vh | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3.selection.info` | 4vw | 4vh | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3.header.title | remaining header width | 100% header height | WC3.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3.header.state | content-fit | 100% header height | WC3.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3.art.tags | available art width minus shared inset | content-fit within art band | WC3.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3.body.detail1 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Choice summary |
+| WC3.body.detail2 | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Current selection / eligibility |
+| WC3.body.blocker | 100% usable body width | content-fit within body band | WC3.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3.selection.outline | 100% card width | 100% card height | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3.selection.info | config.components.target.minRem | config.components.target.minRem | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -3623,7 +3623,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -3640,26 +3640,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3a.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3a.header` | 16vw | 4.096vh | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3a.header.title` | 9.36vw | 4.096vh | WC3a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3a.header.state` | 4.32vw | 4.096vh | WC3a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3a.art` | 16vw | 16.384vh | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3a.art.tags` | 14.4vw | 3.2768vh | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3a.body` | 16vw | 16.384vh | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3a.footer` | 16vw | 4.096vh | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3a.footer.metadata` | 14.4vw | 3.28vh | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3a.body.detail1` | 14.4vw | 6.96vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Class identity / role |
-| `WC3a.body.detail2` | 14.4vw | 6.96vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting stats / abilities |
-| `WC3a.body.blocker` | 14.4vw | 2.46vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3a.selection.outline` | 16vw | 40.96vh | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3a.selection.info` | 4vw | 4vh | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3a.header.title | remaining header width | 100% header height | WC3a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3a.header.state | content-fit | 100% header height | WC3a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3a.art.tags | available art width minus shared inset | content-fit within art band | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3a.body.detail1 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Class identity / role |
+| WC3a.body.detail2 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting stats / abilities |
+| WC3a.body.blocker | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3a.selection.outline | 100% card width | 100% card height | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3a.selection.info | config.components.target.minRem | config.components.target.minRem | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -3676,21 +3676,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3a.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3a.header` | 24vw | 4.800000000000001vh | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3a.header.title` | 14.56vw | 4.800000000000001vh | WC3a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3a.header.state` | 6.72vw | 4.800000000000001vh | WC3a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3a.art` | 24vw | 19.200000000000003vh | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3a.art.tags` | 22.4vw | 3.84vh | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3a.body` | 24vw | 19.200000000000003vh | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3a.footer` | 24vw | 4.800000000000001vh | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3a.footer.metadata` | 22.4vw | 3.84vh | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3a.body.detail1` | 22.4vw | 8.16vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Class identity / role |
-| `WC3a.body.detail2` | 22.4vw | 8.16vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting stats / abilities |
-| `WC3a.body.blocker` | 22.4vw | 2.88vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3a.selection.outline` | 24vw | 48vh | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3a.selection.info` | 4vw | 4vh | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3a.header.title | remaining header width | 100% header height | WC3a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3a.header.state | content-fit | 100% header height | WC3a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3a.art.tags | available art width minus shared inset | content-fit within art band | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3a.body.detail1 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Class identity / role |
+| WC3a.body.detail2 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting stats / abilities |
+| WC3a.body.blocker | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3a.selection.outline | 100% card width | 100% card height | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3a.selection.info | config.components.target.minRem | config.components.target.minRem | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -3698,7 +3698,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3716,21 +3716,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3a.header` | 48vw | 3.84vh | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3a.header.title` | 30.16vw | 3.84vh | WC3a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3a.header.state` | 13.92vw | 3.84vh | WC3a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3a.art` | 48vw | 15.36vh | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3a.art.tags` | 46.4vw | 3.072vh | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3a.body` | 48vw | 15.36vh | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3a.footer` | 48vw | 3.84vh | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3a.footer.metadata` | 46.4vw | 3.07vh | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3a.body.detail1` | 46.4vw | 6.53vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Class identity / role |
-| `WC3a.body.detail2` | 46.4vw | 6.53vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting stats / abilities |
-| `WC3a.body.blocker` | 46.4vw | 2.3vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3a.selection.outline` | 48vw | 38.4vh | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3a.selection.info` | 4vw | 4vh | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3a.header.title | remaining header width | 100% header height | WC3a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3a.header.state | content-fit | 100% header height | WC3a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3a.art.tags | available art width minus shared inset | content-fit within art band | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3a.body.detail1 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Class identity / role |
+| WC3a.body.detail2 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting stats / abilities |
+| WC3a.body.blocker | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3a.selection.outline | 100% card width | 100% card height | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3a.selection.info | config.components.target.minRem | config.components.target.minRem | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -3739,7 +3739,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3757,21 +3757,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3a.header` | 48vw | 3.84vh | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3a.header.title` | 30.16vw | 3.84vh | WC3a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3a.header.state` | 13.92vw | 3.84vh | WC3a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3a.art` | 48vw | 15.36vh | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3a.art.tags` | 46.4vw | 3.072vh | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3a.body` | 48vw | 15.36vh | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3a.footer` | 48vw | 3.84vh | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3a.footer.metadata` | 46.4vw | 3.07vh | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3a.body.detail1` | 46.4vw | 6.53vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Class identity / role |
-| `WC3a.body.detail2` | 46.4vw | 6.53vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting stats / abilities |
-| `WC3a.body.blocker` | 46.4vw | 2.3vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3a.selection.outline` | 48vw | 38.4vh | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3a.selection.info` | 4vw | 4vh | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3a.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3a.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3a.header.title | remaining header width | 100% header height | WC3a.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3a.header.state | content-fit | 100% header height | WC3a.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3a.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3a.art.tags | available art width minus shared inset | content-fit within art band | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3a.body.detail1 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Class identity / role |
+| WC3a.body.detail2 | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting stats / abilities |
+| WC3a.body.blocker | 100% usable body width | content-fit within body band | WC3a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3a.selection.outline | 100% card width | 100% card height | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3a.selection.info | config.components.target.minRem | config.components.target.minRem | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -3811,7 +3811,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 **Wide**
 
 ```text
-               (i)                
+               (i)
 ┌────────────────────────────────┐
 │ {Name}            {Cost/state} │
 ├────────────────────────────────┤
@@ -3828,26 +3828,26 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3b.frame` | 16vw | 40.96vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3b.header` | 16vw | 4.096vh | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3b.header.title` | 9.36vw | 4.096vh | WC3b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3b.header.state` | 4.32vw | 4.096vh | WC3b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3b.art` | 16vw | 16.384vh | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3b.art.tags` | 14.4vw | 3.2768vh | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3b.body` | 16vw | 16.384vh | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3b.footer` | 16vw | 4.096vh | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3b.footer.metadata` | 14.4vw | 3.28vh | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3b.body.detail1` | 14.4vw | 6.96vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting equipment |
-| `WC3b.body.detail2` | 14.4vw | 6.96vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted playing cards |
-| `WC3b.body.blocker` | 14.4vw | 2.46vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3b.selection.outline` | 16vw | 40.96vh | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3b.selection.info` | 4vw | 4vh | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3b.header.title | remaining header width | 100% header height | WC3b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3b.header.state | content-fit | 100% header height | WC3b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3b.art.tags | available art width minus shared inset | content-fit within art band | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3b.body.detail1 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting equipment |
+| WC3b.body.detail2 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted playing cards |
+| WC3b.body.blocker | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3b.selection.outline | 100% card width | 100% card height | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3b.selection.info | config.components.target.minRem | config.components.target.minRem | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Compact**
 
 ```text
-             (i)              
+             (i)
 ┌────────────────────────────┐
 │ {Name}        {Cost/state} │
 ├────────────────────────────┤
@@ -3864,21 +3864,21 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3b.frame` | 24vw | 48vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3b.header` | 24vw | 4.800000000000001vh | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3b.header.title` | 14.56vw | 4.800000000000001vh | WC3b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3b.header.state` | 6.72vw | 4.800000000000001vh | WC3b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3b.art` | 24vw | 19.200000000000003vh | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3b.art.tags` | 22.4vw | 3.84vh | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3b.body` | 24vw | 19.200000000000003vh | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3b.footer` | 24vw | 4.800000000000001vh | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3b.footer.metadata` | 22.4vw | 3.84vh | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3b.body.detail1` | 22.4vw | 8.16vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting equipment |
-| `WC3b.body.detail2` | 22.4vw | 8.16vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted playing cards |
-| `WC3b.body.blocker` | 22.4vw | 2.88vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3b.selection.outline` | 24vw | 48vh | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3b.selection.info` | 4vw | 4vh | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3b.header.title | remaining header width | 100% header height | WC3b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3b.header.state | content-fit | 100% header height | WC3b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3b.art.tags | available art width minus shared inset | content-fit within art band | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3b.body.detail1 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting equipment |
+| WC3b.body.detail2 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted playing cards |
+| WC3b.body.blocker | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3b.selection.outline | 100% card width | 100% card height | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3b.selection.info | config.components.target.minRem | config.components.target.minRem | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -3886,7 +3886,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3903,21 +3903,21 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3b.header` | 48vw | 3.84vh | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3b.header.title` | 30.16vw | 3.84vh | WC3b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3b.header.state` | 13.92vw | 3.84vh | WC3b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3b.art` | 48vw | 15.36vh | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3b.art.tags` | 46.4vw | 3.072vh | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3b.body` | 48vw | 15.36vh | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3b.footer` | 48vw | 3.84vh | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3b.footer.metadata` | 46.4vw | 3.07vh | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3b.body.detail1` | 46.4vw | 6.53vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting equipment |
-| `WC3b.body.detail2` | 46.4vw | 6.53vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted playing cards |
-| `WC3b.body.blocker` | 46.4vw | 2.3vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3b.selection.outline` | 48vw | 38.4vh | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3b.selection.info` | 4vw | 4vh | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3b.header.title | remaining header width | 100% header height | WC3b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3b.header.state | content-fit | 100% header height | WC3b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3b.art.tags | available art width minus shared inset | content-fit within art band | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3b.body.detail1 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting equipment |
+| WC3b.body.detail2 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted playing cards |
+| WC3b.body.blocker | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3b.selection.outline | 100% card width | 100% card height | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3b.selection.info | config.components.target.minRem | config.components.target.minRem | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 
 **Portrait / Galaxy S24**
@@ -3926,7 +3926,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-            (i)             
+            (i)
 ┌──────────────────────────┐
 │ {Name}      {Cost/state} │
 ├──────────────────────────┤
@@ -3943,21 +3943,21 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```
 
 | Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
-|---|---:|---:|---|---|---|---|---|---|
-| `WC3b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
-| `WC3b.header` | 48vw | 3.84vh | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
-| `WC3b.header.title` | 30.16vw | 3.84vh | WC3b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
-| `WC3b.header.state` | 13.92vw | 3.84vh | WC3b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
-| `WC3b.art` | 48vw | 15.36vh | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
-| `WC3b.art.tags` | 46.4vw | 3.072vh | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
-| `WC3b.body` | 48vw | 15.36vh | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
-| `WC3b.footer` | 48vw | 3.84vh | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
-| `WC3b.footer.metadata` | 46.4vw | 3.07vh | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
-| `WC3b.body.detail1` | 46.4vw | 6.53vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting equipment |
-| `WC3b.body.detail2` | 46.4vw | 6.53vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted playing cards |
-| `WC3b.body.blocker` | 46.4vw | 2.3vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
-| `WC3b.selection.outline` | 48vw | 38.4vh | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
-| `WC3b.selection.info` | 4vw | 4vh | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+|---|---|---|---|---|---|---|---|---|
+| WC3b.frame | clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum) | resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Uniform card envelope |
+| WC3b.header | 100% card width | config.cards.geometry.bands.header% of card height | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Name left; state right |
+| WC3b.header.title | remaining header width | 100% header height | WC3b.header | top-left | start / center | normal grid flow | shared inset token from left; vertically centered in header | Top-left |
+| WC3b.header.state | content-fit | 100% header height | WC3b.header | top-right | end / center | normal grid flow | shared inset token from right; vertically centered in header | Top-right if applicable |
+| WC3b.art | 100% card width | config.cards.geometry.bands.art% of card height | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Contain artwork; never stretch |
+| WC3b.art.tags | available art width minus shared inset | content-fit within art band | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | shared inset token horizontal inset; no extra band height | Meaningful tags bottom-left |
+| WC3b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
+| WC3b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
+| WC3b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC3b.body.detail1 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Starting equipment |
+| WC3b.body.detail2 | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Granted playing cards |
+| WC3b.body.blocker | 100% usable body width | content-fit within body band | WC3b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
+| WC3b.selection.outline | 100% card width | 100% card height | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
+| WC3b.selection.info | config.components.target.minRem | config.components.target.minRem | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | Centered above owner; outside ratio envelope |
 
 **Language-agnostic pseudocode**
 
@@ -4026,12 +4026,12 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Compact**
 
@@ -4065,12 +4065,12 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -4107,12 +4107,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 
 **Portrait / Galaxy S24**
@@ -4150,12 +4150,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Language-agnostic pseudocode**
 
@@ -4232,12 +4232,12 @@ Dispose timers/observers and restore focus on close.
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4a.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4a.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Compact**
 
@@ -4271,12 +4271,12 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4a.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4a.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -4313,12 +4313,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4a.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4a.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 
 **Portrait / Galaxy S24**
@@ -4356,12 +4356,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4a.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4a.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Language-agnostic pseudocode**
 
@@ -4438,12 +4438,12 @@ Dispose timers/observers and restore focus on close.
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4b.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4b.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Compact**
 
@@ -4477,12 +4477,12 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4b.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4b.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -4519,12 +4519,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4b.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4b.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 
 **Portrait / Galaxy S24**
@@ -4562,12 +4562,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4b.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4b.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Language-agnostic pseudocode**
 
@@ -4644,12 +4644,12 @@ Dispose timers/observers and restore focus on close.
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4c.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4c.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Compact**
 
@@ -4683,12 +4683,12 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4c.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4c.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -4725,12 +4725,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4c.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4c.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 
 **Portrait / Galaxy S24**
@@ -4768,12 +4768,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
 | WC4c.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
-| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
-| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
-| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | config.combatant.stackGapRem | threshold progress; semantic color and text |
+| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | config.combatant.stackGapRem | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | config.combatant.stackGapRem | uniform badge dimensions across all stances |
 | WC4c.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
 
-H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+H is component height, not screen height. The sprite receives remaining height after measuring the active lower stack; no viewport-fraction conversion may distort its envelope. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
 **Language-agnostic pseudocode**
 

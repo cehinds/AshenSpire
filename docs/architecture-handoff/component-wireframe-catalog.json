@@ -1,5 +1,38 @@
 [
   {
+    "id": "W1x",
+    "name": "Proficiencies",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1x1",
+    "name": "Weapon proficiency",
+    "parent": "W1x",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1x2",
+    "name": "Skill proficiency",
+    "parent": "W1x",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
     "id": "WCB0",
     "name": "Buttons and inspection",
     "parent": null,
@@ -452,8 +485,8 @@
   },
   {
     "id": "WGH0",
-    "name": "HUD composition",
-    "parent": null,
+    "name": "HUD composition contract",
+    "parent": "WCF2",
     "orientations": [
       "wide",
       "compact",
@@ -464,7 +497,7 @@
   {
     "id": "WGH1",
     "name": "Vitality HUD",
-    "parent": "WGS2",
+    "parent": "WCF2",
     "orientations": [
       "wide",
       "compact",
@@ -474,8 +507,8 @@
   },
   {
     "id": "WGH2",
-    "name": "Armament HUD",
-    "parent": "WGS2",
+    "name": "Armoury control",
+    "parent": "WCB2",
     "orientations": [
       "wide",
       "compact",
@@ -485,8 +518,8 @@
   },
   {
     "id": "WGH3",
-    "name": "Menu HUD",
-    "parent": "WGS2",
+    "name": "Menu control",
+    "parent": "WCB2",
     "orientations": [
       "wide",
       "compact",
@@ -497,7 +530,62 @@
   {
     "id": "WGH4",
     "name": "Total HUD",
-    "parent": "WGS2",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH5",
+    "name": "Experience strip",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH6",
+    "name": "Inventory rail",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH7",
+    "name": "Run header strip",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH8",
+    "name": "Charge flask controls",
+    "parent": "WCB2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH9",
+    "name": "HUD mode grip",
+    "parent": "WCB2",
     "orientations": [
       "wide",
       "compact",
@@ -586,6 +674,61 @@
     "id": "WGM7",
     "name": "Enter node button",
     "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP0",
+    "name": "Progression components",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP1",
+    "name": "Proficiency list row",
+    "parent": "WCF1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP2",
+    "name": "Proficiency progress",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP3",
+    "name": "Known techniques",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP4",
+    "name": "Next proficiency benefit",
+    "parent": "WCF4",
     "orientations": [
       "wide",
       "compact",
