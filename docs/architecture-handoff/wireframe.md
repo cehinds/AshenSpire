@@ -9011,8 +9011,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "vitality": {
       "referenceMaximum": {
         "health": 200,
-        "mana": 10,
-        "stamina": 10
+        "mana": 20,
+        "stamina": 20
       },
       "maximumWidthPercent": 100,
       "scaleByMaximum": true
@@ -9612,8 +9612,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "vitality": {
       "referenceMaximum": {
         "health": 200,
-        "mana": 10,
-        "stamina": 10
+        "mana": 20,
+        "stamina": 20
       },
       "maximumWidthPercent": 100,
       "scaleByMaximum": true
@@ -10191,8 +10191,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "vitality": {
       "referenceMaximum": {
         "health": 200,
-        "mana": 10,
-        "stamina": 10
+        "mana": 20,
+        "stamina": 20
       },
       "maximumWidthPercent": 100,
       "scaleByMaximum": true
@@ -10798,8 +10798,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "vitality": {
       "referenceMaximum": {
         "health": 200,
-        "mana": 10,
-        "stamina": 10
+        "mana": 20,
+        "stamina": 20
       },
       "maximumWidthPercent": 100,
       "scaleByMaximum": true
@@ -35110,8 +35110,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -35194,8 +35194,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35206,8 +35206,8 @@ Stamina [████████████████░░░░]    8 / 10
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35221,8 +35221,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35237,8 +35237,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -35357,8 +35357,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -35582,8 +35582,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -35807,8 +35807,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -36083,8 +36083,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -36318,8 +36318,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -36543,8 +36543,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -36768,8 +36768,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -37002,8 +37002,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true
@@ -37228,8 +37228,8 @@ Renderer binding: `hudPlayground`. The HTML “Component composition” tab exec
   "vitality": {
     "referenceMaximum": {
       "health": 200,
-      "mana": 10,
-      "stamina": 10
+      "mana": 20,
+      "stamina": 20
     },
     "maximumWidthPercent": 100,
     "scaleByMaximum": true

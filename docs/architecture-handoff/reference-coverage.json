@@ -9866,8 +9866,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10020,8 +10020,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10152,8 +10152,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10284,8 +10284,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10427,8 +10427,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10547,8 +10547,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10679,8 +10679,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10810,8 +10810,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -10942,8 +10942,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -11062,8 +11062,8 @@
       "vitality": {
         "referenceMaximum": {
           "health": 200,
-          "mana": 10,
-          "stamina": 10
+          "mana": 20,
+          "stamina": 20
         },
         "maximumWidthPercent": 100,
         "scaleByMaximum": true
@@ -19531,8 +19531,8 @@
         "vitality": {
           "referenceMaximum": {
             "health": 200,
-            "mana": 10,
-            "stamina": 10
+            "mana": 20,
+            "stamina": 20
           },
           "maximumWidthPercent": 100,
           "scaleByMaximum": true
@@ -19836,8 +19836,8 @@
         "vitality": {
           "referenceMaximum": {
             "health": 200,
-            "mana": 10,
-            "stamina": 10
+            "mana": 20,
+            "stamina": 20
           },
           "maximumWidthPercent": 100,
           "scaleByMaximum": true
@@ -20132,8 +20132,8 @@
         "vitality": {
           "referenceMaximum": {
             "health": 200,
-            "mana": 10,
-            "stamina": 10
+            "mana": 20,
+            "stamina": 20
           },
           "maximumWidthPercent": 100,
           "scaleByMaximum": true
@@ -20428,8 +20428,8 @@
         "vitality": {
           "referenceMaximum": {
             "health": 200,
-            "mana": 10,
-            "stamina": 10
+            "mana": 20,
+            "stamina": 20
           },
           "maximumWidthPercent": 100,
           "scaleByMaximum": true

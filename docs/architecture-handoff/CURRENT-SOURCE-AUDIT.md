@@ -58,6 +58,6 @@ The owner subsequently clarified that **Potions belongs exclusively to the foote
 
 ### Vitality track proportions
 
-Current `src/model/resources.js` / `resourceBarPlan` distinguishes `lengthPct = maximum / reference` from `pct = current / maximum`; `src/content/resources.js` currently defines reference maxima of 200 HP, 20 MP, and 20 stamina. The requested documentation defaults are **200 HP / 10 MP / 10 stamina**. The atlas therefore documents an explicit configurable presentation change, not a domain maximum change.
+Current `src/model/resources.js` / `resourceBarPlan` distinguishes `lengthPct = maximum / reference` from `pct = current / maximum`; `src/content/resources.js` currently defines reference maxima of 200 HP, 20 MP, and 20 stamina. The requested documentation defaults are **200 HP / 20 MP / 20 stamina**, restored to match the existing reference scales. These remain configurable presentation references, not domain maxima.
 
 WGH1 uses `config.vitality.referenceMaximum`, `maximumWidthPercent`, and `scaleByMaximum`. Track width follows maximum/reference within the allocated width; fill follows current/maximum inside that track. The current/max label sits in an aligned column outside the track so short meters remain readable. Maximum/reference limits displayed width, never health, mana, stamina, or progression mechanics. Sample stamina now reads 8/10.

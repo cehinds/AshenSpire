@@ -1,7 +1,7 @@
 export const hudConfig = {
   context: 'combat', enabled: true, layoutPreset: 'proposed', hudMode: 'expanded',
   layers: { header: true, class: true, cinders: true, position: true, vitality: true, health: true, mana: true, stamina: true, armoury: true, menu: true, rail: true, relics: true, potions: true, experience: true, chargeFlasks: true, modeGrip: false },
-  vitality: { referenceMaximum: { health: 200, mana: 10, stamina: 10 }, maximumWidthPercent: 100, scaleByMaximum: true },
+  vitality: { referenceMaximum: { health: 200, mana: 20, stamina: 20 }, maximumWidthPercent: 100, scaleByMaximum: true },
   potions: { placement: 'footerOnly', componentId: 'WGC11', contentsComponentId: 'WGH8', openIntent: 'openPotions', combineChargeFlasks: true, combineCarriedPotions: true },
   experience: { contexts: ['combat'], color: '#398bd1', heightRem: 0.35, animationMs: 650, awardPreview: 15 },
   layout: { gapRem: 0.35, insetRem: 0.5, meterHeightRem: 1.15, actionHeightRem: 2.75, radiusRem: 0.25 },
@@ -46,7 +46,7 @@ export const hudDefinitions = [
 ['WGH8','Potions contents','WCB2','[WGC11 Potions]\n    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]','Shared footer Potions control contents; WGC11 owns presentation','inside footer WGC11 disclosure; never in top HUD','shared Potions content host width','content-fit; action height config.layout.actionHeightRem','// Proposed owner correction supersedes separate flask buttons.\nentries = ProjectPotionEntries(snapshot.chargeFlasks, snapshot.carriedPotions, config.potions)\nRenderInsideSharedControl(config.potions.componentId, entries)\n// Footer-only placement applies to current and proposed preview presets.\n// Data keeps charge providers separate from owned item instances; view combines references only.\nOnChoose(entry): EmitRegisteredUseIntent(entry.id); DomainRevalidatesChargesAndTarget()'],
 ['WGH9','HUD mode grip','WCB2','[⌃ Compact HUD / ⌄ Expand HUD]','Current-checkout expanded/compact HUD model','HUD bottom center','content-fit','config.layout.actionHeightRem','// Compatibility reference to current checkout HudModeModel.\nProjectNextMode(config.hudMode)\nOnActivate: SetPresentationMode(nextMode); RecomposeActiveLayers()'],
 ['WGH0','HUD composition contract','WCF2','[WGH7 Run header]\n[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]\n[WGH6 Relics rail]\n[WGH5 Experience strip when configured]','WGH4 concrete composition; WGS2 shared scene slot','scene top; shared parent bounds','100% host width','content-fit within configured scene band',behavior],
-['WGH1','Vitality HUD','WCF2','HP      [████░]                 32 / 40\nMana    [████████████░░░░░░░░]    6 / 10\nStamina [████████████████░░░░]    8 / 10','WGH4; WGS2; combat and map HUD','primary row left; align meter edges','remaining primary row width','active meters × config.layout.meterHeightRem',`INPUT resource snapshot, config.vitality, availableWidth
+['WGH1','Vitality HUD','WCF2','HP      [████░]                 32 / 40\nMana    [██████░░░░]    6 / 10\nStamina [████████░░]    8 / 10','WGH4; WGS2; combat and map HUD','primary row left; align meter edges','remaining primary row width','active meters × config.layout.meterHeightRem',`INPUT resource snapshot, config.vitality, availableWidth
 // Current source resourceBarPlan separates track length from fill.
 FOR each configured active resource
   reference = config.vitality.referenceMaximum[resource.id]

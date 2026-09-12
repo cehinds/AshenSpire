@@ -3587,8 +3587,8 @@ On dispose: release timers, observers and events
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3599,8 +3599,8 @@ Stamina [████████████████░░░░]    8 / 10
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3614,8 +3614,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -3630,8 +3630,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 HP      [████░]                 32 / 40
-Mana    [████████████░░░░░░░░]    6 / 10
-Stamina [████████████████░░░░]    8 / 10
+Mana    [██████░░░░]    6 / 10
+Stamina [████████░░]    8 / 10
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
