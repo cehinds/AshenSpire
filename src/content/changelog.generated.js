@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-997",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "A card you have picked is ringed, not labelled",
+    "detail": "Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read \"Selected\", and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.",
+    "build": "0.7.1.9",
+    "pullRequest": 997,
+    "url": "https://github.com/cehinds/AshenSpire/pull/997"
+  },
+  {
     "id": "pr-993",
     "date": "2026-09-11",
     "group": "2026-09-11",
