@@ -2971,17 +2971,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-target > .card-info-button,
 .combatant-leading > .combatant-info { box-sizing:border-box; width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 .combatant-leading > .combatant-info { --card-info-size: 36px; }
-/* IN THE CARD'S CORNER, not floating above it (Constantine's review,
-   2026-09-12). Hanging a tap floor above the face made every scrollport,
-   grid and row reserve 64 px of dead head room for a control that is only
-   drawn while a card is selected, and the button still straddled headers
-   and clipped on first rows. The corner holds no reading, so the badge
-   sits inside it on every surface; the hit box below keeps the tap floor. */
-.card-inspection-target > .card-info-button { --card-info-size:32px; position:absolute; z-index:8; top:var(--card-info-inset,6px); right:var(--card-info-inset,6px); bottom:auto; left:auto; transform:none; font-size:16px; visibility:hidden; pointer-events:none; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 .inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
-.card-info-button::before { content:''; position:absolute; top:50%; left:50%; width:var(--tap-floor); height:var(--tap-floor); transform:translate(-50%,-50%); }
+.card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,190px) minmax(0,1fr); }
 .card-inspection-modal .card-inspection-art > .card { width:100%; height:auto; aspect-ratio:5/7; box-sizing:border-box; }
 .playing-card-details { display:flex; flex-direction:column; gap:16px; padding:4px 0; }
@@ -3023,8 +3017,19 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
-/* Creation keeps card nodes in place so focus can lift and settle smoothly. */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
+/* Creation keeps card nodes in place so focus can lift and settle smoothly.
+   ONE PLACEMENT, AND THE ROOM IT NEEDS (Constantine's review, 2026-09-12).
+   The information badge hangs a tap floor above a selected card on every
+   surface, this one included; a corner exception here read as a second rule
+   for the same control. What made the exception necessary was room, not
+   placement — with nothing reserved the badge straddled the STARTING ARMOUR
+   header's border (measured 1280x800, 2026-09-11) — so these selectors reserve
+   it: the 64 px row gap every other card scrollport keeps, and a head of 80,
+   not 64, because the badge rides its card's focus lift (translateY(-6px)
+   scale(1.05) about center bottom) while the scrollport clips at its padding
+   box. At 64 the circle lost 7 px off its top at 1280 and 8 px at 1440; at 80
+   it is whole and clear of the section face at 1280, 1366, 1440 and 1920. */
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:80px 6px 14px; gap:64px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
 .cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
@@ -3048,10 +3053,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
-.cc-starting-card { min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.cc-starting-card { min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; padding-top:42px; }
 .cc-card-quantity { font-size:13px; color:var(--gold); align-self:start; }
 .cc-starting-card > .card { width:100%; max-width:150px; height:auto; aspect-ratio:5/7; min-width:0; margin:0; transform:none; }
 .equipment-poker-card[data-item='empty-hand'] .epc-art-glyph { font-size:92px; line-height:1; color:var(--gold); }
+.cc-starting-card .card-info-button { top:-44px; }
 .inspection-lore { margin-top:12px; color:var(--muted); font-size:14px; }
 .inspection-lore summary { cursor:pointer; }
 .inspection-lore p { font-style:italic; margin:8px 0 0; }
@@ -3086,7 +3092,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    pane each own their overflow, so the Continue never leaves the glass. The
    subtraction is the door's head and foot, the section face and the panel's
    breathing room, divided by the zoom for the reason .modal's ceiling is.
-   Phones keep the stacked, page-scrolling layout below. */
+   The choices scrollport's head (above) is what keeps the above-card inspect
+   control off the section face on the first row. Phones keep the stacked,
+   page-scrolling layout below. */
 @media(min-width:701px) {
   .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
   .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
@@ -3145,6 +3153,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
 
+/* Equipment disclosure preserves the shared above-card placement. */
+.equipment-poker-card > .card-info-button { width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); }
 @media (pointer:coarse) {
   .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
   .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
@@ -3153,9 +3163,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 
 .equipment-poker-card:focus-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button { visibility:visible; pointer-events:auto; opacity:1; }
 
+/* Reserve room for the above-card control in Inventory scroll content. */
+.armoury .disc-faces:has(.poker-inventory-face) { padding-top:64px; }
 
 .armoury .disc-face:has(.poker-inventory-face) { overflow:visible; }
 
+.smith-card-list.as-options { padding-top:64px; }
 .smith-card-list.as-options.grid > .smith-candidate-card { overflow:visible; }
 
 /* Selected content keeps Information after a host redraw, including radio choices. */
@@ -3165,12 +3178,18 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .equipment-poker-card:is(.selected, [aria-selected='true'], [aria-checked='true']) > .card-info-button {
   visibility: visible; opacity: 1; pointer-events: auto;
 }
+/* Leave space inside scrollports for the above-card control, including wrapped rows. */
+:is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
+  padding-top: 64px; row-gap: 64px;
+}
+.smith-card-list:has(.card-inspection-target) { padding-top: 64px; row-gap: 64px; }
 .smith-card-list > .card-inspection-target { position: relative; overflow: visible; }
 .mount-row.card-inspection-target { position: relative; padding-right: 54px; }
 .mount-row.card-inspection-target > .card-info-button {
   top: 50%; right: 8px; left: auto; transform: translateY(-50%);
 }
-.card-inspection-target { scroll-margin-top: 16px; }
+/* Focusing a selected card must retain its inspection gutter in scrollports. */
+.card-inspection-target { scroll-margin-top: 64px; }
 @media (max-width: 720px) {
   .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
 }

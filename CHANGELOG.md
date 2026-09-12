@@ -32,7 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-12
 
-- **The `i` that explains a card now sits on the card** ([#994](https://github.com/cehinds/AshenSpire/pull/994), `0.7.1.8`). Pick a card anywhere in the game — in a fight, at the merchant, in the Armoury, in the spoils — and the small gold `i` that opens its full text appears in the card's own top-right corner. Until now it floated above the card everywhere except the equipment you choose when making a character, where it already sat in the corner. Floating meant every row and grid of cards held an empty strip above it for a button that is only there while a card is picked, and on the top row of a scrolling list the button could still be cut off or land on the heading above. The corner is the same place on every screen now, the strips are gone, and the `i` is as easy to hit with a thumb as it ever was.
+- **The `i` that explains a card sits above it on every screen** ([#994](https://github.com/cehinds/AshenSpire/pull/994), `0.7.1.9`). Pick a card anywhere in the game and the small gold `i` that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the `i` in the same place as every other one, whole and clear of the heading, and the same control no longer appears in two places depending on where you are.
 
 ## 2026-09-11
 
