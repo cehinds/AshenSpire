@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-994",
+    "id": "pr-1001",
     "date": "2026-09-12",
     "group": "2026-09-12",
-    "summary": "The i that explains a card sits above it on every screen",
-    "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading, and the same control no longer appears in two places depending on where you are.",
+    "summary": "Groundwork: a card's facts now live apart from its picture",
+    "detail": "Nothing you see changes. Until now, working out what a card is — its cost, its type colour, which subtypes it carries, which class it belongs to — happened inside the same step that drew it, so nothing else in the game could ask those questions without drawing a card first. Those answers now live on their own, and drawing reads them. Two small things it fixes on the way: the cost shown on a card's corner and the cost written in its full description were worked out separately and could in principle disagree, and now cannot; and a card's facts can be written out whole, which is what lets the same card be drawn more than one way later.",
     "build": "0.7.1.10",
-    "pullRequest": 994,
-    "url": "https://github.com/cehinds/AshenSpire/pull/994"
+    "pullRequest": 1001,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1001"
   },
   {
     "id": "pr-1000",
