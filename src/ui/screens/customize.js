@@ -251,6 +251,10 @@ export function mountCustomize(app, {
   const statBox = $('#cz-statedit');
   const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
+  // Which sections have their starting-card fold open, for the life of this
+  // screen. renderEquipment rebuilds the detail pane on every choice, so a
+  // fold with no memory is one a player has to re-open after every tap.
+  const packageOpen = new Map();
   let equipmentSectionViews = [];
   let equipmentNodes = new Map();
   let equipmentFold = null;
@@ -697,18 +701,51 @@ export function mountCustomize(app, {
           const preview = startingEquipmentPreview(registries, previewRun(), hands, section.slot);
           const grid = el('div', { class: 'cc-starting-card-grid', 'aria-label': `${piece.name} starting combat cards` });
           for (const { ref, count } of preview.cards) {
-            const face = renderCard(registries, ref);
+            // Small, because inside the fold these are a reference rather than
+            // a thing to choose between: the choice is the armament above.
+            const face = renderCard(registries, ref, { small: true });
             const entry = el('div', { class: 'cc-starting-card', dataset: { cardId: ref.cardId, quantity: String(count) } }, [
               el('span', { class: 'cc-card-quantity' }, `${count} ${count === 1 ? 'copy' : 'copies'}`), face,
             ]);
             grid.append(entry);
           }
-          const packageNode = el('section', { class: 'cc-starting-package' }, [
-            el('h4', {}, 'Starting combat cards'),
-            el('p', { class: 'cc-package-context' }, `${preview.total} ${preview.total === 1 ? 'card' : 'cards'} with this loadout. Quantities depend on both hands.`),
+          // THE DECK IS SUMMARISED, NOT DUMPED (Constantine, 2026-09-12:
+          // *"some of the card details probably can be folded ... and the
+          // continue button always in view and not requiring too much
+          // scrolling"*).
+          //
+          // MEASURED, because the first attempt at this was measured in the
+          // wrong state and looked inert. Opening the right-hand section at
+          // 390x844 took the creation scroll from 838px to 3010px — +2172px,
+          // nearly four screens, for six card faces drawn at full size between
+          // the armament you are choosing and the way on. At 1280x800 it is
+          // +525px. The count and the kinds are what a player compares two
+          // weapons on; the faces are what they want once they have chosen to
+          // look.
+          //
+          // So the summary is the face and the grid is the reveal, closed until
+          // asked. `packageOpen` remembers the answer per section for the life
+          // of the screen: renderEquipment repaints this pane on every choice,
+          // and a fold that forgets is one you re-open after every tap.
+          const kinds = new Set(preview.cards.map(({ ref }) => registries.cards.get(ref.cardId)?.type).filter(Boolean));
+          const summary = preview.cards.length
+            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+              + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
+            : 'Adds no combat cards with the other hand as it stands';
+          const fold = el('details', { class: 'cc-starting-fold' });
+          if (packageOpen.get(section.id)) fold.open = true;
+          fold.addEventListener('toggle', () => packageOpen.set(section.id, fold.open));
+          fold.append(
+            el('summary', { class: 'cc-starting-summary' }, [
+              el('b', { text: summary }),
+              el('small', { class: 'cc-package-context', text: 'Quantities depend on both hands.' }),
+            ]),
             preview.cards.length ? grid : el('p', {}, 'This choice adds no combat cards with the other hand currently selected.'),
-          ]);
-          detailPane.append(packageNode);
+          );
+          detailPane.append(el('section', { class: 'cc-starting-package' }, [
+            el('h4', {}, 'Starting combat cards'),
+            fold,
+          ]));
         }
       };
       const choiceRows = [];

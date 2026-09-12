@@ -3045,6 +3045,42 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    long button's box at 1440 wide (measured: scrollWidth 210 in a 208 box).
    Less side padding than the row's clamp gives it, so the words stay whole. */
 .cz-next { padding-inline:clamp(0.5rem, 5%, 1rem); }
+/* THE WAY ON NEVER SCROLLS OUT OF REACH (Constantine, 2026-09-12: *"the
+   continue button always in view and not requiring too much scrolling"*).
+   MEASURED: with the right-hand section open at 390x844 the creation scroll is
+   2129px against a 784px viewport, and the section's Continue sits at the end
+   of it. A player who had chosen scrolled back through everything to leave.
+   STICKY RATHER THAN MOVED TO THE FOOT, and the reason is the hooks: `#cz-start`
+   and `.cz-next[data-next]` are read by startup-gate, character-creation-check
+   and the contact sheet, and the foot is `.cz-actions`. Relocating the buttons
+   changes what every one of those instruments walks. Sticky changes where the
+   same button PAINTS and nothing about where it lives, so the fix costs no
+   instrument a re-teach.
+   The row carries its own ground: a transparent sticky control with the stage's
+   content sliding under it is unreadable at the moment it matters. */
+.cz-stage .modal-btnrow.end,
+.cz-stage .cc-primary-continue-row {
+  position:sticky; bottom:0; z-index:2;
+  background:linear-gradient(to top, var(--panel) 62%, transparent);
+  padding-block:10px 2px; margin-block-start:8px;
+}
+/* A fold's summary is a control: it takes the tap floor and the kit's ring. */
+.cc-starting-fold > .cc-starting-summary {
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px;
+  min-height:44px; padding:10px 4px; cursor:pointer; list-style:none;
+}
+.cc-starting-fold > .cc-starting-summary::-webkit-details-marker { display:none; }
+.cc-starting-fold > .cc-starting-summary::after {
+  content:'\203A'; margin-inline-start:auto; color:var(--muted);
+  transition:transform 150ms ease-out;
+}
+.cc-starting-fold[open] > .cc-starting-summary::after { transform:rotate(90deg); }
+.cc-starting-fold > .cc-starting-summary b { color:var(--gold); }
+.cc-starting-fold > .cc-starting-summary .cc-package-context { margin:0; }
+.reduced-motion .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+@media (prefers-reduced-motion: reduce) {
+  .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+}
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
