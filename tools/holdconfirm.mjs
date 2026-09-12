@@ -478,20 +478,52 @@ async function main() {
     return true;
   }
 
-  // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
-  // first tap selects, the second is swallowed as an information tap, the
-  // third reaches the card's own choose) — measured 2026-09-11, a finding
-  // for the owner and not this tool's to hide. The tool presses as many
-  // times as a thumb has to, stops the moment the Smith's button says an
-  // item is selected, and says how many it took.
-  const selectSmithCandidate = async (p) => {
-    let taps = 0;
-    for (; taps < 3; taps++) {
-      await press(p, 30); await wait(300);
-      if (await ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`)) { taps++; break; }
+  // A SMITH CANDIDATE TAKES EXACTLY TWO TOUCH TAPS, and this helper is where
+  // that number is held to (Constantine, 2026-09-12: *"it should be two taps.
+  // the first selects and the information icon (i) should appear after the set
+  // delay ... the second tap should select the card"*).
+  //
+  // THE COUNT HAS BEEN WRONG IN BOTH DIRECTIONS, so the helper pins it from
+  // both sides rather than reporting whatever it finds:
+  //   THREE (before #980) — cardInspection swallowed the selecting tap AND the
+  //     one after it, reserving the second for an information button nobody
+  //     had asked for. Measured here on 2026-09-11.
+  //   ONE (#980 through 2026-09-12) — the card was handed the first tap
+  //     outright (`actionOwnsTouch`), which bought the count by spending the
+  //     selecting beat: a thumb committed to a candidate it had not been shown.
+  //
+  // So this returns the count AND checks the shape of each beat: after tap one
+  // the card must be lit and the Smith must still hold nothing; after tap two
+  // the Smith must hold it. A tool that only counted would pass on the
+  // one-tap regression, which is the one that cost a player a choice.
+  const smithHolds = () => ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`);
+  const cardIsLit = () => ev(`!!document.querySelector('.smith-candidate-card.inspection-selected')`);
+  const selectSmithCandidate = async (p, { assert = null } = {}) => {
+    await press(p, 30); await wait(300);
+    const litAfterOne = await cardIsLit();
+    const heldAfterOne = await smithHolds();
+    if (assert) {
+      assert('the first tap on a Smith candidate lights it and chooses nothing',
+        litAfterOne && !heldAfterOne,
+        `lit=${litAfterOne} smith-holds-it=${heldAfterOne}`);
     }
-    if (taps > 1) console.log(`    (the Smith candidate took ${taps} touch taps to select — cardInspection swallows the first two)`);
-    return taps;
+    if (heldAfterOne) {
+      console.log('    (REGRESSION: one tap chose the Smith candidate — the selecting beat was spent)');
+      return 1;
+    }
+    await press(p, 30); await wait(300);
+    const heldAfterTwo = await smithHolds();
+    if (assert) {
+      assert('the second tap on a lit Smith candidate is the one that chooses it',
+        heldAfterTwo, `smith-holds-it=${heldAfterTwo}`);
+    }
+    if (!heldAfterTwo) {
+      // The old three-tap shape, if it ever comes back: say so by name rather
+      // than pressing a third time and reporting success.
+      console.log('    (REGRESSION: two taps did not choose the Smith candidate — a tap is being swallowed)');
+      return 3;
+    }
+    return 2;
   };
 
   async function openShot(state, extra = {}) {
@@ -1503,7 +1535,7 @@ async function main() {
       await openShot('rest', { shotSmithingStones: 1 });
       await press(await pointOf('#smith-opt'), 30); await wait(300);
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
-      await selectSmithCandidate(await pointOf('.smith-candidate-card'));
+      await selectSmithCandidate(await pointOf('.smith-candidate-card'), { assert: ok });
       const ready = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
         nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
         hold: b.dataset.optionHold, holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint')

@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-12
+
+- **Every card answers the same two taps** ([#998](https://github.com/cehinds/AshenSpire/pull/998), `0.7.1.8`). Tap a card once and it lights up, with the small i appearing beside it a moment later; tap it again — or press and hold it — and it does the thing you came for. That is now true of every card in the game. Two recent changes had pulled it apart: choosing an armament at the Smith and arming a card to burn at the merchant had started acting on the *first* tap, so you committed to a card before you had been shown it, and a card whose text was cut short opened its information straight from the small arrow in its corner, which no other card did. The arrow now selects the card like a tap anywhere else on it, and the i is the one way in to a card's full information everywhere. Reading a card and then tapping it no longer loses that tap. The merchant's burn shelf gains the green confirm button the loot screen and the Smith already had, so burning a card can be done with a second tap, a hold, or the button.
+
 ## 2026-09-11
 
 - **Levelling and the merchant catch up with the tripled cinders** ([#993](https://github.com/cehinds/AshenSpire/pull/993), `0.7.1.7`). Cinder rewards were tripled a week ago and nothing else moved, so levels at the shrine had become far too cheap — a simulated climb bought 27 of them where the design asks for 10 to 20 — and every price at the merchant was effectively a third of what it was meant to be. A level now starts at 50 cinders and rises by 10 each time, which a 40-run simulation puts back at 15 levels a climb; armaments, weapon arts, cards, relics, flasks and card removal all cost three times what they did, which is exactly the number of fights per purchase they were tuned to before. Selling prices follow automatically, and nothing about how much you earn has changed.

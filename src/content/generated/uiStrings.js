@@ -451,6 +451,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.burn.idle",
+    "extends": "",
+    "short": "SELECT A CARD",
+    "full": "Tap a card to light it; this button burns the one you light.",
+    "tip": ""
+  },
+  {
+    "id": "shop.burn.ready",
+    "extends": "",
+    "short": "BURN {name} ({cost})",
+    "full": "Take {name} out of the deck for good for {cost} cinders.",
+    "tip": ""
+  },
+  {
     "id": "shop.sell.confirm",
     "extends": "",
     "short": "SELL IT",

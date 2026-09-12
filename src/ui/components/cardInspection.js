@@ -115,35 +115,54 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
     info.addEventListener(type, event => event.stopImmediatePropagation());
   }
+  // THE SELECTING BEAT IS SPENT, NOT RESET. This used to zero the count, so a
+  // player who read a card's information and then tapped it had their tap
+  // swallowed as a fresh selection — the card was already lit and the tap did
+  // nothing visible. Reading is something you do TO a selected card; the beat
+  // it stands on is still spent, so the next tap on the face is the action's.
   info.addEventListener('click', event => {
     event.preventDefault(); event.stopImmediatePropagation();
-    touchedIdentity = null; touchTaps = 0;
+    touchedIdentity = identity; touchTaps = 1;
     select(); open(info);
   });
   card.addEventListener('cardinspectioncancelreveal', () => {
     clearTimeout(revealTimer);
     card.classList.remove('inspection-info-visible');
   });
-  // TRUNCATED IS NEVER A DEAD END, AND ON TOUCH THE WAY IN IS VISIBLE
-  // (Constantine's review, 2026-09-11). A face whose text was clipped
-  // (fitCardFace → data-truncated) used to carry a muted `›` drawn by CSS —
-  // a hint a mouse could hover but a thumb could not act on, since the `i`
-  // only shows once the card is selected. The chevron is the control now: a
-  // tap-floor box in the corner the `›` sat in, shown only on a truncated
-  // face (kit.css), opening the same inspect door the `i` opens. It swallows
-  // its own pointer and touch so the card's tap accounting never sees it.
+  // TRUNCATED IS NEVER A DEAD END, AND IT IS STILL THE SAME TWO BEATS
+  // (Constantine, 2026-09-12: *"it should still select and show the (i) button
+  // for more information. all cards should react this way"*).
+  //
+  // A face whose text is clipped (fitCardFace → data-truncated) carries a `›`
+  // in its corner. It began as a muted CSS hint a thumb could not act on;
+  // #987 made it a control that opened the inspect door on ONE tap, and that
+  // is the half that was wrong — it gave one kind of card a private shortcut
+  // past the selecting beat every other card owes, so the same gesture meant
+  // two different things depending on whether a card's text happened to fit.
+  //
+  // The chevron is still a real tap-floor control, and what it does now is
+  // what a tap on the card's own face does: SELECT, draw the selection border,
+  // and reveal the `i` after the authored delay. The `i` is the one door into
+  // information, on every card, truncated or not. The chevron's job is to say
+  // "there is more here" somewhere a thumb can reach — not to be a second
+  // door with its own rules.
+  //
+  // It still swallows its own pointer and touch so the card's tap accounting
+  // never sees it; the chevron begins the two beats rather than spending one.
   const more = document.createElement('button');
   more.type = 'button';
   more.className = 'card-more-button';
   more.textContent = '›';
-  more.setAttribute('aria-label', `Read the full text of ${title}`);
+  more.setAttribute('aria-label', `Select ${title} to read its full text`);
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
     more.addEventListener(type, event => event.stopImmediatePropagation());
   }
   more.addEventListener('click', event => {
     event.preventDefault(); event.stopImmediatePropagation();
-    touchedIdentity = null; touchTaps = 0;
-    select(); open(more);
+    // The chevron IS the selecting beat, so it spends it rather than zeroing
+    // the count: the next tap on the face is the card's own act.
+    touchedIdentity = identity; touchTaps = 1;
+    select(); revealInfo();
   });
   card.append(info, more);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
@@ -161,8 +180,31 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
       // place under a thumb already on the glass. Both the delay and the fade
       // are authored in balance.ui.equipmentCard.info.
       revealInfo();
-      if (!actionOwnsTouch && (touchTaps === 2 || (touchTaps === 1 && !touchSelectionSafe))) {
-        // Selection/information taps cannot reach buy, equip or play handlers.
+      // TWO TAPS, AND THE SECOND ONE IS THE ACTION'S (Constantine, 2026-09-12:
+      // *"it should be two taps. the first selects and the information icon (i)
+      // should appear after the set delay ... the second tap should select the
+      // card or press and hold should work as well"*).
+      //
+      // THIS LINE USED TO SWALLOW TWO, and that is the defect #980 answered
+      // from the wrong end. `touchTaps === 2` reserved the second tap for the
+      // information button nobody had asked for, so a card's own act — choose
+      // this candidate, arm this burn — could only be reached on the THIRD.
+      // #980 fixed the count by handing tap ONE to the action (`actionOwnsTouch`
+      // on the Smith and the merchant), which cost the selecting beat: a thumb
+      // committed to a candidate it had not yet been shown.
+      //
+      // The rule now is the one he asked for, and it is the same rule for every
+      // card that has an act: THE FIRST TAP SELECTS AND NOTHING ELSE; every tap
+      // after it on the SAME card reaches the host's own handler. The `i` the
+      // first tap reveals is a door beside the act, never in front of it, and a
+      // press-and-hold is unaffected — it never came through `click` at all.
+      //
+      // `actionOwnsTouch` survives for the surfaces with no selecting beat to
+      // spend (a card in the combat hand, the reward chooser whose click only
+      // selects); `touchSelectionSafe` still lets a card whose act needs a
+      // target keep its first tap.
+      if (!actionOwnsTouch && touchTaps === 1 && !touchSelectionSafe) {
+        // The selecting tap cannot reach buy, equip, burn or play handlers.
         event.preventDefault(); event.stopImmediatePropagation();
       }
     } else if (readOnly) open(card);
