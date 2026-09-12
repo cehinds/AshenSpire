@@ -1,4 +1,48 @@
 {
+  "standardHeight": "2.75rem",
+  "heightMultipliers": {
+    "standard": 1,
+    "tall": 1.5,
+    "double": 2
+  },
+  "sizes": {
+    "third-standard": {
+      "width": "third",
+      "height": "standard"
+    },
+    "third-tall": {
+      "width": "third",
+      "height": "tall"
+    },
+    "third-double": {
+      "width": "third",
+      "height": "double"
+    },
+    "half-standard": {
+      "width": "half",
+      "height": "standard"
+    },
+    "half-tall": {
+      "width": "half",
+      "height": "tall"
+    },
+    "half-double": {
+      "width": "half",
+      "height": "double"
+    },
+    "full-standard": {
+      "width": "full",
+      "height": "standard"
+    },
+    "full-tall": {
+      "width": "full",
+      "height": "tall"
+    },
+    "full-double": {
+      "width": "full",
+      "height": "double"
+    }
+  },
   "presets": {
     "quarter": 25,
     "third": 30,

@@ -87,3 +87,7 @@ The generated hud-config.json contains the complete editable preview defaults. C
 ## Shared button widths
 
 Button width is a named presentation preset, not the length of its text. button-widths.json exposes quarter=25%, third=30%, half=50% and full=100%, with half-width choices by default. These percentages are relative to the owning action region: they equal vw only when the region fills the viewport. Sibling options use one preset and align their edges. Narrow hosts preserve the shared width and wrap labels when needed. Header exit and compact stepper/icon controls use the icon-size exception. Footer buttons share the available width equally after subtracting gaps; a single footer action fills the region. WCB0–WCB4 define the shared contract; W1 workspaces consume it.
+
+## Nine standard button sizes
+
+button-widths.json defines nine size IDs: third-standard, third-tall, third-double, half-standard, half-tall, half-double, full-standard, full-tall and full-double. Widths are 30%, 50% and 100% of the owning region; heights are the configured standardHeight multiplied by 1, 1.5 or 2. The default standard height is 2.75rem. Host-relative percentages become vw only for a viewport-wide host; height uses a readable shared token rather than shrinking with the viewport. The quarter-width option and compact icon size remain explicit additional variants. All values reside in shared configuration. Equal footer shares subtract gaps before sizing. Proficiency selection uses full-double within its column; category navigation uses full-standard.

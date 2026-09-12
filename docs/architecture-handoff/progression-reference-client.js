@@ -18,7 +18,7 @@
     const cfg = config();
     const value = Math.min(entry.required, entry.progress + (state.awards[entry.id] || 0));
     const percent = entry.required > 0 ? Math.max(cfg.progressMinimum, Math.min(cfg.progressMaximum, value / entry.required * cfg.progressMaximum)) : cfg.progressMinimum;
-    return `<div class="pg-meter-group" data-component="WGP2"><div class="pg-fact"><span>Practice</span><span>${value} / ${entry.required}</span></div><div class="pg-meter" role="progressbar" aria-label="${escape(entry.name)} practice" aria-valuemin="${cfg.progressMinimum}" aria-valuemax="${entry.required}" aria-valuenow="${value}"><span style="width:${percent}%"></span></div></div>`;
+    return `<div class="pg-meter-group" data-component="WGP2"><div class="pg-meter" role="progressbar" aria-label="${escape(entry.name)} practice" aria-valuemin="${cfg.progressMinimum}" aria-valuemax="${entry.required}" aria-valuenow="${value}"><span style="width:${percent}%"></span></div><span class="pg-progress-value">${value} / ${entry.required}</span></div>`;
   }
   function techniques(entry,state) {
     return `<section data-component="WGP3"><h4>Known techniques</h4>${entry.techniques.filter(item => item.known || state.showLockedTechniques).map(item => `<div class="pg-fact"><span>${item.known ? escape(item.name) : 'Undiscovered'}</span><span>${item.known ? 'Available' : 'Locked'}</span></div>`).join('')}</section>`;
@@ -33,7 +33,7 @@
   }
   function styleTokens() {
     const cfg=config();
-    return Object.entries({'bg':cfg.colors.background,'inset':cfg.colors.inset,'text':cfg.colors.text,'muted':cfg.colors.muted,'gold':cfg.colors.gold,'progress':cfg.colors.progress,'danger':cfg.colors.danger,'gap':cfg.layout.gap,'padding':cfg.layout.inset,'meter-height':cfg.layout.meterHeight}).map(([name,value])=>`--pg-${name}:${escape(value)}`).join(';');
+    return Object.entries({'bg':cfg.colors.background,'inset':cfg.colors.inset,'text':cfg.colors.text,'muted':cfg.colors.muted,'gold':cfg.colors.gold,'progress':cfg.colors.progress,'danger':cfg.colors.danger,'gap':cfg.layout.gap,'padding':cfg.layout.inset,'meter-height':cfg.layout.meterHeight,'button-height':cfg.layout.standardButtonHeight,'tile-multiplier':cfg.layout.tileHeightMultiplier}).map(([name,value])=>`--pg-${name}:${escape(value)}`).join(';');
   }
   function controls(state,entry) {
     const cfg=config(),refs=state.id.startsWith('WGP')?({WGP0:['WGP1','WGP2','WGP3','WGP4'],WGP1:['WCI1','WGP2'],WGP2:['WCM2'],WGP3:['WCF4'],WGP4:['WCF4']}[state.id]||[]):['WGP1','WGP2','WGP3','WGP4','WCB4','WCB5'];

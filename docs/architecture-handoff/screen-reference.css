@@ -19,3 +19,6 @@ dialog.inspector[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;h
 .reference-shell>footer>button:only-child{width:100%;flex-basis:100%}
 .reference-shell>header>button[data-width=icon]{width:var(--button-icon);flex:0 0 var(--button-icon)}
 .reference-record:has(>button~button)>button[data-width]{width:var(--button-third);flex-basis:var(--button-third);min-width:0}
+.reference-shell button[data-size$="-standard"]{height:calc(var(--button-height) * var(--button-height-standard))}
+.reference-shell button[data-size$="-tall"]{height:calc(var(--button-height) * var(--button-height-tall))}
+.reference-shell button[data-size$="-double"]{height:calc(var(--button-height) * var(--button-height-double))}

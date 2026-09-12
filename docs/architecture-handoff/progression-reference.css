@@ -30,3 +30,26 @@
 .pg-host>[hidden]{display:none!important}
 @container (max-width:42rem){.pg-body{grid-template-columns:1fr}.pg-body>nav,.pg-list{display:none}.pg-mobile-navigation{display:flex;gap:var(--pg-gap)}.pg-mobile-navigation select{flex:1;width:0}.pg-details{max-height:60vh}}
 @media(prefers-reduced-motion:reduce){.pg-meter>span{transition:none}}
+
+/* Shared baseline, full-column widths, and separate navigation lanes. */
+.pg-body{gap:0;align-items:start}
+.pg-body>nav,.pg-body>.pg-list{align-self:stretch;padding-inline-end:var(--pg-gap);border-inline-end:.0625rem solid var(--pg-gold)}
+.pg-body>.pg-list,.pg-body>.pg-details{padding-inline-start:var(--pg-gap)}
+.pg-body>nav>button{box-sizing:border-box;width:100%;height:var(--pg-button-height);margin:0}
+.pg-list .pg-list-row,.pg-standalone .pg-list-row{box-sizing:border-box;width:100%;height:calc(var(--pg-button-height) * var(--pg-tile-multiplier));display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:var(--pg-gap);margin:0}
+.pg-list-row .pg-fact{margin:0;align-items:center}
+.pg-list-row .pg-fact>span:first-child{min-width:0;overflow-wrap:anywhere}
+.pg-list-row .pg-fact>span:last-child{white-space:nowrap}
+.pg-meter-group{display:grid;grid-template-columns:minmax(0,1fr) max-content;gap:var(--pg-gap);align-items:center}
+.pg-progress-value{white-space:nowrap;font-variant-numeric:tabular-nums;text-align:right}
+.pg-details>.pg-identity{margin:0;min-height:var(--pg-button-height);align-items:center}
+@container (max-width:42rem){.pg-body>.pg-details{padding-inline-start:0}.pg-mobile-navigation{padding-block-end:var(--pg-gap);margin-block-end:var(--pg-gap);border-bottom:.0625rem solid var(--pg-gold)}.pg-mobile-navigation select{height:var(--pg-button-height)}}
+.pg-body{grid-template-columns:minmax(8rem,1fr) minmax(8rem,1fr) minmax(0,2fr)}
+.pg-body>nav,.pg-body>.pg-list{padding-inline:var(--pg-gap)}
+@container (max-width:42rem){.pg-body{grid-template-columns:1fr}}
+
+/* One body inset owns the top baseline; selection never changes outer bounds. */
+.pg-body>nav,.pg-body>.pg-list,.pg-body>.pg-details{margin-block:0;padding-block:0;align-self:stretch}
+.pg-body>nav>button,.pg-list>.pg-list-row{margin-block:0;transform:none}
+.pg-workspace [aria-pressed=true]{outline:none;box-shadow:inset 0 0 0 .125rem var(--pg-gold)}
+.pg-body>.pg-details>.pg-identity{margin-block:0;padding-inline:.6rem;box-sizing:border-box}

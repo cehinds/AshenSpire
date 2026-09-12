@@ -9,17 +9,20 @@ WP identifiers describe composable parts, not additional screen families. Every 
 **Wide**
 
 ```text
-┌──────────────────────────────────────────────┐
-│ Proficiencies                             [×] │
-├──────────┬────────────┬───────────────────────┤
-│ Weapons  │ Swords  3  │ Swords · Rank 3       │
-│ Skills   │ Bows    2  │ [Progress──────────]  │
-│          │            │ Next benefit          │
-│          │            │ Known techniques      │
-│          │            │ Recent practice       │
-├──────────┴────────────┴───────────────────────┤
-│ [                  Back                   ] │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Proficiencies                                                        [×] │
+├──────────────────┬──────────────────┬────────────────────────────────────┤
+│ [    Weapons   ] │ ┌──────────────┐ │ Swords                      Rank 3 │
+│ [    Skills    ] │ │ Swords     3 │ │ [████████░░░░░░░░░░░░░░]    42/100 │
+│                  │ │ [██░] 42/100 │ │ Next benefit                       │
+│                  │ └──────────────┘ │ Known techniques                   │
+│                  │ ┌──────────────┐ │ Recent practice                    │
+│                  │ │ Bows       2 │ │                                    │
+│                  │ │ [██░] 68/100 │ │                                    │
+│                  │ └──────────────┘ │                                    │
+├──────────────────┴──────────────────┴────────────────────────────────────┤
+│ [                                 Back                                 ] │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -33,8 +36,8 @@ WP identifiers describe composable parts, not additional screen families. Every 
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -57,8 +60,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -82,8 +85,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -106,6 +109,13 @@ category = ResolveCategoryOrDefault(config.progression.categories, config.progre
 entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
+// Columns share a top anchor; category buttons and tiles never stretch to fill height.
+SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
+SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
+SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
+// Category and tile tracks have equal width and equal horizontal insets.
+UseUniformWidthWithinEachColumn(); UseSharedColumnInset(config.progression.layout.inset)
+AlignColumnsToTop(); SeparateColumnsWithVerticalRules()
 Compose(WGP1, entries); Compose(WGP2, selected); Compose(WGP3, selected); Compose(WGP4, selected)
 // Compact hosts replace navigation columns with dropdowns; retain the same selected ID.
 AdaptNavigationToHost(config.progression.layout.compactBreakpoint)
@@ -131,17 +141,20 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-┌──────────────────────────────────────────────┐
-│ Proficiencies                             [×] │
-├──────────┬────────────┬───────────────────────┤
-│ Weapons  │ Swords  3  │ Swords · Rank 3       │
-│ Skills   │ Bows    2  │ [Progress──────────]  │
-│          │            │ Next benefit          │
-│          │            │ Known techniques      │
-│          │            │ Recent practice       │
-├──────────┴────────────┴───────────────────────┤
-│ [                  Back                   ] │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Proficiencies                                                        [×] │
+├──────────────────┬──────────────────┬────────────────────────────────────┤
+│ [    Weapons   ] │ ┌──────────────┐ │ Swords                      Rank 3 │
+│ [    Skills    ] │ │ Swords     3 │ │ [████████░░░░░░░░░░░░░░]    42/100 │
+│                  │ │ [██░] 42/100 │ │ Next benefit                       │
+│                  │ └──────────────┘ │ Known techniques                   │
+│                  │ ┌──────────────┐ │ Recent practice                    │
+│                  │ │ Bows       2 │ │                                    │
+│                  │ │ [██░] 68/100 │ │                                    │
+│                  │ └──────────────┘ │                                    │
+├──────────────────┴──────────────────┴────────────────────────────────────┤
+│ [                                 Back                                 ] │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -155,8 +168,8 @@ On dispose: release timers, observers and events
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -179,8 +192,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -204,8 +217,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -228,6 +241,13 @@ category = ResolveCategoryOrDefault(config.progression.categories, config.progre
 entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
+// Columns share a top anchor; category buttons and tiles never stretch to fill height.
+SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
+SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
+SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
+// Category and tile tracks have equal width and equal horizontal insets.
+UseUniformWidthWithinEachColumn(); UseSharedColumnInset(config.progression.layout.inset)
+AlignColumnsToTop(); SeparateColumnsWithVerticalRules()
 Compose(WGP1, entries); Compose(WGP2, selected); Compose(WGP3, selected); Compose(WGP4, selected)
 // Compact hosts replace navigation columns with dropdowns; retain the same selected ID.
 AdaptNavigationToHost(config.progression.layout.compactBreakpoint)
@@ -254,17 +274,20 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-┌──────────────────────────────────────────────┐
-│ Proficiencies                             [×] │
-├──────────┬────────────┬───────────────────────┤
-│ Weapons  │ Swords  3  │ Swords · Rank 3       │
-│ Skills   │ Bows    2  │ [Progress──────────]  │
-│          │            │ Next benefit          │
-│          │            │ Known techniques      │
-│          │            │ Recent practice       │
-├──────────┴────────────┴───────────────────────┤
-│ [                  Back                   ] │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│ Proficiencies                                                        [×] │
+├──────────────────┬──────────────────┬────────────────────────────────────┤
+│ [    Weapons   ] │ ┌──────────────┐ │ Swords                      Rank 3 │
+│ [    Skills    ] │ │ Swords     3 │ │ [████████░░░░░░░░░░░░░░]    42/100 │
+│                  │ │ [██░] 42/100 │ │ Next benefit                       │
+│                  │ └──────────────┘ │ Known techniques                   │
+│                  │ ┌──────────────┐ │ Recent practice                    │
+│                  │ │ Bows       2 │ │                                    │
+│                  │ │ [██░] 68/100 │ │                                    │
+│                  │ └──────────────┘ │                                    │
+├──────────────────┴──────────────────┴────────────────────────────────────┤
+│ [                                 Back                                 ] │
+└──────────────────────────────────────────────────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -278,8 +301,8 @@ On dispose: release timers, observers and events
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -302,8 +325,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -327,8 +350,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 │ Proficiencies          [×] │
 │ [Weapons ▾]  [Swords ▾]   │
 ├───────────────────────────┤
-│ Swords · Rank 3           │
-│ [Progress──────────────]  │
+│ Swords            Rank 3  │
+│ [████░░░░░░]      42/100  │
 │ Next benefit              │
 │ Known techniques          │
 │ Recent practice           │
@@ -351,6 +374,13 @@ category = ResolveCategoryOrDefault(config.progression.categories, config.progre
 entries = ProjectKnownProficiencies(character, category)
 selected = ResolveStableSelection(entries)
 ComposeW1Shell(title=config.progression.labels.title)
+// Columns share a top anchor; category buttons and tiles never stretch to fill height.
+SetCategoryButtonHeight(config.progression.layout.standardButtonHeight)
+SetTileHeight(config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier)
+SetColumnTracks(config.progression.layout.sidebar, config.progression.layout.list, config.progression.layout.detail)
+// Category and tile tracks have equal width and equal horizontal insets.
+UseUniformWidthWithinEachColumn(); UseSharedColumnInset(config.progression.layout.inset)
+AlignColumnsToTop(); SeparateColumnsWithVerticalRules()
 Compose(WGP1, entries); Compose(WGP2, selected); Compose(WGP3, selected); Compose(WGP4, selected)
 // Compact hosts replace navigation columns with dropdowns; retain the same selected ID.
 AdaptNavigationToHost(config.progression.layout.compactBreakpoint)
@@ -5029,29 +5059,33 @@ On dispose: release timers, observers and events
 
 ## Wireframe WGP1: Proficiency list row
 
-**Parent: WCF1.** Use cases: Weapon and skill navigation; links WCI1, WGP2. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCF1.** Use cases: Weapon and skill navigation; links WCI1, WGP2; same tile contract in every profile. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-[Name                         Rank]
-[Progress────────────────────────]
+┌───────────────────────────────┐
+│ Name                   Rank 3 │
+│ [████░░░░░░░░]         42/100 │
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP1.root | available list-column width, uniform across all tiles | config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier | owning component slot | top aligned; name inline-start and rank inline-end; progress directly below | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-[Name                         Rank]
-[Progress────────────────────────]
+┌───────────────────────────────┐
+│ Name                   Rank 3 │
+│ [████░░░░░░░░]         42/100 │
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP1.root | available list-column width, uniform across all tiles | config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier | owning component slot | top aligned; name inline-start and rank inline-end; progress directly below | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -5059,13 +5093,15 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Name                         Rank]
-[Progress────────────────────────]
+┌───────────────────────────────┐
+│ Name                   Rank 3 │
+│ [████░░░░░░░░]         42/100 │
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP1.root | available list-column width, uniform across all tiles | config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier | owning component slot | top aligned; name inline-start and rank inline-end; progress directly below | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -5074,13 +5110,15 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-[Name                         Rank]
-[Progress────────────────────────]
+┌───────────────────────────────┐
+│ Name                   Rank 3 │
+│ [████░░░░░░░░]         42/100 │
+└───────────────────────────────┘
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP1.root | available list width | content fit | owning component slot | start aligned; rank at inline end | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP1.root | available list-column width, uniform across all tiles | config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier | owning component slot | top aligned; name inline-start and rank inline-end; progress directly below | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -5088,7 +5126,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 INPUT: immutable component model, owner state, context, layout tokens
 INPUT proficiency summary, selected ID, config.progression
 // Preserve stable selection across categories and host sizes.
-RenderNameAndRank(WCI1, summary); Compose(WGP2, summary)
+tileHeight = config.progression.layout.standardButtonHeight * config.progression.layout.tileHeightMultiplier
+SetUniformTileSize(width=AvailableListColumnWidth(), height=tileHeight)
+RenderInlineNameAndRank(WCI1, summary, alignName=InlineStart(), alignRank=InlineEnd())
+// The next row is a single inline meter/value component, with no extra subtitle.
+ComposeBelow(WGP2, summary)
 OnActivate: SelectProficiency(summary.id)
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
@@ -5096,29 +5138,27 @@ On dispose: release timers, observers and events
 
 ## Wireframe WGP2: Proficiency progress
 
-**Parent: WCM2.** Use cases: List rows, details and award preview; shared meter model. Owner selection propagates to the component; no duplicated selected state.
+**Parent: WCM2.** Use cases: List rows, details and award preview; same inline meter/value layout in wide, compact, SE and S24. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-Practice 42 / 100
-[████████░░░░░░░░░░░░]
+[████████░░░░░░░░]  42/100
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP2.root | available row width; meter takes remaining width after fraction and shared gap | row content-fit; bar thickness=config.progression.layout.meterHeight | owning component slot | meter inline-start and fraction inline-end; vertically centered within the same row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-Practice 42 / 100
-[████████░░░░░░░░░░░░]
+[████████░░░░░░░░]  42/100
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP2.root | available row width; meter takes remaining width after fraction and shared gap | row content-fit; bar thickness=config.progression.layout.meterHeight | owning component slot | meter inline-start and fraction inline-end; vertically centered within the same row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -5126,13 +5166,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Practice 42 / 100
-[████████░░░░░░░░░░░░]
+[████████░░░░░░░░]  42/100
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP2.root | available row width; meter takes remaining width after fraction and shared gap | row content-fit; bar thickness=config.progression.layout.meterHeight | owning component slot | meter inline-start and fraction inline-end; vertically centered within the same row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -5141,13 +5180,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Practice 42 / 100
-[████████░░░░░░░░░░░░]
+[████████░░░░░░░░]  42/100
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGP2.root | available width | config.progression.layout.meterHeight | owning component slot | label start; meter spans host | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGP2.root | available row width; meter takes remaining width after fraction and shared gap | row content-fit; bar thickness=config.progression.layout.meterHeight | owning component slot | meter inline-start and fraction inline-end; vertically centered within the same row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -5156,7 +5194,10 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT accumulated practice, threshold, config.progression
 // Domain projection supplies values; renderer does not award progression.
 fraction = SafeProgressFraction(accumulatedPractice, threshold)
-RenderSharedMeter(WCM2, fraction, config.progression.colors.progress)
+ComposeInlineRow(gap=config.progression.layout.gap)
+RenderSharedMeter(WCM2, fraction, config.progression.colors.progress, thickness=config.progression.layout.meterHeight, width=RemainingRowWidth())
+RenderFractionAtInlineEnd(accumulatedPractice, threshold)
+// No Practice subtitle: the fraction and accessible label already identify progress.
 ProvideAccessibleValueText(accumulatedPractice, threshold)
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events

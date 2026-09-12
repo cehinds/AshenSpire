@@ -1,6 +1,50 @@
 {
   "screens": {
     "buttonWidths": {
+      "standardHeight": "2.75rem",
+      "heightMultipliers": {
+        "standard": 1,
+        "tall": 1.5,
+        "double": 2
+      },
+      "sizes": {
+        "third-standard": {
+          "width": "third",
+          "height": "standard"
+        },
+        "third-tall": {
+          "width": "third",
+          "height": "tall"
+        },
+        "third-double": {
+          "width": "third",
+          "height": "double"
+        },
+        "half-standard": {
+          "width": "half",
+          "height": "standard"
+        },
+        "half-tall": {
+          "width": "half",
+          "height": "tall"
+        },
+        "half-double": {
+          "width": "half",
+          "height": "double"
+        },
+        "full-standard": {
+          "width": "full",
+          "height": "standard"
+        },
+        "full-tall": {
+          "width": "full",
+          "height": "tall"
+        },
+        "full-double": {
+          "width": "full",
+          "height": "double"
+        }
+      },
       "presets": {
         "quarter": 25,
         "third": 30,
@@ -266,6 +310,50 @@
   },
   "components": {
     "buttonWidths": {
+      "standardHeight": "2.75rem",
+      "heightMultipliers": {
+        "standard": 1,
+        "tall": 1.5,
+        "double": 2
+      },
+      "sizes": {
+        "third-standard": {
+          "width": "third",
+          "height": "standard"
+        },
+        "third-tall": {
+          "width": "third",
+          "height": "tall"
+        },
+        "third-double": {
+          "width": "third",
+          "height": "double"
+        },
+        "half-standard": {
+          "width": "half",
+          "height": "standard"
+        },
+        "half-tall": {
+          "width": "half",
+          "height": "tall"
+        },
+        "half-double": {
+          "width": "half",
+          "height": "double"
+        },
+        "full-standard": {
+          "width": "full",
+          "height": "standard"
+        },
+        "full-tall": {
+          "width": "full",
+          "height": "tall"
+        },
+        "full-double": {
+          "width": "full",
+          "height": "double"
+        }
+      },
       "presets": {
         "quarter": 25,
         "third": 30,
@@ -494,11 +582,15 @@
       "height": "min(90vh, 48rem)",
       "inset": "1rem",
       "gap": ".75rem",
-      "sidebar": "10rem",
-      "list": "minmax(10rem, 1fr)",
+      "sidebar": "minmax(0, 1fr)",
+      "list": "minmax(0, 1fr)",
       "detail": "minmax(0, 2fr)",
       "meterHeight": ".6rem",
-      "compactBreakpoint": "42rem"
+      "compactBreakpoint": "42rem",
+      "standardButtonHeight": "2.75rem",
+      "tileHeightMultiplier": 2,
+      "categoryButtonSize": "full-standard",
+      "tileButtonSize": "full-double"
     },
     "colors": {
       "background": "#241c13",
