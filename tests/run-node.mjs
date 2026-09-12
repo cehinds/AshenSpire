@@ -1002,6 +1002,12 @@ try {
   console.error('FAIL The card action service:', error);
 }
 try {
+  await import('./playing-card-model.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The playing card model:', error);
+}
+try {
   await import('./starting-equipment-preview.test.mjs');
 } catch (error) {
   zoomExtra++;
