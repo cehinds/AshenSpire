@@ -1,7 +1,7 @@
 [
   {
-    "id": "WP0",
-    "name": "Component contract",
+    "id": "WCB0",
+    "name": "Buttons and inspection",
     "parent": null,
     "orientations": [
       "wide",
@@ -10,9 +10,9 @@
     ]
   },
   {
-    "id": "WP1",
+    "id": "WCB1",
     "name": "Inspect control",
-    "parent": "WP0",
+    "parent": "WCB0",
     "orientations": [
       "wide",
       "compact",
@@ -20,139 +20,9 @@
     ]
   },
   {
-    "id": "WP2",
-    "name": "Nameplate",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP3",
-    "name": "Sprite / artwork",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP4",
-    "name": "Health meter",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP5",
-    "name": "Resource meter",
-    "parent": "WP4",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP6",
-    "name": "Buildup meter",
-    "parent": "WP5",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP7",
-    "name": "Stance strip",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP8",
-    "name": "Status icon",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP9",
-    "name": "Icon overflow",
-    "parent": "WP8",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP10",
-    "name": "Intent indicator",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP11",
-    "name": "Defense badge",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP12",
-    "name": "Aura layer",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP13",
-    "name": "Buff layer",
-    "parent": "WP12",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP14",
-    "name": "Metadata footer",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP15",
+    "id": "WCB2",
     "name": "Context action",
-    "parent": "WP0",
+    "parent": "WCB0",
     "orientations": [
       "wide",
       "compact",
@@ -160,49 +30,9 @@
     ]
   },
   {
-    "id": "WP16",
-    "name": "Ordered active stack",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP17",
-    "name": "Selection effect",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP18",
-    "name": "Inspector facts",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP19",
-    "name": "Tooltip presenter",
-    "parent": "WP0",
-    "orientations": [
-      "wide",
-      "compact",
-      "portrait"
-    ]
-  },
-  {
-    "id": "WP20",
+    "id": "WCB3",
     "name": "Primary / confirmation button",
-    "parent": "WP0",
+    "parent": "WCB0",
     "orientations": [
       "wide",
       "compact",
@@ -210,9 +40,9 @@
     ]
   },
   {
-    "id": "WP21",
+    "id": "WCB4",
     "name": "Back / cancel button",
-    "parent": "WP0",
+    "parent": "WCB0",
     "orientations": [
       "wide",
       "compact",
@@ -220,9 +50,239 @@
     ]
   },
   {
-    "id": "WP22",
+    "id": "WCB5",
     "name": "Exit button",
-    "parent": "WP21",
+    "parent": "WCB0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCF0",
+    "name": "Component foundations",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCF1",
+    "name": "Component contract",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCF2",
+    "name": "Ordered active stack",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCF3",
+    "name": "Selection effect",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCF4",
+    "name": "Inspector facts",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCI0",
+    "name": "Identity and artwork",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCI1",
+    "name": "Nameplate",
+    "parent": "WCI0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCI2",
+    "name": "Sprite / artwork",
+    "parent": "WCI0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCI3",
+    "name": "Metadata footer",
+    "parent": "WCI0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM0",
+    "name": "Meters and statuses",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM1",
+    "name": "Health meter",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM2",
+    "name": "Resource meter",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM3",
+    "name": "Buildup meter",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM4",
+    "name": "Stance strip",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM5",
+    "name": "Status icon",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCM6",
+    "name": "Icon overflow",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCO0",
+    "name": "Combat overlays",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCO1",
+    "name": "Intent indicator",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCO2",
+    "name": "Defense badge",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCO3",
+    "name": "Aura layer",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCO4",
+    "name": "Buff layer",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCT0",
+    "name": "Tooltip components",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WCT1",
+    "name": "Tooltip presenter",
+    "parent": "WCT0",
     "orientations": [
       "wide",
       "compact",
