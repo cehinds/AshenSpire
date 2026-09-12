@@ -26,7 +26,24 @@ WP identifiers describe composable parts, not additional screen families. Every 
 |---|---|---|---|---|---|---|---|---|
 | WCB0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCB0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -71,7 +88,25 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCB1.root | 2.75rem minimum target | 2.75rem minimum target | owning component slot | above owner top-center / above intent when present | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+             (i)
+        {Owning card}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCB1.root | 2.75rem minimum target | 2.75rem minimum target | owning component slot | above owner top-center / above intent when present | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
              (i)
@@ -115,7 +150,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCB2.root | usable host width | minimum target height | owning component slot | below selected card; outside its frame | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[          Use            ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCB2.root | usable host width | minimum target height | owning component slot | below selected card; outside its frame | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [          Use            ]
@@ -158,7 +210,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCB3.root | shared action width | minimum target token | owning component slot | footer right; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[ Confirm ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCB3.root | shared action width | minimum target token | owning component slot | footer right; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [ Confirm ]
@@ -201,7 +270,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCB4.root | shared action width | minimum target token | owning component slot | footer left; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[ Back ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCB4.root | shared action width | minimum target token | owning component slot | footer left; full-width when sole action | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [ Back ]
@@ -244,7 +330,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCB5.root | minimum target token | minimum target token | owning component slot | header top-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[ × ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCB5.root | minimum target token | minimum target token | owning component slot | header top-right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [ × ]
@@ -287,7 +390,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCF0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCF0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -330,7 +450,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCF1.root | host allocation | host allocation | owning component slot | host slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Immutable model} → [View] → Intent
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCF1.root | host allocation | host allocation | owning component slot | host slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Immutable model} → [View] → Intent
@@ -381,7 +518,28 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCF2.root | 100% host width | content-fit, maximum5 rows | owning component slot | below sprite/name | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HP]
+[Resource if active]
+[Buildup if admitted]
+[Stance if active]
+[Icons ... +N]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCF2.root | 100% host width | content-fit, maximum5 rows | owning component slot | below sprite/name | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [HP]
@@ -428,7 +586,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCF3.root | owner visual bounds | owner visual bounds | owning component slot | entire owner assembly including inspect | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{ Glow around complete owner }
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCF3.root | owner visual bounds | owner visual bounds | owning component slot | entire owner assembly including inspect | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 { Glow around complete owner }
@@ -473,7 +648,25 @@ Label          Value
 |---|---|---|---|---|---|---|---|---|
 | WCF4.root | 100% detail pane | content-fit | owning component slot | top-left within detail section | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Label          Value
+Label          Value
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCF4.root | 100% detail pane | content-fit | owning component slot | top-left within detail section | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 Label          Value
@@ -517,7 +710,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCI0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCI0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -560,7 +770,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCI1.root | usable host width | content-fit | owning component slot | registered name slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+       {Entity name}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCI1.root | usable host width | content-fit | owning component slot | registered name slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
        {Entity name}
@@ -603,7 +830,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCI2.root | contained host width | remaining host height | owning component slot | center; combatant baseline bottom | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+       [Artwork]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCI2.root | contained host width | remaining host height | owning component slot | center; combatant baseline bottom | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
        [Artwork]
@@ -646,7 +890,24 @@ Rarity               Owned: n
 |---|---|---|---|---|---|---|---|---|
 | WCI3.root | 100% usable card width | 10% card height | owning component slot | card bottom band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+Rarity               Owned: n
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCI3.root | 100% usable card width | 10% card height | owning component slot | card bottom band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 Rarity               Owned: n
@@ -689,7 +950,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -732,7 +1010,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM1.root | 100% stack width | HP height token (demo1.4rem) | owning component slot | below sprite/name | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HP ================= 32/40]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM1.root | 100% stack width | HP height token (demo1.4rem) | owning component slot | below sprite/name | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [HP ================= 32/40]
@@ -775,7 +1070,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM2.root | 100% stack width | 0.5 × HP height | owning component slot | after HP in ordered active stack | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Resource =========== 6/10]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM2.root | 100% stack width | 0.5 × HP height | owning component slot | after HP in ordered active stack | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Resource =========== 6/10]
@@ -818,7 +1130,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM3.root | 100% stack width | 0.5 × HP height | owning component slot | after resources | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Buildup ============ 65/100]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM3.root | 100% stack width | 0.5 × HP height | owning component slot | after resources | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Buildup ============ 65/100]
@@ -861,7 +1190,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM4.root | 100% stack width | 1 × HP height | owning component slot | after buildup / before icons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[       {Stance}          ]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM4.root | 100% stack width | 1 × HP height | owning component slot | after buildup / before icons | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [       {Stance}          ]
@@ -904,7 +1250,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM5.root | 1.575rem | 1.575rem | owning component slot | ordered bottom icon row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[◆]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM5.root | 1.575rem | 1.575rem | owning component slot | ordered bottom icon row | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [◆]
@@ -947,7 +1310,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCM6.root | same as WCM5 | same as WCM5 | owning component slot | final visible icon slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[◆] [☠] [+4]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCM6.root | same as WCM5 | same as WCM5 | owning component slot | final visible icon slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [◆] [☠] [+4]
@@ -990,7 +1370,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCO0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -1033,7 +1430,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCO1.root | content-fit | 2.8rem minimum | owning component slot | above sprite; below Inspect | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[⚔ Attack · 12]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO1.root | content-fit | 2.8rem minimum | owning component slot | above sprite; below Inspect | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [⚔ Attack · 12]
@@ -1076,7 +1490,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCO2.root | 3.5rem minimum | 3.5rem minimum | owning component slot | sprite50% height; player right/enemy left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[◇ 8]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO2.root | 3.5rem minimum | 3.5rem minimum | owning component slot | sprite50% height; player right/enemy left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [◇ 8]
@@ -1119,7 +1550,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCO3.root | 100% sprite width | 100% sprite height | owning component slot | sprite bounds, behind artwork | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{ Aura behind sprite }
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO3.root | 100% sprite width | 100% sprite height | owning component slot | sprite bounds, behind artwork | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 { Aura behind sprite }
@@ -1162,7 +1610,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCO4.root | sprite width minus shared inset | 100% sprite height | owning component slot | sprite bounds, above artwork | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{ Buff over sprite }
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCO4.root | sprite width minus shared inset | 100% sprite height | owning component slot | sprite bounds, above artwork | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 { Buff over sprite }
@@ -1205,7 +1670,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCT0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCT0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -1252,7 +1734,26 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WCT1.root | WT1/WT2/WT3 token | content-fit | owning component slot | above trigger; flip/shift within viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Title / explanation]
+          ▽
+       [Trigger]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WCT1.root | WT1/WT2/WT3 token | content-fit | owning component slot | above trigger; flip/shift within viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Title / explanation]
@@ -1297,7 +1798,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -1340,7 +1858,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Battlefield stage]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Battlefield stage]
@@ -1383,7 +1918,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC2.root | slot width | stage height | owning component slot | stage left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Player placement]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC2.root | slot width | stage height | owning component slot | stage left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Player placement]
@@ -1426,7 +1978,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC3.root | slot widths | stage height | owning component slot | stage right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Enemy placements]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC3.root | slot widths | stage height | owning component slot | stage right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Enemy placements]
@@ -1469,7 +2038,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC4.root | 100% | 100% | owning component slot | over battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Target layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC4.root | 100% | 100% | owning component slot | over battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Target layer]
@@ -1512,7 +2098,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC5.root | 100% | config.context | owning component slot | below battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Hand region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC5.root | 100% | config.context | owning component slot | below battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Hand region]
@@ -1555,7 +2158,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC6.root | content-fit | config.footer | owning component slot | bottom-center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Packed action footer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC6.root | content-fit | config.footer | owning component slot | bottom-center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Packed action footer]
@@ -1598,7 +2218,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC7.root | large control | large control | owning component slot | footer first | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Actions remaining]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC7.root | large control | large control | owning component slot | footer first | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Actions remaining]
@@ -1641,7 +2278,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC8.root | small control | small control | owning component slot | footer second | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Draw pile button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC8.root | small control | small control | owning component slot | footer second | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Draw pile button]
@@ -1684,7 +2338,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC9.root | large control | large control | owning component slot | footer center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[End turn button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC9.root | large control | large control | owning component slot | footer center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [End turn button]
@@ -1727,7 +2398,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC10.root | small control | small control | owning component slot | footer fourth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Discard/exhaust button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC10.root | small control | small control | owning component slot | footer fourth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Discard/exhaust button]
@@ -1770,7 +2458,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGC11.root | large control | large control | owning component slot | footer fifth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Potion control]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC11.root | large control | large control | owning component slot | footer fifth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Potion control]
@@ -1813,7 +2518,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -1856,7 +2578,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM1.root | config.mapWidth | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Map viewport]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM1.root | config.mapWidth | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Map viewport]
@@ -1899,7 +2638,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM2.root | map bounds | map bounds | owning component slot | inside viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Map paths]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM2.root | map bounds | map bounds | owning component slot | inside viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Map paths]
@@ -1942,7 +2698,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM3.root | target token | target token | owning component slot | authored graph coordinate | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM3.root | target token | target token | owning component slot | authored graph coordinate | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Node button]
@@ -1985,7 +2758,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM4.root | 100% | config.context | owning component slot | below map | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Node details]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM4.root | 100% | config.context | owning component slot | below map | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Node details]
@@ -2028,7 +2818,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM5.root | content-fit | target token | owning component slot | inside HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Region selector]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM5.root | content-fit | target token | owning component slot | inside HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Region selector]
@@ -2071,7 +2878,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Recenter button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Recenter button]
@@ -2114,7 +2938,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGM7.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Enter node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM7.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Enter node button]
@@ -2157,7 +2998,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -2200,7 +3058,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Dialogue scene]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Dialogue scene]
@@ -2243,7 +3118,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Player portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Player portrait]
@@ -2286,7 +3178,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[NPC portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [NPC portrait]
@@ -2329,7 +3238,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Caption/choice region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Caption/choice region]
@@ -2372,7 +3298,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ5.root | none | none | owning component slot | nonvisual controller | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Speech progression]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ5.root | none | none | owning component slot | nonvisual controller | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Speech progression]
@@ -2415,7 +3358,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Back button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Back button]
@@ -2458,7 +3418,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ7.root | action width | target token | owning component slot | footer middle | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Skip speech button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ7.root | action width | target token | owning component slot | footer middle | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Skip speech button]
@@ -2501,7 +3478,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGQ8.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Continue button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ8.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Continue button]
@@ -2544,7 +3538,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 {Shared family components}
@@ -2587,7 +3598,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Background composition]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Background composition]
@@ -2630,7 +3658,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS2.root | 100% | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Shared HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS2.root | 100% | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Shared HUD]
@@ -2673,7 +3718,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS3.root | content-fit | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HUD identity]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS3.root | content-fit | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [HUD identity]
@@ -2716,7 +3778,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS4.root | remaining | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HUD resource strip]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS4.root | remaining | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [HUD resource strip]
@@ -2759,7 +3838,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS5.root | target token | target token | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[HUD menu button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS5.root | target token | target token | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [HUD menu button]
@@ -2802,7 +3898,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Skyline layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Skyline layer]
@@ -2845,7 +3958,24 @@ On dispose: release timers, observers and events
 |---|---|---|---|---|---|---|---|---|
 | WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+[Floor layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 [Floor layer]

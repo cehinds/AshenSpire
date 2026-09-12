@@ -84,7 +84,51 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 | `WC0.selection.outline` | 24vw | 48vh | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC0.selection.info` | 4vw | 4vh | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ {Registered content      │
+│ slots}                   │
+│ {Availability / reason}  │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC0.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC0.header` | 48vw | 3.84vh | WC0.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC0.header.title` | 30.16vw | 3.84vh | WC0.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC0.header.state` | 13.92vw | 3.84vh | WC0.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC0.art` | 48vw | 15.36vh | WC0.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC0.art.tags` | 46.4vw | 3.072vh | WC0.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC0.body` | 48vw | 15.36vh | WC0.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC0.footer` | 48vw | 3.84vh | WC0.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC0.footer.metadata` | 46.4vw | 3.07vh | WC0.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC0.body.detail1` | 46.4vw | 6.53vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Registered content slots} |
+| `WC0.body.detail2` | 46.4vw | 6.53vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | {Availability / reason} |
+| `WC0.body.blocker` | 46.4vw | 2.3vh | WC0.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC0.selection.outline` | 48vw | 38.4vh | WC0.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC0.selection.info` | 4vw | 4vh | WC0.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -261,7 +305,50 @@ Never branch on entity names or inject executable markup from tags.
 | `WC1.selection.outline` | 24vw | 48vh | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC1.selection.info` | 4vw | 4vh | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Cost / targeting         │
+│ Effects / rules          │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC1.header` | 48vw | 3.84vh | WC1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC1.header.title` | 30.16vw | 3.84vh | WC1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC1.header.state` | 13.92vw | 3.84vh | WC1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC1.art` | 48vw | 15.36vh | WC1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC1.art.tags` | 46.4vw | 3.072vh | WC1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC1.body` | 48vw | 15.36vh | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC1.footer` | 48vw | 3.84vh | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC1.footer.metadata` | 46.4vw | 3.07vh | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC1.body.detail1` | 46.4vw | 6.53vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Cost / targeting |
+| `WC1.body.detail2` | 46.4vw | 6.53vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effects / rules |
+| `WC1.body.blocker` | 46.4vw | 2.3vh | WC1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC1.selection.outline` | 48vw | 38.4vh | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC1.selection.info` | 4vw | 4vh | WC1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -404,7 +491,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC1a.selection.outline` | 24vw | 48vh | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC1a.selection.info` | 4vw | 4vh | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Damage / affected stat   │
+│ Target and effect        │
+│ preview                  │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC1a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC1a.header` | 48vw | 3.84vh | WC1a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC1a.header.title` | 30.16vw | 3.84vh | WC1a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC1a.header.state` | 13.92vw | 3.84vh | WC1a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC1a.art` | 48vw | 15.36vh | WC1a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC1a.art.tags` | 46.4vw | 3.072vh | WC1a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC1a.body` | 48vw | 15.36vh | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC1a.footer` | 48vw | 3.84vh | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC1a.footer.metadata` | 46.4vw | 3.07vh | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC1a.body.detail1` | 46.4vw | 6.53vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / affected stat |
+| `WC1a.body.detail2` | 46.4vw | 6.53vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target and effect preview |
+| `WC1a.body.blocker` | 46.4vw | 2.3vh | WC1a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC1a.selection.outline` | 48vw | 38.4vh | WC1a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC1a.selection.info` | 4vw | 4vh | WC1a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -548,7 +679,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC1b.selection.outline` | 24vw | 48vh | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC1b.selection.info` | 4vw | 4vh | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Defense / utility        │
+│ effects                  │
+│ Target / requirements    │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC1b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC1b.header` | 48vw | 3.84vh | WC1b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC1b.header.title` | 30.16vw | 3.84vh | WC1b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC1b.header.state` | 13.92vw | 3.84vh | WC1b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC1b.art` | 48vw | 15.36vh | WC1b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC1b.art.tags` | 46.4vw | 3.072vh | WC1b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC1b.body` | 48vw | 15.36vh | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC1b.footer` | 48vw | 3.84vh | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC1b.footer.metadata` | 46.4vw | 3.07vh | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC1b.body.detail1` | 46.4vw | 6.53vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / utility effects |
+| `WC1b.body.detail2` | 46.4vw | 6.53vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Target / requirements |
+| `WC1b.body.blocker` | 46.4vw | 2.3vh | WC1b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC1b.selection.outline` | 48vw | 38.4vh | WC1b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC1b.selection.info` | 4vw | 4vh | WC1b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -692,7 +867,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC1c.selection.outline` | 24vw | 48vh | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC1c.selection.info` | 4vw | 4vh | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Persistent effect        │
+│ Trigger / duration       │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC1c.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC1c.header` | 48vw | 3.84vh | WC1c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC1c.header.title` | 30.16vw | 3.84vh | WC1c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC1c.header.state` | 13.92vw | 3.84vh | WC1c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC1c.art` | 48vw | 15.36vh | WC1c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC1c.art.tags` | 46.4vw | 3.072vh | WC1c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC1c.body` | 48vw | 15.36vh | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC1c.footer` | 48vw | 3.84vh | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC1c.footer.metadata` | 46.4vw | 3.07vh | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC1c.body.detail1` | 46.4vw | 6.53vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Persistent effect |
+| `WC1c.body.detail2` | 46.4vw | 6.53vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger / duration |
+| `WC1c.body.blocker` | 46.4vw | 2.3vh | WC1c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC1c.selection.outline` | 48vw | 38.4vh | WC1c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC1c.selection.info` | 4vw | 4vh | WC1c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -835,7 +1053,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC1d.selection.outline` | 24vw | 48vh | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC1d.selection.info` | 4vw | 4vh | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Penalty / consequence    │
+│ Playability / removal    │
+│ rule                     │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC1d.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC1d.header` | 48vw | 3.84vh | WC1d.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC1d.header.title` | 30.16vw | 3.84vh | WC1d.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC1d.header.state` | 13.92vw | 3.84vh | WC1d.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC1d.art` | 48vw | 15.36vh | WC1d.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC1d.art.tags` | 46.4vw | 3.072vh | WC1d.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC1d.body` | 48vw | 15.36vh | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC1d.footer` | 48vw | 3.84vh | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC1d.footer.metadata` | 46.4vw | 3.07vh | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC1d.body.detail1` | 46.4vw | 6.53vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Penalty / consequence |
+| `WC1d.body.detail2` | 46.4vw | 6.53vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
+| `WC1d.body.blocker` | 46.4vw | 2.3vh | WC1d.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC1d.selection.outline` | 48vw | 38.4vh | WC1d.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC1d.selection.info` | 4vw | 4vh | WC1d.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -979,7 +1241,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC1e.selection.outline` | 24vw | 48vh | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC1e.selection.info` | 4vw | 4vh | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Status effect / duration │
+│ Playability / removal    │
+│ rule                     │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC1e.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC1e.header` | 48vw | 3.84vh | WC1e.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC1e.header.title` | 30.16vw | 3.84vh | WC1e.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC1e.header.state` | 13.92vw | 3.84vh | WC1e.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC1e.art` | 48vw | 15.36vh | WC1e.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC1e.art.tags` | 46.4vw | 3.072vh | WC1e.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC1e.body` | 48vw | 15.36vh | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC1e.footer` | 48vw | 3.84vh | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC1e.footer.metadata` | 46.4vw | 3.07vh | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC1e.body.detail1` | 46.4vw | 6.53vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Status effect / duration |
+| `WC1e.body.detail2` | 46.4vw | 6.53vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Playability / removal rule |
+| `WC1e.body.blocker` | 46.4vw | 2.3vh | WC1e.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC1e.selection.outline` | 48vw | 38.4vh | WC1e.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC1e.selection.info` | 4vw | 4vh | WC1e.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1124,7 +1430,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2.selection.outline` | 24vw | 48vh | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2.selection.info` | 4vw | 4vh | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Ownership / quantity     │
+│ Capabilities /           │
+│ requirements             │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2.header` | 48vw | 3.84vh | WC2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2.header.title` | 30.16vw | 3.84vh | WC2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2.header.state` | 13.92vw | 3.84vh | WC2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2.art` | 48vw | 15.36vh | WC2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2.art.tags` | 46.4vw | 3.072vh | WC2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2.body` | 48vw | 15.36vh | WC2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2.footer` | 48vw | 3.84vh | WC2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2.footer.metadata` | 46.4vw | 3.07vh | WC2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2.body.detail1` | 46.4vw | 6.53vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Ownership / quantity |
+| `WC2.body.detail2` | 46.4vw | 6.53vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Capabilities / requirements |
+| `WC2.body.blocker` | 46.4vw | 2.3vh | WC2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2.selection.outline` | 48vw | 38.4vh | WC2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2.selection.info` | 4vw | 4vh | WC2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1268,7 +1618,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2a.selection.outline` | 24vw | 48vh | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2a.selection.info` | 4vw | 4vh | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Slot / requirements      │
+│ Equipped comparison      │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2a.header` | 48vw | 3.84vh | WC2a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2a.header.title` | 30.16vw | 3.84vh | WC2a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2a.header.state` | 13.92vw | 3.84vh | WC2a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2a.art` | 48vw | 15.36vh | WC2a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2a.art.tags` | 46.4vw | 3.072vh | WC2a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2a.body` | 48vw | 15.36vh | WC2a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2a.footer` | 48vw | 3.84vh | WC2a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2a.footer.metadata` | 46.4vw | 3.07vh | WC2a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2a.body.detail1` | 46.4vw | 6.53vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Slot / requirements |
+| `WC2a.body.detail2` | 46.4vw | 6.53vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Equipped comparison |
+| `WC2a.body.blocker` | 46.4vw | 2.3vh | WC2a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2a.selection.outline` | 48vw | 38.4vh | WC2a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2a.selection.info` | 4vw | 4vh | WC2a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1415,7 +1808,52 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2a1.selection.outline` | 24vw | 48vh | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2a1.selection.info` | 4vw | 4vh | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Damage / scaling         │
+│ Hand / requirements      │
+│ Granted card package     │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2a1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2a1.header` | 48vw | 3.84vh | WC2a1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2a1.header.title` | 30.16vw | 3.84vh | WC2a1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2a1.header.state` | 13.92vw | 3.84vh | WC2a1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2a1.art` | 48vw | 15.36vh | WC2a1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2a1.art.tags` | 46.4vw | 3.072vh | WC2a1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2a1.body` | 48vw | 15.36vh | WC2a1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2a1.footer` | 48vw | 3.84vh | WC2a1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2a1.footer.metadata` | 46.4vw | 3.07vh | WC2a1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2a1.body.detail1` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Damage / scaling |
+| `WC2a1.body.detail2` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Hand / requirements |
+| `WC2a1.body.detail3` | 46.4vw | 4.35vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted card package |
+| `WC2a1.body.blocker` | 46.4vw | 2.3vh | WC2a1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2a1.selection.outline` | 48vw | 38.4vh | WC2a1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2a1.selection.info` | 4vw | 4vh | WC2a1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1565,7 +2003,52 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2a2.selection.outline` | 24vw | 48vh | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2a2.selection.info` | 4vw | 4vh | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Defense / resistance     │
+│ Weight / requirements    │
+│ Granted modifiers        │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2a2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2a2.header` | 48vw | 3.84vh | WC2a2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2a2.header.title` | 30.16vw | 3.84vh | WC2a2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2a2.header.state` | 13.92vw | 3.84vh | WC2a2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2a2.art` | 48vw | 15.36vh | WC2a2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2a2.art.tags` | 46.4vw | 3.072vh | WC2a2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2a2.body` | 48vw | 15.36vh | WC2a2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2a2.footer` | 48vw | 3.84vh | WC2a2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2a2.footer.metadata` | 46.4vw | 3.07vh | WC2a2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2a2.body.detail1` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Defense / resistance |
+| `WC2a2.body.detail2` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Weight / requirements |
+| `WC2a2.body.detail3` | 46.4vw | 4.35vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted modifiers |
+| `WC2a2.body.blocker` | 46.4vw | 2.3vh | WC2a2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2a2.selection.outline` | 48vw | 38.4vh | WC2a2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2a2.selection.info` | 4vw | 4vh | WC2a2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1711,7 +2194,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2b.selection.outline` | 24vw | 48vh | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2b.selection.info` | 4vw | 4vh | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Relic effect             │
+│ Acquisition / equip      │
+│ state                    │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2b.header` | 48vw | 3.84vh | WC2b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2b.header.title` | 30.16vw | 3.84vh | WC2b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2b.header.state` | 13.92vw | 3.84vh | WC2b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2b.art` | 48vw | 15.36vh | WC2b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2b.art.tags` | 46.4vw | 3.072vh | WC2b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2b.body` | 48vw | 15.36vh | WC2b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2b.footer` | 48vw | 3.84vh | WC2b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2b.footer.metadata` | 46.4vw | 3.07vh | WC2b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2b.body.detail1` | 46.4vw | 6.53vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Relic effect |
+| `WC2b.body.detail2` | 46.4vw | 6.53vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Acquisition / equip state |
+| `WC2b.body.blocker` | 46.4vw | 2.3vh | WC2b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2b.selection.outline` | 48vw | 38.4vh | WC2b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2b.selection.info` | 4vw | 4vh | WC2b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1855,7 +2382,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2b1.selection.outline` | 24vw | 48vh | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2b1.selection.info` | 4vw | 4vh | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Passive modifiers        │
+│ Affected resources /     │
+│ stats                    │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2b1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2b1.header` | 48vw | 3.84vh | WC2b1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2b1.header.title` | 30.16vw | 3.84vh | WC2b1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2b1.header.state` | 13.92vw | 3.84vh | WC2b1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2b1.art` | 48vw | 15.36vh | WC2b1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2b1.art.tags` | 46.4vw | 3.072vh | WC2b1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2b1.body` | 48vw | 15.36vh | WC2b1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2b1.footer` | 48vw | 3.84vh | WC2b1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2b1.footer.metadata` | 46.4vw | 3.07vh | WC2b1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2b1.body.detail1` | 46.4vw | 6.53vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Passive modifiers |
+| `WC2b1.body.detail2` | 46.4vw | 6.53vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Affected resources / stats |
+| `WC2b1.body.blocker` | 46.4vw | 2.3vh | WC2b1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2b1.selection.outline` | 48vw | 38.4vh | WC2b1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2b1.selection.info` | 4vw | 4vh | WC2b1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -1999,7 +2570,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2b2.selection.outline` | 24vw | 48vh | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2b2.selection.info` | 4vw | 4vh | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Trigger condition        │
+│ Effect / limit /         │
+│ cooldown                 │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2b2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2b2.header` | 48vw | 3.84vh | WC2b2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2b2.header.title` | 30.16vw | 3.84vh | WC2b2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2b2.header.state` | 13.92vw | 3.84vh | WC2b2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2b2.art` | 48vw | 15.36vh | WC2b2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2b2.art.tags` | 46.4vw | 3.072vh | WC2b2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2b2.body` | 48vw | 15.36vh | WC2b2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2b2.footer` | 48vw | 3.84vh | WC2b2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2b2.footer.metadata` | 46.4vw | 3.07vh | WC2b2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2b2.body.detail1` | 46.4vw | 6.53vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Trigger condition |
+| `WC2b2.body.detail2` | 46.4vw | 6.53vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Effect / limit / cooldown |
+| `WC2b2.body.blocker` | 46.4vw | 2.3vh | WC2b2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2b2.selection.outline` | 48vw | 38.4vh | WC2b2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2b2.selection.info` | 4vw | 4vh | WC2b2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -2143,7 +2758,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2c.selection.outline` | 24vw | 48vh | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2c.selection.info` | 4vw | 4vh | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Charges / quantity       │
+│ Use effect / eligibility │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2c.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2c.header` | 48vw | 3.84vh | WC2c.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2c.header.title` | 30.16vw | 3.84vh | WC2c.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2c.header.state` | 13.92vw | 3.84vh | WC2c.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2c.art` | 48vw | 15.36vh | WC2c.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2c.art.tags` | 46.4vw | 3.072vh | WC2c.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2c.body` | 48vw | 15.36vh | WC2c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2c.footer` | 48vw | 3.84vh | WC2c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2c.footer.metadata` | 46.4vw | 3.07vh | WC2c.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2c.body.detail1` | 46.4vw | 6.53vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / quantity |
+| `WC2c.body.detail2` | 46.4vw | 6.53vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Use effect / eligibility |
+| `WC2c.body.blocker` | 46.4vw | 2.3vh | WC2c.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2c.selection.outline` | 48vw | 38.4vh | WC2c.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2c.selection.info` | 4vw | 4vh | WC2c.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -2286,7 +2944,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2c1.selection.outline` | 24vw | 48vh | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2c1.selection.info` | 4vw | 4vh | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Healing preview          │
+│ Charges / availability   │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2c1.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2c1.header` | 48vw | 3.84vh | WC2c1.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2c1.header.title` | 30.16vw | 3.84vh | WC2c1.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2c1.header.state` | 13.92vw | 3.84vh | WC2c1.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2c1.art` | 48vw | 15.36vh | WC2c1.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2c1.art.tags` | 46.4vw | 3.072vh | WC2c1.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2c1.body` | 48vw | 15.36vh | WC2c1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2c1.footer` | 48vw | 3.84vh | WC2c1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2c1.footer.metadata` | 46.4vw | 3.07vh | WC2c1.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2c1.body.detail1` | 46.4vw | 6.53vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Healing preview |
+| `WC2c1.body.detail2` | 46.4vw | 6.53vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
+| `WC2c1.body.blocker` | 46.4vw | 2.3vh | WC2c1.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2c1.selection.outline` | 48vw | 38.4vh | WC2c1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2c1.selection.info` | 4vw | 4vh | WC2c1.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -2429,7 +3130,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2c2.selection.outline` | 24vw | 48vh | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2c2.selection.info` | 4vw | 4vh | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Resource restoration     │
+│ Charges / availability   │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2c2.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2c2.header` | 48vw | 3.84vh | WC2c2.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2c2.header.title` | 30.16vw | 3.84vh | WC2c2.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2c2.header.state` | 13.92vw | 3.84vh | WC2c2.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2c2.art` | 48vw | 15.36vh | WC2c2.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2c2.art.tags` | 46.4vw | 3.072vh | WC2c2.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2c2.body` | 48vw | 15.36vh | WC2c2.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2c2.footer` | 48vw | 3.84vh | WC2c2.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2c2.footer.metadata` | 46.4vw | 3.07vh | WC2c2.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2c2.body.detail1` | 46.4vw | 6.53vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Resource restoration |
+| `WC2c2.body.detail2` | 46.4vw | 6.53vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Charges / availability |
+| `WC2c2.body.blocker` | 46.4vw | 2.3vh | WC2c2.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2c2.selection.outline` | 48vw | 38.4vh | WC2c2.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2c2.selection.info` | 4vw | 4vh | WC2c2.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -2572,7 +3316,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC2c3.selection.outline` | 24vw | 48vh | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC2c3.selection.info` | 4vw | 4vh | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Utility effect / target  │
+│ Quantity / availability  │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC2c3.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC2c3.header` | 48vw | 3.84vh | WC2c3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC2c3.header.title` | 30.16vw | 3.84vh | WC2c3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC2c3.header.state` | 13.92vw | 3.84vh | WC2c3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC2c3.art` | 48vw | 15.36vh | WC2c3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC2c3.art.tags` | 46.4vw | 3.072vh | WC2c3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC2c3.body` | 48vw | 15.36vh | WC2c3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC2c3.footer` | 48vw | 3.84vh | WC2c3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC2c3.footer.metadata` | 46.4vw | 3.07vh | WC2c3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC2c3.body.detail1` | 46.4vw | 6.53vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Utility effect / target |
+| `WC2c3.body.detail2` | 46.4vw | 6.53vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Quantity / availability |
+| `WC2c3.body.blocker` | 46.4vw | 2.3vh | WC2c3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC2c3.selection.outline` | 48vw | 38.4vh | WC2c3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC2c3.selection.info` | 4vw | 4vh | WC2c3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -2717,7 +3504,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC3.selection.outline` | 24vw | 48vh | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC3.selection.info` | 4vw | 4vh | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Choice summary           │
+│ Current selection /      │
+│ eligibility              │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC3.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC3.header` | 48vw | 3.84vh | WC3.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC3.header.title` | 30.16vw | 3.84vh | WC3.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC3.header.state` | 13.92vw | 3.84vh | WC3.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC3.art` | 48vw | 15.36vh | WC3.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC3.art.tags` | 46.4vw | 3.072vh | WC3.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC3.body` | 48vw | 15.36vh | WC3.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC3.footer` | 48vw | 3.84vh | WC3.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC3.footer.metadata` | 46.4vw | 3.07vh | WC3.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC3.body.detail1` | 46.4vw | 6.53vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Choice summary |
+| `WC3.body.detail2` | 46.4vw | 6.53vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Current selection / eligibility |
+| `WC3.body.blocker` | 46.4vw | 2.3vh | WC3.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC3.selection.outline` | 48vw | 38.4vh | WC3.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC3.selection.info` | 4vw | 4vh | WC3.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -2861,7 +3692,51 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC3a.selection.outline` | 24vw | 48vh | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC3a.selection.info` | 4vw | 4vh | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Class identity / role    │
+│ Starting stats /         │
+│ abilities                │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC3a.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC3a.header` | 48vw | 3.84vh | WC3a.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC3a.header.title` | 30.16vw | 3.84vh | WC3a.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC3a.header.state` | 13.92vw | 3.84vh | WC3a.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC3a.art` | 48vw | 15.36vh | WC3a.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC3a.art.tags` | 46.4vw | 3.072vh | WC3a.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC3a.body` | 48vw | 15.36vh | WC3a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC3a.footer` | 48vw | 3.84vh | WC3a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC3a.footer.metadata` | 46.4vw | 3.07vh | WC3a.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC3a.body.detail1` | 46.4vw | 6.53vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Class identity / role |
+| `WC3a.body.detail2` | 46.4vw | 6.53vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting stats / abilities |
+| `WC3a.body.blocker` | 46.4vw | 2.3vh | WC3a.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC3a.selection.outline` | 48vw | 38.4vh | WC3a.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC3a.selection.info` | 4vw | 4vh | WC3a.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -3005,7 +3880,50 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 | `WC3b.selection.outline` | 24vw | 48vh | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
 | `WC3b.selection.info` | 4vw | 4vh | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+            (i)             
+┌──────────────────────────┐
+│ {Name}      {Cost/state} │
+├──────────────────────────┤
+│                          │
+│ [Art / portrait]         │
+│ {Meaningful tag badges}  │
+├──────────────────────────┤
+│ Starting equipment       │
+│ Granted playing cards    │
+│ {Blocker if needed}      │
+├──────────────────────────┤
+│ [Rarity       Owned: n ] │
+└──────────────────────────┘
+```
+
+| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |
+|---|---:|---:|---|---|---|---|---|---|
+| `WC3b.frame` | 48vw | 38.4vh | owning hand/grid/picker | host-assigned cell | center / center | host grid item | host gap token | Nominal card host allocation |
+| `WC3b.header` | 48vw | 3.84vh | WC3b.frame | top / full width | stretch / center | normal grid flow | 0 | Title and optional cost/state; no duplicate title |
+| `WC3b.header.title` | 30.16vw | 3.84vh | WC3b.header | top-left | start / center | normal grid flow | 0.8vw from left; vertically centered in header | Top-left |
+| `WC3b.header.state` | 13.92vw | 3.84vh | WC3b.header | top-right | end / center | normal grid flow | 0.8vw from right; vertically centered in header | Top-right if applicable |
+| `WC3b.art` | 48vw | 15.36vh | WC3b.frame | below header | center / center | normal grid flow | 0; preserve intrinsic artwork ratio | Aspect-preserving art well |
+| `WC3b.art.tags` | 46.4vw | 3.072vh | WC3b.art | bottom-left | start / center | reserved bottom row inside art band | 0.8vw horizontal inset; no extra band height | Bottom of art band; nested inside art 40%, meaningful tags only |
+| `WC3b.body` | 48vw | 15.36vh | WC3b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes inner spacing and blocker |
+| `WC3b.footer` | 48vw | 3.84vh | WC3b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Supplementary metadata only; no embedded action |
+| `WC3b.footer.metadata` | 46.4vw | 3.07vh | WC3b.footer | bottom / full usable width | center / center | single-row footer grid item | 0.8vw side inset; vertically centered in footer | Rarity left; owned count right when relevant; no embedded command |
+| `WC3b.body.detail1` | 46.4vw | 6.53vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Starting equipment |
+| `WC3b.body.detail2` | 46.4vw | 6.53vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Granted playing cards |
+| `WC3b.body.blocker` | 46.4vw | 2.3vh | WC3b.body | next row, top to bottom | start / start | normal grid flow | 0.8vw horizontal inset; rows share body budget | Shares body budget; omit and reclaim space when absent |
+| `WC3b.selection.outline` | 48vw | 38.4vh | WC3b.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Overlay follows lifted card perimeter; does not consume band height |
+| `WC3b.selection.info` | 4vw | 4vh | WC3b.frame | above top-center | center / center | anchored overlay following visual card transform | 0.75vh gap above lifted card; reserve host headroom | External centered info button; minimum target size overrides nominal size |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
             (i)             
@@ -3154,7 +4072,53 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 
 H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+             (i)
+        [INTENT: ATTACK]
+     {Aura behind sprite}
+       [Combatant sprite]
+      {Buff overlay}
+    [DEFENSE at sprite 50%]
+       {Combatant name}
+
+       Sprite: remaining H
+
+     [HP =================] 5% H
+     [Resource ===========] 5% H each
+     [Buildup ============]
+     [ Stance             ]
+       [◆] [☠] [✚]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WC4.frame | 16rem max; host-clamped | derived from shared combatant envelope | battlefield slot | bottom-center | center / end | normal flow | shared stage baseline | transparent; no border or item-card furniture |
+| WC4.name | 100% component | auto; readable line | frame | sprite bottom-center, above HP | center / center | inside sprite bottom; reserve text room | 0.2rem gap | entity display name; reserve host headroom |
+| WC4.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
+| WC4.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
+| WC4.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
+| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
+| WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
+| WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
+| WC4.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
+| WC4.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
+| WC4.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
+
+H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
              (i)
@@ -3314,7 +4278,53 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 
 H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+             (i)
+        [INTENT: ATTACK]
+     {Aura behind sprite}
+       [Combatant sprite]
+      {Buff overlay}
+    [DEFENSE at sprite 50%]
+       {Combatant name}
+
+       Sprite: remaining H
+
+     [HP =================] 5% H
+     [Resource ===========] 5% H each
+     [Buildup ============]
+     [ Stance             ]
+       [◆] [☠] [✚]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WC4a.frame | 12rem max; host-clamped | derived from shared combatant envelope | battlefield slot | bottom-center | center / end | normal flow | shared stage baseline | transparent; no border or item-card furniture |
+| WC4a.name | 100% component | auto; readable line | frame | sprite bottom-center, above HP | center / center | inside sprite bottom; reserve text room | 0.2rem gap | entity display name; reserve host headroom |
+| WC4a.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
+| WC4a.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
+| WC4a.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
+| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4a.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
+| WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
+| WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
+| WC4a.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
+| WC4a.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
+| WC4a.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4a.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4a.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
+
+H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
              (i)
@@ -3474,7 +4484,53 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 
 H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+             (i)
+        [INTENT: ATTACK]
+     {Aura behind sprite}
+       [Combatant sprite]
+      {Buff overlay}
+    [DEFENSE at sprite 50%]
+       {Combatant name}
+
+       Sprite: remaining H
+
+     [HP =================] 5% H
+     [Resource ===========] 5% H each
+     [Buildup ============]
+     [ Stance             ]
+       [◆] [☠] [✚]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WC4b.frame | 16rem max; host-clamped | derived from shared combatant envelope | battlefield slot | bottom-center | center / end | normal flow | shared stage baseline | transparent; no border or item-card furniture |
+| WC4b.name | 100% component | auto; readable line | frame | sprite bottom-center, above HP | center / center | inside sprite bottom; reserve text room | 0.2rem gap | entity display name; reserve host headroom |
+| WC4b.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
+| WC4b.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
+| WC4b.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
+| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4b.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
+| WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
+| WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
+| WC4b.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
+| WC4b.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
+| WC4b.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4b.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4b.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
+
+H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
              (i)
@@ -3634,7 +4690,53 @@ H is component height, not screen height. Nominal 40vh envelope: one bar gives s
 
 H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+             (i)
+        [INTENT: ATTACK]
+     {Aura behind sprite}
+       [Combatant sprite]
+      {Buff overlay}
+    [DEFENSE at sprite 50%]
+       {Combatant name}
+
+       Sprite: remaining H
+
+     [HP =================] 5% H
+     [Resource ===========] 5% H each
+     [Buildup ============]
+     [ Stance             ]
+       [◆] [☠] [✚]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WC4c.frame | 20rem max; host-clamped | derived from shared combatant envelope | battlefield slot | bottom-center | center / end | normal flow | shared stage baseline | transparent; no border or item-card furniture |
+| WC4c.name | 100% component | auto; readable line | frame | sprite bottom-center, above HP | center / center | inside sprite bottom; reserve text room | 0.2rem gap | entity display name; reserve host headroom |
+| WC4c.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
+| WC4c.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
+| WC4c.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
+| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4c.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
+| WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
+| WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
+| WC4c.status | 100% component | content-fit; sprite yields space | frame | below resources | center / start | row 3 | 0.2rem shared gap | contains buildup, stance, icons in this order |
+| WC4c.buildup | 100% component | 0.5 × HP bar height | status | top | stretch / center | rows first | 0.35rem gap | threshold progress; semantic color and text |
+| WC4c.statusIcons | 100% component | 1.575rem; exactly one icon row | status | below stance | center / center | last row; final +N opens inspector | 0.21rem gap | uniform 1.575rem square tiles; icon only; details in tooltip/inspector |
+| WC4c.stance | 100% component | 1 × HP bar height | status | below buildup | center / center | before status icons | 0.35rem gap | uniform badge dimensions across all stances |
+| WC4c.info | minimum input target | minimum input target | frame | above top-center | center / center | overlay | above intent with shared gap | outside H; selection delay inherited |
+
+H is component height, not screen height. Nominal 40vh envelope: one bar gives sprite34vh / bars2vh / statuses4vh; two bars gives sprite32vh / bars4vh / statuses4vh. Minimum readable bars override nominal allocation; host scales uniformly or uses inspection if space runs out. Presentation variants: player faces right, enemy faces left; mirror only sprite artwork, never labels/meters. Defense stays outside the sprite with0.5rem gap on the facing side: player right, enemy left, vertically centered at50%. Selected variant adds shared targeting emphasis and delayed info. Aura is visibly present at sprite top edge. Filter inactive optional components before layout; collapse omitted rows and gaps. Preserve HP → resources → buildup → stance → icons order among active components. Block/intent overlays are also active-only, subject to role visibility. Maximum five lower rows: reserve HP, stance and icons; at most two extra resource/buildup bars. Excess buildup moves into progress icons. If icons exceed width, reserve last slot for +N hidden items; inspector shows full list. Preserve existing leading intentions, block badge and stage baseline as overlays/registered slots; no gameplay change.
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
              (i)

@@ -53,3 +53,5 @@ WGS shared scene layers, WGC combat components, WGM map components and WGQ quest
 Background composition WGS1 contains WGS6 Skyline and WGS7 Floor. Skyline fills scene bounds behind the bottom-anchored floor. Floor height/asset and skyline asset/color are separately configurable; both are noninteractive below actors and HUD. Independent gallery toggles test each layer.
 
 Every gallery entry exposes Actual reference code: shared renderer functions, exact wireframe model JSON, reference CSS, and a downloadable complete runnable HTML. This is executable documentation code, not an assertion of production implementation. Shared child components reference their renderer; placeholder previews accompany component schematics.
+
+Portrait reference profiles: iPhone SE3 at375×667 CSS px and Galaxy S24 at360×780 CSS px. Every entry has wide, compact and both portrait views. portrait-devices.json owns profile defaults. These are layout references, not native-resolution screenshots or a claim of on-device validation. Shared portrait structural layout resolves against each profile. Source reference: https://www.floow.design/free-tools/device-size-reference .

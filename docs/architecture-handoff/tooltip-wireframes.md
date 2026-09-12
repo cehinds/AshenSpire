@@ -42,7 +42,32 @@ Three configurable sizes: compact, standard and expanded. WT0 is an anchored ove
 | WT0.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
 | WT0.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌────────────────────────────┐
+│ {Tag / semantic title}     │
+│ {Concise description}      │
+└─────────────┬──────────────┘
+              ▽
+          [Trigger]
+```
+
+| Component | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WT0.frame | 60vw nominal | auto; 12vh reference | trigger | top-center; flip below | center / end | fixed overlay | 0.5rem gap | clamp to safe viewport; content height, never clip text |
+| WT0.title | parent minus 1.5rem | auto | frame | top-left | start / start | normal flow | 0.75rem inset | optional, omit repeated title |
+| WT0.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
+| WT0.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 ┌────────────────────────────┐
@@ -113,7 +138,32 @@ CancelOnTriggerRemoval(); never execute domain commands
 | WT1.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
 | WT1.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌────────────────────────────┐
+│ {Tag / semantic title}     │
+│ {Concise description}      │
+└─────────────┬──────────────┘
+              ▽
+          [Trigger]
+```
+
+| Component | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WT1.frame | 36vw nominal | auto; 6vh reference | trigger | top-center; flip below | center / end | fixed overlay | 0.5rem gap | clamp to safe viewport; content height, never clip text |
+| WT1.title | parent minus 1.5rem | auto | frame | top-left | start / start | normal flow | 0.75rem inset | optional, omit repeated title |
+| WT1.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
+| WT1.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 ┌────────────────────────────┐
@@ -184,7 +234,32 @@ CancelOnTriggerRemoval(); never execute domain commands
 | WT2.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
 | WT2.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌────────────────────────────┐
+│ {Tag / semantic title}     │
+│ {Concise description}      │
+└─────────────┬──────────────┘
+              ▽
+          [Trigger]
+```
+
+| Component | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WT2.frame | 60vw nominal | auto; 12vh reference | trigger | top-center; flip below | center / end | fixed overlay | 0.5rem gap | clamp to safe viewport; content height, never clip text |
+| WT2.title | parent minus 1.5rem | auto | frame | top-left | start / start | normal flow | 0.75rem inset | optional, omit repeated title |
+| WT2.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
+| WT2.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 ┌────────────────────────────┐
@@ -255,7 +330,32 @@ CancelOnTriggerRemoval(); never execute domain commands
 | WT3.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
 | WT3.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
 
-**Vertical / Mobile**
+**Portrait / iPhone SE (3rd generation)**
+
+Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
+
+```text
+┌────────────────────────────┐
+│ {Tag / semantic title}     │
+│ {Concise description}      │
+└─────────────┬──────────────┘
+              ▽
+          [Trigger]
+```
+
+| Component | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WT3.frame | 84vw nominal | auto; 20vh reference | trigger | top-center; flip below | center / end | fixed overlay | 0.5rem gap | clamp to safe viewport; content height, never clip text |
+| WT3.title | parent minus 1.5rem | auto | frame | top-left | start / start | normal flow | 0.75rem inset | optional, omit repeated title |
+| WT3.body | parent minus 1.5rem | auto | frame | below title | start / start | normal flow | 0.375rem gap | readable text wins |
+| WT3.arrow | 0.75rem | 0.375rem | frame | nearest trigger edge | center / center | overlay | tracks trigger center | decorative |
+
+
+**Portrait / Galaxy S24**
+
+Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
+
 
 ```text
 ┌────────────────────────────┐
