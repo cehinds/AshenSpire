@@ -1,0 +1,102 @@
+{
+  "W4a": {
+    "parent": "W4",
+    "bands": {
+      "hud": 10,
+      "scene": 40,
+      "context": 35,
+      "footer": 15
+    },
+    "layers": {
+      "background": true,
+      "hud": true,
+      "actors": true,
+      "targets": true,
+      "context": true,
+      "footer": true
+    },
+    "playerCount": 1,
+    "enemyCount": 3,
+    "components": [
+      "WGS1",
+      "WGS2",
+      "WGS3",
+      "WGS4",
+      "WGS5",
+      "WGC1",
+      "WGC2",
+      "WGC3",
+      "WGC4",
+      "WGC5",
+      "WGC6",
+      "WGC7",
+      "WGC8",
+      "WGC9",
+      "WGC10",
+      "WGC11"
+    ]
+  },
+  "W4b": {
+    "parent": "W4",
+    "bands": {
+      "hud": 10,
+      "scene": 60,
+      "context": 20,
+      "footer": 10
+    },
+    "mapWidth": 95,
+    "layers": {
+      "background": true,
+      "hud": true,
+      "paths": true,
+      "nodes": true,
+      "context": true,
+      "footer": true
+    },
+    "components": [
+      "WGS1",
+      "WGS2",
+      "WGS3",
+      "WGS4",
+      "WGS5",
+      "WGM1",
+      "WGM2",
+      "WGM3",
+      "WGM4",
+      "WGM5",
+      "WGM6",
+      "WGM7"
+    ]
+  },
+  "W4c": {
+    "parent": "W4",
+    "bands": {
+      "hud": 10,
+      "scene": 40,
+      "context": 35,
+      "footer": 15
+    },
+    "layers": {
+      "background": true,
+      "hud": true,
+      "portraits": true,
+      "context": true,
+      "footer": true
+    },
+    "components": [
+      "WGS1",
+      "WGS2",
+      "WGS3",
+      "WGS4",
+      "WGS5",
+      "WGQ1",
+      "WGQ2",
+      "WGQ3",
+      "WGQ4",
+      "WGQ5",
+      "WGQ6",
+      "WGQ7",
+      "WGQ8"
+    ]
+  }
+}

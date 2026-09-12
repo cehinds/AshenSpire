@@ -288,5 +288,355 @@
       "compact",
       "portrait"
     ]
+  },
+  {
+    "id": "WGC0",
+    "name": "Combat composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC1",
+    "name": "Battlefield stage",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC2",
+    "name": "Player placement",
+    "parent": "WC4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC3",
+    "name": "Enemy placements",
+    "parent": "WC4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC4",
+    "name": "Target layer",
+    "parent": "WCF3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC5",
+    "name": "Hand region",
+    "parent": "WC1",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC6",
+    "name": "Packed action footer",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC7",
+    "name": "Actions remaining",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC8",
+    "name": "Draw pile button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC9",
+    "name": "End turn button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC10",
+    "name": "Discard/exhaust button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGC11",
+    "name": "Potion control",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM0",
+    "name": "Map composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM1",
+    "name": "Map viewport",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM2",
+    "name": "Map paths",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM3",
+    "name": "Node button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM4",
+    "name": "Node details",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM5",
+    "name": "Region selector",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM6",
+    "name": "Recenter button",
+    "parent": "WCB4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGM7",
+    "name": "Enter node button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ0",
+    "name": "Dialogue composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ1",
+    "name": "Dialogue scene",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ2",
+    "name": "Player portrait",
+    "parent": "WCI2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ3",
+    "name": "NPC portrait",
+    "parent": "WCI2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ4",
+    "name": "Caption/choice region",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ5",
+    "name": "Speech progression",
+    "parent": "WCF1",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ6",
+    "name": "Back button",
+    "parent": "WCB4",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ7",
+    "name": "Skip speech button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGQ8",
+    "name": "Continue button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS0",
+    "name": "Shared scene layers",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS1",
+    "name": "Background art",
+    "parent": "WCI2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS2",
+    "name": "Shared HUD",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS3",
+    "name": "HUD identity",
+    "parent": "WCI1",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS4",
+    "name": "HUD resource strip",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS5",
+    "name": "HUD menu button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
   }
 ]

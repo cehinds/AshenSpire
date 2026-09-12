@@ -27,8 +27,9 @@ defs.push(
  ['WCB4','Back / cancel button','WCF1','[ Back ]','W0 modal footers and cancellation','footer left; full-width when sole action','shared action width','minimum target token','Inherit action primitive. Highlight danger color on focus/hover. Cancel only current presentation flow; restore origin focus.'],
  ['WCB5','Exit button','WCB4','[ × ]','Shared modal header','header top-right','minimum target token','minimum target token','Use accessible Close label and inherited dismissal policy. Danger highlight; do not commit pending domain actions.']
 );
-const families=[['WCF0','Component foundations'],['WCB0','Buttons and inspection'],['WCI0','Identity and artwork'],['WCM0','Meters and statuses'],['WCO0','Combat overlays'],['WCT0','Tooltip components']];
-for(const def of defs){def[2]=def[0].slice(0,3)+'0';}
+for(const [id,name,parent,anchor,width,height,logic] of JSON.parse(fs.readFileSync(path.join(root,'gameplay-components.json'),'utf8')))defs.push([id,name,parent,'['+name+']','Combat/map/dialogue composition',anchor,width,height,logic+'; read configuration from gameplay-config.json. Emit semantic intents only.']);
+const families=[['WCF0','Component foundations'],['WCB0','Buttons and inspection'],['WCI0','Identity and artwork'],['WCM0','Meters and statuses'],['WCO0','Combat overlays'],['WCT0','Tooltip components'],['WGS0','Shared scene layers'],['WGC0','Combat composition'],['WGM0','Map composition'],['WGQ0','Dialogue composition']];
+for(const def of defs){if(!def[0].startsWith('WG'))def[2]=def[0].slice(0,3)+'0';}
 for(const [id,name] of families)defs.push([id,name,null,'{Shared family components}',name+' reusable component family','owning context','configured by child','configured by child','Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.']);
 defs.sort((a,b)=>a[0].localeCompare(b[0],undefined,{numeric:true}));
 let out='# Shared component wireframes\n\nWP identifiers describe composable parts, not additional screen families. Every part receives an immutable view model and owner interaction state. WC0/WC4 and W1w compose these same components; context controls visibility and placement. Dimensions are shared configurable proposals.\n\n';

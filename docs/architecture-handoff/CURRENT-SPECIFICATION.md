@@ -45,3 +45,7 @@ Pseudocode tuning uses injected config variables. pseudocode-config.json lists e
 Component library hierarchy: Screens / Cards / Shared components. Shared families: WCF0 foundations, WCB0 buttons/inspection, WCI0 identity/artwork, WCM0 meters/statuses, WCO0 combat overlays, WCT0 tooltips. Each child uses its family prefix and number; component-id-migration.json maps former WP IDs for compatibility. Navigation labels include IDs.
 
 Gallery navigation uses five grandparents: Foundations, Menus & Workspaces, Gameplay, Cards, Components. Each contains category branches and linked wireframe leaves. Search filters leaves and opens matching ancestry; current selection opens its own branch. Existing IDs/links remain stable; the dropdown is a shortcut within the selected category.
+
+## Gameplay assembly references
+
+WGS shared scene layers, WGC combat components, WGM map components and WGQ quest-dialogue components break the scenes down to command buttons. Each component identifies reusable parent primitives and includes three diagrams, placement contracts and pseudocode. gameplay-config.json is the scene composition default; gameplay-components.json records slots and reuse. W4a/W4b/W4c gallery entries include editable band JSON and independent layer toggles. Sample geometry/actions are illustrative, not production gameplay. Hidden layers preserve region budgets in this diagnostic view so composition can be inspected. Production optional-slot collapse follows the scene definition.

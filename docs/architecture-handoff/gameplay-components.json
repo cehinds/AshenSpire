@@ -1,0 +1,281 @@
+[
+  [
+    "WGS1",
+    "Background art",
+    "WCI2",
+    "scene background",
+    "full scene",
+    "full scene",
+    "lowest paint layer; no input"
+  ],
+  [
+    "WGS2",
+    "Shared HUD",
+    "WCF2",
+    "top band",
+    "100%",
+    "config.hud",
+    "identity/resources/menu; one shared model"
+  ],
+  [
+    "WGS3",
+    "HUD identity",
+    "WCI1",
+    "HUD left",
+    "content-fit",
+    "HUD inner height",
+    "player name/portrait from snapshot"
+  ],
+  [
+    "WGS4",
+    "HUD resource strip",
+    "WCM2",
+    "HUD center",
+    "remaining",
+    "HUD inner height",
+    "active resources only"
+  ],
+  [
+    "WGS5",
+    "HUD menu button",
+    "WCB3",
+    "HUD right",
+    "target token",
+    "target token",
+    "open menu, preserve simulation policy"
+  ],
+  [
+    "WGC1",
+    "Battlefield stage",
+    "WCF2",
+    "below HUD",
+    "100%",
+    "config.scene",
+    "shared baseline and authored slots"
+  ],
+  [
+    "WGC2",
+    "Player placement",
+    "WC4",
+    "stage left",
+    "slot width",
+    "stage height",
+    "place player facing right"
+  ],
+  [
+    "WGC3",
+    "Enemy placements",
+    "WC4",
+    "stage right",
+    "slot widths",
+    "stage height",
+    "stable IDs, spacing, authored baseline"
+  ],
+  [
+    "WGC4",
+    "Target layer",
+    "WCF3",
+    "over battlefield",
+    "100%",
+    "100%",
+    "domain-eligible targets only"
+  ],
+  [
+    "WGC5",
+    "Hand region",
+    "WC1",
+    "below battlefield",
+    "100%",
+    "config.context",
+    "stable card IDs; preserve targeting and hit areas"
+  ],
+  [
+    "WGC6",
+    "Packed action footer",
+    "WCF2",
+    "bottom-center",
+    "content-fit",
+    "config.footer",
+    "actions draw endTurn discard potions; uniform minimal gaps"
+  ],
+  [
+    "WGC7",
+    "Actions remaining",
+    "WCM2",
+    "footer first",
+    "large control",
+    "large control",
+    "domain count; fade when empty"
+  ],
+  [
+    "WGC8",
+    "Draw pile button",
+    "WCB3",
+    "footer second",
+    "small control",
+    "small control",
+    "open pile viewer; no invented draw command"
+  ],
+  [
+    "WGC9",
+    "End turn button",
+    "WCB3",
+    "footer center",
+    "large control",
+    "large control",
+    "revalidate turn; green legal no-actions or highlighted"
+  ],
+  [
+    "WGC10",
+    "Discard/exhaust button",
+    "WCB3",
+    "footer fourth",
+    "small control",
+    "small control",
+    "open category workspace"
+  ],
+  [
+    "WGC11",
+    "Potion control",
+    "WCB3",
+    "footer fifth",
+    "large control",
+    "large control",
+    "choose owned usable potion; target through domain"
+  ],
+  [
+    "WGM1",
+    "Map viewport",
+    "WCF2",
+    "below HUD",
+    "config.mapWidth",
+    "config.scene",
+    "pan/zoom/recenter preserve node identity"
+  ],
+  [
+    "WGM2",
+    "Map paths",
+    "WGS1",
+    "inside viewport",
+    "map bounds",
+    "map bounds",
+    "noninteractive links from map graph"
+  ],
+  [
+    "WGM3",
+    "Node button",
+    "WCB3",
+    "authored graph coordinate",
+    "target token",
+    "target token",
+    "current/reachable/visited/blocked states; selection does not enter"
+  ],
+  [
+    "WGM4",
+    "Node details",
+    "WCF4",
+    "below map",
+    "100%",
+    "config.context",
+    "project selected node known facts"
+  ],
+  [
+    "WGM5",
+    "Region selector",
+    "WCB3",
+    "inside HUD",
+    "content-fit",
+    "target token",
+    "switch available region"
+  ],
+  [
+    "WGM6",
+    "Recenter button",
+    "WCB4",
+    "footer left",
+    "action width",
+    "target token",
+    "reset camera to current node"
+  ],
+  [
+    "WGM7",
+    "Enter node button",
+    "WCB3",
+    "footer right",
+    "action width",
+    "target token",
+    "revalidate reachable selected node then enter"
+  ],
+  [
+    "WGQ1",
+    "Dialogue scene",
+    "WGS1",
+    "below HUD",
+    "100%",
+    "config.scene",
+    "authored scene art; never duplicate HUD facts"
+  ],
+  [
+    "WGQ2",
+    "Player portrait",
+    "WCI2",
+    "scene left",
+    "portrait width",
+    "scene height",
+    "preserve art ratio"
+  ],
+  [
+    "WGQ3",
+    "NPC portrait",
+    "WCI2",
+    "scene right",
+    "portrait width",
+    "scene height",
+    "preserve art ratio, speaking emphasis"
+  ],
+  [
+    "WGQ4",
+    "Caption/choice region",
+    "WCF4",
+    "below scene",
+    "100%",
+    "config.context",
+    "short authored beats, knowledge-filtered choices"
+  ],
+  [
+    "WGQ5",
+    "Speech progression",
+    "WCF1",
+    "nonvisual controller",
+    "none",
+    "none",
+    "audio-ended advances linear beats only; stale generation guard"
+  ],
+  [
+    "WGQ6",
+    "Back button",
+    "WCB4",
+    "footer left",
+    "action width",
+    "target token",
+    "previous permitted beat without replaying effects"
+  ],
+  [
+    "WGQ7",
+    "Skip speech button",
+    "WCB3",
+    "footer middle",
+    "action width",
+    "target token",
+    "stop current clip and reveal caption; no quest skip"
+  ],
+  [
+    "WGQ8",
+    "Continue button",
+    "WCB3",
+    "footer right",
+    "action width",
+    "target token",
+    "advance once or commit explicitly chosen response"
+  ]
+]

@@ -1273,3 +1273,1508 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
+## Wireframe WGC0: Combat composition
+
+**Parent: none.** Use cases: Combat composition reusable component family. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC1: Battlefield stage
+
+**Parent: WCF2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Battlefield stage]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Battlefield stage]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Battlefield stage]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+shared baseline and authored slots; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC2: Player placement
+
+**Parent: WC4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Player placement]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC2.root | slot width | stage height | owning component slot | stage left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Player placement]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC2.root | slot width | stage height | owning component slot | stage left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Player placement]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC2.root | slot width | stage height | owning component slot | stage left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+place player facing right; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC3: Enemy placements
+
+**Parent: WC4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Enemy placements]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC3.root | slot widths | stage height | owning component slot | stage right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Enemy placements]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC3.root | slot widths | stage height | owning component slot | stage right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Enemy placements]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC3.root | slot widths | stage height | owning component slot | stage right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+stable IDs, spacing, authored baseline; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC4: Target layer
+
+**Parent: WCF3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Target layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC4.root | 100% | 100% | owning component slot | over battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Target layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC4.root | 100% | 100% | owning component slot | over battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Target layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC4.root | 100% | 100% | owning component slot | over battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+domain-eligible targets only; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC5: Hand region
+
+**Parent: WC1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Hand region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC5.root | 100% | config.context | owning component slot | below battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Hand region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC5.root | 100% | config.context | owning component slot | below battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Hand region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC5.root | 100% | config.context | owning component slot | below battlefield | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+stable card IDs; preserve targeting and hit areas; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC6: Packed action footer
+
+**Parent: WCF2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Packed action footer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC6.root | content-fit | config.footer | owning component slot | bottom-center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Packed action footer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC6.root | content-fit | config.footer | owning component slot | bottom-center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Packed action footer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC6.root | content-fit | config.footer | owning component slot | bottom-center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+actions draw endTurn discard potions; uniform minimal gaps; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC7: Actions remaining
+
+**Parent: WCM2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Actions remaining]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC7.root | large control | large control | owning component slot | footer first | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Actions remaining]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC7.root | large control | large control | owning component slot | footer first | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Actions remaining]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC7.root | large control | large control | owning component slot | footer first | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+domain count; fade when empty; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC8: Draw pile button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Draw pile button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC8.root | small control | small control | owning component slot | footer second | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Draw pile button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC8.root | small control | small control | owning component slot | footer second | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Draw pile button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC8.root | small control | small control | owning component slot | footer second | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+open pile viewer; no invented draw command; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC9: End turn button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[End turn button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC9.root | large control | large control | owning component slot | footer center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[End turn button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC9.root | large control | large control | owning component slot | footer center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[End turn button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC9.root | large control | large control | owning component slot | footer center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+revalidate turn; green legal no-actions or highlighted; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC10: Discard/exhaust button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Discard/exhaust button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC10.root | small control | small control | owning component slot | footer fourth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Discard/exhaust button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC10.root | small control | small control | owning component slot | footer fourth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Discard/exhaust button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC10.root | small control | small control | owning component slot | footer fourth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+open category workspace; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGC11: Potion control
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Potion control]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC11.root | large control | large control | owning component slot | footer fifth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Potion control]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC11.root | large control | large control | owning component slot | footer fifth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Potion control]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGC11.root | large control | large control | owning component slot | footer fifth | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+choose owned usable potion; target through domain; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM0: Map composition
+
+**Parent: none.** Use cases: Map composition reusable component family. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM1: Map viewport
+
+**Parent: WCF2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Map viewport]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM1.root | config.mapWidth | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Map viewport]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM1.root | config.mapWidth | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Map viewport]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM1.root | config.mapWidth | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+pan/zoom/recenter preserve node identity; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM2: Map paths
+
+**Parent: WGS1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Map paths]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM2.root | map bounds | map bounds | owning component slot | inside viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Map paths]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM2.root | map bounds | map bounds | owning component slot | inside viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Map paths]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM2.root | map bounds | map bounds | owning component slot | inside viewport | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+noninteractive links from map graph; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM3: Node button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM3.root | target token | target token | owning component slot | authored graph coordinate | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM3.root | target token | target token | owning component slot | authored graph coordinate | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM3.root | target token | target token | owning component slot | authored graph coordinate | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+current/reachable/visited/blocked states; selection does not enter; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM4: Node details
+
+**Parent: WCF4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Node details]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM4.root | 100% | config.context | owning component slot | below map | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Node details]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM4.root | 100% | config.context | owning component slot | below map | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Node details]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM4.root | 100% | config.context | owning component slot | below map | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+project selected node known facts; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM5: Region selector
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Region selector]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM5.root | content-fit | target token | owning component slot | inside HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Region selector]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM5.root | content-fit | target token | owning component slot | inside HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Region selector]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM5.root | content-fit | target token | owning component slot | inside HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+switch available region; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM6: Recenter button
+
+**Parent: WCB4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Recenter button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Recenter button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Recenter button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+reset camera to current node; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGM7: Enter node button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Enter node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM7.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Enter node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM7.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Enter node button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGM7.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+revalidate reachable selected node then enter; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ0: Dialogue composition
+
+**Parent: none.** Use cases: Dialogue composition reusable component family. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ1: Dialogue scene
+
+**Parent: WGS1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Dialogue scene]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Dialogue scene]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Dialogue scene]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+authored scene art; never duplicate HUD facts; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ2: Player portrait
+
+**Parent: WCI2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Player portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Player portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Player portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+preserve art ratio; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ3: NPC portrait
+
+**Parent: WCI2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[NPC portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[NPC portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[NPC portrait]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+preserve art ratio, speaking emphasis; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ4: Caption/choice region
+
+**Parent: WCF4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Caption/choice region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Caption/choice region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Caption/choice region]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+short authored beats, knowledge-filtered choices; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ5: Speech progression
+
+**Parent: WCF1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Speech progression]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ5.root | none | none | owning component slot | nonvisual controller | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Speech progression]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ5.root | none | none | owning component slot | nonvisual controller | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Speech progression]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ5.root | none | none | owning component slot | nonvisual controller | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+audio-ended advances linear beats only; stale generation guard; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ6: Back button
+
+**Parent: WCB4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Back button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Back button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Back button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ6.root | action width | target token | owning component slot | footer left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+previous permitted beat without replaying effects; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ7: Skip speech button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Skip speech button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ7.root | action width | target token | owning component slot | footer middle | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Skip speech button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ7.root | action width | target token | owning component slot | footer middle | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Skip speech button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ7.root | action width | target token | owning component slot | footer middle | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+stop current clip and reveal caption; no quest skip; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGQ8: Continue button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Continue button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ8.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Continue button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ8.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Continue button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGQ8.root | action width | target token | owning component slot | footer right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+advance once or commit explicitly chosen response; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS0: Shared scene layers
+
+**Parent: none.** Use cases: Shared scene layers reusable component family. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+{Shared family components}
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS0.root | configured by child | configured by child | owning component slot | owning context | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+Resolve registered child component and view model. Inherit common tokens and lifecycle; never duplicate domain state.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS1: Background art
+
+**Parent: WCI2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Background art]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Background art]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Background art]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+lowest paint layer; no input; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS2: Shared HUD
+
+**Parent: WCF2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Shared HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS2.root | 100% | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Shared HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS2.root | 100% | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Shared HUD]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS2.root | 100% | config.hud | owning component slot | top band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+identity/resources/menu; one shared model; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS3: HUD identity
+
+**Parent: WCI1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[HUD identity]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS3.root | content-fit | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[HUD identity]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS3.root | content-fit | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[HUD identity]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS3.root | content-fit | HUD inner height | owning component slot | HUD left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+player name/portrait from snapshot; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS4: HUD resource strip
+
+**Parent: WCM2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[HUD resource strip]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS4.root | remaining | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[HUD resource strip]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS4.root | remaining | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[HUD resource strip]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS4.root | remaining | HUD inner height | owning component slot | HUD center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+active resources only; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS5: HUD menu button
+
+**Parent: WCB3.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[HUD menu button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS5.root | target token | target token | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[HUD menu button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS5.root | target token | target token | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[HUD menu button]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS5.root | target token | target token | owning component slot | HUD right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+open menu, preserve simulation policy; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
