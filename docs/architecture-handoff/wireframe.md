@@ -238,7 +238,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -550,7 +550,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -864,7 +864,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1220,7 +1220,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1573,7 +1573,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1932,7 +1932,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2258,7 +2258,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2579,7 +2579,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2899,7 +2899,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3225,7 +3225,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3532,7 +3532,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3851,7 +3851,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4167,7 +4167,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4469,7 +4469,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4776,7 +4776,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5081,7 +5081,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5379,7 +5379,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5681,7 +5681,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5971,7 +5971,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6275,7 +6275,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6579,7 +6579,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6890,7 +6890,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7201,7 +7201,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7507,7 +7507,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7861,7 +7861,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8147,7 +8147,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8412,7 +8412,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8680,7 +8680,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8954,7 +8954,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9224,7 +9224,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9492,7 +9492,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9768,7 +9768,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10050,7 +10050,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10351,7 +10351,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10635,7 +10635,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -11246,7 +11246,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -11845,7 +11845,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -12464,7 +12464,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13091,7 +13091,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13475,7 +13475,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13861,7 +13861,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14224,7 +14224,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14597,7 +14597,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14972,7 +14972,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15348,7 +15348,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15725,7 +15725,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16100,7 +16100,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16493,7 +16493,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16863,7 +16863,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17242,7 +17242,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17623,7 +17623,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17986,7 +17986,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18364,7 +18364,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18750,7 +18750,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19111,7 +19111,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19478,7 +19478,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19850,7 +19850,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20236,7 +20236,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20597,7 +20597,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20994,7 +20994,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21287,7 +21287,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21558,7 +21558,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21837,7 +21837,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21999,7 +21999,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22209,7 +22209,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22419,7 +22419,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22634,7 +22634,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22887,7 +22887,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23201,7 +23201,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23515,7 +23515,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23811,7 +23811,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24202,7 +24202,7 @@ Reuses the inspect source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24603,7 +24603,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25005,7 +25005,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25398,7 +25398,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25679,7 +25679,9 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 **Wide**
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -25689,7 +25691,9 @@ Title                     [×] ← top-right
 **Compact**
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -25702,7 +25706,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -25716,7 +25722,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -25733,7 +25741,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Use Close accessible label and shared dismissal policy. Respect pending modal decisions. Keep aligned to the header inset.
+// Use a square: set both inline and block size from config.buttonWidths.iconSize; prevent flex stretching and center glyph with zero internal padding. Use Close accessible label and shared dismissal policy. Respect pending modal decisions. Keep aligned to the header inset.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -25761,7 +25769,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26127,7 +26135,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26514,7 +26522,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26892,7 +26900,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -27291,7 +27299,7 @@ Reuses the selection source boundary. Reference sample data and interaction styl
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -27690,7 +27698,7 @@ Reuses the inspector source boundary. Reference sample data and interaction styl
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28068,7 +28076,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28447,7 +28455,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28825,7 +28833,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29187,7 +29195,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29565,7 +29573,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29952,7 +29960,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -30314,7 +30322,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -30681,7 +30689,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31048,7 +31056,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31410,7 +31418,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31772,7 +31780,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32155,7 +32163,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32542,7 +32550,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32908,7 +32916,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -33282,7 +33290,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -33661,7 +33669,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34036,7 +34044,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34419,7 +34427,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34793,7 +34801,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35184,7 +35192,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35575,7 +35583,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35950,7 +35958,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -36321,7 +36329,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -36692,7 +36700,7 @@ Reuses the hand source boundary. Reference sample data and interaction styling a
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37060,7 +37068,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37448,7 +37456,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37811,7 +37819,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38179,7 +38187,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38547,7 +38555,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38927,7 +38935,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39320,7 +39328,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39578,7 +39586,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39813,7 +39821,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40048,7 +40056,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40336,7 +40344,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40581,7 +40589,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40816,7 +40824,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41051,7 +41059,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41295,7 +41303,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41531,7 +41539,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41791,7 +41799,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42193,7 +42201,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42579,7 +42587,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42940,7 +42948,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43318,7 +43326,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43684,7 +43692,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44045,7 +44053,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44411,7 +44419,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44781,7 +44789,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45038,7 +45046,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45283,7 +45291,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45533,7 +45541,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45778,7 +45786,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46036,7 +46044,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46436,7 +46444,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46816,7 +46824,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47188,7 +47196,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47564,7 +47572,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47936,7 +47944,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48299,7 +48307,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48667,7 +48675,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49035,7 +49043,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49422,7 +49430,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49813,7 +49821,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50196,7 +50204,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50563,7 +50571,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50934,7 +50942,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51305,7 +51313,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51688,7 +51696,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 
@@ -52128,7 +52136,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
 
 <details><summary>Model JSON</summary>
 

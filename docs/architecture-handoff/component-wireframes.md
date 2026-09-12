@@ -921,7 +921,9 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -931,7 +933,9 @@ Title                     [×] ← top-right
 **Compact**
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -944,7 +948,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -958,7 +964,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Title                     [×] ← top-right
+┌───┐
+│ × │  width = height = config.buttonWidths.iconSize
+└───┘  top-right shared inset
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -972,7 +980,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Use Close accessible label and shared dismissal policy. Respect pending modal decisions. Keep aligned to the header inset.
+// Use a square: set both inline and block size from config.buttonWidths.iconSize; prevent flex stretching and center glyph with zero internal padding. Use Close accessible label and shared dismissal policy. Respect pending modal decisions. Keep aligned to the header inset.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
