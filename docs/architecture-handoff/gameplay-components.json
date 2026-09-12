@@ -1,12 +1,12 @@
 [
   [
     "WGS1",
-    "Background art",
+    "Background composition",
     "WCI2",
     "scene background",
     "full scene",
     "full scene",
-    "lowest paint layer; no input"
+    "compose independently configured skyline and floor; neither captures input"
   ],
   [
     "WGS2",
@@ -277,5 +277,23 @@
     "action width",
     "target token",
     "advance once or commit explicitly chosen response"
+  ],
+  [
+    "WGS6",
+    "Skyline layer",
+    "WGS1",
+    "scene top / behind floor",
+    "100% scene",
+    "100% scene",
+    "distant sky and scenery; configurable asset/color; no input"
+  ],
+  [
+    "WGS7",
+    "Floor layer",
+    "WGS1",
+    "scene bottom / ahead of skyline",
+    "100% scene",
+    "config.background.floorHeightPercent",
+    "ground plane under actors; preserve stage baseline"
   ]
 ]

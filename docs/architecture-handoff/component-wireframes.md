@@ -2563,14 +2563,14 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
-## Wireframe WGS1: Background art
+## Wireframe WGS1: Background composition
 
 **Parent: WCI2.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**
 
 ```text
-[Background art]
+[Background composition]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2580,7 +2580,7 @@ On dispose: release timers, observers and events
 **Compact**
 
 ```text
-[Background art]
+[Background composition]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2590,7 +2590,7 @@ On dispose: release timers, observers and events
 **Vertical / Mobile**
 
 ```text
-[Background art]
+[Background composition]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2601,7 +2601,7 @@ On dispose: release timers, observers and events
 
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
-lowest paint layer; no input; read configuration from gameplay-config.json. Emit semantic intents only.
+compose independently configured skyline and floor; neither captures input; read configuration from gameplay-config.json. Emit semantic intents only.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -2774,6 +2774,92 @@ On dispose: release timers, observers and events
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
 open menu, preserve simulation policy; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS6: Skyline layer
+
+**Parent: WGS1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Skyline layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Skyline layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Skyline layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+distant sky and scenery; configurable asset/color; no input; read configuration from gameplay-config.json. Emit semantic intents only.
+On model change: reproject registered values; preserve stable identity
+On dispose: release timers, observers and events
+```
+
+## Wireframe WGS7: Floor layer
+
+**Parent: WGS1.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
+
+**Wide**
+
+```text
+[Floor layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Compact**
+
+```text
+[Floor layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Vertical / Mobile**
+
+```text
+[Floor layer]
+```
+
+| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
+|---|---|---|---|---|---|---|---|---|
+| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+
+**Language-agnostic pseudocode**
+
+```text
+INPUT: immutable component model, owner state, context, layout tokens
+ground plane under actors; preserve stage baseline; read configuration from gameplay-config.json. Emit semantic intents only.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```

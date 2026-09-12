@@ -591,7 +591,7 @@
   },
   {
     "id": "WGS1",
-    "name": "Background art",
+    "name": "Background composition",
     "parent": "WCI2",
     "orientations": [
       "wide",
@@ -633,6 +633,26 @@
     "id": "WGS5",
     "name": "HUD menu button",
     "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS6",
+    "name": "Skyline layer",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "portrait"
+    ]
+  },
+  {
+    "id": "WGS7",
+    "name": "Floor layer",
+    "parent": "WGS1",
     "orientations": [
       "wide",
       "compact",

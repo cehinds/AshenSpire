@@ -8,7 +8,8 @@
       "footer": 15
     },
     "layers": {
-      "background": true,
+      "skyline": true,
+      "floor": true,
       "hud": true,
       "actors": true,
       "targets": true,
@@ -33,8 +34,15 @@
       "WGC8",
       "WGC9",
       "WGC10",
-      "WGC11"
-    ]
+      "WGC11",
+      "WGS6",
+      "WGS7"
+    ],
+    "background": {
+      "floorHeightPercent": 35,
+      "skylineColor": "#635139",
+      "floorColor": "#382c20"
+    }
   },
   "W4b": {
     "parent": "W4",
@@ -46,7 +54,8 @@
     },
     "mapWidth": 95,
     "layers": {
-      "background": true,
+      "skyline": true,
+      "floor": true,
       "hud": true,
       "paths": true,
       "nodes": true,
@@ -65,8 +74,15 @@
       "WGM4",
       "WGM5",
       "WGM6",
-      "WGM7"
-    ]
+      "WGM7",
+      "WGS6",
+      "WGS7"
+    ],
+    "background": {
+      "floorHeightPercent": 35,
+      "skylineColor": "#635139",
+      "floorColor": "#382c20"
+    }
   },
   "W4c": {
     "parent": "W4",
@@ -77,7 +93,8 @@
       "footer": 15
     },
     "layers": {
-      "background": true,
+      "skyline": true,
+      "floor": true,
       "hud": true,
       "portraits": true,
       "context": true,
@@ -96,7 +113,14 @@
       "WGQ5",
       "WGQ6",
       "WGQ7",
-      "WGQ8"
-    ]
+      "WGQ8",
+      "WGS6",
+      "WGS7"
+    ],
+    "background": {
+      "floorHeightPercent": 35,
+      "skylineColor": "#635139",
+      "floorColor": "#382c20"
+    }
   }
 }
