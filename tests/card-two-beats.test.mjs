@@ -40,10 +40,15 @@ ok(!/open\(more\)/.test(code),
   'the chevron never opens the inspect door itself — the `i` is the one door');
 
 // ---- reading a card spends the beat rather than zeroing it ------------------
-ok(!/touchedIdentity = null; touchTaps = 0;/.test(code),
+// The tap count moved to ./cardSelection.js, so these now check the CALL
+// rather than the assignment. Same two facts: reading a card never resets its
+// count, and both doors spend exactly one selecting beat.
+ok(!/touchTaps = 0|touchedIdentity = null/.test(code),
   'neither the `i` nor the chevron resets the tap count under a lit card');
-ok((code.match(/touchedIdentity = identity; touchTaps = 1;/g) || []).length === 2,
+ok((code.match(/spendSelectingBeat\(identity, douse\)/g) || []).length === 2,
   'both the `i` and the chevron spend exactly one selecting beat');
+ok(/countBeat\(identity, douse\)/.test(code),
+  'and the face counts its taps through the same store');
 
 // ---- the selection grids kept their selecting beat --------------------------
 // `actionOwnsTouch` is for surfaces with no selecting beat to spend: a card in
