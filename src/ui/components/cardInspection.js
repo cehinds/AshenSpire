@@ -1,10 +1,17 @@
 import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
+import { lightCard, countBeat, spendSelectingBeat } from './cardSelection.js';
 
-// Logical identity survives a host re-render after its first selection tap.
-let touchedIdentity = null;
-let touchTaps = 0;
+// WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
+// ./cardSelection.js. They were two module-level `let`s here — shared by every
+// card on the page, with `.inspection-selected` in the DOM as a second copy of
+// the same fact and a `document.querySelectorAll` sweep reconciling them. That
+// is why three shipped changes in three days broke the tap accounting: the
+// state had no name, no test, and no way to be asked a question.
+//
+// The behaviour is unchanged. Selection is still page-wide; the sweep is gone
+// because a card now hands the store the callback that puts it out.
 
 /** Read-only composition shared by equipment and playing-card detail surfaces. */
 export function cardInspectionLayout(card, details) {
@@ -134,16 +141,17 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     revealTimer = setTimeout(() => card.classList.add('inspection-info-visible'), revealDelayMs());
   };
   const identity = card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
+  // HOW THIS CARD PUTS ITSELF OUT. The store calls this on the card that was
+  // lit before, so nothing traverses the document looking for it. A pending
+  // reveal is cancelled with it: otherwise it lands after the card has lost
+  // selection, showing an information button on a card nobody chose.
+  const douse = () => {
+    card.classList.remove('inspection-selected', 'inspection-info-visible');
+    card.removeAttribute('aria-current');
+    card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
+  };
   const select = () => {
-    document.querySelectorAll('.inspection-selected').forEach(other => {
-      if (other !== card) {
-        other.classList.remove('inspection-selected', 'inspection-info-visible');
-        other.removeAttribute('aria-current');
-        // A pending reveal on the card being deselected would otherwise land
-        // after it lost selection, showing a button on a card nobody chose.
-        other.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
-      }
-    });
+    lightCard(identity, douse);
     card.classList.add('inspection-selected');
     card.setAttribute('aria-current', 'true');
     revealInfo();
@@ -161,7 +169,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // it stands on is still spent, so the next tap on the face is the action's.
   info.addEventListener('click', event => {
     event.preventDefault(); event.stopImmediatePropagation();
-    touchedIdentity = identity; touchTaps = 1;
+    spendSelectingBeat(identity, douse);
     select(); open(info);
   });
   card.addEventListener('cardinspectioncancelreveal', () => {
@@ -200,7 +208,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     event.preventDefault(); event.stopImmediatePropagation();
     // The chevron IS the selecting beat, so it spends it rather than zeroing
     // the count: the next tap on the face is the card's own act.
-    touchedIdentity = identity; touchTaps = 1;
+    spendSelectingBeat(identity, douse);
     select(); revealInfo();
   });
   card.append(info, more);
@@ -210,8 +218,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     select();
     revealInfo();
     if (touch) {
-      touchTaps = touchedIdentity === identity ? touchTaps + 1 : 1;
-      touchedIdentity = identity;
+      const touchTaps = countBeat(identity, douse);
       // ONE PRESS REVEALS IT. This waited for touchTaps >= 2, so the button
       // that explains a card could only be found by someone who already knew
       // it was there — every first-time player selected a card and saw nothing.
