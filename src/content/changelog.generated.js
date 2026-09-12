@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-994",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "The i that explains a card sits above it on every screen",
+    "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading, and the same control no longer appears in two places depending on where you are.",
+    "build": "0.7.1.12",
+    "pullRequest": 994,
+    "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
     "id": "pr-1002",
     "date": "2026-09-12",
     "group": "2026-09-12",
