@@ -2142,7 +2142,7 @@
       "id": "WCI0",
       "name": "Identity and artwork",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2165,13 +2165,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "IdentityModel.js (IDENTITY_PARTS name/artwork/metadata) with wireframeUi.identity. Cards, combatants and the inspector preview stamp data-identity-part on the parts they own; values stay with the owner."
     },
     {
       "id": "WCI1",
       "name": "Nameplate",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2194,13 +2195,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Card header, combatant nameplate and inspector title carry data-identity-part=name. The combatant nameplate is the card child directly above the meters (HP first)."
     },
     {
       "id": "WCI2",
       "name": "Sprite / artwork",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2223,13 +2225,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "artworkAnchor(host): card and inspector centre, combatant bottom (baseline); artwork keeps its intrinsic ratio (object-fit contain). Facing mirrors only the .facing art layer, never text or controls."
     },
     {
       "id": "WCI3",
       "name": "Metadata footer",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2252,7 +2255,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "metadataFooter: rarity at the start, Owned: n at the end (wireframeUi.identity.metadataSlots); an unstated fact is absent. Reward, shop and draft offers pass the deck count; deck and pile views omit it. Equipment cards keep their own footer (WC2)."
     },
     {
       "id": "WCM0",

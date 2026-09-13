@@ -41,4 +41,11 @@ export const wireframeUi = freeze({
     backLayer: 200, frontLayer: 0, focusPriority: 100,
     guardAnchor: { player: 0.12, enemy: 0.88 }, guardGapRem: 0.5,
   },
+  // WCI0 identity and artwork. The metadata band names what each end holds;
+  // contained artwork sits centred on cards and inspector previews and stands
+  // on its baseline in combat. Only artwork mirrors for facing.
+  identity: {
+    metadataSlots: { start: 'rarity', end: 'owned' },
+    artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
+  },
 });
