@@ -1,6 +1,6 @@
 {
   "referenceCommit": "dcb3d1cd",
-  "implementationBase": "1b72522d",
+  "implementationBase": "e017ef1d",
   "note": "Coverage is implementation status, not a claim of visual parity. Missing source references are proposed or owner-local seams; integrate through current production authorities.",
   "entries": [
     {
@@ -4318,7 +4318,7 @@
       }
     }
   ],
-  "rebasedImplementationCommit": "18a44b28",
+  "rebasedImplementationCommit": "b07b8747",
   "validation": {
     "nodeSuite": "Passed: node tests/run-node.mjs, exit 0 after overlay coordinate correction",
     "build": "Passed: node tools/launch.mjs --build-only",
@@ -4326,5 +4326,6 @@
     "buildversion": "Passed: eight checks",
     "reference": "Passed: 152 entries, 608 views, no consistency failures",
     "visual": "Partial browser review only; no wireframe marked complete"
-  }
+  },
+  "issue": 1008
 }

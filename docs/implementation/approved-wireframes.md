@@ -6,6 +6,11 @@ used an old build. The branch now starts at `1b72522d`; the original
 `09bda158` implementation commit was replayed as `18a44b28`. Existing work was
 preserved. The owner’s unrelated primary checkout was not edited.
 
+The subsequent merge preparation rebased onto `e017ef1d` (documentation-only
+updates); the original implementation commit is now `b07b8747`. Runtime source,
+tests, tools, and generated artifacts are byte-identical to the validated tree.
+Implementation delivery is tracked in issue #1008.
+
 ## Coverage and current behavior
 
 The adjacent `wireframe-coverage.json` lists all 152 approved entries and
