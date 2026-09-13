@@ -6,6 +6,7 @@ import { attachTooltip, esc } from './tooltip.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { metadataFooter } from '../models/IdentityModel.js';
 import { t } from '../strings.js';
+import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
 // Connection-owned sizing: removed inventory reveals cannot retain observers.
 //
@@ -41,7 +42,7 @@ function applyCardTokens(card, tokens) {
   set('--card-info-size', `${tokens.info.sizePx}px`);
   set('--card-info-inset', `${tokens.info.insetPx}px`);
   set('--card-info-fade', `${tokens.info.fadeMs}ms`);
-  set('--card-info-delay', `${tokens.info.revealDelayMs}ms`);
+  set('--card-info-delay', `${selectionRevealDelayMs()}ms`);
   for (const [key, value] of Object.entries(tokens.type)) set(`--epc-text-${key}`, value);
 }
 
