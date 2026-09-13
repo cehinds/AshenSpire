@@ -106,6 +106,25 @@ const armoury = combat.match(/function openCombatArmoury\(request = ''\) \{([\s\
 ok(!!armoury, 'combat.js still opens the Armoury through a function whose body can be read');
 const beforeDelegation = armoury[1].split('if (onArmoury)')[0];
 ok(armoury[1].includes('if (onArmoury)'), 'the Armoury can still be routed to the host');
+
+// AND A CLICK THAT OPENS NOTHING TAKES NOTHING. The first version of the disarm
+// ran before the feature gate, so with `balance.equipment.enabled` false and no
+// host handler the button opened nothing and still threw the player's aim away —
+// worse than the bug it fixed.
+//
+// The gate is `!onArmoury && !enabled`, not `!enabled`: main.js's `showArmoury`
+// never consults that flag, so a host-routed Armoury OPENS regardless and the
+// aim must still go down. Gating on `enabled` alone would put the original bug
+// back on that route.
+const gate = beforeDelegation.match(/if \(!onArmoury && !registries\.balance\.equipment\.enabled\) return;/);
+ok(!!gate, 'a click that opens nothing returns before anything is cleared');
+ok(beforeDelegation.indexOf(gate[0]) < beforeDelegation.indexOf('selected = null;'),
+  'that guard stands BEFORE the clearing, not after it');
+// The old post-delegation gate was only reachable with no `onArmoury`, which the
+// guard above now catches earlier. Leaving both would be dead code claiming to
+// be a check.
+ok(!/if \(!registries\.balance\.equipment\.enabled\) return;/.test(armoury[1]),
+  'the superseded gate after the delegation is gone rather than left dead');
 for (const field of ['selected', 'selfArm', 'selectedFlask']) {
   ok(new RegExp(`${field} = null;`).test(beforeDelegation),
     `opening the Armoury clears ${field} before the host delegation`);

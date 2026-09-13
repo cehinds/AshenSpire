@@ -2205,7 +2205,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // battlefield either way; on the way back out the enemies were still
     // answering to a tap.
     // BEFORE the `onArmoury` delegation, so the host-routed Armoury (main.js)
-    // disarms exactly as the panel mounted from here does.
+    // disarms exactly as the panel mounted from here does — but AFTER the gate
+    // below, because a click that opens nothing must take nothing.
+    //
+    // THE GATE IS NOT JUST `enabled`. It reads `!onArmoury && !enabled` because
+    // the two routes answer to different rules: the host's `showArmoury`
+    // (main.js) does not consult `balance.equipment.enabled` at all, so with a
+    // host handler the Armoury OPENS whatever that flag says, and the aim must
+    // go down. Only the locally mounted panel is gated — and when it is shut,
+    // this button is inert, so the first version of this disarm silently threw
+    // away an armed card, a self-target or a raised flask for a click that did
+    // nothing at all. That is strictly worse than the bug it was fixing.
+    //
+    // This subsumes the old `if (!registries.balance.equipment.enabled) return;`
+    // that stood after the delegation: that line was only ever reachable with no
+    // `onArmoury`, which is exactly the case this guard now catches earlier.
+    if (!onArmoury && !registries.balance.equipment.enabled) return;
     if (selected || selfArm || selectedFlask != null) {
       selected = null;
       selfArm = null;
@@ -2213,7 +2228,6 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       syncCardSelection();
     }
     if (onArmoury) return onArmoury();
-    if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
     const destination = request && typeof request === 'object' ? request.destination || '' : '';
     const panel = mountEquipment(document.body, {
