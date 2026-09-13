@@ -3140,6 +3140,16 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @media (prefers-reduced-motion: reduce) {
   .cc-starting-fold > .cc-starting-summary::after { transition:none; }
 }
+/* INSIDE THE FOLD THE CARDS ARE A REFERENCE, AND ARE DRAWN AS ONE. The
+   renderer's `small` flag was the wrong tool and is not used here: its only
+   effect is `transform: scale(0.92)`, which `.cc-starting-card > .card` above
+   correctly cancels — a transformed card still occupies its untransformed box,
+   so it saves no scroll at all. A smaller BOX does. Three to a row instead of
+   two turns six faces from three rows into two. */
+.cc-starting-fold .cc-starting-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; }
+.cc-starting-fold .cc-starting-card { padding-top:34px; }
+.cc-starting-fold .cc-starting-card > .card { max-width:104px; }
+.cc-starting-fold .cc-starting-card .card-info-button { top:-36px; }
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
@@ -3194,6 +3204,21 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @media(max-width:700px) {
   .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-row:auto; }
   .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
+  /* THE SECTION'S OWN WAY ON, MEASURED: with the Main Hand section open at
+     390x844 the `Continue to Off Hand` button sat 1815px down a 784px
+     scrollport — 1058px below the fold, at the end of the armament picker it
+     exists to close. The stage-level sticky rule above never reached it: that
+     rule matches `.modal-btnrow.end` and `.cc-primary-continue-row`, and this
+     is a bare `.cc-equipment-continue` inside `.cc-equip-group`.
+     THE GROUP BECOMES A COLUMN FLEX CONTAINER HERE, and that is load-bearing
+     rather than cosmetic: a grid item's containing block is its own one-row
+     grid area, so `position:sticky` inside it has nowhere to travel and does
+     nothing. A flex item's containing block is the container's content box —
+     the full height of the open section — which is the travel sticky needs.
+     At this width the group already rendered as one stacked column, so the
+     switch changes the layout in no other way. */
+  .cc-equip-group[data-equipment-section] { display:flex; flex-direction:column; padding-bottom:4px; }
+  .cc-equipment-continue { position:sticky; bottom:4px; z-index:3; }
   .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px) scale(1.03); }
   .cc-starting-card-grid { gap:9px 6px; }
   .cc-starting-card > .card { max-width:150px; }

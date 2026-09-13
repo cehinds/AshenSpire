@@ -53,6 +53,10 @@ import {
   el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack,
   button, buttonRow, modalHead, modalFooter, pane, statPair,
 } from '../kit/index.js';
+// The fold's own sentence is a row in content/source/uiStrings.csv, which is
+// where #991 put the words this game says. This screen still carries plenty of
+// copy in code — the baseline counts it — but a NEW sentence does not join it.
+import { t } from '../strings.js';
 
 /** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
 function sectionHead(kicker, title, trail = []) {
@@ -703,7 +707,11 @@ export function mountCustomize(app, {
           for (const { ref, count } of preview.cards) {
             // Small, because inside the fold these are a reference rather than
             // a thing to choose between: the choice is the armament above.
-            const face = renderCard(registries, ref, { small: true });
+            // NOT `small: true`: that flag's only effect is a 0.92 transform, which
+            // `.cc-starting-card > .card` cancels — and a transformed card keeps its
+            // untransformed box, so it would save no scroll even if it applied. The
+            // fold sizes these faces in CSS, where a smaller box is a smaller box.
+            const face = renderCard(registries, ref);
             const entry = el('div', { class: 'cc-starting-card', dataset: { cardId: ref.cardId, quantity: String(count) } }, [
               el('span', { class: 'cc-card-quantity' }, `${count} ${count === 1 ? 'copy' : 'copies'}`), face,
             ]);
@@ -738,7 +746,7 @@ export function mountCustomize(app, {
           fold.append(
             el('summary', { class: 'cc-starting-summary' }, [
               el('b', { text: summary }),
-              el('small', { class: 'cc-package-context', text: 'Quantities depend on both hands.' }),
+              el('small', { class: 'cc-package-context', text: t('creation.startingCards.context') }),
             ]),
             preview.cards.length ? grid : el('p', {}, 'This choice adds no combat cards with the other hand currently selected.'),
           );
