@@ -12,6 +12,9 @@ export const wireframeUi = freeze({
   // WCF3: one shared glow on a selected owner (card or combatant); its inspect
   // control appears once the selection has stood this long.
   selection: { glowRem: 0.35, revealDelayMs: 1000 },
+  // WCB1: one inspect circle for every card, combatant and tile — a 2.75
+  // reference-rem (44 physical px) target, 16 px label, hung 10 px above.
+  inspect: { sizeRem: 2.75, labelPx: 16, gapPx: 10 },
   // W4b: a repeat pick enters only after the selection has stood this long.
   // Owner kept 400 ms on 2026-09-13.
   map: { repeatPickDelayMs: 400 },

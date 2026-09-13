@@ -515,8 +515,9 @@ export const balance = {
       // The information button. It appears on the FIRST press of a card, not
       // the second: a control nobody can find is a control nobody uses. The
       // fade keeps it from snapping into place under the thumb. Its reveal
-      // delay is the shared WCF3 one (wireframeUi.selection.revealDelayMs).
-      info: { fadeMs: 120, sizePx: 44, insetPx: 6 },
+      // delay (wireframeUi.selection) and size (wireframeUi.inspect) are the
+      // shared WCF3/WCB1 ones every card and combatant uses.
+      info: { fadeMs: 120, insetPx: 6 },
     },
     tooltipPlacement: {
       hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],

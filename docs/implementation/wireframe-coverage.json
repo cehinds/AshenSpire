@@ -1835,7 +1835,7 @@
       "id": "WCB1",
       "name": "Inspect control",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1858,7 +1858,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "InspectControlModel.js with wireframeUi.inspect (sizeRem 2.75, labelPx 16, gapPx 10). main.js writes --inspect-size / --inspect-label / --inspect-gap; card, equipment card, combatant and hand-portal controls all read them (one 44 physical px circle, 16 px label, 10 px above the owner; combatant control above the intent). The reveal delay is selection.revealDelayMs. Only the creation corner still declares its own --card-info-size."
     },
     {
       "id": "WCB2",

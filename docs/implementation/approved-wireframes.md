@@ -429,7 +429,40 @@ Limits:
   Confirm and stays as it is.
 - The creation selectors keep their corner inspect control (contested in
   #994/#996).
-- The inspect control's own size and label are WCB1's.
+- The inspect control's own size and label are WCB1's (next section).
+
+## Inspect control (WCB1)
+
+Branch `feature/wireframe-inspect-control`, stacked on
+`feature/wireframe-selection-effect` (#1037). One control for every
+selectable card, combatant and inventory tile, from
+`src/ui/models/InspectControlModel.js` with values in `wireframeUi.inspect`
+(`sizeRem: 2.75`, `labelPx: 16`, `gapPx: 10`).
+
+- `main.js` writes `--inspect-size` (2.75 reference rems, a 44 physical px
+  target), `--inspect-label` (16 physical px) and `--inspect-gap` (10
+  physical px) to `:root`.
+- The card, equipment card, combatant and hand-portal controls all read
+  them. Removed:
+  - the combatant's 36 px override;
+  - the card's tap-floor size;
+  - the equipment card's raw 44 CSS px (and `balance.ui…info.sizePx`);
+  - the 20 px label.
+- The hand overlay places its portal `inspectControlRisePx()` (size + gap)
+  above the card instead of a hard-coded 48 px.
+- The reveal still waits `selection.revealDelayMs`. The combatant control
+  stays above the intent, centred on the sprite.
+
+Browser evidence (emulation, 1280×800 at UI zoom 1.07 and 390×844 at 0.9):
+- **Combatant control:** 44×44 physical px with a 16 px label, 4 px above the
+  intent, horizontally centred on the sprite art (offset 0).
+- **Hand portal:** 44×44 with a 16 px label, 10 px above the selected card,
+  centred on it.
+- **Equipment card control** (`item-cards-preview.html`): 44×44 with a 16 px
+  label, 10 px above the card, centred.
+
+Limits: the creation selectors still declare a 32 px corner control through
+`--card-info-size` (contested in #994/#996).
 
 ## Remaining integration
 
