@@ -8,7 +8,7 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 
 ## Wireframe WC0: Master card
 
-**Parent: none — master card.** All structural and optional components are resolved by validated tag rules. No label-based construction.
+**Parent: none — master card.** Master preview selection reveals only the shared info control; no Select or Eligible target demo buttons. All structural and optional components are resolved by validated tag rules. No label-based construction.
 
 **Construction tags (proposed):** `presentable:card`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 

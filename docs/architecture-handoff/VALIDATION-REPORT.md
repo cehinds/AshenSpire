@@ -16,3 +16,5 @@ Validated reference source at 0fd283ab with the expanded validator in this chang
 Structural and JSON checks cover every catalog entry and all four view definitions. Browser smoke coverage is the combat composition in four modes, not an exhaustive visual or interaction audit of all 608 views. Shipped-artifact checks inspect the existing game bundle; this documentation work does not rebuild or change game runtime behavior.
 
 Run the repeatable atlas checks with node docs/architecture-handoff/validate-reference-atlas.mjs.
+
+WC0 follow-up: removed Select/Eligible target demo controls from master-card selection. Browser check confirms one selected master card, only its (i) button visible, and hidden contextual action panel. Full atlas validator rerun passes after regeneration; runtime game sources unchanged.

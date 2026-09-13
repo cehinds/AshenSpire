@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root=dirname(fileURLToPath(import.meta.url));
 const cards=[];
 function card(id,parent,name,tags,fields,action,extra){cards.push({id,parent,name,tags,fields,action,extra});}
-card('WC0',null,'Master card',['presentable:card'],['{Registered content slots}','{Availability / reason}'],'Context action','All structural and optional components are resolved by validated tag rules. No label-based construction.');
+card('WC0',null,'Master card',['presentable:card'],['{Registered content slots}','{Availability / reason}'],'Inspect via (i)','Master preview selection reveals only the shared info control; no Select or Eligible target demo buttons. All structural and optional components are resolved by validated tag rules. No label-based construction.');
 card('WC1','WC0','Playing card',['card-kind:playing'],['Targeting','Effects / rules'],'Select / Play','Inherits card identity/art/tags; adds a compact left-edge cost stack below the header inside the art containing every projected action/stamina/MP cost, followed by targeting and effect components. Costs come from playingCardModel.costs in src/model/playingCard.js; renderer does not calculate or invent costs.');
 card('WC1a','WC1','Attack card',['ability:attack'],['Damage / affected stat','Target and effect preview'],'Select / Play','Use engine damage preview, including current modifiers; never calculate damage in renderer.');
 card('WC1b','WC1','Skill card',['ability:skill'],['Defense / utility effects','Target / requirements'],'Select / Play','The effect list is projected from the existing opcode/formula engine.');
