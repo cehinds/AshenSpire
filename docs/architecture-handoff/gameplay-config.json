@@ -3,9 +3,9 @@
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 50,
-      "context": 25,
-      "footer": 15
+      "scene": 55,
+      "context": 30,
+      "footer": 5
     },
     "layers": {
       "skyline": true,

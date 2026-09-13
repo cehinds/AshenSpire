@@ -3990,7 +3990,7 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 ### Wireframe WC4: Combatant card
 
-**Parent: WC0.** Borderless combatant presentation: sprite remaining (85% with HP only), resource bars 5% each, statuses 10% of component height; overrides WC0 item-card bands. Three sizes are host presentation variants, never different combatant models. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC0.** Borderless combatant presentation: sprite remaining (85% with HP only), resource bars 5% each, statuses 10% of component height; overrides WC0 item-card bands. Three sizes are host presentation variants, never different combatant models. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -4186,6 +4186,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -4197,7 +4199,7 @@ Dispose timers/observers and restore focus on close.
 
 ### Wireframe WC4a: Compact combatant
 
-**Parent: WC4.** Compact: clamp(10rem, 14vw, 12rem) width; height = width × 8/5. Supplementary full details through inspection. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC4.** Compact: clamp(10rem, 14vw, 12rem) width; height = width × 8/5. Supplementary full details through inspection. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -4393,6 +4395,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -4404,7 +4408,7 @@ Dispose timers/observers and restore focus on close.
 
 ### Wireframe WC4b: Standard combatant
 
-**Parent: WC4.** Standard: clamp(12rem, 18vw, 16rem) width; height = width × 8/5. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC4.** Standard: clamp(12rem, 18vw, 16rem) width; height = width × 8/5. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -4600,6 +4604,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -4611,7 +4617,7 @@ Dispose timers/observers and restore focus on close.
 
 ### Wireframe WC4c: Expanded combatant
 
-**Parent: WC4.** Expanded: clamp(16rem, 24vw, 20rem) width; height = width × 8/5. No new gameplay facts implied. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC4.** Expanded: clamp(16rem, 24vw, 20rem) width; height = width × 8/5. No new gameplay facts implied. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -4807,6 +4813,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name

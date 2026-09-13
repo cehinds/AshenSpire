@@ -3,7 +3,7 @@ function renderSceneComposition(id,mode,config,notify){
  Object.assign(tokens.scene,{skyline:config.layers.skyline,floor:config.layers.floor,floorHeightPercent:config.background.floorHeightPercent,playerCount:config.playerCount??tokens.scene.playerCount,enemyCount:config.enemyCount??tokens.scene.enemyCount});
  const parts=createComponentReferenceRenderers(tokens),scene=document.createElement('div');
  scene.className='scene-demo scene-composition '+mode;parts.applyTokens(scene);
- scene.style.gridTemplateRows=['hud','scene','context','footer'].map(key=>key==='hud'?(config.layers.hud?'minmax('+config.minimumHudHeightRem+'rem,'+config.bands[key]+'fr)':'0fr'):config.bands[key]+'fr').join(' ');
+ scene.style.gridTemplateRows=['hud','scene','context','footer'].map(key=>key==='hud'?(config.layers.hud?'minmax('+config.minimumHudHeightRem+'rem,'+config.bands[key]+'fr)':'0fr'):key==='footer'?'minmax('+(globalThis.COMPONENT_COMPLETION_DEFAULTS?.footerLayout?.minimumHeightPx??56)+'px,'+config.bands[key]+'fr)':key==='context'&&id==='W4a'?'minmax('+(tokens.hand.minimumHeightPx??190)+'px,'+config.bands[key]+'fr)':'minmax(0,'+config.bands[key]+'fr)').join(' ');
  const context=id==='W4a'?'combat':id==='W4b'?'map':'town';
  const hudConfig={...structuredClone(HUD_REFERENCE_CONFIG),context,...(config.hud||{})};
  const hud=document.createElement('div');hud.className='scene-hud';hud.dataset.component='WGH4';

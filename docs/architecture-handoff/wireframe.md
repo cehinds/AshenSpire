@@ -238,7 +238,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -550,7 +550,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -864,7 +864,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1220,7 +1220,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1573,7 +1573,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1932,7 +1932,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2258,7 +2258,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2579,7 +2579,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2899,7 +2899,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3225,7 +3225,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3532,7 +3532,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3851,7 +3851,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4167,7 +4167,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4469,7 +4469,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4776,7 +4776,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5081,7 +5081,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5379,7 +5379,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5681,7 +5681,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5971,7 +5971,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6275,7 +6275,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6579,7 +6579,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6890,7 +6890,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7201,7 +7201,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7507,7 +7507,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7861,7 +7861,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8147,7 +8147,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8412,7 +8412,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8680,7 +8680,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8954,7 +8954,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9224,7 +9224,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9492,7 +9492,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9768,7 +9768,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10050,7 +10050,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10351,7 +10351,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10635,7 +10635,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10646,9 +10646,9 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 50,
-      "context": 25,
-      "footer": 15
+      "scene": 55,
+      "context": 30,
+      "footer": 5
     },
     "layers": {
       "skyline": true,
@@ -10791,9 +10791,9 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 50,
-      "context": 25,
-      "footer": 15
+      "scene": 55,
+      "context": 30,
+      "footer": 5
     },
     "layers": {
       "skyline": true,
@@ -11242,11 +11242,11 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8), [WGH9](wireframe-gallery.html#WGH9)
 
-**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [component-completion-client.js](component-completion-client.js), [hud-reference-client.js](hud-reference-client.js), [scene-reference-client.js](scene-reference-client.js)
+**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [component-completion-client.js](component-completion-client.js), [hud-reference-client.js](hud-reference-client.js), [scene-reference-client.js](scene-reference-client.js), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -11257,9 +11257,9 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 50,
-      "context": 25,
-      "footer": 15
+      "scene": 55,
+      "context": 30,
+      "footer": 5
     },
     "layers": {
       "skyline": true,
@@ -11402,9 +11402,9 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
     "parent": "W4",
     "bands": {
       "hud": 10,
-      "scene": 50,
-      "context": 25,
-      "footer": 15
+      "scene": 55,
+      "context": 30,
+      "footer": 5
     },
     "layers": {
       "skyline": true,
@@ -11845,7 +11845,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -12464,7 +12464,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13091,7 +13091,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13475,7 +13475,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13861,7 +13861,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14224,7 +14224,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14597,7 +14597,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14972,7 +14972,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15348,7 +15348,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15725,7 +15725,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16100,7 +16100,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16493,7 +16493,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16863,7 +16863,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17242,7 +17242,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17623,7 +17623,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17986,7 +17986,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18364,7 +18364,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18750,7 +18750,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19111,7 +19111,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19478,7 +19478,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19850,7 +19850,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20236,7 +20236,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20597,7 +20597,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20774,7 +20774,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 <!-- reference-metadata:end -->
 ### Wireframe WC4: Combatant card
 
-**Parent: WC0.** Borderless combatant presentation: sprite remaining (85% with HP only), resource bars 5% each, statuses 10% of component height; overrides WC0 item-card bands. Three sizes are host presentation variants, never different combatant models. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC0.** Borderless combatant presentation: sprite remaining (85% with HP only), resource bars 5% each, statuses 10% of component height; overrides WC0 item-card bands. Three sizes are host presentation variants, never different combatant models. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -20970,6 +20970,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -20991,11 +20993,11 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
-**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
+**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21051,7 +21053,18 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "defenseOffsetRatio": 0.5,
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
-    "enemyIntentVisible": true
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
   },
   "visibility": {
     "unselectedHiddenSelectors": [
@@ -21066,6 +21079,50 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     0.95,
     1
   ],
+  "focus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
+  "legibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
@@ -21081,7 +21138,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 <!-- reference-metadata:end -->
 ### Wireframe WC4a: Compact combatant
 
-**Parent: WC4.** Compact: clamp(10rem, 14vw, 12rem) width; height = width × 8/5. Supplementary full details through inspection. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC4.** Compact: clamp(10rem, 14vw, 12rem) width; height = width × 8/5. Supplementary full details through inspection. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -21277,6 +21334,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -21298,11 +21357,11 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
-**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
+**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21336,7 +21395,18 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "defenseOffsetRatio": 0.5,
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
-    "enemyIntentVisible": true
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
   },
   "visibility": {
     "unselectedHiddenSelectors": [
@@ -21351,6 +21421,50 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     0.95,
     1
   ],
+  "focus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
+  "legibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
@@ -21366,7 +21480,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 <!-- reference-metadata:end -->
 ### Wireframe WC4b: Standard combatant
 
-**Parent: WC4.** Standard: clamp(12rem, 18vw, 16rem) width; height = width × 8/5. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC4.** Standard: clamp(12rem, 18vw, 16rem) width; height = width × 8/5. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -21562,6 +21676,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -21583,11 +21699,11 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
-**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
+**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21621,7 +21737,18 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "defenseOffsetRatio": 0.5,
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
-    "enemyIntentVisible": true
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
   },
   "visibility": {
     "unselectedHiddenSelectors": [
@@ -21636,6 +21763,50 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     0.95,
     1
   ],
+  "focus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
+  "legibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
@@ -21651,7 +21822,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 <!-- reference-metadata:end -->
 ### Wireframe WC4c: Expanded combatant
 
-**Parent: WC4.** Expanded: clamp(16rem, 24vw, 20rem) width; height = width × 8/5. No new gameplay facts implied. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. See CURRENT-SPECIFICATION.md.
+**Parent: WC4.** Expanded: clamp(16rem, 24vw, 20rem) width; height = width × 8/5. No new gameplay facts implied. Borderless combatant renderer. Inherits WC0 identity, tag providers, inspection and shared selection effects; overrides item-card bands. Name sits above HP. Intent is above sprite, hidden for player by configurable default; info appears above it after1s. Defense is large at50% sprite height outside the facing side with0.5rem gap (player right, enemy left). Aura/buff fill sprite height. Filter active components before stacking HP/resources/buildup/stance/icons; max5 rows, no empty gaps. Extra resource and buildup bars are half HP height; stance matches HP width/height. Icons are1.575rem squares, icon-only; final +N opens the complete inspector. Shared0.2rem stack gap and whole-assembly selected glow. Tooltip delay1s. Inspector uses entity-name title; left sprite/name/HP only; right summary, current state, previous actions, known abilities/traits, lore. Facts are knowledge-filtered and data-driven. Formation fit is shared across factions and measured from unselected geometry. Configured row factors preserve back/middle/front depth; selected growth raises the assembly without changing its floor anchor. See CURRENT-SPECIFICATION.md.
 
 **Construction tags (proposed):** `card-kind:combatant`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -21847,6 +22018,8 @@ AnchorNameAboveHP(); IntentAboveSprite(); InfoAboveIntentOrSprite()
 AnchorDefenseAtSpriteRatio(config.combatant.defenseOffsetRatio, gap=config.combatant.defenseGapRem, player=right, enemy=left)
 MirrorArtworkForFacingOnly(); auraBehindAndBuffAboveSpanFullSpriteHeight()
 On selected: glow whole visible assembly; reveal info after config.interaction.inspectDelayMs
+ApplyRowPresentation(config.combatantFocus.rowBase, config.combatantFocus.selectedGrowth) // Share unselected category fit across factions; selection details never shrink it.
+AnchorScaledSpriteAtGroundShadow(); RaiseSelectedTo(config.combatantFocus.focusZ) // Keep foot contact stable and bring selected assembly forward.
 On hover/focus/tap tag: schedule shared tooltip after config.interaction.tooltipDelayMs; cancel stale timer
 On +N or info: open W1w; preview ONLY sprite/name/HP
 Inspector title = entity name
@@ -21876,11 +22049,11 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
-**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs)
+**Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [card-reference-client.js](card-reference-client.js), [card-reference.mjs](card-reference.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21914,7 +22087,18 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "defenseOffsetRatio": 0.5,
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
-    "enemyIntentVisible": true
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
   },
   "visibility": {
     "unselectedHiddenSelectors": [
@@ -21929,6 +22113,50 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     0.95,
     1
   ],
+  "focus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
+  "legibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
@@ -22055,7 +22283,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22265,7 +22493,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22475,7 +22703,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22690,7 +22918,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22943,7 +23171,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23257,7 +23485,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23571,7 +23799,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23867,7 +24095,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23968,6 +24196,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -24033,6 +24293,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -24047,14 +24309,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -24300,7 +24597,7 @@ Reuses the inspect source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24380,6 +24677,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -24445,6 +24774,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -24459,14 +24790,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -24743,7 +25109,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24828,6 +25194,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -24893,6 +25291,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -24907,14 +25307,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -25187,7 +25622,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25267,6 +25702,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -25332,6 +25799,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -25346,14 +25815,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -25622,7 +26126,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25702,6 +26206,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -25767,6 +26303,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -25781,14 +26319,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -26035,7 +26608,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26115,6 +26688,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -26180,6 +26785,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -26194,14 +26801,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -26443,7 +27085,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26540,6 +27182,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -26605,6 +27279,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -26619,14 +27295,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -26872,7 +27583,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26952,6 +27663,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -27017,6 +27760,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27031,14 +27776,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -27292,7 +28072,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -27393,6 +28173,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -27458,6 +28270,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27472,14 +28286,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -27733,7 +28582,7 @@ Reuses the selection source boundary. Reference sample data and interaction styl
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -27830,6 +28679,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -27895,6 +28776,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27909,14 +28792,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -28174,7 +29092,7 @@ Reuses the inspector source boundary. Reference sample data and interaction styl
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28254,6 +29172,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -28319,6 +29269,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -28333,14 +29285,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -28594,7 +29581,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28687,6 +29674,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -28752,6 +29771,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -28766,14 +29787,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -29015,7 +30071,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29095,6 +30151,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -29160,6 +30248,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29174,14 +30264,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -29435,7 +30560,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29515,6 +30640,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -29580,6 +30737,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29594,14 +30753,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -29839,7 +31033,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29919,6 +31113,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -29984,6 +31210,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29998,14 +31226,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -30259,7 +31522,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -30364,6 +31627,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -30429,6 +31724,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -30443,14 +31740,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -30688,7 +32020,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -30768,6 +32100,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -30833,6 +32197,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -30847,14 +32213,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -31092,7 +32493,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31177,6 +32578,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -31242,6 +32675,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -31256,14 +32691,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -31501,7 +32971,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31586,6 +33056,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -31651,6 +33153,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -31665,14 +33169,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -31910,7 +33449,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31990,6 +33529,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -32055,6 +33626,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32069,14 +33642,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -32314,7 +33922,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32394,6 +34002,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -32459,6 +34099,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32473,14 +34115,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -32718,7 +34395,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32803,6 +34480,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -32868,6 +34577,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32882,14 +34593,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -33143,7 +34889,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -33244,6 +34990,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -33309,6 +35087,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -33323,14 +35103,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -33576,7 +35391,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -33656,6 +35471,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -33721,6 +35568,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -33735,14 +35584,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -33984,7 +35868,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34064,6 +35948,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -34129,6 +36045,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34143,14 +36061,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -34400,7 +36353,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34485,6 +36438,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -34550,6 +36535,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34564,14 +36551,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -34821,7 +36843,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34906,6 +36928,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -34971,6 +37025,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34985,14 +37041,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -35238,7 +37329,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35323,6 +37414,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -35388,6 +37511,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -35402,14 +37527,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -35655,7 +37815,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35740,6 +37900,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -35805,6 +37997,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -35819,14 +38013,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -36080,7 +38309,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -36160,6 +38389,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -36225,6 +38486,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -36239,14 +38502,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -36492,11 +38790,11 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4), [WGC1](wireframe-gallery.html#WGC1), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -36593,6 +38891,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -36658,6 +38988,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -36672,14 +39004,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -36902,7 +39269,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Own one selectedCombatantId for this battlefield. On selection replace the previous ID, clear its glow and hide its inspect control before highlighting the new actor. Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays.
+// Own one selectedCombatantId for this battlefield. On selection replace the previous ID, clear its glow and hide its inspect control before highlighting the new actor. Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays. Selection does not resize other actors: shared faction/category fit uses unselected cached envelopes, then adds selected growth at the stable foot anchor and highest focus layer.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -36925,11 +39292,11 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37026,6 +39393,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -37091,6 +39490,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37105,14 +39506,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -37335,7 +39771,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Allocate player slots from config.scene.playerCount and stable actor IDs; render shared combatant cards with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions. Counts are preview fixture configuration, not a gameplay party-size rule.
+// Allocate player slots from config.scene.playerCount and stable actor IDs; render shared combatant cards with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions and the same category base scale used by enemies. Apply configured row-base/selected-growth factors only after shared unselected fitting; anchor the sprite feet. Counts are preview fixture configuration, not a gameplay party-size rule.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -37358,11 +39794,11 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WC4a](wireframe-gallery.html#WC4a)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37447,6 +39883,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -37512,6 +39980,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37526,14 +39996,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -37752,7 +40257,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable enemy IDs to authored slots; the preview count comes from config.scene.enemyCount. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
+// Project stable enemy IDs to authored slots; the preview count comes from config.scene.enemyCount. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names. Use the same category base fit as allies, excluding selected details; preserve row depth and foot anchors under focus growth.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -37775,11 +40280,11 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WC4a](wireframe-gallery.html#WC4a)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37864,6 +40369,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -37929,6 +40466,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37943,14 +40482,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -38188,11 +40762,11 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 **Referenced components:** [WCF3](wireframe-gallery.html#WCF3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38277,6 +40851,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -38342,6 +40948,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -38356,14 +40964,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -38578,7 +41221,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
+// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Interpolate capacity between config.hand.minCapacity and maxCapacity over narrowWidthRem to wideWidthRem, then constrain by minExposedTargetPx. Every card has the same scale bounded by minCardWidthRem and maxCardWidthRem; no per-card fitting. Use one bounded uniform card scale for the entire hand and preserve aspect ratio inside its section; focus/selection raises a card above its neighbors. Keep the configured exposed touch area for each unselected card; if the bounded cards cannot fit, use one horizontal hand scroller rather than shrinking below minimum or clipping targets. Do not create inner-card or vertical scrollbars; summarize text and inspect full details. Do not implement draw or damage logic here.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -38601,11 +41244,11 @@ Reuses the hand source boundary. Reference sample data and interaction styling a
 
 **Referenced components:** [WC1](wireframe-gallery.html#WC1)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38690,6 +41333,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -38755,6 +41430,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -38769,14 +41446,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -38987,7 +41699,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose controls in configured order as one tightly packed centered group. Large outer circles and center control share size token; empty non-End-turn controls fade.
+// Compose controls in configured order as one tightly packed centered group. The nominal footer band is config.bands.footer, with minimum physical height config.footerLayout.minimumHeightPx. The hand absorbs the extra height required by that touch floor. Compute widths from config.footerLayout after subtracting gaps. Actions/Potions share a square diameter based on footer height times config.footerLayout.heightFraction, capped by allocated width while preserving the configured touch target; End turn shares their height and may stretch to its configured width fraction. Draw/Discard share their configured maximum width. Never overlap the hand. Empty non-End-turn controls fade.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -39011,11 +41723,11 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39116,6 +41828,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -39181,6 +41925,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39195,14 +41941,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -39441,11 +42222,11 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** Leaf component; no nested component.
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39525,6 +42306,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -39590,6 +42403,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39604,14 +42419,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -39846,11 +42696,11 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39935,6 +42785,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -40000,6 +42882,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40014,14 +42898,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -40256,11 +43175,11 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40345,6 +43264,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -40410,6 +43361,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40424,14 +43377,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -40666,11 +43654,11 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40755,6 +43743,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -40820,6 +43840,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40834,14 +43856,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -41088,11 +44145,11 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 **Referenced components:** [WGH8](wireframe-gallery.html#WGH8), [WCB3](wireframe-gallery.html#WCB3)
 
-**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs)
+**Actual reference code:** [component-completion-client.js](component-completion-client.js), [component-completion.mjs](component-completion.mjs), [button-widths.mjs](button-widths.mjs), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41181,6 +44238,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -41246,6 +44335,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -41260,14 +44351,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -41527,7 +44653,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41785,7 +44911,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42020,7 +45146,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42255,7 +45381,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42543,7 +45669,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42788,7 +45914,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43023,7 +46149,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43258,7 +46384,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43502,7 +46628,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43738,7 +46864,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43998,7 +47124,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44103,6 +47229,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -44168,6 +47326,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -44182,14 +47342,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -44442,7 +47637,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44531,6 +47726,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -44596,6 +47823,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -44610,14 +47839,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -44870,7 +48134,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44950,6 +48214,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -45015,6 +48311,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -45029,14 +48327,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -45273,7 +48606,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45358,6 +48691,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -45423,6 +48788,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -45437,14 +48804,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -45693,7 +49095,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45778,6 +49180,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -45843,6 +49277,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -45857,14 +49293,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -46101,7 +49572,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46181,6 +49652,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -46246,6 +49749,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -46260,14 +49765,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -46504,7 +50044,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46589,6 +50129,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -46654,6 +50226,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -46668,14 +50242,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -46912,7 +50521,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46997,6 +50606,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -47062,6 +50703,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -47076,14 +50719,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -47324,7 +51002,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47581,7 +51259,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47826,7 +51504,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48076,7 +51754,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48321,7 +51999,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48579,7 +52257,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48684,6 +52362,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -48749,6 +52459,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -48763,14 +52475,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -49021,7 +52768,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49114,6 +52861,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -49179,6 +52958,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -49193,14 +52974,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -49443,7 +53259,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49528,6 +53344,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -49593,6 +53441,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -49607,14 +53457,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -49857,7 +53742,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49942,6 +53827,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -50007,6 +53924,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50021,14 +53940,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -50275,7 +54229,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50360,6 +54314,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -50425,6 +54411,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50439,14 +54427,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -50689,7 +54712,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50769,6 +54792,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -50834,6 +54889,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50848,14 +54905,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -51094,7 +55186,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51179,6 +55271,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -51244,6 +55368,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -51258,14 +55384,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -51504,7 +55665,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51589,6 +55750,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -51654,6 +55847,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -51668,14 +55863,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -51914,7 +56144,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51999,6 +56229,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -52064,6 +56326,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -52078,14 +56342,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -52343,7 +56642,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -52432,6 +56731,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -52497,6 +56828,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -52511,14 +56844,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -52776,7 +57144,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -52865,6 +57233,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -52930,6 +57330,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -52944,14 +57346,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -53201,7 +57638,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -53286,6 +57723,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -53351,6 +57820,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -53365,14 +57836,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -53610,7 +58116,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -53695,6 +58201,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -53760,6 +58298,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -53774,14 +58314,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -54023,7 +58598,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -54112,6 +58687,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -54177,6 +58784,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -54191,14 +58800,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -54436,7 +59080,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -54521,6 +59165,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -54586,6 +59262,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -54600,14 +59278,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -54861,7 +59574,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -54941,6 +59654,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -55006,6 +59751,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55020,14 +59767,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -55277,7 +60059,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -55362,6 +60144,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -55427,6 +60241,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55441,14 +60257,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {
@@ -55679,7 +60530,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Selected actors use the highest configured paint priority. Refit only when host allocation, roster or unselected geometry changes.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -55703,7 +60554,18 @@ On dispose: release timers, observers and events
     "defenseOffsetRatio": 0.5,
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
-    "enemyIntentVisible": true
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
   },
   "interaction": {
     "inspectDelayMs": 1000,
@@ -55729,9 +60591,28 @@ On dispose: release timers, observers and events
   "combat": {
     "regionFractions": {
       "topHUD": 0.1,
-      "battlefield": 0.5,
-      "hand": 0.25,
-      "footer": 0.15
+      "battlefield": 0.55,
+      "hand": 0.3,
+      "footer": 0.05
+    },
+    "hand": {
+      "minimumHeightPx": 208,
+      "verticalInsetRem": 0.25,
+      "minFontRem": 0.7,
+      "minCapacity": 5,
+      "maxCapacity": 15,
+      "narrowWidthRem": 22,
+      "wideWidthRem": 75,
+      "minCardWidthRem": 5,
+      "maxCardWidthRem": 9,
+      "minExposedTargetPx": 44,
+      "selectedLiftRem": 0.5,
+      "cardAspectRatio": "5 / 8",
+      "verticalAnchor": "card-body-center"
+    },
+    "footer": {
+      "minimumHeightPx": 56,
+      "heightFraction": 0.95
     }
   },
   "inspector": {
@@ -55772,7 +60653,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -55852,6 +60733,38 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "footer": "equalSharesAfterGaps",
     "singleFooter": "full"
   },
+  "combatantFocus": {
+    "rowIds": [
+      "back",
+      "middle",
+      "front"
+    ],
+    "rowBase": [
+      0.9,
+      0.95,
+      1
+    ],
+    "selectedGrowth": [
+      1.1,
+      1.05,
+      1.1
+    ],
+    "rowZPriority": [
+      10,
+      20,
+      30
+    ],
+    "focusZ": 100,
+    "fit": {
+      "maximumScale": 1,
+      "minimumScale": 0.01,
+      "inset": 0,
+      "gap": 0
+    },
+    "selectionDetailsAffectFit": false,
+    "sharedBaseAcrossFactions": true,
+    "stableAnchor": "sprite-baseline-center"
+  },
   "spacing": {
     "gapRem": 0.2,
     "insetRem": 0.75,
@@ -55917,6 +60830,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "minimumSpriteHeightPx": 60,
+    "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55931,14 +60846,49 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "skyline": true,
     "floor": true
   },
+  "combatantLegibility": {
+    "intentRowMinPx": 20,
+    "valueFontMinPx": 12,
+    "infoSizePx": 44,
+    "infoFontPx": 16,
+    "barMinWidthPx": 0,
+    "fontMinRem": 0.75,
+    "hpMinRem": 0.85,
+    "secondaryMinRem": 0.45,
+    "stanceMinRem": 0.85,
+    "iconMinRem": 1
+  },
+  "footerLayout": {
+    "circleMaxFraction": 0.2,
+    "pileMaxFraction": 0.1,
+    "endMaxFraction": 0.4,
+    "gapRem": 0.2,
+    "heightFraction": 0.95,
+    "minimumHeightPx": 56
+  },
   "hand": {
+    "minimumHeightPx": 208,
+    "verticalInsetRem": 0.25,
+    "minFontRem": 0.7,
+    "minCapacity": 5,
+    "maxCapacity": 15,
+    "narrowWidthRem": 22,
+    "wideWidthRem": 75,
+    "minCardWidthRem": 5,
+    "maxCardWidthRem": 9,
+    "minExposedTargetPx": 44,
+    "selectedLiftRem": 0.5,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
     "fixtureIds": [
       "WC1a",
       "WC1b",
-      "WC1c"
+      "WC1c",
+      "WC1a",
+      "WC1b",
+      "WC1c",
+      "WC1a"
     ]
   },
   "tooltip": {

@@ -2998,7 +2998,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Own one selectedCombatantId for this battlefield. On selection replace the previous ID, clear its glow and hide its inspect control before highlighting the new actor. Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays.
+// Own one selectedCombatantId for this battlefield. On selection replace the previous ID, clear its glow and hide its inspect control before highlighting the new actor. Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays. Selection does not resize other actors: shared faction/category fit uses unselected cached envelopes, then adds selected growth at the stable foot anchor and highest focus layer.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -3079,7 +3079,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Allocate player slots from config.scene.playerCount and stable actor IDs; render shared combatant cards with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions. Counts are preview fixture configuration, not a gameplay party-size rule.
+// Allocate player slots from config.scene.playerCount and stable actor IDs; render shared combatant cards with player-facing context. Intent is hidden by role default but configurable. Preserve sprite proportions and the same category base scale used by enemies. Apply configured row-base/selected-growth factors only after shared unselected fitting; anchor the sprite feet. Counts are preview fixture configuration, not a gameplay party-size rule.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -3156,7 +3156,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable enemy IDs to authored slots; the preview count comes from config.scene.enemyCount. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names.
+// Project stable enemy IDs to authored slots; the preview count comes from config.scene.enemyCount. Render the same combatant component with enemy-facing context and active intent; do not mirror controls or names. Use the same category base fit as allies, excluding selected details; preserve row depth and foot anchors under focus growth.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -3302,7 +3302,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Use configured spacing and card ratio; fit/paginate when minimum readable width cannot fit. Do not implement draw or damage logic here.
+// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Interpolate capacity between config.hand.minCapacity and maxCapacity over narrowWidthRem to wideWidthRem, then constrain by minExposedTargetPx. Every card has the same scale bounded by minCardWidthRem and maxCardWidthRem; no per-card fitting. Use one bounded uniform card scale for the entire hand and preserve aspect ratio inside its section; focus/selection raises a card above its neighbors. Keep the configured exposed touch area for each unselected card; if the bounded cards cannot fit, use one horizontal hand scroller rather than shrinking below minimum or clipping targets. Do not create inner-card or vertical scrollbars; summarize text and inspect full details. Do not implement draw or damage logic here.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -3371,7 +3371,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose controls in configured order as one tightly packed centered group. Large outer circles and center control share size token; empty non-End-turn controls fade.
+// Compose controls in configured order as one tightly packed centered group. The nominal footer band is config.bands.footer, with minimum physical height config.footerLayout.minimumHeightPx. The hand absorbs the extra height required by that touch floor. Compute widths from config.footerLayout after subtracting gaps. Actions/Potions share a square diameter based on footer height times config.footerLayout.heightFraction, capped by allocated width while preserving the configured touch target; End turn shares their height and may stretch to its configured width fraction. Draw/Discard share their configured maximum width. Never overlap the hand. Empty non-End-turn controls fade.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -6815,7 +6815,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Selected actors use the highest configured paint priority. Refit only when host allocation, roster or unselected geometry changes.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)

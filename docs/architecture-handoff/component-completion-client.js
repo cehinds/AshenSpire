@@ -55,7 +55,7 @@ function createComponentReferenceRenderers(configuration) {
     const n=wrap('WGC1','cc-battlefield');n.append(background());
     const band=E('div','cc-formation');band.append(actors('WGC2',mode),actors('WGC3',mode));
     if(targets)band.querySelectorAll('[data-component="WC4a"]').forEach((actor,i)=>{if(i===0)return;actor.classList.add('cc-eligible');actor.tabIndex=0;actor.setAttribute('role','button');actor.setAttribute('aria-label','Select eligible enemy');actor.onclick=()=>{band.querySelectorAll('.cc-target-selected').forEach(x=>x.classList.remove('cc-target-selected'));actor.classList.add('cc-target-selected');signal(n,'Enemy target selected. Domain commit is outside the reference.');};});
-    n.append(band);let pending=false;
+    n.append(band);let pending=false;const baseGeometry=new WeakMap();
     const layoutActors=()=>{
       if(!n.isConnected)return;const stage=n.getBoundingClientRect();if(!stage.width||!stage.height)return;
       const c=cfg().groundGrid,grid=n.querySelector('.cc-ground-grid'),ground=n.querySelector('.cc-floor');
@@ -68,44 +68,114 @@ function createComponentReferenceRenderers(configuration) {
       n.style.setProperty('--grid-back-shift',stage.width*c.backRowOffsetPercent/100+'px');
       const slots=[...grid.querySelectorAll('.cc-ground-slot')];
       for(const slot of slots){const direction=slot.dataset.side==='ally'?1:-1;slot.dataset.trackShift=(Number(slot.dataset.row)-(c.rows-1)/2)*direction;slot.style.transform='translateX(calc(var(--grid-back-shift) * '+slot.dataset.trackShift+'))';}
+      // Allocate row baselines between readable overhead and the expanded-detail reserve.
+      // Spacing adapts before any sprite fit; upper rows must not consume the sprite's entire height.
+      const detailReserve=(cfg().scene.selectionDetailReserveRem??5)*rem,legibility=cfg().combatantLegibility;
+      const controlsReserve=(legibility.infoSizePx??44)+(n.querySelector('.combatant-intent:not([hidden])')?(legibility.intentRowMinPx??20):0)+cfg().spacing.gapRem*rem*2;
+      const minimumSprite=cfg().scene.minimumSpriteHeightPx??60;
+      const lastFoot=Math.max(inset,stage.height-inset-detailReserve),firstFoot=Math.min(lastFoot,inset+controlsReserve+minimumSprite);
+      const rowStep=Math.max(0,(lastFoot-firstFoot)/Math.max(1,c.rows-1));
+      for(const slot of slots){const r=slot.getBoundingClientRect(),originalY=r.top+r.height/2-stage.top,targetY=firstFoot+Number(slot.dataset.row)*rowStep;slot.dataset.verticalShift=String(targetY-originalY);slot.style.transform+=' translateY('+slot.dataset.verticalShift+'px)';}
       // Reset every actor before reading geometry; no post-paint correction and no accumulated transforms.
-      all.forEach(a=>{a.hidden=false;a.style.transform='none';a.style.left='0';a.style.top='0';});
+      all.forEach(a=>{a.hidden=false;a.classList.remove('combatant-legible');a.style.transform='none';a.style.left='0';a.style.top='0';});
+      const focus=cfg().combatantFocus||{rowIds:['back','middle','front'],rowBase:[.9,.95,1],selectedGrowth:[1.1,1.05,1.1],rowZPriority:[10,20,30],focusZ:100,fit:{maximumScale:1,minimumScale:.01,inset:0,gap:0}};
       const models=all.map(actor=>{
-        const art=actor.querySelector('.combatant-sprite');if(!art)return null;
-        const box=actor.getBoundingClientRect(),spriteBox=art.getBoundingClientRect();
+        const art=actor.querySelector('.combatant-sprite'),host=actor.querySelector('.combatant-host');if(!art||!host)return null;
         const side=actor.closest('[data-component="WGC2"]')?'ally':'enemy',index=[...actor.parentElement.children].indexOf(actor);
         const slot=slots.find(s=>s.dataset.side===side&&Number(s.dataset.index)===index);if(!slot){actor.hidden=true;return null;}
-        const shapes=[...art.querySelectorAll('svg path,svg circle,svg rect,svg ellipse,svg polygon')];
-        const sole=shapes.length?Math.max(...shapes.map(shape=>shape.getBoundingClientRect().bottom)):spriteBox.bottom;
-        const shadow=art.querySelector('.combatant-ground-shadow');if(shadow){shadow.style.top=(sole-spriteBox.top)+'px';shadow.style.transform='translate(-50%,-50%)';}
-        const parts=[box,...actor.querySelectorAll('.cardbox,.defense-badge,.combatant-intent,.info,.combatant-status,.combatant-resources')].map(p=>p.getBoundingClientRect?p.getBoundingClientRect():p).filter(r=>r.width&&r.height);
-        const anchorX=box.left+box.width/2;
-        return {actor,slot,side,index,width:box.width,foot:sole-box.top,left:Math.max(...parts.map(r=>anchorX-r.left)),right:Math.max(...parts.map(r=>r.right-anchorX)),above:Math.max(...parts.map(r=>sole-r.top)),below:Math.max(0,...parts.map(r=>r.bottom-sole))};
+        const selected=host.classList.contains('selected');let base=baseGeometry.get(actor);
+        if(!base){
+          // Measure once in unselected presentation. Selected details never enter the shared fit.
+          host.classList.remove('selected');host.classList.add('compact-unselected');
+          const box=actor.getBoundingClientRect(),spriteBox=art.getBoundingClientRect();
+          const shapes=[...art.querySelectorAll('svg path,svg circle,svg rect,svg ellipse,svg polygon')];
+          const sole=shapes.length?Math.max(...shapes.map(shape=>shape.getBoundingClientRect().bottom)):spriteBox.bottom;
+          const parts=[box,...actor.querySelectorAll('.cardbox,.defense-badge,.combatant-intent,.info,.combatant-status,.combatant-resources')].map(p=>p.getBoundingClientRect?p.getBoundingClientRect():p).filter(r=>r.width&&r.height),anchorX=box.left+box.width/2;
+          base={width:box.width,foot:sole-box.top,spriteTop:spriteBox.top-box.top,spriteCenter:spriteBox.left-box.left+spriteBox.width/2,spriteAbove:sole-spriteBox.top,intentPresent:Boolean(host.querySelector('.combatant-intent:not([hidden])')),left:Math.max(...parts.map(r=>anchorX-r.left)),right:Math.max(...parts.map(r=>r.right-anchorX)),above:Math.max(...parts.map(r=>sole-r.top)),below:Math.max(0,...parts.map(r=>r.bottom-sole))};
+          // Pin only the sprite envelope. Revealed details grow below it without moving the feet.
+          const cardbox=host.querySelector('.cardbox');cardbox.style.height='auto';cardbox.style.aspectRatio='auto';cardbox.style.gridTemplateRows=spriteBox.height+'px auto auto';
+          art.style.height=spriteBox.height+'px';const svg=art.querySelector('svg');if(svg){svg.style.maxHeight='100%';svg.style.marginBottom='0';}
+          const name=host.querySelector('.combatant-nameplate');if(name){const st=getComputedStyle(name);actor.style.setProperty('--cc-name-line',(parseFloat(st.lineHeight)||parseFloat(st.fontSize))+'px');}
+          const shadow=art.querySelector('.combatant-ground-shadow');if(shadow){shadow.style.top=(sole-spriteBox.top)+'px';shadow.style.transform='translate(-50%,-50%)';}
+          baseGeometry.set(actor,base);host.classList.toggle('selected',selected);host.classList.toggle('compact-unselected',!selected);
+        }
+        return {...base,actor,slot,side,index,selected,row:Math.floor(index/c.columns)};
       }).filter(Boolean);
       const gap=stage.width*c.centerGapPercent/100;
-      for(const side of ['ally','enemy']){
+      const allocations=[];const bothSides=['ally','enemy'];
+      for(const side of bothSides)for(let row=0;row<c.rows;row++){const rowActors=models.filter(m=>m.side===side&&m.row===row);if(rowActors.length)allocations.push({availableWidth:(stage.width-gap)/2-inset,availableHeight:stage.height*cfg().scene.actorHeightFraction,actors:rowActors.map(m=>({row,baseWidth:m.left+m.right,baseHeight:m.above+m.below}))});}
+      let sharedScale=(typeof sharedCombatantBaseScale==='function'?sharedCombatantBaseScale(allocations,focus):focus.fit.maximumScale)*c.actorScale;
+      const peak=Math.max(...focus.rowBase.map((base,row)=>base*focus.selectedGrowth[row]));
+      // Reserve configured focus growth before selection; selection itself never refits any actor.
+      for(const m of models){const r=m.slot.getBoundingClientRect(),y=r.top+r.height/2-stage.top;sharedScale=Math.min(sharedScale,r.width/((m.left+m.right)*peak));const legibility=cfg().combatantLegibility,controlReserve=(legibility.infoSizePx??44)+(m.intentPresent?Math.max(legibility.intentRowMinPx??20,legibility.valueFontMinPx??12):0)+cfg().spacing.gapRem*rem*2;if(m.spriteAbove>0)sharedScale=Math.min(sharedScale,Math.max(0,y-inset-controlReserve)/(m.spriteAbove*peak));if(m.below>0)sharedScale=Math.min(sharedScale,Math.max(0,stage.height-inset-y)/(m.below*peak));}
+      for(const side of bothSides){
         const group=models.filter(m=>m.side===side);if(!group.length)continue;
         const sideSlots=slots.filter(s=>s.dataset.side===side).map(slot=>{const r=slot.getBoundingClientRect();return {slot,x:r.left+r.width/2-stage.left,y:r.top+r.height/2-stage.top,width:r.width};});
         const minX=side==='ally'?inset:stage.width/2+gap/2,maxX=side==='ally'?stage.width/2-gap/2:stage.width-inset;
         const left=Math.max(...group.map(m=>m.left)),right=Math.max(...group.map(m=>m.right));
-        let scale=Math.min(1,Math.max(0,maxX-minX)/(left+right))*c.actorScale;
-        // One scale per faction fits the entire assembly, including intent/defense and below-foot statuses.
-        for(const m of group){const slot=sideSlots.find(s=>s.slot===m.slot);scale=Math.min(scale,stage.height*cfg().scene.actorHeightFraction/(m.above+m.below),slot.width/(m.left+m.right));if(m.above>0)scale=Math.min(scale,Math.max(0,slot.y-inset)/m.above);if(m.below>0)scale=Math.min(scale,Math.max(0,stage.height-inset-slot.y)/m.below);}
+        const scale=sharedScale;
         const originalMin=Math.min(...sideSlots.map(s=>s.x)),originalMax=Math.max(...sideSlots.map(s=>s.x));
-        const allowedMin=minX+left*scale,allowedMax=maxX-right*scale;
+        const infoHalf=Math.max((cfg().combatantLegibility.barMinWidthPx??64)/2,(cfg().combatantLegibility.infoSizePx??44)/2);
+        const allowedMin=minX+Math.max(left*scale*peak,infoHalf),allowedMax=maxX-Math.max(right*scale*peak,infoHalf);
         // Affine track fit preserves mirrored diagonal alignment; never nudge individual actors off slots.
         const extent=originalMax-originalMin,available=Math.max(0,allowedMax-allowedMin),trackScale=extent>0?Math.min(1,available/extent):1;
         const center=Math.max(allowedMin+extent*trackScale/2,Math.min(allowedMax-extent*trackScale/2,(originalMin+originalMax)/2));
-        for(const s of sideSlots){s.targetX=center+(s.x-(originalMin+originalMax)/2)*trackScale;const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px))';}
-        for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot),row=Math.floor(m.index/c.columns),depth=c.rowScaleFactors[row]??1,actorScale=scale*depth;m.actor.style.setProperty('--row-depth',c.preserveInformationSize?depth:1);m.actor.style.zIndex=String(row+1);m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot*actorScale)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';}
+        for(const s of sideSlots){s.targetX=center+(s.x-(originalMin+originalMax)/2)*trackScale;const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px)) translateY('+s.slot.dataset.verticalShift+'px)';}
+        for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot),presentation=typeof rowPresentationScale==='function'?rowPresentationScale(m.row,m.selected,focus):{factor:focus.rowBase[m.row]*(m.selected?focus.selectedGrowth[m.row]:1),zPriority:m.selected?focus.focusZ:focus.rowZPriority[m.row]},actorScale=scale*presentation.factor;
+          if(actorScale>0&&typeof applyCombatantLegibility==='function')applyCombatantLegibility(m.actor,actorScale,cfg().combatantLegibility);
+          const host=m.actor.querySelector('.combatant-host'),intent=host.querySelector('.combatant-intent'),info=host.querySelector('.info'),overlayGap=cfg().spacing.gapRem*rem/Math.max(actorScale,Number.EPSILON);
+          let above=m.spriteTop-overlayGap;
+          if(intent&&!intent.hidden){intent.style.bottom='auto';intent.style.left=m.spriteCenter+'px';intent.style.transform='translateX(-50%)';above-=intent.offsetHeight;intent.style.top=above+'px';above-=overlayGap;}
+          if(info){info.style.bottom='auto';info.style.left=m.spriteCenter+'px';info.style.transform='translateX(-50%)';info.style.top=(above-info.offsetHeight)+'px';}
+          m.actor.style.setProperty('--row-depth',1);m.actor.style.zIndex=String(presentation.zPriority);m.actor.style.transformOrigin='50% '+m.foot+'px';m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';m.actor.dataset.sharedBaseScale=String(scale);m.actor.dataset.presentationScale=String(actorScale);
+        }
       }
     };
     const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;layoutActors();});};
-    const observer=new ResizeObserver(schedule);observer.observe(n);band.querySelectorAll('.combatant-sprite').forEach(art=>observer.observe(art));if(typeof statusObservers!=='undefined')statusObservers.push(observer);schedule();return n;
+    const observer=new ResizeObserver(schedule);observer.observe(n);const selectionObserver=new MutationObserver(schedule);band.querySelectorAll('.combatant-host').forEach(host=>selectionObserver.observe(host,{attributes:true,attributeFilter:['class']}));if(typeof statusObservers!=='undefined')statusObservers.push(observer,selectionObserver);schedule();return n;
   }
-  function hand(mode){const n=wrap('WGC5','cc-hand');for(const id of cfg().hand.fixtureIds)n.append(cardNative(id,mode));return n;}
+  function hand(mode){
+    const n=wrap('WGC5','cc-hand'),track=E('div','cc-hand-track');
+    for(const id of cfg().hand.fixtureIds)track.append(cardNative(id,mode));n.append(track);
+    let pending=false;
+    const fit=()=>{if(!n.isConnected)return;const width=n.clientWidth,height=n.clientHeight;if(!width||!height)return;
+      const c=cfg(),hand={minCapacity:5,maxCapacity:15,narrowWidthRem:22,wideWidthRem:75,minCardWidthRem:5,maxCardWidthRem:9,minExposedTargetPx:44,selectedLiftRem:.5,minFontRem:.7,verticalInsetRem:.25,...c.hand},rem=parseFloat(getComputedStyle(document.documentElement).fontSize),inset=c.spacing.insetRem*rem;
+      const ratio=hand.cardAspectRatio.split('/').map(Number),aspect=ratio[0]/ratio[1];
+      const lift=hand.selectedLiftRem*rem,headroom=c.target.minRem*rem+lift,verticalInset=hand.verticalInsetRem*rem;
+      const usableWidth=Math.max(0,width-inset*2),usableHeight=Math.max(0,height-headroom-verticalInset*2);
+      const range=Math.max(Number.EPSILON,(hand.wideWidthRem-hand.narrowWidthRem)*rem),progress=Math.max(0,Math.min(1,(width-hand.narrowWidthRem*rem)/range));
+      const desiredWidth=(hand.minCardWidthRem+(hand.maxCardWidthRem-hand.minCardWidthRem)*progress)*rem;
+      const minimumWidth=hand.minCardWidthRem*rem,maximumWidth=hand.maxCardWidthRem*rem;
+      const constrained=usableHeight*aspect<minimumWidth||usableWidth<minimumWidth;
+      const cardWidth=Math.max(minimumWidth,Math.min(maximumWidth,desiredWidth,usableHeight*aspect,usableWidth)),cardHeight=cardWidth/aspect;
+      const count=track.children.length,gap=hand.gapRem*rem,touchStep=hand.minExposedTargetPx;
+      const requestedCapacity=Math.round(hand.minCapacity+(hand.maxCapacity-hand.minCapacity)*progress);
+      const physicalCapacity=cardWidth>0?Math.max(1,Math.floor(Math.max(0,usableWidth-cardWidth)/touchStep)+1):0;
+      const capacity=Math.min(requestedCapacity,physicalCapacity),visibleCount=Math.min(count,capacity);
+      const naturalStep=cardWidth+gap,fitStep=visibleCount>1?Math.max(touchStep,(usableWidth-cardWidth)/(visibleCount-1)):naturalStep;
+      const step=Math.min(naturalStep,fitStep),extent=count?cardWidth+Math.max(0,count-1)*step:0;
+      const scrolling=count>capacity&&extent>usableWidth;
+      n.dataset.capacity=String(capacity);n.dataset.cardWidth=String(cardWidth);n.dataset.exposedTarget=String(Math.min(cardWidth,step));n.dataset.heightConstrained=String(constrained);n.setAttribute('aria-label',constrained?'Hand: allocated space is below the configured readable minimum':'Hand cards');
+      n.classList.toggle('cc-hand-scroll',scrolling);n.style.setProperty('--cc-hand-active-order',count+1);n.style.setProperty('--cc-hand-selected-order',count+2);n.style.setProperty('--cc-hand-lift',lift+'px');n.style.setProperty('--cc-hand-font-min',hand.minFontRem+'rem');
+      track.style.width=Math.max(width,extent+inset*2)+'px';track.style.height=height+'px';
+      const start=scrolling?inset:Math.max(inset,(width-extent)/2);
+      [...track.children].forEach((entry,index)=>{entry.style.left=(start+index*step)+'px';entry.style.top=(Math.max(headroom+verticalInset,Math.min(height-verticalInset-cardHeight,(height-cardHeight)/2)))+'px';entry.style.width=cardWidth+'px';entry.style.height=cardHeight+'px';entry.style.setProperty('--cc-hand-order',index);});
+    };
+    const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;fit();});};
+    const observer=new ResizeObserver(schedule);observer.observe(n);if(typeof statusObservers!=='undefined')statusObservers.push(observer);schedule();return n;
+  }
   function footerControl(id){if(id==="WGC11" && typeof hudPotionMarkup==="function"){const n=wrap(id,"cc-potions-control");n.innerHTML=hudStyleSheet()+hudPotionMarkup(hudDefaultConfig(),true);n.addEventListener("click",e=>{const b=e.target.closest("[data-hud-item]");if(b)signal(n,"Selected "+b.dataset.hudItem+". Target and confirmation belong to the host.");});return n;}const sample=cfg().samples.footer;const labels={WGC7:`${sample.actions} Actions`,WGC8:`Draw ${sample.draw}`,WGC9:'End turn',WGC10:`Discard ${sample.discard} / ${sample.exhaust}`,WGC11:`${sample.potions} Potions`};const large=['WGC7','WGC9','WGC11'].includes(id);const b=button(id,labels[id],(large?'large ':'small ')+(id==='WGC7'||id==='WGC11'?'round':''));if(id==='WGC9'&&sample.actions===0)b.classList.add('primary');return b;}
-  function footer(){const n=wrap('WGC6','cc-footer');for(const id of ['WGC7','WGC8','WGC9','WGC10','WGC11'])n.append(footerControl(id));return n;}
+  function footer(){
+    const n=wrap('WGC6','cc-footer');for(const id of ['WGC7','WGC8','WGC9','WGC10','WGC11'])n.append(footerControl(id));
+    let pending=false;const fit=()=>{if(!n.isConnected)return;const c=cfg().footerLayout,width=n.clientWidth,height=n.clientHeight;if(!width||!height)return;
+      const rem=parseFloat(getComputedStyle(document.documentElement).fontSize),count=n.children.length;
+      const gap=Math.min(c.gapRem*rem,width/Math.max(1,count)),available=Math.max(0,width-gap*Math.max(0,count-1)),heightLimit=height*c.heightFraction;
+      const circle=Math.min(available*c.circleMaxFraction,heightLimit),pile=Math.min(available*c.pileMaxFraction,heightLimit),end=Math.min(available*c.endMaxFraction,Math.max(0,available-circle*2-pile*2));
+      n.style.gridTemplateColumns=[circle,pile,end,pile,circle].map(v=>v+'px').join(' ');n.style.gap=gap+'px';
+      n.style.setProperty('--cc-footer-major',circle+'px');n.style.setProperty('--cc-footer-pile',Math.min(heightLimit,Math.max(cfg().target.minRem*rem,Math.min(pile,circle)))+'px');
+    };const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;fit();});};
+    const observer=new ResizeObserver(schedule);observer.observe(n);if(typeof statusObservers!=='undefined')statusObservers.push(observer);schedule();return n;
+  }
   function mapGraph(pathsOnly=false,onSelect){const n=wrap(pathsOnly?'WGM2':'WGM1','cc-map');const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',cfg().map.viewBox);svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');for(const [a,b] of cfg().samples.mapEdges){const from=cfg().samples.mapNodes.find(x=>x.id===a),to=cfg().samples.mapNodes.find(x=>x.id===b);if(!from||!to)continue;const line=document.createElementNS(ns,'line');for(const [k,v] of Object.entries({x1:from.x,y1:from.y,x2:to.x,y2:to.y}))line.setAttribute(k,v);svg.append(line);}n.append(svg);for(const model of cfg().samples.mapNodes){const b=button('WGM3',pathsOnly?'●':model.icon+' '+model.label,model.state,()=>{n.querySelectorAll('.cc-node').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');n.dataset.selectedNode=model.id;if(onSelect)onSelect(model);else signal(n,model.state==='blocked'?'Unknown route: not reachable.':model.label+' selected. Use Enter to travel.');});b.classList.add('cc-node');if(model.id===cfg().map.selectedNode)b.classList.add('selected');b.style.left=model.x+'%';b.style.top=model.y+'%';if(pathsOnly)b.disabled=true;tip(b,model.label,model.state);n.append(b);}return n;}
   function nodeDetails(model){if(!model||typeof model!=='object')model=cfg().samples.mapNodes.find(n=>n.id===cfg().map.selectedNode);const n=wrap('WGM4','cc-node-details');if(!model){n.append(E('p','','Select a node to inspect its known details.'));return n;}n.append(E('h4','',model.label+' · '+model.state));const dl=E('dl','cc-facts');const known=model.state!=='blocked';const rows=model.details||[['Services',known&&model.id==='town'?'Smith · Merchant · Rest':'Not known'],['Risk',known?(model.id==='town'?'Known safe':'Known encounter'):'Unknown'],['Entry',model.state==='reachable'?'Select Enter '+model.label.toLowerCase()+' to travel':'This node cannot be entered now']];for(const [a,b] of rows)dl.append(E('dt','',a),E('dd','',b));n.append(dl);return n;}
   function region(){const n=wrap('WGM5','cc-region');const label=E('label','','Region '),select=E('select');for(const text of ['Ashen March','The Cinder Road'])select.append(E('option','',text));select.onchange=()=>signal(n,select.value+' map view selected. Run location unchanged.');label.append(select);n.append(label);return n;}

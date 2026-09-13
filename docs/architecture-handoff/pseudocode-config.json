@@ -7,7 +7,18 @@
     "defenseOffsetRatio": 0.5,
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
-    "enemyIntentVisible": true
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
   },
   "interaction": {
     "inspectDelayMs": 1000,
@@ -33,9 +44,28 @@
   "combat": {
     "regionFractions": {
       "topHUD": 0.1,
-      "battlefield": 0.5,
-      "hand": 0.25,
-      "footer": 0.15
+      "battlefield": 0.55,
+      "hand": 0.3,
+      "footer": 0.05
+    },
+    "hand": {
+      "minimumHeightPx": 208,
+      "verticalInsetRem": 0.25,
+      "minFontRem": 0.7,
+      "minCapacity": 5,
+      "maxCapacity": 15,
+      "narrowWidthRem": 22,
+      "wideWidthRem": 75,
+      "minCardWidthRem": 5,
+      "maxCardWidthRem": 9,
+      "minExposedTargetPx": 44,
+      "selectedLiftRem": 0.5,
+      "cardAspectRatio": "5 / 8",
+      "verticalAnchor": "card-body-center"
+    },
+    "footer": {
+      "minimumHeightPx": 56,
+      "heightFraction": 0.95
     }
   },
   "inspector": {
