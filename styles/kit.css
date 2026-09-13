@@ -3206,6 +3206,10 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* W3b: with a save, the menu and that save's preview share the body; the
    wordmark above stays centred. W3a (no save) keeps the lone centred menu. */
 .title-screen .as-titlemenu:has(> .title-home) { max-width: 60rem; }
+/* The wordmark sizes from its container (12cqi); widening the block for the
+   preview must not grow it. min(12cqi, 4.8rem) is exactly its size in the
+   40rem no-save block, whatever the host width. */
+.title-screen .as-titlemenu:has(> .title-home) .tm-name { font-size: min(12cqi, 4.8rem); }
 .title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: center; margin: 1.8rem 0; }
 .title-screen .title-home > .title-menu { margin: 0; }
 :root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
