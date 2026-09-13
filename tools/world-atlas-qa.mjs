@@ -51,6 +51,15 @@ try {
   await page.locator('.slot-continue').waitFor();
   await page.locator('.slot-continue').click();
   await page.locator('.world-atlas-screen').waitFor();
+  // SETTLE, exactly as `atlas()` does on first entry. The shared screen-entry
+  // transition offsets a freshly mounted screen by 8px for under 250ms, so
+  // bandsFit below measured the footer mid-animation and read it 10px past the
+  // viewport: footer bottom 1090 at 0ms, 1084 at 120ms, 1080 once settled, with
+  // header/scene/context/footer at an unchanged 79/747/190/64 throughout. The
+  // bands were never the finding — the missing wait was. Steady-state geometry
+  // is what this gate is for; the entry offset is by design and reduced motion
+  // turns it off.
+  await page.waitForTimeout(350);
   check(JSON.stringify(await page.evaluate(() => window.__worldJourney())) === JSON.stringify(initial), 'Save, quit and Continue preserve the manifest');
   if (gameEntry.includes('.html')) check(await page.locator('.atlas-terrain image').evaluateAll(es => es.every(e => e.getAttribute('href').startsWith('data:'))), 'Standalone world artwork is embedded');
   await bandsFit("1440x1080");
