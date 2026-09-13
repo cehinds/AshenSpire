@@ -98,7 +98,7 @@ resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
-ReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
+ProjectSelectionVisibility(config.visibility.unselectedHiddenSelectors, owner.selected) // Retain HP, block, intent, icons, aura and buffs while unselected.\nReserveHP(); remainingRows = 5 - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
 ComposeActiveRowsInOrder(HP, resources, buildup, stance, icons)

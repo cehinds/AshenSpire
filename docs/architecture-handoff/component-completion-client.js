@@ -97,7 +97,7 @@ function createComponentReferenceRenderers(configuration) {
         const extent=originalMax-originalMin,available=Math.max(0,allowedMax-allowedMin),trackScale=extent>0?Math.min(1,available/extent):1;
         const center=Math.max(allowedMin+extent*trackScale/2,Math.min(allowedMax-extent*trackScale/2,(originalMin+originalMax)/2));
         for(const s of sideSlots){s.targetX=center+(s.x-(originalMin+originalMax)/2)*trackScale;const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px))';}
-        for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot);m.actor.style.zIndex=String(Math.floor(m.index/c.columns)+1);m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot*scale)+'px';m.actor.style.transform='translateX(-50%) scale('+scale+')';}
+        for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot),row=Math.floor(m.index/c.columns),depth=c.rowScaleFactors[row]??1,actorScale=scale*depth;m.actor.style.setProperty('--row-depth',c.preserveInformationSize?depth:1);m.actor.style.zIndex=String(row+1);m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot*actorScale)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';}
       }
     };
     const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;layoutActors();});};

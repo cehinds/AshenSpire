@@ -4173,6 +4173,7 @@ resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
+ProjectSelectionVisibility(config.visibility.unselectedHiddenSelectors, owner.selected) // Retain HP, block, intent, icons, aura and buffs while unselected.
 ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
@@ -4379,6 +4380,7 @@ resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
+ProjectSelectionVisibility(config.visibility.unselectedHiddenSelectors, owner.selected) // Retain HP, block, intent, icons, aura and buffs while unselected.
 ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
@@ -4585,6 +4587,7 @@ resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
+ProjectSelectionVisibility(config.visibility.unselectedHiddenSelectors, owner.selected) // Retain HP, block, intent, icons, aura and buffs while unselected.
 ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs
@@ -4791,6 +4794,7 @@ resourceRows = ProjectActiveResourceProviders(snapshot)
 buildupRows = ProjectActiveBuildupProviders(snapshot)
 stance = ProjectActiveStanceOrAbsent(snapshot)
 statusIcons = ProjectActiveStatusIcons(snapshot)
+ProjectSelectionVisibility(config.visibility.unselectedHiddenSelectors, owner.selected) // Retain HP, block, intent, icons, aura and buffs while unselected.
 ReserveHP(); remainingRows = config.combatant.maxStackRows - HP - present(stance) - present(statusIcons OR buildupRows)
 ChooseOptionalBarsByConfiguredPriority(resourceRows, buildupRows, remainingRows)
 ConvertExcessBuildupToProgressIcons(); retain stable IDs

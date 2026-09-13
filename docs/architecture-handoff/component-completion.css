@@ -50,3 +50,8 @@
 /* Row-major 3×3 formations: shallow row advance gives deliberate overlap. */
 .cc-ground-side{grid-template-rows:repeat(var(--grid-rows),var(--grid-row-step));row-gap:0}
 .cc-ground-grid{top:var(--grid-depth);transform:translateY(-50%)}
+
+/* Counter the small perspective reduction for essential combat information. */
+.cc-battlefield .combatant-meter span{font-size:calc(.7rem / var(--row-depth,1))}
+.cc-battlefield .combatant-intent{font-size:calc(.95rem / var(--row-depth,1))!important}
+.cc-battlefield .defense-badge{font-size:calc(1.2rem / var(--row-depth,1))!important}

@@ -27,7 +27,7 @@ for(const entry of data){
  Object.assign(entry,baseReferenceMetadata(entry));
  if(entry.id.startsWith('WC4')){
   const shared=JSON.parse(fs.readFileSync(path.join(root,'pseudocode-config.json'),'utf8'));
-  entry.defaults={combatant:shared.combatant,interaction:shared.interaction,geometry:{presentation:'borderless combatant assembly',artwork:'preserve intrinsic ratio; sprite receives remaining height'}};
+  entry.defaults={combatant:shared.combatant,visibility:componentCompletionDefaults.combatantVisibility,rowDepth:componentCompletionDefaults.groundGrid.rowScaleFactors,interaction:shared.interaction,geometry:{presentation:'borderless combatant assembly',artwork:'preserve intrinsic ratio; sprite receives remaining height'}};
  }
  const completion=componentCompletions[entry.id];
  if(completion)Object.assign(entry,{model:completion.model,children:completion.children,defaults:componentCompletionDefaults,references:resolveSources(completion.sourceReferences),referenceStatus:completion.sourceDescription,implementation:{renderer:'renderCompletedComponent',source:['component-completion-client.js','component-completion.mjs','button-widths.mjs'],styles:['component-completion.css']}});

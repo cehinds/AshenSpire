@@ -394,7 +394,21 @@
       "playerIntent": false,
       "enemyIntent": true
     },
+    "combatantVisibility": {
+      "unselectedHiddenSelectors": [
+        ".combatant-nameplate",
+        ".combatant-meter:not(:first-child)",
+        ".buildup",
+        ".stance"
+      ]
+    },
     "groundGrid": {
+      "rowScaleFactors": [
+        0.9,
+        0.95,
+        1
+      ],
+      "preserveInformationSize": true,
       "slotsPerSide": 6,
       "columns": 2,
       "rows": 3,
