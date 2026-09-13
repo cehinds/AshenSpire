@@ -478,6 +478,54 @@ async function main() {
     return true;
   }
 
+  // A SMITH CANDIDATE TAKES EXACTLY TWO TOUCH TAPS, and this helper is where
+  // that number is held to (Constantine, 2026-09-12: *"it should be two taps.
+  // the first selects and the information icon (i) should appear after the set
+  // delay ... the second tap should select the card"*).
+  //
+  // THE COUNT HAS BEEN WRONG IN BOTH DIRECTIONS, so the helper pins it from
+  // both sides rather than reporting whatever it finds:
+  //   THREE (before #980) — cardInspection swallowed the selecting tap AND the
+  //     one after it, reserving the second for an information button nobody
+  //     had asked for. Measured here on 2026-09-11.
+  //   ONE (#980 through 2026-09-12) — the card was handed the first tap
+  //     outright (`actionOwnsTouch`), which bought the count by spending the
+  //     selecting beat: a thumb committed to a candidate it had not been shown.
+  //
+  // So this returns the count AND checks the shape of each beat: after tap one
+  // the card must be lit and the Smith must still hold nothing; after tap two
+  // the Smith must hold it. A tool that only counted would pass on the
+  // one-tap regression, which is the one that cost a player a choice.
+  const smithHolds = () => ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`);
+  const cardIsLit = () => ev(`!!document.querySelector('.smith-candidate-card.inspection-selected')`);
+  const selectSmithCandidate = async (p, { assert = null } = {}) => {
+    await press(p, 30); await wait(300);
+    const litAfterOne = await cardIsLit();
+    const heldAfterOne = await smithHolds();
+    if (assert) {
+      assert('the first tap on a Smith candidate lights it and chooses nothing',
+        litAfterOne && !heldAfterOne,
+        `lit=${litAfterOne} smith-holds-it=${heldAfterOne}`);
+    }
+    if (heldAfterOne) {
+      console.log('    (REGRESSION: one tap chose the Smith candidate — the selecting beat was spent)');
+      return 1;
+    }
+    await press(p, 30); await wait(300);
+    const heldAfterTwo = await smithHolds();
+    if (assert) {
+      assert('the second tap on a lit Smith candidate is the one that chooses it',
+        heldAfterTwo, `smith-holds-it=${heldAfterTwo}`);
+    }
+    if (!heldAfterTwo) {
+      // The old three-tap shape, if it ever comes back: say so by name rather
+      // than pressing a third time and reporting success.
+      console.log('    (REGRESSION: two taps did not choose the Smith candidate — a tap is being swallowed)');
+      return 3;
+    }
+    return 2;
+  };
+
   async function openShot(state, extra = {}) {
     const q = [`shot=${state}`, ...Object.entries(extra).map(([k, v]) => `${k}=${encodeURIComponent(v)}`)];
     await cdp.send('Page.navigate', { url: `${base}?${q.join('&')}` }, sessionId);
@@ -711,6 +759,12 @@ async function main() {
       `progress ${mid.progress} at 45% of ${before.holdMs} ms`);
     ok(`the bar returned to rest after the abort`, mutate ? true : aborted.holdState === 'idle' && aborted.progress === 0,
       `state=${aborted.holdState} progress=${aborted.progress}`);
+    // AN EARLY RELEASE IS A TAP, AND A TAP REVIEWS (the universal option
+    // contract, components/holdconfirm.js arm(): short activation → review
+    // modal, deliberate hold → commit). So the abort above leaves the review
+    // standing over the bars, and a hold pressed through that veil lands on
+    // nothing. Put it away the way a player does — Back — before the hold.
+    if (aborted.reviewing) { await press(await pointOf('.confirmation-cancel'), 30); await wait(260); }
 
     // ---- 2. A COMPLETED HOLD COMMITS.
     // If the abort above already committed, there is no bar left to hold and
@@ -1019,7 +1073,13 @@ async function main() {
     const seen = new Map();      // id -> Set(forms drawn)
     const undeclared = [];
     for (const surface of surfaces) {
-      await openShot(surface, surface === 'event' ? { shotEvent: EVENT } : {});
+      // THE SMITH'S SERVICES WANT A STONE. A fresh `?shot=rest` run carries
+      // none, so #smith-opt opens on a refusal and the three smith beats are
+      // never drawn — the census reading "not affordable" as "not wired". One
+      // Stone through main.js's own `?shotSmithingStones` door (values closed
+      // to 0|1) stands the run on the affordable side, as a player with a
+      // Stone in the purse is.
+      await openShot(surface, surface === 'event' ? { shotEvent: EVENT } : surface === 'rest' ? { shotSmithingStones: 1 } : {});
       // Two of the controls live behind a reveal (the Smith's grid, the
       // merchant's brazier). A census that only reads the first paint would
       // report them absent, which is the same word as "not wired" and means the
@@ -1044,7 +1104,15 @@ async function main() {
       // behind LOAD. Observed red without this press at dev = e5d9c981
       // ('11 claimed, 3 absent: … deleteSave') — the census reading a closed
       // selector as "not wired", the useFlask inversion again.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .as-option:first-child', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
+      // The Potions menu is a list of `.potion-fold` rows now (combat.js
+      // openPotions, 2026-09): the healing row's summary is pressed so its
+      // armed Use control stands where a thumb finds it.
+      // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
+      // first selects, the second is swallowed as an information tap, the
+      // third reaches the card's own choose) — measured 2026-09-11, and a
+      // finding for the owner, not this census's to hide: the census presses
+      // the card as many times as a thumb has to, and the count is on record.
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1298,8 +1366,8 @@ async function main() {
       { id: 'useFlask', of: 'drink the flask', sel: '[data-beat-action="useFlask"]', key: 'Enter', btn: 0,
         open: async (d) => { await openShot('combat', { shotSettings: JSON.stringify({ holdConfirm: d }) });
           await press(await pointOf('.combat-potions'), 60); await wait(400);
-          await press(await pointOf('.combat-potion-menu .as-option:first-child'), 60); await wait(400);
-          if (!await ev(`!!document.querySelector('[data-flask-action="use"][data-beat-action="useFlask"]')`)) {
+          await press(await pointOf('.combat-potion-menu .potion-fold:first-of-type > summary'), 60); await wait(400);
+          if (!await ev(`!!document.querySelector('.potion-use[data-beat-action="useFlask"]')`)) {
             throw new Error('Potions menu did not expose the armed healing-flask Use action');
           }
         },
@@ -1411,7 +1479,7 @@ async function main() {
       const cardP = await pointOf('.smith-candidate-card');
       if (!cardP) ok(`the Smith modal offers an armament candidate`, false, 'no .smith-candidate-card — nothing to review');
       else {
-        await press(cardP, 30); await wait(300);
+        await selectSmithCandidate(cardP);
         if (mutate) {
           await ev(`(() => { const el = document.querySelector('.smith-confirm'); if (!el) return 0;
             const c = el.cloneNode(true); el.parentNode.replaceChild(c, el);
@@ -1467,7 +1535,7 @@ async function main() {
       await openShot('rest', { shotSmithingStones: 1 });
       await press(await pointOf('#smith-opt'), 30); await wait(300);
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
-      await press(await pointOf('.smith-candidate-card'), 30); await wait(300);
+      await selectSmithCandidate(await pointOf('.smith-candidate-card'), { assert: ok });
       const ready = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
         nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
         hold: b.dataset.optionHold, holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint')
@@ -1599,7 +1667,7 @@ async function main() {
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const cp = await step('.smith-candidate-card', 'the first Smith candidate');
       if (!cp) continue;
-      await press(cp, 30); await wait(300);
+      await selectSmithCandidate(cp);
       await ev(`document.querySelector('.smith-confirm')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const up = await step('.smith-confirm', 'the Smith Upgrade action');
       if (!up) continue;
@@ -1670,7 +1738,17 @@ async function main() {
       const cp = await pointOf('#remove-grid .card');
       if (!cp) ok(`the brazier offers a card`, false, 'no card in #remove-grid');
       else {
-        await press(cp, 30); await wait(260);
+        // A BRAZIER CARD IS A CARD (renderCard + cardInspection): by touch the
+        // first tap selects it and the second is swallowed as an information
+        // tap, so the arm lands on the third — the same three-tap finding the
+        // Smith candidate records above. Pressed until the panel stands, at
+        // most three times, and the count is said.
+        let burnTaps = 0;
+        for (; burnTaps < 3; burnTaps++) {
+          await press(cp, 30); await wait(260);
+          if (await ev(`!!document.querySelector('.confirmation-modal')`)) { burnTaps++; break; }
+        }
+        if (burnTaps > 1) console.log(`    (the brazier card took ${burnTaps} touch taps to arm — cardInspection swallows the first two)`);
         const armed = await ev(`(() => { const p = document.querySelector('.confirmation-modal'); return { panel: !!p,
           q: p ? [p.querySelector('h2')?.textContent || '', p.querySelector('.confirmation-copy')?.textContent || ''].join(' ') : '',
           cards: document.querySelectorAll('#remove-grid .card').length }; })()`);

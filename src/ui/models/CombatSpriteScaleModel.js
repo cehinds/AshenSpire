@@ -15,8 +15,8 @@ export function fitCombatSprites({ width, height, actors }) {
   let base = Math.min(figureCeiling({ width, height }), height * .52);
   for (const a of actors) {
     const ratio = a.ratio * a.slot.depth;
-    const maxHeight = Math.max(1, a.slot.ground - a.leading - 6);
-    const maxWidth = Math.max(1, Math.min(a.slot.artWidth, width - 12));
+    const maxHeight = Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6);
+    const maxWidth = Math.max(1, Math.min(a.slot.artWidth, 2 * Math.min(a.slot.x - 6, width - a.slot.x - 6)));
     // Overhead controls anchor to the visible idle top, so transparent canvas
     // padding must not consume the clearance a second time.
     base = Math.min(base, maxHeight / ratio,
@@ -25,8 +25,7 @@ export function fitCombatSprites({ width, height, actors }) {
   return actors.map(a => {
     const visibleHeight = base * a.ratio * a.slot.depth;
     const scale = visibleHeight / a.visibleHeight;
-    const half = a.visibleWidth * scale / 2;
     return { id: a.slot.id, scale, visibleHeight,
-      x: Math.max(half + 6, Math.min(width - half - 6, a.slot.x)) };
+      x: a.slot.x };
   });
 }

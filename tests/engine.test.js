@@ -1413,13 +1413,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const r = createRng(0xaa11);
       const rn = createRunState({ seed: 0xaa11, classId: 'reaver', registries: REG });
       return JSON.stringify([
-        rollEncounter(REG, r, { pool: 'normal' }),
+        rollEncounter(REG, r, { pool: 'normal', seat: rn.seatOrder[0] }),
         rollRuneReward(REG, r, 'normal', []),
         rollCardRewardIds(REG, r, { classId: 'reaver', pool: 'normal' }),
         rollFlaskDrop(REG, r, rn),
         rollRelicReward(REG, r, ['forsakenMedallion']),
         buildShopStock(REG, r, rn),
-        resolveUnknownNode(REG, r, { act: 1 }),
+        resolveUnknownNode(REG, r, { tier: 1 }),
       ]);
     };
     eq(rollAll(), rollAll(), 'reward/shop/unknown rolls deterministic');
@@ -1720,17 +1720,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
-  test('21. act-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
-    // Encounter rolls are act-scoped.
+  test('21. seat-scoped encounters; Blighted Valkyrie heal-on-hit; player-side Bleed; Stitched King phase', () => {
+    // Encounter rolls are SEAT-scoped (SPEC §13.2); an act argument is refused.
     for (let i = 0; i < 20; i++) {
       const r = createRng(i * 7919);
-      assert(rollEncounter(REG, r, { pool: 'normal', act: 2 }).startsWith('a2_'), 'act 2 pool only');
-      assert(rollEncounter(REG, r, { pool: 'normal', act: 3 }).startsWith('a3_'), 'act 3 pool only');
-      assert(!rollEncounter(REG, r, { pool: 'normal', act: 1 }).startsWith('a2_'), 'act 1 pool untouched');
+      assert(rollEncounter(REG, r, { pool: 'normal', seat: 'marches' }).startsWith('a2_'), 'marches pool only');
+      assert(rollEncounter(REG, r, { pool: 'normal', seat: 'reach' }).startsWith('a3_'), 'reach pool only');
+      assert(!rollEncounter(REG, r, { pool: 'normal', seat: 'weald' }).startsWith('a2_'), 'weald pool untouched');
     }
-    const act3Boss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', act: 3 }));
-    eq(act3Boss.act, 3, 'boss stays in act 3');
-    eq(act3Boss.pool, 'boss', 'boss pool only');
+    let refused = null;
+    try { rollEncounter(REG, createRng(1), { pool: 'normal', act: 2 }); } catch (e) { refused = e.message; }
+    assert(/retired/.test(refused || ''), 'act is refused by name');
+    const reachBoss = REG.encounters.get(rollEncounter(REG, createRng(1), { pool: 'boss', seat: 'reach' }));
+    eq(reachBoss.seat, 'reach', 'boss stays in its seat');
+    eq(reachBoss.pool, 'boss', 'boss pool only');
 
     // Blighted Valkyrie: heals 2 whenever SHE lands a hit (persistent phase trigger);
     // her thrust also Bleeds the PLAYER (entity-agnostic status model).
@@ -1795,7 +1798,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (let act = 4; act <= 12; act++) {
       const ca = endlessActInfo(act).contentAct;
       assert(REG.mapConfig(ca), `mapConfig exists for looped act ${act} → ${ca}`);
-      assert(rollEncounter(REG, createRng(act), { pool: 'boss', act: ca }), `boss encounter rolls for looped act ${act}`);
+      assert(rollEncounter(REG, createRng(act), { pool: 'boss', seat: ['weald', 'marches', 'reach'][ca - 1] }), `boss encounter rolls for looped act ${act}`);
     }
     // Cycle scaling applies in combat: +35% HP and +1 Strength per loop.
     const base = createCombat({
@@ -6084,13 +6087,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // shape leaves every existing seed byte-for-byte identical, and a shaped
     // run is flagged out of win-rate telemetry.
     const reg = createRegistries(contentBundle);
-    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 1, shape));
+    const graphOf = (shape) => JSON.stringify(buildActMap(reg, createRng(0x715e), 'weald', 1, shape));
     eq(graphOf(null), graphOf(undefined), 'no shape and an absent shape are the same run');
     // `shortest`, not a literal, for the same reason as above: this call really
     // does build a map, so it must name a length this act's own rules resolve.
     assert(graphOf(null) !== graphOf({ floors: shortest }), 'a shape reaches the generator through buildActMap');
     let threw = null;
-    try { buildActMap(reg, createRng(1), 1, { columns: 1 }); } catch (e) { threw = e.message; }
+    try { buildActMap(reg, createRng(1), 'weald', 1, { columns: 1 }); } catch (e) { threw = e.message; }
     assert(threw && threw.includes('corridor'), `a bad shape throws at act boot and names the knob — got ${threw}`);
     assert(isCustomRun({ mapShape: { floors: 6 } }), 'a shaped run is kept out of win-rate stats');
     assert(!isCustomRun({ ascension: 0, mods: {}, deckMode: 'standard' }), '…and an unshaped one is not');
@@ -6197,13 +6200,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
-    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '20/4', 'the measured ramp (E13: 14.8 level-ups per full run for a greedy bot) — five purchases cost 140');
+    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '50/10', 'the measured ramp (E13, re-measured at the ×3 faucet: 15.4 level-ups per full run for a greedy bot) — five purchases cost 350');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'five purchases cost 140 on the measured 20 + 4 ramp and end at displayed level 6');
+    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 350, 'five purchases cost 350 on the measured 50 + 10 ramp and end at displayed level 6');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
@@ -6674,8 +6677,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // THE RAMP, and the only half of his acceptance test this suite can hold.
     eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
-    eq(levelsAffordable(REG, 140), 5, '140 cinders buys five levels and reaches displayed level 6');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 140, 'the measured 20 + 4 ramp totals 140 for five purchases');
+    eq(levelsAffordable(REG, 350), 5, '350 cinders buys five levels and reaches displayed level 6');
+    eq(levelsAffordable(REG, 349), 4, 'and one cinder short buys four — the ramp is exact, not generous');
+    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 350, 'the measured 50 + 10 ramp totals 350 for five purchases');
     eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
   });
 

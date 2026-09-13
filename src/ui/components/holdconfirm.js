@@ -1050,6 +1050,10 @@ export function beatArmer(meta, registries) {
           ? 'Review this change before confirming, or go back without applying it.'
           : `This action means ${current.of}. Review any visible cost or consequence before confirming.`,
         consequence: current.undo === 'none' ? 'CANNOT BE UNDONE' : 'STATE CHANGE',
+        // THE TONE IS THE ROW'S (secondbeat.js), never a call site's word: an
+        // action that writes the profile and gives nothing back is a danger
+        // door — red Delete, alertdialog — as the slot's Overwrite already is.
+        tone: current.stakes === 'profile' && current.undo === 'none' ? 'danger' : 'neutral',
         detailsHtml: authoredDetail || '',
         confirmLabel: confirmLabel || 'Confirm change',
         cancelLabel: 'Back',

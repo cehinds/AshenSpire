@@ -258,7 +258,7 @@
 .atlas-roads path { stroke:#322a1c; stroke-width:3.5; fill:none; stroke-dasharray:4 4; }
 .atlas-roads .traveled { stroke:#e9c477; stroke-width:4; stroke-dasharray:none; }
 .atlas-node { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; padding:0; background:none; border:0; cursor:pointer; display:grid; place-items:center; }
-.atlas-node:focus-visible { outline:3px solid #fff2b5; outline-offset:3px; border-radius:50%; }
+.atlas-node:focus-visible { outline:var(--focus-ring); outline-offset:3px; border-radius:50%; }
 .atlas-landmark { position:absolute; width:110px; height:110px; bottom:19px; left:50%; transform:translateX(-50%); transform-origin:50% 95%; transition:transform 180ms ease; pointer-events:none; filter:drop-shadow(0 5px 5px #18100a99); }
 .atlas-landmark img,.atlas-landmark svg { width:100%; height:100%; object-fit:contain; }
 .atlas-landmark svg { mask-image:radial-gradient(ellipse,#000 30%,transparent 70%); }
@@ -337,7 +337,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .atlas-local-zoom-tools output { min-width:45px; text-align:center; font-size:13px; }
 .atlas-local-help { margin:0; font-size:12px; line-height:1.4; color:#c2b38e; }
 .atlas-local-port { position:relative; flex:1; min-height:170px; overflow:clip; background:#8b7d61; touch-action:none; overscroll-behavior:contain; cursor:grab; isolation:isolate; }
-.atlas-local-port:focus-visible { outline:2px solid #f6d37c; outline-offset:2px; }
+.atlas-local-port:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .atlas-local-port[data-dragging] { cursor:grabbing; user-select:none; }
 .atlas-local-map { position:absolute; aspect-ratio:auto; }
 .atlas-local-map>svg { position:absolute; width:100%; height:100%; pointer-events:none; }

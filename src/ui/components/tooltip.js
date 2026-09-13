@@ -33,6 +33,7 @@ import { tooltipPlacementIntent } from '../models/TooltipPlacementModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
+import { reducedMotionRequested } from '../motion.js';
 let tooltipSettings = resolveTooltipSettings();
 
 export function configureTooltipSettings(settings) {
@@ -236,6 +237,27 @@ function fitRung(el, pinned) {
 }
 
 /**
+ * THE RUNG STEPS, IT DOES NOT JUMP. When an open panel re-opens larger — the
+ * pointer hopped from a value-and-a-line to a card with a glossary — the new
+ * box is revealed from the old one's size over tooltipHelp.stepMs, anchored on
+ * the edge that faces the control (a panel above its anchor grows upward). A
+ * clip reveal, never a size transition: fitRung reads scrollHeight against
+ * clientHeight the tick it writes the rung, and the instruments read the
+ * panel's rect the tick it opens, so the box itself is always final. Shrinks
+ * cut. Reduced motion (either ask) skips it.
+ */
+function stepRung(t, before, intent) {
+  if (typeof t.animate !== 'function' || !(tooltipSettings.step > 0) || reducedMotionRequested()) return;
+  const dw = Math.max(0, t.offsetWidth - before.w);
+  const dh = Math.max(0, t.offsetHeight - before.h);
+  if (dw < 2 && dh < 2) return;
+  const top = intent === 'above' ? dh : 0, bottom = intent === 'above' ? 0 : dh;
+  const left = intent === 'left' ? dw : 0, right = intent === 'left' ? 0 : dw;
+  t.animate([{ clipPath: `inset(${top}px ${right}px ${bottom}px ${left}px)` }, { clipPath: 'inset(0px)' }],
+    { duration: tooltipSettings.step, easing: 'ease-out' });
+}
+
+/**
  * The one way the tooltip is ever shown: fill it, reveal it, size it by rung,
  * place it beside its anchor. Every entry point is this function plus an
  * anchor, so the "how" cannot drift while the "where" differs.
@@ -290,6 +312,9 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
   clearTimers();
   const t = level === 0 ? ensure() : panel(1);
   t.style.setProperty('--tooltip-fade-duration', `${tooltipSettings.fade}ms`);
+  // The box this panel stood at, if it stood at all: a hop from one control to
+  // the next re-opens at the new rung, and the difference is revealed, not cut.
+  const stoodAt = t.dataset.open === 'true' && t.style.display !== 'none' ? { w: t.offsetWidth, h: t.offsetHeight } : null;
   conceal(level);
   t.innerHTML = html;
   // At the second level definitions are terminal: no unreachable third panel.
@@ -326,6 +351,7 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
   placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
+  if (stoodAt) stepRung(t, stoodAt, resolvedIntent);
   state[level].target?.removeAttribute?.('data-tip-open');
   hoverCloseCallback = null;
   state[level].target = target;

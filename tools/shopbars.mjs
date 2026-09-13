@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// tools/shopbars.mjs — THE MERCHANT IS FIVE BARS, AND EACH ANSWERS IN WORDS.
+// tools/shopbars.mjs — THE MERCHANT IS SEVEN BARS, AND EACH ANSWERS IN WORDS.
+// (Seven since the armaments and weapon-arts shelves of 2026-09; an eighth,
+// THE SMITH, only when the arrival roll says a smith travels with him.)
 // The rendered check on E2 (#247): shop.js's fold over the one mechanism
 // (components/disclosure.js — tools/onefold.mjs counts that it stayed one).
 //
@@ -65,8 +67,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the toggled-off SELL bar comes back greyed instead of absent',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: '      ...(sellOn() ? [{ key: \'bar:sell\', label: \'SELL\', node: sellRow,',
-          replace: '      ...(true ? [{ key: \'bar:sell\', label: \'SELL\', node: sellRow, // planted: discoverable over absent',
+          find: '      ...(sellOn() ? [{ key: \'bar:sell\', label: t(\'shop.bar.sell\'), node: sellRow,',
+          replace: '      ...(true ? [{ key: \'bar:sell\', label: t(\'shop.bar.sell\'), node: sellRow, // planted: discoverable over absent',
         }],
         expectRed: /BAD\s+S6 .*bar:sell/,
       },
@@ -99,8 +101,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the FLASKS bar quietly stops being declared',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: "      { key: 'bar:flasks', label: 'FLASKS', node: flasksRow,",
-          replace: "      ...(false ? [] : []), { key: 'bar:flasksX', label: 'FLASKS', node: flasksRow, // planted: renamed off the roster",
+          find: "      { key: 'bar:flasks', label: t('shop.bar.flasks'), node: flasksRow,",
+          replace: "      ...(false ? [] : []), { key: 'bar:flasksX', label: t('shop.bar.flasks'), node: flasksRow, // planted: renamed off the roster",
         }],
         expectRed: /BAD\s+S1 /,
       },
@@ -115,7 +117,10 @@ const SHAPES = [
 
 // The roster, a CONTRACT like creationbrief's: a bar that stops folding is
 // red by name, a bar that appears unnamed is red by name.
-const BARS = ['bar:cards', 'bar:relics', 'bar:flasks', 'bar:remove', 'bar:sell'];
+const BARS = ['bar:cards', 'bar:armaments', 'bar:weapon-arts', 'bar:relics', 'bar:flasks', 'bar:remove', 'bar:sell'];
+// Rolled at the door (smithServicesAt on the merchant's own stream): a bar
+// that MAY be drawn, never one that must — so it is neither missing nor stray.
+const OPTIONAL_BARS = ['bar:smith'];
 
 const findings = [];
 let checks = 0;
@@ -142,8 +147,8 @@ const READ = `(() => {
   const area = (el) => !!el && [...el.getClientRects()].some((r) => r.width > 0 && r.height > 0);
   const faces = [...document.querySelectorAll('.shop-bars .disc-face')];
   const panel = document.querySelector('.shop-bars .disc-reveal');
-  const shelfOf = { 'bar:cards': '#shop-cards', 'bar:relics': '#shop-relics',
-    'bar:flasks': '#shop-flasks', 'bar:remove': '#shop-remove', 'bar:sell': '#shop-sell' };
+  const shelfOf = { 'bar:cards': '#shop-cards', 'bar:armaments': '#shop-armaments', 'bar:weapon-arts': '#shop-weapon-arts',
+    'bar:relics': '#shop-relics', 'bar:flasks': '#shop-flasks', 'bar:remove': '#shop-remove', 'bar:sell': '#shop-sell', 'bar:smith': '#shop-smith' };
   return {
     bars: faces.map((el) => ({
       key: el.dataset.face,
@@ -156,7 +161,9 @@ const READ = `(() => {
       const el = document.querySelector(sel);
       return [key, { present: !!el, area: area(el) }];
     })),
-    cinders: (() => { const m = document.body.textContent.match(/Cinders: (\\d+)/); return m ? +m[1] : null; })(),
+    // THE PURSE IS THE BAND'S (runHud.js, 2026-09-11): the screen's own
+    // 'Cinders N' line is gone; the run HUD's chip is the one home.
+    cinders: (() => { const el = document.querySelector('.hud-cinders .cv'); const m = el && el.textContent.match(/(\\d+)/); return m ? +m[1] : null; })(),
   };
 })()`;
 
@@ -196,7 +203,7 @@ async function main() {
     // S1 — the roster, both directions, and every face speaks.
     const drawn = arrival.bars.map((b) => b.key);
     const missing = BARS.filter((k) => !drawn.includes(k));
-    const stray = drawn.filter((k) => !BARS.includes(k));
+    const stray = drawn.filter((k) => !BARS.includes(k) && !OPTIONAL_BARS.includes(k));
     const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '');
     if (missing.length || stray.length || mute.length) {
       bad('S1', shape, `the bars are not the roster — missing: [${missing.join(', ')}] stray: [${stray.join(', ')}]`
@@ -237,6 +244,11 @@ async function main() {
     await wait(250);
     const flasksBefore = await ev(`document.querySelectorAll('#shop-flasks .class-pick').length`);
     await ev(`(() => { const row = [...document.querySelectorAll('#shop-flasks .class-pick')].find((el) => !el.classList.contains('locked')); if (row) row.click(); return !!row; })()`);
+    await wait(300);
+    // A PURCHASE IS A DECISION (shop.js arm(el, 'shopBuy')): the tap opens the
+    // review modal and the second beat is its BUY IT — driven, not bypassed,
+    // exactly as S5 presses SELL IT below.
+    await ev(`(() => { const btn = document.querySelector('.confirmation-modal .confirmation-confirm'); if (btn) btn.click(); return !!btn; })()`);
     await wait(400);
     const afterBuy = await ev(READ);
     const flasksAfter = await ev(`document.querySelectorAll('#shop-flasks .class-pick').length`);
@@ -277,7 +289,8 @@ async function main() {
     await wait(400);
     const off = await ev(READ);
     const offKeys = off.bars.map((b) => b.key);
-    if (!offKeys.includes('bar:sell') && offKeys.length === BARS.length - 1) {
+    // Against the roster THIS boot drew (the Smith's bar is a roll), less SELL.
+    if (!offKeys.includes('bar:sell') && offKeys.join() === drawn.filter((k) => k !== 'bar:sell').join()) {
       ok('S6', shape, `with the toggle off the SELL bar is ABSENT — ${offKeys.join(', ')}`);
     } else {
       bad('S6', shape, `the toggled-off shop still carries bar:sell in some form — faces: ${offKeys.join(', ')}`);

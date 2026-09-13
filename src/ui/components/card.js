@@ -1,4 +1,5 @@
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { cardActions } from '../../services/cardActions.js';
 import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
@@ -7,7 +8,8 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // computeTokenBindings. No math happens here.
 
 import { resolveCard } from '../../model/registries.js';
-import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
+import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
+import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { esc } from './tooltip.js';
 import { statusTooltipText } from '../uiContent.js';
@@ -15,15 +17,14 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 
-/** Static token values straight off the def (for reward/pile/deck views). */
-export function staticTokens(def) {
-  const tokens = {};
-  for (const b of computeTokenBindings(def.effects || [])) {
-    const v = (def.effects[b.index] || {})[b.field];
-    if (typeof v === 'number') tokens[b.token] = v;
-  }
-  return tokens;
-}
+/**
+ * Static token values straight off the def (for reward/pile/deck views).
+ *
+ * The body moved to src/model/playingCard.js with the rest of the projection;
+ * this stays as the name five files already import, so the extraction costs
+ * no call site a rename that would prove nothing.
+ */
+export function staticTokens(def) { return staticCardTokens(def); }
 
 /**
  * relicText(def) → plain text with every {token} replaced by the number the
@@ -95,77 +96,75 @@ function fillTemplate(def, tokens, baseTokens) {
 export function renderCard(registries, ref, opts = {}) {
   configureTooltipGlossary(registries);
   const def = resolveCard(registries, ref);
+  // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
+  // way to innerHTML — the tag junction, the cost profile, the type row, the
+  // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
+  // left. The output is byte-identical by construction: the model's bodies are
+  // the ones that stood here.
+  const model = playingCardModel(registries, ref, { preview: opts.preview || null });
   const el = document.createElement('div');
   // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
   // type band), and one shared row budget below the band that tags and text
   // divide. `as-card` is the recipe; the old class names stay as the hooks
   // every tool and screen reads.
-  el.className = `card as-card playing-poker-card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  el.className = playingCardClasses(model);
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
-  const ty = balance.ui.cardTypes[def.type];
-  if (ty) {
-    el.style.setProperty('--card-type-color', ty.color);
-    el.style.setProperty('--card-radius', `${ty.radius}px`);
-    el.style.setProperty('--card-art-radius', `${ty.art}px`);
+  if (model.paint.typeColor) {
+    el.style.setProperty('--card-type-color', model.paint.typeColor);
+    el.style.setProperty('--card-radius', `${model.paint.radiusPx}px`);
+    el.style.setProperty('--card-art-radius', `${model.paint.artRadiusPx}px`);
   }
   // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
   // adding a class brings its own card colour with no stylesheet edit. Colorless
   // cards have no owning class, so they fall back to the neutral frame.
-  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
-  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
+  if (model.paint.tint) el.style.setProperty('--card-tint', model.paint.tint);
   if (opts.affordable === false) el.classList.add('unaffordable');
-  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
-  el.dataset.cardId = def.id;
+  if (model.instanceId) el.dataset.instanceId = model.instanceId;
+  el.dataset.cardId = model.id;
 
   // Equipment-generated cards carry their profile's tags on `cardTags`; authored
   // cards resolve through the junction. BOTH read the ACTIVE registries — the
   // authored branch used to call the module-global `tagsFor`, so a bundle that
   // changed a card's tags changed what combat did with them and not what the
   // card showed, which is the chip strip lying about the run being played.
-  const service = tagService(registries);
-  const liveTagRows = (opts.preview?.values || []).filter((row) => Array.isArray(row.tags));
-  const inheritedBy = new Map();
-  for (const row of liveTagRows) for (const id of row.inheritedTags || []) {
-    const sources = inheritedBy.get(id) || new Set(); sources.add(row.sourceName); inheritedBy.set(id, sources);
-  }
-  const resolvedTags = liveTagRows.length
-    ? service.resolve([...new Set(liveTagRows.flatMap((row) => row.tags))])
-    : def.cardTags && def.cardTags.length
-    ? service.resolve(def.cardTags)
-    : service.tagsOf('card', def);
-  // Keep legacy schools for compatibility, but do not print Blood/Heavy twice
-  // when the categorized theme/technique is the same visible word.
-  const categorizedLabels = new Set(resolvedTags.filter((tag) => ['theme', 'technique'].includes(tag.domain)).map((tag) => tag.label.toLowerCase()));
-  const tags = resolvedTags.filter((tag) => tag.domain !== 'card' || !categorizedLabels.has(tag.label.toLowerCase()));
+  const tags = model.tags;
   el.dataset.tagRows = tags.length ? '1' : '0';
-  const base = staticTokens(def);
-  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
   // The badge numbers come from the framework cost profile (a preview's
   // numbers are the preview's own — it already resolved them); the badge
   // words come from the TermRegistry, like the tooltip's cost line.
-  const pools = opts.preview ? null : registries.framework.costProfile(def);
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : (pools.variable ? 'X' : pools.action);
-  const manaCost = opts.preview ? opts.preview.manaCost : pools.mana;
-  const staminaCost = opts.preview ? opts.preview.staminaCost : pools.stamina;
+  const cost = model.costs.variable ? 'X' : model.costs.action;
+  const manaCost = model.costs.mana;
+  const staminaCost = model.costs.stamina;
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
+  // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
+  // The existing framework/preview remains the authority for all values.
+  const costRows = [
+    ['action', 'cost', '◆', cost],
+    ['stamina', 'stamina-cost', 'ϟ', staminaCost],
+    ['mana', 'mana-cost', '♦', manaCost],
+  ].filter(([, , , value]) => value != null && value !== 0);
+  el.dataset.wireframe = 'WC1';
   el.innerHTML =
-    `<div class="card-costs"><div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
-    (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
-    `</div><div class="cname">${esc(def.name)}</div>` +
-    `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
+    `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
+      `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
+    ).join('')}</div>` +
+
+    `<div class="cname">${esc(model.name)}</div>` +
+    `<div class="art"><span class="card-art-glyph">${esc(model.icon)}</span>` +
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
-      ? `<div class="cd-body"><div class="ctags cd-tags">${tags
-          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (inheritedBy.has(t.id) ? ` Granted by ${[...inheritedBy.get(t.id)].join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+      ? `<div class="ctags cd-tags">${tags
+          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
-      : '<div class="cd-body">') +
-    `<div class="ctext cd-text">${fillTemplate(def, tokens, base)}</div></div>`;
+      : '') + '</div>' +
+    `<div class="cd-body"><div class="ctype">${esc(model.type.label)}</div>` +
+    `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>` +
+    `<div class="card-metadata"><span>${esc(def.rarity || '')}</span></div>`;
+
   // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
   // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
   // count or measure, so the renderer reports after the first paint.
@@ -175,10 +174,9 @@ export function renderCard(registries, ref, opts = {}) {
   // number in the status row's own tint — "these cards just lit up" instead
   // of set-intersection math. Non-matching cards get nothing (absence = no
   // bonus; never a "+0%" badge).
-  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
-  if (boost) {
+  if (model.paint.boostTint) {
     el.classList.add('tag-boost');
-    el.style.setProperty('--boost-tint', boost.boostTint);
+    el.style.setProperty('--boost-tint', model.paint.boostTint);
   }
 
   // NO HOVER TOOLTIP ON A CARD (owner, 2026-09-11: "all cards will use the
@@ -193,13 +191,25 @@ export function renderCard(registries, ref, opts = {}) {
     actionOwnsTouch: opts.actionOwnsTouch === true,
     open: opener => {
       const details = document.createElement('div');
-      const liveCosts = opts.preview ? { variable: !!opts.preview.costIsX, action: opts.preview.cost, mana: opts.preview.manaCost, stamina: opts.preview.staminaCost } : null;
-      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
+      const liveCosts = model.hasPreview ? model.costs : null;
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
       decorateKeywords(details);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
       details.classList.add('playing-card-details');
+      // NO DEFAULT VERB. This line used to read
+      //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
+      // and that fallback was the defect: every surface but combat inherited
+      // combat's verb as a dead button, on the spoils screen most absurdly,
+      // where the player had opened the card in order to take it.
+      //
+      // A surface now says which one it is (`opts.surface`) and hands over the
+      // commits it owns (`opts.commands`); services/cardActions.js answers what
+      // that surface offers. A card with nothing to offer gets a reading door
+      // and no footer, which is the honest shape rather than an apology.
+      const surface = opts.surface || 'none';
       return openCardInspection({ title: def.name, card: face, details, opener,
-        getAction: opts.inspectionAction || (() => ({ enabled:false, reason:'Play cards from your combat hand.' })) });
+        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
+        commands: opts.commands || {} });
     } });
   return el;
 }

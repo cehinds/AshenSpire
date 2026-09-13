@@ -77,6 +77,14 @@ for (const r of results) {
 // in engine.test.js. Two files, no git conflict, and a suite that would have
 // printed "35." twice — the collision a merge cannot see.
 let zoomExtra = 0;
+{
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const files = ['wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'combat-formation.test.mjs', 'combat-sprite-scale.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
+  if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
+  console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);
+}
 let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
                     // two-homes defect these two lines exist to catch.
 {
@@ -868,7 +876,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
 {
   const { execFileSync } = await import('node:child_process');
   try {
-    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs', 'tests/offline-play.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs', 'tests/offline-play.test.mjs', 'tests/ui-strings.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     execFileSync(process.execPath, ['tools/attack-source-audit.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
     console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
     zoomPassed++;
@@ -988,6 +996,30 @@ try {
 } catch (error) {
   zoomExtra++;
   console.error('FAIL  Card removal and touch flick regressions:', error);
+}
+try {
+  await import('./card-two-beats.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Every card owes two beats:', error);
+}
+try {
+  await import('./card-actions.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card action service:', error);
+}
+try {
+  await import('./playing-card-model.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The playing card model:', error);
+}
+try {
+  await import('./card-selection-store.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card selection store:', error);
 }
 try {
   await import('./starting-equipment-preview.test.mjs');

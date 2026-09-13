@@ -173,7 +173,7 @@ check('the second cairn opens after the keeper and answers the branch taken',
 const rollEvents = (history, seeds = 400) => {
   const seen = new Set();
   for (let seed = 1; seed <= seeds; seed++) {
-    const r = resolveUnknownNode(REG, createRng(seed), { act: 1, history });
+    const r = resolveUnknownNode(REG, createRng(seed), { tier: 1, history });
     if (r.kind === 'event') seen.add(r.eventId);
   }
   return seen;

@@ -16,6 +16,8 @@ import { carriedIds } from '../../model/loadout.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
 import { openModal } from '../components/modalShell.js';
 import { button, statusText, el } from '../kit/index.js';
+// Every sentence this screen says is a row in content/source/uiStrings.csv.
+import { t } from '../strings.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
@@ -145,7 +147,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         arm(el, 'shopBuy', {
           hintHost: wrap,
           question: `Buy ${registries.cards.get(item.id).name} for ${item.cost} cinders? You have ${run.cinders}.`,
-          confirmLabel: 'BUY IT',
+          confirmLabel: t('shop.buy.confirm'),
           onConfirm: () => {
             run.cinders -= item.cost;
             run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
@@ -180,7 +182,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         const quote = armamentPurchasePlan(registries, run, item, 'weaponArt');
         const buy = button({ label: `Buy · ${quote.cost} cinders`, weight: 'primary', disabled: !quote.ok });
         const message = statusText(quote.reason || 'Adds a loose card to your deck. A smith can seat it in a compatible open mount.');
-        const shell = openModal({ title: quote.def.name, eyebrow: 'Weapon art', bodyClassName: 'as-pane', opener: card, body: (host) => host.append(renderCard(registries, { cardId: item.id, upgraded: false }, { small: true }), message), primary: buy });
+        const shell = openModal({ title: quote.def.name, eyebrow: t('shop.weaponArt.eyebrow'), bodyClassName: 'as-pane', opener: card, body: (host) => host.append(renderCard(registries, { cardId: item.id, upgraded: false }, { small: true }), message), primary: buy });
         buy.addEventListener('click', () => {
           try { commitArmamentPurchase(registries, run, quote); }
           catch (error) { message.textContent = error.message; buy.disabled = true; return; }
@@ -226,6 +228,48 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         grid.style.flexWrap = 'wrap';
         grid.style.gap = '14px';
         grid.style.justifyContent = 'center';
+        // THE BURN IS TWO BEATS AND THREE DOORS (Constantine, 2026-09-12).
+        // The first tap on a card HIGHLIGHTS it and reveals its `i`; nothing
+        // is armed and nothing is spent. The second beat is the burn, and it
+        // can arrive three ways, all of them the same `shopRemove` row:
+        //   · a second tap on the highlighted card  → the review modal
+        //   · a press-and-hold on it                → commits, fill and all
+        //   · the button below, green once a card is lit → the review modal
+        // The button is the beat a thumb can find without knowing the gesture,
+        // and it is the same primary-greens-on-selection shape the reward
+        // chooser and the Smith already use.
+        //
+        // ONE SELECTION, READ OFF THE SHARED EVENT. `cardinspectionselect`
+        // bubbles from whichever card the first tap lit (cardInspection.js),
+        // so this grid never keeps a second idea of what is selected — the
+        // highlight a player can see IS the button's subject.
+        let burning = null;
+        const burnCost = () => stock.removeCost;
+        const burnConfirm = button({
+          label: t('shop.burn.idle'), weight: 'primary', className: 'shop-burn-confirm', disabled: true,
+        });
+        burnConfirm.dataset.burnState = 'unselected';
+        const dressBurnConfirm = () => {
+          const ready = !!burning && run.cinders >= burnCost();
+          burnConfirm.disabled = !ready;
+          burnConfirm.dataset.burnState = !burning ? 'unselected' : (ready ? 'actionable' : 'blocked');
+          burnConfirm.textContent = burning
+            ? t('shop.burn.ready', { name: burning.def.name, cost: burnCost() })
+            : t('shop.burn.idle');
+        };
+        const commitBurn = () => {
+          if (!burning || run.cinders < burnCost()) return;
+          if (!removeDeckCard(run, burning.inst.instanceId, { keepOne: true })) return;
+          run.cinders -= burnCost();
+          run.removesPurchased = (run.removesPurchased || 0) + 1;
+          stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
+          sfx.play('buy');
+          onChanged();
+          render();
+        };
+        const burnQuestion = () => (burning
+          ? `Burn ${burning.def.name} out of the deck? ${burnCost()} cinders, and the card is gone.`
+          : 'Burn a card out of the deck?');
         run.deck.forEach((inst) => {
           // Basic attacks are run-owned even when equipment supplies their face.
           if (!canRemoveDeckCard(inst)) return;
@@ -235,22 +279,30 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           const wrap = document.createElement('div');
           wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
           wrap.appendChild(el);
+          el.addEventListener('cardinspectionselect', () => {
+            burning = { inst, def };
+            dressBurnConfirm();
+          });
           arm(el, 'shopRemove', {
             hintHost: wrap,
-            question: `Burn ${def.name} out of the deck? ${stock.removeCost} cinders, and the card is gone.`,
-            confirmLabel: 'BURN IT',
+            // The card's own beat always speaks for the card under the finger,
+            // whatever the grid last highlighted.
+            question: () => `Burn ${def.name} out of the deck? ${burnCost()} cinders, and the card is gone.`,
+            confirmLabel: t('shop.burn.confirm'),
             onConfirm: () => {
-              if (run.cinders < stock.removeCost || !removeDeckCard(run, inst.instanceId, { keepOne: true })) return;
-              run.cinders -= stock.removeCost;
-              run.removesPurchased = (run.removesPurchased || 0) + 1;
-              stock.removeCost = registries.balance.shop.removeBase + registries.balance.shop.removeStep * run.removesPurchased;
-              sfx.play('buy');
-              onChanged();
-              render();
+              burning = { inst, def };
+              commitBurn();
             },
           });
           grid.appendChild(wrap);
         });
+        arm(burnConfirm, 'shopRemove', {
+          question: burnQuestion,
+          confirmLabel: t('shop.burn.confirm'),
+          onConfirm: commitBurn,
+        });
+        grid.after(burnConfirm);
+        dressBurnConfirm();
       });
     }
 
@@ -265,7 +317,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const el = shopItem(row.title, row.desc, row.price, true, null, { titleHtml: !!row.titleHtml, costWord: 'cinders back' });
       arm(el, 'shopSell', {
         question: `Sell ${row.def.name} back to the merchant? ${row.price} cinders, and it is gone.`,
-        confirmLabel: 'SELL IT',
+        confirmLabel: t('shop.sell.confirm'),
         onConfirm: () => {
           if (row.kind === 'relic') {
             run.relics.splice(row.at, 1);
@@ -350,28 +402,28 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
     // ---- the fold: one mount, one open bar, faces that answer in words ----
     const BARS = [
-      { key: 'bar:cards', label: 'CARDS', node: cardsRow,
+      { key: 'bar:cards', label: t('shop.bar.cards'), node: cardsRow,
         value: () => (stock.cards.length ? `${stock.cards.length} for sale` : 'sold out'),
         tip: 'Cards for cinders. Tap to browse the shelf.' },
-      { key: 'bar:armaments', label: 'ARMAMENTS', node: armamentsRow,
+      { key: 'bar:armaments', label: t('shop.bar.armaments'), node: armamentsRow,
         value: () => `${(stock.armaments || []).length} for sale`, tip: 'Inspect an armament before buying it for your inventory.' },
-      { key: 'bar:weapon-arts', label: 'WEAPON ARTS', node: artsRow,
+      { key: 'bar:weapon-arts', label: t('shop.bar.weaponArts'), node: artsRow,
         value: () => `${(stock.weaponArts || []).length} for sale`, tip: 'Loose weapon-art cards. A smith can seat compatible cards in an open mount.' },
-      { key: 'bar:relics', label: 'RELICS', node: relicsRow,
+      { key: 'bar:relics', label: t('shop.bar.relics'), node: relicsRow,
         value: () => (stock.relics.length ? `${stock.relics.length} for sale` : 'sold out'),
         tip: 'Relics for cinders.' },
-      { key: 'bar:flasks', label: 'FLASKS', node: flasksRow,
+      { key: 'bar:flasks', label: t('shop.bar.flasks'), node: flasksRow,
         value: () => (stock.flasks.length ? `${stock.flasks.length} for sale` : 'sold out'),
         tip: 'Flasks for cinders.' },
-      { key: 'bar:remove', label: 'REMOVE A CARD', node: app.querySelector('#shop-remove'),
+      { key: 'bar:remove', label: t('shop.bar.remove'), node: app.querySelector('#shop-remove'),
         value: () => `${stock.removeCost} cinders`,
         tip: 'Pay the merchant to burn a card out of the deck.' },
       // ABSENT, never greyed, when his toggle is off — the recorded answer.
-      ...(sellOn() ? [{ key: 'bar:sell', label: 'SELL', node: sellRow,
+      ...(sellOn() ? [{ key: 'bar:sell', label: t('shop.bar.sell'), node: sellRow,
         value: () => (goods.length + armamentGoods.filter((plan) => plan.ok).length ? `${goods.length + armamentGoods.filter((plan) => plan.ok).length} the merchant will take` : 'nothing he wants'),
         tip: 'Sell stored armaments, relics and flasks. Equipped armaments must be unequipped first.' }] : []),
       // ABSENT when the roll at the door said no smith travels with him.
-      ...(smithCards.length ? [{ key: 'bar:smith', label: 'THE SMITH', node: smithRow,
+      ...(smithCards.length ? [{ key: 'bar:smith', label: t('shop.bar.smith'), node: smithRow,
         value: () => `${smithCards.filter((el) => !el.classList.contains('locked')).length} of ${smithCards.length} services open`,
         tip: 'A smith travels with this merchant: upgrade an item, lift a card out of one, or seat a card in one.' }] : []),
     ];
@@ -405,7 +457,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     message.setAttribute('role', 'status');
     const detail = renderEquipmentInspection(registries, def);
     const upgrades = statusText(`Smithing tier ${packageInfo.tier}. Attached cards: ${packageInfo.mounts.map((mount) => mount.cardName).join(', ') || 'none'}.`);
-    const cancel = button({ label: 'Back' });
+    const cancel = button({ label: t('shop.back') });
     const shell = openModal({ title: def.name, eyebrow: mode === 'sell' ? 'Sell armament' : 'Buy armament', bodyClassName: 'as-pane', body: (host) => host.append(detail, upgrades, message), secondary: [cancel], primary: confirm });
     cancel.addEventListener('click', shell.close);
     confirm.addEventListener('click', () => {
@@ -441,7 +493,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     if (affordable && onBuy) {
       arm(el, 'shopBuy', {
         question: `Buy ${itemName} for ${cost} ${costWord}? You have ${run.cinders} cinders.`,
-        confirmLabel: 'BUY IT',
+        confirmLabel: t('shop.buy.confirm'),
         onConfirm: onBuy,
       });
     }

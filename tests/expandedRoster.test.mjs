@@ -9,6 +9,7 @@ import { rollEncounter } from '../src/engine/encounters.js';
 import { checkPhases } from '../src/engine/triggers.js';
 import { BOSS_LOCATIONS } from '../src/content/bossDestinations.js';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { defaultSeatOrder } from '../src/model/seats.js';
 const added = ['lanternMoth','briarHermit','chainScavenger','bellKeeper','thornMatriarch','mirrorScribe','stitchCrab','glassRegent','marrowOrganist','cinderMantis','eclipseCantor','furnaceSaint','hollowAstronomer','ashheartDragon'];
 const bosses = new Set(['fellWarden','stitchedKing','blightedValkyrie','bellKeeper','thornMatriarch','glassRegent','marrowOrganist','furnaceSaint','hollowAstronomer','ashheartDragon']);
 const elites = new Set(['wyrmAspirant','courtDuelist','wyrmLord']);
@@ -20,9 +21,11 @@ test('all ten authored boss locations appear as distinct saved map destinations'
  assert.deepEqual(Object.keys(BOSS_LOCATIONS).sort(),encounters.map(e=>e.id).sort());
  assert.equal(new Set(Object.values(BOSS_LOCATIONS)).size,10);
  const seen=new Set();
+ const order=defaultSeatOrder(reg);
  for(const act of [1,2,3])for(let seed=1;seed<=20;seed++){
-  const map=buildActMap(reg,createRng(seed),act);
-  for(const id of map.bossIds){const encounter=bossEncounterForNode(reg,map,id,act);seen.add(encounter);assert(map.nodes[id].destinationLabel.startsWith(BOSS_LOCATIONS[encounter]+' · '));}
+  const seat=order[act-1];
+  const map=buildActMap(reg,createRng(seed),seat,act);
+  for(const id of map.bossIds){const encounter=bossEncounterForNode(reg,map,id,{seat,tier:act});seen.add(encounter);assert(map.nodes[id].destinationLabel.startsWith(BOSS_LOCATIONS[encounter]+' · '));}
  }
  assert.equal(seen.size,10);
 });
@@ -80,13 +83,14 @@ test('live pools expose all 20 regular enemies and 10 bosses through seeded lega
  for(let act=1;act<=3;act++){
   for(const id of actIds[act-1]){
    const rows=encounters.filter(e=>e.enemies.includes(id));assert(rows.length);
-   for(const row of rows){assert.equal(row.act,act);assert.equal(row.pool,bosses.has(id)?'boss':'normal');assert(row.weight>0);assert(row.floorBand.min>=1 && row.floorBand.min<=row.floorBand.max);assert(row.floorBand.max<=(bosses.has(id)?6:4));}
+   for(const row of rows){assert.equal(row.seat,row.id==='a3_bossRotValkyrie'?null:defaultSeatOrder(reg)[act-1]);assert.equal(row.pool,bosses.has(id)?'boss':'normal');assert(row.weight>0);assert(row.floorBand.min>=1 && row.floorBand.min<=row.floorBand.max);assert(row.floorBand.max<=(bosses.has(id)?6:4));}
    assert(reg.enemies.get(id).tags.length>0,id+' needs creature tags');
   }
   for(const pool of ['normal','boss']){
-   const expected=encounters.filter(e=>e.act===act&&e.pool===pool).map(e=>e.id),seen=new Set();
+   const seat=defaultSeatOrder(reg)[act-1];
+   const expected=encounters.filter(e=>e.seat===seat&&e.pool===pool).map(e=>e.id),seen=new Set();
    const a=createRng(1700+act),b=createRng(1700+act);
-   for(let n=0;n<600;n++){const id=rollEncounter(reg,a,{act,pool});assert.equal(id,rollEncounter(reg,b,{act,pool}));seen.add(id);}
+   for(let n=0;n<600;n++){const id=rollEncounter(reg,a,{seat,pool});assert.equal(id,rollEncounter(reg,b,{seat,pool}));seen.add(id);}
    assert.deepEqual([...seen].sort(),expected.sort());
   }
  }

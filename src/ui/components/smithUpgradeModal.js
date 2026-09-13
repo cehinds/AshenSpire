@@ -210,6 +210,13 @@ export function mountSmithUpgradeModal(host, initialModel, {
     const piece = item.itemKind === 'relic' ? registries.relics.get(item.itemId)
       : item.itemKind === 'armor' ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
         : registries.equipment.armaments.find(piece => piece.id === item.itemId);
+    // TWO TAPS: HIGHLIGHT, THEN CHOOSE (Constantine, 2026-09-12). The first
+    // tap highlights this candidate and reveals its `i`; the second reaches
+    // `choose` below and makes it the Smith's selection, which is what greens
+    // the footer's Upgrade. A press-and-hold reaches `choose` too — it never
+    // travelled through `click`. It owned the touch outright for a day
+    // (#980): that fixed the three-tap count by spending the selecting beat,
+    // so a thumb committed to a candidate it had not been shown yet.
     if (piece) bindCardInspection(card, { title: item.name, open: opener => {
       const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false })
         : renderEquipmentCard(registries, piece, { inspection: false, interactive: false });

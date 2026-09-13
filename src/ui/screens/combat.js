@@ -1255,11 +1255,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         }
         const affordable = !!pv && combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm,
-          inspectionAction: () => inspectionPlayAction(inst.instanceId) };
+          // The surface names itself and hands over its own commit; the
+          // verb and its availability sentence come from the service.
+          surface: 'combat',
+          availability: { play: playAvailability(inst.instanceId) },
+          commands: { play: () => inspectionPlayAction(inst.instanceId).play?.() } };
       }),
     });
     syncHandPager(handList);
     handRenderKey = key;
+  }
+
+  /**
+   * The service asks one question — is this act available, and if not, what
+   * is the sentence — so this adapts the resolver below to that answer.
+   * `true` when it can be played; the refusal's own words otherwise. The
+   * needs-a-target case is AVAILABLE: choosing a target is part of playing it,
+   * not a reason it cannot be played, which is what the old caption implied.
+   */
+  function playAvailability(instanceId) {
+    const action = inspectionPlayAction(instanceId);
+    return action.enabled ? true : (action.reason || 'This card cannot be played right now.');
   }
 
   function inspectionPlayAction(instanceId) {
@@ -1605,6 +1621,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // cancel would aim the card at wherever the finger happened to die.
           if (cancelled) return;
           // armHold consumes the trailing click of a moved press.
+          const handBounds = $('.hand').getBoundingClientRect();
+          if (up.clientY >= handBounds.top && up.clientY <= handBounds.bottom && up.clientX >= handBounds.left && up.clientX <= handBounds.right) {
+            handStrip.reorderAt(inst.instanceId, up.clientX);
+            return;
+          }
           const plan = dropPlan(up, true);
           if (plan.legal) playCard(inst.instanceId, plan.targetId || null);
         },
@@ -1778,7 +1799,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return;
       }
       // Selection mode: play the Nth hand card (auto-target a lone enemy).
-      const inst = combat.piles.hand[cardIdx];
+      const visibleId = app.querySelectorAll('.hand .card')[cardIdx]?.dataset.instanceId;
+      const inst = combat.piles.hand.find(card => card.instanceId === visibleId);
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);

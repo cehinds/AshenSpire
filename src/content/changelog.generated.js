@@ -3,6 +3,156 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1002",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Groundwork: the game now keeps one record of which card you have selected",
+    "detail": "Nothing you see changes. Selecting a card used to be tracked in two places at once — a note the code kept to itself, and the highlight drawn on the card — which had to be kept in step by searching the whole screen for whatever was lit. Three changes in three days got the tap counting wrong because of it: the tap that should have acted on a card was spent, skipped, or swallowed depending on which screen you were on. There is now one record, with its own tests, including the two mistakes that kept recurring: reading a card's information no longer loses your next tap, and re-selecting the card you already picked no longer forgets that you picked it.",
+    "build": "0.7.1.11",
+    "pullRequest": 1002,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1002"
+  },
+  {
+    "id": "pr-1001",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Groundwork: a card's facts now live apart from its picture",
+    "detail": "Nothing you see changes. Until now, working out what a card is — its cost, its type colour, which subtypes it carries, which class it belongs to — happened inside the same step that drew it, so nothing else in the game could ask those questions without drawing a card first. Those answers now live on their own, and drawing reads them. Two small things it fixes on the way: the cost shown on a card's corner and the cost written in its full description were worked out separately and could in principle disagree, and now cannot; and a card's facts can be written out whole, which is what lets the same card be drawn more than one way later.",
+    "build": "0.7.1.10",
+    "pullRequest": 1001,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1001"
+  },
+  {
+    "id": "pr-1000",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Inspecting a card now offers what that screen is for",
+    "detail": "Opening a card to read it used to show a greyed-out Play card button with the words \"Play cards from your combat hand\" — on every screen except combat, including the spoils screen, where you had opened the card in order to take it. A card's buttons now come from the screen it is standing on: the spoils screen offers Choose this card, and choosing it there picks the same card in the row behind the window. A card you are only reading, such as one in the compendium, simply shows no button at all instead of a dead one.",
+    "build": "0.7.1.9",
+    "pullRequest": 1000,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1000"
+  },
+  {
+    "id": "pr-998",
+    "date": "2026-09-12",
+    "group": "2026-09-12",
+    "summary": "Every card answers the same two taps",
+    "detail": "Tap a card once and it lights up, with the small i appearing beside it a moment later; tap it again — or press and hold it — and it does the thing you came for. That is now true of every card in the game. Two recent changes had pulled it apart: choosing an armament at the Smith and arming a card to burn at the merchant had started acting on the first tap, so you committed to a card before you had been shown it, and a card whose text was cut short opened its information straight from the small arrow in its corner, which no other card did. The arrow now selects the card like a tap anywhere else on it, and the i is the one way in to a card's full information everywhere. Reading a card and then tapping it no longer loses that tap. The merchant's burn shelf gains the green confirm button the loot screen and the Smith already had, so burning a card can be done with a second tap, a hold, or the button.",
+    "build": "0.7.1.8",
+    "pullRequest": 998,
+    "url": "https://github.com/cehinds/AshenSpire/pull/998"
+  },
+  {
+    "id": "pr-993",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Levelling and the merchant catch up with the tripled cinders",
+    "detail": "Cinder rewards were tripled a week ago and nothing else moved, so levels at the shrine had become far too cheap — a simulated climb bought 27 of them where the design asks for 10 to 20 — and every price at the merchant was effectively a third of what it was meant to be. A level now starts at 50 cinders and rises by 10 each time, which a 40-run simulation puts back at 15 levels a climb; armaments, weapon arts, cards, relics, flasks and card removal all cost three times what they did, which is exactly the number of fights per purchase they were tuned to before. Selling prices follow automatically, and nothing about how much you earn has changed.",
+    "build": "0.7.1.7",
+    "pullRequest": 993,
+    "url": "https://github.com/cehinds/AshenSpire/pull/993"
+  },
+  {
+    "id": "pr-991",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The words the game says now live in one table",
+    "detail": "Nothing you see changes today. Until now every sentence in the interface was written inside the screen that showed it, so the same idea could be worded two ways on two screens and rewording anything meant editing code. The spoils screen and the merchant now read their words from a single spreadsheet, each entry holding three lengths — the short label, the full sentence, and the tooltip a small button gets — and a new check stops any screen from quietly going back to writing its own.",
+    "build": "0.7.1.6",
+    "pullRequest": 991,
+    "url": "https://github.com/cehinds/AshenSpire/pull/991"
+  },
+  {
+    "id": "pr-989",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The three regions can now be climbed in any order, and each run picks its own",
+    "detail": "The Hollow Weald, the Pale Marches and the Cinder Reach are now seats: each carries its own enemies, bosses and scenery, and the seed decides which one a new climb opens in. Fighting a seat out of its old order scales its enemies' health to the act you meet it in, so the second and third acts stay the second and third acts wherever you are. The map title and the top band read the act and the seat together. Custom Climb gains a First seat control to open where you choose; a party in Forsaken Together climbs one shared order. The final act still offers the Blighted Valkyrie beside the seat's own bosses, and her fight paints the causeway. Saves from before this change load exactly as they were, climbing the same order they always did, and every existing seed's maps and fights are unchanged. This is the first build of the 0.7 line.",
+    "build": "0.7.1.2",
+    "pullRequest": 989,
+    "url": "https://github.com/cehinds/AshenSpire/pull/989"
+  },
+  {
+    "id": "pr-990",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Doors and explanations arrive with a small motion",
+    "detail": "Every window that opens over the game — settings, the Armoury, a confirmation, the loot screen — now fades in and settles into place over a fraction of a second instead of appearing all at once, and explanations fade in the same way. When an explanation grows because you moved to something with more to say, the extra part is revealed rather than snapped open. The Reduced motion setting, or the same preference in your operating system, turns all of this off.",
+    "build": "0.6.0.165",
+    "pullRequest": 990,
+    "url": "https://github.com/cehinds/AshenSpire/pull/990"
+  },
+  {
+    "id": "pr-988",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Every control shows the same gold ring when you land on it",
+    "detail": "Moving through the game with a keyboard or a controller now draws one ring — a thin gold line — around whatever you are on, everywhere: buttons, cards, the map, the Armoury, settings. Before, different screens drew different rings in different colours and thicknesses, and some drew a soft halo instead. The controller's cursor uses the same ring.",
+    "build": "0.6.0.162",
+    "pullRequest": 988,
+    "url": "https://github.com/cehinds/AshenSpire/pull/988"
+  },
+  {
+    "id": "pr-985",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A written plan for how your character will grow",
+    "detail": "Nothing a player sees changes. The owner's design for the next ruleset is now a document in the repository rather than a conversation: weapons, armour, relics and your class all become cards you wear; using a weapon levels a skill that offers you cards; your character levels from experience and grants one attribute point each time; mana stays a fixed pool that only potions, rests and named effects refill; every rest restores some mana; and every number in it is a settings row. It ends with the order the work will land in, and a second document breaks that order into the pull requests, files and tests each step needs.",
+    "build": "0.6.0.161",
+    "pullRequest": 985,
+    "url": "https://github.com/cehinds/AshenSpire/pull/985"
+  },
+  {
+    "id": "pr-987",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A card whose text is cut short can be opened with one tap",
+    "detail": "When a card's text does not fit its face, the small › in its corner is now a button: tap it on a phone and the card's full information opens, the same window the i button shows. Before, the › was only a hint, and the i only appeared after you had already selected the card.",
+    "build": "0.6.0.160",
+    "pullRequest": 987,
+    "url": "https://github.com/cehinds/AshenSpire/pull/987"
+  },
+  {
+    "id": "pr-986",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "A breath between the last blow and the loot",
+    "detail": "When the last enemy falls, the fight's title — Victory, Elite vanquished, or the boss's name falling — now stands over the battlefield for a moment before the reward screen opens, instead of the loot appearing the instant the fight ends. The Reduced motion setting skips the pause.",
+    "build": "0.6.0.159",
+    "pullRequest": 986,
+    "url": "https://github.com/cehinds/AshenSpire/pull/986"
+  },
+  {
+    "id": "pr-982",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "Deleting a save asks the way every other decision does",
+    "detail": "The ✕ on a save slot now opens a door that names the slot, shows the climb that would go — class, act, floor, health, seed — and offers a red Delete or Back, instead of a bare hold with no picture of what it erases. A deliberate hold on the ✕ still deletes directly if you keep that setting on. On the way, a red button on a danger door (Overwrite, Delete) had been painted green by the rule that turns a ready button green; it keeps its red now.",
+    "build": "0.6.0.158",
+    "pullRequest": 982,
+    "url": "https://github.com/cehinds/AshenSpire/pull/982"
+  },
+  {
+    "id": "pr-980",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "One tap picks an item at the Smith and one tap arms a burn at the merchant",
+    "detail": "On a phone, choosing an armament for the Smith to upgrade took three taps, and so did arming a card to burn out of your deck at the merchant: the first tap selected the card, the second was taken as a request for its explanation, and only the third did what you meant. Both cards now answer the first tap, the same way a card in your hand does. Upgrading and burning still ask you to confirm.",
+    "build": "0.6.0.157",
+    "pullRequest": 980,
+    "url": "https://github.com/cehinds/AshenSpire/pull/980"
+  },
+  {
+    "id": "pr-979",
+    "date": "2026-09-11",
+    "group": "2026-09-11",
+    "summary": "The project's own checks read the screens as they are now",
+    "detail": "Nothing a player sees changes. Five of the checks the project runs against the real game had fallen behind the screens they measure — the merchant's seven shelves, the potions that moved into a menu in combat, the Smith's level-up dialog, a purchase that asks before it takes your cinders, a kit choice that is two taps — and were reporting the game broken where it was not. Each one now walks the game the way a player does. Two things they found on the way are recorded for the owner rather than papered over: choosing a Smith candidate by touch takes three taps, and the Smith's extract and install services cannot be reached from a fresh run's Shrine.",
+    "build": "0.6.0.156",
+    "pullRequest": 979,
+    "url": "https://github.com/cehinds/AshenSpire/pull/979"
+  },
+  {
     "id": "pr-977",
     "date": "2026-09-11",
     "group": "2026-09-11",

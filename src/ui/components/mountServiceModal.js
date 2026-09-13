@@ -163,7 +163,9 @@ export function mountMountServiceModal(host, initialModel, {
       const piece = item.itemKind === 'armor'
         ? registries.equipment.armour.find(piece => piece.id === item.itemId && piece.classId === item.classId)
         : registries.equipment.armaments.find(piece => piece.id === item.itemId);
-      if (piece) bindCardInspection(card, { title: item.name, actionOwnsTouch: true, open: opener => openModal({
+      // Two taps: the first highlights and reveals the `i`, the second
+      // reaches `choose` below. The footer's verb is still the commit.
+      if (piece) bindCardInspection(card, { title: item.name, open: opener => openModal({
         title: item.name, eyebrow: 'Item information', opener, size: 'lg',
         body: renderEquipmentInspection(registries, piece, { interactive: false }),
       }) });
@@ -206,7 +208,7 @@ export function mountMountServiceModal(host, initialModel, {
       for (const row of previewHost.querySelectorAll('.mount-row')) {
         markUiComponent(row, UI.mountRow, row.classList.contains('selected') ? 'selected' : 'available');
         const mount = selected.mounts.find(mount => mount.mountKey === row.dataset.mountKey);
-        bindCardInspection(row, { title: mount.cardName || mount.kindLabel, actionOwnsTouch: true, open: opener => openModal({
+        bindCardInspection(row, { title: mount.cardName || mount.kindLabel, open: opener => openModal({
           title: mount.cardName || 'Open mount', eyebrow: mount.kindLabel, opener,
           bodyClassName: 'as-pane', body: host => {
             if (mount.cardId) host.append(renderCard(registries, { cardId: mount.cardId, upgraded: mount.upgraded }, { inspection: false, tooltip: false }));
@@ -226,7 +228,7 @@ export function mountMountServiceModal(host, initialModel, {
       const cardList = previewHost.querySelector('.mount-card-list');
       if (cardList && p.selectedMount) {
         for (const card of p.selectedMount.cards) {
-          const el = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true, actionOwnsTouch: true });
+          const el = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true });
           el.classList.toggle('selected', card.selected);
           el.setAttribute('role', 'option');
           el.setAttribute('aria-selected', String(card.selected));

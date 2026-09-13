@@ -130,9 +130,18 @@ export const ACT_NAMES = {
 // this line held a literal `3` beside a table of three, which is one fact in two
 // places and would have gone wrong the day a fourth act was named.
 export const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
-export function actTitle(actNumber) {
-  const base = ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`;
+const TIER_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+/**
+ * actTitle(actNumber, seatName?) — with a seat name the title is the TIER and
+ * the SEAT (SPEC §13.2: `Act <tier> · <seat name>`), e.g. `ACT II — THE PALE
+ * MARCHES`; without one (a snapshot that carries no seat) the authored table
+ * above still answers, so nothing that never had seats changes its title.
+ */
+export function actTitle(actNumber, seatName = null) {
   const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
+  const base = seatName
+    ? `ACT ${TIER_NUMERALS[actPlate(actNumber, ACT_NAME_COUNT) - 1] || actPlate(actNumber, ACT_NAME_COUNT)} — ${String(seatName).toUpperCase()}`
+    : (ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`);
   return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
 }
 

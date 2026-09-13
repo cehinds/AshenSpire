@@ -1142,7 +1142,7 @@
 :root .combat[data-layout='formation'] .combatant :is(.status-row,.stance-chip,.foundation-evade,.dodge-receipt) { pointer-events: auto; }
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
-.combat-ability-badge:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
 :root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
@@ -1178,26 +1178,6 @@
    edges and the cluster rather than inside the piles. The `/ var(--ui-zoom)`
    is the shape every viewport length wears under the body zoom (base.css).
    Below 600px tall the formation's own 52/42 px rule above still stands. */
-@media (min-height: 600px) {
-:root[data-layout='wide'] .combat[data-layout='formation']:not(.coop) > .hand-area > .combat-action-row {
-  --combat-control-size: calc(13vh / var(--ui-zoom, 1)) !important;
-  --combat-pile-w: calc(15vw / var(--ui-zoom, 1));
-  --combat-end-w: calc(30vw / var(--ui-zoom, 1));
-  grid-template-columns: var(--combat-control-size) var(--combat-pile-w) var(--combat-end-w) var(--combat-pile-w) var(--combat-control-size);
-  justify-content: space-between;
-}
-:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn {
-  height: calc(var(--combat-control-size) * .8); min-height: calc(var(--combat-control-size) * .8);
-  font-size: max(1.05rem, calc(2.4vh / var(--ui-zoom, 1)));
-}
-:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
-  height: calc(var(--combat-control-size) * .62); min-height: calc(var(--combat-control-size) * .62);
-  font-size: max(0.95rem, calc(1.9vh / var(--ui-zoom, 1)));
-}
-:root[data-layout='wide'] .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb, .combat-potions) {
-  font-size: max(1.1rem, calc(2.1vh / var(--ui-zoom, 1)));
-}
-}
 .turn-ribbon {
   position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 40; pointer-events: none;
   padding: calc(3px / var(--ui-zoom,1)) calc(32px / var(--ui-zoom,1));
@@ -1206,6 +1186,25 @@
   background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
 }
 .turn-ribbon::before { content: '‹ ✧ '; } .turn-ribbon::after { content: ' ✧ ›'; }
+/* THE VICTORY BEAT (components/victoryBeat.js): the fight's title over the
+   battlefield for balance.ui.victoryBeat.ms, drawn in the ribbon's own ink so
+   it reads as the same voice that said "Player Turn". Absolute inside .combat
+   like the ribbon; px through --ui-zoom, never vw/vh. */
+.victory-beat {
+  position: absolute; inset: 0; z-index: 60; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #00000088, #000000cc);
+  opacity: 0; transition: opacity 180ms ease;
+}
+.victory-beat.is-in { opacity: 1; }
+.victory-beat-title {
+  margin: 0; width: 100%; text-align: center;
+  padding: calc(8px / var(--ui-zoom,1)) calc(40px / var(--ui-zoom,1));
+  font: small-caps bold calc(34px / var(--ui-zoom,1))/1.2 Georgia, serif; letter-spacing: .14em;
+  color: #ead294; border-block: 1px solid #ac854b;
+  background: linear-gradient(90deg, transparent, #332515e8 20%, #332515e8 80%, transparent);
+}
+.victory-beat-title::before { content: '‹ ✧ '; } .victory-beat-title::after { content: ' ✧ ›'; }
 [data-turn='enemy'] .turn-ribbon { color: #ffc0a4; border-color: #9f492f; background: linear-gradient(90deg, transparent, #5a2017ec 20%, #5a2017ec 80%, transparent); }
 @media (max-height: 500px) {
   :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(42px / var(--ui-zoom,1)) !important; padding-block: 0; }
@@ -1280,7 +1279,7 @@
 
 /* The fitted fan has no scrollbars. A scrollbar appearing/disappearing when
    the enemy-turn filter changes would shift the vertically centered cards. */
-:root .combat[data-layout='formation'] .hand { overflow:visible !important; }
+:root .combat[data-layout='formation'] .hand { overflow:visible; }
 
 /* Short landscape keeps vitals in one row inside the fixed HUD band. */
 @media (max-height:500px) {
@@ -1375,7 +1374,7 @@
 .combatant-leading .intent.staggered { font-size: calc(18px / var(--ui-zoom, 1)); }
 .combatant-leading .intent.dashed { border-style: dashed; }
 .combatant-leading .overhead-control:is(.tooltip-selected, :focus-visible) {
-  outline: calc(3px / var(--ui-zoom, 1)) solid #fff2bd;
+  outline: var(--focus-ring);
   outline-offset: calc(3px / var(--ui-zoom, 1));
   box-shadow: 0 0 12px #f8d98588, inset 0 1px 0 #ffffff55;
 }
@@ -1390,42 +1389,3 @@
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }
 
-/* Reserve space for larger edge controls; compact piles leave End Turn room. */
-:root .combat:not(.coop)[data-layout='formation'] > .hand-area {
-  --combat-orb-size: calc(clamp(64px, 20vw, 128px) / var(--ui-zoom,1));
-  grid-template-rows: minmax(0,1fr) calc(var(--combat-orb-size) + 16px / var(--ui-zoom,1));
-}
-:root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
-  grid-template-columns: var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
-  gap:calc(8px / var(--ui-zoom,1));
-}
-:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > :is(.energy-orb,.combat-potions) {
-  width:var(--combat-orb-size); height:var(--combat-orb-size); min-height:var(--combat-orb-size);
-}
-:root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .pile {
-  height:calc(52px / var(--ui-zoom,1)); min-height:calc(52px / var(--ui-zoom,1)); padding-inline:2px;
-}
-@media (max-width:480px) {
-  /* A PHONE'S ROW, measured at 390x844 on 2026-09-11: the two 78 px orbs took
-     156 of 374 px, Draw and Discard were 64 wide, and End Turn was a 74x52 box
-     carrying "End Turn", the E keycap and HOLD on three lines. The orbs come
-     down to 56 (still over the 44 tap floor), the keycap goes (a thumb has no E
-     to press — the kit already hides keycaps under `pointer: coarse`, and a
-     phone-wide viewport is the same statement made by width), and End Turn
-     stacks its label over its hold hint on one line each. */
-  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(56px / var(--ui-zoom,1)); }
-  :root .combat:not(.coop)[data-layout='formation'] > .hand-area > .combat-action-row {
-    grid-template-columns:var(--combat-orb-size) minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr) var(--combat-orb-size);
-    gap:calc(4px / var(--ui-zoom,1));
-  }
-  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn {
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(2px / var(--ui-zoom,1));
-    white-space:nowrap; padding-inline:2px; font-size:max(1.2rem, calc(13px / var(--ui-zoom,1)));
-  }
-  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn > .et-key { display:none; }
-  :root .combat:not(.coop)[data-layout='formation'] .combat-action-row > .end-turn > .hold-hint { margin-left:0; }
-}
-@media (max-height:500px) {
-  :root .combat:not(.coop)[data-layout='formation'] { grid-template-rows:10% minmax(0,1fr) calc(248px / var(--ui-zoom,1)); }
-  :root .combat:not(.coop)[data-layout='formation'] > .hand-area { --combat-orb-size:calc(96px / var(--ui-zoom,1)); }
-}

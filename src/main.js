@@ -28,7 +28,8 @@ import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_S
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
-import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
+import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
+import { seatAtTier, seatTierHpMult } from './model/seats.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
@@ -58,6 +59,7 @@ import { mountRest } from './ui/screens/rest.js';
 import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
+import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
@@ -844,6 +846,11 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   run.seenEvents = [];
   run.lastEncounters = [];
   rng = createRng(seed);
+  // SPEC §13.4: the seats this climb visits, drawn ONCE on the `seats` stream.
+  // A pinned first seat (Custom Run) rotates the same draw, so the pin changes
+  // nothing any later stream rolls. createRunState gave the default order; this
+  // is the one line that makes a new run open wherever the light never reached.
+  run.seatOrder = drawSeatOrder(registries, rng, { firstSeat: run.custom.firstSeat || null });
 
   // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
   const keepsake = (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
@@ -868,7 +875,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
-  run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
+  run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
   persist();
   showMap();
@@ -901,6 +908,11 @@ function endlessOn() {
 function contentAct() {
   return endlessOn() ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
 }
+// The SEAT climbed at the current tier (SPEC §13.1): content follows the seat,
+// geometry and difficulty follow the tier. Endless loops the order with the act.
+function currentSeat() {
+  return seatAtTier(run.seatOrder, contentAct());
+}
 
 // The Custom Climb debug shape (floors cap, columns cap, node weights) or null
 // for an ordinary run. It rides on `run.custom`, so it is saved and reloaded
@@ -926,7 +938,7 @@ function advanceAct() {
   } else {
     run.hp = run.maxHp;
   }
-  run.mapGraph = buildActMap(registries, rng, contentAct(), runMapShape(), { history: run.history });
+  run.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   persist();
   showMap();
 }
@@ -1692,6 +1704,11 @@ function combatMods(pool) {
   const cm = registries.balance.customMods;
   if ((pool === 'elite' || pool === 'boss') && mods.toughElites) hpMult *= cm.toughElitesHpMult;
   if (pool === 'boss' && mods.bigBosses) hpMult *= cm.bigBossesHpMult;
+  // SPEC §13.3: a seat climbed off its authored baseline scales by the tier
+  // ratio — exactly 1 at the baseline, so every existing seed's fights roll
+  // the HP they always did. World Journey binds difficulty to its own act and
+  // has no seat, so it is untouched (§13.6 claim 4).
+  if (!run.journey && Array.isArray(run.seatOrder)) hpMult *= seatTierHpMult(registries, currentSeat(), contentAct());
   if (mods.deadlyEnemies) enemyStatuses.push({ status: 'strength', stacks: 1 });
   if (mods.glassCannon) playerStatuses.push({ status: 'glassCannon', stacks: 1 });
   if (mods.endless) {
@@ -1709,8 +1726,8 @@ function startFight(pool, nodeId) {
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
   const encounterId = pool === 'boss'
-    ? bossEncounterForNode(registries, run.mapGraph, nodeId, contentAct())
-    : rollEncounter(registries, rng, { pool, act: contentAct(), exclude: run.lastEncounters });
+    ? bossEncounterForNode(registries, run.mapGraph, nodeId, { seat: currentSeat(), tier: contentAct() })
+    : rollEncounter(registries, rng, { pool, seat: currentSeat(), exclude: run.lastEncounters });
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -1868,7 +1885,16 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   }
 }
 
-function onCombatEnd(result, combat, enc) {
+/**
+ * THE FIGHT'S TITLE, ONE HOME: the spoils door is headed with it and the
+ * victory beat stands it over the battlefield first. A boss falls by name.
+ */
+function victoryTitle(enc) {
+  if (enc.pool === 'boss') return `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`;
+  return enc.pool === 'elite' ? 'ELITE VANQUISHED' : 'VICTORY';
+}
+
+async function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   for (const field of ['hp', 'mana', 'stamina']) {
@@ -1890,6 +1916,11 @@ function onCombatEnd(result, combat, enc) {
     const earnedOnDeath = finishRun(false);
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
+
+  // A breath between the last blow and the spoils (components/victoryBeat.js):
+  // the combat screen is still mounted here, so the beat stands over it and
+  // the door opens when it lifts. Reduced motion resolves at once.
+  await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
 
   run.stats.fightsWon += 1;
   if (run.journey) completeJourneyNode(run.journey);
@@ -1923,7 +1954,7 @@ function onCombatEnd(result, combat, enc) {
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
     const bossRewards = {
-      title: `${registries.enemies.get(enc.enemies[0]).name.toUpperCase()} FALLS`,
+      title: victoryTitle(enc),
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
       cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
@@ -1934,7 +1965,7 @@ function onCombatEnd(result, combat, enc) {
   }
 
   const rewards = {
-    title: enc.pool === 'elite' ? 'ELITE VANQUISHED' : 'VICTORY',
+    title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
     cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),

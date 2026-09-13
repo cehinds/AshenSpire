@@ -62,12 +62,12 @@
 
 
 /* ---------- keyboard / gamepad focus cursor ---------- */
-.gp-focus {
-  outline: 3px solid var(--gold) !important; outline-offset: 2px;
-  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: var(--r-2);
-}
+/* The pad's cursor wears THE ring (--focus-ring, kit.css) — the same one a
+   keyboard's :focus-visible wears — and nothing else: no second width, no
+   glow. `!important` because a screen's hover rule may still say
+   `outline: none` on the element the cursor is standing on. */
+.gp-focus { outline: var(--focus-ring) !important; outline-offset: var(--focus-ring-offset); border-radius: var(--r-2); }
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
-.reduced-motion .gp-focus { box-shadow: none !important; }
 
 /* ---------- shared confirmation ---------- */
 .confirmation-veil {
@@ -833,7 +833,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,0.14)); border-radius: 8px;
   background: rgba(0,0,0,0.25); cursor: pointer;
 }
-.mount-row:focus-visible, .mount-row:hover { border-color: var(--gold); outline: none; }
+.mount-row:focus-visible, .mount-row:hover { border-color: var(--gold); }
 .mount-row.selected { border-color: var(--gold); background: rgba(201,162,39,0.12); }
 .mount-row > em { grid-row: 1 / span 2; align-self: center; font-style: normal; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .mount-row > b { font-size: 13px; }
@@ -891,9 +891,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .modal .modal-close:focus-visible,
 .modal .modal-iconbtn:focus-visible,
 .modal .set-tab:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: var(--focus-ring);
   outline-offset: -3px;
-  box-shadow: inset 0 0 0 4px #17130e;
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
 /* The rail folds on a short height as well as a narrow width (the media

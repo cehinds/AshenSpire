@@ -46,8 +46,10 @@ export const balance = {
     cardChoices: 3,
     // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
     // base") — cinders are granted on arrival at the reward door now, so the
-    // faucet is the whole economy lever; the level ladder (levelUp below) and
-    // shop prices are unchanged and read against this.
+    // faucet is the whole economy lever. The ladder and the shop were left
+    // reading against the OLD faucet for a week; both are re-tuned against
+    // this one now (2026-09-11) — the shop by this same ×3, the level ladder
+    // by measurement, each explained where it lives.
     cinders: { normal: [45, 75], elite: [105, 150], boss: [225, 270] },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
@@ -65,13 +67,23 @@ export const balance = {
     flaskStock: 2,
     armamentStock: 3,
     weaponArtStock: 2,
-    armamentCost: { common: [80, 100], uncommon: [120, 150], rare: [200, 240] },
-    weaponArtCost: [90, 120],
-    cardCost: { common: [45, 55], uncommon: [68, 82], rare: [135, 160] },
-    relicCost: { common: [140, 160], uncommon: [200, 230], rare: [270, 300] },
-    flaskCost: [50, 80],
-    removeBase: 75,
-    removeStep: 25,
+    // ×3 WITH THE FAUCET (2026-09-11). Every price here was tuned against the
+    // pre-2026-09-04 faucet and was left reading against it when `rewards.
+    // cinders` tripled, so the merchant quietly became a third of his price:
+    // a common card cost two-and-a-half normal fights before, and one fight
+    // after. These are linear in cinders — you pay the number or you do not —
+    // so the factor that restores a price is the faucet's own, and ×3 here
+    // puts every shelf back at the fights-per-purchase it was tuned to. (The
+    // level ladder is quadratic and takes a different, measured factor; see
+    // levelUp below.) `sellFraction` is a fraction OF this table and needs no
+    // scaling — it moved with these numbers by construction.
+    armamentCost: { common: [240, 300], uncommon: [360, 450], rare: [600, 720] },
+    weaponArtCost: [270, 360],
+    cardCost: { common: [135, 165], uncommon: [204, 246], rare: [405, 480] },
+    relicCost: { common: [420, 480], uncommon: [600, 690], rare: [810, 900] },
+    flaskCost: [150, 240],
+    removeBase: 225,
+    removeStep: 75,
     // E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
     // same cost table his own stock rolls from (relicCost[rarity][0] /
     // flaskCost[0]) — so a possession is always worth less than the cheapest
@@ -196,15 +208,42 @@ export const balance = {
   // distinctions into one number because it is tidier.
   levelUp: {
     // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
-    // acceptance test is "10-20 level-ups a run, scalable". Over 40 greedy-bot
-    // runs per ladder, level-ups per FULL (victorious) run: 800+200 → 0.5;
-    // 60+10 → 7.2; 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. The bot spends
+    // acceptance test is "10-20 level-ups a run, scalable". The bot spends
     // every cinder on levels and nothing at merchants, so its number is the
-    // ceiling a real climb approaches; 20+4 puts that ceiling mid-range and a
-    // merchant-spending player at the low edge. Two numbers, one home, and
-    // the sweep flag reruns the measurement for any other pair.
-    firstCost: 20,
-    costStep: 4,
+    // CEILING a real climb approaches; the ladder is chosen to put that
+    // ceiling mid-range, which leaves a merchant-spending player inside the
+    // band rather than under it. Two numbers, one home, and the sweep flag
+    // reruns the measurement for any other pair.
+    //
+    // FIRST SWEEP, at the original faucet, 40 greedy-bot runs per ladder,
+    // level-ups per FULL (victorious) run: 800+200 → 0.5; 60+10 → 7.2;
+    // 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. 20+4 shipped.
+    //
+    // THEN THE FAUCET TRIPLED (2026-09-04, `rewards.cinders` above) and this
+    // ladder was left reading against the old one — the comment up there said
+    // as much and nothing re-measured it. At ×3 the same 20+4 buys 26.7
+    // level-ups a run: a third again past the top of his range, and the
+    // acceptance test had quietly stopped being met. SECOND SWEEP, same tool,
+    // same 40 runs per ladder, at the ×3 faucet — level-ups per victorious
+    // run, and the fleet's own win count beside it, because the ladder is a
+    // difficulty dial as much as an economy one:
+    //
+    //   20+4   26.7   32/40 wins   (shipped; above the range)
+    //   30+8   18.6   29/40        top edge
+    //   50+10  15.4   29/40        ← this one
+    //   60+12  13.8   23/40        the faucet's own ×3; costs ~6 wins
+    //   70+14  12.4   20/40        low edge, and ~12 wins
+    //
+    // 50+10 IS THE PICK, and not the tidy ×3, for a measured reason: it lands
+    // the ceiling at 15.4, within half a level of the 14.8 that E13 accepted,
+    // and it holds the win rate that 30+8 holds. Scaling the ladder by the
+    // faucet's own factor sounds right and is not: a ladder's cost is
+    // QUADRATIC in levels bought (f·n + s·n(n−1)/2), so tripling its two
+    // numbers overshoots — 60+12 buys 13.8, and the fleet drops six runs for
+    // the privilege. Shop prices ARE linear in cinders and do take the ×3
+    // (`shop` above); the two are different arithmetic, measured separately.
+    firstCost: 50,
+    costStep: 10,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -274,6 +313,16 @@ export const balance = {
     strPerLoop: 1, // +Strength per completed cycle
     actsPerCycle: 3, // acts before the spire loops (also the act count)
   },
+  // ---- Seats (SPEC §13.3) ------------------------------------------------------
+  // One multiplier per TIER. A seat's rosters were authored at its baseTier
+  // (content/seats.js), so a fight in seat S at tier T scales enemy HP by
+  // seatTiers[T] / seatTiers[S.baseTier] — exactly 1 at the baseline, which is
+  // what keeps every existing seed's fights byte-identical (§13.6). The values
+  // are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
+  // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
+  // bosses weighted together). Tier 1 is 1 by definition and the validator
+  // holds it there.
+  seatTiers: { 1: 1, 2: 1.5, 3: 1.9 },
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
@@ -467,7 +516,7 @@ export const balance = {
       // the second: a control nobody can find is a control nobody uses. The
       // delay keeps it from flickering under a press that is really a scroll,
       // and the fade keeps it from snapping into place under the thumb.
-      info: { revealDelayMs: 125, fadeMs: 120, sizePx: 44, insetPx: 6 },
+      info: { revealDelayMs: 1000, fadeMs: 120, sizePx: 44, insetPx: 6 },
     },
     tooltipPlacement: {
       hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],
@@ -755,6 +804,11 @@ export const balance = {
     // without becoming a chore. `short` is for players who find the wait
     // irritating, `long` for hands that need the room. `off` is 0 and disables
     // only the shortcut; the short activation still opens the review modal.
+    // THE VICTORY BEAT (Constantine's review, 2026-09-11): when the last enemy
+    // falls, the fight's title stands over the battlefield for this long
+    // before the spoils door opens — a breath between the blow and the loot.
+    // Reduced motion skips it entirely (ui/components/victoryBeat.js).
+    victoryBeat: { ms: 600 },
     holdConfirm: {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },

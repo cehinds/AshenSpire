@@ -195,13 +195,38 @@ export function openConfirmationModal({
   // pointerdown on the ✕, MODAL-ADDED, pointerup, click on the veil, REMOVED.
   // A press that begins on the scrim is the player's; a click that arrives
   // without one is the opening gesture's echo.
+  //
+  // THE SAME ECHO, AIMED AT AN ANSWER (2026-09-11, the same leg of the same
+  // tool): the head's close box stands at the top-right of the review, which
+  // is where the title's ✕ stood under the finger — so the echo landed on it
+  // (pointerdown on the ✕, MODAL-ADDED, pointerup, click on .confirmation-close,
+  // REMOVED) and the review was gone before it was seen. An answer — the
+  // close box, Back, or CONFIRM (a review committed by its own opening echo
+  // would be the worst of the three) — takes a pointer click only from a
+  // press that began on it. A keyboard or synthetic activation carries
+  // `detail === 0` and no press, and passes untouched.
+  const ANSWERS = '.confirmation-close, .confirmation-cancel, .confirmation-confirm';
+  // Duck-typed: the contract test drives this in a minimal DOM with no `Element`.
+  const answerOf = (target) => (typeof target?.closest === 'function' ? target.closest(ANSWERS) : null);
   let scrimPressed = false;
-  veil.addEventListener('pointerdown', (event) => { scrimPressed = event.target === veil; });
+  let pressedAnswer = null;
+  veil.addEventListener('pointerdown', (event) => {
+    scrimPressed = event.target === veil;
+    pressedAnswer = answerOf(event.target);
+  }, true);
   veil.addEventListener('click', (event) => {
+    const answer = answerOf(event.target);
+    const pressedOnAnswer = pressedAnswer;
+    pressedAnswer = null;
+    if (answer && event.detail > 0 && pressedOnAnswer !== answer) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
     const pressedHere = scrimPressed;
     scrimPressed = false;
     if (event.target === veil && pressedHere) cancel();
-  });
+  }, true);
   window.addEventListener('keydown', onKeydown, true);
   // Quick-menu actions close their list after awaiting the controller result,
   // and that close restores focus to the launcher. Run after that microtask so
