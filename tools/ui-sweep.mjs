@@ -25,8 +25,11 @@
 //                REDUCED MOTION at both shapes (the transition-duration trick
 //                made the first landing read stale geometry).
 //   R5 CREATION  stacked (phone), the class list sits above the preview pane;
-//                at the desk the selected armour's info button lies inside its
-//                card, not over the section header.
+//                at the desk the selected armour's information badge stands
+//                ABOVE its card — whole inside the choices scrollport, which
+//                clips at its padding box, and clear of the section header it
+//                used to straddle (#994). Until then this row looked for the
+//                badge INSIDE the card, on a chip that has never carried one.
 //   R6 ARMOURY   on a phone every view tab and the close control share one
 //                row.
 //   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
@@ -166,8 +169,17 @@ for (const state of wanted) {
         check(order.classes < order.preview, `R5 ${cell}: the class list stands above the preview pane`, JSON.stringify(order));
       } else {
         await click('[data-face="equipment"]'); await click('[data-face="armour"]'); await wait(300);
-        const info = await ev(`(()=>{const b=document.querySelector('#cz-armours .equip-chip.on .card-info-button');if(!b)return null;const r=b.getBoundingClientRect();const c=b.parentElement.getBoundingClientRect();return {inside:r.top>=c.top&&r.right<=c.right+1&&r.bottom<=c.bottom,top:Math.round(r.top),cardTop:Math.round(c.top)}})()`);
-        check(!!info && info.inside, `R5 ${cell}: the selected armour's info button sits inside its card`, JSON.stringify(info));
+        // THE BADGE IS ABOVE THE CARD, and the three facts that makes true are
+        // separate: it hangs clear of the face, it is WHOLE inside the scrollport
+        // (which clips at its padding box, so the head room is what is really
+        // asserted here), and it does not cross the section header it used to
+        // straddle. The old form read `.equip-chip.on .card-info-button` — a
+        // selector for a chip that carries no badge, so the check answered null
+        // and had been RED on dev rather than guarding anything (#994).
+        await click('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');
+        const info = await ev(`(()=>{const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');if(!card)return null;const b=card.querySelector('.card-info-button');if(!b)return {found:false};const cs=getComputedStyle(b);const shown=cs.visibility==='visible'&&cs.opacity!=='0';const r=b.getBoundingClientRect();const c=card.getBoundingClientRect();const port=card.closest('.cc-card-selectors');const p=port&&port.getBoundingClientRect();const fold=card.closest('details');const face=fold&&fold.querySelector('summary.disc-face');const f=face&&face.getBoundingClientRect();return {found:true,shown,above:r.bottom<=c.top+1,whole:!p||r.top>=p.top-0.5,clearsFace:!!f&&r.top>=f.bottom-0.5,face:face?face.textContent.trim().slice(0,16):null,top:Math.round(r.top),cardTop:Math.round(c.top),portTop:p?Math.round(p.top):null,faceBottom:f?Math.round(f.bottom):null}})()`);
+        check(!!info && info.found && info.shown && info.above && info.whole && info.clearsFace,
+          `R5 ${cell}: the selected armour's information badge stands above its card, whole inside the scrollport and clear of the section face`, JSON.stringify(info));
       }
     }
     if (state.name === 'armoury' && shape.mobile) {
