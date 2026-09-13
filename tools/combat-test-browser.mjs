@@ -273,7 +273,11 @@ try {
         await evaluate('window.__combat.enemies[0].hp=1');
         const attack = await evaluate('window.__combat.piles.hand.find(c=>window.__combat.registries.cards.get(c.cardId).effects.some(e=>e.op==="damage"))?.cardId');
         if (!attack) throw new Error('Expected a drawn attack for continuation fixture');
-        await click(`[data-card-id="${attack}"]`); await click('.combatant.enemy');
+        // Target through the sprite. The enemy's (i) and intent are reading
+        // controls: a tap on them reads the foe and never starts the armed
+        // attack (owner, 2026-09-13), and on the phone the frame's sample
+        // point lands on the intent.
+        await click(`[data-card-id="${attack}"]`); await click('.combatant.enemy .sprite');
         await until('!!document.querySelector("#test-next")');
         const carry = await evaluate('({hp:window.__combat.player.hp,stamina:window.__combat.player.stamina,mana:window.__combat.player.mana})');
         await click('#test-next'); await until('!!document.querySelector(".combat") && window.__combat.enemies[0].enemyId==="prototype_armored"');
