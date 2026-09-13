@@ -73,13 +73,19 @@ standard runs use; the world-journey atlas follows in its own branch.
     is never selectable.
   - Keyboard and gamepad activation reach the same click path, so pressing
     confirm twice on a node also travels.
+  - A repeat pick enters only once the selection has stood
+    `wireframeUi.map.repeatPickDelayMs` (400 ms, provisional), so a fast
+    double tap selects but never travels in one gesture.
 - **Context band (WGM4).** Below the scene, the band shows the selected
   node's floor, kind, and description from the same `NODE_TYPES` table the
   legend and tooltip read. It adds a boss destination and the Sealstone Key
   reveal when they apply.
   - Under fog it shows the kind the board drew, never the hidden one. The
     board now passes its own reading with each pick.
-  - The band sizes to its content, up to 20% of the height.
+  - The band has a fixed height, min(20% of the height, 8rem), and scrolls
+    its own overflow, so a pick never shrinks the scene under the finger.
+  - Without the board's reading a node reads as unknown; the hidden kind
+    cannot leak through a caller that forgot to pass one.
 - **Footer (WGM6, WGM7).** Recenter (the board's existing `resetFraming`)
   sits on the left and Enter on the right. Enter is disabled until a
   reachable node is selected and then names the kind.
@@ -87,7 +93,14 @@ standard runs use; the world-journey atlas follows in its own branch.
   changes there.
 - **Wording.** New text lives in `uiStrings.csv` (`map.*`).
 - **Tools.** `tutorial-reach`, `offline-play-qa`, and
-  `map-camera-persistence` now press Enter after selecting a node.
+  `map-camera-persistence` now press Enter after selecting a node. The
+  camera tool's self-test seam matches the board's new `onPick` call.
+- **Camera.** The band and footer are built before the board mounts. The
+  board checks a saved fit camera against the scene's height, so the bands
+  must already take theirs, or every remount (Armoury, Continue) would drop
+  the player's pan.
+- **Selection mark.** A glow marks the selected node, because the pad
+  cursor and hover both repaint the node's stroke.
 
 Browser evidence (emulation, `?shot=map`):
 - At 1280×800 one tap selected the lone reachable node, filled the band

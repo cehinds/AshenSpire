@@ -25,6 +25,7 @@
 // it is the operator that lifts a node from `placed` to `known`.
 
 import { passiveFlag } from '../../model/registries.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { veilIsOpen } from '../components/veil.js';
 import { matchAction, actionDestinationForEvent, isEngaged, focusFirst } from '../input.js';
@@ -130,7 +131,21 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // green — this was only ever visible to an eye.
   // The legend belongs to the corner it opens from — the ? in the zoom bar — so
   // it is mounted with the board's chrome, not on the HUD.
-  const board = mountMapBoard(app.querySelector('.mapscreen'), {
+  //
+  // W4b's bands are built BEFORE the board mounts: the board checks a saved
+  // fit camera against the scene's height, so the bands must already take
+  // theirs, or every remount would discard the player's pan. They move below
+  // the board's chrome once it is mounted; that changes no height.
+  const screen = app.querySelector('.mapscreen');
+  let selection = { selectedId: null };
+  const readings = new Map();
+  const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
+  const recenterButton = button({ label: t('map.recenter'), id: 'map-recenter', className: 'map-recenter' });
+  const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
+  const footer = el('footer', { class: 'map-footer' }, buttonRow({ size: 'fill', buttons: [recenterButton, enterButton] }));
+  screen.append(context, footer);
+  renderSelection();
+  const board = mountMapBoard(screen, {
     act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
     showLegendControl: true,
     viewer: {
@@ -153,19 +168,16 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The scene is followed by the selected node's context and a Recenter /
   // Enter footer. The board is shared with co-op, whose client keeps its own
   // pick; only this solo screen asks for the second step.
-  let selection = { selectedId: null };
-  const readings = new Map();
-  const context = el('section', { class: 'map-context', 'aria-live': 'polite', 'aria-label': t('map.context.aria') });
-  const recenterButton = button({ label: t('map.recenter'), id: 'map-recenter', className: 'map-recenter' });
-  const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
-  app.querySelector('.mapscreen').append(context, el('footer', { class: 'map-footer' }, buttonRow({ size: 'fill', buttons: [recenterButton, enterButton] })));
+  screen.append(context, footer);
+  // Live only after the resting text is in place: a mount announces nothing.
+  context.setAttribute('aria-live', 'polite');
   recenterButton.addEventListener('click', () => board.resetFraming());
   enterButton.addEventListener('click', () => {
     if (selection.selectedId && reachable.has(selection.selectedId)) onPick(selection.selectedId);
   });
   function selectNode(id, reading) {
     if (reading) readings.set(id, reading);
-    const next = pickMapNode(selection, id, reachable);
+    const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
     if (next.enter) { onPick(id); return; }
     selection = next;
     renderSelection();
@@ -186,7 +198,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     enterButton.disabled = !view.canEnter;
     enterButton.textContent = view.canEnter ? t('map.enterNamed', { name: view.kindName }) : t('map.enter');
   }
-  renderSelection();
 
   // The legend hangs off the ? IN THE ZOOM BAR, so it is mounted inside that
   // Band — the Band is its containing block, which is how `bottom: 100%` means

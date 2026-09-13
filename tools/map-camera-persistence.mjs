@@ -588,7 +588,7 @@ async function selftest() {
     const fitSeam = '    && fitViewportMatches\n';
     const raceSeam = '      const snapshot = pendingViewCommit;\n';
     const settleSeam = '      if (settled || scroll.clientHeight <= 0) return false;\n';
-    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));";
+    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));";
     // The #243 guard: removing it re-opens the detached-timer crash, and the
     // plant enters as source bytes in the copied tree — the same door a real
     // regression would take (a build of this copy, driven by the real controls).
@@ -601,7 +601,7 @@ async function selftest() {
       .replace(fitSeam, '')
       .replace(raceSeam, '      const snapshot = viewSnapshot();\n')
       .replace(settleSeam, '      if (settled) return false;\n')
-      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id); });")
+      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id, { shownType, revealed }); });")
       .replace(exitSeam, ''));
     const ownership = await runProbe(tempRoot, { screenshots: false });
     const fitCaught = ownership.fitViewport && !ownership.fitViewport.pass;

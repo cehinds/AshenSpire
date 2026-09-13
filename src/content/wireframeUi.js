@@ -9,6 +9,8 @@ const freeze = (value) => {
 };
 export const wireframeUi = freeze({
   card: { ratio: 5 / 8, bands: [1, 4, 4, 1], inspectDelayMs: 1000 },
+  // W4b: a repeat pick enters only after the selection has stood this long.
+  map: { repeatPickDelayMs: 400 },
   hand: {
     minimumHeightPx: 208, minWidthRem: 5, maxWidthRem: 9,
     minCapacity: 5, maxCapacity: 15, narrowWidthRem: 22, wideWidthRem: 75,

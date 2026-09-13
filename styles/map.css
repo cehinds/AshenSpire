@@ -129,13 +129,18 @@
    second. One home, two readers (the keyframe below, and mountMap). */
 .mapscreen { --halo-peak: 1.35; }
 /* W4b: the scene, then the selected node's context, then Recenter / Enter. */
-.mapscreen > .map-context { flex: 0 0 auto; max-height: calc(20dvh / var(--ui-zoom, 1)); overflow-y: auto; display: grid; gap: .2rem; padding: .6rem 2.5vw; border-top: 1px solid var(--line); background: var(--panel); }
+/* A FIXED height: the scene must not shrink under the finger when a pick fills
+   the band, and a saved fit camera is checked against the scene's height. */
+.mapscreen > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw; border-top: 1px solid var(--line); background: var(--panel); }
 .mapscreen > .map-context > * { margin: 0; }
 .mapscreen .map-context-title { font: 600 1.5rem/1.2 var(--font-display); color: var(--parchment); }
 .mapscreen .map-context-line { color: var(--muted); }
 .mapscreen > .map-footer { flex: 0 0 auto; padding: .5rem 2.5vw calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)); background: var(--panel); }
 .mapscreen > .map-footer > .modal-btnrow { width: 100%; }
 .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 4; }
+/* The pad cursor and hover both repaint the stroke; the glow keeps the
+   selection visible under either. */
+.map-node.selected { filter: drop-shadow(0 0 5px var(--parchment)); }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
