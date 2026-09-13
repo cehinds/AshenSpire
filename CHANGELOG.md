@@ -32,7 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-12
 
-- **A card you have picked is ringed, not labelled** ([#997](https://github.com/cehinds/AshenSpire/pull/997), `0.7.1.9`). Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read "Selected", and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.
+- **A card you have picked is ringed, not labelled** ([#997](https://github.com/cehinds/AshenSpire/pull/997), `0.7.1.11`). Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read "Selected", and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.
 
 ## 2026-09-11
 

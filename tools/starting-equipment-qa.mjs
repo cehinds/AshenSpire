@@ -51,6 +51,13 @@ try {
           check(await wearsChosenRing(choice),`${name}/${cls}/${slot}/${id}: the chosen card wears the green ring`);
           check(!await choice.locator('.equipment-choose').isVisible(),`${name}/${cls}/${slot}/${id}: nothing is printed under the chosen card`);
           check(await choice.locator('.equip-chosen-note').evaluate(el=>el.textContent)==='Selected',`${name}/${cls}/${slot}/${id}: the state is spoken for a screen reader`);
+          // The note is only spoken if the CARD points at it: Tab lands on the
+          // card, and the pressed button that used to carry the state is hidden
+          // from the accessibility tree along with the page.
+          check(await choice.locator('.equipment-poker-card').evaluate(el=>{
+            const ids=(el.getAttribute('aria-describedby')||'').split(/\s+/).filter(Boolean);
+            return ids.some(id=>el.ownerDocument.getElementById(id)?.textContent==='Selected');
+          }),`${name}/${cls}/${slot}/${id}: the chosen card describes itself as selected`);
           check(await panel.locator('.cc-equipment-details').getAttribute('data-preview-item')===id,`${name}/${cls}/${slot}/${id}: matching details`);
           check(await choice.locator('.equipment-choose').getAttribute('aria-pressed')==='true',`${name}/${cls}/${slot}/${id}: pressed state`);
           check(await panel.isVisible(),`${name}/${cls}/${slot}/${id}: waits for Continue`);
@@ -81,6 +88,18 @@ try {
     check(await selected.evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).a>1),`${name}: selected card enlarges`);
     check(await selected.evaluate(el=>new DOMMatrixReadOnly(getComputedStyle(el).transform).f<0),`${name}: selected card lifts`);
     check(await selected.evaluate(el=>getComputedStyle(el).transitionDuration.includes('0.18s')),`${name}: short eased animation`);
+    // KEYBOARD, AND IT IS THE CHOICE ITSELF THAT TAKES THE CONTROL AWAY: the
+    // button the player just pressed is hidden by pressing it, so unless the
+    // card catches the focus the ring falls to the document and the next Tab
+    // restarts at the top of the page.
+    const byKeyboard = main.locator('[data-armament-id=straightSword]');
+    await byKeyboard.locator('.equipment-poker-card').click();
+    await byKeyboard.locator('.equipment-choose').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(250);
+    check(await byKeyboard.locator('.equipment-poker-card').evaluate(el=>el.ownerDocument.activeElement===el),`${name}: choosing with the keyboard leaves focus on the chosen card`);
+    await chooseItem(main.locator('[data-armament-id=greatsword]'));
+    await page.waitForTimeout(230);
     await main.evaluate(el=>el.scrollIntoView({block:'start'}));await snapshot(page,`${name}-selected-weapon`);
     await main.locator('.cc-equipment-continue').click();
     check(await page.locator('[data-equipment-section=leftHand]').isVisible(),`${name}: Continue opens Off Hand`);

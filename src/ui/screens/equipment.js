@@ -445,6 +445,10 @@ function pieceArt(piece, fallback = '⚔') {
   return well;
 }
 
+// One counter, because the chosen note is referenced BY ID from the card that
+// owns it and two chips in the same picker must not claim the same id.
+let chosenNoteSerial = 0;
+
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
 export function pieceChip(registries, piece, { selected, kind = null, presentation = null }) {
   const card = document.createElement('div');
@@ -462,8 +466,14 @@ export function pieceChip(registries, piece, { selected, kind = null, presentati
   // The ring is a colour, and a colour is not available to everyone. This note
   // is the same fact in words, sized out of the layout (`.sr-only`), so the
   // state survives for a screen reader once the button goes quiet.
+  // IT IS TIED TO THE CARD, NOT MERELY PLACED NEAR IT. A sibling nobody points
+  // at is read by nobody: Tab lands on the card, and the card is what has to
+  // carry the state — the pressed button that used to carry it is hidden, and
+  // `visibility: hidden` leaves the accessibility tree as well as the page.
   const note = document.createElement('span');
   note.className = 'sr-only equip-chosen-note';
+  note.id = `equip-chosen-note-${++chosenNoteSerial}`;
+  face.setAttribute('aria-describedby', [face.getAttribute('aria-describedby'), note.id].filter(Boolean).join(' '));
   card.append(face, choose, note);
   setPieceChipChosen(card, selected);
   return card;
@@ -477,12 +487,20 @@ export function pieceChip(registries, piece, { selected, kind = null, presentati
  */
 export function setPieceChipChosen(chip, chosen) {
   const on = !!chosen;
+  const face = chip.querySelector('.equipment-poker-card, .card');
   chip.classList.toggle('on', on);
-  chip.querySelector('.equipment-poker-card, .card')?.classList.toggle('is-chosen', on);
+  face?.classList.toggle('is-chosen', on);
   const choose = chip.querySelector('.equipment-choose');
   if (choose) choose.setAttribute('aria-pressed', String(on));
   const note = chip.querySelector('.equip-chosen-note');
   if (note) note.textContent = on ? 'Selected' : '';
+  // THE BUTTON IS ABOUT TO VANISH UNDER THE KEYBOARD. A player who chose with
+  // Enter still has focus on the control this call hides, and hiding a focused
+  // element drops the ring to the document — the next Tab restarts at the top
+  // of the page instead of continuing from the choice just made. The card is
+  // the stable landing: it is focusable, it is what now wears the ring, and it
+  // is the thing the choice was about.
+  if (on && choose && document.activeElement === choose) face?.focus({ preventScroll: true });
 }
 
 function inventoryFace(registries, row, {
