@@ -1004,6 +1004,30 @@ try {
   console.error('FAIL Every card owes two beats:', error);
 }
 try {
+  await import('./selection-clears-on-mount.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL A spent beat belongs to the screen that spent it:', error);
+}
+try {
+  await import('./combat-disarms-when-selection-clears.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL An armed card that stopped looking armed is still armed:', error);
+}
+try {
+  await import('./creation-continue-stacking.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error("FAIL The substep's way on outranks the stage's skip:", error);
+}
+try {
+  await import('./hand-forwards-surface.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The hand forwards its surface to the inspect door:', error);
+}
+try {
   await import('./card-actions.test.mjs');
 } catch (error) {
   zoomExtra++;

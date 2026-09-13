@@ -647,6 +647,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.startingCards.context",
+    "extends": "",
+    "short": "Quantities depend on both hands.",
+    "full": "How many copies of each card you start with depends on what you are holding in the other hand.",
+    "tip": ""
+  },
+  {
     "id": "customRun.seat.group",
     "extends": "",
     "short": "First seat",

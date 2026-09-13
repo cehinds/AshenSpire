@@ -77,6 +77,7 @@ import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
+import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -92,6 +93,12 @@ function pileButton(kind, label) {
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   configureTooltipGlossary(registries);
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
@@ -463,6 +470,47 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null; selectedFlask = null; selfArm = null;
     }
     refreshAim();
+  });
+
+  // A DOUSED CARD IS A DISARMED CARD.
+  //
+  // When a card is armed THROUGH THE INSPECT DOOR, the door lit it in the shared
+  // store first, so the store's lit card is combat's `selected`. Empty the store
+  // — which every card screen now does on mount, and the mid-fight Armoury is a
+  // screen that mounts OVER a live fight — and the store runs that card's
+  // `douse`, stripping `inspection-selected`, `inspection-info-visible` AND
+  // `selected` and setting `aria-pressed="false"` on the very node the player is
+  // looking at. Closing the overlay does not remount combat, so without this the
+  // module kept its `selected` while the card had stopped saying so: enemies
+  // still wearing `.targetable`, and the next enemy tap committing a card the
+  // player could no longer see was armed.
+  //
+  // THIS WATCH IS NOT SUFFICIENT ON ITS OWN, and an earlier version of this
+  // comment claimed otherwise — that `selected` is written in exactly one place.
+  // It is not. Arming also happens at the drag/flick `select()`, at the
+  // positional card key, and through `armSelf`, and NONE of those light the
+  // store. `clearSelection()` returns without notifying when the store is
+  // already empty, so on those paths this callback never runs at all. That is
+  // why `openCombatArmoury` puts the aim down directly, below, rather than
+  // trusting a notification that may not come. This watch remains because it is
+  // the only thing that answers the DOUSE — the case where the glass has already
+  // changed under an arming that is still live.
+  //
+  // ONLY THE EMPTY CASE IS HANDLED HERE. A store that moves to a DIFFERENT card
+  // is the `cardinspectionselect` listener's business above, and that listener
+  // deliberately ignores a lit card outside the hand — lighting a relic does
+  // not disarm you. Widening this watcher to every change would take that away.
+  // `selectedFlask` is untouched for the same reason: a flask is not a card in
+  // the store, so nothing douses it and nothing has gone out of step.
+  const releaseSelectionWatch = onSelectionChange((lit) => {
+    // A later fight's mount empties the store, and this mount's watch is not
+    // released until its observer runs — so an outgoing mount can be notified
+    // once after its own DOM is gone. It has nothing left to re-dress.
+    if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
+    if (lit !== null || (!selected && !selfArm)) return;
+    selected = null;
+    selfArm = null;
+    syncCardSelection();
   });
 
   // Selection changes presentation only; every input waits for confirmation.
@@ -2210,6 +2258,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // set switches and item replacement route through engine intents so Energy,
   // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
+    // YOU LEFT THE BATTLEFIELD, SO THE AIM GOES DOWN — all of it, and here
+    // rather than in a store watcher, because only ONE of the ways to arm goes
+    // through the shared selection store. The positional card key and the
+    // drag/flick `select()` write `selected` (or `selfArm`) directly and light
+    // nothing, so `clearSelection()` inside the panel finds an empty store,
+    // returns without notifying, and no watcher fires. The overlay covers the
+    // battlefield either way; on the way back out the enemies were still
+    // answering to a tap.
+    // BEFORE the `onArmoury` delegation, so the host-routed Armoury (main.js)
+    // disarms exactly as the panel mounted from here does.
+    if (selected || selfArm || selectedFlask != null) {
+      selected = null;
+      selfArm = null;
+      selectedFlask = null;
+      syncCardSelection();
+    }
     if (onArmoury) return onArmoury();
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';
@@ -2267,6 +2331,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         battlefieldStage.release();
         combatLayout.release();
         aimObserver?.disconnect();
+        releaseSelectionWatch();
         clearCardFeedback();
         pagerVeilObserver.disconnect();
         delete combatEl.dataset.handPagerOwner;

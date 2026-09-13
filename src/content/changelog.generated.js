@@ -3,14 +3,64 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1003",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
+    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
+    "build": "0.7.1.23",
+    "pullRequest": 1003,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
     "id": "pr-994",
-    "date": "2026-09-12",
-    "group": "2026-09-12",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
     "summary": "The i that explains a card sits above it on every screen",
     "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading, and the same control no longer appears in two places depending on where you are.",
     "build": "0.7.1.23",
     "pullRequest": 994,
     "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
+    "id": "pr-997",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "A card you have picked is ringed, not labelled",
+    "detail": "Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read \"Selected\", and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.",
+    "build": "0.7.1.11",
+    "pullRequest": 997,
+    "url": "https://github.com/cehinds/AshenSpire/pull/997"
+  },
+  {
+    "id": "pr-1010",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The combat screen's bands and its bottom row are sized from one plan",
+    "detail": "How much of the screen the battlefield, your hand and the bottom row each take is now worked out in one place instead of being set separately, so they cannot disagree. Your hand keeps its height and the bottom row keeps its own; the battlefield takes whatever is left. Actions and Potions are equal circles, End Turn sits between them at the same height, and the draw and discard piles hold their words rather than being squeezed — on a narrow phone the piles keep a readable width and End Turn gives way instead. Nothing is ever shrunk below a comfortable tap. Where a screen is too short to show a readable fight at all — a phone held sideways, for instance — the screen now says so rather than drawing something unusable. The receipt is written here after the fact; the merge landed without one.",
+    "build": "0.7.1.15",
+    "pullRequest": 1010,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1010"
+  },
+  {
+    "id": "pr-1009",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The first of the approved wireframes reaches the cards and the battlefield",
+    "detail": "Card faces are drawn to a fixed 5:8 shape with their costs down a rail on the left, read live rather than re-derived, so the number on the face and the number in the card's full description cannot disagree. In combat, the hand selects one card at a time and holds the order you put it in, and the information button appears after the same short delay everywhere. On the battlefield the two sides sit in mirrored fixed places, every figure is scaled by the same size rule, and the one you select grows from a ground anchor instead of drifting. A window opened over a card now carries a Back button. This is a first instalment of a larger revamp, not the whole of it: narrow screens, the compact battlefield and the screens that depend on these parts are still to come. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.13",
+    "pullRequest": 1009,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1009"
+  },
+  {
+    "id": "pr-1005",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "A written reference for how every screen is laid out",
+    "detail": "Nothing a player sees changes, and nothing in the game was rebuilt — this is documentation only, which is why it shares the previous build's stamp. The repository now carries a handoff describing the shell every screen is built from: where a title, an exit, a Back and a primary button sit; how a window, a confirmation, the main menu and an encounter differ from that shell and from each other; and what each part of a screen is allowed to take up at wide, compact and phone widths. It comes with a browsable gallery of those drawings and a check that the gallery and the written catalogue agree. The receipt is written here after the fact: the merge landed without one, which the project's own check caught on the next promotion.",
+    "build": "0.7.1.11",
+    "pullRequest": 1005,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1005"
   },
   {
     "id": "pr-1002",
@@ -21,16 +71,6 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.11",
     "pullRequest": 1002,
     "url": "https://github.com/cehinds/AshenSpire/pull/1002"
-  },
-  {
-    "id": "pr-997",
-    "date": "2026-09-12",
-    "group": "2026-09-12",
-    "summary": "A card you have picked is ringed, not labelled",
-    "detail": "Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read \"Selected\", and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.",
-    "build": "0.7.1.11",
-    "pullRequest": 997,
-    "url": "https://github.com/cehinds/AshenSpire/pull/997"
   },
   {
     "id": "pr-1001",
