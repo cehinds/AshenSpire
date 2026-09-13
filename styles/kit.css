@@ -3659,11 +3659,24 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 /* Solo combat reads the configured selected-only list (WCM0, data-selected-only);
    co-op keeps its name-only rule. */
 :root .combat.coop[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
+/* WCO2: the guard badge sits outside the sprite on its role's side, at its
+   role's height (overlay.defenseAnchorByRole via the combat layout adapter);
+   the fallbacks are the same accepted geometry. Never mirrored. */
 :root .combat[data-layout='formation'] .combatant .sprite > .block-badge {
-  right: auto; left: calc(100% + .5rem); top: 12%; bottom: auto; transform: translateY(-50%);
+  right: var(--defense-right-player, auto); left: var(--defense-left-player, calc(100% + .5rem));
+  top: var(--defense-top-player, 12%); bottom: auto; transform: translateY(-50%);
 }
 :root .combat[data-layout='formation'] .combatant.enemy .sprite > .block-badge {
-  left: auto; right: calc(100% + .5rem); top: 88%;
+  left: var(--defense-left-enemy, auto); right: var(--defense-right-enemy, calc(100% + .5rem)); top: var(--defense-top-enemy, 88%);
+}
+:root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge {
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  min-width: var(--defense-min, 3.5rem); min-height: var(--defense-min, 3.5rem);
+  font-size: max(1.2rem, var(--overlay-value-font, calc(13.2px / var(--ui-zoom, 1)))); line-height: 1;
+}
+/* WCO1: the intent keeps its minimum height and value font. */
+:root .combat[data-layout='formation']:not(.coop) .combatant-leading .intent {
+  min-height: max(calc(48px / var(--ui-zoom, 1)), var(--intent-min, 2.8rem));
 }
 :root .combat[data-layout='formation'] .combatant .sprite::before {
   content: ''; position: absolute; left: 50%; bottom: 0;
