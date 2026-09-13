@@ -3669,10 +3669,25 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation'] .combatant.enemy .sprite > .block-badge {
   left: var(--defense-left-enemy, auto); right: var(--defense-right-enemy, calc(100% + .5rem)); top: var(--defense-top-enemy, 88%);
 }
+/* The badge sits inside the zoomed sprite host (battlefieldStage). It undoes
+   that zoom and anchors to the visible art's box, published by the stage:
+   --s is 1 for the right edge and 0 for the left; --f the height fraction. */
 :root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge {
+  --s: var(--defense-right-player, 1); --f: var(--defense-fraction-player, .12);
+  /* Out of the host's flex row: a relative badge was offset from its place
+     after the art, which is why it floated far from the sprite. */
+  position: absolute;
+  zoom: calc(1 / var(--sprite-zoom, 1));
+  left: calc(var(--art-left, 0px) + (var(--art-right, 100%) - var(--art-left, 0px)) * var(--s) + var(--defense-gap, .5rem) * (2 * var(--s) - 1));
+  right: auto; bottom: auto;
+  top: calc(var(--art-top, 0px) + var(--art-height, 100%) * var(--f));
+  transform: translate(calc((var(--s) - 1) * 100%), -50%);
   display: flex; align-items: center; justify-content: center; box-sizing: border-box;
   min-width: var(--defense-min, 3.5rem); min-height: var(--defense-min, 3.5rem);
   font-size: max(1.2rem, var(--overlay-value-font, calc(13.2px / var(--ui-zoom, 1)))); line-height: 1;
+}
+:root .combat[data-layout='formation']:not(.coop) .combatant.enemy .sprite > .block-badge {
+  --s: var(--defense-right-enemy, 0); --f: var(--defense-fraction-enemy, .88);
 }
 /* WCO1: the intent keeps its minimum height and value font. */
 :root .combat[data-layout='formation']:not(.coop) .combatant-leading .intent {

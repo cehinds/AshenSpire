@@ -575,6 +575,25 @@ replaced by `overlay.defenseAnchorByRole` and `overlay.defenseGapRem`.
   transparent.
 - WCO4 Buff layer: not built. No buff visuals exist to fill a front layer.
 
+Defect fixed on the way: on dev the guard badge sat inside the zoomed sprite
+host, inherited its zoom, and stayed in the host's flex row. On a phone the
+player's badge was about 8 px wide with a roughly 3 px number, and every
+badge floated far from its sprite. The battlefield stage now publishes the
+sprite's zoom and the drawn art's box. The badge counter-zooms, is absolutely
+positioned, and anchors to that box.
+
+Browser evidence (headless Chrome, `?shot=combat`, block set on every
+combatant), measured against the drawn art:
+
+| Shape | Role | Side | Gap | Centre | Smallest side | Value font |
+|---|---|---|---|---|---|---|
+| 1365×1000 | player | right | 7.9 px | 0.120 | 56 px | 13.7 px |
+| 1365×1000 | enemy | left | 7.9 px | 0.880 | 56 px | 13.7 px |
+| 390×844 | player | right | 7.9 px | 0.121 | 56 px | 13.2 px |
+| 390×844 | enemy | left | 8.0 px | 0.879 | 56 px | 13.2 px |
+
+The stance aura's box equals its pose stage in both shapes, at z-index −1.
+
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant
