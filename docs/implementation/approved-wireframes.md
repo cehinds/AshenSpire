@@ -923,6 +923,92 @@ because History and Compendium are separate title routes; this needs an owner
 decision. `?shot=compendium&shotFound=…` shows 0 held on dev and on this
 branch alike.
 
+## Rest and Event choice body
+
+Branch `feature/wireframe-rest-event`, based on dev `d2ea5bcd`. W1s (Rest) and
+W1u (Event) now stand in one W1 frame, `src/ui/components/choiceBody.js`,
+under the run HUD. Its shares live in `wireframeUi.choiceBody`.
+`src/ui/models/ChoiceBodyModel.js` turns them into zoom-divided viewport
+lengths and projects each screen's `{Status}`
+(`tests/wireframe-choice-body.test.mjs`).
+
+- **Frame.** A head (eyebrow, title, `{Status}`), a body that alone scrolls,
+  and a foot when the surface has a continuation. It is 95% of the viewport
+  wide; its height is what the HUD leaves, capped at 90%. The two body slots
+  sit side by side on wide hosts and stack on narrow ones (`data-layout`). No
+  close control: the head's close is removed rather than built and hidden.
+- **Rest (W1s).** The title is the Shrine's name under the eyebrow "Rest"; the
+  flavour subtitle is gone. The option cards are unchanged and fill the first
+  slot. The second holds the arrival refill sentence and an Availability list
+  (Available, Unavailable, Rested) from `restChoiceStatus`, read off the same
+  plans that build the cards. The head reads "{available} of {total}
+  available".
+  - Multi-use's LEAVE THE SHRINE is now the foot's single Continue.
+  - A single-use Shrine still has no foot, because taking a choice is its
+    way on.
+- **Event (W1u).** The title is the event's name. `{Status}` reads "Choose a
+  response", then "{available} of {total} available" when a price closes a
+  response, then "Resolved" (`eventResponseStatus`).
+  - The narrative (art and authored prose) is the first slot and the
+    responses the second. The result sentence replaces the responses, as
+    before.
+  - Continue is in the foot from the start, disabled until a response is
+    taken, and reads "Steel yourself" when the response starts a fight.
+  - Cost and consequence stay in the authored labels; "Cannot afford" is
+    unchanged.
+- **Unchanged.** Every option and what it does, the hold/confirm beats
+  (`beatArmer`), `data-binding` and `data-requires`, and the hooks the tools
+  read (`#rest-opt`, `#smith-opt`, `#level-opt`, `#flask-reallocate`,
+  `#choices`, `.ev-choice`, the shrine card tokens on `.screen`).
+- **Wording.** New `uiStrings.csv` rows `rest.*` and `event.*`.
+- **Tools.** `tools/screenreach.mjs` now finds Shrine cards as descendants of
+  the screen, since they sit in the body slot, so its `.cp-body` check still
+  covers them.
+
+Browser evidence (emulation, `?shot=rest`, `?shot=smith`, `?shot=event`,
+reduced motion). Frame size, then head / body / foot as a share of the
+viewport height; the body share is without and with a foot.
+- 1440×860 (wide, zoom 1.18): 1368×659, 10% / 66.4–56.4% / 10%; slots side
+  by side, 628 px each.
+- 1280×800 (wide, 1.07): 1216×610, 10% / 66–56% / 10%; side by side, 557 px.
+- 390×844 (narrow, 0.9): 371×639, 10% / 65.4–55.4% / 10%; stacked, 349 px.
+- 375×667 (narrow, 0.85): 356×474, 10% / 60.8–50.8% / 10%; stacked, 336 px.
+- 844×390 (wide, 0.62): 802×244, 12.7% / 49.3–33.3% / 16%; side by side,
+  370 px. The tap floor enlarges the head and foot.
+- No page or screen scroll at any size. Every control in the frame is
+  hit-testable once scrolled into view.
+- At 1280×800 and 375×667, a flask step moved 3/1 to 4/0, and Level up opened
+  the shared allocator, with Cancel returning. A short tap on Rest opened
+  review and kept the Shrine; a 1.1 s hold rested and left. Multi-use
+  Continue returned to the map, and the Smith modal opens over the Shrine.
+- On the event, Continue was disabled before a response. "Leave" (tap,
+  review, CHOOSE) showed the result, "Resolved", and an enabled Continue that
+  returned to the map. The priced Wayward Pilgrim reads "1 of 2 available",
+  with its priced response disabled.
+- Browser tools that touch these screens (all CDP; none is Playwright-based).
+  `flaskbox`, `ui-sweep --only event,rest,smith` and `holdbeat` pass. The
+  rest fail the same way on dev `d2ea5bcd`:
+  - `holdconfirm`: 1 finding over 137 checks. `smithExtract` and
+    `smithInstall` draw no armed control at `?shot=rest`.
+  - `armament-smithing-ui`: 66 passed, 15 failed, the same RED set as dev.
+  - `uprightgate`: its rest-smith drive still looks for `#smith-grid .card`.
+  - `screenreach`: 8 findings, none on rest or event (dev has 11).
+  - `presentation-matrix` crashes when its first Shrine cell misses the tool's
+    12 s wait (3 of 4 runs here, 2 of 3 on dev). The Shrine mounts in the same
+    time on both trees from the same drive, and the completed run matched
+    dev's 0/12.
+
+Limits:
+- The run HUD takes 16–19% of the height above the frame, so the frame is
+  71–77% of the height rather than W1's 90%, as on W4b.
+- At 844×390 the Shrine cards are 37 px tall, under 44 px. Dev is the same
+  (`--shrine-card-h` at zoom 0.62). Dev's screen scrolled 91 px there; now
+  only the body scrolls.
+- Galaxy S24 (360×780) was not measured.
+- W1s draws a Continue; a single-use Shrine has none. Leaving without taking
+  a choice would be a new mechanic, so that is an owner decision.
+- `ui-components` C12, `flaskpresentation` (overlay.js) and
+  `flask-data-authority` (flaskCapacity) are red on dev `d2ea5bcd` too.
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant

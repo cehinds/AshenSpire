@@ -456,7 +456,7 @@
       "id": "W1s",
       "name": "Rest",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -471,7 +471,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Shared W1 choice-body frame (components/choiceBody.js, wireframeUi.choiceBody): head \"{available} of {total} available\" from restChoiceStatus, option cards beside an availability column with the refill sentence; side by side on wide, stacked on narrow. Multi-use Leave is the foot's Continue; a single-use Shrine has no foot. HUD leaves the frame 71-77% of the height, not 90%. Galaxy S24 not measured."
     },
     {
       "id": "W1t",
@@ -499,7 +500,7 @@
       "id": "W1u",
       "name": "Event",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -514,7 +515,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Shared W1 choice-body frame: event name title with {Status} (Choose a response / {available} of {total} available / Resolved) from eventResponseStatus, authored narrative beside the responses, Continue in the foot disabled until a response is taken. No close control is built. Cost/consequence stays in the authored labels. Galaxy S24 not measured."
     },
     {
       "id": "W1v",
