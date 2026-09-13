@@ -2,6 +2,7 @@
 // It never derives carriers, applies damage, or mutates a meter.
 
 import { esc, attachTooltip } from './tooltip.js';
+import { helpText } from '../../model/tooltipSettings.js';
 import { meter, pill, glyph, statusText } from '../kit/index.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
@@ -38,7 +39,9 @@ export function arcaneExposureReceipt(registries, enemySnapshot, recentEvents = 
     mode: 'configured', label, glyph: '✧', value, threshold,
     percent, fillPercent: Math.max(0, Math.min(100, percent)),
     locked, status, event: event ? { ...event } : null,
-    tooltip: `${value} / ${threshold}${locked ? ' · Locked while Magic Vulnerable is active.' : ''}`,
+    tooltip: helpText('arcane', { value, threshold })
+      + (state.onBreak ? helpText('arcaneBreak', { status: registries.frameworkTerms.withStatusWords(registries.statuses.get(state.onBreak.status)).name, value: state.onBreak.value, duration: state.onBreak.duration }) : '')
+      + (locked ? helpText('arcaneLocked') : ''),
   };
 }
 

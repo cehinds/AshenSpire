@@ -6403,5 +6403,47 @@ export const tagging = [
     "scope": "",
     "objectId": "wyrmhornStaff",
     "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldGuardian",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardianBulwark",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBastion",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "fx:shield"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "delivery:melee"
   }
 ];

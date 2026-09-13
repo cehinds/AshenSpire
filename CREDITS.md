@@ -132,3 +132,34 @@ through `tools/readiness-poses-ship.mjs`.
 ## Map detail and engraving (2026-09-09)
 
 Original square-world detail remaster: `art/environments/worlds/fractured-realm-square-detail.png`, generated with OpenAI imagegen from the project-owned original. Project-owned AI artwork, CC0-1.0. Geography retained, fine shapes redrawn; native output remains 1254px, not a 4K master. Original procedural parchment engraving: `src/ui/components/mapFog.js`, CC0-1.0. Source: this repository. Pyramid exports are derived by `tools/map-detail-build.mjs`.
+
+## Title city and tower (2026-09-10)
+
+`assets/bg/title-city-tower.webp` is original project-owned artwork generated
+with OpenAI imagegen using the existing `bg_act1.webp` as a palette and mood
+reference. It depicts a central stone spire above a medieval city in muted
+umber and olive-gold haze. Exported at its native 1586 × 992 resolution as WebP,
+quality 90. Used by the startup gate and title menu. No third-party asset
+license is claimed.
+
+Three review-only alternatives generated from the approved title artwork are
+retained in `art/title-background-variations/`: River Citadel, Forgotten
+Observatory, and Ashen Bastion. They use the same native resolution and WebP
+export settings and are excluded from the runtime asset bundle.
+
+## Tower entrance preview (2026-09-10)
+
+The River Citadel unlit/lit pair and landscape/portrait entrance hall in
+`assets/bg/` are project-owned artwork generated with OpenAI imagegen from
+the River Citadel concept and its derived hall. Exported to WebP at quality
+90. Prompt specifications and preview scope are in
+`art/tower-entry-preview/README.md`. No third-party asset license is claimed.
+
+`assets/bg/tower-city-background.webp` is a generated outdoor-only background
+plate derived from the hall reference. The foreground retains the existing
+hall paintings with project-authored SVG display masks. City brightness is
+controlled independently from the doorway and sconces.
+
+`assets/bg/tower-city-background-unlit.webp` is a generated lighting edit of
+that city plate with artificial lights and their reflections removed, exported
+to WebP at quality 90 for the menu's separate background layer.

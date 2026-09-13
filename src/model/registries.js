@@ -460,7 +460,7 @@ export function resolveCard(registries, instanceOrRef) {
   for (let nextTier = 1; nextTier <= smithingLevel; nextTier += 1) {
     result = applyItemCardUpgradeRows(
       result,
-      instanceOrRef.equipmentRole || result.equipmentRole,
+      instanceOrRef.kitRole || instanceOrRef.equipmentRole || result.equipmentRole,
       itemUpgradeRows(registries, `armament/${sourceArmamentId}`, nextTier),
       registries.attributes.ids(),
     );

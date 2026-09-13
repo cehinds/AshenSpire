@@ -236,8 +236,8 @@ if (args.includes('--selftest')) {
       {
         name: 'reveal transition skips its deterministic cleanup deadline',
         file: 'src/ui/components/startupGate.js',
-        find: "    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;",
-        replace: "    const delay = document.body.classList.contains('reduced-motion') ? 900 : 180; // startup-gate selftest plant",
+        find: "    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;",
+        replace: "    const delay = reducedMotion ? 900 : lightUpMs + holdMs + fadeMs; // startup-gate selftest plant",
         expectRed: /RED A10\.REVEAL-CLEANUP/,
       },
       {
@@ -474,13 +474,24 @@ async function assertPromptFamilies() {
   await p.close();
 }
 
+// #949 gives the tower an entrance: on the completing edge the gate keeps
+// standing with `.is-revealing` through light-up + lit-city hold + fade before
+// the title mounts. The longest configurable hold is 2 s, so ~3.4 s is the
+// honest end of a reveal; the ceiling below is the 'never reveals' verdict.
+// GATE_STANDING is stricter than "no title yet": a gate that has begun its
+// exit is already a reveal, and the negative claims must say so.
+const TITLE_REVEALED = `!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`;
+const GATE_STANDING = `!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`;
+const REVEAL_CEILING_MS = 6000;
+const awaitReveal = (p, label) => p.until(TITLE_REVEALED, label, REVEAL_CEILING_MS).catch(() => { /* the verdict below reads the truth */ });
+
 async function assertKeyboard(key, code) {
   const p = await page();
   await p.until(`!!document.querySelector('.startup-gate')`, `${key} startup`);
   const release = await p.key(key);
-  verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), `${code}.DOWN-CONSUMED`, `${JSON.stringify(key)} down is consumed and does not reveal`);
+  verdict(await p.ev(GATE_STANDING), `${code}.DOWN-CONSUMED`, `${JSON.stringify(key)} down is consumed and does not reveal`);
   await release();
-  await wait(180);
+  await awaitReveal(p, `${key} reveal`);
   const receipt = await p.ev(`({startup:!!document.querySelector('.startup-gate'), title:!!document.querySelector('.title-screen'), customize:!!document.querySelector('.customize'), active:document.activeElement?.className||''})`);
   verdict(!receipt.startup && receipt.title && !receipt.customize, `${code}.REVEAL-ONCE`, `${JSON.stringify(key)} release reveals title without activating it (${JSON.stringify(receipt)})`);
   verdict(/title-menu-item/.test(receipt.active), `${code}.TITLE-FOCUS`, `default title control owns DOM focus (${receipt.active || 'none'})`);
@@ -515,9 +526,9 @@ async function assertGamepad(button) {
   const p = await page({ pad: true });
   await p.until(`!!document.querySelector('.startup-gate')`, `gamepad ${button} startup`);
   await p.ev(`window.__startupPad.set(${button},true)`); await wait(100);
-  verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed without beginning reveal`);
-  await p.ev(`window.__startupPad.set(${button},false)`); await wait(220);
-  await wait(150);
+  verdict(await p.ev(GATE_STANDING), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed without beginning reveal`);
+  await p.ev(`window.__startupPad.set(${button},false)`);
+  await awaitReveal(p, `gamepad ${button} reveal`);
   const r = await p.ev(`({title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),customize:!!document.querySelector('.customize'),veil:!!document.querySelector('.modal-veil'),active:document.activeElement?.className||''})`);
   verdict(r.title && !r.startup, 'A7.GAMEPAD-REVEAL', `button ${button} release reveals the title (${JSON.stringify(r)})`);
   verdict(r.title && !r.startup && !r.customize && !r.veil && /title-menu-item/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
@@ -531,7 +542,7 @@ async function assertInterruptedPresses() {
   await keyboard.ev(`dispatchEvent(new Event('blur'))`);
   await release();
   await wait(220);
-  verdict(await keyboard.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.INTERRUPT-CANCEL', 'blur cancels the armed keyboard press; its orphaned keyup cannot reveal title');
+  verdict(await keyboard.ev(GATE_STANDING), 'A7.INTERRUPT-CANCEL', 'blur cancels the armed keyboard press; its orphaned keyup cannot reveal title');
   const freshRelease = await keyboard.key('Enter'); await freshRelease();
   await keyboard.until(`!!document.querySelector('.title-screen')`, 'fresh keyboard press after blur');
   await keyboard.close();
@@ -541,14 +552,15 @@ async function assertInterruptedPresses() {
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,false); window.__startupPad.connect()`); await wait(140);
-  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.INTERRUPT-CANCEL', 'disconnect cancels an armed controller press; reconnecting unpressed cannot synthesize a reveal');
+  verdict(await pad.ev(GATE_STANDING), 'A7.INTERRUPT-CANCEL', 'disconnect cancels an armed controller press; reconnecting unpressed cannot synthesize a reveal');
   await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,true); window.__startupPad.connect()`); await wait(140);
   await pad.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.HELD-AT-RECONNECT', 'a button pressed while disconnected and held through reconnect is seeded, not invented as a new press');
+  verdict(await pad.ev(GATE_STANDING), 'A7.HELD-AT-RECONNECT', 'a button pressed while disconnected and held through reconnect is seeded, not invented as a new press');
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
-  verdict(await pad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
+  await pad.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(pad, 'reconnect recovery reveal');
+  verdict(await pad.ev(TITLE_REVEALED), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
   await pad.close();
 
   const blurredPad = await page({ pad: true });
@@ -556,29 +568,32 @@ async function assertInterruptedPresses() {
   await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await blurredPad.ev(`dispatchEvent(new Event('blur'))`);
   await blurredPad.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await blurredPad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.GAMEPAD-BLUR-CANCEL', 'window blur cancels controller ownership; the orphaned release cannot reveal title');
+  verdict(await blurredPad.ev(GATE_STANDING), 'A7.GAMEPAD-BLUR-CANCEL', 'window blur cancels controller ownership; the orphaned release cannot reveal title');
   await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await blurredPad.ev(`window.__startupPad.set(0,false)`); await wait(260);
-  verdict(await blurredPad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.GAMEPAD-BLUR-RECOVERY', 'a fresh complete controller press still reveals after focus returns');
+  await blurredPad.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(blurredPad, 'blur recovery reveal');
+  verdict(await blurredPad.ev(TITLE_REVEALED), 'A7.GAMEPAD-BLUR-RECOVERY', 'a fresh complete controller press still reveals after focus returns');
   await blurredPad.close();
 
   const held = await page({ pad: true, heldButton: 0 });
   await held.until(`!!document.querySelector('.startup-gate')`, 'held-at-boot startup');
   await wait(120);
   await held.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await held.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.HELD-AT-BOOT', 'a button already held when polling begins is seeded, not invented as a fresh activation');
+  verdict(await held.ev(GATE_STANDING), 'A7.HELD-AT-BOOT', 'a button already held when polling begins is seeded, not invented as a fresh activation');
   await held.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await held.ev(`window.__startupPad.set(0,false)`); await wait(260);
-  verdict(await held.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
+  await held.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(held, 'held-at-boot recovery reveal');
+  verdict(await held.ev(TITLE_REVEALED), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
   await held.close();
 
   const multiple = await page({ pad: true, secondHeldButton: 0 });
   await multiple.until(`!!document.querySelector('.startup-gate')`, 'multiple gamepads startup');
   await multiple.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await multiple.ev(`window.__startupPad.setSecond(0,false)`); await wait(240);
-  verdict(await multiple.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.MULTIPAD-OWNERSHIP', 'releasing a seeded hold on pad 1 cannot complete the activation begun by pad 0');
-  await multiple.ev(`window.__startupPad.set(0,false)`); await wait(260);
-  verdict(await multiple.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.MULTIPAD-RECOVERY', 'releasing the same pad that began the activation reveals normally');
+  verdict(await multiple.ev(GATE_STANDING), 'A7.MULTIPAD-OWNERSHIP', 'releasing a seeded hold on pad 1 cannot complete the activation begun by pad 0');
+  await multiple.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(multiple, 'multipad recovery reveal');
+  verdict(await multiple.ev(TITLE_REVEALED), 'A7.MULTIPAD-RECOVERY', 'releasing the same pad that began the activation reveals normally');
   await multiple.close();
 }
 
@@ -849,22 +864,167 @@ async function assertReducedMotion() {
   await p.close();
 }
 
+// Device pixels per CSS pixel for the ink sweep. At 1 an antialiased glyph
+// edge lands above or below the luminance threshold depending on where the
+// text falls in the pixel grid, moving the measured midpoint by half a pixel:
+// the same 48px wordmark read -1, -1.5 and -2.5 at three widths where the
+// type was byte-identical. 3 resolves the edge instead of guessing at it, and
+// changes only the raster — layout and CSS geometry do not depend on it.
+const INK_SCALE = 3;
+
+// TWO BUDGETS, BECAUSE THERE ARE NOW TWO INSTRUMENTS.
+//
+// The prompt and the build stamp are still measured as boxes and still land on
+// 0 exactly, so they keep the 1px budget this check has always used.
+//
+// The wordmark is measured as INK, and ink cannot be driven to 0 here. With the
+// principled compensation — half the track, which is exactly the trailing
+// advance letter-spacing adds after the final glyph — it measures:
+//
+//     390 M -1.00   844 M -0.67   1200 M -1.00   2550 M -1.67
+//     390 XL -1.00  844 XL -0.67  1200 XL -1.17  2550 XL -2.00
+//
+// Note the type is byte-identical across the Text M row: 48px, same string,
+// same tracking. The residual still varies with viewport width, so it is not a
+// font metric and no single tracking multiplier removes it — doubling the
+// compensation to a full track was measured too and simply moves every shape
+// to the other side of centre, red at three shapes again.
+//
+// 2.5px is therefore derived from what the correct rendering actually measures,
+// not chosen to make a red shape pass. It keeps its teeth: A11.CENTERING-DETECTOR
+// strips the compensation and reads -6, which is 2.4x this budget, so the defect
+// #910 shipped would still be caught with room to spare. If a future change
+// makes the residual approach this number, that is a real regression to look at
+// rather than a budget to raise.
+const INK_BUDGET = 2.5;
+const BOX_BUDGET = 1;
+
 async function assertShape(shape, textSize) {
   const settings = encodeURIComponent(JSON.stringify({ textSize }));
   const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${settings}`, width: shape.w, height: shape.h, mobile: shape.w <= 390 });
   await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
-  const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
+  // CENTRING IS JUDGED FROM PAINTED PIXELS, NOT FROM A BOX.
+  //
+  // Two box models were tried here and both were wrong, in opposite
+  // directions, which is why this now scans the screenshot instead.
+  //
+  //   The raw Range over the wordmark INCLUDES the trailing letter-spacing
+  //   after the final glyph. That made a wordmark with NO tracking
+  //   compensation read as perfectly centred — the missing compensation and
+  //   the phantom trailing advance are the same half-track, cancelling. A
+  //   real defect shipped green under that measurement, and #910 deleted a
+  //   correct rule on the strength of it.
+  //
+  //   Subtracting the trailing advance fixed most of that and was still not
+  //   ink: it carries the first and last glyphs' SIDE BEARINGS, which do not
+  //   cancel in a display face. At 2550x1305 Text XL it read +1.6px while the
+  //   glyphs sat -2.5px the other way. Tuning the stylesheet to satisfy it
+  //   would have pushed the wordmark further off centre while turning the
+  //   check green.
+  //
+  // A screenshot has no box model to be wrong about. The capture below is
+  // taken anyway for the `capture=` assertion, so scanning it costs one more
+  // decode: the wordmark's row band is swept for the leftmost and rightmost
+  // lit column and that midpoint is compared to the viewport centre. The
+  // threshold sits above the ember of the drifting ash (luminance ~103) and
+  // below parchment glyph ink, so only type counts.
+  //
+  // The prompt and the build stamp keep box geometry: they carry little
+  // tracking, they measure 0 either way, and their text is dim enough that a
+  // luminance sweep would be the less reliable instrument for them.
+  const measure = `(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
     const boxes=critical.map(x=>{let b=x.getBoundingClientRect();let name=x.className||x.dataset.place;
-      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);b=range.getBoundingClientRect();name+=' text';}
+      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);const advance=range.getBoundingClientRect();
+        const trailing=parseFloat(getComputedStyle(x).letterSpacing)||0;
+        b={left:advance.left,top:advance.top,right:advance.right-trailing,bottom:advance.bottom};name+=' text';}
       return [name,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
     const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
-    const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
-    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centered, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
-  const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`;
+
+  // Returns the wordmark ink's offset from the viewport centre, or null when
+  // no lit column was found — null is never treated as centred.
+  //
+  // `clip` carries the band's CSS-pixel origin, so a lit column at image x maps
+  // back to clip.x + x/INK_SCALE in CSS pixels.
+  const inkDelta = (b64, clip) => `(async () => {
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/png;base64,'+${JSON.stringify(b64)};});
+    const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+    const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);
+    const d=g.getImageData(0,0,img.width,img.height).data;
+    let min=Infinity,max=-Infinity;
+    for(let y=0;y<img.height;y++)for(let x=0;x<img.width;x++){const i=(y*img.width+x)*4;
+      const lum=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+      if(lum>150){if(x<min)min=x;if(x>max)max=x;}}
+    if(min===Infinity) return null;
+    const mid=${clip.x} + ((min+max)/2 + 0.5)/${INK_SCALE};
+    return Math.round((mid-innerWidth/2)*100)/100;
+  })()`;
+
+  // A box has no opacity; ink does. `.startup-gate > .as-titlemenu` fades in
+  // over 520ms (startupMarkIn), so a capture taken before that settles finds
+  // no lit column and the sweep returns null. Wait for the reveal to finish
+  // first — and only for THAT, because the prompt's pulse is infinite and
+  // awaiting every animation on the subtree would hang forever.
+  const settled = `(async () => {
+    const el=document.querySelector('.startup-gate > .as-titlemenu'); if(!el) return false;
+    const t0=performance.now();
+    while(performance.now()-t0 < 3000){
+      if(parseFloat(getComputedStyle(el).opacity) > 0.99) return true;
+      await new Promise(r=>requestAnimationFrame(r));
+    }
+    return false; })()`;
+
+  // One reading: box facts, the capture, then the ink sweep over that capture.
+  //
+  // THE CAPTURE IS TAKEN AT 3x, AND THAT IS NOT A DETAIL. At deviceScaleFactor
+  // 1 a glyph's antialiased edge column lands above or below the luminance
+  // threshold depending on where the text falls in the pixel grid, which moves
+  // the measured extent by a whole pixel and the midpoint by half of one. That
+  // noise was large enough to matter: the same 48px wordmark read -1, -1.5 and
+  // -2.5 at three viewport widths where the type was byte-identical. Rastering
+  // at 3x makes each device pixel a third of a CSS pixel, so the sweep resolves
+  // the edge instead of guessing at it. It changes only the raster: layout,
+  // fonts and CSS pixel geometry are untouched by deviceScaleFactor, and the
+  // override is restored immediately after.
+  const read = async () => {
+    const fact = await p.ev(measure);
+    await p.ev(settled);
+    const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
+    // The ink sweep gets its own CLIPPED capture at INK_SCALE. Rastering the
+    // whole 2550x1305 viewport at 3x produced a 7650x3915 PNG whose base64 had
+    // to cross Runtime.evaluate eight times, and the gate stopped finishing
+    // inside ten minutes. Only the wordmark's band is ever scanned, so only
+    // the band is captured; the full-page shot above still backs the
+    // `capture=` assertion at the normal scale.
+    const band = await p.ev(`(() => { const el=document.querySelector('.startup-wordmark'); if(!el) return null;
+      const r=el.getBoundingClientRect();
+      return {x:0, y:Math.max(0,Math.floor(r.top)), width:innerWidth, height:Math.max(1,Math.ceil(r.bottom)-Math.floor(r.top))}; })()`);
+    let ink = null;
+    if (band) {
+      const inkShot = await cdp.send('Page.captureScreenshot',
+        { format: 'png', fromSurface: true, clip: { ...band, scale: INK_SCALE } }, p.sessionId);
+      ink = await p.ev(inkDelta(inkShot.data, band));
+    }
+    const deltas = fact.centerDeltas.map(([name, delta]) =>
+      (name.includes('startup-wordmark') ? [name + ' ink', ink] : [name, delta]));
+    const centered = ink !== null
+      && Math.abs(ink) <= INK_BUDGET
+      && deltas.every(([name, delta]) => delta !== null
+        && (name.endsWith(' ink') || Math.abs(delta) <= BOX_BUDGET));
+    return { ...fact, centerDeltas: deltas, centered, capture: shot.data.length };
+  };
+
+  const fact = await read();
   const expectedFont = textSize === 'M' ? '10px' : '12px';
-  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && fact.capture > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${fact.capture}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  if (shape.w === 2550 && textSize === 'XL') {
+    await p.ev(`document.querySelector('.startup-wordmark').style.setProperty('transform','none','important')`);
+    const uncentered = await read();
+    verdict(!uncentered.centered, 'A11.CENTERING-DETECTOR', `removing tracking compensation is detected: ${JSON.stringify(uncentered.centerDeltas)}`);
+  }
   await p.close();
 }
 

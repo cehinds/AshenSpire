@@ -103,6 +103,14 @@ export function initAudio(settings = {}) {
   // title screen is tapped before any hold exists, so that window is normally
   // already closed — `?shot=` boots are where it is not.
   function resume() {
+    if (ctx.state === 'running') return;
+    // Before the browser has counted a gesture, every resume() is refused and
+    // logged ("The AudioContext was not allowed to start") — and every cue on
+    // the title screen used to ask again. `userActivation` is the browser's
+    // own answer to "has a gesture been counted yet"; where it exists, ask
+    // only once it says yes. The lift-event listeners above guarantee the
+    // first counted gesture still reaches here.
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
     if (ctx.state === 'suspended' || ctx.state === 'interrupted') ctx.resume().catch(() => {});
     if (state.mediaEl?.paused && state.musicEnabled && !state.muted) state.mediaEl.play()?.catch(() => {});
   }

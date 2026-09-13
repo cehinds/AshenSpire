@@ -1,3 +1,4 @@
+import { resolveLocationPresentation } from './model/locationPresentation.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -8,9 +9,11 @@
 // backward-compatible recovery path for older saves and interrupted sessions.
 
 import { contentBundle } from './content/index.js';
+import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
+import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
@@ -27,6 +30,8 @@ import { createCombat } from './engine/combat.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
+import { createSaveTransfer } from './engine/saveTransfer.js';
+import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -72,6 +77,9 @@ import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
+import { clearPosePreloads } from './ui/services/posePreloads.js';
+import { scheduleCardFits } from './ui/components/card.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
 import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
@@ -592,6 +600,10 @@ if (typeof window !== 'undefined') {
 }
 
 function applyDisplaySettings(settings) {
+  const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+  document.documentElement.dataset.performance = quality;
+  if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
+  configureTooltipSettings(settings);
   setSpritesEnabled(settings.useSprites !== false);
   document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);
   // High contrast is ON unless the player turned it off. Asked rather than
@@ -609,7 +621,7 @@ function applyDisplaySettings(settings) {
       : (settings.largeText === true ? 'L' : null);
   if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
   else document.documentElement.style.removeProperty('font-size');
-  document.body.classList.toggle('no-shake', settings.screenShake === false);
+  document.body.classList.toggle('no-shake', quality === 'lite' || settings.screenShake === false);
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
   const motif = UI.cardMotifModes.includes(settings.cardMotif) ? settings.cardMotif : UI.cardMotif;
@@ -653,7 +665,7 @@ function applyDisplaySettings(settings) {
   document.documentElement.dataset.walkedFade = wf;
   // Ambient effects level → data attr read by the title screen (ember count) + CSS.
   const amb = ['off', 'low', 'normal', 'high'].includes(settings.ambient) ? settings.ambient : 'normal';
-  document.documentElement.dataset.ambient = amb;
+  document.documentElement.dataset.ambient = quality === 'lite' ? 'off' : amb;
   // Accent theme → CSS variables on the root (falls back to gold).
   const accent = ACCENTS[settings.accent] || ACCENTS.gold;
   const root = document.documentElement.style;
@@ -665,8 +677,9 @@ function applyDisplaySettings(settings) {
   // applyUiScale for readability only: `--tap-floor` divides one by the other
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
-  setAnimSpeed(settings.animSpeed || 'normal');
+  setAnimSpeed(resolveCombatPacing(settings, quality));
   audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
+  scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -1036,7 +1049,7 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   audio.music('title');
   const family = startupInputFamily(forcedFamily);
   unmountStartupGate = mountStartupGate(app, {
-    model: startupGateModel({ inputFamily: family }),
+    model: startupGateModel({ inputFamily: family, settings: activeSettings }),
     registerInputGate: setInputGate,
     onReveal: ({ family }) => {
       startupGatePending = false;
@@ -1087,6 +1100,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onCompendium: showCompendium,
     onProfile: showProfile,
     onSettings: showSettings,
+    onOffline: showOfflinePlay,
     onSettingsChange: persistSettingsChange,
     onCollapse: showCollapsedTitle,
     onQuit: quitGame,
@@ -1163,14 +1177,28 @@ function showSettings() {
   openSettings({
     meta: activeMeta,
     onChange: persistSettingsChange,
+    onOffline: showOfflinePlay,
   });
+}
+
+function showOfflinePlay() {
+  openOfflinePlay({ transfer: createSaveTransfer(bootStorage, registries), assertImportAllowed: () => {
+    if (run) throw new Error('Return to the title screen before importing saves.');
+    let persistent = false;
+    try { persistent = bootStorage === window.localStorage; } catch { /* blocked browser storage */ }
+    if (!persistent) throw new Error('This browser is not keeping saves. Enable browser storage and reopen the game before importing.');
+  } });
 }
 
 /**
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(request = '') {
+// `returnTo` is the screen the Armoury closes back onto. The map is the
+// default; a room (merchant, Shrine, event) passes itself, because the band
+// those rooms now carry opens the Armoury too and a close that went to the
+// map would abandon the room mid-visit.
+function showArmoury(request = '', returnTo = showMap) {
   const initialView = typeof request === 'string' ? request : '';
   const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
@@ -1191,7 +1219,7 @@ function showArmoury(request = '') {
       stampDeck(registries, run);
       persist();
     },
-    onClose: showMap,
+    onClose: returnTo,
   });
 }
 
@@ -1242,6 +1270,7 @@ function quitGame() {
 function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
+    onOffline: showOfflinePlay,
     registries,
     run,
     meta: activeMeta,
@@ -1494,6 +1523,9 @@ function syncWorldPosition() {
   run.floor = run.mapGraph.nodes[j.currentNodeId].floor;
   run.actNumber = ATLAS.world[j.currentNodeId].difficultyAct;
   run.environmentRegionId = ATLAS.regionOf(j.currentNodeId);
+  run.locationPresentation = resolveLocationPresentation({ nodeId:j.currentNodeId, seedString:run.seedString,
+    timeId:run.presentationTimeId || 'day', weatherId:run.presentationWeatherId || 'any',
+    savedSceneId:run.locationPresentation?.nodeId === j.currentNodeId ? run.locationPresentation?.sceneId : undefined });
 }
 
 function enterWorldNode(nodeId) {
@@ -1756,6 +1788,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // a deck too small to reach the asked hand refuses rather than photograph an
   // eight-card hand labelled ten — a silent shortfall here would quietly turn
   // every downstream sliver measurement into a fact about a different hand.
+  if (shotState === 'combat' && shotParams.get('shotKit') === '1') drawArmamentKitPreview(combat);
   if (shotState === 'combat' && shotParams.has('shotHand')) {
     const wantHand = Number(shotParams.get('shotHand'));
     if (!Number.isInteger(wantHand) || wantHand < 1 || wantHand > combat.handMax) {
@@ -1966,7 +1999,30 @@ function shopPriceMult() {
 }
 
 // ---- non-combat nodes -----------------------------------------------------------------
-function showRest() {
+// THE BAND EVERY ROOM CARRIES (components/runHud.js). The same callbacks the
+// map hands its HUD, with the Armoury closing back onto the room that opened
+// it. One bag, three rooms, so the merchant cannot offer a menu the Shrine
+// does not.
+function roomHud(returnTo) {
+  return {
+    onMenu: showOverlay,
+    onArmoury: (view) => showArmoury(view, returnTo),
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
+    quickControls: quickMenuControls,
+    onSettingsChange: persistSettingsChange,
+    onSave: () => {
+      persist();
+      return activeSlot;
+    },
+    onQuit: () => {
+      persist(); // the run is resumable from its slot via Continue
+      showCollapsedTitle();
+    },
+  };
+}
+
+function showRest(openPanel = null) {
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
   // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
@@ -1988,6 +2044,8 @@ function showRest() {
   mountRest(app, {
     registries,
     run,
+    hud: roomHud(() => showRest()),
+    openPanel,
     healMult,
     refill,
     meta: saves.loadMeta(),
@@ -2027,6 +2085,7 @@ function showShop() {
   mountShop(app, {
     registries,
     run,
+    hud: roomHud(showShop),
     meta: saves.loadMeta(),
     onChanged: () => persist(),
     onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
@@ -2043,6 +2102,7 @@ function showEvent(eventId) {
   mountEvent(app, {
     registries,
     run,
+    hud: roomHud(() => showEvent(eventId)),
     // The hold-to-confirm dial lives in meta.settings; the screen reads it the
     // same way every other screen reads a display setting.
     meta: saves.loadMeta(),
@@ -2379,7 +2439,7 @@ if (shotState) {
 
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -2399,6 +2459,9 @@ if (shotState === 'combat-test') {
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
   newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
+    configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
+  }
   // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
   //
   // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
@@ -2578,7 +2641,7 @@ if (shotState === 'combat-test') {
     // bars. `?shotEvent=<id>` overrides it, through the one `shotParams` const.
     const evId = shotParams.get('shotEvent') || 'graveOfTheNameless';
     showEvent(evId);
-  } else if (shotState === 'rest') {
+  } else if (shotState === 'rest' || shotState === 'smith') {
     // A REACH STATE, not the denominator. Constantine could not scroll the
     // Smith grid on a phone; the reason nobody caught it is that the Shrine is
     // one of seven player-facing screens no instrument we own can open, so
@@ -2613,7 +2676,13 @@ if (shotState === 'combat-test') {
     // discipline as the twenty-card deck above — enough to reach the control,
     // no rng, identical every run.
     run.cinders = 999;
-    showRest();
+    // `?shot=smith` — THE SAME SHRINE WITH THE UPGRADE TRANSACTION OPEN. The
+    // Smith is a modal over the Shrine, not a screen of its own, so the review
+    // of 2026-09-11 could not photograph it: `?shot=smith` was not a state and
+    // fell through to the title. One Stone so the upgrade is affordable and
+    // the modal opens on an offer, not a refusal.
+    if (shotState === 'smith') run.smithingStones = Math.max(1, run.smithingStones || 0);
+    showRest(shotState === 'smith' ? 'smith' : null);
   } else if (shotState === 'shop') {
     // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
     // `?shot=rest`). The merchant is one of the screens no instrument this repo

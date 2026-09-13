@@ -2,6 +2,8 @@
 // headless target rules live below UI in model/friendlyTargets.js so the
 // authoritative engine never depends on DOM-facing modules.
 
+import { liteRendering } from '../performance.js';
+
 export const TARGET_COLORS = Object.freeze({
   enemy: '#e0463c',
   self: '#4d94e0',
@@ -51,13 +53,15 @@ export function renderTargetSilhouette(combatantEl, relationship) {
   const color = TARGET_COLORS[relationship];
   const spriteWrap = combatantEl && combatantEl.querySelector('.sprite');
   if (!color || !spriteWrap) return false;
-  const clone = tintedClone(spriteWrap, color);
-  if (!clone) return false;
+  const light = liteRendering();
+  const clone = light ? null : tintedClone(spriteWrap, color);
+  if (!light && !clone) return false;
   const holder = document.createElement('div');
   holder.className = 'aim-silho';
   holder.dataset.targetRelationship = relationship;
   holder.style.setProperty('--target-color', color);
-  holder.appendChild(clone);
+  if (clone) holder.appendChild(clone);
+  else holder.classList.add('aim-outline');
   spriteWrap.insertBefore(holder, spriteWrap.firstChild);
   combatantEl.classList.add('aiming', `aim-${relationship}`);
   return true;

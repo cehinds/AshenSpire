@@ -81,5 +81,5 @@ export function runPrototypeMatrix(seeds = 100, progress = () => {}, pressure = 
       trials: group.length, turns: mean('turns'), hp: mean('hp'), mana: mean('mana'), impact: mean('impact'), bleeds: mean('bleeds'), staggers: mean('staggers'),
       ...(scenarioId === 'gauntlet' ? { completed: mean('completed') } : {}) });
   }
-  return { seeds, pressure, policy: 'greedy-exact-preview-v1', limitations: ['Authored armor and resource caps are controlled fixtures, not final equipment-derived builds.', 'Fixed greedy policy is not optimal human play.', 'Gauntlet carries HP, stamina and mana; no rest, consumables or upgrades.', 'No reward pool or production run migration is enabled.'], summary, rows };
+  return { seeds, pressure, policy: 'greedy-exact-preview-v1', limitations: ['Armor/load derive from prototype equipment; resource caps remain controlled fixtures, not final production builds.', 'Fixed greedy policy is not optimal human play.', 'Gauntlet carries HP, stamina and mana; no rest, consumables or upgrades.', 'No reward pool or production run migration is enabled.'], summary, rows };
 }

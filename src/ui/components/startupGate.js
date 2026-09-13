@@ -59,12 +59,20 @@ export function mountStartupGate(app, {
   app.innerHTML = `
     <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
+      <div class="tower-scene" aria-hidden="true">
+        <div class="tower-exterior"><div class="tower-city-unlit"></div><div class="tower-city-lit"></div></div>
+        <div class="tower-hall"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
+      </div>
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
       ${lockupHtml(properties, accessibility)}
       ${buildStampHtml('startup')}
     </section>`;
 
   const root = app.querySelector('.startup-gate');
+  const { lightUpMs, holdMs, fadeMs } = properties.entrance;
+  root.style.setProperty('--tower-light-ms', `${lightUpMs}ms`);
+  root.style.setProperty('--tower-fade-ms', `${fadeMs}ms`);
+  root.style.setProperty('--tower-fade-delay', `${lightUpMs + holdMs}ms`);
   const prompt = root.querySelector('.startup-prompt');
   let family = properties.inputFamily;
   let armed = null;
@@ -84,7 +92,12 @@ export function mountStartupGate(app, {
     armed = null;
     root.classList.add('is-revealing');
     root.setAttribute('aria-busy', 'true');
-    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;
+    const reducedMotion = document.body.classList.contains('reduced-motion')
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.classList.toggle('tower-calm', reducedMotion);
+    // Retain the input gate until the hall fade completes so the activation
+    // gesture cannot fall through to Continue/New on the revealed menu.
+    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;
     revealTimer = setTimeout(() => {
       revealTimer = null;
       teardown(true);

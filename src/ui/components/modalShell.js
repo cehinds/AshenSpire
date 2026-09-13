@@ -134,6 +134,19 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
  *   to lose a settings change mid-gesture.
  */
 export function bindModalDismiss({ veil, panel, close, opener = document.activeElement } = {}) {
+  // Promote overflowing dialogs once per opening; shrinking back would oscillate
+  // when content or scrollbars change the available width.
+  const promote = () => {
+    if (!panel.isConnected || panel.dataset.height === 'long') return;
+    const bodies = panel.querySelectorAll('.modal-body, .as-body, .as-pane');
+    if ([...bodies].some(body => body.scrollHeight > body.clientHeight + 2)) {
+      panel.dataset.height = 'long';
+    }
+  };
+  const resize = typeof ResizeObserver === 'function' ? new ResizeObserver(promote) : null;
+  resize?.observe(panel);
+  const mutations = typeof MutationObserver === 'function' ? new MutationObserver(promote) : null;
+  mutations?.observe(panel, { childList: true, subtree: true, characterData: true });
   const onKeydown = (event) => {
     if (event.defaultPrevented) return;
     if (event.key === 'Tab') {
@@ -159,11 +172,28 @@ export function bindModalDismiss({ veil, panel, close, opener = document.activeE
     event.stopImmediatePropagation();
     close();
   };
-  const onClick = (event) => { if (event.target === veil) close(); };
+  // A SCRIM CLICK CANCELS ONLY WHEN THE PRESS BEGAN ON THE SCRIM. With the
+  // hold dial off, a control opens a door on pointerup, and the browser then
+  // dispatches that same touch's trailing click at the point of release —
+  // which is now the scrim (the finger never moved; the veil did). Cancelling
+  // on it closed the door in the gesture that opened it. The confirmation
+  // modal measured this first (tools/holdconfirm.mjs, the title's dial-off
+  // leg); every shell door now carries the same guard.
+  let scrimPressed = false;
+  const onPointerDown = (event) => { scrimPressed = event.target === veil; };
+  const onClick = (event) => {
+    const pressedHere = scrimPressed;
+    scrimPressed = false;
+    if (event.target === veil && pressedHere) close();
+  };
   document.addEventListener('keydown', onKeydown, true);
+  veil.addEventListener('pointerdown', onPointerDown);
   veil.addEventListener('click', onClick);
   return function release({ restoreFocus = true } = {}) {
+    resize?.disconnect();
+    mutations?.disconnect();
     document.removeEventListener('keydown', onKeydown, true);
+    veil.removeEventListener('pointerdown', onPointerDown);
     veil.removeEventListener('click', onClick);
     if (restoreFocus && opener?.isConnected && typeof opener.focus === 'function') {
       opener.focus({ preventScroll: true });

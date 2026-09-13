@@ -1,5 +1,12 @@
 # AshenSpire component catalog
 
+`offlinePlay.js` supplies the shared **Download & saves** modal, opened from
+Title and Settings (including in-run Settings). Release metadata supplies its
+version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
+instructions, and transfer limits. The save-transfer engine validates all slots
+before replacing storage and preserves a recovery copy. Import is available from
+Title, with a preview and confirmation. See [offline play](offline-play.md).
+
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
 glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
 node radii; `AtlasCameraModel.js` frames a journey junction using that same close-up
@@ -63,11 +70,11 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
-| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark, deterministic ash, family prompt, and shared build receipt; Title is not mounted behind it. |
+| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > Game > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
 | `startup-ash-field` | `startupGateModel.properties.particles` | `startupGate.mountStartupGate` | Startup Gate | Decorative particle host; visual-only and removed with the boot gate. |
 | `startup-ash-particle` | deterministic particle record | `startupGate.mountStartupGate` | Startup Ash Field | One data-driven ash mote with position, delay, duration, and size. |
 | `startup-mark` | startup copy + responsive presentation | `startupGate.mountStartupGate` | Startup Gate | Centered folded-title content group; its phone backing is fully transparent. |
-| `startup-wordmark` | `startupGateModel.properties.wordmark` | `startupGate.mountStartupGate` | Startup Mark | Replaceable Ashen Spire wordmark text. |
+| `startup-wordmark` | `startupGateModel.properties.wordmark` | `startupGate.mountStartupGate` | Startup Mark | Replaceable Ashen Spire wordmark text with a feathered translucent backing that fades in. |
 | `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
 | `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
 | `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
@@ -91,7 +98,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-modal-actions` | `saveSlotSelectionModel` action projection + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; Continue remains enabled for and targets the selected slot, while the `load-review` variant becomes Back to Saves / Load Save. |
 | `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
 | `title-modal-continue-control` | `saveSlotSelectionModel` action child | `title.mountTitle` | Title Modal Actions | Carries the selected slot as its semantic load/create command payload; the review variant exposes a positive Load Save action. |
-| `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition with remembered Expanded and Razor Strip snap states. |
+| `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition of header, resources, controls, and belt. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
 | `portrait-badge` | `componentModel` child | `hudmeta.identityClusterHtml` | Map + Combat | Character glyph/badge. |
@@ -110,7 +117,6 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
 | `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Phone faces are 32px (20% smaller) inside unchanged 44px touch targets; compact HUD anchors the pair below potions. |
-| `hud-mode-grip` | `hudModeGripModel` | `sharedRunHudHtml` + `wireHudModeGrip` | Map + Combat | Two-state HUD snap control: an 18x3 visible border notch within a 44x44 pointer/keyboard/drag target. |
 | `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
@@ -127,7 +133,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
 | `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
-| `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
+| `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
 | `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` + `paintedOutfits.js` | Solo and co-op combat cards | Rendered player or enemy figure. Player rest resolves stance, readiness, guard, then idle through `combatPose.js`; Prepared, Starstone Charge and Blood Rite have authored outfit poses, intermediate entry/exit sprites, subtle breathing glows, and fades that survive combat redraws. Reduced motion uses a steady glow. [Interactive miniature](../art/readiness-poses/preview.html). |
@@ -139,7 +145,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `proc-status-bar` | semantic component | `combat.js` | Enemy cards | Individual Bleed/Frost/Insanity buildup bar. |
 | `arcane-exposure-bar` | semantic component | `arcaneExposure.js` | Enemy cards | Individual Arcane Exposure meter. |
 | `status-effect-tray` | semantic component | `combat.js` | Combat cards | Active status icons and stacks. |
-| `tooltip` | semantic component | `tooltip.js` + `tooltipGlossary.js` | All interactive surfaces | Every hover, handover and nested term waits 500 ms; dismiss 500 ms after leaving owner and panel. Active-bundle keywords and touch/keyboard definitions share the renderer. |
+| `tooltip` | semantic component | `tooltip.js` + `tooltipGlossary.js` | All interactive surfaces | Every hover, handover and nested term waits the explanation delay (1 s default); a tap or click selects a detail and a second one explains it; keyboard focus explains after 500 ms; dismiss 500 ms after leaving owner and panel. Cards explain only through their Information button. Active-bundle keywords and touch/keyboard definitions share the renderer. |
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
@@ -580,6 +586,17 @@ Shared modals contain keyboard focus in the top dialog, restore the opener on Es
 
 Reward chooser: playing-card inspection yields face taps to reward selection; the separate Confirm control owns collection. Back retains selection and a failed save exposes a retry status without adding a duplicate card. Touch flicks retain the current shared TouchFlickModel and Accessibility controls.
 
+Selected content inspection: reward radio choices retain Information after Back and redraw. Keyboard focus reveals the same control. Reward, merchant, pile, inventory and smith card rows reserve space above the face, including wrapped rows. Smith extraction/installation item choices and mount rows expose Information without collecting, buying or confirming the service; explicit transaction controls retain ownership.
+
 `map-detail` shares viewport tile selection, decoded-image replacement and engraved fog between traditional/co-op and World Journey/Long Expedition. `mapPresentation.js` holds the tile budget, density cap and route widths; `mapArt.generated.js` owns asset versions and available dimensions. Tiles never carry node discovery or travel permissions.
 
 `local-map-camera` composes fixed-size accessible markers over adaptive detail imagery. `localMapPresentation.js` holds defaults and optional map-ID overrides; `LocalMapCameraModel` derives pan and anchored zoom. `LocalServiceModel` reads existing healing, smithing, refill and level-up plans without mutating the run. World Journey and Long Expedition share this location dialog.
+
+Relic reward rows open a collectible card and full effects before Take relic; Back leaves the reward pending. Map and combat relic slots open the same read-only collectible inspection. Playing-card inspection expands its text area and stacks card/details on phones so complete effects remain readable.
+
+Primary confirmation buttons use green when enabled and neutral styling when native or ARIA disabled. Reward Continue stays gold while any reward remains unresolved and turns green once all rows are taken or explicitly skipped; its existing hold and auto-collect behavior is preserved.
+Combatant overhead controls: `combatantOverhead.js` shares Information and enlarged intent between solo and co-op. The vertical stack anchors to visible idle artwork and collapses empty slots. Its selected outline precedes the configured tooltip delay for hover, touch, and focus. Information opens the existing detailed body; overhead input never bubbles into combat targeting.
+
+Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
+
+Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.

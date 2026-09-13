@@ -1,3 +1,8 @@
+import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
+import { combatantDetailBody } from '../components/combatantInspector.js';
+import { activeCombatAbilities } from '../components/combatAbilities.js';
+import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { openModal } from '../kit/index.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -53,7 +58,7 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
-import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
@@ -98,6 +103,31 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let seatIdx = 0;
   let me = seats[0];
   let selectedEnemy = null;
+  let selectedCombatantId = null;
+  function selectCombatant(id) {
+    selectedCombatantId = id;
+    selectCombatantInfo(app, id);
+  }
+  function wireCombatantContext(box, name) {
+    box.tabIndex = -1;
+    box.dataset.focusable = '';
+    box.setAttribute('role', 'button');
+    if (!box.hasAttribute('aria-label')) box.setAttribute('aria-label', `Select ${name}`);
+    box.classList.toggle('context-selected', selectedCombatantId === box.dataset.eid);
+    box.setAttribute('aria-pressed', String(selectedCombatantId === box.dataset.eid));
+    box.addEventListener('focus', () => { if (box.matches(':focus-visible')) selectCombatant(box.dataset.eid); });
+    box.addEventListener('gpfocus', event => { if (event.target === box) selectCombatant(box.dataset.eid); });
+    box.addEventListener('keydown', event => {
+      if (event.target !== box || !['Enter', ' '].includes(event.key)) return;
+      event.preventDefault(); box.click();
+    });
+  }
+  const dismissCombatant = event => {
+    if (!event.target.closest('.combatant, .combatant-door, .modal')) selectCombatant(null);
+  };
+  const inspectCard = () => selectCombatant(null);
+  app.addEventListener('click', dismissCombatant);
+  app.addEventListener('cardinspectionselect', inspectCard);
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
   let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
@@ -327,6 +357,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
+    if (ev.key === 'Escape') selectCombatant(null);
     if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
       ev.preventDefault();
       if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
@@ -374,6 +405,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
+    app.removeEventListener('click', dismissCombatant);
+    app.removeEventListener('cardinspectionselect', inspectCard);
     app.querySelectorAll('.coop-seat .sprite').forEach(node => stageFor(node)?.dispose?.());
     clearCombatEffects(app.querySelector('.fx-layer'));
     releaseFlaskKeyClaim();
@@ -496,19 +529,28 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     return b;
   }
   function intentEl(intent) {
-    // ONE INTENT PIECE, the kit's StatePill in the fact's own tone — the same
-    // composition solo combat draws (screens/combat.js intentEl). This read
-    // `badge.html`, which intentBadge has never returned, so the co-op board
-    // printed the word "undefined" over every enemy.
-    const badge = intentBadge(intent);
-    const node = pill({
-      label: badge.label,
-      attrs: { class: `intent lg ${badge.cls}${badge.dashed ? ' dashed' : ''}`, dataset: { tone: badge.tone || undefined } },
-    });
-    if (badge.glyph) node.prepend(kitGlyph(badge.glyph, { class: 'ic' }));
-    attachTooltip(node, () => intentTooltip(intent, { victim: 'each hero' }));
-    return node;
+    return combatantIntent(intent, () => intentTooltip(intent, { victim: 'each hero' }));
   }
+
+  function infoEl(entity, name, def = null) {
+    return combatantInfo(name, opener => {
+      const resources = [
+        { label: 'HP', value: entity.hp, max: entity.maxHp },
+        { label: 'MP', value: entity.mana, max: entity.maxMana },
+        { label: 'Poise', value: entity.poiseMeter?.value, max: entity.poiseMeter?.max },
+        { label: 'Block', value: entity.block || 0 },
+      ].filter(row => row.value != null);
+      const abilities = activeCombatAbilities(registries, entity, false);
+      const subject = { name, resources, statuses: abilities, ...(def
+        ? { moveCards: enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) }
+        : { abilities }) };
+      openModal({ title: name, size: 'md', className: 'combatant-door', opener,
+        bodyClassName: 'combatant-inspector-body',
+        body: host => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      });
+    });
+  }
+
 
   // ---- combat (parity board) ------------------------------------------------
   function renderCombat() {
@@ -517,6 +559,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
     let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
+    if (selectedCombatantId && ![...living, ...sc.players.filter(p => p.alive)].some(e => e.id === selectedCombatantId)) selectedCombatantId = null;
+    if (armedFlask != null || armedFriendlyCard) selectedCombatantId = null;
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
     let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
@@ -590,6 +634,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
       box.dataset.eid = p.id;
+      if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
@@ -631,7 +676,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
           armedFlask = null;
         });
+      } else if (p.alive) {
+        box.addEventListener('click', () => selectCombatant(p.id));
       }
+      if (p.alive) wireCombatantContext(box, m.name || p.id);
       adoptCombatantFrame(box);
       zone.appendChild(box);
     }
@@ -645,7 +693,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       box.className = `combatant enemy${dead ? ' dead' : ''}${!dead && e.id === selectedEnemy ? ' selected-target' : ''}`;
       box.dataset.eid = e.id;
       box.dataset.stature = statureFor(registries, def.id);
-      if (!dead) box.appendChild(intentEl(e.intent));
+      if (!dead) box.append(infoEl(e, def.name, def), intentEl(e.intent));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
       sprite.appendChild(enemySprite(def, e));
@@ -656,7 +704,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         event.targetId === e.id && (event.type === 'arcaneExposureRefused' || event.type === 'arcaneBreak' || event.type === 'arcaneExposureChanged')
       ))));
       box.appendChild(statusRow(e.statuses));
-      if (!dead) box.addEventListener('click', () => { selectedEnemy = e.id; render(); });
+      if (!dead) {
+        wireCombatantContext(box, def.name);
+        box.addEventListener('click', () => { selectedEnemy = e.id; selectCombatant(e.id); render(); });
+      }
       adoptCombatantFrame(box);
       row.appendChild(box);
     }
@@ -760,7 +811,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const canEnd = meP && meP.alive && meP.connected && !meP.ended;
     const et = app.querySelector('#coop-endturn');
     et.disabled = !canEnd;
-    et.classList.toggle('pulse', canEnd && meP.energy > 0);
+    const hasPlayable = canEnd && meP.hand.some(card => {
+      const def = cardDef(card);
+      if (registries.framework.isUnplayable(def) || !cardAffordableFromSnapshot(def, meP)) return false;
+      if (def.effects?.some(effect => effect.target === 'enemy') && !sc.enemies.some(enemy => enemy.hp > 0)) return false;
+      const friendly = friendlyTargetPlan(def, me, sc.players);
+      return !friendly.active || friendly.legalIds.length > 0;
+    });
+    et.classList.toggle('pulse', hasPlayable);
+    et.dataset.confirmReady = String(canEnd && !hasPlayable);
     endTurnBeat = arm(et, 'endTurn', {
       onConfirm: () => {
         const current = snap && snap.scene && snap.scene.kind === 'combat'

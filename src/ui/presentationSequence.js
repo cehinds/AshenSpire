@@ -6,6 +6,7 @@ import {assetUrl} from './assetmap.js';
 import {combatEffectFrames} from './assets.js';
 import {reducedMotionRequested} from './motion.js';
 import {combatEffectOpacity} from '../content/combatEffectPresentation.js';
+import { hintImage } from './imageHints.js';
 const frames={...COMBAT_EFFECT_ART,...POSE_EFFECT_ART},actors=new WeakMap();
 const catalog={effects:Object.keys(frames),actors:Object.keys(PAINTED_OUTFITS),poses:id=>Object.keys(PAINTED_OUTFITS[id]?.frames||{})};
 let cachedText,cachedProject;
@@ -37,7 +38,7 @@ export function playPresentationSequence(layer,from,context,{targets=[],duration
    // Target anchors/travel only appear for actual recipients from the caller.
    const recipients=clip.anchor==='target'||clip.travel?targets:[null];
    for(let i=0;i<recipients.length;i++){
-    const key=clip.id+':'+i;live.add(key);let img=nodes.get(key);if(!img){img=document.createElement('img');img.className='studio-combat-effect';img.alt='';img.setAttribute('aria-hidden','true');img.style.cssText='position:absolute;pointer-events:none;object-fit:contain;';nodes.set(key,img);effectLayer(clip).append(img);}
+    const key=clip.id+':'+i;live.add(key);let img=nodes.get(key);if(!img){img=hintImage(document.createElement('img'));img.className='studio-combat-effect';img.alt='';img.setAttribute('aria-hidden','true');img.style.cssText='position:absolute;pointer-events:none;object-fit:contain;';nodes.set(key,img);effectLayer(clip).append(img);}
     img.src=project.assets[frames[clip.effect][clip.frame]]||combatEffectFrames(clip.effect)[clip.frame];img.dataset.effect=clip.effect;
     const target=recipients[i],sx=from.width/230,sy=from.height/350;
     let x=from.left+from.width/2+(clip.x-ANCHORS.torso[0])*1000*sx,y=from.top+from.height*.5+(clip.y-ANCHORS.torso[1])*600*sy;

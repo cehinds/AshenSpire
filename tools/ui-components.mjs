@@ -26,7 +26,7 @@ const REQUIRED_IDS = Object.freeze([
   'shared-run-hud', 'act-route-strip', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'hud-quick-settings', 'hud-mode-grip', 'fullscreen-control', 'music-control',
+  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control',
   'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
@@ -61,7 +61,7 @@ export function receipt() {
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
       'HudPrimitiveModels', 'RunHeaderModel', 'VitalsPanelModel',
-      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel', 'HudModeModel',
+      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
@@ -98,6 +98,9 @@ export function receipt() {
     saveSlotSelector: read('src/ui/components/saveSlotSelector.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
+    runHud: read('src/ui/components/runHud.js'),
+    shop: read('src/ui/screens/shop.js'),
+    event: read('src/ui/screens/event.js'),
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
@@ -133,9 +136,17 @@ export function findings(r) {
       || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
-  if (![r.map, r.combat].every((text) => /import \{ hudShellHtml \}/.test(text)
-      && /import \{ runHudViewModel \}/.test(text)
-      && /\$\{hudShellHtml\(runHudViewModel\(\{/.test(text))) {
+  // C3 — ONE COMPOSITION. Combat renders `hudShellHtml(runHudViewModel({…}))`
+  // itself; the map and the three rooms (merchant, Shrine, event) render it
+  // through components/runHud.js, which is the same call behind one function.
+  // Each consumer is named so a room that grows its own band goes red here.
+  const composes = (text) => /import \{ hudShellHtml \}/.test(text)
+    && /import \{ runHudViewModel \}/.test(text)
+    && /hudShellHtml\(runHudViewModel\(\{/.test(text);
+  const viaRunHud = (text) => /import \{ runHudHtml, wireRunHud \} from '\.\.\/components\/runHud\.js'/.test(text)
+    && /\$\{[^`]*runHudHtml\(\{/.test(text) && /wireRunHud\(app, \{/.test(text);
+  if (!composes(r.combat) || !composes(r.runHud) || ![r.map, r.rest, r.shop].every(viaRunHud)
+      || !/runHudHtml\(\{/.test(r.event) || !/wireRunHud\(app, \{/.test(r.event)) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
   }
   if (!/export function combatantFrame/.test(r.frame)
@@ -301,7 +312,7 @@ export function findings(r) {
       // The ORDER of what remains is still pinned, which is what this line is
       // for, and the second clause pins the removal itself so the child cannot
       // reappear without a finding.
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)[\s\S]*hudModeGripModel\(\{ mode: hudMode \}\)/.test(r.hudViewModel)
+      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
       || /hudQuickSettingsModel\(\{ place/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
@@ -491,7 +502,9 @@ function selftest() {
   const plants = [
     ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
-    ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
+    ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${runHudHtml({', '${(() => "")({') })],
+    ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replace('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
+    ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],

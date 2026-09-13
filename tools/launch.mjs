@@ -112,6 +112,11 @@ if (landed !== aliases.length) {
   process.exit(1);
 }
 
+// Produce the mobile/web edition with the same source stamp and external art.
+console.log('launch: building the external-art web edition…');
+const web = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--external-art', '--out', 'build/web'], { stdio: 'inherit' });
+if (web.status !== 0) process.exit(web.status || 1);
+
 if (args.includes('--build-only')) {
   // The terminated verdict line #12's contract requires: one line, one count.
   console.log(`launch: OK — ${landed}/${aliases.length} current-build aliases refreshed.`);

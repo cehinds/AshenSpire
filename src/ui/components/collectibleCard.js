@@ -1,6 +1,7 @@
 import { renderEquipmentCard, renderEquipmentInspection } from './equipmentCard.js';
 import { relicText } from './card.js';
 import { assetUrl } from '../assetmap.js';
+import { openModal } from './modalShell.js';
 
 // The same poker canvas, populated with the collectible's authored effects.
 // No equipment statistics or invented combat values are attached to collectibles.
@@ -34,4 +35,10 @@ export function renderCollectibleInspection(registries, item, kind, options = {}
   const result = renderEquipmentInspection(registries, item, { ...options, presentation: presentation(registries, item, kind) });
   result.querySelector('.equipment-poker-card').classList.add('collectible-poker-card');
   return result;
+}
+
+export function openCollectibleInspection(registries, item, kind, opener) {
+  return openModal({ title: item.name, eyebrow: `${kind} information`, size: 'lg',
+    className: 'card-inspection-modal', opener,
+    body: renderCollectibleInspection(registries, item, kind, { interactive: false }) });
 }

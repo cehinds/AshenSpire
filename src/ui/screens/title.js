@@ -13,6 +13,7 @@ import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
+import { offlinePlay } from '../../content/offlinePlay.js';
 
 let releaseActiveTitleBack = null;
 
@@ -33,6 +34,7 @@ export function mountTitle(app, {
   onHistory,
   onProfile,
   onSettings,
+  onOffline,
   onSettingsChange,
   onCollapse,
   onQuit,
@@ -94,6 +96,7 @@ export function mountTitle(app, {
         // #armaments remains the compatibility anchor for the existing watched probe.
         entry('Collection', 'collection', { id: 'armaments' }),
         entry('Settings', 'settings', { id: 'settings' }),
+        ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
         entry('Quit', 'quit', { id: 'quit-game' }),
       ],
       attrs: { 'data-component': UI.titleBrandLockup },
@@ -210,15 +213,18 @@ export function mountTitle(app, {
   function render() {
     app.innerHTML = `
       <div class="screen title-screen">
+        <div class="tower-hall" aria-hidden="true"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
         ${Array.from({ length: 7 }, (_, i) => `<span class="ember" style="left:${8 + ((i * 13.7) % 84)}%;animation-delay:${(i * 1.7) % 9}s;animation-duration:${7 + (i % 4) * 2}s"></span>`).join('')}
         ${hudQuickSettingsHtml(hudQuickSettingsModel({ place: 'title', presentation: registries.balance.ui.hudQuickSettings, settings: meta.settings || {} }))}
         ${menuHtml()}
         ${buildStampHtml('title')}
+        <button type="button" class="tower-preview-replay">Replay entrance</button>
         ${modalHtml()}
       </div>`;
 
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
     const root = app.querySelector('.title-screen');
+    root.querySelector('.tower-preview-replay')?.addEventListener('click', () => onCollapse?.());
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
@@ -246,6 +252,7 @@ export function mountTitle(app, {
         else if (action === 'new') openModal(action);
         else if (action === 'collection' && onCompendium) onCompendium();
         else if (action === 'settings') onSettings();
+        else if (action === 'offline') onOffline?.();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
         else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);

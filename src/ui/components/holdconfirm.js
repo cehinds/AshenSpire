@@ -109,6 +109,7 @@
 // hold transition, so their three cues remain here without double-firing.
 // ---------------------------------------------------------------------------
 
+import { balance } from '../../content/balance.js';
 import { armPress } from '../gesture.js';
 import { setActionControl, releaseActionControl } from '../input.js';
 import { beatFor } from '../../model/secondbeat.js';
@@ -119,6 +120,18 @@ import { openConfirmationModal } from './confirmationModal.js';
 /** How far a finger may wander before the hold is read as a drag. */
 export const HOLD_POINTER_SLOP = 12;
 const SLOP = HOLD_POINTER_SLOP;
+
+/**
+ * THE SETTLE WINDOW, authored in balance.ui.holdConfirm.
+ *
+ * `HOLD_DRAG_SETTLE_MS` is the delay a call site passes as `settleMs` when the
+ * same object can also be dragged; `HOLD_SETTLE_SLOP` is how far the finger may
+ * drift during it and still count as still. Exported so a screen names the
+ * authored value rather than typing a second 1000 next to it.
+ */
+export const HOLD_DRAG_SETTLE_MS = balance.ui.holdConfirm.dragSettleMs;
+export const HOLD_SETTLE_SLOP = balance.ui.holdConfirm.settleSlopPx;
+const SETTLE_SLOP = HOLD_SETTLE_SLOP;
 
 /**
  * THE CUE VOCABULARY — six phases, one family. Exported so Vega can author
@@ -162,11 +175,18 @@ export function beatCue(phase, id, form) {
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
-  onHoldStart = null, onHoldEnd = null,
+  onHoldStart = null, onHoldEnd = null, settleMs = 0,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
+  // Like `ms`, the settle may be a function so a surface can turn it off while
+  // mounted — a card that is draggable only while an editor is open needs the
+  // delay only then.
+  const settleOf = typeof settleMs === 'function' ? settleMs : () => settleMs;
 
   let raf = 0;
+  // Pending settle. Non-zero means a press is in its settle window: not yet a
+  // hold, not yet anything a player can see.
+  let settleTimer = 0;
   let armed = false;
   let fired = false;
   let committedThisPress = false;
@@ -265,6 +285,10 @@ export function armHold(btn, {
   function stop(state) {
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
+    // A press torn down mid-settle must not arm afterwards. disarm(), Escape
+    // and a re-render all reach here, and every one of them can land while a
+    // finger is still inside its settle window.
+    if (settleTimer) { clearTimeout(settleTimer); settleTimer = 0; }
     armed = false;
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
@@ -335,19 +359,32 @@ export function armHold(btn, {
       });
       return true;
     }
-    clearFeedback();
-    activeFeedback = resolveFeedback();
-    dressFeedback(activeFeedback);
     heldThisPress = origin.source === 'pointer';
-    armed = true;
-    btn.dataset.hold = 'holding';
-    holdLifecycleActive = true;
-    if (onHoldStart) onHoldStart({ duration: ms0, origin });
-    const t0 = performance.now();
     const x0 = origin.x;
     const y0 = origin.y;
     const ev = origin.ev;
+    const settle0 = Math.max(0, Number(settleOf()) || 0);
 
+    // NOTHING IS DRESSED UNTIL THE PRESS HAS SETTLED. Everything that makes a
+    // hold visible, audible or readable lives here so there is exactly one
+    // moment the gesture becomes real — and on a surface that also drags, that
+    // moment is only reached by a finger that stayed put.
+    const armNow = () => {
+      clearFeedback();
+      activeFeedback = resolveFeedback();
+      dressFeedback(activeFeedback);
+      armed = true;
+      btn.dataset.hold = 'holding';
+      holdLifecycleActive = true;
+      if (onHoldStart) onHoldStart({ duration: ms0, origin });
+      // The fill measures the HOLD, not the settle: it starts from zero the
+      // instant the gesture becomes a hold, so the bar a player watches is the
+      // whole of what they are committing to.
+      t0 = performance.now();
+      raf = requestAnimationFrame(tick);
+    };
+
+    let t0 = 0;
     const tick = (now) => {
       if (!armed) return;
       const p = Math.min(1, (now - t0) / ms0);
@@ -367,10 +404,26 @@ export function armHold(btn, {
       }
       raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
+
+    // A settle of zero is the old behaviour exactly — armed on the press, with
+    // no timer in between — so a control that has no drag under it pays
+    // nothing for this seam existing.
+    if (settle0 > 0) settleTimer = setTimeout(armNow, settle0);
+    else armNow();
 
     track({
       onMove: (mv) => {
+        // DURING THE SETTLE, MOVEMENT MEANS DRAG, AND A DRAG IS NOT AN ABORT.
+        // The press never became a hold, so there is no fill to cancel and no
+        // `onHoldEnd` owed to anyone. Cancelling the timer is the whole of it;
+        // the surface underneath keeps the pointer and drags as it always did.
+        if (settleTimer) {
+          if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SETTLE_SLOP) {
+            clearTimeout(settleTimer);
+            settleTimer = 0;
+          }
+          return;
+        }
         if (!armed) return;
         if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) {
           movedThisPress = origin.source === 'pointer';
@@ -394,6 +447,17 @@ export function armHold(btn, {
         // so the moved state must not outlive this press: the next activation
         // by key or pad would otherwise be swallowed as that press's click.
         if (info && info.cancelled) movedThisPress = false;
+        // RELEASED INSIDE THE SETTLE IS A TAP, AND THE TIMER MUST DIE WITH IT.
+        // Left running it would dress and fill a control a second after the
+        // finger had gone, then commit against nobody. The tap itself still
+        // reaches its authored meaning through the trailing click, exactly as
+        // an early release always has.
+        if (settleTimer) {
+          clearTimeout(settleTimer);
+          settleTimer = 0;
+          if (tapOnEarlyRelease && onTap && origin.source !== 'pointer') onTap(ev);
+          return true;
+        }
         if (armed) {
           stop('idle');
           // Pointer taps finish through the browser's trailing click so the

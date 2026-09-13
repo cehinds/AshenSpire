@@ -7,6 +7,9 @@ import { READINESS_POSE_ART } from '../content/readinessPoseArt.js';
 
 import { assetUrl } from './assetmap.js';
 import { reducedMotionRequested } from './motion.js';
+import { hintImage } from './imageHints.js';
+import { preloadPoses } from './services/posePreloads.js';
+import { liteRendering } from './performance.js';
 
 export function paintedPortraitUrl(classId, armourId = 'default') {
   const art = paintedOutfit(classId, armourId);
@@ -16,7 +19,7 @@ export function paintedPortraitUrl(classId, armourId = 'default') {
 export function paintedPresentation(classId, armourId = 'default', pose = 'stand') {
   const art = paintedOutfit(classId, armourId);
   if (!art || !art.menu[pose]) return null;
-  const img = document.createElement('img');
+  const img = hintImage(document.createElement('img'));
   img.src = assetUrl(art.menu[pose]);
   img.alt = `${classId} ${armourId || 'default'}`;
   img.className = 'painted-presentation';
@@ -26,6 +29,11 @@ export function paintedPresentation(classId, armourId = 'default', pose = 'stand
 
 // The reviewed frames share a 640px canvas, center 320 and floor 600.
 // Fit the tallest resting body to the stage; every action keeps that scale.
+// Frame warm-up happens once per stage for the life of the page, through the
+// bounded pose-preload cache shared with PoseAnimator (posePreloads.js). The
+// stage is rebuilt on every combat render, and each rebuild used to allocate
+// a fresh Image per outfit frame — nineteen per render for a painted class.
+
 export function createPaintedStage(classId, armourId = 'default', { still = false } = {}) {
   if (still) {
     const presentation = paintedPresentation(classId, armourId);
@@ -67,7 +75,7 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   layer.className = 'pose-layer';
   layer.style.cssText = `height:${640 / height * 100}%;aspect-ratio:1;top:${100 - 600 / height * 100}%;transform:translateX(-50%);`;
   layer.style.isolation = 'isolate';
-  const img = document.createElement('img');
+  const img = hintImage(document.createElement('img'));
   img.className = 'pose-frame';
   img.alt = classId;
   img.style.cssText = 'inset:0;width:100%;height:100%;';
@@ -79,12 +87,12 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
   aura.innerHTML = '<svg viewBox="0 0 120 140"><g class="pose-diamond"><path d="M60 8 78 28 60 48 42 28Z"/><path d="M60 18 68 28 60 38 52 28Z"/></g><g class="pose-constellation"><path d="m25 38 30-23 30 20 16 33-40-11-34 27 7-46"/><circle cx="25" cy="38" r="3"/><circle cx="55" cy="15" r="4"/><circle cx="85" cy="35" r="3"/><circle cx="101" cy="68" r="3"/><circle cx="61" cy="57" r="4"/><circle cx="27" cy="84" r="3"/></g><g class="pose-halo"><circle cx="60" cy="38" r="30" stroke-dasharray="35 11 20 12"/><circle class="pose-halo-gold" cx="60" cy="38" r="36" stroke-dasharray="24 18 42 30"/></g><ellipse class="pose-floor" cx="60" cy="128" rx="42" ry="8"/></svg>';
   el.appendChild(aura);
   const downArt = DEFEATED_ART[el.dataset.poseClass] || DEFEATED_ART[classId];
-  const down = document.createElement('img');
+  const down = hintImage(document.createElement('img'));
   down.className = 'defeated-frame'; down.alt = '';
   down.style.cssText = `position:absolute;left:50%;bottom:0;height:${100 * (downArt?.scale || 1)}%;width:auto;max-width:none;transform:translate(-50%,5.208333%);visibility:hidden;pointer-events:none;`;
   if (downArt) down.src = assetUrl(downArt.file);
   el.appendChild(down);
-  const warmed = Object.values(frames).map(frame => { const image = new Image(); image.src = assetUrl(frame.file); return image; });
+  preloadPoses(`painted:${classId}:${armourId}`, Object.values(frames).map(frame => assetUrl(frame.file)));
   const previous = img.cloneNode();
   previous.alt = ''; previous.setAttribute('aria-hidden', 'true');
   previous.classList.add('pose-previous'); previous.style.opacity = '0'; previous.style.display = 'none';
@@ -188,11 +196,11 @@ export function createPaintedStage(classId, armourId = 'default', { still = fals
     if (!reactionTimer) next();
   };
   settle();
-  return Object.freeze({ el, poses: ['defeated', ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, warmed, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
+  return Object.freeze({ el, poses: ['defeated', ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
     play(pose, ms = 260, aura = []) {
       if (pose === 'defeated') { setRestPose('defeated'); return true; }
       if (resting === 'defeated') return false;
-      if (reducedMotionRequested()) { settle(); return false; }
+      if (reducedMotionRequested() || liteRendering()) { settle(); return false; }
       const sequence = sequenceFor(/^attack[1-4]$/.test(pose) ? 'attack' : pose);
       if (!sequence.length) return false;
       clear();

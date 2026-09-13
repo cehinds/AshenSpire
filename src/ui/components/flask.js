@@ -1,6 +1,7 @@
 import { renderCollectibleInspection } from './collectibleCard.js';
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
+import { imageHintAttrs } from '../imageHints.js';
 import { openModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement, matchAction, actionLabel } from '../input.js';
@@ -21,7 +22,7 @@ export function closeFlaskActionMenu({ cancelled = true, restoreFocus = false } 
 /** One data-owned identity fragment; every surface may add its own surrounding copy. */
 export function flaskIdentityHtml(def, { showName = true, className = '' } = {}) {
   const art = def.artAsset
-    ? `<img class="flask-art-image" src="${esc(assetUrl(def.artAsset))}" alt="">`
+    ? `<img class="flask-art-image"${imageHintAttrs()} src="${esc(assetUrl(def.artAsset))}" alt="">`
     : `<span class="flask-art-glyph">${esc(def.icon)}</span>`;
   return `<span class="flask-identity ${esc(className)}" data-flask-art="${esc(def.artKey)}" style="--flask-tint:${esc(def.tint)}" aria-label="${esc(def.name)}">`
     + `<span class="flask-art" aria-hidden="true">${art}</span>`

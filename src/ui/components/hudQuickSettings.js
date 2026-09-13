@@ -157,7 +157,7 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   // Fullscreen exit notifications are inconsistent in embedded and mobile
   // browser shells. A cheap state read keeps the control truthful even when
   // the platform drops that event; this interval owns no simulation state.
-  const fullscreenStatePoll = setInterval(() => syncFullscreen(stack), 750);
+  const fullscreenStatePoll = setInterval(() => syncFullscreen(stack), 2000);
 
   const detachObserver = new MutationObserver(() => {
     if (!stack.isConnected) release();

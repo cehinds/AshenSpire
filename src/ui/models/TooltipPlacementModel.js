@@ -1,5 +1,6 @@
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { balance } from '../../content/balance.js';
 
 const finite = (value, fallback) => Number.isFinite(value) ? value : fallback;
 const clampPct = (value, fallback) => Math.max(0, Math.min(50, finite(value, fallback)));
@@ -11,7 +12,7 @@ export function tooltipPlacementModel(presentation = {}) {
   return componentModel(UI.tooltip, {
     variant: 'edge-aware',
     tokens: {
-      hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, 500)),
+      hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, balance.ui.tooltipPlacement.hoverDelayMs)),
       autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, 5000)),
       topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
       sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),

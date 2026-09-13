@@ -16,6 +16,7 @@ import {
   beatArmer as adoptedBeatArmer,
   holdMs as adoptedHoldMs,
   HOLD_POINTER_SLOP as ADOPTED_HOLD_POINTER_SLOP,
+  HOLD_DRAG_SETTLE_MS as ADOPTED_HOLD_DRAG_SETTLE_MS,
 } from '../ui/components/holdconfirm.js';
 
 export const armOptionDecision = adoptedArmOptionDecision;
@@ -30,3 +31,5 @@ export const armInspect = adoptedArmInspect;
 export const beatArmer = adoptedBeatArmer;
 export const holdMs = adoptedHoldMs;
 export const HOLD_POINTER_SLOP = ADOPTED_HOLD_POINTER_SLOP;
+/** The authored settle a drag-bearing surface passes as `settleMs`. */
+export const HOLD_DRAG_SETTLE_MS = ADOPTED_HOLD_DRAG_SETTLE_MS;

@@ -27,13 +27,12 @@ async function check(page) {
     const field = document.querySelector('.field').getBoundingClientRect();
     const backdrop = document.querySelector('.environment-backdrop');
     const art = backdrop.getBoundingClientRect();
-    const floorSvg = backdrop.querySelector('.environment-floor');
-    const box = floorSvg.viewBox.baseVal, matrix = floorSvg.getScreenCTM();
-    // SVG getBoundingClientRect includes its unclipped atlas image. Project
-    // the actual viewport's corners instead of measuring that hidden overflow.
-    const top = new DOMPoint(box.x, box.y).matrixTransform(matrix).y;
-    const bottom = new DOMPoint(box.x, box.y + box.height).matrixTransform(matrix).y;
-    const floor = { top, bottom, height: bottom - top };
+    const plate = backdrop.querySelector('svg');
+    const box = plate.viewBox.baseVal, matrix = plate.getScreenCTM();
+    const corner = new DOMPoint(box.x, box.y).matrixTransform(matrix);
+    const opposite = new DOMPoint(box.x + box.width, box.y + box.height).matrixTransform(matrix);
+    const proportional = Math.abs(matrix.a - matrix.d) < .00001 && matrix.b === 0 && matrix.c === 0;
+    const covers = corner.x <= art.left && corner.y <= art.top && opposite.x >= art.right && opposite.y >= art.bottom;
     const sprites = [...document.querySelectorAll('.combatant .sprite')];
     const feet = sprites.filter(s => s.closest('.combatant').dataset.formationRow === '0').map(s => s.getBoundingClientRect().bottom);
     const images = [...document.querySelectorAll('.enemy-pose-idle,.painted-stage .pose-frame')].filter(i => getComputedStyle(i).display !== 'none' && i.closest('.combatant').dataset.formationRow === '0');
@@ -41,16 +40,12 @@ async function check(page) {
       const r = i.getBoundingClientRect();
       return r.top + r.height * (i.classList.contains('enemy-pose-idle') ? 364 / 384 : 600 / 640);
     });
-    const groundFront = backdrop.querySelector('.environment-ground-front');
-    const groundBox = groundFront.viewBox.baseVal;
-    const paintedGroundY = new DOMPoint(groundBox.x, groundBox.y).matrixTransform(groundFront.getScreenCTM()).y;
     return {
       scene: backdrop.dataset.scene, viewport: `${innerWidth}x${innerHeight}`,
-      floorRatio: floor.height / art.height,
+      proportional, covers,
       feetSpread: Math.max(...feet) - Math.min(...feet),
       anchorSpread: Math.max(...anchors) - Math.min(...anchors),
-      paintedGroundError: Math.max(...feet.map(y => Math.abs(y - paintedGroundY))),
-      feetOnGround: feet.every(y => y >= floor.top && y <= floor.bottom),
+      feetOnGround: feet.every(y => y >= field.top && y <= field.bottom),
       topClear: sprites.every(s => s.getBoundingClientRect().top >= field.top - 1),
       metersClear: [...document.querySelectorAll('.combatant .meters')].every(m => m.getBoundingClientRect().bottom <= field.bottom + 1),
       outlined: images.every(i => getComputedStyle(i).filter.includes('drop-shadow')),
@@ -59,7 +54,7 @@ async function check(page) {
       embedded: [...backdrop.querySelectorAll('image')].every(i => i.getAttribute('href').startsWith('data:')),
     };
   });
-  if (Math.abs(result.floorRatio - .6) > .002 || result.feetSpread > 1 || result.anchorSpread > 2 || result.paintedGroundError > 1 ||
+  if (!result.proportional || !result.covers || result.feetSpread > 1 || result.anchorSpread > 2 ||
     !result.feetOnGround || !result.topClear || !result.metersClear || !result.outlined || !result.artFits || !result.noHorizontalOverflow ||
     (base.includes('AshenSpire.html') && !result.embedded)) throw Error(JSON.stringify(result));
   results.push(result);

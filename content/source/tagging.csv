@@ -1111,3 +1111,11 @@ armament,,gorefireBrand,damage:arcane
 armament,,wyrmhornStaff,source:spell
 armament,,wyrmhornStaff,delivery:projectile
 armament,,wyrmhornStaff,damage:arcane
+
+card,,shieldGuardian,guard
+card,,guardianBulwark,guard
+card,,shieldBastion,guard
+card,,spikedReprisal,guard
+card,,spikedReprisal,fx:shield
+card,,spikedReprisal,source:weapon
+card,,spikedReprisal,delivery:melee

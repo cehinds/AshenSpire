@@ -449,7 +449,7 @@ if (process.argv.includes('--selftest')) {
       // the defect this plant exists to make impossible.
       name: 'the run dies in the harness before any check — the boundary must still print',
       file: 'src/ui/components/hand.js',
-      find: '      handEl.appendChild(el);',
+      find: '      handEl.insertBefore(el, handEl.children[i] || null);',
       replace: '      /* planted: the hand draws no card, so the run dies in the harness */',
       expectRed: /BOUNDARY: Linux headless Chromium/,
     }, {

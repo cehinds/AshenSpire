@@ -7,12 +7,15 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { mountFlickPractice } from '../components/flickPractice.js';
+import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
+import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
+import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
 import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
 import {
@@ -79,15 +82,22 @@ function graceRefillRows() {
 }
 
 const ROWS = [
+  ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
-  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
-    choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
-    note: 'How deliberately actions play out — one actor at a time, or instant.' },
+  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'auto',
+    choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
+    note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },
+  { cat: 'Display', key: 'performanceMode', type: 'choice', def: 'auto',
+    choices: ['auto', 'full', 'lite'], label: 'Rendering quality',
+    note: 'Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.' },
+  { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
+    choices: Object.keys(TITLE_ENTRANCE_TIMING.holdDurations), label: 'Lit city pause',
+    note: 'Pause with the city fully lit before fading to the menu. Reduced motion skips this pause.' },
   // `choices` and `def` are DERIVED. The four numbers here used to be typed, and
   // they were a second copy of the zoom ladder that had already drifted: the
   // ladder has six steps and this row offered four of them, so 175% and 200%
@@ -156,6 +166,16 @@ const ROWS = [
   // data-driven instruction for an unsettled 'maybe' asks.
   { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
     note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
+  // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
+  // equipment head carried an "Auto-advance on valid choice" toggle beside
+  // the List/Grid control — a preference standing in the middle of a decision
+  // (review, 2026-09-11). It lives here with the other Gameplay preferences;
+  // the screen reads it the way it reads every other display setting. OFF
+  // matches the shipped creation layout (content/source/characterCreation.json
+  // `equipmentAutoAdvance`), which stays the screen's fallback when no
+  // settings bag reaches it.
+  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
+    note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
   { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
@@ -1210,7 +1230,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null }) {
   let html = '';
   let cats = [];
   let current = null;
@@ -1259,6 +1279,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // releases listeners even while the shared container remains on the page.
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
+  if (onOffline) {
+    const offline = button({ label: offlinePlay.title, id: 'settings-download' });
+    offline.addEventListener('click', onOffline);
+    container.prepend(offline);
+  }
 
   const syncFullscreen = (message = '') => {
     const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
@@ -1382,7 +1407,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // finger that changed it. Read where the pressed chip is BEFORE the change
       // lands, so the anchor below has something to aim at.
       const wasAt = btn.getBoundingClientRect().top;
-      btn.parentElement.querySelectorAll('.choice').forEach((b) => b.classList.toggle('on', b === btn));
+      btn.parentElement.querySelectorAll('.choice').forEach((b) => {
+        b.classList.toggle('on', b === btn);
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
       // AFTER onChange, which is what applies the zoom. Reading before it would
@@ -1541,11 +1569,13 @@ export function showSettingsNotice(msg) {
   el.textContent = msg;
 }
 
-export function openSettings({ meta, onChange, saves = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
   const done = button({ label: 'Done', weight: 'primary', id: 'set-close' });
+  const offline = onOffline ? button({ label: offlinePlay.title, id: 'settings-download' }) : null;
+  offline?.addEventListener('click', onOffline);
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
@@ -1555,6 +1585,7 @@ export function openSettings({ meta, onChange, saves = null }) {
     closeLabel: 'Close Settings',
     bodyClassName: 'set-body',
     body: (host) => renderSettings(host, { settings, onChange, saves }),
+    secondary: offline ? [offline] : [],
     primary: done,
     footSize: 'short',
   });

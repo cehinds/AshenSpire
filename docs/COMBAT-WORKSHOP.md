@@ -6,9 +6,19 @@ This is the first executable slice of [spec PR #844](https://github.com/cehinds/
 
 ### Game test build
 
-Open `AshenSpire.html?shot=combat-test` on the preview server, or use `index.html?shot=combat-test` for source development. Select a build, an individual encounter or the three-fight route, enemy strength, and a seed. This uses the shipped battlefield, hand, target confirmation, animation, and resource HUD. The route carries health, stamina, and mana to the next fight; it offers no automatic refill. The Armoury/menu receipt shows the controlled equipment profile and offers a return to build selection. Equipment swaps are disabled for this fixed-profile experiment, including keyboard and quick-menu routes.
+Open `AshenSpire.html?shot=combat-test` on the preview server, or use `index.html?shot=combat-test` for source development. Select a build, an individual encounter or the three-fight route, enemy strength, and a seed. The equipment controls let you compare armor, legal grip, and a Blood Rune before starting. The live receipt shows requirements, load, armor, Dodge cost, source impact, contact buildup, and rune-inclusive weapon value. This uses the shipped battlefield, hand, target confirmation, animation, and resource HUD. The route carries health, stamina, and mana to the next fight; it offers no automatic refill. Equipment remains locked for a route, including keyboard and quick-menu routes; Armoury shows the exact equipment receipt and offers a return to build selection.
 
-Dodge's card description and Evade indicator reflect the new deterministic rule. Measured Guard and Astral Focus use existing guard art with persistent blue and violet auras. Enemies reuse the game's authored sprites. This is a combat test mode, not a complete new campaign: rune loot, affinities, new stance artwork, item-derived defenses, and expanded reward decks remain pending. The `shot` storage seam keeps all profile/run writes in memory.
+Dodge's card description and Evade indicator reflect the new deterministic rule. Measured Guard and Astral Focus use existing guard art with persistent blue and violet auras. Enemies reuse the game's authored sprites. This is a combat test mode, not a complete new campaign: rune loot, affinities, new stance artwork, production equipment migration, and expanded reward decks remain pending. The `shot` storage seam keeps all profile/run writes in memory.
+
+### Equipment experiment (#934)
+
+`src/content/prototypes/combatEquipment.js` owns the experiment's explicit armor weights/ratings, load bands, allowed grips, native hand counts, quality/socket capacities, and Blood Rune. Weapon weights, attack identity, and attribute requirements come from the current catalog. Every preset uses Fine equipment at the same progression tier; no reinforcement bonuses are added. Armor choices are test items using existing class visuals, not newly authored production drops. HP, stamina and mana caps remain controlled build values.
+
+`deriveEquipmentCombatProfile` validates instance identity, hand occupancy, requirements, grip compatibility, rune compatibility, sockets, tags and buildup before returning a detached profile. One-handing the greatsword requires 18 Strength (ceil(12 × 1.5)); two-handing requires 12. Other requirements are unchanged. Weapons can prohibit one-handed use. Empty hands produce no weapon source and the existing resolver uses unarmed fallback. This does not add another character-creation flow.
+
+Only worn items contribute weight, defense or attack sources. Defense changes do not alter armor weight. A socketed Blood Rune adds its configured contact buildup and theme only to attacks using that item; it adds its value once. Removing it and deriving a new profile removes those grants and value. The combat adapter freezes the profile before payment and existing saves retain that resolved snapshot. No mid-route gear mutation, inventory purchase/install/remove transaction, rune drops, smithing, or ordinary-run save migration is enabled here. Displayed item values are experiment receipts, not a new shop economy.
+
+Try the greatsword with no armor and one-handed grip to compare light Dodge against Plate; remove the dagger rune to isolate technique Bleed from weapon Bleed; try the rune on a staff to see compatibility refusal. Configuration changes are validated before a fight begins.
 
 Run `node tools/combat-test-browser.mjs` after rebuilding. It checks all three builds at desktop and phone sizes through real pointer/touch controls, including Dodge, stance auras, storage isolation, and route carryover. The continuation check uses an explicitly weakened enemy to reach the victory screen; it is a UI/state test, not a balance measurement.
 
@@ -42,7 +52,7 @@ Run `node tools/combat-prototypes.mjs --seeds=100` for standard pressure and add
 
 ## Content-expansion gate remains open
 
-These measurements are provisional. They use equal 80 HP and equal attribute budgets, but authored armor/load classes and resource caps rather than final item-derived statistics. There is no current-dev equipment/deck baseline comparison yet. The policy also does not plan mana conservation across an entire route. Neither the standard-pressure wins nor the stress losses establish full-run balance.
+The published measurements predate the equipment experiment and are provisional. They used equal 80 HP and equal attribute budgets, but authored armor/load classes and resource caps. The current default item projections preserve those defense/load values, but this is not a new balance measurement. There is no current-dev equipment/deck baseline comparison yet. The policy also does not plan mana conservation across an entire route. Neither the standard-pressure wins nor the stress losses establish full-run balance.
 
 Before enabling the revision in ordinary runs, complete item-derived build profiles, the legacy comparison, source-specific multi-weapon participation, player-poise consequences, condition/trait authoring, run/save migration, and production HUD integration. Then rerun the gate with resource and encounter pacing tuned against those complete builds.
 

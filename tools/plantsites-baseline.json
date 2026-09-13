@@ -134,7 +134,7 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "d647785d7e8374b1"
+      "digest": "2cae8cf11c778d97"
     },
     "tools/class-loadouts.mjs": {
       "count": 4,
@@ -186,7 +186,7 @@
     },
     "tools/flaskbox.mjs": {
       "count": 6,
-      "digest": "be113152db0960cf"
+      "digest": "601fc9365791d717"
     },
     "tools/fullscreen-control.mjs": {
       "count": 5,
@@ -218,7 +218,7 @@
     },
     "tools/hudparity.mjs": {
       "count": 18,
-      "digest": "ed51eea7692ad338"
+      "digest": "39c6558a1814857d"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
@@ -298,7 +298,7 @@
     },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "9abfde2c2b0b2048"
+      "digest": "a3803ac419d0b8b8"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
@@ -331,6 +331,10 @@
     "tools/tutorial-reach.mjs": {
       "count": 1,
       "digest": "8ecba2d09176de17"
+    },
+    "tools/ui-sweep.mjs": {
+      "count": 3,
+      "digest": "d53972e2e2f71feb"
     },
     "tools/uprightgate.mjs": {
       "count": 14,

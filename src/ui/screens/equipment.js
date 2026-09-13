@@ -30,7 +30,7 @@ import {
   renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise, renderPlayerLoad, renderRoleCopies,
 } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip, hideTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
-import { armHold, holdMs, HOLD_POINTER_SLOP } from '../../framework/optionDecision.js';
+import { armHold, holdMs, HOLD_POINTER_SLOP, HOLD_DRAG_SETTLE_MS } from '../../framework/optionDecision.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure, spritesAreEnabled } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
@@ -591,6 +591,9 @@ function inventoryReveal(registries, row, {
     const disarm = armHold(el, {
       ms: holdDuration,
       id: 'equipInventory',
+      // The whole card is the control and it lives in a list that scrolls
+      // under the thumb; a scroll must not paint a hold on the way past.
+      settleMs: HOLD_DRAG_SETTLE_MS,
       onConfirm: onClassAction,
       onHoldStart: startComparisonPreview,
       onHoldEnd: endComparisonPreview,
@@ -1318,6 +1321,8 @@ export function mountEquipment(host, {
           const disarm = armHold(button, {
             ms: holdDuration,
             id: 'equipInventory',
+            // Same card, same scrolling list — see the whole-card hold above.
+            settleMs: HOLD_DRAG_SETTLE_MS,
             onConfirm: act,
             onTap: () => {
               // The hold controller consumes its trailing click; reveal the

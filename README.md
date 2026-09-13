@@ -22,6 +22,7 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 - **Addresses:** `…/<branch>/<ordinal>/` is that exact build, byte-identical to the `AshenSpire.html` of the commit that produced it. `…/<branch>/latest/` is the branch's newest. Each index entry links the `CHANGELOG.md` at that build's commit.
 - **Publication:** pushes to `dev`, `test` and `release` publish themselves. A push to **`main` publishes nothing** — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
 - The site is assembled from git history by `node tools/pages-site.mjs`; nothing on it is hand-edited.
+- **Weight:** one self-contained file, art and all, at **~58 MB** on the `0.6.0` line — down from 93 MB before the sprite sheets were re-encoded as WebP (#908). It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting.
 
 ### Offline
 

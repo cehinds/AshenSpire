@@ -20,6 +20,7 @@ import { renderEquipmentCard, renderEquipmentInspection } from '../components/eq
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { settingOn } from './settings.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
@@ -46,7 +47,7 @@ function sellPriceFor(balance, kind, def) {
   return Math.floor(shop.flaskCost[0] * fraction);
 }
 
-export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {} }) {
+export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {}, hud = null }) {
   const stock = run.shopStock;
   // BUYING AND BURNING ARE NOT THE SAME ACTION and the table says why: a
   // purchase spends cinders, which the run refills (`shopBuy`: tempo, faucet —
@@ -82,11 +83,17 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
   function render() {
     if (fold && fold.openKey) openBar = fold.openKey;
+    // THE PURSE IS THE BAND'S. This screen used to print its own "Cinders N ·
+    // HP" line here as a `.as-status`, and the kit's ellipsis rule (overflow:
+    // hidden) let the overflowing column crush it to 0 px — measured at both
+    // widths on 2026-09-11: the player bought blind. The band the map draws
+    // (components/runHud.js) carries cinders, HP and the act, and it cannot be
+    // crushed because it is not a flex child of this column.
     app.innerHTML = `
-      <div class="screen" style="justify-content:flex-start;overflow-y:auto;gap:14px;padding-top:28px">
+      ${hud ? runHudHtml({ registries, run, meta, place: 'shop', headerClass: 'map-header room-header' }) : ''}
+      <div class="screen room-screen" style="overflow-y:auto;gap:14px">
         <h2>The Wandering Merchant</h2>
         <p class="subtitle">"I've climbed higher than you. I came back. Draw your own conclusions."</p>
-        <p class="as-status" style="text-align:center">Cinders <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
         <div class="shop-bars cz-disc">
           <div class="reward-row" id="shop-cards"></div>
           <div class="reward-row" id="shop-armaments"></div>
@@ -106,6 +113,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         </div>
         <button id="leave-shop" class="primary">Leave</button>
       </div>`;
+
+    if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
 
     const cardsRow = app.querySelector('#shop-cards');
     stock.cards.forEach((item, i) => {

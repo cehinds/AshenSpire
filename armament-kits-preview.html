@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Armament combat kits · Ashen Spire</title>
+<link rel="stylesheet" href="styles/base.css"><link rel="stylesheet" href="styles/ui.css"><link rel="stylesheet" href="styles/kit.css">
+<style>
+body{margin:0;background:#17130e;color:#eee0bf;font-family:Georgia,serif}main{max-width:1200px;margin:auto;padding:20px}h1{font-size:24px;margin:0 0 8px}p{line-height:1.5}form{display:flex;gap:12px;flex-wrap:wrap;align-items:end}label{display:grid;gap:6px;flex:1;min-width:160px}select,button{font:inherit;padding:10px;background:#30271b;color:#f2d881;border:1px solid #ad8b3b;border-radius:5px}button{cursor:pointer}#kits{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}.kit{border:1px solid #695531;border-radius:8px;padding:14px;min-width:0}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.entry{min-width:0}.entry>.card{width:100%;height:auto;aspect-ratio:5/7}.entry>p{font:13px system-ui;margin:0 0 7px;color:#d9bc72}h2{font-size:19px;margin:0 0 14px}iframe{width:100%;height:900px;border:1px solid #695531;border-radius:8px;background:#17130e}#message{font:14px system-ui;color:#e8cd87}a{color:#e8cd87}@media(max-width:800px){#kits{grid-template-columns:1fr}main{padding:12px}iframe{height:850px}}@media(max-width:430px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head><body><main>
+<h1>Armament combat kits</h1><p>Every armament brings a Strike, a Guard, and an Art. Choose a loadout to inspect its cards, then try it in a fresh fight.</p>
+<form id="controls"><label>Class<select id="class"></select></label><label>Main hand<select id="right"></select></label><label>Off hand<select id="left"></select></label><button>Start fresh fight</button></form>
+<p id="message" role="status"></p><div id="kits"></div>
+<p>This disposable sandbox unlocks every armament and puts the equipped kits in your opening hand. Cards keep their normal costs and effects. Ordinary saves are untouched. Select a card, then use its play action and target.</p>
+<p><a id="full" target="_blank" rel="noopener">Open fight in a full window</a> · <a href="equipment-selection-preview.html">Character creation</a> · <a href="AshenSpire.html">Start the game</a></p>
+<iframe title="Playable armament kit fight" id="fight"></iframe>
+</main><script type="module">
+import {contentBundle} from './src/content/index.js';
+import {createRegistries} from './src/model/registries.js';
+import {createRunState} from './src/model/state.js';
+import {configureArmamentKitPreview} from './src/dev/armamentKitPreview.js';
+import {renderCard} from './src/ui/components/card.js';
+const r=createRegistries(contentBundle), $=id=>document.getElementById(id);
+for(const cls of r.classes.all()) $('class').add(new Option(cls.name,cls.id));
+for(const id of ['right','left']) {$(id).add(new Option('Empty Hand',''));for(const p of r.equipment.armaments) $(id).add(new Option(p.name,p.id));}
+const params=new URLSearchParams(location.search);
+$('class').value=params.get('class')||'reaver';$('right').value=params.get('right')??'straightSword';$('left').value=params.get('left')??'roundShield';
+function show(event){
+ event?.preventDefault();
+ try{
+ const run=configureArmamentKitPreview(r,createRunState({seed:896,classId:$('class').value,registries:r}),$('right').value,$('left').value);
+ $('kits').replaceChildren();
+ for(const [slot,label] of [['right','Main hand'],['left','Off hand']]){
+  const id=$(slot).value, piece=r.equipment.armaments.find(p=>p.id===id), section=document.createElement('section');section.className='kit';section.dataset.item=id;
+  const title=document.createElement('h2');title.textContent=`${label} · ${piece?.name||'Empty Hand'}`;section.append(title);
+  const grid=document.createElement('div');grid.className='cards';
+  const refs=run.deck.filter(c=>id?c.grantedBy===id:c.grantedBy===`unarmed:${slot}`).sort((a,b)=>({attack:0,guard:1}[a.kitRole]??2)-({attack:0,guard:1}[b.kitRole]??2));
+  for(const ref of refs){const entry=document.createElement('div');entry.className='entry';const label=document.createElement('p');label.textContent=ref.kitRole==='attack'?'Strike':ref.kitRole==='guard'?'Guard':'Armament Art';entry.append(label,renderCard(r,ref));grid.append(entry);}
+  if(!refs.length){const note=document.createElement('p');note.textContent='No item-owned kit. Your unarmed basics come from the starter deck.';grid.append(note);}
+  section.append(grid);$('kits').append(section);
+ }
+ const q=new URLSearchParams({shot:'combat',shotKit:'1',shotClass:run.class,shotMainHand:$('right').value,shotOffHand:$('left').value});
+ const url=`AshenSpire.html?${q}`;$('fight').src=url;$('full').href=url;
+ $('message').textContent=`${run.deck.length} starting cards · ${run.deck.filter(c=>c.grantedBy).length} item-owned contributions · restart to try another loadout.`;
+ history.replaceState(null,'',`?${new URLSearchParams({class:run.class,right:$('right').value,left:$('left').value})}`);
+ }catch(error){$('message').textContent=error.message;}
+}
+$('controls').addEventListener('submit',show);show();
+</script></body></html>

@@ -9,6 +9,11 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
+`node tools/launch.mjs --build-only` produces the standalone aliases and an
+external-art web edition in `build/web/`. Serve the whole web directory for
+mobile testing. Rendering-quality behavior and performance checks are described
+in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
+
 The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
 Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
@@ -73,7 +78,10 @@ mounting and save round-trip coverage. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
-separate pile tabs. `node tools/screenreach.mjs --only 390x650` checks reachable
+separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
+room at a desk and a phone width and asserts the facts the 2026-09-11 review's
+fixes stand on (the run band on every room, wrapped event choices, the phone
+action row, the map camera under reduced motion). `node tools/screenreach.mjs --only 390x650` checks reachable
 controls across screens. Potion selection uses the shared flask action plan;
 only explicit Use may spend a charge. The map Quick Access faces retain real
 44px target boxes to prevent neighboring invisible hit regions overlapping.
@@ -85,7 +93,18 @@ npx serve .            # then http://localhost:3000
 # tests (22 assertions, SPEC §8)
 node tests/run-node.mjs        # CI-style, exits 1 on failure
 # or open tests/index.html in a browser — same suite, green/red list
+
+# what raises the red failure banner, and what must not
+node --test tests/debug-banner.test.mjs
 ```
+
+The failure banner (`src/ui/debuglog.js`) is the game's one claim that a control
+died, so it must never make that claim about a working screen. `window.onerror`
+also carries browser *notifications* — `ResizeObserver loop completed with
+undelivered notifications` is the one a player met, arriving with no filename and
+no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
+and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
+`tests/debug-banner.test.mjs` holds both edges.
 
 ## The CI door: a tool's silence is not its success (#12)
 
@@ -603,3 +622,5 @@ not locate your Chromium browser. `--shots` is optional for test-only runs.
 Combat cards select before committing. A selected card retains its fan position and reveals above its siblings. Confirm using the shared hold duration/progress, a double-tap after selection, or a valid target tap/drop. A single extra tap does not play. Empty-field taps and Escape cancel; invalid/cancelled drags spend nothing. Test both a self skill and an enemy attack, including switching selection, at 320x568, 375x667 and desktop sizes.
 
 Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
+
+Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.

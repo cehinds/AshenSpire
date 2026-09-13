@@ -161,10 +161,39 @@ export function failureBanner(key, title, body) {
 // `ev.message` is the filter, deliberately: an <img> that 404s is not a script
 // error and must not raise this. Measured — a resource 404 was present in both
 // the red and the green run and raised nothing.
+//
+// AND A NOTIFICATION IS NOT A FAILURE EITHER — the other half of the same
+// filter, and the one a player actually met. `ResizeObserver loop completed
+// with undelivered notifications` is not an exception: it is the browser
+// saying it spent its frame budget delivering resize callbacks and will
+// deliver the rest on the next frame. Layout settles, nothing threw, nothing
+// was dropped, and the control the player pressed DID work. The spec routes
+// it to `window.onerror` anyway, so this listener raised the red block — and
+// the banner's own body sentence, "What you last pressed did not", was a
+// false statement about a screen that was working.
+//
+// It arrives with no filename and no line, which is the `at :0` a player sees
+// and the reason it cannot be traced to a file even if you wanted to: there
+// is no throw site, because there was no throw.
+//
+// IT STAYS IN THE LOG. A burst of these is a real smell about layout churn
+// and an instrument should be able to read it — so it is recorded as NOTICE
+// and raises nothing. Anchored, not a substring search: a genuine failure
+// that merely NAMES ResizeObserver ("Failed to construct 'ResizeObserver'")
+// is a script error and must still raise the banner.
+const RESIZE_OBSERVER_NOTICE =
+  /^(?:Uncaught\s+)?ResizeObserver loop (?:completed with undelivered notifications|limit exceeded)\.?$/;
+
+/** True for browser notifications routed to `error` that are not failures. */
+export function isBenignPageNotice(message) {
+  return RESIZE_OBSERVER_NOTICE.test(String(message ?? '').trim());
+}
+
 if (typeof window !== 'undefined') {
   const where = (ev) => (ev.filename ? ` at ${String(ev.filename).split('/').pop()}:${ev.lineno}` : '');
   window.addEventListener('error', (ev) => {
     if (!ev.message) return;
+    if (isBenignPageNotice(ev.message)) { dlog('NOTICE', String(ev.message)); return; }
     dlog('ERROR', String(ev.message), ev.error && ev.error.stack ? String(ev.error.stack).split('\n').slice(0, 4).join(' | ') : '');
     failureBanner(`uncaught:${ev.message}`, 'SOMETHING JUST STOPPED WORKING',
       `${ev.message}${where(ev)}\nThe game is still running. What you last pressed did not.`);
