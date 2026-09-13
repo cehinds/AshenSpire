@@ -860,6 +860,68 @@ Browser evidence (headless Chrome, `?shot=map`, 1280×800 and 390×844):
 Limits: a keyboard or pad user whose cursor rests on the selected node
 still sees the `.gp-focus` ring beside the glow. It is kept on purpose as
 the focus indication; the owner can ask to drop it.
+## Compendium and Profile workspaces
+
+Branch `feature/wireframe-compendium-profile`, based on dev `d2ea5bcd`. W1f
+and W1g are now the W1 workspace: a header title with its exit, a category
+rail on wide hosts, an active pane in two slots, and one footer action. The
+frame shares (95% × 90% of the visible viewport, a 21.6vw rail held between
+11 and 24 rem, 2vw and 2vh slot gaps) are `wireframeUi.workspace`, written as
+custom properties by `components/w1Workspace.js` and read by one
+`.w1-workspace` block in `kit.css`.
+
+- W1f: `mountCompendium` is a page door titled Compendium, with the held count
+  as its eyebrow. The armament kinds stay on the rail with their counts. The
+  pane holds the entry list beside the selected entry's known facts.
+  `CompendiumModel.entryDetail` withholds the name (unless listed), mods and
+  tags exactly as the tooltip does. A cell click now selects; the tooltips
+  remain.
+- W1g: the Profile door's categories are the two kinds of entry the drawer
+  holds (set-aside profiles, set-aside runs), the only groups `save.js`
+  writes. The current profile's identity sits beside the selected category's
+  records. Export, restore and its confirmation, the status line and the
+  drawer notice are unchanged. `ProfileWorkspaceModel` picks the first
+  non-empty category and says whether the whole drawer or only this category
+  is empty.
+- Compact hosts put the navigation above the pane as one `[Kind ▾]` selector.
+  It opens the same rail as a list under it; rule 11 rules out horizontal tabs
+  and accordions. While the list is open the pane is hidden. Escape closes the
+  list, not the door. The two slots stack.
+- Keys and the pad stay with `input.js`: arrows or the d-pad move the cursor,
+  and Enter or A selects a category. Home and End jump to the ends.
+  Programmatic focus goes through `focusElement`. Rail items keep `role=tab`
+  and `aria-selected`.
+- New copy lives in `uiStrings.csv` (`compendium.*`, `profile.*`).
+  `compendium.js` holds no literal copy now; the uistrings baseline records
+  it as migrated (461 → 456 sites).
+
+Browser evidence (Chrome, CDP emulation, `?shot=compendium` and
+`?shot=profile`):
+- 1440×860: frame 1368×774; rail 282 px; pane slots 500 and 501 px.
+- 1280×800: frame 1216×720; rail 256 px; pane slots 441 px each.
+- 390×844 and 375×667: selector 351 and 337 px wide, 44 px tall; slots
+  stacked at 270 and 194 px each.
+- 844×390 (wide layout): frame 802×351; rail 148 px; slots 298 px each.
+- At every size: no document or screen scroll, every visible target at least
+  44 px, and no duplicate headings. The footer holds one Back spanning the
+  usable width, with the exit in the header corner.
+- Keyboard: arrow then Enter changed the category; Home and End jumped. On
+  compact, Enter opened the list, ArrowDown and Enter picked, and Escape
+  closed only the list.
+- The CDP profile tools do not reach W1g on this machine, on dev `d2ea5bcd`
+  and on this branch alike, so they are no evidence either way.
+  `profile-surface-drive.mjs` and `restore-settings-drive.mjs` stop at a null
+  `.click()` before any profile screen. `profile-first-run.mjs` reports 0/6
+  on both.
+
+Limits: Galaxy S24 (360×780) was not measured. Playwright tools
+(`tooltip-review-qa.mjs`, `screenshot.mjs`) were not run. The kit's global
+narrow rule still lays other screens' rails out as a horizontal strip, which
+rule 11 forbids; that is outside this change. W1g does not bind the
+Overview/History/Discoveries/Progression categories from the gallery example,
+because History and Compendium are separate title routes; this needs an owner
+decision. `?shot=compendium&shotFound=…` shows 0 held on dev and on this
+branch alike.
 
 ## Remaining integration
 

@@ -173,7 +173,7 @@
       "id": "W1f",
       "name": "Compendium",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -188,13 +188,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "mountCompendium is a W1 page door (w1-workspace): title Compendium with the held count as eyebrow and exit; armament kinds on the rail (a [Kind ▾] selector above the pane on compact hosts); the pane splits the entry list from the selected entry's known facts; one Back fills the footer. CompendiumModel projects sections, selection and entryDetail, which withholds name (unless listed), mods and tags exactly as the tooltip does. Frame shares in wireframeUi.workspace. Hooks .cp-cell/.cp-grid/.cp-scroll/#cp-back kept. Galaxy S24 not measured."
     },
     {
       "id": "W1g",
       "name": "Profile",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -209,7 +210,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openProfileArchive is a W1 workspace door: rail categories are the two drawer kinds save.js writes (set-aside profiles, set-aside runs), a [Kind ▾] selector on compact hosts; the pane shows current profile identity beside the selected category's records with their export/restore actions and status; one Back fills the footer. ProfileWorkspaceModel projects categories, counts and empty states. Owner decision open: the gallery example's Overview/History/Discoveries/Progression categories were not bound (those live on other routes). Galaxy S24 not measured."
     },
     {
       "id": "W1h",

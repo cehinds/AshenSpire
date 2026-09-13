@@ -722,5 +722,75 @@ export const uiStrings = [
     "short": "Unknown.",
     "full": "Not revealed yet.",
     "tip": ""
+  },
+  {
+    "id": "compendium.title",
+    "extends": "",
+    "short": "Compendium",
+    "full": "Every armament the Spire keeps.",
+    "tip": ""
+  },
+  {
+    "id": "compendium.eyebrow",
+    "extends": "",
+    "short": "Armaments · {held} of {total} held",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.close",
+    "extends": "",
+    "short": "Close compendium",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.kinds",
+    "extends": "",
+    "short": "Armament kinds",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.unknown",
+    "extends": "",
+    "short": "Unknown {kind}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.categories",
+    "extends": "",
+    "short": "Set-aside kinds",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.category.meta",
+    "extends": "",
+    "short": "Profiles",
+    "full": "Profiles set aside in this device’s drawer.",
+    "tip": ""
+  },
+  {
+    "id": "profile.category.run",
+    "extends": "",
+    "short": "Runs",
+    "full": "Runs set aside in this device’s drawer.",
+    "tip": ""
+  },
+  {
+    "id": "profile.empty.meta",
+    "extends": "",
+    "short": "No profiles have been set aside.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.empty.run",
+    "extends": "",
+    "short": "No runs have been set aside.",
+    "full": "",
+    "tip": ""
   }
 ];
