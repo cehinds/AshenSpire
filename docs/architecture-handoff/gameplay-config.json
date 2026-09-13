@@ -16,8 +16,8 @@
       "context": true,
       "footer": true
     },
-    "playerCount": 4,
-    "enemyCount": 4,
+    "playerCount": 6,
+    "enemyCount": 6,
     "components": [
       "WGS1",
       "WGS2",

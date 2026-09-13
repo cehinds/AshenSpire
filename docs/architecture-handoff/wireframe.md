@@ -10659,8 +10659,8 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": true,
       "footer": true
     },
-    "playerCount": 4,
-    "enemyCount": 4,
+    "playerCount": 6,
+    "enemyCount": 6,
     "components": [
       "WGS1",
       "WGS2",
@@ -10804,8 +10804,8 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": true,
       "footer": true
     },
-    "playerCount": 4,
-    "enemyCount": 4,
+    "playerCount": 6,
+    "enemyCount": 6,
     "components": [
       "WGS1",
       "WGS2",
@@ -11270,8 +11270,8 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": true,
       "footer": true
     },
-    "playerCount": 4,
-    "enemyCount": 4,
+    "playerCount": 6,
+    "enemyCount": 6,
     "components": [
       "WGS1",
       "WGS2",
@@ -11415,8 +11415,8 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": true,
       "footer": true
     },
-    "playerCount": 4,
-    "enemyCount": 4,
+    "playerCount": 6,
+    "enemyCount": 6,
     "components": [
       "WGS1",
       "WGS2",
@@ -23941,17 +23941,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -24339,17 +24339,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -24773,17 +24773,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -25198,17 +25198,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -25619,17 +25619,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -26018,17 +26018,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -26429,17 +26429,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -26827,17 +26827,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -27254,17 +27254,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -27677,17 +27677,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -28087,17 +28087,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -28506,17 +28506,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -28900,17 +28900,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -29306,17 +29306,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -29696,17 +29696,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -30127,17 +30127,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -30517,17 +30517,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -30912,17 +30912,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -31307,17 +31307,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -31697,17 +31697,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -32087,17 +32087,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -32482,17 +32482,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -32909,17 +32909,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -33307,17 +33307,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -33701,17 +33701,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -34108,17 +34108,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -34515,17 +34515,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -34918,17 +34918,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -35321,17 +35321,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -35727,17 +35727,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -36146,17 +36146,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -36565,17 +36565,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -36972,17 +36972,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -37375,17 +37375,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -37774,17 +37774,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -38173,17 +38173,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -38585,17 +38585,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -38980,17 +38980,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -39376,17 +39376,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -39772,17 +39772,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -40168,17 +40168,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -40580,17 +40580,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -43488,17 +43488,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -43902,17 +43902,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -44307,17 +44307,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -44701,17 +44701,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -45107,17 +45107,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -45496,17 +45496,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -45890,17 +45890,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -46284,17 +46284,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -47957,17 +47957,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -48373,17 +48373,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -48773,17 +48773,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -49173,17 +49173,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -49577,17 +49577,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -49972,17 +49972,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -50368,17 +50368,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -50764,17 +50764,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -51160,17 +51160,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -51579,17 +51579,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -51998,17 +51998,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -52405,17 +52405,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -52800,17 +52800,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -53203,17 +53203,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -53598,17 +53598,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -54004,17 +54004,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -54411,17 +54411,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
@@ -54612,8 +54612,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
 
 ```text
 Allies ¬∑ fill left to right         Enemies ¬∑ fill left to right
-[ A1 ] [ A2 ]   gap   [ E1 ] [ E2 ]
-[ A3 ] [ A4 ]   gap   [ E3 ] [ E4 ]
+[ A1 ] [ A2 ]       [ E1 ] [ E2 ]
+  [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
+    [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ‚î¥   ‚î¥   ‚î¥   ‚î¥               ‚î¥   ‚î¥   ‚î¥   ‚î¥
          shadow centers anchor to ground
 ```
@@ -54626,8 +54627,9 @@ Allies ¬∑ fill left to right         Enemies ¬∑ fill left to right
 
 ```text
 Allies ¬∑ fill left to right         Enemies ¬∑ fill left to right
-[ A1 ] [ A2 ]   gap   [ E1 ] [ E2 ]
-[ A3 ] [ A4 ]   gap   [ E3 ] [ E4 ]
+[ A1 ] [ A2 ]       [ E1 ] [ E2 ]
+  [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
+    [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ‚î¥   ‚î¥   ‚î¥   ‚î¥               ‚î¥   ‚î¥   ‚î¥   ‚î¥
          shadow centers anchor to ground
 ```
@@ -54643,8 +54645,9 @@ Reference viewport: 375 √ó 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Allies ¬∑ fill left to right         Enemies ¬∑ fill left to right
-[ A1 ] [ A2 ]   gap   [ E1 ] [ E2 ]
-[ A3 ] [ A4 ]   gap   [ E3 ] [ E4 ]
+[ A1 ] [ A2 ]       [ E1 ] [ E2 ]
+  [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
+    [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ‚î¥   ‚î¥   ‚î¥   ‚î¥               ‚î¥   ‚î¥   ‚î¥   ‚î¥
          shadow centers anchor to ground
 ```
@@ -54661,8 +54664,9 @@ Reference viewport: 360 √ó 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Allies ¬∑ fill left to right         Enemies ¬∑ fill left to right
-[ A1 ] [ A2 ]   gap   [ E1 ] [ E2 ]
-[ A3 ] [ A4 ]   gap   [ E3 ] [ E4 ]
+[ A1 ] [ A2 ]       [ E1 ] [ E2 ]
+  [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
+    [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ‚î¥   ‚î¥   ‚î¥   ‚î¥               ‚î¥   ‚î¥   ‚î¥   ‚î¥
          shadow centers anchor to ground
 ```
@@ -54681,7 +54685,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve four slots per side in two columns and two separated rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -54883,17 +54887,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "enemyIntent": true
   },
   "groundGrid": {
-    "slotsPerSide": 4,
+    "slotsPerSide": 6,
     "columns": 2,
-    "rows": 2,
+    "rows": 3,
     "depthPercent": 58,
-    "rowStepRem": 5.5,
+    "rowStepRem": 4.5,
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
     "centerGapPercent": 10,
-    "backRowOffsetPercent": 3,
-    "actorScale": 0.85,
+    "backRowOffsetPercent": 5,
+    "actorScale": 0.78,
     "showGuides": true
   },
   "groundShadow": {
