@@ -3061,12 +3061,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
 /* One drawn face for both information controls; the size is a variable so the
-   card's control reads the tap floor while the combatant's keeps the 36px the
-   overhead layout was fitted around (docs/qa/combatant-overhead). */
+   WCB1: every host's control is the one shared circle (--inspect-size, a
+   44 physical px target, with a 16 px label) unless the host declares its own
+   --card-info-size (only the creation corner still does). */
 .card-inspection-target > .card-info-button,
-.combatant-leading > .combatant-info { box-sizing:border-box; width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
-.combatant-leading > .combatant-info { --card-info-size: 36px; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
+.combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
 /* WCF3: the selected card and its inspect control share one glow. The hand
    moves that control into an overlay, so the portal wears the same filter. */
@@ -3262,7 +3262,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
 
 /* Equipment disclosure preserves the shared above-card placement. */
-.equipment-poker-card > .card-info-button { width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); }
+.equipment-poker-card > .card-info-button { width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); }
 @media (pointer:coarse) {
   .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
   .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
@@ -3665,11 +3665,12 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .hand-overlay { position: relative; }
 .hand-overlay > .hand-info-portal {
   position: absolute; z-index: 500; transform: translateX(-50%);
-  width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
-  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+  --inspect-box: var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
   border: 1px solid var(--gold); border-radius: 50%; padding: 0;
   display: grid; place-items: center; background: var(--bg); color: var(--gold);
-  visibility: visible; pointer-events: auto; font-size: calc(16px / var(--ui-zoom, 1));
+  visibility: visible; pointer-events: auto; font-size: var(--inspect-label, calc(16px / var(--ui-zoom, 1)));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }

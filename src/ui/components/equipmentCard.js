@@ -39,7 +39,6 @@ function applyCardTokens(card, tokens) {
   set('--epc-gap', `${tokens.gapPx}px`);
   set('--epc-flavor-row', `${tokens.heights.flavor}px`);
   set('--epc-bonus-lines', String(tokens.bonusMaxLines));
-  set('--card-info-size', `${tokens.info.sizePx}px`);
   set('--card-info-inset', `${tokens.info.insetPx}px`);
   set('--card-info-fade', `${tokens.info.fadeMs}ms`);
   set('--card-info-delay', `${selectionRevealDelayMs()}ms`);
