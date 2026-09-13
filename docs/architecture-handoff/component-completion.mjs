@@ -8,7 +8,7 @@ export const componentCompletionDefaults = {
   meter: { healthHeightRem: 1.4, secondaryHeightRatio: 0.5, stanceHeightRatio: 1, maxRows: 5 },
   selection: { revealDelayMs: 1000, tooltipDelayMs: 1000, liftRem: 0.25 },
   overlay: { defenseAnchorRatio: 0.5, defenseGapRem: 0.5, playerIntent: false, enemyIntent: true },
-  groundGrid: { slotsPerSide: 4, columns: 2, rows: 2, depthPercent: 58, rowStepRem: 4, paddingRem: 1, slotGapRem: 1.5, centerGapRem: 3, actorScale: 1, showGuides: true },
+  groundGrid: { slotsPerSide: 4, columns: 2, rows: 2, depthPercent: 58, rowStepRem: 5.5, paddingRem: 1, slotGapRem: 1.5, centerGapRem: 3, centerGapPercent: 10, backRowOffsetPercent: 3, actorScale: 0.85, showGuides: true },
   groundShadow: { enabled: true, widthPercent: 55, heightPercent: 7, opacity: 0.4, color: '#000000', anchorXFraction: 0.5 },
   scene: { groundContactDepthFraction: 0.3, actorBaselinePercent: 66.667, actorHeightFraction: 0.72, actorSlotPadding: 1, actorWidthRem: 12, groundCutout: 'polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)', floorHeightPercent: 80, playerWidthPercent: 25, enemyWidthPercent: 65, playerCount: 1, enemyCount: 2, skyline: true, floor: true },
   hand: { cardWidthRem: 7, cardAspectRatio: '5 / 8', gapRem: 0.2, fixtureIds: ['WC1a', 'WC1b', 'WC1c'] },

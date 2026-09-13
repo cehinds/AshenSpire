@@ -399,11 +399,13 @@
       "columns": 2,
       "rows": 2,
       "depthPercent": 58,
-      "rowStepRem": 4,
+      "rowStepRem": 5.5,
       "paddingRem": 1,
       "slotGapRem": 1.5,
       "centerGapRem": 3,
-      "actorScale": 1,
+      "centerGapPercent": 10,
+      "backRowOffsetPercent": 3,
+      "actorScale": 0.85,
       "showGuides": true
     },
     "groundShadow": {
