@@ -2046,7 +2046,7 @@
       "id": "WCF2",
       "name": "Ordered active stack",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2069,7 +2069,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Ordered active stack from CombatantStackModel: HP, resources, buildup by fill, stance, icons; max five rows; excess buildup becomes ring pips."
     },
     {
       "id": "WCF3",
@@ -2394,7 +2395,7 @@
       "id": "WCM5",
       "name": "Status icon",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2417,13 +2418,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Status icons use the configured 1.575rem tile (reference rem at least 16 physical px); one non-wrapping row."
     },
     {
       "id": "WCM6",
       "name": "Icon overflow",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2446,7 +2448,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Overflow collapses to a final +N tile that opens the combatant inspector with every effect; co-op keeps its popover."
     },
     {
       "id": "WCO0",
@@ -2656,7 +2659,7 @@
       "id": "WCT1",
       "name": "Tooltip presenter",
       "parent": "WCT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2679,7 +2682,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js; not changed in this task."
     },
     {
       "id": "WGC0",
@@ -4246,7 +4250,7 @@
       "id": "WT0",
       "name": "Shared tooltip",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -4261,7 +4265,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default; not changed in this task."
     },
     {
       "id": "WT1",
