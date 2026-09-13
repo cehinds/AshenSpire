@@ -47,6 +47,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
   button.type = 'button';
   if (id) button.id = id;
   button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
+  button.dataset.controlRole = 'exit';
   button.title = `${label} (Esc)`;
   button.setAttribute('aria-label', label);
   const face = document.createElement('span');
@@ -65,7 +66,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
  * markup would be a fifth chrome by the end of the week.
  */
 export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
-  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}"`
+  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}" data-control-role="exit"`
     + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
 }
 
@@ -111,7 +112,10 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
     // drive it in a minimal DOM (tests/confirmation-modal.test.mjs), and a
     // shared piece of chrome must not need more of the platform than the
     // surfaces that share it.
-    if (!` ${primary.className} `.includes(' primary ')) {
+    // An exit keeps its role in the primary slot: a sole Back/Close spans the
+    // foot but is never painted as the green way forward (ControlAppearance).
+    const role = primary.dataset?.controlRole ?? primary.getAttribute?.('data-control-role');
+    if (role !== 'exit' && !` ${primary.className} `.includes(' primary ')) {
       primary.className = `${primary.className} primary`.trim();
     }
     actions.appendChild(primary);

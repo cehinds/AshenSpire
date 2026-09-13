@@ -60,6 +60,35 @@ shared conversion helper. After converting them through `anchorLocalBox`, the
 full Node rerun completed with exit code 0. Targeted zoom checks also pass.
 Test logs and temporary images stay outside commits.
 
+## Control roles and appearance
+
+Branch `feature/wireframe-control-roles`, based on dev
+`3c72a6df`. COLOR-INTERACTION-CONTRACT §3 now has one resolver,
+`src/ui/models/ControlAppearance.js`. It applies the contract's precedence:
+absent, then unavailable/busy, then destructive, then exit, then primary, then
+utility/selection. Registered exceptions are validated by name.
+
+- The kit `button()` stamps `data-control-role`, derived from its weight
+  (a danger class is destructive), or from an explicit `role`. A registered
+  `exception` is stamped as `data-control-exception`.
+- Close (both shell builders), Back, Cancel, and Leave carry the exit role.
+  They stay brown/gold at rest and turn red under pointer, keyboard, or pad
+  highlight. A sole exit in the modal primary slot no longer receives
+  primary green.
+- `combatEndTurn` exception: a legal early End Turn stays neutral at rest and
+  turns green while highlighted. Spent actions still mark it ready. Legality is
+  unchanged.
+- The positive (ready) colours now live in one set of
+  `--control-positive-*` tokens.
+
+WGH1 needed no change. `HUD_REFERENCE_MAX` (200/20/20) scales each track by
+maximum/reference; the fill is current/maximum; there is no minimum track
+length; `balance.ui.hudBars.main.scaleByMax` is on.
+
+Not in this task: the nine size presets (WCB0). Grid button rows resolve
+percentages against their own tracks, so presets need a workspace migration
+that consumes them. They were not added as unused tokens.
+
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant
