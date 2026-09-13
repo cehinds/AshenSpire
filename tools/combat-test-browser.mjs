@@ -109,7 +109,7 @@ try {
         const tipOpen = 'document.querySelector("#tooltip")?.dataset.open==="true"';
         const hover = async (selector, expected, screenshot, reset = true) => {
           if (reset) { await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(650); }
-          const point = await evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)});if(!el)throw new Error('Missing hover target '+${JSON.stringify(selector)});const b=el.getBoundingClientRect();for(const fy of [.5,.2,.8])for(const fx of [.5,.15,.85]){const x=b.x+b.width*fx,y=b.y+b.height*fy;if(el.contains(document.elementFromPoint(x,y)))return{x,y};}throw new Error('Unreachable hover target '+${JSON.stringify(selector)});})()`);
+          const point = await evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(selector)});if(!el)throw new Error('Missing hover target '+${JSON.stringify(selector)});const b=el.getBoundingClientRect();for(const fy of [.5,.2,.8])for(const fx of [.5,.15,.85]){const x=b.x+b.width*fx,y=b.y+b.height*fy;if(el.contains(document.elementFromPoint(x,y)))return{x,y};}const hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);throw new Error('Unreachable hover target '+${JSON.stringify(selector)}+'; its centre hits '+(hit?hit.tagName.toLowerCase()+(hit.id?'#'+hit.id:'')+(hit.className&&typeof hit.className==='string'?'.'+hit.className.trim().split(/\\s+/).join('.'):''):'nothing')+' at '+JSON.stringify({x:Math.round(b.x),y:Math.round(b.y),w:Math.round(b.width),h:Math.round(b.height)}));})()`);
           await evaluate('window.__hoverAt=performance.now();window.__openedAfter=0;window.__hoverObserver?.disconnect();window.__hoverObserver=new MutationObserver(()=>{if(document.querySelector("#tooltip")?.dataset.open==="true"&&!window.__openedAfter)window.__openedAfter=performance.now()-window.__hoverAt;});window.__hoverObserver.observe(document.body,{subtree:true,attributes:true});');
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...point }, sessionId);
           await until(`${tipOpen} && document.querySelector(${JSON.stringify(selector)}).closest('[data-tip-attached]')?.hasAttribute('data-tip-open') && document.querySelector('#tooltip').textContent.includes(${JSON.stringify(expected)})`);
@@ -133,20 +133,29 @@ try {
             ['.foundation-evade', 'charge'],
             ['.combatant.enemy [data-res=hp]', 'Health remaining'], ['.combatant.enemy .intent', 'Intent:', 'intent-hover'],
             ['.energy-orb', 'Actions'], ['.pile.draw', 'Draw pile'], ['.pile.spent', 'Discard'], ['.combat-potions', 'Potions'], ['.end-turn', 'End Turn'],
-            ['.hand .card .cost', 'cost'], ['.hand .card .stamina-cost', 'cost'], ['.hand .card .ctag', ''],
           ]) await hover(selector, expected, screenshot);
           check(await evaluate(`getComputedStyle(document.querySelector('.stance-chip')).display === 'none'`), 'unselected player: the stance strip waits for selection');
           await selectCombatant('player');
           await hover('.stance-chip', 'Gain 3 Block');
+          // The name no longer carries a hover glance; it is the door into the
+          // enemy's full read, which is where its HP is explained.
           await selectCombatant('enemy');
-          await hover('.combatant.enemy .nm', 'HP');
+          await click('.combatant.enemy .nm'); await until('!!document.querySelector(".combatant-door")');
+          check(await evaluate('!!document.querySelector(".combatant-door .combatant-inspector-resource[data-res=hp]")'), 'desktop: the selected enemy name opens its full read, HP included');
+          await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
           for (const selector of ['.combatant.enemy [data-res=poise]', '.arcane-exposure-meter']) {
             if (await evaluate(`!!document.querySelector(${JSON.stringify(selector)})`)) await hover(selector, selector.includes('poise') ? 'Stagger' : '/', 'buildup-hover');
           }
-          await hover('.hand .card .cost', 'cost');
-          const cardName = await evaluate('document.querySelector(".hand .card .cname").textContent');
-          await hover('.hand .card .cname', cardName, null, false);
-          await hover('.hand .card .cost', 'cost', 'card-cost-hover', false);
+          // A hand card explains itself only through the (i) its selection
+          // reveals (owner, 2026-09-11): its face parts carry no hover tooltip,
+          // and the fan's hit lane owns the pointer over them. So the pointer
+          // over the cost badge must land on that card and stay silent.
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(650);
+          const costPoint = await evaluate(`(()=>{const card=document.querySelector('.hand .card'),b=card.querySelector('.cost').getBoundingClientRect(),x=b.x+b.width/2,y=b.y+b.height/2;return card.contains(document.elementFromPoint(x,y))?{x,y}:null})()`);
+          check(!!costPoint, 'desktop: the pointer over a hand card cost badge lands on that card');
+          await send('Input.dispatchMouseEvent', { type: 'mouseMoved', ...costPoint }, sessionId); await wait(1500);
+          check(!(await evaluate(tipOpen)), 'desktop: a hovered hand card stays silent; its (i) explains it');
+          await capture('card-cost-hover');
           await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId); await wait(650);
           await send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
           await send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', code: 'Tab', windowsVirtualKeyCode: 9 }, sessionId);
@@ -177,7 +186,8 @@ try {
         await capture('active-abilities');
         if (!shape.mobile) {
           await hover('.combatant-inspector-resource[data-res=hp]', 'Health remaining');
-          await hover('.combatant-inspector-resource[data-res=block]', 'Absorbs');
+          // W1w: only HP stays a meter; Block is the summary's Defense row.
+          check(await evaluate('(()=>{const s=document.querySelector(".combatant-door [data-section=summary]")?.textContent||"";return s.includes("Defense")&&s.includes(window.__combat.player.block+" Block")})()'), `${shape.name}: inspector summary states the live Block as Defense`);
           await hover('.combatant-abilities > summary', 'active entries');
           await hover('[data-ability-id=evade] > summary', 'charge', 'inspector-hover');
           await hover('.combatant-door .modal-close', 'Close');
