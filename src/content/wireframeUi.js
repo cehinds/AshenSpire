@@ -18,6 +18,15 @@ export const wireframeUi = freeze({
     fanAngleDegrees: 2.5, arcRem: 0.6, dragThresholdPx: 12,
   },
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56 },
+  // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
+  combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
+  footer: {
+    circleMaxFraction: 0.2, pileMaxFraction: 0.1, endMaxFraction: 0.4,
+    gapRem: 0.2, heightFraction: 0.95, minimumTargetPx: 44,
+    // Readable floor for the two-line Discard / Exhaust face on narrow hosts,
+    // in reference rems (at least 16 physical px each: 64 physical px).
+    pileMinimumRem: 4,
+  },
   formation: {
     depth: [0.9, 0.95, 1], selectedGrowth: [1.1, 1.05, 1.1],
     displayScale: 1.1, floorFraction: 0.8, insetRem: 1,
