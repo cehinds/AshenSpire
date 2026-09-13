@@ -73,7 +73,7 @@ import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
-import { clearSelection } from '../components/cardSelection.js';
+import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -466,6 +466,40 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null; selectedFlask = null; selfArm = null;
     }
     refreshAim();
+  });
+
+  // THE LIGHT AND THE ARMING ARE THE SAME CARD, AND THEY FALL TOGETHER.
+  //
+  // `selected` is combat's TARGETING state — the card whose next enemy tap
+  // commits it — and it is set in exactly one place: the inspect door's Play on
+  // a card that needs a target. That door lit the card in the shared store
+  // first, so while combat is armed the store's lit card IS `selected`.
+  //
+  // Those two facts used to be able to part. A screen that mounts OVER a live
+  // fight — the mid-fight Armoury is the one that does — empties the store on
+  // mount, and the store runs the card's `douse`, which removes
+  // `inspection-selected`, `inspection-info-visible` AND `selected` and sets
+  // `aria-pressed="false"`. Closing that overlay does not remount combat, so
+  // the module kept its `selected` while the card had stopped saying so: the
+  // enemies were still wearing `.targetable`, and the next enemy tap reached
+  // `if (selected) playCard(selected, enemy.id)` and COMMITTED A CARD THE
+  // PLAYER COULD NO LONGER SEE WAS ARMED.
+  //
+  // ONLY THE EMPTY CASE IS HANDLED HERE. A store that moves to a DIFFERENT card
+  // is the `cardinspectionselect` listener's business above, and that listener
+  // deliberately ignores a lit card outside the hand — lighting a relic does
+  // not disarm you. Widening this watcher to every change would take that away.
+  // `selectedFlask` is untouched for the same reason: a flask is not a card in
+  // the store, so nothing douses it and nothing has gone out of step.
+  const releaseSelectionWatch = onSelectionChange((lit) => {
+    // A later fight's mount empties the store, and this mount's watch is not
+    // released until its observer runs — so an outgoing mount can be notified
+    // once after its own DOM is gone. It has nothing left to re-dress.
+    if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) return;
+    if (lit !== null || (!selected && !selfArm)) return;
+    selected = null;
+    selfArm = null;
+    syncCardSelection();
   });
 
   // Selection changes presentation only; every input waits for confirmation.
@@ -2212,6 +2246,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         battlefieldStage.release();
         combatLayout.release();
         aimObserver?.disconnect();
+        releaseSelectionWatch();
         clearCardFeedback();
         pagerVeilObserver.disconnect();
         delete combatEl.dataset.handPagerOwner;

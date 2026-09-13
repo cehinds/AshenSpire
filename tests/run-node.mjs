@@ -1010,6 +1010,12 @@ try {
   console.error('FAIL A spent beat belongs to the screen that spent it:', error);
 }
 try {
+  await import('./combat-disarms-when-selection-clears.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL An armed card that stopped looking armed is still armed:', error);
+}
+try {
   await import('./creation-continue-stacking.test.mjs');
 } catch (error) {
   zoomExtra++;
