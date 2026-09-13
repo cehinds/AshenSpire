@@ -8,7 +8,10 @@ const freeze = (value) => {
   return value;
 };
 export const wireframeUi = freeze({
-  card: { ratio: 5 / 8, bands: [1, 4, 4, 1], inspectDelayMs: 1000 },
+  card: { ratio: 5 / 8, bands: [1, 4, 4, 1] },
+  // WCF3: one shared glow on a selected owner (card or combatant); its inspect
+  // control appears once the selection has stood this long.
+  selection: { glowRem: 0.35, revealDelayMs: 1000 },
   // W4b: a repeat pick enters only after the selection has stood this long.
   // Owner kept 400 ms on 2026-09-13.
   map: { repeatPickDelayMs: 400 },

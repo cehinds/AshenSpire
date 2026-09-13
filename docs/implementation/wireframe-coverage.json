@@ -1999,7 +1999,7 @@
       "id": "WCF0",
       "name": "Component foundations",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2022,13 +2022,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Foundations: ComponentModel.js (immutable, serializable, validated records) plus the WCF3 selection effect from wireframeUi.selection via SelectionEffectModel.js."
     },
     {
       "id": "WCF1",
       "name": "Component contract",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2051,7 +2052,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "componentModel() validates the registered id, serializable properties/tokens/accessibility, Behavior Models and child Component Models, and freezes the record; owner selection is the only selected state (cards: cardSelection store; combatants: context-selected)."
     },
     {
       "id": "WCF2",
@@ -2087,7 +2089,7 @@
       "id": "WCF3",
       "name": "Selection effect",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2110,7 +2112,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "One shared glow, selectionGlowFilter() = drop-shadow(0 0 0.35rem var(--gold)), written once to :root as --selection-glow. It is applied to the whole owner: a selected card (its inspect control is a child; the hand portal wears the same filter) and a selected combatant's whole stack (intent, inspect, art, name, lower stack). Per-child outlines and glow shadows removed. Reveal delay has one home, selection.revealDelayMs (1000 ms), read by card inspection, equipment cards and combatant inspection."
     },
     {
       "id": "WCF4",

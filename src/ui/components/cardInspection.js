@@ -2,7 +2,7 @@ import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat } from './cardSelection.js';
-import { wireframeUi } from '../../content/wireframeUi.js';
+import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -137,7 +137,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   const revealDelayMs = () => {
     const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
     const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
-    return Number.isFinite(ms) && ms >= 0 ? ms : wireframeUi.card.inspectDelayMs;
+    return Number.isFinite(ms) && ms >= 0 ? ms : selectionRevealDelayMs();
   };
   const revealInfo = () => {
     if (revealTimer !== null || card.classList.contains('inspection-info-visible')) return;

@@ -381,6 +381,55 @@ Limits:
 - WC2a's "Equipped comparison" row is not built.
 - The weapon/armour and relic/consumable sub-variants (WC2a1–WC2c3) share
   this canvas; their own rows are not added.
+## Selection effect (WCF0, WCF1, WCF3)
+
+Branch `feature/wireframe-selection-effect`, based on dev `d2ea5bcd`. WCF3's
+one shared glow and the reveal delay come from one pure model,
+`src/ui/models/SelectionEffectModel.js`, with values in
+`wireframeUi.selection` (`glowRem: 0.35`, `revealDelayMs: 1000`).
+
+- **One glow per owner.** `main.js` writes `selectionGlowFilter()` to `:root`
+  as `--selection-glow`: a gold `drop-shadow` whose radius is 0.35 reference
+  rems (at least 16 physical px each, as in the hand and footer plans), not
+  the game's 10 px root.
+  - A selected card wears it as a filter, so its inspect control, a child,
+    glows with it. The hand moves that control into an overlay, so the portal
+    wears the same filter.
+  - A selected combatant wears it on its whole `.combatant-stack`: intent,
+    the delayed inspect control, art, name and the lower stack.
+- **No per-child marks.** These are removed:
+  - the combatant card's own drop-shadow;
+  - the card's 3 px `inspection-selected` outline;
+  - the `.card.selected` glow box-shadow;
+  - the hand's parchment outline;
+  - the mount list's outline.
+
+  Elevation shadows and the gold border stay; they are not glow.
+- **One reveal delay.** `selection.revealDelayMs` replaces
+  `wireframeUi.card.inspectDelayMs` and the equipment card's own
+  `balance.ui…info.revealDelayMs`. Card inspection, equipment cards and
+  combatant inspection all read it.
+- **WCF1.** `ComponentModel.js` already validates and freezes component
+  records. Owner selection is the only selected state: the card selection
+  store for cards, and `context-selected` for combatants.
+
+Browser evidence (emulation, `?shot=combat`, 1280×800 at UI zoom 1.07 and
+390×844 at 0.9):
+- The glow radius resolves to 5.23 local px at zoom 1.07 and 6.22 at 0.9.
+  Both are 5.6 physical px, 0.35 reference rems. At the game's 10 px root, a
+  plain `0.35rem` would have given 3.5 px.
+- A selected enemy's stack carries the one gold drop-shadow. Its card has no
+  filter, and no other gold glow exists inside the stack. Its inspect control
+  is inside the glow and appears after the delay.
+- A selected hand card and its portalled inspect control both carry the same
+  filter, with no outline.
+
+Limits:
+- The reward door's green "chosen" highlight is a separate state tied to
+  Confirm and stays as it is.
+- The creation selectors keep their corner inspect control (contested in
+  #994/#996).
+- The inspect control's own size and label are WCB1's.
 
 ## Remaining integration
 

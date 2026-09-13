@@ -514,9 +514,9 @@ export const balance = {
       bonusMaxLines: 2,
       // The information button. It appears on the FIRST press of a card, not
       // the second: a control nobody can find is a control nobody uses. The
-      // delay keeps it from flickering under a press that is really a scroll,
-      // and the fade keeps it from snapping into place under the thumb.
-      info: { revealDelayMs: 1000, fadeMs: 120, sizePx: 44, insetPx: 6 },
+      // fade keeps it from snapping into place under the thumb. Its reveal
+      // delay is the shared WCF3 one (wireframeUi.selection.revealDelayMs).
+      info: { fadeMs: 120, sizePx: 44, insetPx: 6 },
     },
     tooltipPlacement: {
       hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],

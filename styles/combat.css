@@ -296,10 +296,8 @@
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
 }
-.hand .card.selected {
-  border-color: var(--gold);
-  outline: 2px solid var(--parchment); outline-offset: 2px;
-}
+/* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
+.hand .card.selected { border-color: var(--gold); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
@@ -639,8 +637,10 @@
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
-.combatant.context-selected .combatant-card {
-  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+/* WCF3: one glow over the whole selected assembly — intent, the delayed
+   inspect control, art, name and lower stack — never one per child. */
+.combatant.context-selected > .combatant-stack {
+  filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
