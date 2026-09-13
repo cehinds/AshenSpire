@@ -374,27 +374,6 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "title.save.eyebrow",
-    "extends": "",
-    "short": "Your climb",
-    "full": "The saved run Continue resumes.",
-    "tip": ""
-  },
-  {
-    "id": "title.save.identity",
-    "extends": "",
-    "short": "Slot {slot} · Seed {seed}",
-    "full": "Which save Continue loads.",
-    "tip": ""
-  },
-  {
-    "id": "title.save.aria",
-    "extends": "",
-    "short": "Saved climb in slot {slot}",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "reward.status.claimed",
     "extends": "",
     "short": "{claimed} of {total} claimed",
@@ -427,6 +406,27 @@ export const uiStrings = [
     "extends": "",
     "short": "Full",
     "full": "There is no room for this one.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.eyebrow",
+    "extends": "",
+    "short": "Your climb",
+    "full": "The saved run Continue resumes.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.identity",
+    "extends": "",
+    "short": "Slot {slot} · Seed {seed}",
+    "full": "Which save Continue loads.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.aria",
+    "extends": "",
+    "short": "Saved climb in slot {slot}",
+    "full": "",
     "tip": ""
   },
   {
