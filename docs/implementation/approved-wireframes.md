@@ -792,6 +792,37 @@ Limits:
   revalidation, not measured in the browser.
 - Combat's potions menu (WGC11) builds its own flask plan and does not open
   this door.
+## Inspector side-tray meters
+
+Branch `fix/inspector-tray-meters`, based on dev `d2ea5bcd`. Owner-approved
+follow-up: restore the HP/MP/Poise meters in the inspector's side tray.
+
+- Root cause: `52bc33db` swapped the detail body's pool meters
+  (`resourceMeters(subject.resources)`) for the ordered text sections. After
+  that the door's left column kept one HP meter under the sprite and nothing
+  else. The old edge Folding Tray has not been mounted by combat since
+  `2ba87601`, so the door's side column is the side tray.
+- `CombatantInspectorSections.js` now projects `preview.meters`: HP, MP,
+  Poise in that order, taken from the live subject. MP and Poise appear only
+  when the combatant has the pool (max > 0), and Block never appears there.
+  The preview still names the sprite and HP as before.
+- `combatantInspectorPreview` renders the rows with the existing
+  `resourceMeters`, the stacked kit Meters the tray used for its pools, so
+  there is no second meter renderer. The details pane is unchanged.
+- This supersedes the W1w line "left contains only sprite/name/HP" for
+  resource meters only. Intent, defense, aura and status overlays still stay
+  out of the preview.
+
+Browser evidence (headless Chrome, `?shot=combat-test&build=caster`):
+- 1280×800 and 390×844: the player door shows HP 80 / 80 and MP 3 / 3, with
+  no Poise meter because the player's poise max is 0. The enemy door shows
+  HP 55 / 55 and Poise 0 / 18, with no MP meter. Values match the live
+  combatant, the preview fits the door, and nothing scrolls sideways. 20/20
+  probe checks passed, with no page errors.
+
+Limits: the co-op door renders only the detail body (no preview column), so
+it does not gain meters. The door is a snapshot taken when it opens; it does
+not redraw meters while it stays open.
 
 ## Remaining integration
 
