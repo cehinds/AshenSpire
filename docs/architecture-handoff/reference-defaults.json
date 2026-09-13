@@ -1,0 +1,792 @@
+{
+  "screens": {
+    "buttonWidths": {
+      "standardHeight": "2.75rem",
+      "heightMultipliers": {
+        "standard": 1,
+        "tall": 1.5,
+        "double": 2
+      },
+      "sizes": {
+        "third-standard": {
+          "width": "third",
+          "height": "standard"
+        },
+        "third-tall": {
+          "width": "third",
+          "height": "tall"
+        },
+        "third-double": {
+          "width": "third",
+          "height": "double"
+        },
+        "half-standard": {
+          "width": "half",
+          "height": "standard"
+        },
+        "half-tall": {
+          "width": "half",
+          "height": "tall"
+        },
+        "half-double": {
+          "width": "half",
+          "height": "double"
+        },
+        "full-standard": {
+          "width": "full",
+          "height": "standard"
+        },
+        "full-tall": {
+          "width": "full",
+          "height": "tall"
+        },
+        "full-double": {
+          "width": "full",
+          "height": "double"
+        }
+      },
+      "presets": {
+        "quarter": 25,
+        "third": 30,
+        "half": 50,
+        "full": 100
+      },
+      "choice": "half",
+      "minimumReadable": "8rem",
+      "iconSize": "2.75rem",
+      "footer": "equalSharesAfterGaps",
+      "singleFooter": "full"
+    },
+    "inset": "1rem",
+    "gap": ".5rem",
+    "sidebarShare": "26%",
+    "minimumTarget": "2.75rem",
+    "bodyHeight": "26rem",
+    "portraitBodyHeight": "25rem",
+    "previewCardWidth": "12rem",
+    "controls": {
+      "rangeMin": 0,
+      "rangeMax": 150,
+      "rangeStep": 5,
+      "attributeMin": 0,
+      "attributeMax": 20,
+      "attributeStep": 1,
+      "attributeBudget": 3
+    },
+    "headerShare": 10,
+    "bodyShare": 80,
+    "footerShare": 10
+  },
+  "hud": {
+    "context": "combat",
+    "enabled": true,
+    "layoutPreset": "proposed",
+    "layers": {
+      "header": true,
+      "class": true,
+      "cinders": true,
+      "position": true,
+      "vitality": true,
+      "health": true,
+      "mana": true,
+      "stamina": true,
+      "armoury": true,
+      "menu": true,
+      "rail": true,
+      "relics": true,
+      "potions": true,
+      "experience": true,
+      "chargeFlasks": true
+    },
+    "vitality": {
+      "referenceMaximum": {
+        "health": 200,
+        "mana": 20,
+        "stamina": 20
+      },
+      "maximumWidthPercent": 100,
+      "scaleByMaximum": true
+    },
+    "potions": {
+      "placement": "footerOnly",
+      "componentId": "WGC11",
+      "contentsComponentId": "WGH8",
+      "openIntent": "openPotions",
+      "combineChargeFlasks": true,
+      "combineCarriedPotions": true
+    },
+    "experience": {
+      "contexts": [
+        "combat"
+      ],
+      "color": "#398bd1",
+      "heightRem": 0.35,
+      "animationMs": 650,
+      "awardPreview": 15
+    },
+    "diagram": {
+      "columns": {
+        "wide": 62,
+        "compact": 48,
+        "portraitSE": 40,
+        "portraitS24": 42
+      },
+      "trackColumns": 20,
+      "labelColumns": 8
+    },
+    "layout": {
+      "gapRem": 0.35,
+      "insetRem": 0.5,
+      "meterHeightRem": 1.15,
+      "actionHeightRem": 2.75,
+      "radiusRem": 0.25
+    },
+    "colors": {
+      "background": "#211a12",
+      "gold": "#d5af68",
+      "text": "#eee2ca",
+      "health": "#668c46",
+      "mana": "#478dbc",
+      "stamina": "#bf9949"
+    },
+    "sample": {
+      "className": "Warden",
+      "cinders": 120,
+      "act": 1,
+      "floor": 4,
+      "health": {
+        "value": 32,
+        "maximum": 40
+      },
+      "mana": {
+        "value": 6,
+        "maximum": 10
+      },
+      "stamina": {
+        "value": 8,
+        "maximum": 10
+      },
+      "experience": {
+        "value": 40,
+        "maximum": 100
+      },
+      "relics": [
+        "Ash seal",
+        "Ember charm"
+      ],
+      "potions": [
+        "Smoke vial ×1"
+      ],
+      "chargeFlasks": [
+        "HP ×2",
+        "MP ×1"
+      ]
+    }
+  },
+  "cards": {
+    "geometry": {
+      "ratioWidth": 5,
+      "ratioHeight": 8,
+      "widthMinimum": "10rem",
+      "widthPreferred": "18vw",
+      "widthMaximum": "16rem",
+      "bands": {
+        "header": 10,
+        "art": 40,
+        "body": 40,
+        "footer": 10
+      }
+    },
+    "interaction": {
+      "inspectDelayMs": 1000,
+      "tooltipDelayMs": 1000
+    },
+    "costs": {
+      "order": [
+        "action",
+        "stamina",
+        "mana"
+      ],
+      "showZero": false,
+      "railWidthRem": 1.8,
+      "insetRem": 0.15,
+      "gapRem": 0.1,
+      "fontRem": 0.75,
+      "iconSizeRem": 0.8,
+      "outlineColor": "#120e09",
+      "variableLabel": "X",
+      "providers": {
+        "action": {
+          "label": "Actions",
+          "glyph": "◆",
+          "icon": "diamond",
+          "color": "#d1aa60"
+        },
+        "stamina": {
+          "label": "Stamina",
+          "glyph": "ϟ",
+          "icon": "bolt",
+          "color": "#88b96d"
+        },
+        "mana": {
+          "label": "MP",
+          "glyph": "♦",
+          "icon": "droplet",
+          "color": "#79bcec"
+        }
+      },
+      "sampleOverrides": {
+        "WC1b": {
+          "stamina": 2
+        },
+        "WC1c": {
+          "mana": 3
+        }
+      }
+    },
+    "metadata": {
+      "ownedLabel": "Owned",
+      "unknown": "Unknown",
+      "empty": "None"
+    },
+    "body": {
+      "maximumPreviewFacts": 2,
+      "showFlavor": false
+    },
+    "components": {
+      "identity": "WCI1",
+      "art": "WCI2",
+      "footer": "WCI3",
+      "inspect": "WCB1",
+      "action": "WCB2",
+      "facts": "WCF4"
+    },
+    "features": [
+      {
+        "tag": "feature:rules",
+        "component": "rules",
+        "order": 10
+      },
+      {
+        "tag": "feature:facts",
+        "component": "facts",
+        "order": 20
+      },
+      {
+        "tag": "feature:availability",
+        "component": "availability",
+        "order": 30
+      }
+    ],
+    "tags": {
+      "attack": {
+        "label": "Attack",
+        "description": "An attack card. Target and effect come from its projected rules."
+      },
+      "skill": {
+        "label": "Skill",
+        "description": "A skill card with a context-defined effect."
+      },
+      "power": {
+        "label": "Power",
+        "description": "A card whose projected effect can persist."
+      },
+      "curse": {
+        "label": "Curse",
+        "description": "An unfavorable card; this fixture cannot be played."
+      },
+      "status": {
+        "label": "Status",
+        "description": "A temporary deck condition in this fixture."
+      },
+      "weapon": {
+        "label": "Weapon",
+        "description": "Equipment with projected weapon facts and requirements."
+      },
+      "armor": {
+        "label": "Armor",
+        "description": "Equipment with projected protection and requirements."
+      },
+      "relic": {
+        "label": "Relic",
+        "description": "An owned object with authored passive or triggered effects."
+      },
+      "passive": {
+        "label": "Passive",
+        "description": "Applies while its domain activation condition is true."
+      },
+      "triggered": {
+        "label": "Triggered",
+        "description": "Applies when its registered trigger resolves."
+      },
+      "consumable": {
+        "label": "Consumable",
+        "description": "Using this object consumes its projected charge or quantity."
+      },
+      "healing": {
+        "label": "Healing",
+        "description": "Restores health, subject to projected limits."
+      },
+      "resource": {
+        "label": "Resource",
+        "description": "Changes the projected resource pool."
+      },
+      "utility": {
+        "label": "Utility",
+        "description": "Provides a situational effect."
+      },
+      "class": {
+        "label": "Class",
+        "description": "A character archetype and its known starting properties."
+      },
+      "kit": {
+        "label": "Starting kit",
+        "description": "A collection of initial equipment and cards."
+      },
+      "combatant": {
+        "label": "Combatant",
+        "description": "A borderless actor assembly using WC4 geometry."
+      }
+    }
+  },
+  "components": {
+    "buttonWidths": {
+      "standardHeight": "2.75rem",
+      "heightMultipliers": {
+        "standard": 1,
+        "tall": 1.5,
+        "double": 2
+      },
+      "sizes": {
+        "third-standard": {
+          "width": "third",
+          "height": "standard"
+        },
+        "third-tall": {
+          "width": "third",
+          "height": "tall"
+        },
+        "third-double": {
+          "width": "third",
+          "height": "double"
+        },
+        "half-standard": {
+          "width": "half",
+          "height": "standard"
+        },
+        "half-tall": {
+          "width": "half",
+          "height": "tall"
+        },
+        "half-double": {
+          "width": "half",
+          "height": "double"
+        },
+        "full-standard": {
+          "width": "full",
+          "height": "standard"
+        },
+        "full-tall": {
+          "width": "full",
+          "height": "tall"
+        },
+        "full-double": {
+          "width": "full",
+          "height": "double"
+        }
+      },
+      "presets": {
+        "quarter": 25,
+        "third": 30,
+        "half": 50,
+        "full": 100
+      },
+      "choice": "half",
+      "minimumReadable": "8rem",
+      "iconSize": "2.75rem",
+      "footer": "equalSharesAfterGaps",
+      "singleFooter": "full"
+    },
+    "combatantFocus": {
+      "rowIds": [
+        "upper",
+        "middle",
+        "lower"
+      ],
+      "rowBase": [
+        0.9,
+        0.95,
+        1
+      ],
+      "selectedGrowth": [
+        1.1,
+        1.05,
+        1.1
+      ],
+      "rowZPriority": [
+        10,
+        20,
+        30
+      ],
+      "focusZ": 100,
+      "fit": {
+        "maximumScale": 1,
+        "minimumScale": 0.01,
+        "inset": 0,
+        "gap": 0
+      },
+      "selectionDetailsAffectFit": false,
+      "sharedBaseAcrossFactions": true,
+      "stableAnchor": "sprite-baseline-center"
+    },
+    "spacing": {
+      "gapRem": 0.2,
+      "insetRem": 0.75,
+      "sectionGapRem": 0.75
+    },
+    "target": {
+      "minRem": 2.75,
+      "iconRem": 1.575,
+      "largeRem": 3.4,
+      "smallRem": 2.75
+    },
+    "meter": {
+      "healthHeightRem": 1.4,
+      "secondaryHeightRatio": 0.5,
+      "stanceHeightRatio": 1,
+      "maxRows": 5
+    },
+    "selection": {
+      "revealDelayMs": 1000,
+      "tooltipDelayMs": 1000,
+      "liftRem": 0.25
+    },
+    "overlay": {
+      "defenseAnchorRatio": 0.12,
+      "defenseAnchorByRole": {
+        "player": 0.12,
+        "enemy": 0.88
+      },
+      "defenseGapRem": 0.5,
+      "playerIntent": false,
+      "enemyIntent": true
+    },
+    "combatantVisibility": {
+      "unselectedHiddenSelectors": [
+        ".combatant-nameplate",
+        ".combatant-meter:not(:first-child)",
+        ".buildup",
+        ".stance"
+      ]
+    },
+    "groundGrid": {
+      "displayScale": 1.1,
+      "rowScaleFactors": [
+        0.9,
+        0.95,
+        1
+      ],
+      "preserveInformationSize": true,
+      "slotsPerSide": 6,
+      "columns": 2,
+      "rows": 3,
+      "depthPercent": 58,
+      "rowStepRem": 4.5,
+      "paddingRem": 1,
+      "slotGapRem": 1.5,
+      "centerGapRem": 3,
+      "centerGapPercent": 3,
+      "centerGap": {
+        "narrowPercent": 3,
+        "widePercent": 5,
+        "narrowWidthPx": 375,
+        "wideWidthPx": 1200
+      },
+      "formationLayers": {
+        "frontRow": 0,
+        "backRow": 200
+      },
+      "backRowOffsetPercent": 5,
+      "minimumRowOffsetPx": 8,
+      "depthLoweringFractions": [
+        0.25,
+        0.125,
+        0
+      ],
+      "frontRowRetreatPercent": 2,
+      "actorScale": 1,
+      "showGuides": true
+    },
+    "groundShadow": {
+      "enabled": true,
+      "widthPercent": 55,
+      "heightPercent": 7,
+      "opacity": 0.4,
+      "color": "#000000",
+      "anchorXFraction": 0.5
+    },
+    "scene": {
+      "detailEdgeInsetPx": 4,
+      "baselineInsetPx": 4,
+      "minimumSpriteHeightPx": 92,
+      "selectionDetailReserveRem": 3.5,
+      "groundContactDepthFraction": 0.3,
+      "actorBaselinePercent": 66.667,
+      "actorHeightFraction": 0.72,
+      "actorSlotPadding": 1,
+      "actorWidthRem": 12,
+      "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
+      "floorHeightPercent": 80,
+      "playerWidthPercent": 25,
+      "enemyWidthPercent": 65,
+      "playerCount": 1,
+      "enemyCount": 2,
+      "skyline": true,
+      "floor": true
+    },
+    "combatantLegibility": {
+      "intentRowMinPx": 22,
+      "valueFontMinPx": 13.2,
+      "infoVisualScale": 0.64,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "barMinWidthPx": 0,
+      "fontMinRem": 0.75,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1
+    },
+    "footerLayout": {
+      "circleMaxFraction": 0.2,
+      "pileMaxFraction": 0.1,
+      "endMaxFraction": 0.4,
+      "gapRem": 0.2,
+      "heightFraction": 0.95,
+      "minimumHeightPx": 56
+    },
+    "hand": {
+      "infoVisualSizePx": 28,
+      "infoHitSizePx": 44,
+      "infoGapPx": 4,
+      "reorderThresholdPx": 8,
+      "edgeScrollPx": 24,
+      "edgeScrollStepPx": 12,
+      "horizontalInsetRem": 0.625,
+      "inspectRiseRem": 0.5,
+      "fanMaxDegrees": 2.5,
+      "fanArchPx": 8,
+      "bodyUpPx": 0,
+      "minimumHeightPx": 208,
+      "verticalInsetRem": 0.25,
+      "minFontRem": 0.7,
+      "minCapacity": 5,
+      "maxCapacity": 15,
+      "narrowWidthRem": 22,
+      "wideWidthRem": 75,
+      "minCardWidthRem": 5,
+      "maxCardWidthRem": 9,
+      "minExposedTargetPx": 44,
+      "selectedLiftRem": 1,
+      "cardWidthRem": 7,
+      "cardAspectRatio": "5 / 8",
+      "gapRem": 0.2,
+      "fixtureIds": [
+        "WC1a",
+        "WC1b",
+        "WC1c",
+        "WC1a",
+        "WC1b"
+      ]
+    },
+    "tooltip": {
+      "widthRem": 18,
+      "maxWidthPercent": 95
+    },
+    "map": {
+      "viewBox": "0 0 100 100",
+      "selectedNode": "town",
+      "nodeSizeRem": 2.75
+    },
+    "dialogue": {
+      "speakingId": "keeper",
+      "autoAdvance": false,
+      "currentBeat": "welcome"
+    },
+    "samples": {
+      "health": {
+        "label": "HP",
+        "current": 32,
+        "maximum": 40
+      },
+      "resource": {
+        "label": "Mana",
+        "current": 6,
+        "maximum": 10
+      },
+      "buildup": {
+        "label": "Burn buildup",
+        "current": 65,
+        "maximum": 100
+      },
+      "stance": {
+        "label": "Aggressive",
+        "active": true
+      },
+      "intent": {
+        "label": "Attack",
+        "icon": "⚔",
+        "amount": 12,
+        "active": true
+      },
+      "defense": {
+        "label": "Block",
+        "icon": "◇",
+        "amount": 8,
+        "active": true
+      },
+      "footer": {
+        "actions": 3,
+        "draw": 12,
+        "discard": 4,
+        "exhaust": 1,
+        "potions": 2
+      },
+      "statuses": [
+        {
+          "id": "regen",
+          "icon": "✚",
+          "name": "Regeneration",
+          "detail": "2 stacks · 3 turns"
+        },
+        {
+          "id": "poison",
+          "icon": "☠",
+          "name": "Poison",
+          "detail": "3 stacks · 2 turns"
+        },
+        {
+          "id": "weak",
+          "icon": "↓",
+          "name": "Weakened",
+          "detail": "1 stack · 1 turn"
+        }
+      ],
+      "mapNodes": [
+        {
+          "id": "start",
+          "label": "Visited",
+          "icon": "●",
+          "x": 50,
+          "y": 82,
+          "state": "visited"
+        },
+        {
+          "id": "combat",
+          "label": "Combat",
+          "icon": "⚔",
+          "x": 25,
+          "y": 53,
+          "state": "reachable"
+        },
+        {
+          "id": "town",
+          "label": "Town",
+          "icon": "⌂",
+          "x": 73,
+          "y": 53,
+          "state": "reachable"
+        },
+        {
+          "id": "unknown",
+          "label": "Unknown",
+          "icon": "?",
+          "x": 50,
+          "y": 18,
+          "state": "blocked"
+        }
+      ],
+      "mapEdges": [
+        [
+          "start",
+          "combat"
+        ],
+        [
+          "start",
+          "town"
+        ],
+        [
+          "combat",
+          "unknown"
+        ],
+        [
+          "town",
+          "unknown"
+        ]
+      ],
+      "beats": [
+        {
+          "id": "welcome",
+          "speaker": "The Keeper",
+          "text": "The forge is still warm. What brings you here?"
+        },
+        {
+          "id": "offer",
+          "speaker": "The Keeper",
+          "text": "I can mend what the ash has taken.",
+          "choices": [
+            "Ask about the forge",
+            "Leave the forge"
+          ]
+        }
+      ]
+    }
+  },
+  "progression": {
+    "categories": [
+      "weapons",
+      "skills"
+    ],
+    "categoryIds": {
+      "weapons": "weapons",
+      "skills": "skills"
+    },
+    "defaultCategory": "weapons",
+    "showLockedTechniques": true,
+    "showHistory": true,
+    "allowPreviewAward": true,
+    "previewAward": 12,
+    "progressMinimum": 0,
+    "progressMaximum": 100,
+    "labels": {
+      "title": "Proficiencies",
+      "back": "Back",
+      "award": "Preview progress"
+    },
+    "layout": {
+      "width": "min(95vw, 68rem)",
+      "height": "min(90vh, 48rem)",
+      "inset": "1rem",
+      "gap": ".75rem",
+      "sidebar": "minmax(0, 1fr)",
+      "list": "minmax(0, 1fr)",
+      "detail": "minmax(0, 2fr)",
+      "meterHeight": ".6rem",
+      "compactBreakpoint": "42rem",
+      "standardButtonHeight": "2.75rem",
+      "tileHeightMultiplier": 2,
+      "categoryButtonSize": "full-standard",
+      "tileButtonSize": "full-double"
+    },
+    "colors": {
+      "background": "#241c13",
+      "inset": "#19140e",
+      "text": "#efe5d4",
+      "muted": "#c1ad8b",
+      "gold": "#d1aa60",
+      "progress": "#4189b6",
+      "primary": "#557b3f",
+      "danger": "#ac4e3c"
+    }
+  }
+}
