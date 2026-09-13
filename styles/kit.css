@@ -3151,10 +3151,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cz-stage .modal-btnrow.cc-primary-continue-row {
   bottom:var(--cz-continue-row); z-index:3;
 }
-/* A fold's summary is a control: it takes the tap floor and the kit's ring. */
+/* A fold's summary is a control: it takes the tap floor and the kit's ring.
+   THE FLOOR IS THE TOKEN, NOT THE NUMBER. `--tap-floor` is
+   `calc(var(--tap-target) / var(--ui-zoom, 1))` precisely because `body` carries
+   `zoom: var(--ui-zoom)`: a literal 44px below body renders at 44 x zoom, so at
+   Auto's 0.62 floor this control would have been a ~27px physical target while
+   every button beside it stayed 44. The division cancels the zoom; the number
+   does not. The comment said "takes the tap floor" while the code took a
+   constant that happens to equal it at zoom 1. */
 .cc-starting-fold > .cc-starting-summary {
   display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px;
-  min-height:44px; padding:10px 4px; cursor:pointer; list-style:none;
+  min-height:var(--tap-floor); padding:10px 4px; cursor:pointer; list-style:none;
 }
 .cc-starting-fold > .cc-starting-summary::-webkit-details-marker { display:none; }
 .cc-starting-fold > .cc-starting-summary::after {
