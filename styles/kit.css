@@ -1289,6 +1289,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-backdrop { min-height: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door .reward-menu { max-width: none; width: 100%; }
+/* W1t: reward choices beside their claim status; stacked on narrow hosts. */
+.reward-door .reward-claim-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
+:root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+.reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
+.reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.reward-door .reward-claim-row[data-state='taken'] .reward-claim-state { color: var(--gold); }
+.reward-door .reward-claim-row:is([data-state='blocked'], [data-state='skipped']) .reward-claim-state { color: var(--muted); }
+.reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 .reward-door .reward-row .card.reward-selected {

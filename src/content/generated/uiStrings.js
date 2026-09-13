@@ -374,6 +374,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.status.claimed",
+    "extends": "",
+    "short": "{claimed} of {total} claimed",
+    "full": "How many of this fight's rewards you have collected.",
+    "tip": ""
+  },
+  {
+    "id": "reward.claim.heading",
+    "extends": "",
+    "short": "Claim status",
+    "full": "What each reward is waiting on.",
+    "tip": ""
+  },
+  {
+    "id": "reward.state.available",
+    "extends": "",
+    "short": "Available",
+    "full": "Still here to collect.",
+    "tip": "Available"
+  },
+  {
+    "id": "reward.claim.required",
+    "extends": "",
+    "short": "Required choice",
+    "full": "A decision is still waiting before this reward can be taken.",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",
