@@ -15,7 +15,10 @@ import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
-import { projectCombatantInspector } from '../models/CombatantInspectorSections.js';
+import { projectCombatantInspector as projectSections } from '../models/CombatantInspectorSections.js';
+import { t } from '../strings.js';
+
+const projectCombatantInspector = (subject) => projectSections(subject, t);
 import { attachTooltip, esc } from './tooltip.js';
 import { helpText } from '../../model/tooltipSettings.js';
 import { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } from '../kit/index.js';
@@ -73,11 +76,9 @@ function abilitySection(abilities) {
  * how the tray and the door would drift.
  */
 // The two empty states never share wording (W1w: unknown and none are distinct).
-const EMPTY_TEXT = Object.freeze({ none: 'None.', unknown: 'Unknown.' });
-
 function factRows(section) {
   if (section.knowledge !== 'known') {
-    const empty = row({ label: EMPTY_TEXT[section.knowledge], tag: 'div', disabled: true, className: 'combatant-inspector-row' });
+    const empty = row({ label: t(`inspector.empty.${section.knowledge}`), tag: 'div', disabled: true, className: 'combatant-inspector-row' });
     empty.dataset.knowledge = section.knowledge;
     return [empty];
   }

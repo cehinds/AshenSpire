@@ -1,6 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { projectCombatantInspector, INSPECTOR_SECTION_ORDER } from '../src/ui/models/CombatantInspectorSections.js';
+import { projectCombatantInspector as projectSections, INSPECTOR_SECTION_ORDER } from '../src/ui/models/CombatantInspectorSections.js';
+import { t } from '../src/ui/strings.js';
+
+// The component passes the copy table's lookup; so does this test.
+const projectCombatantInspector = (subject) => projectSections(subject, t);
+
+test('every title and label comes from the copy table', () => {
+  const view = projectSections({ name: 'X', resources: [] });
+  assert.deepEqual(view.sections.map((s) => s.title), INSPECTOR_SECTION_ORDER.map((id) => `inspector.section.${id}`));
+  assert.notEqual(t('inspector.empty.none'), t('inspector.empty.unknown'));
+});
 
 const enemy = {
   name: 'Blight Hound',

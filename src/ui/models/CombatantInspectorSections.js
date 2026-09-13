@@ -12,15 +12,18 @@ const disclose = (rows) => (rows == null
   ? { knowledge: 'unknown', rows: freezeRows([]) }
   : { knowledge: rows.length ? 'known' : 'none', rows: freezeRows(rows) });
 
-export function projectCombatantInspector(subject) {
+// `text(id, tokens)` is the copy lookup (the caller passes strings.js `t`):
+// every title and label is a uiStrings.csv row, and this model stays free of
+// both the DOM and the table.
+export function projectCombatantInspector(subject, text = (id) => id) {
   if (!subject?.name) throw new Error('combatant inspector requires a named subject');
   const resources = subject.resources || [];
   const hp = resources.find((r) => r.label === 'HP') || null;
   const block = resources.find((r) => r.label === 'Block');
   const summary = [
-    hp && { label: 'HP', value: `${hp.value} / ${hp.max}` },
-    subject.intent && { label: 'Intent', value: subject.intent.name, detail: subject.intent.detail || '' },
-    { label: 'Defense', value: `${block?.value ?? 0} Block` },
+    hp && { label: text('inspector.summary.hp'), value: `${hp.value} / ${hp.max}` },
+    subject.intent && { label: text('inspector.summary.intent'), value: subject.intent.name, detail: subject.intent.detail || '' },
+    { label: text('inspector.summary.defense'), value: text('inspector.summary.block', { amount: block?.value ?? 0 }) },
   ].filter(Boolean);
   // Current state: active pools other than HP/Block, then active effects. A
   // subject that lists its effects as abilities shows them there instead.
@@ -32,14 +35,14 @@ export function projectCombatantInspector(subject) {
   ];
   const abilityList = subject.abilities ?? subject.moveCards ?? subject.skills ?? null;
   const sections = {
-    summary: { title: 'Summary', ...disclose(summary) },
-    state: { title: 'Current state', ...disclose(state) },
+    summary: { title: text('inspector.section.summary'), ...disclose(summary) },
+    state: { title: text('inspector.section.state'), ...disclose(state) },
     // History arrives oldest first, as the engine records it.
-    history: { title: 'Previous actions', ...disclose(subject.history == null ? null
+    history: { title: text('inspector.section.history'), ...disclose(subject.history == null ? null
       : [...subject.history].reverse().map((h) => ({ label: h.name, detail: h.detail || '' }))) },
-    abilities: { title: subject.skillLabel || 'Known abilities', ...disclose(abilityList == null ? null : abilityList.map((a) => ({ label: a.name || '' }))) },
-    traits: { title: 'Known traits', ...disclose(subject.traits == null ? null : subject.traits.map((t) => ({ label: t.name, detail: t.detail || '' }))) },
-    lore: { title: 'Lore', ...disclose(subject.lore == null ? null : subject.lore.map((text) => ({ label: text }))) },
+    abilities: { title: subject.skillLabel || text('inspector.section.abilities'), ...disclose(abilityList == null ? null : abilityList.map((a) => ({ label: a.name || '' }))) },
+    traits: { title: text('inspector.section.traits'), ...disclose(subject.traits == null ? null : subject.traits.map((trait) => ({ label: trait.name, detail: trait.detail || '' }))) },
+    lore: { title: text('inspector.section.lore'), ...disclose(subject.lore == null ? null : subject.lore.map((line) => ({ label: line }))) },
   };
   return Object.freeze({
     preview: Object.freeze({ name: subject.name, hp: hp ? Object.freeze({ ...hp }) : null }),

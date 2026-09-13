@@ -570,10 +570,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       active: moveId === currentMoveId,
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
-    // movesHistory records each rolled intent; the newest entry is the current
-    // intent, so previous actions are the entries before it (oldest first).
-    const past = [...(entity.movesHistory || [])];
-    if (currentMoveId && past.at(-1) === currentMoveId) past.pop();
+    // Previous actions are the moves that RESOLVED (oldest first). movesHistory
+    // records rolls, and a roll cancelled by a stagger never happened.
+    const past = entity.performedMoves || [];
     return {
       role: 'enemy',
       name: def.name,
