@@ -3654,10 +3654,43 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 .modal-foot-actions[data-action-count] {
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr);
-  width: 100%; min-width: 0; gap: .5rem;
+  width: 100%; min-width: 0; gap: var(--button-gap);
 }
 .modal-foot-actions[data-action-count] > button { width: 100%; min-width: 0; max-width: none; }
 .modal-foot-actions[data-action-count='0'] { display: none; }
+/* WCB0 BUTTON SIZES. Every value comes from wireframeUi.buttons through
+   ButtonSizeModel.buttonSizeTokens(), written onto :root by the kit; this
+   block only combines them. A reference rem is at least 16 physical px (the
+   hand and footer plans' unit), so heights neither shrink with the zoom nor
+   with the 10px root. Widths belong to the group that owns the action region:
+   the footer above divides it into equal shares after the shared gap (a sole
+   action fills it); a choice row gives every sibling one preset of the row,
+   capped by the equal share, and wraps labels rather than sizing to them. */
+:root {
+  --button-reference-rem: max(calc(16px / var(--ui-zoom, 1)), 1rem);
+  --button-gap: calc(var(--button-gap-rem, 0) * var(--button-reference-rem));
+  --button-minimum: calc(var(--button-minimum-rem, 0) * var(--button-reference-rem));
+}
+button[data-button-size$='-standard'] { --button-height-multiplier: var(--button-height-standard); }
+button[data-button-size$='-tall'] { --button-height-multiplier: var(--button-height-tall); }
+button[data-button-size$='-double'] { --button-height-multiplier: var(--button-height-double); }
+button[data-button-size] {
+  min-height: max(var(--tap-floor), calc(var(--button-standard-rem, 0) * var(--button-height-multiplier, 1) * var(--button-reference-rem)));
+}
+.as-choicerow {
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+  gap: var(--button-gap); width: 100%; min-width: 0; box-sizing: border-box;
+}
+.as-choicerow > button[data-button-size^='third-'] { --button-preset: var(--button-third); }
+.as-choicerow > button[data-button-size^='half-'] { --button-preset: var(--button-half); }
+.as-choicerow > button[data-button-size^='full-'] { --button-preset: var(--button-full); }
+.as-choicerow > button {
+  flex: 0 0 auto; box-sizing: border-box; min-width: 0; max-width: 100%;
+  width: min(var(--button-preset), calc((100% - (var(--button-count) - 1) * var(--button-gap)) / var(--button-count)));
+  white-space: normal; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.2;
+}
+.as-choicerow[data-button-count='1'] > button { min-width: min(var(--button-minimum), 100%); }
+.as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
 .modal-close { aspect-ratio: 1; flex: none; padding: 0; }
 :root[data-layout='narrow'] .as-railed { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); }
 :root[data-layout='narrow'] .as-railed > .as-rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
