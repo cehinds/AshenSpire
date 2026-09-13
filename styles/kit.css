@@ -3203,6 +3203,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 .as-ornament::before, .as-ornament::after { flex: 1 1 0; min-width: 0; }
 .title-screen .as-titlemenu { margin-inline: auto; text-align: center; }
+/* W3b: with a save, the menu and that save's preview share the body; the
+   wordmark above stays centred. W3a (no save) keeps the lone centred menu. */
+.title-screen .as-titlemenu:has(> .title-home) { max-width: 60rem; }
+.title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: center; margin: 1.8rem 0; }
+.title-screen .title-home > .title-menu { margin: 0; }
+:root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+.title-screen .title-save-preview { display: grid; gap: .35rem; min-width: 0; padding: 1rem 1.2rem; text-align: left; border: 1px solid var(--line-soft); border-radius: var(--r-3); background: color-mix(in srgb, var(--panel) 82%, transparent); }
+.title-screen .title-save-preview > p { margin: 0; }
+.title-screen .title-save-name { font: 600 1.6rem/1.2 var(--font-display); color: var(--parchment); }
+.title-screen .title-save-facts, .title-screen .title-save-identity { color: var(--muted); overflow-wrap: anywhere; }
+.title-screen .title-menu .tm-entry.slot-continue.is-highlighted:not(:disabled) { color: var(--gold); font-weight: 700; }
 .title-screen .as-ornament { width: 100%; justify-content: center; margin-inline: auto; }
 .set-range { touch-action: pan-x; min-height: var(--tap-floor); }
 .cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }

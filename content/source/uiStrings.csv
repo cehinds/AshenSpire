@@ -83,6 +83,9 @@ reward.detail.back,common.back,,Return without collecting; your other choices ke
 reward.chooser.back,common.back,,Return to the spoils — the offer keeps.,
 reward.leave.question,,Leave these rewards and continue?,,
 reward.leave.confirm,,CONTINUE,Leave the spoils door with rows still unclaimed.,
+title.save.eyebrow,,Your climb,The saved run Continue resumes.,
+title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,
+title.save.aria,,Saved climb in slot {slot},,
 # ---- the merchant ---------------------------------------------------------
 shop.bar.cards,,CARDS,Cards the merchant will sell you.,
 shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,
