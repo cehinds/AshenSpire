@@ -3076,8 +3076,19 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
-/* Creation keeps card nodes in place so focus can lift and settle smoothly. */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
+/* Creation keeps card nodes in place so focus can lift and settle smoothly.
+   ONE PLACEMENT, AND THE ROOM IT NEEDS (Constantine's review, 2026-09-12).
+   The information badge hangs a tap floor above a selected card on every
+   surface, this one included; a corner exception here read as a second rule
+   for the same control. What made the exception necessary was room, not
+   placement — with nothing reserved the badge straddled the STARTING ARMOUR
+   header's border (measured 1280x800, 2026-09-11) — so these selectors reserve
+   it: the 64 px row gap every other card scrollport keeps, and a head of 80,
+   not 64, because the badge rides its card's focus lift (translateY(-6px)
+   scale(1.05) about center bottom) while the scrollport clips at its padding
+   box. At 64 the circle lost 7 px off its top at 1280 and 8 px at 1440; at 80
+   it is whole and clear of the section face at 1280, 1366, 1440 and 1920. */
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:80px 6px 14px; gap:64px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
 .cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
@@ -3085,12 +3096,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
-/* IN THE CARD'S CORNER, not floating above it. Elsewhere the info button
-   hangs a tap floor above a selected card and the row reserves 64 px for it;
-   the creation selectors reserve nothing, so the button straddled the STARTING
-   ARMOUR header's border (measured 1280x800, 2026-09-11). Here it sits inside
-   the card's top-right corner at 32 px — the corner holds no reading. */
-.cc-card-selectors .card-inspection-target > .card-info-button { --card-info-size: 32px; top: 6px; left: auto; right: 6px; transform: none; font-size: 16px; }
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
@@ -3146,13 +3151,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    pane each own their overflow, so the Continue never leaves the glass. The
    subtraction is the door's head and foot, the section face and the panel's
    breathing room, divided by the zoom for the reason .modal's ceiling is.
-   The choices scrollport keeps the 64px head the other card scrollports keep
-   (above), so the above-card inspect control is not clipped on the first
-   row. Phones keep the stacked, page-scrolling layout below. */
+   The choices scrollport's head (above) is what keeps the above-card inspect
+   control off the section face on the first row. Phones keep the stacked,
+   page-scrolling layout below. */
 @media(min-width:701px) {
   .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
   .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
-  .cc-equip-group[data-equipment-section] > .cc-card-selectors:has(.poker-equipment-choice) { padding-top:64px; }
   .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
 }
 @media(max-width:700px) {
