@@ -27,7 +27,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
     }
   }
 
-  const done = button({ label: 'Close', weight: 'primary', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+  const done = button({ label: 'Close', role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
 
   // The COUNT is the head's status, not part of the title: "Draw pile" names
   // the door and stays put while `(5)` changes underneath it. The old markup
