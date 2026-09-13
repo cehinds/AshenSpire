@@ -510,7 +510,7 @@
       "minimumRowOffsetPx": 8,
       "depthLoweringFractions": [
         0.25,
-        0.2,
+        0.125,
         0
       ],
       "frontRowRetreatPercent": 2,

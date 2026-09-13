@@ -25248,7 +25248,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -25763,7 +25763,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -26314,7 +26314,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -26856,7 +26856,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -27394,7 +27394,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -27910,7 +27910,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -28438,7 +28438,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -28953,7 +28953,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -29497,7 +29497,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -30037,7 +30037,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -30564,7 +30564,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -31100,7 +31100,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -31611,7 +31611,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -32134,7 +32134,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -32641,7 +32641,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -33189,7 +33189,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -33696,7 +33696,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -34208,7 +34208,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -34720,7 +34720,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -35227,7 +35227,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -35734,7 +35734,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -36246,7 +36246,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -36790,7 +36790,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -37305,7 +37305,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -37816,7 +37816,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -38340,7 +38340,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -38864,7 +38864,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -39384,7 +39384,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -39904,7 +39904,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -40427,7 +40427,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -40963,7 +40963,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -41499,7 +41499,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -42023,7 +42023,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -42543,7 +42543,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -43059,7 +43059,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -43575,7 +43575,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -44104,7 +44104,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -44616,7 +44616,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -45129,7 +45129,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -45642,7 +45642,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -46155,7 +46155,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -46684,7 +46684,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -49455,7 +49455,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -49986,7 +49986,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -50508,7 +50508,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -51019,7 +51019,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -51542,7 +51542,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -52048,7 +52048,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -52559,7 +52559,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -53070,7 +53070,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -54860,7 +54860,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -55393,7 +55393,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -55910,7 +55910,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -56427,7 +56427,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -56948,7 +56948,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -57460,7 +57460,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -57973,7 +57973,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -58486,7 +58486,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -58999,7 +58999,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -59535,7 +59535,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -60071,7 +60071,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -60595,7 +60595,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -61107,7 +61107,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -61627,7 +61627,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -62139,7 +62139,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -62662,7 +62662,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -63186,7 +63186,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
@@ -63825,7 +63825,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "minimumRowOffsetPx": 8,
     "depthLoweringFractions": [
       0.25,
-      0.2,
+      0.125,
       0
     ],
     "frontRowRetreatPercent": 2,
