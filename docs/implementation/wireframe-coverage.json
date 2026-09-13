@@ -466,7 +466,7 @@
       "id": "W1t",
       "name": "Rewards",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -481,7 +481,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Head status \"{claimed} of {total} claimed\" and a claim-status column (per-row state, required choice slot) from rewardClaimStatus; side by side on wide, stacked on narrow. Door keeps its md width over the battlefield."
     },
     {
       "id": "W1u",
