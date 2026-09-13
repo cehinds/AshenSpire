@@ -17,8 +17,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-13",
     "group": "2026-09-13",
     "summary": "Choosing a weapon at character creation no longer buries the Continue button",
-    "detail": "On a phone, opening a hand to pick an armament used to draw every combat card that armament gives you at full size, one after another, between the weapon you were looking at and the button that moves you on — almost four screens of scrolling to get back. Those cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\"); tap it to see them, and they are drawn small. That alone removes about two fifths of the scrolling. The Continue button at the end of each creation step now stays pinned to the bottom of the view instead of sitting at the end of everything, so it is always within reach once you have chosen.",
-    "build": "0.7.1.14",
+    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. Two things change. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. And the Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way.",
+    "build": "0.7.1.16",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
   },
