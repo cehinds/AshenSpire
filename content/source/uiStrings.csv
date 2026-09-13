@@ -100,6 +100,16 @@ map.context.aria,,Selected node,,
 map.context.empty,,Choose a lit node to see what waits there.,,
 map.context.floor,,Floor {floor},,
 map.context.revealed,,Revealed by the Sealstone Key.,,
+# ---- the world-journey atlas (W4b: select, then Enter) --------------------
+atlas.recenter,,Recenter,Frame the map on where you stand and the roads open to you.,Recenter
+atlas.enter,,Enter,"Travel the open road to the selected place, or open the place where you stand.",Enter
+atlas.enterNamed,,Enter {name},,
+atlas.inspect,,Details,Open the full view of the selected place.,Details
+atlas.context.aria,,Selected place,,
+atlas.status.here,,You are here.,,
+atlas.status.road,,A connected road leads here.,,
+atlas.status.far,,Explore connecting roads to reach this place.,,
+atlas.roads.title,,Open roads,,
 # ---- the merchant ---------------------------------------------------------
 shop.bar.cards,,CARDS,Cards the merchant will sell you.,
 shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,

@@ -479,6 +479,69 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "atlas.recenter",
+    "extends": "",
+    "short": "Recenter",
+    "full": "Frame the map on where you stand and the roads open to you.",
+    "tip": "Recenter"
+  },
+  {
+    "id": "atlas.enter",
+    "extends": "",
+    "short": "Enter",
+    "full": "Travel the open road to the selected place, or open the place where you stand.",
+    "tip": "Enter"
+  },
+  {
+    "id": "atlas.enterNamed",
+    "extends": "",
+    "short": "Enter {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.inspect",
+    "extends": "",
+    "short": "Details",
+    "full": "Open the full view of the selected place.",
+    "tip": "Details"
+  },
+  {
+    "id": "atlas.context.aria",
+    "extends": "",
+    "short": "Selected place",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.status.here",
+    "extends": "",
+    "short": "You are here.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.status.road",
+    "extends": "",
+    "short": "A connected road leads here.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.status.far",
+    "extends": "",
+    "short": "Explore connecting roads to reach this place.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.roads.title",
+    "extends": "",
+    "short": "Open roads",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",
