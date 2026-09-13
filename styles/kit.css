@@ -2469,39 +2469,104 @@ body.pad-mode .as-keycap.float { display: none; }
    StatStrip whose two ends are Eyebrows with a rail between them. It is a
    receipt — no pointer, nothing to tap — and it leaves the HUD's right gutter
    free so the utility rail never lands on it. */
-/* THE STRIP CLEARS THE BAND'S GRIP, which hangs half its own height below the
-   HUD's bottom edge (§ BAND: `translate(-50%, 50%)` of a 2.2rem pill = 11 px of
-   overhang). The map is the one screen with READ TEXT directly under the band,
-   and measured at 1200x730 ?shot=map the grip's box ran 183->188 straight over
-   the top of "ACT I — THE FALLOW MARCHES" (title top 183, grip bottom 188).
-   12 px of top padding is that overhang plus a hairline, and it is padding
-   rather than margin so the strip's own ground still meets the band's. */
-.mapscreen > .act-route-strip {
-  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
-  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
-  border-bottom: 1px solid var(--line); background: var(--bg-raise);
-  pointer-events: none; user-select: none; cursor: default;
+/* ═══ MAP HEADER — W4b's 10 vh band (owner: "10 vh for w4b") ══════════════
+   The map draws the SAME run HUD in a host context, `data-hud-layout=
+   "map-compact"`, with its route strip laid out inside it. Combat and the
+   rooms never set the attribute, so nothing below reaches them.
+   HEIGHT comes from ui/models/MapHeaderLayout.js through components/
+   mapHeader.js as unitless physical px: 10% of the visible height, never less
+   than one tap row plus its insets. Divided by the page zoom here, so it lands
+   on glass as computed.
+   COMPOSITION is a grid on `.hud-top`; the resource row dissolves into it so
+   the meters and the Armoury / Menu pair are cells of the same grid.
+     narrow  facts   | actions        wide  route | facts  | actions
+             meters  | actions              route | meters | actions
+             route   | actions
+   Text keeps a physical floor (10 px labels) rather than scaling with the band;
+   what yields first is detail — the act chip's seat name ellipsizes (the route
+   line carries the act's name), then the narrow route line drops. */
+.shared-hud[data-hud-layout="map-compact"] {
+  --mh-inset: calc(var(--map-header-inset-px, 4) * 1px / var(--ui-zoom, 1));
+  --mh-gap: calc(var(--map-header-gap-px, 2) * 1px / var(--ui-zoom, 1));
+  box-sizing: border-box; justify-content: center; gap: 0;
+  height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1)); min-height: 0;
+  padding: var(--mh-inset) 2.5%;
 }
-.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
-.mapscreen > .act-route-strip .map-orientation-progress {
-  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-  align-items: center; gap: 8px; margin: 0; width: 100%;
+.shared-hud[data-hud-layout="map-compact"] > .hud-top {
+  display: grid; height: 100%; min-height: 0; min-width: 0;
+  align-content: center; align-items: center;
+  column-gap: calc(12px / var(--ui-zoom, 1)); row-gap: var(--mh-gap);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info actions" "meters actions" "route actions";
 }
-.mapscreen > .act-route-strip .map-orientation-progress .as-eyebrow { font-size: 0.9rem; letter-spacing: 0.12em; }
-.mapscreen > .act-route-strip [data-role="boss"] { color: var(--ember); }
-.mapscreen > .act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
-.mapscreen > .act-route-strip .map-orientation-rail::after {
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] > .hud-top {
+  grid-template-columns: fit-content(32%) minmax(0, 1fr) auto;
+  grid-template-areas: "route info actions" "route meters actions";
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] > .hud-top {
+  grid-template-areas: "info actions" "meters actions";
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] .act-route-strip { display: none; }
+.shared-hud[data-hud-layout="map-compact"] .hud-resource-row { display: contents; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row { grid-area: info; min-width: 0; gap: calc(8px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
+.shared-hud[data-hud-layout="map-compact"] .hud-control-grid { grid-area: actions; align-self: center; }
+/* One fact line, still three tracks so Cinders stays centred. Each outer track
+   holds its own facts: a chip may shrink, and the class name and the act's
+   seat name ellipsize inside their track instead of running into Cinders
+   (the route strip carries the act's full name). Keys and numbers never do. */
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row > .as-statstrip { min-width: 0; margin: 0; flex-wrap: nowrap; }
+/* The trail FILLS its track and packs right, rather than the kit's
+   `justify-self: end` (§ BAND thirds), which sizes it to its max-content and
+   lets it run left over Cinders on a phone instead of yielding. */
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .hud-run-meta { justify-self: stretch; justify-content: flex-end; gap: 0 calc(8px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip { display: flex; flex: 0 0 auto; min-width: 0; white-space: nowrap; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) { flex: 0 1 auto; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip > .ck { flex: 0 0 auto; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) > .cv {
+  display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* One meter line: HP, MP and SP side by side instead of stacked. */
+.shared-hud[data-hud-layout="map-compact"] .resbars {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  column-gap: calc(10px / var(--ui-zoom, 1)); row-gap: 0;
+}
+.shared-hud[data-hud-layout="map-compact"] .resbars > .resline { min-width: 0; gap: calc(6px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
+/* THE ROUTE STRIP is a receipt — no pointer, nothing to tap: the act's name as
+   a Title·S beside (narrow) or over (wide) a StatStrip whose two ends are
+   Eyebrows with a rail between them. */
+.act-route-strip {
+  box-sizing: border-box; pointer-events: none; user-select: none; cursor: default;
+}
+.shared-hud[data-hud-layout="map-compact"] .act-route-strip {
+  grid-area: route; min-width: 0; width: auto; margin: 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, auto) minmax(4rem, 1fr); align-items: center;
+  column-gap: calc(8px / var(--ui-zoom, 1)); row-gap: calc(3px / var(--ui-zoom, 1));
+  border: 0; background: none;
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] .act-route-strip {
+  grid-template-columns: minmax(0, 1fr); align-self: center;
+  padding-inline-end: calc(12px / var(--ui-zoom, 1)); border-right: 1px solid var(--line);
+}
+.act-route-strip > .as-title-s {
+  margin: 0; min-width: 0; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.2;
+  letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(1.5rem, 1fr) auto;
+  align-items: center; gap: calc(6px / var(--ui-zoom, 1)); margin: 0; width: 100%; min-width: 0;
+}
+.act-route-strip .map-orientation-progress .as-eyebrow { font-size: max(0.9rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.2; letter-spacing: 0.1em; }
+/* Narrow: the title already stands at the rail's start, so ENTRANCE yields. */
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip [data-role="start"] { display: none; }
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip .map-orientation-progress { grid-template-columns: minmax(1.5rem, 1fr) auto; }
+.act-route-strip [data-role="boss"] { color: var(--ember); }
+.act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.act-route-strip .map-orientation-rail::after {
   content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
   border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
   transform: translateY(-50%) rotate(45deg);
-}
-@media (max-width: 700px) {
-  /* Percentage, never a viewport unit: the body is zoomed, so 80% of the Map
-     surface stays 80% on glass. The right margin is the HUD's utility gutter. */
-  .mapscreen > .act-route-strip {
-    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
-    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
-  }
 }
 /* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
    BESIDE the board and never over it (styles/map.css says why). The bar has no

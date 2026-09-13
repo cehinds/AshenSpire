@@ -15,9 +15,21 @@ export const wireframeUi = freeze({
   // WCB1: one inspect circle for every card, combatant and tile — a 2.75
   // reference-rem (44 physical px) target, 16 px label, hung 10 px above.
   inspect: { sizeRem: 2.75, labelPx: 16, gapPx: 10 },
-  // W4b: a repeat pick enters only after the selection has stood this long.
-  // Owner kept 400 ms on 2026-09-13.
-  map: { repeatPickDelayMs: 400 },
+  map: {
+    // W4b: a repeat pick enters only after the selection has stood this long.
+    // Owner kept 400 ms on 2026-09-13.
+    repeatPickDelayMs: 400,
+    // W4b header (owner: "10 vh for w4b"). The run HUD and the route strip
+    // share one band of heightFraction × the visible height, never shorter
+    // than one touch row (minimumTargetPx, physical) plus its two insets.
+    // Lines are the compact text/meter rows the band can stack beside the
+    // controls; a narrow band needs three (facts, meters, route) to keep the
+    // route line, a wide one carries the route in its own column.
+    header: {
+      heightFraction: 0.1, minimumTargetPx: 44, insetPx: 4,
+      lineHeightPx: 16, lineGapPx: 2, wideMinWidthPx: 640, narrowRouteLines: 3,
+    },
+  },
   hand: {
     minimumHeightPx: 208, minWidthRem: 5, maxWidthRem: 9,
     minCapacity: 5, maxCapacity: 15, narrowWidthRem: 22, wideWidthRem: 75,

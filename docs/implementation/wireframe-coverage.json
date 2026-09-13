@@ -833,7 +833,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Classic act map: select then Enter, context band, Recenter/Enter footer; bands measured 58% map at 1280x800 and 66% at 390x844. Header (HUD + route strip) still ~17%. Atlas pending in its own branch."
+      "notes": "Classic act map: select then Enter, context band, Recenter/Enter footer. Header (run HUD + route strip) is now W4b's 10 vh via the map-compact HUD context (MapHeaderLayout, wireframeUi.map.header): 10% at 1280x800, 1440x860, 390x844 and 375x667; 52 px physical floor (13.3%) at 844x390. Map scene 58.9% at 1280x800, 68.6% at 390x844. Atlas pending in its own branch; it can opt into the same header."
     },
     {
       "id": "W4c",
@@ -3108,7 +3108,8 @@
       "id": "WGH0",
       "name": "HUD composition contract",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Host HUD context: runHudHtml/RunHudViewModel accept layout ('map-compact') and orientationHtml; the map's header is sized by src/ui/models/MapHeaderLayout.js (10 vh, one-tap-row floor). Combat and the rooms pass no context and draw unchanged. Placement presets beyond this are not implemented.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3221,7 +3222,8 @@
       "id": "WGH4",
       "name": "Total HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "W4b map context: the total HUD fits W4b's 10 vh header as one grid (route | facts over meters | Armoury, Menu on wide hosts; facts, meters, route beside the controls on narrow). Meters sit side by side; relics stay off the map as before. W4a combat HUD unchanged.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {

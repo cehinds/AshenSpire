@@ -20,10 +20,15 @@ export function runHudViewModel({
   controls,
   quickSettings,
   overlayHtml = '',
+  // A HUD context the host opts into ('map-compact' is W4b's 10 vh header);
+  // empty keeps the band combat and the rooms draw. `orientationHtml` is the
+  // host's own receipt (the map's route strip) laid out inside the band.
+  layout = '',
+  orientationHtml = '',
 } = {}) {
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml },
+    properties: { place, headerClass, overlayHtml, layout, orientationHtml },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {

@@ -114,8 +114,9 @@ Browser evidence (emulation, `?shot=map`):
   takes 58% of the height at 1280×800 and 66% at 390×844.
 
 Limits:
-- The run HUD plus route strip still take about 17% rather than W4b's 10%
-  header; narrowing them means redesigning the shared HUD.
+- ~~The run HUD plus route strip still take about 17% rather than W4b's 10%
+  header.~~ Superseded by *Map header: W4b's 10 vh* below: the header is now
+  10% of the height, with a 52 px physical floor on short hosts.
 - The zoom bar's ⊙ remains beside the footer's Recenter (the co-op map shares
   that bar).
 ## Combatant inspector
@@ -658,6 +659,68 @@ change and was worse on dev. Formation layout ignores safe-area insets, so
 rails touch the edges on notched phones. The gate at 740×360 and 667×375 is
 a separate measured decision (`gateBelowH`, `shortWideMinH`). Playwright QA
 tools could not run here.
+## Map header: W4b's 10 vh
+
+Branch `feature/wireframe-map-header`, based on dev `d2ea5bcd`. The owner
+chose "10 vh for w4b", with the HTML reference as the guide. This applies it
+to the classic act map. The run HUD and the route strip now share one band of
+10% of the visible height, and the map scene gains the rest.
+
+- **A HUD context, not a new HUD.** `runHudHtml` and `RunHudViewModel` accept
+  `layout: 'map-compact'` and `orientationHtml`. The map passes both; the
+  route strip is laid out inside the band. Combat, the merchant, the Shrine
+  and events pass neither, and their markup is unchanged.
+- **Sizing (WGH0).** `src/ui/models/MapHeaderLayout.js` is a DOM-free model
+  over `wireframeUi.map.header`. The band is `max(10% of the visible height,
+  tap row + 2 × 4 px)`. The tap row is the player's `--tap-target` (44 px by
+  default), so the floor is 52 px physical. The model also picks the
+  composition:
+  - wide (640 px and over): route | facts over meters | Armoury · Menu;
+  - narrow: facts, meters and route as three lines beside the controls.
+    A narrow band too short for three lines drops the route line.
+  `src/ui/components/mapHeader.js` writes the answer as custom properties.
+  `styles/kit.css` § MAP HEADER converts them through `--ui-zoom`.
+- **Fit (WGH4).** HP, MP and SP sit side by side on one meter line. The fact
+  line keeps three tracks, so Cinders stays centred. The class name and the
+  act's seat name ellipsize within their track, because the route strip
+  carries the act's full name. On narrow hosts the route's "Entrance" label
+  yields; its title stands at the rail's start.
+- **Readable minimums.** Header text has a 10 px physical floor. On dev,
+  route labels fell to 5.6 px at 844×390. Armoury and Menu stay 44 × 44.
+- **Camera.** `sizeMapHeader` runs before the board mounts, and again on
+  every resize ahead of the camera. The scene height is final when the board
+  checks a saved fit camera, so a pan survives the Armoury remount.
+- **Atlas.** The world-journey atlas (#1027) draws its own `.atlas-header`.
+  To adopt the band, it would draw `runHudHtml({ …, layout: MAP_HEADER_LAYOUT,
+  orientationHtml })` and call `sizeMapHeader(app)` before its board mounts
+  and on resize. This branch does not touch the atlas's files.
+
+Browser evidence (CDP emulation, `?shot=map&shotSeed=SHOWCASE`; header is
+the run HUD including the route strip, before → after):
+
+| Viewport | Header | Map scene | Smallest header target | Page scrolls |
+|---|---|---|---|---|
+| 1280×800 | 137.5 px (17.2%) → 80 px (10%) | 51.7% → 58.9% | 44 px | no |
+| 1440×860 | 150 px (17.4%) → 86 px (10%) | 52.3% → 59.7% | 44 px | no |
+| 390×844 | 147 px (17.4%) → 84.4 px (10%) | 61.2% → 68.6% | 44 px | no |
+| 375×667 | 141.4 px (21.2%) → 66.7 px (10%) | 52.5% → 63.7% | 44 px | no |
+| 844×390 | 101.8 px (26.1%) → 52 px (13.3%, floor) | 22.6% → 35.4% | 44 px | no |
+
+- The footer is in view at every size. No header text overlaps another cell.
+- After a wheel pan, the Armoury remount restored the camera exactly at four
+  sizes. At 844×390 it drifted 19 px, the same drift dev shows there.
+
+Limits:
+- At 844×390, 10 vh (39 px) is shorter than one 44 px tap row, so the band
+  takes the 52 px floor. That exception is deliberate.
+- On narrow hosts each meter's trough is short. The trough keeps its exact
+  max/reference length and is never floored.
+- Not measured: Text size XL, a raised tap size, and real devices.
+  `tools/map-camera-persistence.mjs --entry AshenSpire.html` passes its
+  remount cases, then stalls at its known Save & Quit flush case, as on dev.
+- `tools/ui-components.mjs` C12 pins an older `actRouteStripHtml({ title:
+  actTitle(run.actNumber) })` call that dev had already changed. It is not in
+  the suite and is left as it was.
 
 ## Remaining integration
 
