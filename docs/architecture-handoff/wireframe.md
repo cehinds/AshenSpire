@@ -25215,6 +25215,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -25709,6 +25710,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -26239,6 +26241,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -26760,6 +26763,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -27277,6 +27281,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -27772,6 +27777,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -28279,6 +28285,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -28773,6 +28780,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -29296,6 +29304,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -29815,6 +29824,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -30321,6 +30331,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -30836,6 +30847,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -31326,6 +31338,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -31828,6 +31841,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -32314,6 +32328,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -32841,6 +32856,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -33327,6 +33343,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -33818,6 +33835,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -34309,6 +34327,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -34795,6 +34814,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -35281,6 +35301,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -35772,6 +35793,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -36295,6 +36317,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -36789,6 +36812,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -37279,6 +37303,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -37782,6 +37807,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -38285,6 +38311,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -38784,6 +38811,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -39283,6 +39311,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -39785,6 +39814,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -40300,6 +40330,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -40815,6 +40846,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -41318,6 +41350,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -41817,6 +41850,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -42312,6 +42346,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -42807,6 +42842,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -43315,6 +43351,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -43806,6 +43843,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -44298,6 +44336,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -44790,6 +44829,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -45282,6 +45322,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -45790,6 +45831,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -48540,6 +48582,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -49050,6 +49093,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -49551,6 +49595,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -50041,6 +50086,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -50543,6 +50589,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -51028,6 +51075,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -51518,6 +51566,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -52008,6 +52057,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -53777,6 +53827,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -54289,6 +54340,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -54785,6 +54837,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -55281,6 +55334,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -55781,6 +55835,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -56272,6 +56327,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -56764,6 +56820,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -57256,6 +57313,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -57748,6 +57806,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -58263,6 +58322,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -58778,6 +58838,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -59281,6 +59342,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -59772,6 +59834,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -60271,6 +60334,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -60762,6 +60826,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -61264,6 +61329,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -61767,6 +61833,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },
@@ -62369,6 +62436,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
+    "minimumRowOffsetPx": 8,
     "actorScale": 1,
     "showGuides": true
   },

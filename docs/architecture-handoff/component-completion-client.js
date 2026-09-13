@@ -124,7 +124,8 @@ function createComponentReferenceRenderers(configuration) {
         const requestedStagger=stage.width*c.backRowOffsetPercent/100;
         const minimumPitch=frameHalf*2+bodyGap;
         const staggerRoom=Math.max(0,(available-minimumPitch*Math.max(0,c.columns-1))/Math.max(1,2*rowCenter));
-        const stagger=Math.min(requestedStagger,staggerRoom);
+        // Keep the diagonal visible even when full information-frame widths consume the lane.
+        const stagger=Math.min(requestedStagger,Math.max(c.minimumRowOffsetPx??8,staggerRoom),available/Math.max(1,c.columns+c.rows));
         const staggerExtent=stagger*rowCenter,firstColumn=allowedMin+staggerExtent,lastColumn=allowedMax-staggerExtent;
         for(const s of sideSlots){
           const column=Number(s.slot.dataset.column),row=Number(s.slot.dataset.row);
