@@ -3265,13 +3265,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    two-class rule, so without the exclusion every ready danger door painted
    its red button green (measured on the title's Overwrite and Delete doors,
    2026-09-11: background rgb(37, 92, 57) on both). */
+/* The positive (ready) role, one home; the End Turn exception below reuses it. */
+:root { --control-positive-fill:#255c39; --control-positive-border:#6fb580; --control-positive-text:#f0fff3; }
 button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
-  background-color:#255c39; border-color:#6fb580; color:#f0fff3;
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
 button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
-  background-color:#255c39;
+  background-color:var(--control-positive-fill);
+}
+/* COLOR-INTERACTION-CONTRACT §3 (models/ControlAppearance.js): exits stay
+   brown/gold until highlighted by pointer, keyboard or pad, then turn red. */
+.as-btn[data-control-role='exit']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color:var(--danger); color:var(--parchment);
+}
+.modal-close[data-control-role='exit']:is(:hover, :focus-visible, .gp-focus) > .modal-close-face { border-color:var(--danger); color:var(--danger); }
+/* Registered exception combatEndTurn: a legal early end is neutral at rest and
+   green while highlighted; spent actions already mark it ready above. */
+.as-btn[data-control-exception='combatEndTurn']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
 button.primary:disabled, button.primary[aria-disabled='true'],
 .as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
@@ -3345,6 +3358,10 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   max-width:none; min-width:0;
 }
+/* A lone exit (pile, flask, combatant door) lost `.primary` with its role;
+   it still spans the foot it is the only way out of. */
+.modal-foot-actions:has(> [data-control-role='exit']:only-child) { width:100%; margin-left:0; }
+.modal-foot-actions > [data-control-role='exit']:only-child { max-width:none; min-width:0; }
 /* THE CREATION FOOT KEEPS BACK LEFT AND BEGIN RIGHT once Begin is ready. The
    stacked ready-primary foot above is for a door whose primary is the one
    thing left to do; here Back is a real way out, and Constantine (2026-09-11):
@@ -3476,13 +3493,15 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
 }
 /* Approved wireframe composition. Domain controls retain their handlers. */
+/* Band sizes come from CombatLayout.js; the fallbacks cover the first paint
+   and the co-op screen, which does not mount the layout adapter. */
 :root .combat[data-layout='formation'] {
-  --wireframe-hand-height: max(calc(208px / var(--ui-zoom, 1)), 30%);
-  --wireframe-footer-height: max(calc(56px / var(--ui-zoom, 1)), 5%);
-  grid-template-rows: 10% minmax(0, 1fr) calc(var(--wireframe-hand-height) + var(--wireframe-footer-height));
+  --wireframe-hand-height: var(--wireframe-band-hand, max(calc(208px / var(--ui-zoom, 1)), 30%));
+  --wireframe-footer-height: var(--wireframe-band-footer, max(calc(56px / var(--ui-zoom, 1)), 5%));
+  grid-template-rows: var(--wireframe-band-hud, 10%) minmax(0, 1fr) calc(var(--wireframe-hand-height) + var(--wireframe-footer-height));
 }
 :root .combat[data-layout='formation'] > .hand-area {
-  grid-template-rows: minmax(0, 1fr) max(calc(56px / var(--ui-zoom, 1)), 14.2857%);
+  grid-template-rows: minmax(0, 1fr) var(--wireframe-band-footer, max(calc(56px / var(--ui-zoom, 1)), 14.2857%));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
   position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;
@@ -3535,6 +3554,20 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'] .combat-action-row .pile {
   height: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+}
+/* WGC6: one centered, tightly packed five-track group sized by
+   packCombatFooter(). Applies once the layout adapter has measured the row. */
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']{
+  --combat-control-size: var(--footer-circle) !important;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);
+  justify-content: center; align-items: center; gap: var(--footer-gap);
+  width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
+}
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> * {
+  grid-column: span 1; grid-row: 1;
+}
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
+  width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label {
   font-size: calc(12px / var(--ui-zoom, 1));

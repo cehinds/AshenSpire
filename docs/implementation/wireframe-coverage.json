@@ -797,7 +797,7 @@
         "galaxyS24": "Reviewed at 360x780: page contained; hand has 7 local pixels of horizontal overflow. Not complete.",
         "interactions": "adjacent hand selection and card inspection verified; remaining interactions pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Bands now come from allocateCombatBands (10/55/30/5 with 208/56 px hand/footer minimums); 844x390 reports data-combat-geometry=unsupported. Full reference parity is NOT verified."
     },
     {
       "id": "W4b",
@@ -1790,7 +1790,7 @@
       "id": "WCB0",
       "name": "Buttons and inspection",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1817,7 +1817,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence; the nine size presets are still pending a consuming workspace."
     },
     {
       "id": "WCB1",
@@ -1885,7 +1886,7 @@
       "id": "WCB3",
       "name": "Primary / confirmation button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1912,13 +1913,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Primary role: green when ready, stronger when highlighted; destructive never green; End Turn uses the registered combatEndTurn exception."
     },
     {
       "id": "WCB4",
       "name": "Back / cancel button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1945,7 +1947,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Back/Close/Cancel/Leave carry the exit role: brown/gold at rest, red while highlighted; a sole exit in the primary slot is not green."
     },
     {
       "id": "WCB5",
@@ -1979,7 +1982,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Header exit carries the exit role; its face turns red under pointer, keyboard, or pad highlight. Square geometry from --iconbtn-size."
     },
     {
       "id": "WCF0",
@@ -2890,13 +2893,13 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and provisional 4rem readable floor. Verified in emulation at 1440x860, 375x667, 360x780."
     },
     {
       "id": "WGC7",
       "name": "Actions remaining",
       "parent": "WCM2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2923,13 +2926,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Actions circle shares the packed footer diameter."
     },
     {
       "id": "WGC8",
       "name": "Draw pile button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2956,13 +2960,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Draw pile uses the shared pile track (touch target and readable floor on narrow hosts)."
     },
     {
       "id": "WGC9",
       "name": "End turn button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2989,13 +2994,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "End Turn shares the circle height and takes up to 40% of the footer."
     },
     {
       "id": "WGC10",
       "name": "Discard/exhaust button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3022,13 +3028,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Discard/Exhaust face fits its track without overflow at 375 and 360 px widths."
     },
     {
       "id": "WGC11",
       "name": "Potion control",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3055,7 +3062,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Potions circle shares the packed footer diameter; single footer control, none in the top HUD."
     },
     {
       "id": "WGH0",
@@ -3086,7 +3094,7 @@
       "id": "WGH1",
       "name": "Vitality HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3117,7 +3125,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Already implemented: HUD_REFERENCE_MAX 200/20/20, track = max/reference, fill = current/max, no minimum track length, scaleByMax on the main HUD."
     },
     {
       "id": "WGH2",

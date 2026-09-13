@@ -73,6 +73,7 @@ import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { setStatusTrayOverflow } from '../components/statusTray.js';
 import { planCombatantStack } from '../models/CombatantStackModel.js';
+import { wireCombatLayout } from '../components/combatLayout.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
@@ -151,7 +152,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
           ${html(pileButton('draw', 'Draw'))}
-          ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
+          ${html(button({ label: 'End Turn', weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall' }))}
           ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
           ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
         </div>
@@ -174,6 +175,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+  const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
   let readinessOrder = [];
   let visualPlans = new Map();
@@ -600,7 +602,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
-    const done = button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true', title: helpText('close') } });
+    const done = button({ label: 'Close', role: 'exit', attrs: { 'data-focusable': 'true', title: helpText('close') } });
     const shell = openModal({
       size: 'md',
       className: 'combatant-door',
@@ -2226,6 +2228,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         enemyFrames.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
+        combatLayout.release();
         aimObserver?.disconnect();
         clearCardFeedback();
         pagerVeilObserver.disconnect();
