@@ -1004,6 +1004,12 @@ try {
   console.error('FAIL Every card owes two beats:', error);
 }
 try {
+  await import('./hand-forwards-surface.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The hand forwards its surface to the inspect door:', error);
+}
+try {
   await import('./card-actions.test.mjs');
 } catch (error) {
   zoomExtra++;
