@@ -72,7 +72,7 @@ function createComponentReferenceRenderers(configuration) {
       // Spacing adapts before any sprite fit; upper rows must not consume the sprite's entire height.
       const detailReserve=(cfg().scene.selectionDetailReserveRem??5)*rem,legibility=cfg().combatantLegibility;
       const controlsReserve=(legibility.infoSizePx??44)+(n.querySelector('.combatant-intent:not([hidden])')?(legibility.intentRowMinPx??20):0)+cfg().spacing.gapRem*rem*2;
-      const minimumSprite=cfg().scene.minimumSpriteHeightPx??60;
+      const minimumSprite=cfg().scene.minimumSpriteHeightPx??84;
       const lastFoot=Math.max(inset,stage.height-inset-detailReserve),firstFoot=Math.min(lastFoot,inset+controlsReserve+minimumSprite);
       const rowStep=Math.max(0,(lastFoot-firstFoot)/Math.max(1,c.rows-1));
       for(const slot of slots){const r=slot.getBoundingClientRect(),originalY=r.top+r.height/2-stage.top,targetY=firstFoot+Number(slot.dataset.row)*rowStep;slot.dataset.verticalShift=String(targetY-originalY);slot.style.transform+=' translateY('+slot.dataset.verticalShift+'px)';}
@@ -103,11 +103,11 @@ function createComponentReferenceRenderers(configuration) {
       }).filter(Boolean);
       const gap=stage.width*c.centerGapPercent/100;
       const allocations=[];const bothSides=['ally','enemy'];
-      for(const side of bothSides)for(let row=0;row<c.rows;row++){const rowActors=models.filter(m=>m.side===side&&m.row===row);if(rowActors.length)allocations.push({availableWidth:(stage.width-gap)/2-inset,availableHeight:stage.height*cfg().scene.actorHeightFraction,actors:rowActors.map(m=>({row,baseWidth:m.left+m.right,baseHeight:m.above+m.below}))});}
+      for(const side of bothSides)for(let row=0;row<c.rows;row++){const rowActors=models.filter(m=>m.side===side&&m.row===row);if(rowActors.length)allocations.push({availableWidth:(stage.width-gap)/2-inset,availableHeight:stage.height*cfg().scene.actorHeightFraction,actors:rowActors.map(m=>({row,baseWidth:m.width,baseHeight:m.above+m.below}))});}
       let sharedScale=(typeof sharedCombatantBaseScale==='function'?sharedCombatantBaseScale(allocations,focus):focus.fit.maximumScale)*c.actorScale;
       const peak=Math.max(...focus.rowBase.map((base,row)=>base*focus.selectedGrowth[row]));
       // Reserve configured focus growth before selection; selection itself never refits any actor.
-      for(const m of models){const r=m.slot.getBoundingClientRect(),y=r.top+r.height/2-stage.top;sharedScale=Math.min(sharedScale,r.width/((m.left+m.right)*peak));const legibility=cfg().combatantLegibility,controlReserve=(legibility.infoSizePx??44)+(m.intentPresent?Math.max(legibility.intentRowMinPx??20,legibility.valueFontMinPx??12):0)+cfg().spacing.gapRem*rem*2;if(m.spriteAbove>0)sharedScale=Math.min(sharedScale,Math.max(0,y-inset-controlReserve)/(m.spriteAbove*peak));if(m.below>0)sharedScale=Math.min(sharedScale,Math.max(0,stage.height-inset-y)/(m.below*peak));}
+      for(const m of models){const r=m.slot.getBoundingClientRect(),y=r.top+r.height/2-stage.top;sharedScale=Math.min(sharedScale,r.width/(m.width*peak));const legibility=cfg().combatantLegibility,controlReserve=(legibility.infoSizePx??44)+(m.intentPresent?Math.max(legibility.intentRowMinPx??20,legibility.valueFontMinPx??12):0)+cfg().spacing.gapRem*rem*2;if(m.spriteAbove>0)sharedScale=Math.min(sharedScale,Math.max(0,y-inset-controlReserve)/(m.spriteAbove*peak));if(m.below>0)sharedScale=Math.min(sharedScale,Math.max(0,stage.height-inset-y)/(m.below*peak));}
       for(const side of bothSides){
         const group=models.filter(m=>m.side===side);if(!group.length)continue;
         const sideSlots=slots.filter(s=>s.dataset.side===side).map(slot=>{const r=slot.getBoundingClientRect();return {slot,x:r.left+r.width/2-stage.left,y:r.top+r.height/2-stage.top,width:r.width};});

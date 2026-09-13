@@ -24281,7 +24281,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -24293,7 +24293,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -24762,7 +24762,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -24774,7 +24774,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -25279,7 +25279,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -25291,7 +25291,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -25787,7 +25787,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -25799,7 +25799,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -26291,7 +26291,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -26303,7 +26303,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -26773,7 +26773,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -26785,7 +26785,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -27267,7 +27267,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -27279,7 +27279,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -27748,7 +27748,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -27760,7 +27760,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -28258,7 +28258,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -28270,7 +28270,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -28764,7 +28764,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -28776,7 +28776,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -29257,7 +29257,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -29269,7 +29269,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -29759,7 +29759,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -29771,7 +29771,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -30236,7 +30236,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -30248,7 +30248,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -30725,7 +30725,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -30737,7 +30737,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -31198,7 +31198,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -31210,7 +31210,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -31712,7 +31712,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -31724,7 +31724,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -32185,7 +32185,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -32197,7 +32197,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -32663,7 +32663,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -32675,7 +32675,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -33141,7 +33141,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -33153,7 +33153,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -33614,7 +33614,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -33626,7 +33626,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -34087,7 +34087,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -34099,7 +34099,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -34565,7 +34565,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -34577,7 +34577,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -35075,7 +35075,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -35087,7 +35087,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -35556,7 +35556,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -35568,7 +35568,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -36033,7 +36033,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -36045,7 +36045,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -36523,7 +36523,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -36535,7 +36535,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -37013,7 +37013,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -37025,7 +37025,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -37499,7 +37499,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -37511,7 +37511,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -37985,7 +37985,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -37997,7 +37997,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -38474,7 +38474,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -38486,7 +38486,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -38976,7 +38976,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -38988,7 +38988,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -39478,7 +39478,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -39490,7 +39490,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -39968,7 +39968,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -39980,7 +39980,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -40454,7 +40454,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -40466,7 +40466,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -40936,7 +40936,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -40948,7 +40948,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -41418,7 +41418,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -41430,7 +41430,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -41913,7 +41913,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -41925,7 +41925,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -42391,7 +42391,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -42403,7 +42403,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -42870,7 +42870,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -42882,7 +42882,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -43349,7 +43349,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -43361,7 +43361,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -43828,7 +43828,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -43840,7 +43840,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -44323,7 +44323,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -44335,7 +44335,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -47314,7 +47314,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -47326,7 +47326,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -47811,7 +47811,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -47823,7 +47823,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -48299,7 +48299,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -48311,7 +48311,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -48776,7 +48776,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -48788,7 +48788,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -49265,7 +49265,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -49277,7 +49277,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -49737,7 +49737,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -49749,7 +49749,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -50214,7 +50214,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -50226,7 +50226,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -50691,7 +50691,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -50703,7 +50703,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -52447,7 +52447,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -52459,7 +52459,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -52946,7 +52946,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -52958,7 +52958,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -53429,7 +53429,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -53441,7 +53441,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -53912,7 +53912,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -53924,7 +53924,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -54399,7 +54399,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -54411,7 +54411,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -54877,7 +54877,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -54889,7 +54889,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -55356,7 +55356,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -55368,7 +55368,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -55835,7 +55835,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -55847,7 +55847,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -56314,7 +56314,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -56326,7 +56326,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -56816,7 +56816,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -56828,7 +56828,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -57318,7 +57318,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -57330,7 +57330,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -57808,7 +57808,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -57820,7 +57820,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -58286,7 +58286,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -58298,7 +58298,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -58772,7 +58772,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -58784,7 +58784,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -59250,7 +59250,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -59262,7 +59262,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -59739,7 +59739,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -59751,7 +59751,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -60229,7 +60229,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -60241,7 +60241,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
@@ -60818,7 +60818,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "centerGapRem": 3,
     "centerGapPercent": 10,
     "backRowOffsetPercent": 5,
-    "actorScale": 0.78,
+    "actorScale": 1,
     "showGuides": true
   },
   "groundShadow": {
@@ -60830,7 +60830,7 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 60,
+    "minimumSpriteHeightPx": 84,
     "selectionDetailReserveRem": 5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
