@@ -28,12 +28,15 @@ export function fitStatusTray(row, width) {
       overflow = summary = document.createElement('button');
       overflow.type = 'button';
       overflow.className = 'status-overflow status-overflow-more';
-      overflow.addEventListener('click', event => { event.stopPropagation(); action(overflow); });
+      // The action returns false when it yields (a card or flask is armed and
+      // the tap is a play on the target); the event then travels on untouched.
+      overflow.addEventListener('click', event => { if (action(overflow) !== false) event.stopPropagation(); });
       // Keyboard activation is explicit, as on the pips: the combat screen's
       // own Enter/Space shortcuts must not also run, and the tile answers once.
       overflow.addEventListener('keydown', event => {
         if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault(); event.stopPropagation(); action(overflow);
+        if (action(overflow) === false) return;
+        event.preventDefault(); event.stopPropagation();
       });
     } else {
       overflow = document.createElement('details'); overflow.className = 'status-overflow';
