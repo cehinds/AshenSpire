@@ -17,6 +17,7 @@
 // `.title-slot-pick`) through `className` for its listeners and the tools
 // that read the page; kit.css draws nothing for those names.
 
+import { resolveControlRole, assertControlException } from '../models/ControlAppearance.js';
 import {
   buttonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, modalHead as shellModalHead,
   modalFooter as shellModalFooter, modalCloseButton as shellModalCloseButton, modalCloseButtonHtml as shellModalCloseButtonHtml,
@@ -113,13 +114,17 @@ export function iconButton({ glyph, label, id = '', className = '', attrs = {} }
     'aria-label': label, title: attrs.title ?? label, text: glyph,
   });
 }
-/** button({ label, weight: 'secondary'|'primary'|'danger', ... }) — three weights, no fourth. */
-export function button({ label, weight = 'secondary', id = '', className = '', disabled = false, attrs = {} } = {}) {
+/** button({ label, weight: 'secondary'|'primary'|'danger', role?, exception?, ... }) — three weights, no fourth;
+ *  `role` names the appearance role when the weight alone does not (an exit). */
+export function button({ label, weight = 'secondary', role = null, exception = null, id = '', className = '', disabled = false, attrs = {} } = {}) {
   const node = el('button', {
     ...attrs, type: attrs.type || 'button', id: id || null,
     class: cls('as-btn', weight === 'primary' ? 'primary' : '', weight === 'danger' ? 'danger' : '', className),
     text: label,
   });
+  // One appearance role per control (models/ControlAppearance.js).
+  node.dataset.controlRole = resolveControlRole({ role, weight, className });
+  if (assertControlException(exception)) node.dataset.controlException = exception;
   if (disabled) node.disabled = true;
   return node;
 }
@@ -489,7 +494,7 @@ import { registerTooltipExpander } from '../components/tooltip.js';
 // still be in its dead zone. By the microtask every module has run.
 queueMicrotask(() => registerTooltipExpander((markup, { title = '', eyebrow = 'Detail' } = {}) => {
   const body = el('div', { class: 'as-detailbody' }, el('div', { class: 'lines', html: markup }));
-  const done = button({ label: 'Close', weight: 'primary' });
+  const done = button({ label: 'Close', role: 'exit' });
   const door = openModal({ size: 'md', eyebrow, title: title || 'Detail', body, primary: done, footSize: 'short' });
   done.addEventListener('click', door.close);
   return door;

@@ -140,6 +140,32 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
 }
 
 /**
+ * rewardClaimStatus(plan, states) → the W1t claim summary.
+ *
+ * Per-kind state (taken | skipped | blocked | available), the counts the
+ * header status prints, and the one choice still waiting, if any. Derived
+ * here with the menu itself, so the screen, co-op and any instrument read
+ * the same answer.
+ */
+export function rewardClaimStatus(plan, states = {}) {
+  const rows = plan.rows.map((row) => Object.freeze({
+    kind: row.kind,
+    state: states[row.kind] || (row.blockedBy ? 'blocked' : 'available'),
+  }));
+  const count = (state) => rows.filter((row) => row.state === state).length;
+  const card = plan.rows.find((row) => row.kind === 'card');
+  return Object.freeze({
+    total: rows.length,
+    claimed: count('taken'),
+    skipped: count('skipped'),
+    blocked: count('blocked'),
+    available: count('available'),
+    requiredChoice: card && card.choice && !states.card ? Object.freeze({ kind: 'card', count: card.cardIds.length }) : null,
+    rows: Object.freeze(rows),
+  });
+}
+
+/**
  * unseenIds(rewards, possessions) → { cards, relics, flasks, armaments }
  * The 'new' marker's derivation: an id is new iff the handed-in possession
  * sets have never held it. The caller decides what "held" means (run

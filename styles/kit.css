@@ -965,7 +965,16 @@ input[type="range"] { min-height: var(--tap-floor); }
   margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
 /* The full read, in a door: the same sections the edge tray renders. */
-.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
+.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow: hidden; }
+/* W1w: sprite/name/HP preview left, details right; only the details scroll. */
+.combatant-door .combatant-inspector-layout {
+  display: grid; grid-template-columns: minmax(0, calc(var(--inspector-preview-fraction, .38) * 100%)) minmax(0, 1fr);
+  gap: 1rem; flex: 1 1 auto; min-height: 0; align-items: start;
+}
+.combatant-door .combatant-inspector-details { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; max-height: 100%; overflow-y: auto; overflow-x: hidden; }
+.combatant-door .combatant-inspector-preview { display: grid; gap: .5rem; min-width: 0; align-content: start; }
+.combatant-door .combatant-inspector-art { display: grid; place-items: end center; aspect-ratio: 3 / 4; overflow: hidden; }
+.combatant-door .combatant-inspector-art > * { max-width: 100%; max-height: 100%; }
 
 /* ═══ QUICK SETTINGS — the utility rail, under the band on the right ══════ */
 /* Fullscreen and music are the two controls that belong to the PAGE, not to
@@ -1289,6 +1298,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-backdrop { min-height: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door .reward-menu { max-width: none; width: 100%; }
+/* W1t: reward choices beside their claim status; stacked on narrow hosts. */
+.reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
+:root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+.reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
+.reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.reward-door .reward-claim-row[data-state='taken'] .reward-claim-state { color: var(--gold); }
+.reward-door .reward-claim-row:is([data-state='blocked'], [data-state='skipped']) .reward-claim-state { color: var(--muted); }
+.reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 .reward-door .reward-row .card.reward-selected {
@@ -3322,6 +3340,21 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 .as-ornament::before, .as-ornament::after { flex: 1 1 0; min-width: 0; }
 .title-screen .as-titlemenu { margin-inline: auto; text-align: center; }
+/* W3b: with a save, the menu and that save's preview share the body; the
+   wordmark above stays centred. W3a (no save) keeps the lone centred menu. */
+.title-screen .as-titlemenu:has(> .title-home) { max-width: 60rem; }
+/* The wordmark sizes from its container (12cqi); widening the block for the
+   preview must not grow it. min(12cqi, 4.8rem) is exactly its size in the
+   40rem no-save block, whatever the host width. */
+.title-screen .as-titlemenu:has(> .title-home) .tm-name { font-size: min(12cqi, 4.8rem); }
+.title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: center; margin: 1.8rem 0; }
+.title-screen .title-home > .title-menu { margin: 0; }
+:root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+.title-screen .title-save-preview { display: grid; gap: .35rem; min-width: 0; padding: 1rem 1.2rem; text-align: left; border: 1px solid var(--line-soft); border-radius: var(--r-3); background: color-mix(in srgb, var(--panel) 82%, transparent); }
+.title-screen .title-save-preview > p { margin: 0; }
+.title-screen .title-save-name { font: 600 1.6rem/1.2 var(--font-display); color: var(--parchment); }
+.title-screen .title-save-facts, .title-screen .title-save-identity { color: var(--muted); overflow-wrap: anywhere; }
+.title-screen .title-menu .tm-entry.slot-continue.is-highlighted:not(:disabled) { color: var(--gold); font-weight: 700; }
 .title-screen .as-ornament { width: 100%; justify-content: center; margin-inline: auto; }
 .set-range { touch-action: pan-x; min-height: var(--tap-floor); }
 .cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
@@ -3384,13 +3417,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    two-class rule, so without the exclusion every ready danger door painted
    its red button green (measured on the title's Overwrite and Delete doors,
    2026-09-11: background rgb(37, 92, 57) on both). */
+/* The positive (ready) role, one home; the End Turn exception below reuses it. */
+:root { --control-positive-fill:#255c39; --control-positive-border:#6fb580; --control-positive-text:#f0fff3; }
 button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
-  background-color:#255c39; border-color:#6fb580; color:#f0fff3;
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
 button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
-  background-color:#255c39;
+  background-color:var(--control-positive-fill);
+}
+/* COLOR-INTERACTION-CONTRACT §3 (models/ControlAppearance.js): exits stay
+   brown/gold until highlighted by pointer, keyboard or pad, then turn red. */
+.as-btn[data-control-role='exit']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color:var(--danger); color:var(--parchment);
+}
+.modal-close[data-control-role='exit']:is(:hover, :focus-visible, .gp-focus) > .modal-close-face { border-color:var(--danger); color:var(--danger); }
+/* Registered exception combatEndTurn: a legal early end is neutral at rest and
+   green while highlighted; spent actions already mark it ready above. */
+.as-btn[data-control-exception='combatEndTurn']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
 button.primary:disabled, button.primary[aria-disabled='true'],
 .as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
@@ -3464,6 +3510,10 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   max-width:none; min-width:0;
 }
+/* A lone exit (pile, flask, combatant door) lost `.primary` with its role;
+   it still spans the foot it is the only way out of. */
+.modal-foot-actions:has(> [data-control-role='exit']:only-child) { width:100%; margin-left:0; }
+.modal-foot-actions > [data-control-role='exit']:only-child { max-width:none; min-width:0; }
 /* THE CREATION FOOT KEEPS BACK LEFT AND BEGIN RIGHT once Begin is ready. The
    stacked ready-primary foot above is for a door whose primary is the one
    thing left to do; here Back is a real way out, and Constantine (2026-09-11):

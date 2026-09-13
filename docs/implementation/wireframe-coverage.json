@@ -378,7 +378,7 @@
       "id": "W1p",
       "name": "Combatant inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -397,7 +397,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Sections: Summary (HP/intent/defense), Current state, Previous actions newest first (movesHistory), Known abilities, Known traits (tags), Lore (unknown until authored). No knowledge filter exists yet."
     },
     {
       "id": "W1q",
@@ -466,7 +467,7 @@
       "id": "W1t",
       "name": "Rewards",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -481,7 +482,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Head status \"{claimed} of {total} claimed\" and a claim-status column (per-row state, required choice slot) from rewardClaimStatus; side by side on wide, stacked on narrow. Door keeps its md width over the battlefield."
     },
     {
       "id": "W1u",
@@ -549,13 +551,13 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Combatant door is a two-column W1w layout: sprite/name/HP preview (0.38) left, ordered details right; only details scroll. Unknown and none are distinct."
     },
     {
       "id": "W2",
       "name": "Confirmation variant",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -570,7 +572,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Already implemented by openConfirmationModal: question title + close, message + consequence details, Back left / action-named primary right, danger as alertdialog."
     },
     {
       "id": "W2a",
@@ -681,7 +684,7 @@
       "id": "W3",
       "name": "Main-menu composition",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -696,13 +699,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Title keeps the centred wordmark; with a save the menu list and a save preview share the body (stacked on narrow). Menu order/labels differ from W3 (owner decision)."
     },
     {
       "id": "W3a",
       "name": "Main menu — centered, no preview",
       "parent": "W3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -717,13 +721,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "No save: lone centred menu, Continue disabled, no empty preview placeholder."
     },
     {
       "id": "W3b",
       "name": "Main menu — Continue highlighted",
       "parent": "W3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -738,7 +743,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Save available: Continue highlighted and focused; preview shows class, slotFacts, and Slot/Seed beside the menu (below on narrow). Verified with a fixture save through the production mountTitle."
     },
     {
       "id": "W4",
@@ -803,7 +809,7 @@
       "id": "W4b",
       "name": "Map — 10 / 60 / 20 / 10",
       "parent": "W4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -826,7 +832,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Classic act map: select then Enter, context band, Recenter/Enter footer; bands measured 58% map at 1280x800 and 66% at 390x844. Header (HUD + route strip) still ~17%. Atlas pending in its own branch."
     },
     {
       "id": "W4c",
@@ -1790,7 +1797,7 @@
       "id": "WCB0",
       "name": "Buttons and inspection",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1817,7 +1824,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence; the nine size presets are still pending a consuming workspace."
     },
     {
       "id": "WCB1",
@@ -1885,7 +1893,7 @@
       "id": "WCB3",
       "name": "Primary / confirmation button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1912,13 +1920,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Primary role: green when ready, stronger when highlighted; destructive never green; End Turn uses the registered combatEndTurn exception."
     },
     {
       "id": "WCB4",
       "name": "Back / cancel button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1945,7 +1954,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Back/Close/Cancel/Leave carry the exit role: brown/gold at rest, red while highlighted; a sole exit in the primary slot is not green."
     },
     {
       "id": "WCB5",
@@ -1979,7 +1989,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Header exit carries the exit role; its face turns red under pointer, keyboard, or pad highlight. Square geometry from --iconbtn-size."
     },
     {
       "id": "WCF0",
@@ -2043,7 +2053,7 @@
       "id": "WCF2",
       "name": "Ordered active stack",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2066,7 +2076,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Ordered active stack from CombatantStackModel: HP, resources, buildup by fill, stance, icons; max five rows; excess buildup becomes ring pips."
     },
     {
       "id": "WCF3",
@@ -2101,7 +2112,7 @@
       "id": "WCF4",
       "name": "Inspector facts",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2124,7 +2135,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Inspector facts render as uniform label/value rows from CombatantInspectorSections; empty states say None. or Unknown."
     },
     {
       "id": "WCI0",
@@ -2391,7 +2403,7 @@
       "id": "WCM5",
       "name": "Status icon",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2414,13 +2426,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Status icons use the configured 1.575rem tile (reference rem at least 16 physical px); one non-wrapping row."
     },
     {
       "id": "WCM6",
       "name": "Icon overflow",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2443,7 +2456,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Overflow collapses to a final +N tile that opens the combatant inspector with every effect; co-op keeps its popover."
     },
     {
       "id": "WCO0",
@@ -2653,7 +2667,7 @@
       "id": "WCT1",
       "name": "Tooltip presenter",
       "parent": "WCT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2676,7 +2690,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js; not changed in this task."
     },
     {
       "id": "WGC0",
@@ -3087,7 +3102,7 @@
       "id": "WGH1",
       "name": "Vitality HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3118,7 +3133,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Already implemented: HUD_REFERENCE_MAX 200/20/20, track = max/reference, fill = current/max, no minimum track length, scaleByMax on the main HUD."
     },
     {
       "id": "WGH2",
@@ -3398,7 +3414,7 @@
       "id": "WGM4",
       "name": "Node details",
       "parent": "WCF4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3417,7 +3433,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Selected node context band: floor, kind, blurb, boss destination, key reveal; shown kind under fog; sizes to content up to 20%."
     },
     {
       "id": "WGM5",
@@ -3448,7 +3465,7 @@
       "id": "WGM6",
       "name": "Recenter button",
       "parent": "WCB4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3467,13 +3484,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Footer Recenter calls the board resetFraming."
     },
     {
       "id": "WGM7",
       "name": "Enter node button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3492,7 +3510,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Footer Enter disabled until a reachable node is selected, then names the kind; picking the selected node again also enters."
     },
     {
       "id": "WGP0",
@@ -4242,7 +4261,7 @@
       "id": "WT0",
       "name": "Shared tooltip",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -4257,7 +4276,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default; not changed in this task."
     },
     {
       "id": "WT1",

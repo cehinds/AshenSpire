@@ -374,6 +374,111 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.status.claimed",
+    "extends": "",
+    "short": "{claimed} of {total} claimed",
+    "full": "How many of this fight's rewards you have collected.",
+    "tip": ""
+  },
+  {
+    "id": "reward.claim.heading",
+    "extends": "",
+    "short": "Claim status",
+    "full": "What each reward is waiting on.",
+    "tip": ""
+  },
+  {
+    "id": "reward.state.available",
+    "extends": "",
+    "short": "Available",
+    "full": "Still here to collect.",
+    "tip": "Available"
+  },
+  {
+    "id": "reward.claim.required",
+    "extends": "",
+    "short": "Required choice",
+    "full": "A decision is still waiting before this reward can be taken.",
+    "tip": ""
+  },
+  {
+    "id": "reward.claim.blocked",
+    "extends": "",
+    "short": "Full",
+    "full": "There is no room for this one.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.eyebrow",
+    "extends": "",
+    "short": "Your climb",
+    "full": "The saved run Continue resumes.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.identity",
+    "extends": "",
+    "short": "Slot {slot} · Seed {seed}",
+    "full": "Which save Continue loads.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.aria",
+    "extends": "",
+    "short": "Saved climb in slot {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.enter",
+    "extends": "",
+    "short": "Enter",
+    "full": "Travel to the selected node.",
+    "tip": "Enter"
+  },
+  {
+    "id": "map.enterNamed",
+    "extends": "",
+    "short": "Enter {name}",
+    "full": "Travel to the selected node.",
+    "tip": ""
+  },
+  {
+    "id": "map.recenter",
+    "extends": "",
+    "short": "Recenter",
+    "full": "Frame the map on where you stand.",
+    "tip": "Recenter"
+  },
+  {
+    "id": "map.context.aria",
+    "extends": "",
+    "short": "Selected node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.empty",
+    "extends": "",
+    "short": "Choose a lit node to see what waits there.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.floor",
+    "extends": "",
+    "short": "Floor {floor}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.revealed",
+    "extends": "",
+    "short": "Revealed by the Sealstone Key.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",
@@ -497,6 +602,90 @@ export const uiStrings = [
     "extends": "",
     "short": "Seeded",
     "full": "The seed decides which seat the climb opens in.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.summary",
+    "extends": "",
+    "short": "Summary",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.state",
+    "extends": "",
+    "short": "Current state",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.history",
+    "extends": "",
+    "short": "Previous actions",
+    "full": "Moves this fighter has performed; the newest first.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.abilities",
+    "extends": "",
+    "short": "Known abilities",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.traits",
+    "extends": "",
+    "short": "Known traits",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.lore",
+    "extends": "",
+    "short": "Lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.intent",
+    "extends": "",
+    "short": "Intent",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.defense",
+    "extends": "",
+    "short": "Defense",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.block",
+    "extends": "",
+    "short": "{amount} Block",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.empty.none",
+    "extends": "",
+    "short": "None.",
+    "full": "Known to be empty.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.empty.unknown",
+    "extends": "",
+    "short": "Unknown.",
+    "full": "Not revealed yet.",
     "tip": ""
   }
 ];

@@ -201,7 +201,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     },
     onClose: () => {
       teardown();
-      const leave = button({ label: 'Leave', weight: 'primary', id: 'coop-leave' });
+      const leave = button({ label: 'Leave', role: 'exit', id: 'coop-leave' });
       app.innerHTML = '';
       app.appendChild(el('div', { class: 'screen coop-scene' }, pageDoor({
         eyebrow: 'Forsaken Together', title: 'The fire went out', size: 'sm', className: 'coop-door',
@@ -811,7 +811,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         line: throwing ? 'Click a hero seat to give it.' : 'Choose a highlighted hero.',
         attrs: { class: 'floating coop-arm', role: 'status' },
       });
-      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
+      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', role: 'exit', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
       ahost.replaceWith(card);
     }
 
@@ -994,7 +994,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // + ornament, Flavour for a note, the shared renderCard row, OptionCards
   // for the ways on), and Leave on the foot's ladder. One shell, five scenes.
   function sceneDoor({ title, eyebrow: eb = 'Forsaken Together', children = [], note = '' }) {
-    const leave = button({ label: 'Leave', id: 'coop-leave' });
+    const leave = button({ label: 'Leave', role: 'exit', id: 'coop-leave' });
     const door = pageDoor({
       eyebrow: eb, title, size: 'md', className: 'coop-door',
       body: decide({ title, children: [note ? flavour(note, { class: 'coop-note' }) : null, ...children] }),

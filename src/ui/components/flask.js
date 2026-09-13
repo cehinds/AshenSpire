@@ -96,7 +96,7 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
   if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
   const lines = flaskDetailLines(def, { charges });
 
-  const done = button({ label: 'Close', weight: 'primary', className: 'flask-inspect-done', attrs: { 'data-focusable': 'true' } });
+  const done = button({ label: 'Close', role: 'exit', className: 'flask-inspect-done', attrs: { 'data-focusable': 'true' } });
 
   const shell = openModal({
     size: 'md',

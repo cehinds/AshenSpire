@@ -83,6 +83,23 @@ reward.detail.back,common.back,,Return without collecting; your other choices ke
 reward.chooser.back,common.back,,Return to the spoils — the offer keeps.,
 reward.leave.question,,Leave these rewards and continue?,,
 reward.leave.confirm,,CONTINUE,Leave the spoils door with rows still unclaimed.,
+reward.status.claimed,,{claimed} of {total} claimed,How many of this fight's rewards you have collected.,
+reward.claim.heading,,Claim status,What each reward is waiting on.,
+reward.state.available,,Available,Still here to collect.,Available
+reward.claim.required,,Required choice,A decision is still waiting before this reward can be taken.,
+reward.claim.blocked,,Full,There is no room for this one.,
+# ---- the title screen -----------------------------------------------------
+title.save.eyebrow,,Your climb,The saved run Continue resumes.,
+title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,
+title.save.aria,,Saved climb in slot {slot},,
+# ---- the act map (W4b) ---------------------------------------------------
+map.enter,,Enter,Travel to the selected node.,Enter
+map.enterNamed,,Enter {name},Travel to the selected node.,
+map.recenter,,Recenter,Frame the map on where you stand.,Recenter
+map.context.aria,,Selected node,,
+map.context.empty,,Choose a lit node to see what waits there.,,
+map.context.floor,,Floor {floor},,
+map.context.revealed,,Revealed by the Sealstone Key.,,
 # ---- the merchant ---------------------------------------------------------
 shop.bar.cards,,CARDS,Cards the merchant will sell you.,
 shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,
@@ -104,3 +121,16 @@ creation.startingCards.context,,Quantities depend on both hands.,How many copies
 # ---- the custom climb -----------------------------------------------------
 customRun.seat.group,,First seat,Which seat the climb opens in.,
 customRun.seat.seeded,,Seeded,The seed decides which seat the climb opens in.,
+# ---- the combatant inspector (W1w) ----------------------------------------
+inspector.section.summary,,Summary,,
+inspector.section.state,,Current state,,
+inspector.section.history,,Previous actions,Moves this fighter has performed; the newest first.,
+inspector.section.abilities,,Known abilities,,
+inspector.section.traits,,Known traits,,
+inspector.section.lore,,Lore,,
+inspector.summary.hp,,HP,,
+inspector.summary.intent,,Intent,,
+inspector.summary.defense,,Defense,,
+inspector.summary.block,,{amount} Block,,
+inspector.empty.none,,None.,Known to be empty.,
+inspector.empty.unknown,,Unknown.,Not revealed yet.,

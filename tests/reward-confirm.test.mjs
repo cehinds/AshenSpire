@@ -20,6 +20,11 @@ export function runRewardConfirmTests() {
       mountRewards(app, { registries, run, checkpoint, rewards: { cardIds: ['frostNova', 'starstoneArc', 'scholarsInsight'] }, onDone() {},
         onPersist() { writes++; if (fail === 'throw') throw new Error('disk full'); if (fail) return false; savedDeck = [...run.deck]; },
       });
+      // W1t claim status: the head count and status column follow the menu rows.
+      const claimed = () => app.querySelector('.modal-head-status').textContent;
+      check(claimed(), '0 of 1 claimed', 'nothing claimed yet');
+      check([...app.querySelectorAll('.reward-claim-row')].map(row => row.dataset.state), ['available'], 'a pending row reads available');
+      check(!!app.querySelector('.reward-claim-required'), true, 'the card choice is required');
       const open = () => app.querySelector('[data-kind="card"]').click();
       const tap = card => { if (pointerType !== 'synthetic') card.dispatchEvent(new dom.Event('pointerdown', { pointerType, button: 0, bubbles: true })); card.click(); };
       open();
@@ -45,6 +50,9 @@ export function runRewardConfirmTests() {
       check(savedDeck, run.deck, 'selected card persisted');
       check(writes, 3, 'duplicate confirm cannot persist twice');
       check(checkpoint.states.card, 'taken', 'successful checkpoint records Taken');
+      check(claimed(), '1 of 1 claimed', 'the head counts the taken card');
+      check([...app.querySelectorAll('.reward-claim-row')].map(row => row.dataset.state), ['taken'], 'the status row matches the menu');
+      check(app.querySelector('.reward-claim-required'), null, 'no choice waits once the card is taken');
       app.remove();
     }
     return checks;

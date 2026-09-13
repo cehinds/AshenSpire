@@ -252,7 +252,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     item.addEventListener('click', () => { current = sec.kind; render(); });
     return item;
   });
-  const back = button({ label: 'Back', id: 'cp-back' });
+  const back = button({ label: 'Back', role: 'exit', id: 'cp-back' });
   const grid = options([], { class: 'grid cp-grid cp-scroll' });
   const head = el('div', { class: 'as-pane-head' });
   const panel = pane({
