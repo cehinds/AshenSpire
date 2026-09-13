@@ -395,15 +395,15 @@
       "enemyIntent": true
     },
     "groundGrid": {
-      "slotsPerSide": 9,
-      "columns": 3,
-      "rows": 3,
+      "slotsPerSide": 4,
+      "columns": 2,
+      "rows": 2,
       "depthPercent": 58,
-      "rowStepRem": 2,
+      "rowStepRem": 4,
       "paddingRem": 1,
-      "slotGapRem": 0.5,
-      "centerGapRem": 2,
-      "actorScale": 0.8,
+      "slotGapRem": 1.5,
+      "centerGapRem": 3,
+      "actorScale": 1,
       "showGuides": true
     },
     "groundShadow": {
