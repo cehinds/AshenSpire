@@ -823,6 +823,43 @@ Browser evidence (headless Chrome, `?shot=combat-test&build=caster`):
 Limits: the co-op door renders only the detail body (no preview column), so
 it does not gain meters. The door is a snapshot taken when it opens; it does
 not redraw meters while it stays open.
+## Map node: selection glow only
+
+Branch `fix/map-node-tooltip-outline`, based on dev `d2ea5bcd`.
+Owner-approved follow-up: remove the tooltip's gold outline beside the
+selection glow on map nodes.
+
+- Root cause: a press on a node also runs the shared tooltip's
+  tap-to-select (`explainOnSecondTap` in `tooltip.js`), which marks the node
+  `.tooltip-selected`. Then `kit.css` draws
+  `.tooltip-selected:not(.overhead-control)` as a 2px gold rounded box
+  beside the map's own `.selected` stroke and glow. It is not the pad cursor
+  and not the open-tooltip ring, although `[data-tip-open]` (1px gold at
+  0.45 alpha) can land on a node the same way.
+- `styles/map.css`: `g.map-node.tooltip-selected,
+  g.map-node[data-tip-open="true"] { outline: none; }`. The `g.` is needed
+  because the kit rule has the same specificity and loads later. Only map
+  nodes change, and every other tooltip target keeps the kit outline.
+- What keyboard and pad users keep:
+  - The `.gp-focus` cursor keeps its focus ring and its 4px gold circle
+    stroke (`ui.css`).
+  - `.selected` keeps its stroke and drop-shadow glow.
+  - Reachable nodes keep the pulsing halo.
+
+Browser evidence (headless Chrome, `?shot=map`, 1280×800 and 390×844):
+- After a press, the selected node computes `outline-style: none`, with the
+  tooltip open on the phone. The glow `drop-shadow(0 0 5px parchment)` and
+  the 4px stroke remain.
+- A control run that re-injects the old rule draws the solid gold box.
+- A top-bar tooltip target still computes the kit's 0.45-alpha gold
+  outline.
+- Arrow keys still land the cursor on a node, with its ring and gold
+  stroke.
+- 20/20 probe checks passed, with no page errors.
+
+Limits: a keyboard or pad user whose cursor rests on the selected node
+still sees the `.gp-focus` ring beside the glow. It is kept on purpose as
+the focus indication; the owner can ask to drop it.
 
 ## Remaining integration
 
