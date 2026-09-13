@@ -35,7 +35,9 @@ import { resolveMapMode } from '../../model/mapknowledge.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { seatNameOf } from '../components/runHud.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
-import { popover, row } from '../kit/index.js';
+import { button, buttonRow, el, popover, row } from '../kit/index.js';
+import { t } from '../strings.js';
+import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -140,11 +142,51 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         run.mapView = viewState;
         if (commit && onSave) onSave();
       },
-      onPick,
+      // W4b: a pick selects; Enter, or picking the selected node again, travels.
+      onPick: (id, reading) => selectNode(id, reading),
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },
     chromeHtml: hintBarHtml('map'),
   });
+
+  // ---- W4b: SELECT, THEN ENTER ---------------------------------------------
+  // The scene is followed by the selected node's context and a Recenter /
+  // Enter footer. The board is shared with co-op, whose client keeps its own
+  // pick; only this solo screen asks for the second step.
+  let selection = { selectedId: null };
+  const readings = new Map();
+  const context = el('section', { class: 'map-context', 'aria-live': 'polite', 'aria-label': t('map.context.aria') });
+  const recenterButton = button({ label: t('map.recenter'), id: 'map-recenter', className: 'map-recenter' });
+  const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
+  app.querySelector('.mapscreen').append(context, el('footer', { class: 'map-footer' }, buttonRow({ size: 'fill', buttons: [recenterButton, enterButton] })));
+  recenterButton.addEventListener('click', () => board.resetFraming());
+  enterButton.addEventListener('click', () => {
+    if (selection.selectedId && reachable.has(selection.selectedId)) onPick(selection.selectedId);
+  });
+  function selectNode(id, reading) {
+    if (reading) readings.set(id, reading);
+    const next = pickMapNode(selection, id, reachable);
+    if (next.enter) { onPick(id); return; }
+    selection = next;
+    renderSelection();
+  }
+  function renderSelection() {
+    for (const node of app.querySelectorAll('.map-node.selected')) node.classList.remove('selected');
+    const id = selection.selectedId;
+    if (id) app.querySelector(`.map-node[data-node="${id}"]`)?.classList.add('selected');
+    const view = projectMapContext({ node: id ? map.nodes[id] : null, reading: readings.get(id), reachable: !!id && reachable.has(id) });
+    context.replaceChildren(...(view.empty
+      ? [el('p', { class: 'map-context-line', text: t('map.context.empty') })]
+      : [
+        el('p', { class: 'as-eyebrow', text: t('map.context.floor', { floor: view.floor }) }),
+        el('h2', { class: 'map-context-title', text: view.kindName }),
+        ...[view.blurb, view.destination, view.revealed ? t('map.context.revealed') : '']
+          .filter(Boolean).map((text) => el('p', { class: 'map-context-line', text })),
+      ]));
+    enterButton.disabled = !view.canEnter;
+    enterButton.textContent = view.canEnter ? t('map.enterNamed', { name: view.kindName }) : t('map.enter');
+  }
+  renderSelection();
 
   // The legend hangs off the ? IN THE ZOOM BAR, so it is mounted inside that
   // Band — the Band is its containing block, which is how `bottom: 100%` means

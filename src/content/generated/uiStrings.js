@@ -374,6 +374,55 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "map.enter",
+    "extends": "",
+    "short": "Enter",
+    "full": "Travel to the selected node.",
+    "tip": "Enter"
+  },
+  {
+    "id": "map.enterNamed",
+    "extends": "",
+    "short": "Enter {name}",
+    "full": "Travel to the selected node.",
+    "tip": ""
+  },
+  {
+    "id": "map.recenter",
+    "extends": "",
+    "short": "Recenter",
+    "full": "Frame the map on where you stand.",
+    "tip": "Recenter"
+  },
+  {
+    "id": "map.context.aria",
+    "extends": "",
+    "short": "Selected node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.empty",
+    "extends": "",
+    "short": "Choose a lit node to see what waits there.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.floor",
+    "extends": "",
+    "short": "Floor {floor}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.revealed",
+    "extends": "",
+    "short": "Revealed by the Sealstone Key.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",

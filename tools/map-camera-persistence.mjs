@@ -258,6 +258,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       port.dispatchEvent(new Event('scroll'));
       const to = target.dataset.node;
       target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.querySelector('#map-enter')?.click(); // W4b: select, then Enter
       return { from, to };
     })()`);
     await wait(180);
