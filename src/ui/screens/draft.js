@@ -11,8 +11,15 @@
 import { renderCard } from '../components/card.js';
 import { createCardInstance, createIdGen } from '../../model/state.js';
 import { el, eyebrow, titleL, subtitle, statPair } from '../kit/index.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 export function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, onDone }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const pool = registries.classes.get(classId).cardPool.slice();
   const idGen = createIdGen('df');
   const picked = [];

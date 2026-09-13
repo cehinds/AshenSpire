@@ -58,6 +58,7 @@ import {
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
+import { clearSelection } from '../components/cardSelection.js';
 // THE KIT (2026-09-04, the sweep): every piece inside the door is a kit builder
 // — OptionCards for the positions, the inventory faces and the card rows,
 // DetailCards for the character's numbers and the open item, StatPairs and
@@ -620,6 +621,12 @@ function inventoryReveal(registries, row, {
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
 }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
   if (destination && !destinationPlan) {
     console.error(`mountEquipment(): unknown action destination ${JSON.stringify(destination)}; refusing to open.`);

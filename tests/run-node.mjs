@@ -1004,6 +1004,12 @@ try {
   console.error('FAIL Every card owes two beats:', error);
 }
 try {
+  await import('./selection-clears-on-mount.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL A spent beat belongs to the screen that spent it:', error);
+}
+try {
   await import('./hand-forwards-surface.test.mjs');
 } catch (error) {
   zoomExtra++;
