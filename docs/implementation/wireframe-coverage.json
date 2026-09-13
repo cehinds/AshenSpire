@@ -798,12 +798,12 @@
       "verification": {
         "structural": "targeted tests passed",
         "wide": "reviewed; incomplete",
-        "compact": "short landscape has unresolved legibility limits",
+        "compact": "Rails arrangement supported in emulation at 844x390 and 915x412 (battlefield 148/163 px, no scroll, 44 px targets, card play and held End Turn verified). 740x360 and 667x375 plan supported but the upright gate covers them by default. Not complete.",
         "iphoneSE": "reviewed; incomplete",
         "galaxyS24": "Reviewed at 360x780: page contained; hand has 7 local pixels of horizontal overflow. Not complete.",
         "interactions": "adjacent hand selection and card inspection verified; remaining interactions pending"
       },
-      "notes": "Bands now come from allocateCombatBands (10/55/30/5 with 208/56 px hand/footer minimums); 844x390 reports data-combat-geometry=unsupported. Full reference parity is NOT verified."
+      "notes": "Bands now come from allocateCombatBands (10/55/30/5 with 208/56 px hand/footer minimums). When the stacked plan cannot hold one readable combatant and the width allows, the footer row folds into rails beside the hand (data-combat-arrangement=rails); 844x390 now plans supported. Hosts that still cannot fit report data-combat-geometry=unsupported. Full reference parity is NOT verified."
     },
     {
       "id": "W4b",
@@ -2932,7 +2932,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and the owner-confirmed 4rem (64 physical px) readable floor. Verified in emulation at 1440x860, 375x667, 360x780."
+      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and the owner-confirmed 4rem (64 physical px) readable floor. Verified in emulation at 1440x860, 375x667, 360x780. Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and provisional 4rem readable floor. Verified in emulation at 1440x860, 375x667, 360x780. Short landscape uses packCombatRails: the same grid wraps the hand, (Actions)[Draw] leading and End Turn over [Discard](Potions) trailing, with 53.2 px circles, 64x44 px piles and a 120 px End Turn at 844x390."
     },
     {
       "id": "WGC7",

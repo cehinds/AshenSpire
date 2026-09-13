@@ -14,7 +14,7 @@ export function wireCombatLayout(combatEl) {
     if (!combatEl.isConnected) { release(); return; }
     const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
     const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
-    const bands = allocateCombatBands({ height: combatEl.clientHeight, zoom, rem });
+    const bands = allocateCombatBands({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom, rem });
     combatEl.style.setProperty('--wireframe-band-hud', bands.hud + 'px');
     combatEl.style.setProperty('--wireframe-band-hand', bands.hand + 'px');
     combatEl.style.setProperty('--wireframe-band-footer', bands.footer + 'px');
@@ -38,11 +38,16 @@ export function wireCombatLayout(combatEl) {
       combatEl.style.setProperty(`--defense-right-${role}`, side === 'right' ? '1' : '0');
       combatEl.style.setProperty(`--defense-fraction-${role}`, String(heightFraction));
     }
+    combatEl.dataset.combatArrangement = bands.arrangement;
+    if (bands.rails) {
+      combatEl.style.setProperty('--wireframe-rail-width', bands.rails.railWidth + 'px');
+      combatEl.style.setProperty('--wireframe-rail-gap', bands.rails.gap + 'px');
+    }
     if (!row) return;
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
     const host = row.parentElement || combatEl;
-    const footer = packCombatFooter({ width: host.clientWidth, height: bands.footer, zoom, rem });
+    const footer = bands.rails || packCombatFooter({ width: host.clientWidth, height: bands.footer, zoom, rem });
     row.style.setProperty('--footer-gap', footer.gap + 'px');
     row.style.setProperty('--footer-circle', footer.diameter + 'px');
     row.style.setProperty('--footer-pile-width', footer.pileWidth + 'px');
