@@ -1,4 +1,5 @@
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
+import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 
 // Measures the combat root once per frame and writes the band and footer plans
 // as custom properties. CSS owns placement; the model owns every number.
@@ -17,6 +18,13 @@ export function wireCombatLayout(combatEl) {
     combatEl.style.setProperty('--wireframe-band-hand', bands.hand + 'px');
     combatEl.style.setProperty('--wireframe-band-footer', bands.footer + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
+    // WCM0: every combatant's meter rows share one geometry.
+    const meters = combatantMeterGeometry({ zoom, rem });
+    combatEl.style.setProperty('--combatant-hp-h', meters.hp + 'px');
+    combatEl.style.setProperty('--combatant-secondary-h', meters.secondary + 'px');
+    combatEl.style.setProperty('--combatant-stance-h', meters.stance + 'px');
+    combatEl.style.setProperty('--combatant-value-text', meters.valueText + 'px');
+    combatEl.style.setProperty('--combatant-meter-gap', meters.gap + 'px');
     if (!row) return;
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.

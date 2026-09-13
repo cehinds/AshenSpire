@@ -117,17 +117,29 @@ try {
           check(await evaluate('(()=>{const b=document.querySelector("#tooltip").getBoundingClientRect();return b.left>=0&&b.right<=innerWidth+1&&b.top>=0&&b.bottom<=innerHeight+1})()'), `hover ${selector}: explanation fits viewport`);
           if (screenshot) await capture(screenshot);
         };
+        // WCM0: name, secondary rows, buildup and stance show only on the
+        // selected combatant, so a reading of them selects its owner first
+        // (a press on the sprite, the pointer's own selection path).
+        const selectCombatant = async (who) => {
+          await evaluate(`document.querySelector('.combatant.${who} .sprite').click()`);
+          await until(`!!document.querySelector('.combatant.${who}.context-selected')`);
+        };
         if (!shape.mobile) {
           for (const [selector, expected, screenshot] of [
             ['.hud-class', 'Class'], ['.hud-cinders', 'Currency'], ['.hud-act', 'region'], ['.hud-floor', 'current step'],
             ['.topbar [data-res=hp]', 'Health remaining', 'health-hover'], ['.topbar [data-res=mana]', 'Mana pays', 'mana-hover'], ['.topbar [data-res=stamina]', 'Stamina pays'],
             ['#combat-armoury', 'fixed weapon'], ['#combat-menu', 'Menu'], ['.turn-ribbon', 'Turn'],
             ['.combatant.player [data-res=hp]', 'Health remaining'], ['.combatant.player .block-badge', 'Absorbs'],
-            ['.stance-chip', 'Gain 3 Block'], ['.foundation-evade', 'charge'],
+            ['.foundation-evade', 'charge'],
             ['.combatant.enemy [data-res=hp]', 'Health remaining'], ['.combatant.enemy .intent', 'Intent:', 'intent-hover'],
-            ['.combatant.enemy .nm', 'HP'], ['.energy-orb', 'Actions'], ['.pile.draw', 'Draw pile'], ['.pile.spent', 'Discard'], ['.combat-potions', 'Potions'], ['.end-turn', 'End Turn'],
+            ['.energy-orb', 'Actions'], ['.pile.draw', 'Draw pile'], ['.pile.spent', 'Discard'], ['.combat-potions', 'Potions'], ['.end-turn', 'End Turn'],
             ['.hand .card .cost', 'cost'], ['.hand .card .stamina-cost', 'cost'], ['.hand .card .ctag', ''],
           ]) await hover(selector, expected, screenshot);
+          check(await evaluate(`getComputedStyle(document.querySelector('.stance-chip')).display === 'none'`), 'unselected player: the stance strip waits for selection');
+          await selectCombatant('player');
+          await hover('.stance-chip', 'Gain 3 Block');
+          await selectCombatant('enemy');
+          await hover('.combatant.enemy .nm', 'HP');
           for (const selector of ['.combatant.enemy [data-res=poise]', '.arcane-exposure-meter']) {
             if (await evaluate(`!!document.querySelector(${JSON.stringify(selector)})`)) await hover(selector, selector.includes('poise') ? 'Stagger' : '/', 'buildup-hover');
           }
@@ -179,9 +191,9 @@ try {
         await click('[data-ability-id=evade] > summary');
         await click('.combatant-door .modal-foot button'); await until('!document.querySelector(".combatant-door")');
         check(true, `${shape.name}: inspector footer closes after tooltip interaction`);
-        await click('.stance-chip'); await until('!!document.querySelector(".combatant-abilities")');
-        check(await evaluate('document.querySelectorAll(".combatant-ability").length===3'), `${shape.name}: stance badge also opens the complete list`);
-        await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
+        // An armed card clears the combatant selection, so the stance strip
+        // (a selected-only row, WCM0) waits until the card is played or put down.
+        check(await evaluate('!document.querySelector(".combatant.context-selected") && getComputedStyle(document.querySelector(".stance-chip")).display==="none"'), `${shape.name}: the stance strip waits while a card is armed`);
         check(await evaluate('JSON.stringify({energy:window.__combat.player.energy,stamina:window.__combat.player.stamina,evade:window.__combat.player.evade,hand:window.__combat.piles.hand})') === beforeInspect, `${shape.name}: inspection never plays the armed self-target card`);
         if (!shape.mobile) {
           await evaluate('document.querySelector(".foundation-evade").focus()');
@@ -237,7 +249,10 @@ try {
       check(await evaluate('window.__combat.eventLog.some(e=>e.type==="attackEvaded")'), `${shape.name}/${build}: incoming hit consumes Evade`);
       if (build === 'heavy') {
         check(!(await evaluate('document.querySelector(".foundation-evade")')), `${shape.name}: spent Evade badge disappears`);
+        await evaluate(`document.querySelector('.combatant.player .sprite').click()`);
+        await until('!!document.querySelector(".combatant.player.context-selected")');
         await click('.stance-chip'); await until('!!document.querySelector(".combatant-abilities")');
+        check(await evaluate('document.querySelectorAll(".combatant-ability").length>=1'), `${shape.name}: the selected player's stance strip opens the active list`);
         check(!(await evaluate('document.querySelector("[data-ability-id=evade], [data-ability-id=strength]")')), `${shape.name}: inspector removes consumed and expired effects`);
         await click('.combatant-door .modal-close'); await until('!document.querySelector(".combatant-door")');
       }
