@@ -1,0 +1,47 @@
+import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
+
+// Measures the combat root once per frame and writes the band and footer plans
+// as custom properties. CSS owns placement; the model owns every number.
+export function wireCombatLayout(combatEl) {
+  const row = combatEl.querySelector('.combat-action-row');
+  let frame = 0;
+  let observer = null;
+
+  function apply() {
+    frame = 0;
+    if (!combatEl.isConnected) { release(); return; }
+    const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
+    const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+    const bands = allocateCombatBands({ height: combatEl.clientHeight, zoom, rem });
+    combatEl.style.setProperty('--wireframe-band-hud', bands.hud + 'px');
+    combatEl.style.setProperty('--wireframe-band-hand', bands.hand + 'px');
+    combatEl.style.setProperty('--wireframe-band-footer', bands.footer + 'px');
+    combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
+    if (!row) return;
+    // Measure the band's host, not the row: the row's own width is what this
+    // plan sets, and a pre-plan cap on it would otherwise feed back.
+    const host = row.parentElement || combatEl;
+    const footer = packCombatFooter({ width: host.clientWidth, height: bands.footer, zoom, rem });
+    row.style.setProperty('--footer-gap', footer.gap + 'px');
+    row.style.setProperty('--footer-circle', footer.diameter + 'px');
+    row.style.setProperty('--footer-pile-width', footer.pileWidth + 'px');
+    row.style.setProperty('--footer-pile-height', footer.pileHeight + 'px');
+    row.style.setProperty('--footer-end-width', footer.endWidth + 'px');
+    row.dataset.footerGeometry = footer.supported ? 'supported' : 'unsupported';
+  }
+
+  // ResizeObserver delivers during layout; defer writes to the next frame.
+  const schedule = () => { if (!frame) frame = requestAnimationFrame(apply); };
+  function release() {
+    if (frame) cancelAnimationFrame(frame);
+    frame = 0;
+    observer?.disconnect();
+    observer = null;
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    observer = new ResizeObserver(schedule);
+    observer.observe(combatEl);
+  }
+  apply();
+  return { apply, release };
+}
