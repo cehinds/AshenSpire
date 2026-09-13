@@ -36412,7 +36412,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays.
+// Own one selectedCombatantId for this battlefield. On selection replace the previous ID, clear its glow and hide its inspect control before highlighting the new actor. Project authored formation slots from host size and stable actor IDs. Compose player and enemy WC4 instances at config.scene.actorBaselinePercent of battlefield height. Align sprite feet to that baseline; labels and status stacks continue below. Paint skyline first, ground cutout second and actors above both. Preserve target overlays.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
