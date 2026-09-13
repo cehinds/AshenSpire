@@ -10,6 +10,7 @@ const freeze = (value) => {
 export const wireframeUi = freeze({
   card: { ratio: 5 / 8, bands: [1, 4, 4, 1], inspectDelayMs: 1000 },
   // W4b: a repeat pick enters only after the selection has stood this long.
+  // Owner kept 400 ms on 2026-09-13.
   map: { repeatPickDelayMs: 400 },
   hand: {
     minimumHeightPx: 208, minWidthRem: 5, maxWidthRem: 9,
@@ -27,6 +28,7 @@ export const wireframeUi = freeze({
     gapRem: 0.2, heightFraction: 0.95, minimumTargetPx: 44,
     // Readable floor for the two-line Discard / Exhaust face on narrow hosts,
     // in reference rems (at least 16 physical px each: 64 physical px).
+    // Owner confirmed on 2026-09-13.
     pileMinimumRem: 4,
   },
   formation: {
