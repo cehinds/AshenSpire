@@ -516,7 +516,7 @@ export const balance = {
       // the second: a control nobody can find is a control nobody uses. The
       // delay keeps it from flickering under a press that is really a scroll,
       // and the fade keeps it from snapping into place under the thumb.
-      info: { revealDelayMs: 125, fadeMs: 120, sizePx: 44, insetPx: 6 },
+      info: { revealDelayMs: 1000, fadeMs: 120, sizePx: 44, insetPx: 6 },
     },
     tooltipPlacement: {
       hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],

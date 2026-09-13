@@ -139,21 +139,32 @@ export function renderCard(registries, ref, opts = {}) {
   const staminaCost = model.costs.stamina;
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
+  // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
+  // The existing framework/preview remains the authority for all values.
+  const costRows = [
+    ['action', 'cost', '◆', cost],
+    ['stamina', 'stamina-cost', 'ϟ', staminaCost],
+    ['mana', 'mana-cost', '♦', manaCost],
+  ].filter(([, , , value]) => value != null && value !== 0);
+  el.dataset.wireframe = 'WC1';
   el.innerHTML =
-    `<div class="card-costs"><div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="${resourceWord('mana')} cost">◆ ${esc(manaCost)}</div>` : '') +
-    (staminaCost ? `<div class="stamina-cost" title="${resourceWord('stamina')} cost">● ${esc(staminaCost)}</div>` : '') +
-    `</div><div class="cname">${esc(model.name)}</div>` +
-    `<div class="art">${esc(model.icon)}</div>` +
-    `<div class="ctype">${esc(model.type.label)}</div>` +
+    `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
+      `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
+    ).join('')}</div>` +
+
+    `<div class="cname">${esc(model.name)}</div>` +
+    `<div class="art"><span class="card-art-glyph">${esc(model.icon)}</span>` +
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
-      ? `<div class="cd-body"><div class="ctags cd-tags">${tags
+      ? `<div class="ctags cd-tags">${tags
           .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
-      : '<div class="cd-body">') +
-    `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>`;
+      : '') + '</div>' +
+    `<div class="cd-body"><div class="ctype">${esc(model.type.label)}</div>` +
+    `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>` +
+    `<div class="card-metadata"><span>${esc(def.rarity || '')}</span></div>`;
+
   // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
   // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
   // count or measure, so the renderer reports after the first paint.
@@ -181,7 +192,7 @@ export function renderCard(registries, ref, opts = {}) {
     open: opener => {
       const details = document.createElement('div');
       const liveCosts = model.hasPreview ? model.costs : null;
-      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens, liveCosts);
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
       decorateKeywords(details);
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
       details.classList.add('playing-card-details');

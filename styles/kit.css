@@ -806,6 +806,27 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 .card .mana-cost { top: -0.7rem; background: #111b35; border: 2px solid #4f82d8; color: #cfe1ff; }
 .card .stamina-cost { top: 1.9rem; background: #142016; border: 2px solid #5f925d; color: var(--parchment); }
+/* Approved WC0/WC1 cost rail: below the name, inside the art. Costs have
+   contrast outlines, never boxes; the remaining exposed fan edge shows all
+   three resource types. Legacy classes remain available to screen callers. */
+.card .card-cost-rail {
+  position: absolute;
+  top: calc(var(--card-pad) + 1.2rem + var(--card-name-h) + var(--card-gap) + 0.25rem);
+  left: calc(var(--card-pad) + 0.25rem);
+  display: flex; flex-direction: column; gap: 0.2rem;
+  z-index: 3; pointer-events: none;
+}
+.card .card-cost-rail > div {
+  position: static; display: flex; justify-content: flex-start; gap: 0.2rem;
+  width: auto; min-width: 0; height: auto; padding: 0;
+  border: 0; border-radius: 0; background: none;
+  font: 600 max(12px, 1.1rem)/1.2 var(--font-body);
+  paint-order: stroke fill; -webkit-text-stroke: 2px var(--bg);
+  text-shadow: 0 1px 2px var(--bg);
+}
+.card .card-cost-rail > .cost { color: var(--gold); }
+.card .card-cost-rail > .stamina-cost { color: var(--green); }
+.card .card-cost-rail > .mana-cost { color: var(--frost); }
 /* THE NAME IS ONE LINE IN A FIXED BOX. A long name steps its type down. */
 .card .cname, .as-card .cd-name {
   --track: 0.02em;
@@ -859,11 +880,49 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card[data-tag-rows="0"] .ctext { -webkit-line-clamp: 4; }
 .card[data-tag-rows="1"] .ctext { -webkit-line-clamp: 3; }
 .card[data-tag-rows="2"] .ctext { -webkit-line-clamp: 2; }
+
+/* WC0: one intrinsic face in every host. The four tracks own the full
+   height; metadata never becomes a gameplay action. */
+.card[data-wireframe="WC1"] {
+  aspect-ratio: 5 / 8;
+  height: auto;
+  padding: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 4fr) minmax(0, 4fr) minmax(0, 1fr);
+  gap: 0;
+  overflow: visible;
+}
+.card[data-wireframe="WC1"] > .cname,
+.card[data-wireframe="WC1"] > .art,
+.card[data-wireframe="WC1"] > .cd-body {
+  height: auto; min-height: 0; min-width: 0; margin: 0;
+  box-sizing: border-box;
+}
+.card[data-wireframe="WC1"] > .cname { padding-inline: 0.3rem; }
+.card[data-wireframe="WC1"] > .art {
+  position: relative; border-radius: 0; border-inline: 0;
+  overflow: hidden;
+}
+.card[data-wireframe="WC1"] .ctags {
+  position: absolute; inset: auto 0.25rem 0.25rem;
+}
+.card[data-wireframe="WC1"] > .cd-body { padding: 0.4rem; }
+.card[data-wireframe="WC1"] .ctext { -webkit-line-clamp: 5; }
+.card[data-wireframe="WC1"] > .card-cost-rail { top: calc(10% + 0.25rem); left: 0.35rem; }
+.card[data-wireframe="WC1"] > .card-metadata {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 0; overflow: hidden; padding-inline: 0.4rem;
+  border-top: 1px solid var(--line-soft); color: var(--muted);
+  font-size: 0.9rem; text-transform: capitalize;
+}
+/* Truncated is never a dead end: the chevron says there is more. */
+
 /* Truncated is never a dead end: the chevron says there is more. On a face
    with inspection bound (cardInspection.js) the chevron IS the control — a
    tap-floor box drawn in the same corner, the glyph where it always sat —
    and the drawn-only mark yields to it; a face without inspection keeps the
    mark alone. */
+
 .card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
 .card.card-inspection-target[data-truncated="true"]::after { content: none; }
 .card-inspection-target > .card-more-button { display: none; }
@@ -3419,4 +3478,125 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 @media (max-width: 360px) and (orientation: portrait) {
   .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
+}
+/* Approved wireframe composition. Domain controls retain their handlers. */
+:root .combat[data-layout='formation'] {
+  --wireframe-hand-height: max(calc(208px / var(--ui-zoom, 1)), 30%);
+  --wireframe-footer-height: max(calc(56px / var(--ui-zoom, 1)), 5%);
+  grid-template-rows: 10% minmax(0, 1fr) calc(var(--wireframe-hand-height) + var(--wireframe-footer-height));
+}
+:root .combat[data-layout='formation'] > .hand-area {
+  grid-template-rows: minmax(0, 1fr) max(calc(56px / var(--ui-zoom, 1)), 14.2857%);
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
+  position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card {
+  position: absolute; left: var(--hand-card-x); top: var(--hand-card-y);
+  flex: none; margin: 0; padding: 0; zoom: 1;
+  width: var(--hand-card-width); min-width: var(--hand-card-width); max-width: var(--hand-card-width);
+  height: var(--hand-card-height); min-height: var(--hand-card-height); max-height: var(--hand-card-height);
+  aspect-ratio: 5 / 8; transform-origin: center center;
+  transform: rotate(var(--hand-card-angle)) !important;
+  z-index: auto !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
+  transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
+  z-index: 50 !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .art {
+  width: 100%; height: auto; margin: 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .cname {
+  font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); min-height: 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext {
+  font-size: max(calc(12px / var(--ui-zoom, 1)), .8rem); line-height: 1.25;
+}
+:root .combat[data-layout='formation'] .hand .card > .card-cost-rail {
+  top: calc(10% + .25rem); left: .35rem; right: auto; bottom: auto;
+  display: flex; flex-direction: column; gap: .2rem; width: auto;
+}
+:root .combat[data-layout='formation'] .hand .card > .card-cost-rail > :is(.cost,.mana-cost,.stamina-cost) {
+  position: static; border: 0; background: none; width: auto; height: auto; min-width: 0;
+  padding: 0; font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); line-height: 1.2;
+}
+:root .combat[data-layout='formation'] .combat-action-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: .25rem; max-width: calc(640px / var(--ui-zoom, 1)); justify-self: center; padding: .15rem;
+  --combat-control-size: calc(48px / var(--ui-zoom, 1)) !important;
+}
+:root .combat[data-layout='formation'] .combat-action-row > * {
+  min-width: 0; width: 100%; max-width: none; margin: 0; align-self: center;
+}
+:root .combat[data-layout='formation'] .combat-action-row :is(.energy-orb,.combat-potions,.end-turn) {
+  height: var(--combat-control-size); min-height: var(--combat-control-size); max-height: var(--combat-control-size);
+}
+:root .combat[data-layout='formation'] .combat-action-row .energy-orb,
+:root .combat[data-layout='formation'] .combat-action-row .combat-potions {
+  width: var(--combat-control-size); min-width: var(--combat-control-size); aspect-ratio: 1;
+}
+:root .combat[data-layout='formation'] .combat-action-row .pile {
+  height: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation'] .combatant .meters .bar .label {
+  font-size: calc(12px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation'] .combatant .meters .bar.hp {
+  height: max(.85rem, calc(14px / var(--ui-zoom, 1)));
+}
+.card-inspection-modal .card-inspection-layout {
+  display: grid; grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
+  min-height: 0; height: 100%; gap: 2%; padding: 1rem;
+}
+.card-inspection-modal .card-inspection-art { min-width: 0; max-width: 14rem; width: 100%; }
+.card-inspection-modal .card-inspection-art > .card[data-wireframe='WC1'] {
+  width: 100%; height: auto; min-height: 0; aspect-ratio: 5 / 8;
+}
+.card-inspection-modal .modal-body { overflow: hidden; min-height: 0; }
+.card-inspection-modal .card-inspection-details { min-height: 0; overflow-y: auto; overflow-x: hidden; }
+:root .combat[data-layout='formation'] .combatant .combatant-info { visibility: hidden; pointer-events: none; }
+:root .combat[data-layout='formation'] .combatant[data-inspect-ready='true'] .combatant-info { visibility: visible; pointer-events: auto; }
+:root .combat[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
+:root .combat[data-layout='formation'] .combatant .sprite > .block-badge {
+  right: auto; left: calc(100% + .5rem); top: 12%; bottom: auto; transform: translateY(-50%);
+}
+:root .combat[data-layout='formation'] .combatant.enemy .sprite > .block-badge {
+  left: auto; right: calc(100% + .5rem); top: 88%;
+}
+:root .combat[data-layout='formation'] .combatant .sprite::before {
+  content: ''; position: absolute; left: 50%; bottom: 0;
+  width: 70%; height: 8%; border-radius: 50%; transform: translate(-50%,50%);
+  background: #0008; pointer-events: none; z-index: -1;
+}
+.modal-foot-actions[data-action-count] {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr);
+  width: 100%; min-width: 0; gap: .5rem;
+}
+.modal-foot-actions[data-action-count] > button { width: 100%; min-width: 0; max-width: none; }
+.modal-foot-actions[data-action-count='0'] { display: none; }
+.modal-close { aspect-ratio: 1; flex: none; padding: 0; }
+:root[data-layout='narrow'] .as-railed { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); }
+:root[data-layout='narrow'] .as-railed > .as-rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+:root[data-layout='narrow'] .as-railed > .as-rail > * { flex: 0 0 auto; }
+.hand-overlay { position: relative; }
+.hand-overlay > .hand-info-portal {
+  position: absolute; z-index: 500; transform: translateX(-50%);
+  width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
+  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+  border: 1px solid var(--gold); border-radius: 50%; padding: 0;
+  display: grid; place-items: center; background: var(--bg); color: var(--gold);
+  visibility: visible; pointer-events: auto; font-size: calc(16px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .hand-hit-lane {
+  pointer-events: auto; position: absolute; left: 0; top: 0;
+  width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
+  transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
+  transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
+  transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
 }
