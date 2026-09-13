@@ -792,5 +792,96 @@ export const uiStrings = [
     "short": "No runs have been set aside.",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "rest.eyebrow",
+    "extends": "",
+    "short": "Rest",
+    "full": "Recover and use this Shrine's services before moving on.",
+    "tip": ""
+  },
+  {
+    "id": "rest.title",
+    "extends": "",
+    "short": "Shrine of Ember",
+    "full": "The Shrine you are resting at.",
+    "tip": ""
+  },
+  {
+    "id": "rest.status.available",
+    "extends": "",
+    "short": "{available} of {total} available",
+    "full": "How many of this Shrine's choices you can take now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.consequences.heading",
+    "extends": "",
+    "short": "Availability",
+    "full": "Whether each choice here can be taken now; its own line says why not.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.available",
+    "extends": "",
+    "short": "Available",
+    "full": "You can take this now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.unavailable",
+    "extends": "",
+    "short": "Unavailable",
+    "full": "This cannot be taken now; the choice's own line says why.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.used",
+    "extends": "",
+    "short": "Rested",
+    "full": "You have already rested at this Shrine.",
+    "tip": ""
+  },
+  {
+    "id": "rest.continue",
+    "extends": "",
+    "short": "Continue",
+    "full": "Leave the Shrine and return to the map.",
+    "tip": "Continue"
+  },
+  {
+    "id": "event.status.choose",
+    "extends": "",
+    "short": "Choose a response",
+    "full": "Every response here is open to you.",
+    "tip": ""
+  },
+  {
+    "id": "event.status.limited",
+    "extends": "",
+    "short": "{available} of {total} available",
+    "full": "A price closes some responses for now.",
+    "tip": ""
+  },
+  {
+    "id": "event.status.resolved",
+    "extends": "",
+    "short": "Resolved",
+    "full": "Your response is taken; continue when ready.",
+    "tip": ""
+  },
+  {
+    "id": "event.continue",
+    "extends": "",
+    "short": "Continue",
+    "full": "Move on from this event.",
+    "tip": "Continue"
+  },
+  {
+    "id": "event.continue.combat",
+    "extends": "",
+    "short": "Steel yourself",
+    "full": "The event leads into a fight.",
+    "tip": "Steel yourself"
   }
 ];

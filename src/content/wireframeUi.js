@@ -41,6 +41,12 @@ export const wireframeUi = freeze({
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56, shortHostRails: true },
   // W1w: preview column share; the details pane takes the rest and scrolls.
   inspector: { previewFraction: 0.38 },
+  // W1s Rest / W1u Event (choice body): nominal shares of the visible game
+  // viewport. The frame takes what the run HUD leaves, capped at these.
+  choiceBody: {
+    frameWidthVw: 95, frameHeightVh: 90, headerMinVh: 10, footerMinVh: 10,
+    sideInsetVw: 2.5, topInsetVh: 2, columnGapVw: 2, rowGapVh: 2,
+  },
   // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
   combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
   // WCM0 lower meters. Screen-space minimums; they hold after perspective

@@ -1091,13 +1091,14 @@ input[type="range"] { min-height: var(--tap-floor); }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
 
-/* ═══ EVENT — body C on the page ═══════════════════════════════════════════ */
-/* The event is a decision: the door's head names it, the body is ArtWell +
-   prose + OptionCards, the foot carries the way on. It stands on the page
-   rather than over one, so it wears the door's box without the veil. */
-.event-door { width: 57rem; max-width: 100%; }
-.event-door .as-decide > .as-artwell { margin: 0 auto 1.2rem; }
-.event-door .as-decide > .as-prose { margin-bottom: 1.5rem; }
+/* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
+/* The head names the event and its {Status}; the narrative (ArtWell + prose)
+   stands beside the responses, stacked on narrow hosts; the foot holds
+   Continue, allowed once a response is taken. It stands on the page rather
+   than over one, so it wears the door's box without the veil. The frame is
+   the CHOICE BODY block below. */
+.event-narrative > .as-artwell { margin: 0 auto 1.2rem; }
+.event-narrative > .as-prose { margin: 0; }
 .event-door .as-options { text-align: left; }
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
@@ -1112,6 +1113,32 @@ input[type="range"] { min-height: var(--tap-floor); }
    390x844 on 2026-09-11 with the "fix" in the file. `.ev-choices` lifts this
    to (0,5,0), which is the smallest step that actually wins. */
 .event-door .ev-choices .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ═══ CHOICE BODY — the W1 frame for W1s Rest and W1u Event ═══════════════ */
+/* Shares arrive as custom properties from ChoiceBodyModel (wireframeUi
+   .choiceBody), divided by --ui-zoom so each is a share of the visible
+   viewport. The frame takes what the run HUD leaves, capped at its nominal
+   height; only the body scrolls. Fallbacks are first-paint values only. */
+.screen.choice-screen { justify-content: flex-start; gap: 0; padding-inline: var(--choice-outer-x, 2.4rem); padding-bottom: var(--choice-outer-y, 2.4rem); }
+.modal.choice-door { flex: 1 1 auto; min-height: 0; width: var(--choice-frame-width, 100%); max-width: 100%; max-height: var(--choice-frame-height, 100%); }
+.choice-door > .modal-head { flex-wrap: wrap; row-gap: 0.4rem; box-sizing: border-box; min-height: var(--choice-head-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-head .modal-head-id h2 { white-space: normal; }
+.choice-door > .modal-head > .modal-head-actions { flex: 0 1 auto; min-width: 0; align-self: center; }
+.choice-door > .modal-body { padding: var(--choice-inset-top, var(--modal-inset)) var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot { box-sizing: border-box; min-height: var(--choice-foot-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot > .modal-foot-actions { flex: 1 1 auto; margin-left: 0; }
+/* The two body slots: side by side on wide hosts, stacked on narrow ones. */
+.choice-body-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--choice-column-gap, 1.5rem); row-gap: var(--choice-row-gap, 1rem); align-items: start; }
+:root[data-layout='narrow'] .choice-body-columns { grid-template-columns: minmax(0, 1fr); }
+.choice-body-columns > * { min-width: 0; }
+.choice-body .class-row.shrine-option-list { width: 100%; max-width: none; margin-inline: 0; }
+/* W1s availability column: what arrival restored, then each choice's state. */
+.choice-status { display: grid; gap: 0.6rem; align-content: start; }
+.screen .choice-status .rest-refill { margin: 0; max-width: none; text-align: left; }
+.choice-status-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.choice-status-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.choice-status-row[data-state='available'] .choice-status-state { color: var(--gold); }
+.choice-status-row:is([data-state='unavailable'], [data-state='used']) .choice-status-state { color: var(--muted); }
 
 /* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
 /* The head is the kit's (tab strip = the views, IconButton close in the same

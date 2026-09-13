@@ -150,3 +150,16 @@ profile.category.meta,,Profiles,Profiles set aside in this device’s drawer.,
 profile.category.run,,Runs,Runs set aside in this device’s drawer.,
 profile.empty.meta,,No profiles have been set aside.,,
 profile.empty.run,,No runs have been set aside.,,
+rest.eyebrow,,Rest,Recover and use this Shrine's services before moving on.,
+rest.title,,Shrine of Ember,The Shrine you are resting at.,
+rest.status.available,,{available} of {total} available,How many of this Shrine's choices you can take now.,
+rest.consequences.heading,,Availability,Whether each choice here can be taken now; its own line says why not.,
+rest.state.available,,Available,You can take this now.,
+rest.state.unavailable,,Unavailable,This cannot be taken now; the choice's own line says why.,
+rest.state.used,,Rested,You have already rested at this Shrine.,
+rest.continue,,Continue,Leave the Shrine and return to the map.,Continue
+event.status.choose,,Choose a response,Every response here is open to you.,
+event.status.limited,,{available} of {total} available,A price closes some responses for now.,
+event.status.resolved,,Resolved,Your response is taken; continue when ready.,
+event.continue,,Continue,Move on from this event.,Continue
+event.continue.combat,,Steel yourself,The event leads into a fight.,Steel yourself
