@@ -759,6 +759,39 @@ Limits:
   count; it has no categories.
 - W1q potion inspection (charges, eligibility, "Use if legal") lives in the
   flask menu and is not changed here.
+## Potion inspection (W1q)
+
+Branch `feature/wireframe-potion-inspection`, based on dev `d2ea5bcd`. The
+flask inspect door (`openFlaskInspectModal`) now follows W1q. A pure view,
+`src/ui/models/PotionInspectionModel.js` (`potionInspectionView`), decides
+what it shows, with three node:tests.
+
+- **Body:** the art sits beside the effect and the remaining charges, as
+  before. When the potion cannot be used here, the door states why: the Use
+  row's own refusal from the host's `flaskActionPlan`. An enabled Use needs no
+  caption.
+- **Footer:** Use is the one action whenever the host's plan offers it. It is
+  disabled, with the reason as its title, when refused. The footer Close is
+  gone; the header close is the way out.
+- **Commit path:** the flask menu passes its Use row into the door. Pressing
+  the door's Use rings the host's own `onAction('use')`, the same call the
+  menu row makes, and each host re-checks there. No caller wraps flask
+  actions, so no confirmation is bypassed. Reading alone rings nothing.
+
+Browser evidence (emulation, `?shot=map`, the run HUD's Crimson Flask,
+1280×800 and 390×844):
+- The door reads "Crimson Flask", with "3 charges remaining.".
+- With "Use flasks outside combat" off, the footer holds only a disabled
+  "Use" titled "Enable 'Use flasks outside combat' in Settings", and the body
+  states the same eligibility line.
+- There is no footer Close; the header close remains.
+
+Limits:
+- Capacity is not shown: flask definitions carry no capacity field.
+- The enabled-Use path is covered by the unit test and the host's own
+  revalidation, not measured in the browser.
+- Combat's potions menu (WGC11) builds its own flask plan and does not open
+  this door.
 
 ## Remaining integration
 

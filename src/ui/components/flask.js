@@ -6,6 +6,7 @@ import { openModal } from './modalShell.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
 import { focusElement, matchAction, actionLabel } from '../input.js';
 import { el, popover, row as kitRow, keycap, titleS, subtitle, artWell, prose, button } from '../kit/index.js';
+import { potionInspectionView } from '../models/PotionInspectionModel.js';
 
 let activeFlaskActionMenu = null;
 
@@ -92,11 +93,16 @@ export function flaskTooltipHtml(def, { charges = null, hint = '' } = {}) {
  * Escape/veil-click/focus-return implementation. A seventh hand-rolled
  * dismissal was the alternative and is the thing that file exists to prevent.
  */
-export function openFlaskInspectModal({ def, charges = null, opener = document.activeElement } = {}) {
+export function openFlaskInspectModal({ def, charges = null, use = null, opener = document.activeElement } = {}) {
   if (!def) throw new Error('openFlaskInspectModal requires a flask definition');
-  const lines = flaskDetailLines(def, { charges });
-
-  const done = button({ label: 'Close', role: 'exit', className: 'flask-inspect-done', attrs: { 'data-focusable': 'true' } });
+  // W1q: charges, the effect, whether the potion can be used here (and why
+  // not), and Use as the one footer action when the host's plan offers it.
+  // The header close is the way out; no footer Close duplicates it.
+  const view = potionInspectionView({ charges, use });
+  const act = view.action
+    ? button({ label: view.action.label, className: 'flask-inspect-use', attrs: { 'data-focusable': 'true', dataset: { flaskAction: 'use' } } })
+    : null;
+  if (act && !view.action.enabled) { act.disabled = true; act.title = view.action.reason; }
 
   const shell = openModal({
     size: 'md',
@@ -108,14 +114,21 @@ export function openFlaskInspectModal({ def, charges = null, opener = document.a
     // so the door's height is the art's and two flasks are the same door.
     body: (host) => {
       const inspection = renderCollectibleInspection(null, def, 'Potion', { interactive: false });
-      if (Number.isFinite(charges)) inspection.querySelector('.card-inspection-details').append(el('p', { class: 'flask-inspect-lines' }, `${charges} charge${charges === 1 ? '' : 's'} remaining.`));
+      const details = inspection.querySelector('.card-inspection-details');
+      if (view.chargeLine) details.append(el('p', { class: 'flask-inspect-lines' }, view.chargeLine));
+      if (view.eligibility) details.append(el('p', { class: 'card-action-reason flask-inspect-eligibility', role: 'status' }, view.eligibility));
       host.replaceChildren(inspection);
     },
-    primary: done,
+    primary: act,
     footSize: 'short',
     opener,
   });
-  done.addEventListener('click', shell.close);
+  // Use commits through the host's own action path, which revalidates.
+  act?.addEventListener('click', () => {
+    if (!view.action.enabled) return;
+    shell.close();
+    use.invoke?.();
+  });
   return Object.freeze({ root: shell.veil, close: shell.close });
 }
 
@@ -263,7 +276,11 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
         // is about to lose its menu underneath it. `restoreFocus: false` for
         // the same reason; the modal's own dismissal returns focus to `anchor`.
         close({ cancelled: false, restoreFocus: false });
-        openFlaskInspectModal({ def, charges, opener: anchor });
+        // W1q: the door offers the same Use row, and pressing it rings
+        // `onAction('use')` exactly as the menu row would; reading alone rings nothing.
+        const useRow = plan.actions.find((candidate) => candidate.id === 'use');
+        openFlaskInspectModal({ def, charges, opener: anchor,
+          use: useRow && onAction ? { ...useRow, invoke: () => onAction('use') } : null });
         return;
       }
       if (onAction) onAction(row.id);
