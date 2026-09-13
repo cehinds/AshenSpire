@@ -554,6 +554,26 @@ adapter writes the geometry as CSS variables beside the band and footer plans.
 
 Behaviour change to confirm: enemy poise and buildup, and the player's
 stance, no longer show until that combatant is selected.
+## Combat overlays (WCO0–WCO3)
+
+Branch `feature/wireframe-overlays`, based on dev `d2ea5bcd`, issue #1030.
+`src/ui/models/CombatOverlayModel.js` owns intent visibility and the guard
+badge's geometry from `wireframeUi.overlay`. The combat layout adapter writes
+them as CSS variables, and the stylesheet reads them rather than hard-coding
+the numbers. The unused `formation.guardAnchor` / `guardGapRem` values are
+replaced by `overlay.defenseAnchorByRole` and `overlay.defenseGapRem`.
+
+- WCO1 Intent: above the sprite, below Inspect, at least 2.8rem tall, with a
+  value font of at least 13.2 physical px. `overlay.intentVisibleByRole`
+  decides it per role: enemies show it; the player has no intent to show.
+- WCO2 Guard badge: outside the sprite by 0.5rem, player upper-right at 12%
+  of sprite height and enemy lower-left at 88% (CURRENT-SPECIFICATION's
+  accepted guard geometry, which supersedes the earlier 50% rule). At least
+  3.5rem, a 13.2 physical px value, never mirrored.
+- WCO3 Aura: the stance aura spans the sprite's own bounds (it previously
+  overflowed them by 7–24%) and paints behind the artwork. It stays input
+  transparent.
+- WCO4 Buff layer: not built. No buff visuals exist to fill a front layer.
 
 ## Remaining integration
 

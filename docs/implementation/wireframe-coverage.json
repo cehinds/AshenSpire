@@ -2489,7 +2489,7 @@
       "id": "WCO0",
       "name": "Combat overlays",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2512,13 +2512,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-overlays (#1030): CombatOverlayModel.js owns intent visibility and the guard badge geometry from wireframeUi.overlay; the combat layout adapter writes it as CSS variables."
     },
     {
       "id": "WCO1",
       "name": "Intent indicator",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2541,13 +2542,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Above the sprite, below Inspect; at least 2.8rem tall with a 13.2 physical px value font. Visibility per role from overlay.intentVisibleByRole (enemy shown, player hidden)."
     },
     {
       "id": "WCO2",
       "name": "Defense badge",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2570,13 +2572,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Outside the sprite by 0.5rem: player upper-right at 12%, enemy lower-left at 88% (overlay.defenseAnchorByRole, the accepted guard geometry); at least 3.5rem; 13.2 physical px value; never mirrored."
     },
     {
       "id": "WCO3",
       "name": "Aura layer",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2599,7 +2602,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "The stance aura spans the sprite bounds (inset 0) behind the artwork, input transparent."
     },
     {
       "id": "WCO4",
@@ -2628,7 +2632,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Not built: no buff visuals exist to fill a front layer. Deferred until buff art or effects are specified."
     },
     {
       "id": "WCO5",

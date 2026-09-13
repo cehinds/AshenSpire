@@ -1,5 +1,6 @@
 import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js';
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
+import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 
 // Measures the combat root once per frame and writes the band and footer plans
 // as custom properties. CSS owns placement; the model owns every number.
@@ -25,6 +26,18 @@ export function wireCombatLayout(combatEl) {
     combatEl.style.setProperty('--combatant-stance-h', meters.stance + 'px');
     combatEl.style.setProperty('--combatant-value-text', meters.valueText + 'px');
     combatEl.style.setProperty('--combatant-meter-gap', meters.gap + 'px');
+    // WCO0: the guard badge and intent read one overlay geometry.
+    const overlay = overlayGeometry({ zoom, rem });
+    combatEl.style.setProperty('--defense-min', overlay.defenseMin + 'px');
+    combatEl.style.setProperty('--intent-min', overlay.intentMin + 'px');
+    combatEl.style.setProperty('--overlay-value-font', overlay.valueFont + 'px');
+    for (const role of OVERLAY_ROLES) {
+      const { side, heightFraction } = overlay.anchors[role];
+      const outside = `calc(100% + ${overlay.gap}px)`;
+      combatEl.style.setProperty(`--defense-left-${role}`, side === 'right' ? outside : 'auto');
+      combatEl.style.setProperty(`--defense-right-${role}`, side === 'left' ? outside : 'auto');
+      combatEl.style.setProperty(`--defense-top-${role}`, `${heightFraction * 100}%`);
+    }
     if (!row) return;
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.

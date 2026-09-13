@@ -73,7 +73,16 @@ export const wireframeUi = freeze({
     innerRetreatFraction: 0.02, maxRetreatSpacingFraction: 0.15,
     gapNarrowFraction: 0.03, gapWideFraction: 0.05,
     backLayer: 200, frontLayer: 0, focusPriority: 100,
-    guardAnchor: { player: 0.12, enemy: 0.88 }, guardGapRem: 0.5,
+  },
+  // WCO0 combat overlays (CURRENT-SPECIFICATION: WC4, the 13.2px value font,
+  // and the accepted guard geometry). Badges and text are never mirrored.
+  overlay: {
+    intentVisibleByRole: { player: false, enemy: true },
+    defenseAnchorByRole: {
+      player: { side: 'right', heightFraction: 0.12 },
+      enemy: { side: 'left', heightFraction: 0.88 },
+    },
+    defenseGapRem: 0.5, defenseMinRem: 3.5, intentMinRem: 2.8, valueFontMinPx: 13.2,
   },
   // WCI0 identity and artwork. The metadata band names what each end holds;
   // contained artwork sits centred on cards and inspector previews and stands
