@@ -915,6 +915,14 @@ input[type="range"] { min-height: var(--tap-floor); }
   border-top: 1px solid var(--line-soft); color: var(--muted);
   font-size: 0.9rem; text-transform: capitalize;
 }
+/* WCI3: the owned count holds the end of the band even when rarity is absent. */
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-slot="end"] { margin-inline-start: auto; }
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-kind="owned"] { text-transform: none; white-space: nowrap; }
+/* WCI2: contained artwork keeps its intrinsic ratio; the anchor only says
+   where the spare room goes (around it, or above a figure on its baseline). */
+[data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
+[data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
+[data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
 /* Truncated is never a dead end: the chevron says there is more. */
 
 /* Truncated is never a dead end: the chevron says there is more. On a face

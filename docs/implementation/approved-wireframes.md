@@ -313,6 +313,45 @@ WGC6 contract supersedes that and the tool needs updating. The hidden
 preview pane throttles animation frames, so measurements were taken after
 forcing a render.
 
+## Identity and artwork (WCI0–WCI3)
+
+Branch `feature/wireframe-identity`, based on dev `d2ea5bcd`. The rules the
+three identity parts share live in one pure model,
+`src/ui/models/IdentityModel.js`, with values in `wireframeUi.identity`.
+Cards, combatants and the inspector preview stamp `data-identity-part`
+(`name`, `artwork`, `metadata`) on the parts they own; the values stay with
+the owner.
+
+- **WCI3 metadata band.** `metadataFooter` puts rarity at the start and
+  "Owned: n" at the end (`identity.metadataSlots`). A fact the surface cannot
+  state is absent, never a blank label or an invented zero. Offers pass the
+  run's deck count: reward cards, shop cards and weapon arts, and the draft
+  (its picks so far). Deck, pile and hand views pass none, so their band
+  shows rarity alone. No action enters the band. The wording is
+  `card.meta.owned` in `uiStrings.csv`.
+- **WCI2 artwork.** `artworkAnchor(host)`: cards and the inspector preview
+  centre their artwork; combatants stand it on the baseline. Artwork is
+  contained at its intrinsic ratio. Facing still mirrors only the `.facing`
+  art layer, and no text, meter or badge lives inside it.
+- **WCI1 nameplate.** The card header, the combatant nameplate and the
+  inspector preview title are the name parts. The combatant nameplate is the
+  card child directly above the meters, HP first.
+
+Browser evidence (emulation, `?shot=shop` and `?shot=combat`, 1280×800 and
+390×844):
+- Shop cards: rarity starts 3.9 px (3.3 px on the phone) from the band's
+  left edge, and "Owned: 0" ends the same distance from its right. The band
+  is 9.9% of the card height, against the wireframe's 10%. Nothing overflows.
+- Combat: with each combatant selected, its nameplate sits 3 px (the meter
+  gap) above the HP row, for the player and both enemies at both sizes.
+
+Limits:
+- Equipment cards keep their own footer (requirement, then rarity); that face
+  is WC2's and is not changed here.
+- Co-op reward and shop offers do not pass an owned count.
+- Unselected combatants hide their names in formation (the selected-only
+  default, kept by #1029), so adjacency was measured with each one selected.
+
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant

@@ -38,7 +38,7 @@ export function mountDraft(app, { registries, classId, rng, rounds = 3, choices 
     ]));
 
     for (const id of offer) {
-      const card = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, {});
+      const card = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, { owned: picked.filter((c) => c.cardId === id).length });
       card.addEventListener('click', () => {
         picked.push(createCardInstance(id, false, idGen));
         // Remove one copy from the pool so later rounds skew fresh.
