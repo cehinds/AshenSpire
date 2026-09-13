@@ -9,6 +9,8 @@ const freeze = (value) => {
 };
 export const wireframeUi = freeze({
   card: { ratio: 5 / 8, bands: [1, 4, 4, 1], inspectDelayMs: 1000 },
+  // W4b: a repeat pick enters only after the selection has stood this long.
+  map: { repeatPickDelayMs: 400 },
   hand: {
     minimumHeightPx: 208, minWidthRem: 5, maxWidthRem: 9,
     minCapacity: 5, maxCapacity: 15, narrowWidthRem: 22, wideWidthRem: 75,
@@ -16,6 +18,10 @@ export const wireframeUi = freeze({
     fanAngleDegrees: 2.5, arcRem: 0.6, dragThresholdPx: 12,
   },
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56 },
+  // W1w: preview column share; the details pane takes the rest and scrolls.
+  inspector: { previewFraction: 0.38 },
+  // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
+  combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
   footer: {
     circleMaxFraction: 0.2, pileMaxFraction: 0.1, endMaxFraction: 0.4,
     gapRem: 0.2, heightFraction: 0.95, minimumTargetPx: 44,

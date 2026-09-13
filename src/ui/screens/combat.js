@@ -24,7 +24,7 @@ import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
-import { combatantDetailBody } from '../components/combatantInspector.js';
+import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText } from '../../model/tooltipSettings.js';
@@ -55,7 +55,7 @@ import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
-import { renderArcaneExposure } from '../components/arcaneExposure.js';
+import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
@@ -71,6 +71,9 @@ import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../compo
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
+import { setStatusTrayOverflow } from '../components/statusTray.js';
+import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
@@ -150,7 +153,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         <div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
           ${html(pileButton('draw', 'Draw'))}
-          ${html(button({ label: 'End Turn', weight: 'primary', className: 'end-turn wide tall' }))}
+          ${html(button({ label: 'End Turn', weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall' }))}
           ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
           ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
         </div>
@@ -556,6 +559,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         abilities,
         skills: abilities,
         statuses: abilities.filter(row => row.kind !== 'stance'),
+        entityId: 'player',
+        // No recorded play history, traits or lore for the player yet: unknown.
+        history: null, traits: null, lore: null,
       };
     }
 
@@ -568,6 +574,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       active: moveId === currentMoveId,
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
+    // Previous actions are the moves that RESOLVED (oldest first). movesHistory
+    // records rolls, and a roll cancelled by a stagger never happened.
+    const past = entity.performedMoves || [];
     return {
       role: 'enemy',
       name: def.name,
@@ -586,6 +595,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries }),
       skills,
       statuses: statusDetails(entity),
+      entityId: entity.id,
+      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId]) })),
+      traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
+      // No authored lore exists for enemies yet; unknown, not none.
+      lore: null,
     };
   }
 
@@ -597,19 +611,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
    * active effect — `combatantDetailBody`, the same sections the edge tray
    * renders, so the two can never drift.
    */
+  // W1w preview art: a fresh still from the same asset functions the field uses.
+  function inspectorPreviewSprite(subject) {
+    if (subject.role === 'player') {
+      const figure = figureSpec(registries, run.loadout, run.class);
+      return playerSprite(run.customization || {}, run.class, figure.armourId);
+    }
+    const enemy = combat.enemies.find((e) => e.id === subject.entityId);
+    if (!enemy) return null;
+    const def = registries.enemies.get(enemy.enemyId);
+    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp });
+  }
+
   function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
-    const done = button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true', title: helpText('close') } });
+    const done = button({ label: 'Close', role: 'exit', attrs: { 'data-focusable': 'true', title: helpText('close') } });
     const shell = openModal({
-      size: 'md',
+      size: 'lg',
       className: 'combatant-door',
       opener,
       eyebrow: subject.subtitle || 'Combatant',
       title: subject.name,
       closeLabel: `Close ${subject.name}`,
       bodyClassName: 'combatant-inspector-body',
-      body: (host) => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      body: (host) => host.replaceChildren(combatantInspectorLayout(subject, { sprite: inspectorPreviewSprite(subject), previewFraction: wireframeUi.inspector.previewFraction })),
       primary: done,
       footSize: 'short',
     });
@@ -843,13 +869,28 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // All three read the PACED view (dv) — the snapshot during playback, the
   // live entity otherwise — so meters move on their own beat (Sunna's gate).
   function procDisplayPlan(entity) {
-    const live = Object.entries(dv(entity).statuses || {})
+    const v = dv(entity);
+    const live = Object.entries(v.statuses || {})
       .filter(([sid, inst]) => {
         const def = registries.statuses.get(sid);
         return def && def.proc && inst.meter && inst.meter.value > 0;
       })
       .sort((a, b) => b[1].meter.value / b[1].meter.max - a[1].meter.value / a[1].meter.max);
-    return { bars: live.slice(0, 2).map(([sid]) => sid), pips: live.slice(2).map(([sid]) => sid) };
+    // WCF2 ordered active stack (models/CombatantStackModel.js): HP, other
+    // resources, buildup by fill, stance, icons; at most five rows. Buildup
+    // that does not fit joins the icon row as a ring pip.
+    const resources = resourceBarPlan(registries, 'model', v, entity, resDomains).map((bar) => bar.id);
+    if (entity.kind === 'enemy' && arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents)) resources.push('arcaneExposure');
+    const icons = Object.entries(v.statuses || {}).filter(([sid, inst]) => {
+      const def = registries.statuses.get(sid);
+      return def && !(def.proc && (inst.meter ? inst.meter.value : inst.stacks) <= 0);
+    }).length;
+    // An entity with no HP row (a legacy fixture) keeps the old two-bar split
+    // rather than failing the whole combatant render.
+    if (!resources.includes('hp')) return { bars: live.slice(0, 2).map(([sid]) => sid), pips: live.slice(2).map(([sid]) => sid), hidden: [] };
+    const stack = planCombatantStack({ resources, buildups: live.map(([sid]) => sid), stance: Boolean(entity.stanceId), icons });
+    const buildups = new Set(live.map(([sid]) => sid));
+    return { bars: stack.bars.filter((id) => buildups.has(id)), pips: [...stack.promoted], hidden: [...stack.hidden] };
   }
 
   function hasResistAgainst(entity, statusId) {
@@ -922,6 +963,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       answerOnTap(el, statusTip);
       row.appendChild(el);
     }
+    // The final +N tile opens the inspector, which lists every effect.
+    // Like the pips, it yields while a card or flask is armed: the tap is a play.
+    setStatusTrayOverflow(row, (opener) => {
+      if (selected || selectedFlask != null || selfArm) return false;
+      openCombatantDoor(combatantSubject(entity.kind === 'enemy' ? 'enemy' : 'player', entity), opener);
+    });
     return row;
   }
 
@@ -958,7 +1005,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // too: the player entity carries the real-but-empty vessel, so his strip
     // shows health and poise exactly as the enemies' do — and a zero-threshold
     // entity still refuses (no meter → ABSENT).
-    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
+    // Resources the WCF2 stack could not fit stay readable in the inspector.
+    const stackHidden = new Set(entity.kind === 'enemy' ? procDisplayPlan(entity).hidden : []);
+    const plan = resourceBarPlan(registries, 'model', v, entity, resDomains).filter((bar) => !stackHidden.has(bar.id));
     const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind), tooltips });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
@@ -977,7 +1026,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
-      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents, { tooltips });
+      const arcane = stackHidden.has('arcaneExposure') ? null : renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents, { tooltips });
       if (arcane) wrap.appendChild(arcane);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),

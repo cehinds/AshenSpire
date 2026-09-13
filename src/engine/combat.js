@@ -425,6 +425,9 @@ function enemyPhase(combat) {
 // 'enemyMoveStarted' marks the acting enemy so the UI can pace playback
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 function executeMovePayload(combat, enemy, move, moveId) {
+  // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
+  // cancels never happens. This is what did — the inspector's history.
+  (enemy.performedMoves ||= []).push(moveId);
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
