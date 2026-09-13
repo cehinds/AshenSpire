@@ -3083,11 +3083,23 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    for the same control. What made the exception necessary was room, not
    placement — with nothing reserved the badge straddled the STARTING ARMOUR
    header's border (measured 1280x800, 2026-09-11) — so these selectors reserve
-   it: the 64 px row gap every other card scrollport keeps, and a head of 80,
-   not 64, because the badge rides its card's focus lift (translateY(-6px)
-   scale(1.05) about center bottom) while the scrollport clips at its padding
-   box. At 64 the circle lost 7 px off its top at 1280 and 8 px at 1440; at 80
-   it is whole and clear of the section face at 1280, 1366, 1440 and 1920. */
+   it: the 64 px row gap every other card scrollport keeps, and a head of 80.
+   THE 80 IS THREE MEASURED TERMS, and it is a typed number ON PURPOSE. The
+   badge on an equipment face is a FIXED 44 px — equipmentCard.js writes
+   --card-info-size from balance.ui.equipmentCard.info.sizePx onto the card
+   itself, so the `var(--card-info-size, var(--tap-floor))` fallback in the
+   shared rule never reaches --tap-floor here, and the badge's own `top`
+   computes to -54 px at every UI size and every Minimum tap size (measured:
+   44.0 px tall and top -54 px at Auto, at S, and at S with the tap dial on
+   60). On top of that 54 sits the focus lift — translateY(-6px) plus the 5 %
+   of the card's height that scale(1.05) about center bottom grows upward —
+   which is what the remaining 26 covers, with slack. A head DERIVED from
+   --tap-floor was tried and refused: the token moves the wrong way for this
+   control (Auto zooms ABOVE 1 on a desktop, 1.48 at 1920, which shrinks it to
+   30 px), and the derived head then clipped 8 px off the first row at 1920
+   while the badge itself had not moved at all.
+   Measured whole and clear of the section face at 1280, 1366, 1440, 1920 and
+   390, at UI sizes Auto, S and XL. */
 .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:80px 6px 14px; gap:64px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
 .cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
