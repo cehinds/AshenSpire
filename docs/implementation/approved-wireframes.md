@@ -530,6 +530,30 @@ Limits:
   `d2ea5bcd` and this branch. The two failures are "the footer appends every
   way back before the one way forward" and "no rule reorders or re-spans the
   foot primary". Both predate this branch and are unchanged by it.
+## Combatant meters (WCM0–WCM4)
+
+Branch `feature/wireframe-meters`, based on dev `d2ea5bcd`, issue #1028.
+`src/ui/models/CombatantMeterModel.js` owns the row geometry and which rows
+wait for selection, from `wireframeUi.combatantMeters`. The combat layout
+adapter writes the geometry as CSS variables beside the band and footer plans.
+
+- WCM1 Health: at least max(0.85rem, 14 physical px), carrying the compact
+  current/maximum at 12 physical px. The full accessible label is kept.
+- WCM2 Resource and WCM3 Buildup: half the HP height, at least 0.45rem. A row
+  that short cannot hold 12 px text, so its exact values live in its tooltip
+  and the inspector. Buildup keeps its glyph nub.
+- WCM4 Stance: the stance chip is a strip the size of HP, after the buildup
+  rows and before the status icons.
+- One shared gap between rows.
+- Selection: unselected combatants show sprite, HP, block, intent, status
+  icons, aura, buffs and shadow. Name, secondary resources, buildup and stance
+  appear only while selected (`selectedOnly`; empty it to show every row).
+  HP never waits. Co-op keeps its own name-only rule.
+- The minimums hold after perspective scaling: the depth scale zooms only the
+  sprite, never the information rows.
+
+Behaviour change to confirm: enemy poise and buildup, and the player's
+stance, no longer show until that combatant is selected.
 
 ## Remaining integration
 
