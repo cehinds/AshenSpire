@@ -3580,13 +3580,15 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
 }
 /* Approved wireframe composition. Domain controls retain their handlers. */
+/* Band sizes come from CombatLayout.js; the fallbacks cover the first paint
+   and the co-op screen, which does not mount the layout adapter. */
 :root .combat[data-layout='formation'] {
-  --wireframe-hand-height: max(calc(208px / var(--ui-zoom, 1)), 30%);
-  --wireframe-footer-height: max(calc(56px / var(--ui-zoom, 1)), 5%);
-  grid-template-rows: 10% minmax(0, 1fr) calc(var(--wireframe-hand-height) + var(--wireframe-footer-height));
+  --wireframe-hand-height: var(--wireframe-band-hand, max(calc(208px / var(--ui-zoom, 1)), 30%));
+  --wireframe-footer-height: var(--wireframe-band-footer, max(calc(56px / var(--ui-zoom, 1)), 5%));
+  grid-template-rows: var(--wireframe-band-hud, 10%) minmax(0, 1fr) calc(var(--wireframe-hand-height) + var(--wireframe-footer-height));
 }
 :root .combat[data-layout='formation'] > .hand-area {
-  grid-template-rows: minmax(0, 1fr) max(calc(56px / var(--ui-zoom, 1)), 14.2857%);
+  grid-template-rows: minmax(0, 1fr) var(--wireframe-band-footer, max(calc(56px / var(--ui-zoom, 1)), 14.2857%));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
   position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;
@@ -3639,6 +3641,20 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'] .combat-action-row .pile {
   height: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+}
+/* WGC6: one centered, tightly packed five-track group sized by
+   packCombatFooter(). Applies once the layout adapter has measured the row. */
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']{
+  --combat-control-size: var(--footer-circle) !important;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);
+  justify-content: center; align-items: center; gap: var(--footer-gap);
+  width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
+}
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> * {
+  grid-column: span 1; grid-row: 1;
+}
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
+  width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label {
   font-size: calc(12px / var(--ui-zoom, 1));
