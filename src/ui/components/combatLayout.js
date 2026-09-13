@@ -31,12 +31,12 @@ export function wireCombatLayout(combatEl) {
     combatEl.style.setProperty('--defense-min', overlay.defenseMin + 'px');
     combatEl.style.setProperty('--intent-min', overlay.intentMin + 'px');
     combatEl.style.setProperty('--overlay-value-font', overlay.valueFont + 'px');
+    combatEl.style.setProperty('--defense-gap', overlay.gap + 'px');
     for (const role of OVERLAY_ROLES) {
       const { side, heightFraction } = overlay.anchors[role];
-      const outside = `calc(100% + ${overlay.gap}px)`;
-      combatEl.style.setProperty(`--defense-left-${role}`, side === 'right' ? outside : 'auto');
-      combatEl.style.setProperty(`--defense-right-${role}`, side === 'left' ? outside : 'auto');
-      combatEl.style.setProperty(`--defense-top-${role}`, `${heightFraction * 100}%`);
+      // Unitless, so the stylesheet can blend the art's two edges in calc().
+      combatEl.style.setProperty(`--defense-right-${role}`, side === 'right' ? '1' : '0');
+      combatEl.style.setProperty(`--defense-fraction-${role}`, String(heightFraction));
     }
     if (!row) return;
     // Measure the band's host, not the row: the row's own width is what this
