@@ -102,6 +102,102 @@ Limits:
 - The menu order and labels differ from W3: this build has Load, New,
   Collection, and Download & saves where W3 shows New game, Load game, and
   Multiplayer. That is an owner decision; this branch does not change it.
+## Combatant lower stack
+
+Branch `feature/wireframe-combatant-stack`, based on dev `3c72a6df`. WCF2 now
+has one pure plan, `src/ui/models/CombatantStackModel.js`, with values in
+`wireframeUi.combatantStack`.
+
+- Rows arrive already filtered by activity. Order: HP (always), other
+  resources, buildup ranked by fill, stance, then the status-icon row.
+- At most five rows. Stance and the icon row are reserved before optional
+  bars. Buildup that does not fit becomes a ring pip in the icon row.
+  Resources that do not fit stay readable in the inspector.
+- `procDisplayPlan` uses this plan. It replaces the former fixed cap of two
+  buildup bars, and arcane exposure counts as a resource row when it renders.
+- The icon row never wraps. Its capacity comes from the configured 1.575rem
+  tile plus its gap; a reference rem is at least 16 physical px, as in the
+  hand and footer plans. When icons overflow, the last tile is `+N`. Where
+  the combat screen registers the inspector, `+N` opens it with every
+  effect. Co-op keeps its popover.
+
+Browser evidence (emulation): at 390×844 an enemy with poise and three
+buildup meters showed HP, poise, two buildup bars, and an icon row. The
+third buildup became a ring pip. The player's `+N` opened the inspector
+with all six added effects.
+
+Limits: on narrow slots the contract tile size leaves room for few icons, so
+`+N` carries most effects there. The player's evade chip and Dodge receipt
+are ability chips outside this plan. WT0/WCT1 timing already runs through
+one tooltip service whose default delay is 1s. It is not changed here.
+## Control roles and appearance
+
+Branch `feature/wireframe-control-roles`, based on dev
+`3c72a6df`. COLOR-INTERACTION-CONTRACT §3 now has one resolver,
+`src/ui/models/ControlAppearance.js`. It applies the contract's precedence:
+absent, then unavailable/busy, then destructive, then exit, then primary, then
+utility/selection. Registered exceptions are validated by name.
+
+- The kit `button()` stamps `data-control-role`, derived from its weight
+  (a danger class is destructive), or from an explicit `role`. A registered
+  `exception` is stamped as `data-control-exception`.
+- Close (both shell builders), Back, Cancel, and Leave carry the exit role.
+  They stay brown/gold at rest and turn red under pointer, keyboard, or pad
+  highlight. A sole exit in the modal primary slot no longer receives
+  primary green.
+- `combatEndTurn` exception: a legal early End Turn stays neutral at rest and
+  turns green while highlighted. Spent actions still mark it ready. Legality is
+  unchanged.
+- The positive (ready) colours now live in one set of
+  `--control-positive-*` tokens.
+
+WGH1 needed no change. `HUD_REFERENCE_MAX` (200/20/20) scales each track by
+maximum/reference; the fill is current/maximum; there is no minimum track
+length; `balance.ui.hudBars.main.scaleByMax` is on.
+
+Not in this task: the nine size presets (WCB0). Grid button rows resolve
+percentages against their own tracks, so presets need a workspace migration
+that consumes them. They were not added as unused tokens.
+## Combat bands and packed footer
+
+Branch `feature/wireframe-combat-footer`, based on dev `3c72a6df`. W4a band
+sizes and the WGC6 footer come from one pure model,
+`src/ui/models/CombatLayout.js`, with every value in `wireframeUi.combat`,
+`wireframeUi.hand`, and `wireframeUi.footer`. `components/combatLayout.js`
+measures the combat root and the footer's host band, then writes custom
+properties. `kit.css` places them; its old literals remain only as first-paint
+and co-op fallbacks.
+
+- Bands: nominal 10/55/30/5; the hand keeps 208 px and the footer 56 px
+  (physical, after `--ui-zoom`); the battlefield absorbs the difference.
+  When the remainder cannot hold one readable combatant (minimum sprite plus
+  detail reserve), the root carries `data-combat-geometry="unsupported"`.
+  844×390 reports unsupported; text and targets are not shrunk.
+- Footer: one centered, gap-first grid. Actions and Potions share one circle
+  at 95% of footer height, capped at 20% of the width; End Turn shares that
+  height up to 40%; Draw and Discard use up to 10%.
+- Resolved conflict: on narrow hosts the 10% pile envelope is smaller than
+  the 44 px target and the two-line Discard/Exhaust face. The target and a
+  provisional `pileMinimumRem: 4` readable floor win; End Turn gives up
+  width. The floor uses the same reference rem as the hand (at least 16
+  physical px), so it is 64 physical px, not CSS 4rem, and does not follow
+  the text-size setting. The owner should confirm or replace this floor.
+  Below about 290 px physical the floors cannot all fit; the footer reports
+  `data-footer-geometry="unsupported"` and keeps the unpacked layout.
+
+Browser evidence (emulation, animations finished):
+- 1440×860: circles 53.2 px, piles 142.7 px, End Turn 570.7 px, centered.
+- 375×667 and 360×780: piles hold their content without overflow; every
+  footer target is at least 44 px; no overlap with the hand or viewport.
+- A live resize from 375×667 to 360×780 re-planned the bands and tracks
+  without remounting.
+
+Limits: compact landscape still needs an owner decision (suggest rotation,
+scroll, or relax minimums). `tools/combat-action-row.mjs`, which is not in
+CI, still describes edge-anchored Actions and Potions. The packed-centered
+WGC6 contract supersedes that and the tool needs updating. The hidden
+preview pane throttles animation frames, so measurements were taken after
+forcing a render.
 
 ## Remaining integration
 

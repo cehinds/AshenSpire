@@ -27,7 +27,7 @@ function door() {
   const body = logBox('', { class: 'debug-log-body' });
   const copy = button({ label: 'Copy', id: 'dbg-copy' });
   const refresh = button({ label: 'Refresh', id: 'dbg-refresh' });
-  const close = button({ label: 'Close', weight: 'primary', id: 'dbg-close' });
+  const close = button({ label: 'Close', role: 'exit', id: 'dbg-close' });
   const modal = openModal({
     size: 'lg',
     className: 'debug-modal',

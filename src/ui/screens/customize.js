@@ -231,7 +231,7 @@ export function mountCustomize(app, {
     closeLabel: 'Back',
   });
   head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
-  const back = button({ label: 'Back', id: 'cz-back' });
+  const back = button({ label: 'Back', role: 'exit', id: 'cz-back' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
   const foot = modalFooter({ note: 'Choose your path. The spire remembers.', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
   const body = el('div', { class: 'modal-body cz-scroll' }, [
