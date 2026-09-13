@@ -3120,13 +3120,21 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cz-stage {
   /* How far above the scrollport's floor a SECOND sticky row has to rest, so it
      clears the first. Authored once because CSS cannot ask how tall a sibling
-     is. MEASURED at 390x844 rather than guessed: the row's own box is 55px
-     (padding-block 10px + 2px around the kit's 44px tap floor), and the stage
-     row's painted bottom sits 9px above the scrollport's floor rather than on
-     it, because the modal body keeps that much beneath. 55 + 9. A first guess
-     of 56px left the two rows overlapping by 5px, which is how this number
-     came to be measured instead of reasoned. */
-  --cz-continue-row: 64px;
+     is — but DERIVED, not typed, because every part of that height is a setting
+     the player can move:
+        var(--tap-floor)  the button inside the row, which is
+                          `calc(var(--tap-target) / var(--ui-zoom, 1))` — it
+                          grows with Minimum tap size and with Auto's zoom
+        12px              the row's own `padding-block: 10px 2px`, below
+        10px              the scrollport's `padding-bottom`, which is why the
+                          stage row's painted bottom sits above the floor
+                          rather than on it
+     THIS WAS A CONSTANT AND THE CONSTANT WAS WRONG. 64px measured clean at the
+     default 44px target, and collided again as soon as the target moved: at
+     `--tap-target: 60px` the rows overlapped by 8px at zoom 1 and by 27.8px at
+     zoom 0.62. A number that only holds at one setting is a number that has
+     not been derived. */
+  --cz-continue-row: calc(var(--tap-floor) + 22px);
 }
 .cz-stage .modal-btnrow.end,
 .cz-stage .cc-primary-continue-row {
