@@ -60,6 +60,43 @@ shared conversion helper. After converting them through `anchorLocalBox`, the
 full Node rerun completed with exit code 0. Targeted zoom checks also pass.
 Test logs and temporary images stay outside commits.
 
+## Combat bands and packed footer
+
+Branch `feature/wireframe-combat-footer`, based on dev `3c72a6df`. W4a band
+sizes and the WGC6 footer come from one pure model,
+`src/ui/models/CombatLayout.js`, with every value in `wireframeUi.combat`,
+`wireframeUi.hand`, and `wireframeUi.footer`. `components/combatLayout.js`
+measures the combat root and the footer's host band, then writes custom
+properties. `kit.css` places them; its old literals remain only as first-paint
+and co-op fallbacks.
+
+- Bands: nominal 10/55/30/5; the hand keeps 208 px and the footer 56 px
+  (physical, after `--ui-zoom`); the battlefield absorbs the difference.
+  When the remainder cannot hold one readable combatant (minimum sprite plus
+  detail reserve), the root carries `data-combat-geometry="unsupported"`.
+  844×390 reports unsupported; text and targets are not shrunk.
+- Footer: one centered, gap-first grid. Actions and Potions share one circle
+  at 95% of footer height, capped at 20% of the width; End Turn shares that
+  height up to 40%; Draw and Discard use up to 10%.
+- Resolved conflict: on narrow hosts the 10% pile envelope is smaller than
+  the 44 px target and the two-line Discard/Exhaust face. The target and a
+  provisional `pileMinimumRem: 4` readable floor win; End Turn gives up
+  width. The owner should confirm or replace this floor.
+
+Browser evidence (emulation, animations finished):
+- 1440×860: circles 53.2 px, piles 142.7 px, End Turn 570.7 px, centered.
+- 375×667 and 360×780: piles hold their content without overflow; every
+  footer target is at least 44 px; no overlap with the hand or viewport.
+- A live resize from 375×667 to 360×780 re-planned the bands and tracks
+  without remounting.
+
+Limits: compact landscape still needs an owner decision (suggest rotation,
+scroll, or relax minimums). `tools/combat-action-row.mjs`, which is not in
+CI, still describes edge-anchored Actions and Potions. The packed-centered
+WGC6 contract supersedes that and the tool needs updating. The hidden
+preview pane throttles animation frames, so measurements were taken after
+forcing a render.
+
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant
