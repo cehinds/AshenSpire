@@ -406,7 +406,7 @@
       "id": "W1q",
       "name": "Potion inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -421,7 +421,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openFlaskInspectModal via PotionInspectionModel.potionInspectionView: art beside effect and remaining charges; the host plan's Use row is the one footer action (disabled with its reason, which the body also states as the eligibility line); no footer Close beside the header close. The menu passes its Use row and rings onAction('use') only when the door's Use is pressed. Capacity is not shown: flask definitions carry none."
     },
     {
       "id": "W1r",
