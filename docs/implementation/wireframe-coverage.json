@@ -557,7 +557,7 @@
       "id": "W2",
       "name": "Confirmation variant",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -572,7 +572,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Already implemented by openConfirmationModal: question title + close, message + consequence details, Back left / action-named primary right, danger as alertdialog."
     },
     {
       "id": "W2a",
@@ -683,7 +684,7 @@
       "id": "W3",
       "name": "Main-menu composition",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -698,13 +699,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Title keeps the centred wordmark; with a save the menu list and a save preview share the body (stacked on narrow). Menu order/labels differ from W3 (owner decision)."
     },
     {
       "id": "W3a",
       "name": "Main menu — centered, no preview",
       "parent": "W3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -719,13 +721,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "No save: lone centred menu, Continue disabled, no empty preview placeholder."
     },
     {
       "id": "W3b",
       "name": "Main menu — Continue highlighted",
       "parent": "W3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -740,7 +743,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Save available: Continue highlighted and focused; preview shows class, slotFacts, and Slot/Seed beside the menu (below on narrow). Verified with a fixture save through the production mountTitle."
     },
     {
       "id": "W4",
