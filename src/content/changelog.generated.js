@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1009",
+    "id": "pr-1003",
     "date": "2026-09-13",
     "group": "2026-09-13",
-    "summary": "The first of the approved wireframes reaches the cards and the battlefield",
-    "detail": "Card faces are drawn to a fixed 5:8 shape with their costs down a rail on the left, read live rather than re-derived, so the number on the face and the number in the card's full description cannot disagree. In combat, the hand selects one card at a time and holds the order you put it in, and the information button appears after the same short delay everywhere. On the battlefield the two sides sit in mirrored fixed places, every figure is scaled by the same size rule, and the one you select grows from a ground anchor instead of drifting. A window opened over a card now carries a Back button. This is a first instalment of a larger revamp, not the whole of it: narrow screens, the compact battlefield and the screens that depend on these parts are still to come. The receipt is written here after the fact — the merge landed without one.",
-    "build": "0.7.1.13",
-    "pullRequest": 1009,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1009"
+    "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
+    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down with the highlight.",
+    "build": "0.7.1.22",
+    "pullRequest": 1003,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1003"
   },
   {
     "id": "pr-1010",
@@ -23,14 +23,14 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1010"
   },
   {
-    "id": "pr-1003",
+    "id": "pr-1009",
     "date": "2026-09-13",
     "group": "2026-09-13",
-    "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
-    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down with the highlight.",
-    "build": "0.7.1.21",
-    "pullRequest": 1003,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+    "summary": "The first of the approved wireframes reaches the cards and the battlefield",
+    "detail": "Card faces are drawn to a fixed 5:8 shape with their costs down a rail on the left, read live rather than re-derived, so the number on the face and the number in the card's full description cannot disagree. In combat, the hand selects one card at a time and holds the order you put it in, and the information button appears after the same short delay everywhere. On the battlefield the two sides sit in mirrored fixed places, every figure is scaled by the same size rule, and the one you select grows from a ground anchor instead of drifting. A window opened over a card now carries a Back button. This is a first instalment of a larger revamp, not the whole of it: narrow screens, the compact battlefield and the screens that depend on these parts are still to come. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.13",
+    "pullRequest": 1009,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1009"
   },
   {
     "id": "pr-1005",
