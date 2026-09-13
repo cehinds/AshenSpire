@@ -60,6 +60,48 @@ shared conversion helper. After converting them through `anchorLocalBox`, the
 full Node rerun completed with exit code 0. Targeted zoom checks also pass.
 Test logs and temporary images stay outside commits.
 
+## Main menu save preview
+
+Branch `feature/wireframe-title-menu`, based on dev `3c72a6df`.
+
+- **W3b.** With a save to continue, the title highlights Continue (gold) and
+  shows that exact save beside the menu:
+  - the class;
+  - `slotFacts` (act, floor, HP);
+  - "Slot n · Seed x".
+
+  It reuses the save facts the slot doors already print. On narrow hosts the
+  preview stacks below the menu. Only the menu list and the preview become
+  columns; the wordmark stays centred on the screen. Continue keeps its
+  `.title-menu .slot-continue` hook, so the default focus and the tools
+  that click it are unchanged.
+- **W3a.** With no save, the lone centred menu is unchanged and has no empty
+  preview placeholder.
+- **Strings.** The new wording is in `uiStrings.csv`
+  (`title.save.eyebrow`, `title.save.identity`, `title.save.aria`).
+- **W2.** Confirmations already match W2 through `openConfirmationModal`:
+  - a question title and a close control;
+  - the message plus a consequence details card;
+  - Back on the left and an action-named primary on the right;
+  - danger tone as an alert dialog.
+
+  Only the Back button's exit role remains, and it belongs with #1013.
+
+Browser evidence (emulation): the production `mountTitle` was mounted with
+a fixture save (slot 1: Reaver, Act 2, Floor 5, 48/62 HP).
+- At 1280×800 the menu and preview sit in two columns, Continue is
+  highlighted and focused, the wordmark is within 2.3px of centre, and nothing
+  overflows.
+- At 390×844 the preview stacks below the menu in view.
+- The no-save title keeps the centred menu with Continue disabled.
+
+Limits:
+- A real new climb could not be started on the preview origin (Begin stayed
+  on character creation), so W3b was verified with a fixture save, not a
+  played one.
+- The menu order and labels differ from W3: this build has Load, New,
+  Collection, and Download & saves where W3 shows New game, Load game, and
+  Multiplayer. That is an owner decision; this branch does not change it.
 ## Rewards claim status
 
 Branch `feature/wireframe-rewards`, based on dev `3c72a6df`. W1t's
