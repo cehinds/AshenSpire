@@ -336,7 +336,9 @@ export function mountRewards(app, {
     door({
       eyebrow: plan.rows.length ? t('reward.eyebrow.claim') : t('reward.eyebrow.spoils'),
       title: rewards.title || t('reward.title.victory'),
-      status: plan.rows.length ? el('span', { class: 'as-status modal-head-status', role: 'status',
+      // No live region: the door is rebuilt each render, and the footer note
+      // already announces progress.
+      status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
         text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
       body: el('div', { class: 'reward-claim-layout' }, [
         el('div', { class: 'class-row reward-menu', html: rowsHtml }),
@@ -416,7 +418,7 @@ export function mountRewards(app, {
   function claimStatusPanel(claim) {
     const lines = claim.rows.map((entry) => el('li', { class: 'reward-claim-row', dataset: { kind: entry.kind, state: entry.state } }, [
       el('span', { class: 'reward-claim-name', text: rowBody(plan.rows.find((row) => row.kind === entry.kind)).title }),
-      el('span', { class: 'reward-claim-state', text: t(`reward.state.${entry.state === 'available' ? 'available' : entry.state}`) }),
+      el('span', { class: 'reward-claim-state', text: t(entry.state === 'blocked' ? 'reward.claim.blocked' : `reward.state.${entry.state}`) }),
     ]));
     const required = claim.requiredChoice ? el('p', { class: 'reward-claim-required', dataset: { required: claim.requiredChoice.kind } }, [
       el('span', { class: 'as-eyebrow', text: t('reward.claim.required') }),

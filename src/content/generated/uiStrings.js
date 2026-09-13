@@ -402,6 +402,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.claim.blocked",
+    "extends": "",
+    "short": "Full",
+    "full": "There is no room for this one.",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",

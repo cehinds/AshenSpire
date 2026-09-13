@@ -87,6 +87,7 @@ reward.status.claimed,,{claimed} of {total} claimed,How many of this fight's rew
 reward.claim.heading,,Claim status,What each reward is waiting on.,
 reward.state.available,,Available,Still here to collect.,Available
 reward.claim.required,,Required choice,A decision is still waiting before this reward can be taken.,
+reward.claim.blocked,,Full,There is no room for this one.,
 # ---- the merchant ---------------------------------------------------------
 shop.bar.cards,,CARDS,Cards the merchant will sell you.,
 shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,
