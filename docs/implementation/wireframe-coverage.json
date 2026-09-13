@@ -809,7 +809,7 @@
       "id": "W4b",
       "name": "Map — 10 / 60 / 20 / 10",
       "parent": "W4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -832,7 +832,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Classic act map: select then Enter, context band, Recenter/Enter footer; bands measured 58% map at 1280x800 and 66% at 390x844. Header (HUD + route strip) still ~17%. Atlas pending in its own branch."
     },
     {
       "id": "W4c",
@@ -3413,7 +3414,7 @@
       "id": "WGM4",
       "name": "Node details",
       "parent": "WCF4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3432,7 +3433,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Selected node context band: floor, kind, blurb, boss destination, key reveal; shown kind under fog; sizes to content up to 20%."
     },
     {
       "id": "WGM5",
@@ -3463,7 +3465,7 @@
       "id": "WGM6",
       "name": "Recenter button",
       "parent": "WCB4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3482,13 +3484,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Footer Recenter calls the board resetFraming."
     },
     {
       "id": "WGM7",
       "name": "Enter node button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3507,7 +3510,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Footer Enter disabled until a reachable node is selected, then names the kind; picking the selected node again also enters."
     },
     {
       "id": "WGP0",

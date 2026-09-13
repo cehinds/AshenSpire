@@ -60,6 +60,61 @@ shared conversion helper. After converting them through `anchorLocalBox`, the
 full Node rerun completed with exit code 0. Targeted zoom checks also pass.
 Test logs and temporary images stay outside commits.
 
+## Map: select, then Enter (classic act map)
+
+Branch `feature/wireframe-map-bands`, based on dev `3c72a6df`. The owner
+chose full W4b on both maps. This branch covers the classic act map, which
+standard runs use; the world-journey atlas follows in its own branch.
+
+- **Select, then Enter.** A tap on a lit node selects it; it no longer
+  travels. Enter, or picking the selected node again, travels through the
+  existing `enterNode` callback.
+  - `src/ui/models/MapSelectionModel.js` owns the rule: an unreachable node
+    is never selectable.
+  - Keyboard and gamepad activation reach the same click path, so pressing
+    confirm twice on a node also travels.
+  - A repeat pick enters only once the selection has stood
+    `wireframeUi.map.repeatPickDelayMs` (400 ms, provisional), so a fast
+    double tap selects but never travels in one gesture.
+- **Context band (WGM4).** Below the scene, the band shows the selected
+  node's floor, kind, and description from the same `NODE_TYPES` table the
+  legend and tooltip read. It adds a boss destination and the Sealstone Key
+  reveal when they apply.
+  - Under fog it shows the kind the board drew, never the hidden one. The
+    board now passes its own reading with each pick.
+  - The band has a fixed height, min(20% of the height, 8rem), and scrolls
+    its own overflow, so a pick never shrinks the scene under the finger.
+  - Without the board's reading a node reads as unknown; the hidden kind
+    cannot leak through a caller that forgot to pass one.
+- **Footer (WGM6, WGM7).** Recenter (the board's existing `resetFraming`)
+  sits on the left and Enter on the right. Enter is disabled until a
+  reachable node is selected and then names the kind.
+- **Co-op.** The co-op map shares the board but keeps its own pick; nothing
+  changes there.
+- **Wording.** New text lives in `uiStrings.csv` (`map.*`).
+- **Tools.** `tutorial-reach`, `offline-play-qa`, and
+  `map-camera-persistence` now press Enter after selecting a node. The
+  camera tool's self-test seam matches the board's new `onPick` call.
+- **Camera.** The band and footer are built before the board mounts. The
+  board checks a saved fit camera against the scene's height, so the bands
+  must already take theirs, or every remount (Armoury, Continue) would drop
+  the player's pan.
+- **Selection mark.** A glow marks the selected node, because the pad
+  cursor and hover both repaint the node's stroke.
+
+Browser evidence (emulation, `?shot=map`):
+- At 1280×800 one tap selected the lone reachable node, filled the band
+  ("Floor 1 · Monster · A fight — cinders and a card reward."), enabled
+  "Enter Monster", and stayed on the map. Enter opened combat.
+- At 390×844 the second tap on the selected node opened combat.
+- At both sizes the footer is in view and the page does not scroll. The map
+  takes 58% of the height at 1280×800 and 66% at 390×844.
+
+Limits:
+- The run HUD plus route strip still take about 17% rather than W4b's 10%
+  header; narrowing them means redesigning the shared HUD.
+- The zoom bar's ⊙ remains beside the footer's Recenter (the co-op map shares
+  that bar).
 ## Combatant inspector
 
 Branch `feature/wireframe-combatant-inspector`, based on dev `3c72a6df`.
