@@ -3,12 +3,22 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1009",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The first of the approved wireframes reaches the cards and the battlefield",
+    "detail": "Card faces are drawn to a fixed 5:8 shape with their costs down a rail on the left, read live rather than re-derived, so the number on the face and the number in the card's full description cannot disagree. In combat, the hand selects one card at a time and holds the order you put it in, and the information button appears after the same short delay everywhere. On the battlefield the two sides sit in mirrored fixed places, every figure is scaled by the same size rule, and the one you select grows from a ground anchor instead of drifting. A window opened over a card now carries a Back button. This is a first instalment of a larger revamp, not the whole of it: narrow screens, the compact battlefield and the screens that depend on these parts are still to come. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.13",
+    "pullRequest": 1009,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1009"
+  },
+  {
     "id": "pr-1003",
     "date": "2026-09-13",
     "group": "2026-09-13",
     "summary": "Choosing a weapon at character creation no longer buries the Continue button",
     "detail": "On a phone, opening a hand to pick an armament used to draw every combat card that armament gives you at full size, one after another, between the weapon you were looking at and the button that moves you on — almost four screens of scrolling to get back. Those cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\"); tap it to see them, and they are drawn small. That alone removes about two fifths of the scrolling. The Continue button at the end of each creation step now stays pinned to the bottom of the view instead of sitting at the end of everything, so it is always within reach once you have chosen.",
-    "build": "0.7.1.13",
+    "build": "0.7.1.14",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
   },
