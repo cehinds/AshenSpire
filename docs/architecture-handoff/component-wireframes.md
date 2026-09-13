@@ -6682,12 +6682,12 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-Allies · fill left to right         Enemies · fill left to right
+Allies: back | front              Enemies: front | back
 [ A1 ] [ A2 ]       [ E1 ] [ E2 ]
   [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
     [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
-         shadow centers anchor to ground
+         shadow centers anchor to ground; equal vertical gaps
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6697,12 +6697,12 @@ Allies · fill left to right         Enemies · fill left to right
 **Compact**
 
 ```text
-Allies · fill left to right         Enemies · fill left to right
+Allies: back | front              Enemies: front | back
 [ A1 ] [ A2 ]       [ E1 ] [ E2 ]
   [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
     [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
-         shadow centers anchor to ground
+         shadow centers anchor to ground; equal vertical gaps
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6715,12 +6715,12 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Allies · fill left to right         Enemies · fill left to right
+Allies: back | front              Enemies: front | back
 [ A1 ] [ A2 ]       [ E1 ] [ E2 ]
   [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
     [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
-         shadow centers anchor to ground
+         shadow centers anchor to ground; equal vertical gaps
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6734,12 +6734,12 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Allies · fill left to right         Enemies · fill left to right
+Allies: back | front              Enemies: front | back
 [ A1 ] [ A2 ]       [ E1 ] [ E2 ]
   [ A3 ] [ A4 ]   [ E3 ] [ E4 ]
     [ A5 ] [ A6 ] [ E5 ] [ E6 ]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
-         shadow centers anchor to ground
+         shadow centers anchor to ground; equal vertical gaps
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -6753,7 +6753,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Lower upper/middle depth anchors by config.groundGrid.depthLoweringFractions of a row step, leaving the lower anchor fixed. Retreat inner columns toward their own side by config.groundGrid.frontRowRetreatPercent of field width, capped at 15% of column spacing. Tag screen-outer columns back-row and inner columns front-row independently of upper/middle/lower depth. Add config.groundGrid.formationLayers to selection paint priority so back-row guards and intents remain above front-row actors. Interpolate the team gap with config.groundGrid.centerGap. Refit only when host allocation, roster or unselected geometry changes.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Resolve first/last foot baselines from available scene height and detail reserve; divide their interval into two equal steps. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Lower upper/middle depth anchors by config.groundGrid.depthLoweringFractions of a row step, leaving the lower anchor fixed. Defaults [0.25,0.125,0] produce equal displayed gaps of 0.875 row steps. Fit scale against unadjusted baselines so these position offsets cannot enlarge sprites. Retreat inner columns toward their own side by config.groundGrid.frontRowRetreatPercent of field width, capped at 15% of column spacing. Tag screen-outer columns back-row and inner columns front-row independently of upper/middle/lower depth. Add config.groundGrid.formationLayers to selection paint priority so back-row guards and intents remain above front-row actors. Interpolate the team gap with config.groundGrid.centerGap. Refit only when host allocation, roster or unselected geometry changes.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)

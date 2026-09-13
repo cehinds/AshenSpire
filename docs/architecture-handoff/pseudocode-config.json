@@ -102,6 +102,18 @@
     "value_15Percent": {
       "value": 15,
       "unit": "%"
+    },
+    "value_0_25": {
+      "value": 0.25,
+      "unit": "count"
+    },
+    "value_0_125": {
+      "value": 0.125,
+      "unit": "count"
+    },
+    "value_0_875": {
+      "value": 0.875,
+      "unit": "count"
     }
   }
 }

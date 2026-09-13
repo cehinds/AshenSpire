@@ -30,4 +30,9 @@ The minimum scale is a presentation fallback; a zero-sized or heavily crowded ho
 
 ## Composition constraint
 
-The current combat allocation is nominally 10% HUD / 50% battlefield / 35% hand / 5% footer. The footer has a configured 56px touch floor and the hand yields the extra space on short viewports. That responsive allocation can invalidate the cached battlefield host geometry; selection itself cannot. Compute row factors from config: back/middle/front 0.9/0.95/1, selected growth 1.1/1.05/1.1. Keep the shared category fit across factions, foot anchor and highest selected paint layer unchanged.
+The current combat allocation is nominally 10% HUD / 55% battlefield / 30% hand / 5% footer. The footer has a configured 56px touch floor and the hand has a 208px physical minimum on short viewports. That responsive allocation can invalidate the cached battlefield host geometry; selection itself cannot. Compute row factors from config: upper/middle/lower 0.9/0.95/1, selected growth 1.1/1.05/1.1. Keep the shared category fit across factions, foot anchor and highest selected paint layer unchanged.
+
+
+## Stable spacing
+
+Fit against the unadjusted row baselines. Display offsets `[0.25, 0.125, 0]` in row-step units lower the upper tiers while retaining equal gaps; these offsets must not feed back into category scale. Inner `front-row` columns retreat toward their own side by 2% of field width, capped at 15% of column spacing. Both factions retain mirrored diagonal tracks. See CURRENT-SPECIFICATION.md for the complete accepted formation contract.

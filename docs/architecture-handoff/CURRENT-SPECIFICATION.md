@@ -98,25 +98,18 @@ WGC6 footer layout owns all five control tracks, including the WGC11 disclosure 
 
 Battlefield WGC1: background WGS1 consists of skyline WGS6 beneath a foreground ground cutout WGS7. The cutout has transparent upper contours, configured by scene.groundCutout; its height is scene.floorHeightPercent. The skyline fills the full background bounds behind it. Combatant sprite feet anchor at scene.actorBaselinePercent (default66.667) of battlefield height measured from its top; name/HP/status content may extend below the baseline. This is battlefield-local height, not total browser vh. The reference observes battlefield resizing and measures sprite bounds once the preview is visible, scaling each assembly to fit its slot before aligning feet. Layer visibility does not move the configured baseline.
 
-Battlefield vertical order: skyline above; floor begins around55% and ends at100%; sprite feet sit inside the floor at66.667%. W4a inherits the45% floor-height default. Ground contours must remain above the feet baseline.
 
 Ground contact supersedes the sprite-container baseline: use the visible artwork bounds (or an authored foot pivot), excluding transparent SVG/image margins. Place the soles at ground.top + ground.height × scene.groundContactDepthFraction (default0.3), inside the ground cutout. The battlefield-percent baseline is only a fallback when the ground layer is hidden. Scale around the artwork's foot contact; status panels are not part of the ground anchor.
 
 WCO5 Ground shadow is a reusable, noninteractive ellipse under sprite artwork. Its center defines the ground-contact pivot shared by the sprite and battlefield placement adapter. groundShadow configuration owns visibility, relative width/height, opacity, color and horizontal anchor. The logical pivot remains when shadow visibility is off. Sprite size changes caused by active status rows trigger re-anchoring to the same ground point. WCO5 has its own diagrams, model, pseudocode and executable reference; combatants reference it through WCO0. Inspector-only previews omit the ground effect.
 
-WGS7 Floor owns WGS8 Ground formation grid. Reserve four ally slots on the left and four enemy slots on the right. Fill each side leftmost-first without recentering occupied slots. Fixed configurable outer padding1rem, slot gaps0.5rem and central gap2rem separate the two sides. Slot centers provide WCO5 shadow anchors; active status rows never change assignments. The reference applies actorScale0.8 after fitting to slots. W4a uses the current 10% HUD /55% battlefield /30% hand /5% footer sizing contract below.
 
-WGS8 formation revision: each faction now has nine reserved positions in a3×3 grid, filled row-major left to right. Configured rowStepRem controls overlap; front rows paint above rear rows. Each shadow anchors to its own slot center instead of sharing a single baseline. The preview shows nine allies and nine enemies to expose the formation. W4a ground/sky allocation is80%/20% (4:1), superseding45% ground. Grid dimensions and row spacing remain configurable.
 
-Current formation:2×2 per faction, four reserved slots each. This replaces3×3. Increase slotGapRem to1.5 and centerGapRem to3; rowStepRem is4. Restore actorScale to1 (25% larger than the prior0.8 multiplier, with wider slots also allowing larger actors). Ground/sky remains80/20. Fill each side row-major left to right; empty slots remain reserved and shadow anchors persist.
 
-Formation spacing revision: actorScale0.85 reduces actor size15% from the2×2 preview; rowStepRem5.5 separates back/front rows. Reserve centerGapPercent10 of battlefield width between faction regions (10vw when the battlefield fills the viewport). Back-row slots shift outward by backRowOffsetPercent3, allies left and enemies right. Actor fit remains bounded by its slot before scaling; empty slots stay reserved. These values supersede prior fixed central-gap and scale values.
 
 Battlefield selection is exclusive: one selectedCombatantId per battlefield view model. Selecting another actor replaces that ID, removes the previous selection glow, resets its pressed state and hides its delayed inspect control. Selecting the same actor may clear selection. Selection state is separate from eligibility indicators; eligibility must not masquerade as multiple selected combatants. Each independent preview has its own selection scope.
 
-Back-row stagger: offset the ally rear row toward the left outer edge and enemy rear row toward the right outer edge by groundGrid.backRowOffsetPercent of battlefield width (default3%). The front row remains unshifted. This uses battlefield width, not individual slot width, making the stagger visible while preserving the central exclusion gap.
 
-Current formation is three rows by two columns per faction (six slots each). Row offsets are -5%,0%,+5% of battlefield width for allies and mirrored for enemies, producing an inward staircase toward the front while reserving the central10% exclusion gap. actorScale0.78 slightly reduces the previous0.85 size. rowStepRem4.5 fits the three rows inside the ground. The preview shows six actors per faction; slot count, row count, scale and stagger are configurable. This supersedes prior2×2 and rear-row-only offset descriptions.
 
 Combatants expose inspection only through the delayed shared(i) control. Do not append a duplicate Inspect action button or the generic Eligible target demo panel beneath a selected combatant. Selection glow and actual battlefield target selection remain; item/playing cards retain their contextual action controls.
 
@@ -160,4 +153,18 @@ Hand order is presentation state keyed by card instance. Drag past the configure
 
 On narrow hosts, row stagger retains a configurable 8px minimum per row, mirrored toward the center for front rows; the diagonal formation remains visible. A separate 4px vertical baseline inset spreads rows over the ground. Expanded selected details shift upward only as necessary to remain inside the floor; the sprite and floor-shadow anchor remain fixed. Cost icons occupy the upper-left artwork below the header, with outline contrast and no tile background.
 
-Formation columns are separate from vertical depth tiers: the screen-outer column is tagged back-row and the inner column front-row on each faction. Back-row assemblies paint above front-row assemblies, including their intent and guard; selection still raises an actor within its column layer. The mirrored diagonal remains. The team gap interpolates from 3% at 375px to 5% at 1200px of battlefield width. The lower reserve is 3.5rem so formations extend farther down; selected information remains clamped within the floor.
+
+
+## Accepted battlefield formation
+
+W4a uses 10% HUD / 55% battlefield / 30% hand / 5% footer, with the documented physical hand/footer minimums. The battlefield is 80% ground and 20% sky. WGS7 Floor owns WGS8 Ground formation grid; six reserved slots per faction form three depth tiers by two columns, filled left to right without recentering empty slots.
+
+Upper, middle and lower describe vertical depth. The outer column carries `data-formation-row="back-row"`; the inner column carries `data-formation-row="front-row"`. These tags are mirrored between factions and are independent of depth. Outer/back assemblies use layer 200; inner/front assemblies use layer 0. Selection adds its configured priority within that layer.
+
+Let firstFoot and lastFoot be the unadjusted fitting baselines and step=(lastFoot-firstFoot)/2. Display foot anchors at firstFoot+0.25*step, firstFoot+1.125*step, and lastFoot. Both displayed gaps equal 0.875*step; the middle anchor is exactly halfway between the others. Fit scale against the unadjusted baselines so lowering rows never enlarges combatants. Pixel distances adapt to the available battlefield height; 122px is a measured wide-preview example, not a fixed requirement.
+
+Preserve mirrored diagonal tracks: allies move right with each depth tier, enemies move left. Requested horizontal step is 5% of battlefield width, fitted to available space with an 8px preferred minimum. Inner/front columns retreat outward toward their own faction by 2% of field width, capped at 15% of column spacing. Preserve 1rem outer padding. Faction allocation gap interpolates from 3% at 375px to 5% at 1200px; all percentages use battlefield width.
+
+Uniform category fit is shared across factions, actorScale is 1 and displayScale is 1.1. Upper/middle/lower factors are 0.9/0.95/1; selected growth is 1.1/1.05/1.1. Scale about the WCO5 ground-shadow pivot, never the expanded status stack. Lower detail reserve is 3.5rem; selected details are contained within the floor. Keep essential information legible through screen-space minimums.
+
+Guard badges stay outside the sprite with a 0.5rem source-space gap: player upper-right at 12% of sprite height, enemy lower-left at 88%. Use overlay.defenseAnchorByRole; do not mirror text or badges. Intent remains above the sprite. The delayed info control keeps its small visible circle and 44px touch target, centered over its owner.
