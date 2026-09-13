@@ -502,7 +502,9 @@ export function openModal({
   release = bindModalDismiss({ veil, panel, close, opener });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
+  // A footer exit (the wide Close) outranks the head's small ✕.
   const first = panel.querySelector('.modal-foot-actions .primary')
+    || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
     || panel.querySelector('[data-focusable="true"]')
     || panel.querySelector('.modal-close');
   first?.focus?.({ preventScroll: true });

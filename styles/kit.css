@@ -3358,6 +3358,10 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   max-width:none; min-width:0;
 }
+/* A lone exit (pile, flask, combatant door) lost `.primary` with its role;
+   it still spans the foot it is the only way out of. */
+.modal-foot-actions:has(> [data-control-role='exit']:only-child) { width:100%; margin-left:0; }
+.modal-foot-actions > [data-control-role='exit']:only-child { max-width:none; min-width:0; }
 /* THE CREATION FOOT KEEPS BACK LEFT AND BEGIN RIGHT once Begin is ready. The
    stacked ready-primary foot above is for a door whose primary is the one
    thing left to do; here Back is a real way out, and Constantine (2026-09-11):

@@ -6,6 +6,10 @@ export const CONTROL_ROLES = Object.freeze(['primary', 'utility', 'selection', '
 
 // Registered exceptions. Each maps its own model facts to a state; none may
 // make an unavailable control look actionable (busy/unavailable resolves first).
+// A deliberate exception to "models hold records, not callbacks": each entry
+// is a pure function of plain model facts, frozen and DOM-free. kit.css paints
+// the same precedence by hand from data-control-role/-exception, so this
+// resolver is the tested statement of it (tests/wireframe-control-appearance).
 export const CONTROL_EXCEPTIONS = Object.freeze({
   // End Turn: a legal early end stays neutral; green once actions are spent,
   // or while the legal action is highlighted. Guidance only, never legality.
