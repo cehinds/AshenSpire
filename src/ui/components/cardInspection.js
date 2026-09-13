@@ -75,14 +75,14 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     if (row.reason) button.title = row.reason;
     return button;
   });
-  const back = document.createElement('button');
-  back.type = 'button'; back.textContent = 'Back'; back.className = 'card-inspection-back';
+  // W1o: the header close is the way out. The footer holds only applicable
+  // actions — one fills it — and a read-only door has no footer at all, not a
+  // redundant Back beside the close it duplicates.
   const shell = openModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener,
     primary: buttons[0] || null,
-    secondary: [back, ...buttons.slice(1)],
+    secondary: buttons.slice(1),
     body: cardInspectionLayout(card, details) });
-  back.addEventListener('click', shell.close);
   for (const button of buttons) {
     button.addEventListener('click', () => {
       // Re-read rather than trusting the row this button was drawn from: the

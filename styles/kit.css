@@ -2608,6 +2608,18 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 .flask-inspect-body { padding: var(--modal-inset); }
 .pile-body .as-cardgrid { justify-content: center; }
 .pile-empty { padding: 2rem; }
+/* W1h: rail | pane. The pane holds the pile beside the selected card's
+   reading; compact hosts put the rail above (kit .as-railed) and the reading
+   under the pile. Only the two columns scroll. */
+.spent-pile-modal .pile-body { display: flex; min-height: 0; }
+.spent-pile-modal .pile-body > .as-railed { flex: 1 1 auto; min-height: 0; width: 100%; }
+.spent-pile-modal .pile-pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; min-height: 0; padding-inline-start: 2.5vw; }
+.spent-pile-modal :is(.pile-collection, .pile-detail) { min-height: 0; overflow: auto; }
+.spent-pile-modal .pile-detail { padding: var(--modal-inset); border-left: 1px solid var(--line); font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.5; color: var(--ink-dim); }
+.spent-pile-modal .pile-detail .tt-title { font-size: calc(18px / var(--ui-zoom, 1)); font-weight: 600; color: var(--parchment); margin-bottom: .4em; }
+.spent-pile-modal .pile-detail .ti-meta { display: flex; gap: .6em; align-items: center; margin-bottom: .6em; }
+:root[data-layout='narrow'] .spent-pile-modal .pile-pane { grid-template-columns: minmax(0, 1fr); padding-inline-start: 0; }
+:root[data-layout='narrow'] .spent-pile-modal .pile-detail { border-left: 0; border-top: 1px solid var(--line); }
 
 /* THE BOSS SPLASH is Eyebrow + Title·L + Ornament on a near-black veil. The
    veil and the beats are FX (the animation lives in styles/combat.css); what is
