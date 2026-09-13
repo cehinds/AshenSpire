@@ -1,0 +1,4331 @@
+{
+  "referenceCommit": "dcb3d1cd",
+  "implementationBase": "e017ef1d",
+  "note": "Coverage is implementation status, not a claim of visual parity. Missing source references are proposed or owner-local seams; integrate through current production authorities.",
+  "entries": [
+    {
+      "id": "W0",
+      "name": "Master shell",
+      "parent": null,
+      "status": "in-progress",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "W1",
+      "name": "Base workspace / modal",
+      "parent": "W0",
+      "status": "in-progress",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "W1a",
+      "name": "Settings",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/settings.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1b",
+      "name": "Town",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/rest.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1c",
+      "name": "Character creation",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/customize.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/statAllocationCard.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1d",
+      "name": "Shop",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/shop.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1e",
+      "name": "Armoury",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ArmouryModels.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1f",
+      "name": "Compendium",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/compendium.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1g",
+      "name": "Profile",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/profileArchive.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1h",
+      "name": "Discard / Exhaust viewer",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1i",
+      "name": "Smith upgrade",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/smithUpgradeModal.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1j",
+      "name": "Extract card",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1k",
+      "name": "Install card",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1l",
+      "name": "New game slot selection",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1m",
+      "name": "Load game slot selection",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1n",
+      "name": "Inventory selection",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1o",
+      "name": "Item inspection",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/cardInspection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1p",
+      "name": "Combatant inspection",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantInspector.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1q",
+      "name": "Potion inspection",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1r",
+      "name": "Save status",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1s",
+      "name": "Rest",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/rest.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1t",
+      "name": "Rewards",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/reward.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1u",
+      "name": "Event",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1v",
+      "name": "Shop offers",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/shop.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1w",
+      "name": "Entity inspector",
+      "parent": "W1",
+      "status": "in-progress",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantInspector.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "W2",
+      "name": "Confirmation variant",
+      "parent": "W0",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W2a",
+      "name": "Service confirmation",
+      "parent": "W2",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W2b",
+      "name": "Delete save",
+      "parent": "W2",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W2c",
+      "name": "Replace save",
+      "parent": "W2",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W2d",
+      "name": "Load over active run",
+      "parent": "W2",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W2e",
+      "name": "Quit confirmation",
+      "parent": "W2",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W3",
+      "name": "Main-menu composition",
+      "parent": "W0",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W3a",
+      "name": "Main menu — centered, no preview",
+      "parent": "W3",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W3b",
+      "name": "Main menu — Continue highlighted",
+      "parent": "W3",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W4",
+      "name": "Gameplay / encounter regions",
+      "parent": "W0",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/map.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W4a",
+      "name": "Combat — tightly packed footer",
+      "parent": "W4",
+      "status": "in-progress",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/map.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "targeted tests passed",
+        "wide": "reviewed; incomplete",
+        "compact": "short landscape has unresolved legibility limits",
+        "iphoneSE": "reviewed; incomplete",
+        "galaxyS24": "Reviewed at 360x780: page contained; hand has 7 local pixels of horizontal overflow. Not complete.",
+        "interactions": "adjacent hand selection and card inspection verified; remaining interactions pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "W4b",
+      "name": "Map — 10 / 60 / 20 / 10",
+      "parent": "W4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/map.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W4c",
+      "name": "Quest dialogue — player left, NPC right",
+      "parent": "W4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/map.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC0",
+      "name": "Master card",
+      "parent": null,
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC1",
+      "name": "Playing card",
+      "parent": "WC0",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC1a",
+      "name": "Attack card",
+      "parent": "WC1",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC1b",
+      "name": "Skill card",
+      "parent": "WC1",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC1c",
+      "name": "Power card",
+      "parent": "WC1",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC1d",
+      "name": "Curse card",
+      "parent": "WC1",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC1e",
+      "name": "Status card",
+      "parent": "WC1",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC2",
+      "name": "Possession card",
+      "parent": "WC0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2a",
+      "name": "Equipment card",
+      "parent": "WC2",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2a1",
+      "name": "Weapon card",
+      "parent": "WC2a",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2a2",
+      "name": "Armor card",
+      "parent": "WC2a",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2b",
+      "name": "Relic card",
+      "parent": "WC2",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2b1",
+      "name": "Passive relic",
+      "parent": "WC2b",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2b2",
+      "name": "Triggered relic",
+      "parent": "WC2b",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2c",
+      "name": "Consumable card",
+      "parent": "WC2",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2c1",
+      "name": "Healing consumable",
+      "parent": "WC2c",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2c2",
+      "name": "Resource consumable",
+      "parent": "WC2c",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC2c3",
+      "name": "Utility consumable",
+      "parent": "WC2c",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC3",
+      "name": "Character-choice card",
+      "parent": "WC0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC3a",
+      "name": "Class card",
+      "parent": "WC3",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC3b",
+      "name": "Starting-kit card",
+      "parent": "WC3",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/collectibleCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/cardSelection.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC4",
+      "name": "Combatant card",
+      "parent": "WC0",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantOverhead.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "Reviewed in rebuilt standalone at 1440x860: selection preserved measured ground anchors and base sprite scales. Full roster/visual parity pending.",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC4a",
+      "name": "Compact combatant",
+      "parent": "WC4",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantOverhead.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "Reviewed in rebuilt standalone at 1440x860: selection preserved measured ground anchors and base sprite scales. Full roster/visual parity pending.",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WC4b",
+      "name": "Standard combatant",
+      "parent": "WC4",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantOverhead.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WC4c",
+      "name": "Expanded combatant",
+      "parent": "WC4",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantOverhead.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1x",
+      "name": "Proficiencies",
+      "parent": "W1",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1x1",
+      "name": "Weapon proficiency",
+      "parent": "W1x",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "W1x2",
+      "name": "Skill proficiency",
+      "parent": "W1x",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCB0",
+      "name": "Buttons and inspection",
+      "parent": null,
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/kit/index.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCB1",
+      "name": "Inspect control",
+      "parent": "WCB0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantInspector.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCB2",
+      "name": "Context action",
+      "parent": "WCB0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/kit/index.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCB3",
+      "name": "Primary / confirmation button",
+      "parent": "WCB0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/kit/index.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCB4",
+      "name": "Back / cancel button",
+      "parent": "WCB0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/kit/index.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCB5",
+      "name": "Exit button",
+      "parent": "WCB0",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/kit/index.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WCF0",
+      "name": "Component foundations",
+      "parent": null,
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/models/ComponentModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/uiComponents.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCF1",
+      "name": "Component contract",
+      "parent": "WCF0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/models/ComponentModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/uiComponents.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCF2",
+      "name": "Ordered active stack",
+      "parent": "WCF0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCF3",
+      "name": "Selection effect",
+      "parent": "WCF0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/hand.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCF4",
+      "name": "Inspector facts",
+      "parent": "WCF0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantInspector.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CombatantInspectorModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCI0",
+      "name": "Identity and artwork",
+      "parent": null,
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCI1",
+      "name": "Nameplate",
+      "parent": "WCI0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCI2",
+      "name": "Sprite / artwork",
+      "parent": "WCI0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCI3",
+      "name": "Metadata footer",
+      "parent": "WCI0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM0",
+      "name": "Meters and statuses",
+      "parent": null,
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/resources.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM1",
+      "name": "Health meter",
+      "parent": "WCM0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/resources.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM2",
+      "name": "Resource meter",
+      "parent": "WCM0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/resources.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM3",
+      "name": "Buildup meter",
+      "parent": "WCM0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/resources.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM4",
+      "name": "Stance strip",
+      "parent": "WCM0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM5",
+      "name": "Status icon",
+      "parent": "WCM0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCM6",
+      "name": "Icon overflow",
+      "parent": "WCM0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCO0",
+      "name": "Combat overlays",
+      "parent": null,
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCO1",
+      "name": "Intent indicator",
+      "parent": "WCO0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCO2",
+      "name": "Defense badge",
+      "parent": "WCO0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCO3",
+      "name": "Aura layer",
+      "parent": "WCO0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCO4",
+      "name": "Buff layer",
+      "parent": "WCO0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCO5",
+      "name": "Ground shadow",
+      "parent": "WCO0",
+      "status": "in-progress",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/combatantFrame.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WCT0",
+      "name": "Tooltip components",
+      "parent": null,
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/TooltipPlacementModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WCT1",
+      "name": "Tooltip presenter",
+      "parent": "WCT0",
+      "status": "pending",
+      "phase": "shared-components",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/TooltipPlacementModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC0",
+      "name": "Combat composition",
+      "parent": null,
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/battlefieldStage.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/BattlefieldStageModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC1",
+      "name": "Battlefield stage",
+      "parent": "WCF2",
+      "status": "in-progress",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/battlefieldStage.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/BattlefieldStageModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WGC2",
+      "name": "Player placement",
+      "parent": "WC4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/battlefieldStage.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/BattlefieldStageModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC3",
+      "name": "Enemy placements",
+      "parent": "WC4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/battlefieldStage.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/BattlefieldStageModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC4",
+      "name": "Target layer",
+      "parent": "WCF3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/battlefieldStage.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/BattlefieldStageModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC5",
+      "name": "Hand region",
+      "parent": "WC1",
+      "status": "in-progress",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hand.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/card.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WGC6",
+      "name": "Packed action footer",
+      "parent": "WCF2",
+      "status": "in-progress",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WGC7",
+      "name": "Actions remaining",
+      "parent": "WCM2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC8",
+      "name": "Draw pile button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC9",
+      "name": "End turn button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC10",
+      "name": "Discard/exhaust button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGC11",
+      "name": "Potion control",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/piles.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH0",
+      "name": "HUD composition contract",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/viewModels/RunHudViewModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH1",
+      "name": "Vitality HUD",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/VitalsPanelModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/resources.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/resources.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH2",
+      "name": "Armoury control",
+      "parent": "WCB2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/QuickAccessPanelModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH3",
+      "name": "Menu control",
+      "parent": "WCB2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/QuickAccessPanelModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH4",
+      "name": "Total HUD",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/viewModels/RunHudViewModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/runHud.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH5",
+      "name": "Experience strip",
+      "parent": "WCM2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH6",
+      "name": "Relic rail",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/InventoryBeltModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH7",
+      "name": "Run header strip",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/RunHeaderModel.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGH8",
+      "name": "Potions contents",
+      "parent": "WCB2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/flask.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM0",
+      "name": "Map composition",
+      "parent": null,
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM1",
+      "name": "Map viewport",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM2",
+      "name": "Map paths",
+      "parent": "WGS1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM3",
+      "name": "Node button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM4",
+      "name": "Node details",
+      "parent": "WCF4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM5",
+      "name": "Region selector",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM6",
+      "name": "Recenter button",
+      "parent": "WCB4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGM7",
+      "name": "Enter node button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/mapboard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/map.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGP0",
+      "name": "Progression components",
+      "parent": "WCF0",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGP1",
+      "name": "Proficiency list row",
+      "parent": "WCF1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGP2",
+      "name": "Proficiency progress",
+      "parent": "WCM2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGP3",
+      "name": "Known techniques",
+      "parent": "WCF4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGP4",
+      "name": "Next proficiency benefit",
+      "parent": "WCF4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/equipment.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/equipmentCard.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/modalShell.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/resbars.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "PROGRESSION-SPECIFICATION.md",
+          "existsOnImplementationBase": false
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ0",
+      "name": "Dialogue composition",
+      "parent": null,
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ1",
+      "name": "Dialogue scene",
+      "parent": "WGS1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ2",
+      "name": "Player portrait",
+      "parent": "WCI2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ3",
+      "name": "NPC portrait",
+      "parent": "WCI2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ4",
+      "name": "Caption/choice region",
+      "parent": "WCF4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ5",
+      "name": "Speech progression",
+      "parent": "WCF1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ6",
+      "name": "Back button",
+      "parent": "WCB4",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ7",
+      "name": "Skip speech button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGQ8",
+      "name": "Continue button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/event.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/model/quests.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/optionDecision.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS0",
+      "name": "Shared scene layers",
+      "parent": null,
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/uiContent.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS1",
+      "name": "Background composition",
+      "parent": "WCI2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/uiContent.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS2",
+      "name": "Shared HUD",
+      "parent": "WCF2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/viewModels/RunHudViewModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS3",
+      "name": "HUD identity",
+      "parent": "WCI1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/viewModels/RunHudViewModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS4",
+      "name": "HUD resource strip",
+      "parent": "WCM2",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/viewModels/RunHudViewModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS5",
+      "name": "HUD menu button",
+      "parent": "WCB3",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/hudmeta.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/viewModels/RunHudViewModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/ui.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS6",
+      "name": "Skyline layer",
+      "parent": "WGS1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/uiContent.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS7",
+      "name": "Floor layer",
+      "parent": "WGS1",
+      "status": "pending",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/screens/combat.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/uiContent.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WGS8",
+      "name": "Ground formation grid",
+      "parent": "WGS7",
+      "status": "in-progress",
+      "phase": "combat-and-hud",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/battlefieldStage.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/BattlefieldStageModel.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/combat.css",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+    },
+    {
+      "id": "WT0",
+      "name": "Shared tooltip",
+      "parent": null,
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WT1",
+      "name": "Compact tooltip",
+      "parent": "WT0",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WT2",
+      "name": "Standard tooltip",
+      "parent": "WT0",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    },
+    {
+      "id": "WT3",
+      "name": "Expanded tooltip",
+      "parent": "WT0",
+      "status": "pending",
+      "phase": "screens-and-overlays",
+      "sourceReferences": [
+        {
+          "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        }
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
+    }
+  ],
+  "rebasedImplementationCommit": "b07b8747",
+  "validation": {
+    "nodeSuite": "Passed: node tests/run-node.mjs, exit 0 after overlay coordinate correction",
+    "build": "Passed: node tools/launch.mjs --build-only",
+    "shipped": "Passed: six checks",
+    "buildversion": "Passed: eight checks",
+    "reference": "Passed: 152 entries, 608 views, no consistency failures",
+    "visual": "Partial browser review only; no wireframe marked complete"
+  },
+  "issue": 1008
+}

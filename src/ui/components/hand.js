@@ -1,3 +1,5 @@
+import { handLayout, reconcileHandOrder, moveHandInstance } from '../models/HandLayout.js';
+import { mountHandInspectionOverlay } from './handInspectionOverlay.js';
 // src/ui/components/hand.js — THE hand strip. One renderer, two surfaces.
 //
 // Until 2026-08-15 the hand was rendered TWICE: combat.js's template (the
@@ -76,6 +78,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   // (axis, mode, why) is the order the old template carried, so the paging
   // DOM stays byte-identical across the collapse.
   applyHandExemption(handEl);
+  const releaseInspectionOverlay = fitFan ? mountHandInspectionOverlay(handEl) : null;
 
   // Snapshot clients remount this strip; arrivals are opt-in for persistent mounts.
   let previousCards = new Set();
@@ -83,50 +86,41 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   let fanMeasurement = null;
   let handFan = []; // each card's shipped fan transform, same index
   const renderedCards = new Map();
+  let presentationOrder = [];
+  let lastRender = null;
   const handLayoutWord = () => document.documentElement.dataset.handLayout;
 
   function applyHandLayout() {
     if (fitFan) {
       const cards = handEls.filter(el => el.parentNode === handEl);
       if (!cards.length || !handEl.isConnected) return;
-      const zoom = parseFloat(getComputedStyle(document.body).zoom) || 1;
-      // Reference-approved physical size range. Grow the fan by overlap, never
-      // by shrinking a card's type below its readable minimum.
-      const band = handEl.getBoundingClientRect();
-      const bandHeight = band.height;
-      // The ceiling was a flat 162 and left the cards at phone size on a
-      // desktop (owner, 2026-09-11: "cards are way too small"). It now grows
-      // with the band's rendered width — about a tenth of it — so a 1920 band
-      // deals ~200 px cards while a phone keeps its 162.
-      const cardCeiling = Math.max(162, band.width * 0.105);
-      // THE FLOOR IS A READABLE CARD, not a 72 px thumbnail. At 390x650 the band
-      // is 151 px tall and the old floor dealt 98 px cards with 8.8 px rules
-      // text (measured 2026-09-11). 118 px keeps the text at ~10.6 px; the card
-      // then stands 165 px in a 151 px band and the top 14 px lift into the
-      // field's own bottom padding, which is what the fan's raise already does.
-      const cardWidth = Math.min(cardCeiling, Math.max(118, (bandHeight - 28) * 5 / 7));
-      // Every read comes before the one write, so the pass costs one layout
-      // rather than one per read.
-      const cs = getComputedStyle(handEl);
-      const available = handEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      // `.hand .card { zoom: var(--hand-card-zoom) }` (combat.css) is the card's
-      // whole zoom, and offsetWidth reports the card's own unzoomed box, so the
-      // rendered width is known before the property is written. A browser
-      // without CSS zoom renders the box unscaled, as it always did.
-      const nextCardZoom = cardWidth / (178 * zoom);
-      const cardZoom = ZOOM_SUPPORTED ? nextCardZoom : 1;
-      const width = cards[0].offsetWidth * cardZoom;
-      handEl.style.setProperty('--hand-card-zoom', String(nextCardZoom));
-      const measurement = [available, width, zoom, cards.length].join(':');
-      if (measurement === fanMeasurement) return;
-      fanMeasurement = measurement;
-      const shown = cards.length;
-      const step = shown > 1 ? Math.max(0, Math.min(width + 8, (available - width - 8) / (shown - 1))) : width;
+      const rect = handEl.getBoundingClientRect();
+      const zoom = rect.width / handEl.clientWidth || 1;
+      const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
+      const plan = handLayout({ width: handEl.clientWidth, height: handEl.clientHeight, count: cards.length, rem, zoom });
+      handEl.dataset.wireframeHand = 'true';
+      handEl.style.setProperty('--hand-card-zoom', '1');
+      handEl.style.setProperty('--hand-span', plan.span + 'px');
+      handEl.style.setProperty('--hand-selection-lift', plan.lift + 'px');
       cards.forEach((el, i) => {
-        // Margins belong to the card's zoomed coordinate space, unlike the
-        // available width measured on its parent.
-        el.style.marginLeft = i ? ((step - width) / cardZoom) + 'px' : '0px';
-        el.style.transform = handFan[i];
+        const slot = plan.cards[i];
+        el.style.setProperty('--hand-card-width', plan.cardWidth + 'px');
+        el.style.setProperty('--hand-card-height', plan.cardHeight + 'px');
+        el.style.setProperty('--hand-card-x', slot.x + 'px');
+        el.style.setProperty('--hand-card-y', (plan.top + slot.y) + 'px');
+        el.style.setProperty('--hand-card-angle', slot.angle + 'deg');
+        el.style.setProperty('--hand-card-arc', slot.y + 'px');
+        el.style.setProperty('--hand-hit-width', (i === cards.length - 1 ? plan.cardWidth : plan.step) + 'px');
+        let lane = el.querySelector('.hand-hit-lane');
+        if (!lane) {
+          lane = document.createElement('span');
+          lane.className = 'hand-hit-lane';
+          lane.setAttribute('aria-hidden', 'true');
+          el.appendChild(lane);
+        }
+        el.style.setProperty('--card-fan-transform', 'rotate(' + slot.angle + 'deg)');
+        el.style.marginLeft = '0px';
+        el.style.transform = 'rotate(' + slot.angle + 'deg)';
       });
       return;
     }
@@ -193,6 +187,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function render({ cards = [], emptyHtml = null }) {
+    lastRender = { cards, emptyHtml };
+    presentationOrder = reconcileHandOrder(presentationOrder, cards.map(entry => entry.inst.instanceId));
+    const entries = new Map(cards.map(entry => [entry.inst.instanceId, entry]));
+    cards = presentationOrder.map(id => entries.get(id));
     const wanted = new Set(cards.map(entry => entry.inst.instanceId));
     for (const [id, record] of renderedCards) if (!reuseCards || emptyHtml != null || !wanted.has(id)) {
       record.release?.(); record.el.remove(); renderedCards.delete(id);
@@ -307,6 +305,7 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
   }
 
   function teardown() {
+    releaseInspectionOverlay?.();
     for (const record of renderedCards.values()) record.release?.();
     renderedCards.clear();
     cancelAnimationFrame(layoutFrame);
@@ -315,5 +314,14 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     if (mo) mo.disconnect();
   }
 
-  return { render, teardown };
+  function reorderAt(id, clientX) {
+    const others = handEls.filter(el => el.dataset.instanceId !== id);
+    const slot = others.filter(el => {
+      const rect = el.getBoundingClientRect();
+      return clientX > rect.left + rect.width / 2;
+    }).length;
+    presentationOrder = moveHandInstance(presentationOrder, id, slot);
+    if (lastRender) render(lastRender);
+  }
+  return { render, teardown, reorderAt };
 }

@@ -1621,6 +1621,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           // cancel would aim the card at wherever the finger happened to die.
           if (cancelled) return;
           // armHold consumes the trailing click of a moved press.
+          const handBounds = $('.hand').getBoundingClientRect();
+          if (up.clientY >= handBounds.top && up.clientY <= handBounds.bottom && up.clientX >= handBounds.left && up.clientX <= handBounds.right) {
+            handStrip.reorderAt(inst.instanceId, up.clientX);
+            return;
+          }
           const plan = dropPlan(up, true);
           if (plan.legal) playCard(inst.instanceId, plan.targetId || null);
         },
@@ -1794,7 +1799,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         return;
       }
       // Selection mode: play the Nth hand card (auto-target a lone enemy).
-      const inst = combat.piles.hand[cardIdx];
+      const visibleId = app.querySelectorAll('.hand .card')[cardIdx]?.dataset.instanceId;
+      const inst = combat.piles.hand.find(card => card.instanceId === visibleId);
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
       const affordable = combat.player.energy >= (pv.costIsX ? 0 : pv.cost) && combat.player.mana >= pv.manaCost && combat.player.stamina >= (pv.staminaCost || 0) && !isUnplayable(inst);

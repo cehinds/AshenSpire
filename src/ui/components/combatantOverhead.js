@@ -2,15 +2,27 @@ import { attachTooltip, hideTooltip, esc } from './tooltip.js';
 import { intentBadge } from '../uiContent.js';
 import { glyph } from '../kit/index.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
+
+const inspectTimers = new WeakMap();
 
 // Reading selection is separate from an armed card or co-op's attack target.
 export function selectCombatantInfo(root, id) {
   hideTooltip();
   for (const frame of root.querySelectorAll('.combatant')) {
     const selected = frame.dataset.eid === id;
+    const changed = frame.classList.contains('context-selected') !== selected;
     frame.classList.toggle('context-selected', selected);
     frame.setAttribute('aria-pressed', String(selected));
+    if (changed || !selected) {
+      clearTimeout(inspectTimers.get(frame));
+      delete frame.dataset.inspectReady;
+      if (selected) inspectTimers.set(frame, setTimeout(() => {
+        if (frame.isConnected && frame.classList.contains('context-selected')) frame.dataset.inspectReady = 'true';
+      }, wireframeUi.card.inspectDelayMs));
+    }
   }
+  root.dispatchEvent(new CustomEvent('combatantselectionchange'));
 }
 
 export function combatantInfo(name, open) {
