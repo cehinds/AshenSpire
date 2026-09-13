@@ -95,6 +95,10 @@ reward.claim.heading,,Claim status,What each reward is waiting on.,
 reward.state.available,,Available,Still here to collect.,Available
 reward.claim.required,,Required choice,A decision is still waiting before this reward can be taken.,
 reward.claim.blocked,,Full,There is no room for this one.,
+# ---- the title screen -----------------------------------------------------
+title.save.eyebrow,,Your climb,The saved run Continue resumes.,
+title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,
+title.save.aria,,Saved climb in slot {slot},,
 # ---- the merchant ---------------------------------------------------------
 shop.bar.cards,,CARDS,Cards the merchant will sell you.,
 shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,

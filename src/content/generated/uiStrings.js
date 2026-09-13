@@ -458,6 +458,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "title.save.eyebrow",
+    "extends": "",
+    "short": "Your climb",
+    "full": "The saved run Continue resumes.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.identity",
+    "extends": "",
+    "short": "Slot {slot} · Seed {seed}",
+    "full": "Which save Continue loads.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.aria",
+    "extends": "",
+    "short": "Saved climb in slot {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",
