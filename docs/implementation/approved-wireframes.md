@@ -346,11 +346,41 @@ Browser evidence (emulation, `?shot=shop` and `?shot=combat`, 1280×800 and
   gap) above the HP row, for the player and both enemies at both sizes.
 
 Limits:
-- Equipment cards keep their own footer (requirement, then rarity); that face
-  is WC2's and is not changed here.
+- Equipment cards were WC2's; the section below moves them onto the same
+  metadata band.
 - Co-op reward and shop offers do not pass an owned count.
 - Unselected combatants hide their names in formation (the selected-only
   default, kept by #1029), so adjacency was measured with each one selected.
+
+## Possession cards (WC2, WC2a, WC2b, WC2c)
+
+Branch `feature/wireframe-possession-card`, stacked on
+`feature/wireframe-identity` (#1036). Equipment, relic and potion cards share
+one poker canvas (`equipmentCard.js`, with `collectibleCard.js` supplying
+relic and potion presentations). That canvas now follows WC2 and WC2a:
+
+- **Footer:** metadata only, built by WCI3's `metadataFooter`. Rarity starts
+  the band; "Owned: n" ends it when the host knows the count. The requirement
+  no longer sits there.
+- **Body row one, "Slot / requirements":** the type band shows the slot or
+  type label, then the requirement (for example "Weapon · Blade · Requires
+  STR 10"). Both keep their own tooltips and shrink with an ellipsis rather
+  than overflow.
+- **Owned counts:** the Armoury inventory passes each row's `count`, and the
+  Smith's candidates pass `inventoryCount`. Creation, shop, reward and preview
+  hosts pass none, so the band shows rarity alone.
+
+Browser evidence (emulation, `item-cards-preview.html`, 1280×800 and
+390×844):
+- All 103 equipment, relic and potion cards start the footer with rarity. No
+  footer overflows, and no type band clips.
+- An armament rendered with `owned: 2` ends the band with "Owned: 2", flush
+  with the right edge.
+
+Limits:
+- WC2a's "Equipped comparison" row is not built.
+- The weapon/armour and relic/consumable sub-variants (WC2a1–WC2c3) share
+  this canvas; their own rows are not added.
 
 ## Remaining integration
 

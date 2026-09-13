@@ -218,8 +218,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
     // (#980): that fixed the three-tap count by spending the selecting beat,
     // so a thumb committed to a candidate it had not been shown yet.
     if (piece) bindCardInspection(card, { title: item.name, open: opener => {
-      const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false })
-        : renderEquipmentCard(registries, piece, { inspection: false, interactive: false });
+      const owned = Number.isInteger(item.inventoryCount) ? item.inventoryCount : null;
+      const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false, owned })
+        : renderEquipmentCard(registries, piece, { inspection: false, interactive: false, owned });
       const details = equipmentDetails(rendered.explanations);
       details.prepend(prose('Smithing tier ' + item.currentLevel + ' → ' + item.nextLevel + '. Cost: ' + item.cost + ' Smithing Stone. Select the item in the Smith to review its exact upgrade changes.'));
       return openCardInspection({ title: item.name, card: rendered.card, details, opener });
