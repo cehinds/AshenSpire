@@ -266,7 +266,7 @@ if (process.argv.includes('--selftest')) {
         // print a confident green over a smaller population.
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
-          file: 'src/ui/screens/map.js',
+          file: 'src/ui/components/runHud.js',
           find: "className: 'mh-flask flask-slot'",
           replace: "className: 'mh-flask-planted-away flask-slot'",
         }],

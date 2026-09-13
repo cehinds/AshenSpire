@@ -1041,8 +1041,8 @@ async function selftest() {
       // hand-written health bar. The host now lives in hudmeta.js; map.js owns
       // the current seam where content is mounted into it.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
-      file: 'src/ui/screens/map.js',
-      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      file: 'src/ui/components/runHud.js',
+      find: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
       replace: "    resHost.innerHTML = '<div class=\"bar hpbar\"><div class=\"fill\" style=\"width:50%\"></div><div class=\"label\">HP</div></div>';",
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
     },
@@ -1081,9 +1081,9 @@ async function selftest() {
       // A SECOND COPY OF THE SHARED RENDERER. Membership-only comparison used
       // to print this literal doubled HUD inside its own green P1 line.
       name: 'the map mounts the shared resource HUD twice',
-      file: 'src/ui/screens/map.js',
-      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
-      replace: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));\n    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      file: 'src/ui/components/runHud.js',
+      find: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
+      replace: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));\n    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
       expectRed: /FINDING P1\/rows .*duplicates map=/,
     },
     {
@@ -1101,7 +1101,7 @@ async function selftest() {
       // THE DEFECT CLASS E9 EXISTS TO KILL and it is invisible to plant 1's
       // check: the map is using the shared component, and lying anyway.
       name: 'the map uses the shared renderer against its OWN ceiling (100 % everywhere)',
-      file: 'src/ui/screens/map.js',
+      file: 'src/ui/components/runHud.js',
       find: "resourceBarPlan(registries, 'main', run, run, resourceDomains(registries))",
       replace: "resourceBarPlan(registries, 'main', run, run, null)",
       expectRed: /FINDING P2\/same-ask .*trough map=/,
@@ -1173,9 +1173,9 @@ async function selftest() {
       // no bars at all. A check that only hunts for mismatches finds none here
       // and reports green over a screen with no HUD on it.
       name: 'the map HUD host is never found, so the map draws no bars (the empty edge)',
-      file: 'src/ui/screens/map.js',
-      find: "const resHost = app.querySelector('.map-header .resbars-host');",
-      replace: "const resHost = app.querySelector('.map-header .resbars-host-gone');",
+      file: 'src/ui/components/runHud.js',
+      find: "const resHost = hud.querySelector('.resbars-host');",
+      replace: "const resHost = hud.querySelector('.resbars-host-gone');",
       expectRed: /FINDING P0\/population .*rendered NO main-HUD bars|FINDING P0\/population .*mapBars=0/,
     },
     {

@@ -391,12 +391,23 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
   to { opacity: 1; transform: none; }
 }
 
-/* Accessibility: honor reduced-motion for ALL animation (GDD §6). */
+/* Accessibility: honor reduced-motion for ALL animation (GDD §6).
+   TRANSITIONS ARE OFF, NOT SHORT. The usual snippet sets
+   `transition-duration: 0.01ms` on `*`, and that is a transition on EVERY
+   property — `transition-property` defaults to `all`, so a style write is
+   followed by a one-frame transition from the old value, and a synchronous
+   read straight after the write still sees the old value. The map camera
+   does exactly that (mapboard.js `sizeSvg` sets the SVG's height, then reads
+   the scroller's scrollHeight to clamp its landing): under reduced motion it
+   read 1136 px against a 2515 px canvas and clamped the entrance frame 1120
+   px short of the door, at every width, only for players with the setting
+   on (measured 2026-09-11; without the setting the same code lands). Nothing
+   in the app waits on `transitionend`, so `none` is the honest value. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition: none !important;
   }
 }
 
@@ -404,5 +415,5 @@ button.primary:disabled { background: var(--panel); border-color: var(--line); c
 .reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+  transition: none !important;
 }

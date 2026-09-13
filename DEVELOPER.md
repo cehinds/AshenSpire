@@ -78,7 +78,10 @@ mounting and save round-trip coverage. Weapon-art packages are authored in
 `content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
 Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
 desktop and phone potion quantities, cancellation, weapon-art targeting and
-separate pile tabs. `node tools/screenreach.mjs --only 390x650` checks reachable
+separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
+room at a desk and a phone width and asserts the facts the 2026-09-11 review's
+fixes stand on (the run band on every room, wrapped event choices, the phone
+action row, the map camera under reduced motion). `node tools/screenreach.mjs --only 390x650` checks reachable
 controls across screens. Potion selection uses the shared flask action plan;
 only explicit Use may spend a charge. The map Quick Access faces retain real
 44px target boxes to prevent neighboring invisible hit regions overlapping.
