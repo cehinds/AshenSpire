@@ -113,4 +113,11 @@ export const wireframeUi = freeze({
     railMinHostWidthRem: 60, bodyHeightFraction: 0.7,
     railGapRem: 0.6, railInsetRem: 1.4, hysteresisRem: 1,
   },
+  // W1 workspace (W1f Compendium, W1g Profile): frame share of the viewport,
+  // the wide rail (21.6vw, floored and capped for readability) and the gaps
+  // between the pane's two slots (2vw beside each other, 2vh stacked).
+  workspace: {
+    frameWidth: 0.95, frameHeight: 0.9, railWidth: 0.216,
+    railMinRem: 11, railMaxRem: 24, columnGap: 0.02, rowGap: 0.02,
+  },
 });
