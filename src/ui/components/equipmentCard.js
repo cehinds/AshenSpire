@@ -4,6 +4,8 @@ import { equipmentCardArt } from '../assets.js';
 import { imageHintAttrs } from '../imageHints.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
+import { metadataFooter } from '../models/IdentityModel.js';
+import { t } from '../strings.js';
 
 // Connection-owned sizing: removed inventory reveals cannot retain observers.
 //
@@ -43,7 +45,7 @@ function applyCardTokens(card, tokens) {
   for (const [key, value] of Object.entries(tokens.type)) set(`--epc-text-${key}`, value);
 }
 
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
   const tokens = equipmentCardTokens();
@@ -58,15 +60,22 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     const index = explanations.push({ label, explanation, role }) - 1;
     return `data-card-tip="${index}"${interactive ? ' tabindex="0"' : ''}`;
   };
+  // WC2a: slot and requirements share body row one; the footer is metadata
+  // only (WCI3) — rarity at the start, the owned count when the host knows it.
+  const requirementRole = model.cardKind ? 'support' : model.requirement.startsWith('Requires ') ? 'requirement' : 'tag';
+  const band = metadataFooter({ rarity: model.rarity, owned });
+  const metaSlot = (slot, entry) => (!entry ? '' : entry.kind === 'rarity'
+    ? `<span data-meta-slot="${slot}" data-meta-kind="rarity" ${tip(entry.value, `Rarity: ${entry.value}.`)}>${esc(entry.value)}</span>`
+    : `<span data-meta-slot="${slot}" data-meta-kind="owned">${esc(t('card.meta.owned', { count: entry.value }))}</span>`);
   card.innerHTML = `<span class="epc-frame">
     <span class="epc-name ec-name" style="--title-units:${Math.max(1, Array.from(String(model.name)).length * 0.62)}">${esc(model.name)}<span aria-hidden="true">◆</span></span>
     <span class="epc-art">${presentation && !model.art ? `<span class="epc-art-glyph" aria-hidden="true">${esc(model.glyph || piece.icon || '◆')}</span>` : `<img${imageHintAttrs({ offscreen: true })} src="${esc(presentation ? model.art : equipmentCardArt(piece))}" alt="${esc(model.name)}">`}</span>
-    <span class="epc-type" ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span>
+    <span class="epc-type"><span ${tip(model.armor ? model.type : model.type.split(' · ')[0], model.typeExplanation)}>${esc(model.type)}</span><span class="epc-requirement" ${tip(model.requirement, model.requirementExplanation, requirementRole)}>${esc(model.requirement)}</span></span>
     <span class="epc-facts">${model.facts.map(f => `<span class="epc-fact" ${tip(model.cardKind ? f.value : `${f.label}: ${f.value}`, f.explanation, model.cardKind ? 'tag' : 'fact')}><strong>${esc(f.value)}</strong>${esc(f.label)}</span>`).join('')}</span>
     <span class="epc-tags ec-tags">${model.tags.map(t => `<span class="epc-tag" ${tip(t.label, t.explanation)}>${esc(t.label)}</span>`).join('')}</span>
     <span class="epc-effects ec-mods"><span class="epc-heading">${esc(model.effectsLabel || 'Equipment bonuses')}</span>${model.bonuses.map(b => `<span class="epc-bonus" ${tip(b.label, b.explanation, 'effect')}>${esc(b.label)}</span>`).join('') || '<span>No additional bonuses</span>'}</span>
     <span class="epc-flavor" ${tip(model.flavor, model.flavor, 'flavor')}>${esc(model.flavor)}</span>
-    <span class="epc-footer"><span ${tip(model.requirement, model.requirementExplanation, model.cardKind ? 'support' : model.requirement.startsWith('Requires ') ? 'requirement' : 'tag')}>${esc(model.requirement)}</span><span ${tip(model.rarity, `Rarity: ${model.rarity}.`)}>${esc(model.rarity)}</span></span>
+    <span class="epc-footer" data-identity-part="metadata">${metaSlot('start', band.start)}${metaSlot('end', band.end)}</span>
   </span>`;
   card.querySelector('img')?.addEventListener('error', event => event.target.replaceWith(document.createTextNode(piece.icon || '◆')));
   {

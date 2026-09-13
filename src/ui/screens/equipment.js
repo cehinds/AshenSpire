@@ -469,9 +469,10 @@ function inventoryFace(registries, row, {
   }));
   if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     const trail = el.querySelector('.r-trail');
+    // WC2: the metadata band ends with how many of this item the run holds.
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
-      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false })
-      : renderEquipmentCard(registries, row.item, { interactive: false })).card);
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count })
+      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }

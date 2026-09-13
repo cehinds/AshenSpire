@@ -1106,7 +1106,7 @@
       "id": "WC2",
       "name": "Possession card",
       "parent": "WC0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1133,13 +1133,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Possession card on the shared equipment poker canvas (equipmentCard.js). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2a",
       "name": "Equipment card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1166,7 +1167,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Equipment card: body row one is Slot / requirements (type label, then requirement). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label. Equipped comparison row not built."
     },
     {
       "id": "WC2a1",
@@ -1238,7 +1240,7 @@
       "id": "WC2b",
       "name": "Relic card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1265,7 +1267,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Relic card through renderCollectibleCard (same canvas). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2b1",
@@ -1337,7 +1340,7 @@
       "id": "WC2c",
       "name": "Consumable card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1364,7 +1367,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Consumable (potion) card through renderCollectibleCard (same canvas). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2c1",

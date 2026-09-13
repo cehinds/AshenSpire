@@ -2932,7 +2932,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-bonus + .epc-bonus { margin-top:3px; }
 .epc-flavor { font:italic 12px/1.3 Georgia,serif; color:#baa98c; padding-top:6px; border-top:1px solid #5e4c32; }
 .epc-footer { display:flex; justify-content:space-between; gap:8px; font:10px/1.1 Arial,sans-serif; color:#ac9c7f; text-transform:uppercase; letter-spacing:.04em; }
-.epc-footer > :last-child { color:var(--accent); }
+/* WC2: metadata only — rarity at the start, the owned count at the end. */
+.epc-footer > [data-meta-kind="rarity"] { color:var(--accent); }
+.epc-footer > [data-meta-slot="end"] { margin-inline-start:auto; }
+.epc-footer > [data-meta-kind="owned"] { text-transform:none; }
+/* WC2a body row one: slot, then requirements, in the one type band. */
+.epc-type { display:flex; justify-content:center; align-items:center; gap:.5em; }
+.epc-type > .epc-requirement { text-transform:none; letter-spacing:.02em; font-weight:400; color:#d1ba82; }
+.epc-type > .epc-requirement::before { content:'·'; margin-inline-end:.5em; color:var(--accent); }
+.epc-type > span { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-type > span:first-child { flex:0 1 auto; }
+.epc-type > .epc-requirement { flex:0 1 auto; }
 .equipment-poker-card [tabindex]:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .equipment-poker-inspection { min-width:0; width:100%; }
 .equipment-poker-explanations { margin-top:12px; font:14px/1.5 Arial,sans-serif; color:#eee3ca; text-align:left; overflow-wrap:anywhere; }
