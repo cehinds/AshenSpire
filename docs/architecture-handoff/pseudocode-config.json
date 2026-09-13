@@ -1,0 +1,119 @@
+{
+  "combatant": {
+    "maxStackRows": 5,
+    "extraBarHeightRatio": 0.5,
+    "stackGapRem": 0.2,
+    "iconSizeRem": 1.575,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
+    "defenseGapRem": 0.5,
+    "playerIntentVisible": false,
+    "enemyIntentVisible": true,
+    "legibility": {
+      "valueFontMinPx": 12,
+      "infoSizePx": 44,
+      "infoFontPx": 16,
+      "hpMinRem": 0.85,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": 0.85,
+      "iconMinRem": 1,
+      "compactHPFormat": "current/maximum",
+      "inspectAnchor": "original-sprite-center"
+    }
+  },
+  "interaction": {
+    "inspectDelayMs": 1000,
+    "tooltipDelayMs": 1000
+  },
+  "card": {
+    "bandFractions": {
+      "header": 0.1,
+      "art": 0.4,
+      "body": 0.4,
+      "footer": 0.1
+    }
+  },
+  "map": {
+    "regionFractions": {
+      "topHUD": 0.1,
+      "map": 0.6,
+      "details": 0.2,
+      "footer": 0.1
+    },
+    "inlineFraction": 0.95
+  },
+  "combat": {
+    "regionFractions": {
+      "topHUD": 0.1,
+      "battlefield": 0.55,
+      "hand": 0.3,
+      "footer": 0.05
+    },
+    "hand": {
+      "minimumHeightPx": 208,
+      "verticalInsetRem": 0.25,
+      "minFontRem": 0.7,
+      "minCapacity": 5,
+      "maxCapacity": 15,
+      "narrowWidthRem": 22,
+      "wideWidthRem": 75,
+      "minCardWidthRem": 5,
+      "maxCardWidthRem": 9,
+      "minExposedTargetPx": 44,
+      "selectedLiftRem": 0.5,
+      "cardAspectRatio": "5 / 8",
+      "verticalAnchor": "card-body-center"
+    },
+    "footer": {
+      "minimumHeightPx": 56,
+      "heightFraction": 0.95
+    }
+  },
+  "inspector": {
+    "widePreviewFraction": 0.34,
+    "portraitPreviewFraction": 0.32,
+    "gapVw": 2,
+    "maxPreviewWidthRem": 14
+  },
+  "referenceTokens": {
+    "value_1000": {
+      "value": 1000,
+      "unit": "count"
+    },
+    "value_0": {
+      "value": 0,
+      "unit": "count"
+    },
+    "value_1": {
+      "value": 1,
+      "unit": "count"
+    },
+    "value_12Percent": {
+      "value": 12,
+      "unit": "%"
+    },
+    "value_88Percent": {
+      "value": 88,
+      "unit": "%"
+    },
+    "value_15Percent": {
+      "value": 15,
+      "unit": "%"
+    },
+    "value_0_25": {
+      "value": 0.25,
+      "unit": "count"
+    },
+    "value_0_125": {
+      "value": 0.125,
+      "unit": "count"
+    },
+    "value_0_875": {
+      "value": 0.875,
+      "unit": "count"
+    }
+  }
+}

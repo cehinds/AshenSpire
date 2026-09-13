@@ -1,0 +1,937 @@
+[
+  {
+    "id": "W1x",
+    "name": "Proficiencies",
+    "parent": "W1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1x1",
+    "name": "Weapon proficiency",
+    "parent": "W1x",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "W1x2",
+    "name": "Skill proficiency",
+    "parent": "W1x",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCB0",
+    "name": "Buttons and inspection",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCB1",
+    "name": "Inspect control",
+    "parent": "WCB0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCB2",
+    "name": "Context action",
+    "parent": "WCB0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCB3",
+    "name": "Primary / confirmation button",
+    "parent": "WCB0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCB4",
+    "name": "Back / cancel button",
+    "parent": "WCB0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCB5",
+    "name": "Exit button",
+    "parent": "WCB0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCF0",
+    "name": "Component foundations",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCF1",
+    "name": "Component contract",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCF2",
+    "name": "Ordered active stack",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCF3",
+    "name": "Selection effect",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCF4",
+    "name": "Inspector facts",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCI0",
+    "name": "Identity and artwork",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCI1",
+    "name": "Nameplate",
+    "parent": "WCI0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCI2",
+    "name": "Sprite / artwork",
+    "parent": "WCI0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCI3",
+    "name": "Metadata footer",
+    "parent": "WCI0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM0",
+    "name": "Meters and statuses",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM1",
+    "name": "Health meter",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM2",
+    "name": "Resource meter",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM3",
+    "name": "Buildup meter",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM4",
+    "name": "Stance strip",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM5",
+    "name": "Status icon",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCM6",
+    "name": "Icon overflow",
+    "parent": "WCM0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCO0",
+    "name": "Combat overlays",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCO1",
+    "name": "Intent indicator",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCO2",
+    "name": "Defense badge",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCO3",
+    "name": "Aura layer",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCO4",
+    "name": "Buff layer",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCO5",
+    "name": "Ground shadow",
+    "parent": "WCO0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCT0",
+    "name": "Tooltip components",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WCT1",
+    "name": "Tooltip presenter",
+    "parent": "WCT0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC0",
+    "name": "Combat composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC1",
+    "name": "Battlefield stage",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC2",
+    "name": "Player placement",
+    "parent": "WC4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC3",
+    "name": "Enemy placements",
+    "parent": "WC4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC4",
+    "name": "Target layer",
+    "parent": "WCF3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC5",
+    "name": "Hand region",
+    "parent": "WC1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC6",
+    "name": "Packed action footer",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC7",
+    "name": "Actions remaining",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC8",
+    "name": "Draw pile button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC9",
+    "name": "End turn button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC10",
+    "name": "Discard/exhaust button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGC11",
+    "name": "Potion control",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH0",
+    "name": "HUD composition contract",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH1",
+    "name": "Vitality HUD",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH2",
+    "name": "Armoury control",
+    "parent": "WCB2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH3",
+    "name": "Menu control",
+    "parent": "WCB2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH4",
+    "name": "Total HUD",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH5",
+    "name": "Experience strip",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH6",
+    "name": "Relic rail",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH7",
+    "name": "Run header strip",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGH8",
+    "name": "Potions contents",
+    "parent": "WCB2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM0",
+    "name": "Map composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM1",
+    "name": "Map viewport",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM2",
+    "name": "Map paths",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM3",
+    "name": "Node button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM4",
+    "name": "Node details",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM5",
+    "name": "Region selector",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM6",
+    "name": "Recenter button",
+    "parent": "WCB4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGM7",
+    "name": "Enter node button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP0",
+    "name": "Progression components",
+    "parent": "WCF0",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP1",
+    "name": "Proficiency list row",
+    "parent": "WCF1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP2",
+    "name": "Proficiency progress",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP3",
+    "name": "Known techniques",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGP4",
+    "name": "Next proficiency benefit",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ0",
+    "name": "Dialogue composition",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ1",
+    "name": "Dialogue scene",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ2",
+    "name": "Player portrait",
+    "parent": "WCI2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ3",
+    "name": "NPC portrait",
+    "parent": "WCI2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ4",
+    "name": "Caption/choice region",
+    "parent": "WCF4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ5",
+    "name": "Speech progression",
+    "parent": "WCF1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ6",
+    "name": "Back button",
+    "parent": "WCB4",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ7",
+    "name": "Skip speech button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGQ8",
+    "name": "Continue button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS0",
+    "name": "Shared scene layers",
+    "parent": null,
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS1",
+    "name": "Background composition",
+    "parent": "WCI2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS2",
+    "name": "Shared HUD",
+    "parent": "WCF2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS3",
+    "name": "HUD identity",
+    "parent": "WCI1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS4",
+    "name": "HUD resource strip",
+    "parent": "WCM2",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS5",
+    "name": "HUD menu button",
+    "parent": "WCB3",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS6",
+    "name": "Skyline layer",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS7",
+    "name": "Floor layer",
+    "parent": "WGS1",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  },
+  {
+    "id": "WGS8",
+    "name": "Ground formation grid",
+    "parent": "WGS7",
+    "orientations": [
+      "wide",
+      "compact",
+      "iphoneSE",
+      "galaxyS24"
+    ]
+  }
+]
