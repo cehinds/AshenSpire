@@ -210,7 +210,7 @@
       "id": "W1h",
       "name": "Discard / Exhaust viewer",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -225,7 +225,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openSpentPileModal on the W1 rail (kit railed/rail/railItem): Discard and Exhaust are rail categories (above the pane on compact hosts), never head tabs; the pane shows the pile beside the selected card reading (cardDetailHtml, the inspect door body); single Close footer. PileViewerModel.spentPileView projects labels, counts, empty state and the reading. Rail items keep role=tab, aria-selected and data-modal-tab."
     },
     {
       "id": "W1i",
@@ -357,7 +358,7 @@
       "id": "W1o",
       "name": "Item inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -372,7 +373,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openCardInspection: the header close is the way out; the footer holds only applicable actions (one fills it) and a read-only door has no footer, no redundant Back."
     },
     {
       "id": "W1p",

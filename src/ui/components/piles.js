@@ -14,9 +14,11 @@
 // What is left here is the BODY, which is all this file ever should have been:
 // a grid of card faces, display-shuffled where the pile is hidden.
 
-import { renderCard } from './card.js';
+import { renderCard, cardDetailHtml } from './card.js';
 import { openModal } from './modalShell.js';
-import { button, cardGrid, flavour, statusText } from '../kit/index.js';
+import { decorateKeywords } from './tooltipGlossary.js';
+import { button, cardGrid, el, flavour, rail, railed, railItem, statusText } from '../kit/index.js';
+import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
 
 export function openPileModal(registries, title, cards, { shuffleForDisplay = false } = {}) {
   let list = [...cards];
@@ -56,36 +58,63 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
   return shell.veil;
 }
 
-/** One entry, two distinct piles. Viewing never moves or merges any cards. */
+/**
+ * W1h: one entry, two distinct piles. The piles are categories, so they sit on
+ * the W1 rail (above the pane on compact hosts), never as tabs across the head.
+ * The pane shows the pile beside the reading of the selected card; a single
+ * Close ends it. Viewing never moves or merges any cards. The rail items keep
+ * `role=tab`, `aria-selected` and `data-modal-tab`, the hooks the HUD tools read.
+ */
 export function openSpentPileModal(registries, piles, opener = document.activeElement) {
   let active = 'discard';
-  const labels = { discard: 'Discard', exhaust: 'Exhaust' };
-  const paint = () => {
-    const cards = piles[active] || [];
-    const grid = cardGrid(cards.map(inst => renderCard(registries, inst, { small: true, inspectReadOnly: true })), { class: 'grid' });
-    if (!cards.length) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
-    shell.body.replaceChildren(grid);
-    shell.body.setAttribute('aria-labelledby', 'spent-tab-' + active);
-    for (const tab of shell.head.querySelectorAll('[role=tab]')) {
-      const selected = tab.dataset.modalTab === active;
-      tab.setAttribute('aria-selected', String(selected));
-      tab.tabIndex = selected ? 0 : -1;
-    }
+  let selectedId = null;
+  const items = SPENT_PILES.map((id) => railItem({ label: id, id: 'spent-tab-' + id,
+    attrs: { dataset: { modalTab: id }, 'aria-controls': 'spent-pile-panel' } }));
+  const collection = el('div', { class: 'pile-collection' });
+  const detail = el('div', { class: 'pile-detail', 'aria-live': 'polite' });
+  const pane = el('div', { class: 'pile-pane', id: 'spent-pile-panel', role: 'tabpanel' }, [collection, detail]);
+  const read = (inst) => {
+    detail.innerHTML = inst ? cardDetailHtml(registries, inst) : '';
+    if (inst) decorateKeywords(detail);
   };
-  const shell = openModal({ title: 'Discard and Exhaust', size: 'xl', className: 'pile-modal spent-pile-modal',
-    showMenuButton: false, opener,
-    tabs: Object.keys(labels).map(id => ({ id, label: labels[id] + ' (' + (piles[id]?.length || 0) + ')', selected: id === active })),
-    onTab: id => { active = id; paint(); }, bodyClassName: 'pile-body',
-  });
-  shell.body.id = 'spent-pile-panel'; shell.body.setAttribute('role', 'tabpanel');
-  for (const tab of shell.head.querySelectorAll('[role=tab]')) {
-    tab.id = 'spent-tab-' + tab.dataset.modalTab; tab.setAttribute('aria-controls', shell.body.id);
-    tab.addEventListener('keydown', event => {
-      if (!['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) return;
-      event.preventDefault(); event.stopPropagation();
-      active = event.key === 'Home' ? 'discard' : event.key === 'End' ? 'exhaust' : active === 'discard' ? 'exhaust' : 'discard';
-      paint(); shell.head.querySelector('[data-modal-tab=' + active + ']').focus();
+  const paint = () => {
+    const view = spentPileView(piles, active, selectedId);
+    items.forEach((item, i) => {
+      const tab = view.tabs[i];
+      item.textContent = tab.label;
+      item.classList.toggle('on', tab.selected);
+      item.setAttribute('aria-selected', String(tab.selected));
+      if (tab.selected) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+      item.tabIndex = tab.selected ? 0 : -1;
     });
-  }
+    pane.setAttribute('aria-labelledby', 'spent-tab-' + active);
+    const faces = view.cards.map((inst) => {
+      const face = renderCard(registries, inst, { small: true, inspectReadOnly: true });
+      face.addEventListener('cardinspectionselect', () => { selectedId = inst.instanceId; read(inst); });
+      return face;
+    });
+    const grid = cardGrid(faces, { class: 'grid' });
+    if (view.empty) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
+    collection.replaceChildren(grid);
+    read(view.detail);
+  };
+  const choose = (id) => { active = id; selectedId = null; paint(); };
+  items.forEach((item) => {
+    item.addEventListener('click', () => choose(item.dataset.modalTab));
+    item.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault(); event.stopPropagation();
+      choose(event.key === 'Home' ? SPENT_PILES[0] : event.key === 'End' ? SPENT_PILES.at(-1)
+        : SPENT_PILES[(SPENT_PILES.indexOf(active) + 1) % SPENT_PILES.length]);
+      items.find((node) => node.dataset.modalTab === active).focus();
+    });
+  });
+  const done = button({ label: 'Close', role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+  const shell = openModal({ title: 'Card piles', size: 'xl', className: 'pile-modal spent-pile-modal',
+    showMenuButton: false, opener, bodyClassName: 'pile-body',
+    body: (host) => host.append(railed(rail(items, { 'aria-label': 'Piles' }), pane)),
+    primary: done, footSize: 'short',
+  });
+  done.addEventListener('click', shell.close);
   paint(); return shell;
 }

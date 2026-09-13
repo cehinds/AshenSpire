@@ -721,6 +721,44 @@ Limits:
 - `tools/ui-components.mjs` C12 pins an older `actRouteStripHtml({ title:
   actTitle(run.actNumber) })` call that dev had already changed. It is not in
   the suite and is left as it was.
+## Pile viewer and inspection doors (W1h, W1o)
+
+Branch `feature/wireframe-inspection-bodies`, based on dev `d2ea5bcd`.
+
+- **W1h Discard / Exhaust viewer.** The piles are W1 categories, so they now
+  sit on the kit's rail (`railed` / `rail` / `railItem`) instead of tabs
+  across the head; compact hosts put the rail above the pane.
+  - The pane shows the pile's cards beside the reading of the selected card.
+    `cardDetailHtml` supplies that reading: the same body the card's inspect
+    door and tooltip use. Selecting a card (its first tap) moves the reading;
+    before any selection it shows the pile's first card.
+  - A single Close ends the viewer, and the title is "Card piles".
+  - `src/ui/models/PileViewerModel.js` (`spentPileView`) projects the rail
+    labels, counts, empty state and reading; four node:tests cover it.
+  - The rail items keep `role=tab`, `aria-selected` and `data-modal-tab`,
+    so the HUD tools that click the pile tabs still find them.
+- **W1o item inspection.** The card inspection door no longer adds a footer
+  Back beside the header close it duplicated. The footer holds only
+  applicable actions, and one fills it. A read-only door has no footer at
+  all, which is what the door's own comment already promised.
+
+Browser evidence (emulation, `?shot=combat` with seeded piles, 1280×800 and
+390×844):
+- Desktop: the rail is 185 px on the left, and the collection and the reading
+  are two equal 370 px columns. Phone: the rail is a row above, with the
+  collection and then the reading below it.
+- The reading starts on the first card, "Slashing Strike". Selecting "Shield
+  Strike" moves the reading to it. Exhaust shows its one card and that card's
+  reading.
+- Close is the only footer button, and the page does not scroll.
+- A hand card's read-only inspection door has no footer and no Back; its
+  header close remains.
+
+Limits:
+- The draw-pile viewer (`openPileModal`) stays a single collection with its
+  count; it has no categories.
+- W1q potion inspection (charges, eligibility, "Use if legal") lives in the
+  flask menu and is not changed here.
 
 ## Remaining integration
 
