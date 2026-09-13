@@ -1315,15 +1315,20 @@
    name at 390x650 (tools/screenreach.mjs, red on dev since #788). Only the pips
    inside it are controls; the tray and its gaps pass the press through. */
 :root .combat[data-layout='formation'] .combatant .statuses {
- display:flex; flex-wrap:nowrap; align-items:center; gap:calc(3px / var(--ui-zoom,1));
- height:calc(24px / var(--ui-zoom,1)); min-height:calc(24px / var(--ui-zoom,1)); width:100%; margin:0; pointer-events:none;
+ display:flex; flex-wrap:nowrap; align-items:center; gap:var(--status-icon-gap, calc(3px / var(--ui-zoom,1)));
+ height:var(--status-icon-size, calc(24px / var(--ui-zoom,1))); min-height:var(--status-icon-size, calc(24px / var(--ui-zoom,1))); width:100%; margin:0; pointer-events:none;
 }
 :root .combat[data-layout='formation'] .combatant .statuses > * { pointer-events:auto; }
 :root .combat[data-layout='formation'] .statuses .status-icon {
- flex:none; width:calc(21px / var(--ui-zoom,1)); height:calc(21px / var(--ui-zoom,1)); min-width:0; min-height:0;
+ flex:none; width:var(--status-icon-size, calc(21px / var(--ui-zoom,1))); height:var(--status-icon-size, calc(21px / var(--ui-zoom,1))); min-width:0; min-height:0;
  font-size:calc(13px / var(--ui-zoom,1)); box-sizing:border-box;
 }
 .status-overflow { position:relative; font-size:calc(11px / var(--ui-zoom,1)); }
+/* WCF2: where a host registers the inspector, +N is a tile that opens it. */
+:root .combat .statuses > .status-overflow-more {
+  flex:none; width:var(--status-icon-size); height:var(--status-icon-size); min-width:0; min-height:0; padding:0;
+  display:grid; place-items:center; border-radius:50%; line-height:1; color:var(--gold); pointer-events:auto;
+}
 .status-overflow summary { cursor:pointer; list-style:none; padding:2px; color:var(--gold); }
 .status-overflow-list { position:absolute; top:100%; right:0; display:flex; flex-wrap:wrap; gap:8px; padding:10px; width:calc(170px / var(--ui-zoom,1)); background:#17130f; border:1px solid var(--gold); z-index:100; }
 .player .status-overflow-list { left:0; right:auto; }
