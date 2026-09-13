@@ -8,9 +8,69 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-13",
     "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
     "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
-    "build": "0.7.1.24",
+    "build": "0.7.1.23",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-1024",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The act map asks you to choose a path, then to take it",
+    "detail": "Picking a lit node on the map now selects it and tells you what waits there — the floor it sits on, and whether it was revealed by the Sealstone Key — and you travel by pressing Enter or picking the same node again. A fast double tap never travels in one gesture: the selection has to have stood for a moment first. Nothing is chosen by a single stray touch. The camera and the scene behind the map hold still while you look around instead of jumping with each pick. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.22",
+    "pullRequest": 1024,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1024"
+  },
+  {
+    "id": "pr-1017",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "Looking at a fighter tells you what you know, and says plainly what you do not",
+    "detail": "The window you open on a combatant is now one ordered reading: a summary of health, what it intends and what it is guarding with; its current state; the moves it has already performed, newest first; the abilities and traits you have learnt; and its lore last. Each of those says which of three things it is — known, known to be empty, or not yet revealed — and the last two never wear the same words, so \"there is nothing here\" can no longer be mistaken for \"you have not seen this yet\". The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.21",
+    "pullRequest": 1017,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1017"
+  },
+  {
+    "id": "pr-1021",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The main menu shows the climb Continue would resume",
+    "detail": "Beside the menu there is now a preview of your saved run — which slot it is in and the seed it was rolled from — so Continue is a button you can read before you press it. The game's wordmark keeps its size when that preview widens the menu. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.20",
+    "pullRequest": 1021,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1021"
+  },
+  {
+    "id": "pr-1019",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The spoils screen says what each reward is waiting on",
+    "detail": "Every reward now carries its claim status beside it: Available while it is still there to collect, Required choice when a decision is waiting before it can be taken, and Full when there is no room for it. A running count says how many of the fight's rewards you have collected. Before this a reward you could not take looked the same as one you simply had not taken yet. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.18",
+    "pullRequest": 1019,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1019"
+  },
+  {
+    "id": "pr-1015",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "A fighter's bars and icons are ordered, and what will not fit stays readable",
+    "detail": "The rows stacked under a combatant now follow one order — health first, then its other resources, then the buildups that matter most, then its stance, then the row of status icons — and only as many rows as there is room for. A buildup that does not fit joins the icon row rather than vanishing; anything else that does not fit is still readable in the window you open on that fighter. Playing a card at a fighter is no longer blocked by the small \"+N\" tile that marks the overflow. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.17",
+    "pullRequest": 1015,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1015"
+  },
+  {
+    "id": "pr-1013",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "Every button gets its look from one rule",
+    "detail": "How a control is coloured — the primary action, a utility, something selected, the way out, something destructive — is now decided in one place with one order of precedence, instead of each screen dressing its own buttons. A control that cannot be used never looks like one that can: unavailable and busy are settled before anything else can make a button look inviting. A screen whose only footer control is the way out now gives it the whole foot, and the exit takes focus first. The receipt is written here after the fact — the merge landed without one.",
+    "build": "0.7.1.16",
+    "pullRequest": 1013,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1013"
   },
   {
     "id": "pr-1010",
