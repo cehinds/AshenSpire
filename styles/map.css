@@ -141,6 +141,15 @@
 /* The pad cursor and hover both repaint the stroke; the glow keeps the
    selection visible under either. */
 .map-node.selected { filter: drop-shadow(0 0 5px var(--parchment)); }
+/* The selection glow is a node's only selection mark (owner, 2026-09-13).
+   A press on a node also runs the tooltip's tap-to-select, which marks it
+   `.tooltip-selected`; kit.css outlines that in gold, and the box sat beside
+   the glow. An open tooltip's own quieter ring ([data-tip-open]) goes too.
+   Keyboard and pad users keep the cursor: `.gp-focus` (ui.css) still rings
+   the node and strokes its circle gold, and the reachable halo still pulses.
+   `g.` is load-bearing: kit.css's `.tooltip-selected:not(.overhead-control)`
+   is (0,2,0) and loads after this file, so an equal selector loses. */
+g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
