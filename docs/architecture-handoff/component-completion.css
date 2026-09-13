@@ -46,3 +46,7 @@
 .cc-ground-slot{min-width:0;height:1rem;display:grid;place-items:center;font-size:.5rem;color:transparent}
 .cc-ground-grid.guides .cc-ground-slot{border-bottom:.0625rem dashed #cbb17c;color:#cbb17c}
 .cc-reference[data-component=WGS8]>.cc-ground-grid{position:relative;top:auto;transform:none;min-height:5rem;align-items:center}
+
+/* Row-major 3×3 formations: shallow row advance gives deliberate overlap. */
+.cc-ground-side{grid-template-rows:repeat(var(--grid-rows),var(--grid-row-step));row-gap:0}
+.cc-ground-grid{top:var(--grid-depth);transform:translateY(-50%)}

@@ -395,7 +395,11 @@
       "enemyIntent": true
     },
     "groundGrid": {
-      "slotsPerSide": 4,
+      "slotsPerSide": 9,
+      "columns": 3,
+      "rows": 3,
+      "depthPercent": 58,
+      "rowStepRem": 2,
       "paddingRem": 1,
       "slotGapRem": 0.5,
       "centerGapRem": 2,
@@ -417,7 +421,7 @@
       "actorSlotPadding": 1,
       "actorWidthRem": 12,
       "groundCutout": "polygon(0 12%, 18% 8%, 36% 14%, 55% 5%, 78% 10%, 100% 3%, 100% 100%, 0 100%)",
-      "floorHeightPercent": 45,
+      "floorHeightPercent": 80,
       "playerWidthPercent": 25,
       "enemyWidthPercent": 65,
       "playerCount": 1,

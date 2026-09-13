@@ -6745,7 +6745,9 @@ On dispose: release timers, observers and events
 
 ```text
 Allies · fill left to right         Enemies · fill left to right
-[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+[A1][A2][A3]   gap   [E1][E2][E3]
+[A4][A5][A6]   gap   [E4][E5][E6]
+[A7][A8][A9]   gap   [E7][E8][E9]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
          shadow centers anchor to ground
 ```
@@ -6758,7 +6760,9 @@ Allies · fill left to right         Enemies · fill left to right
 
 ```text
 Allies · fill left to right         Enemies · fill left to right
-[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+[A1][A2][A3]   gap   [E1][E2][E3]
+[A4][A5][A6]   gap   [E4][E5][E6]
+[A7][A8][A9]   gap   [E7][E8][E9]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
          shadow centers anchor to ground
 ```
@@ -6774,7 +6778,9 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Allies · fill left to right         Enemies · fill left to right
-[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+[A1][A2][A3]   gap   [E1][E2][E3]
+[A4][A5][A6]   gap   [E4][E5][E6]
+[A7][A8][A9]   gap   [E7][E8][E9]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
          shadow centers anchor to ground
 ```
@@ -6791,7 +6797,9 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 Allies · fill left to right         Enemies · fill left to right
-[A1][A2][A3][A4]     gap     [E1][E2][E3][E4]
+[A1][A2][A3]   gap   [E1][E2][E3]
+[A4][A5][A6]   gap   [E4][E5][E6]
+[A7][A8][A9]   gap   [E7][E8][E9]
  ┴   ┴   ┴   ┴               ┴   ┴   ┴   ┴
          shadow centers anchor to ground
 ```
@@ -6807,7 +6815,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve four slots on each side even when empty. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve nine slots per side in three columns and three overlapping rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Apply config.groundGrid.actorScale.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
