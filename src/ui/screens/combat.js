@@ -468,22 +468,29 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     refreshAim();
   });
 
-  // THE LIGHT AND THE ARMING ARE THE SAME CARD, AND THEY FALL TOGETHER.
+  // A DOUSED CARD IS A DISARMED CARD.
   //
-  // `selected` is combat's TARGETING state — the card whose next enemy tap
-  // commits it — and it is set in exactly one place: the inspect door's Play on
-  // a card that needs a target. That door lit the card in the shared store
-  // first, so while combat is armed the store's lit card IS `selected`.
+  // When a card is armed THROUGH THE INSPECT DOOR, the door lit it in the shared
+  // store first, so the store's lit card is combat's `selected`. Empty the store
+  // — which every card screen now does on mount, and the mid-fight Armoury is a
+  // screen that mounts OVER a live fight — and the store runs that card's
+  // `douse`, stripping `inspection-selected`, `inspection-info-visible` AND
+  // `selected` and setting `aria-pressed="false"` on the very node the player is
+  // looking at. Closing the overlay does not remount combat, so without this the
+  // module kept its `selected` while the card had stopped saying so: enemies
+  // still wearing `.targetable`, and the next enemy tap committing a card the
+  // player could no longer see was armed.
   //
-  // Those two facts used to be able to part. A screen that mounts OVER a live
-  // fight — the mid-fight Armoury is the one that does — empties the store on
-  // mount, and the store runs the card's `douse`, which removes
-  // `inspection-selected`, `inspection-info-visible` AND `selected` and sets
-  // `aria-pressed="false"`. Closing that overlay does not remount combat, so
-  // the module kept its `selected` while the card had stopped saying so: the
-  // enemies were still wearing `.targetable`, and the next enemy tap reached
-  // `if (selected) playCard(selected, enemy.id)` and COMMITTED A CARD THE
-  // PLAYER COULD NO LONGER SEE WAS ARMED.
+  // THIS WATCH IS NOT SUFFICIENT ON ITS OWN, and an earlier version of this
+  // comment claimed otherwise — that `selected` is written in exactly one place.
+  // It is not. Arming also happens at the drag/flick `select()`, at the
+  // positional card key, and through `armSelf`, and NONE of those light the
+  // store. `clearSelection()` returns without notifying when the store is
+  // already empty, so on those paths this callback never runs at all. That is
+  // why `openCombatArmoury` puts the aim down directly, below, rather than
+  // trusting a notification that may not come. This watch remains because it is
+  // the only thing that answers the DOUSE — the case where the glass has already
+  // changed under an arming that is still live.
   //
   // ONLY THE EMPTY CASE IS HANDLED HERE. A store that moves to a DIFFERENT card
   // is the `cardinspectionselect` listener's business above, and that listener
@@ -2189,6 +2196,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // set switches and item replacement route through engine intents so Energy,
   // live card piles, resources, Poise, and the combat snapshot stay atomic.
   function openCombatArmoury(request = '') {
+    // YOU LEFT THE BATTLEFIELD, SO THE AIM GOES DOWN — all of it, and here
+    // rather than in a store watcher, because only ONE of the ways to arm goes
+    // through the shared selection store. The positional card key and the
+    // drag/flick `select()` write `selected` (or `selfArm`) directly and light
+    // nothing, so `clearSelection()` inside the panel finds an empty store,
+    // returns without notifying, and no watcher fires. The overlay covers the
+    // battlefield either way; on the way back out the enemies were still
+    // answering to a tap.
+    // BEFORE the `onArmoury` delegation, so the host-routed Armoury (main.js)
+    // disarms exactly as the panel mounted from here does.
+    if (selected || selfArm || selectedFlask != null) {
+      selected = null;
+      selfArm = null;
+      selectedFlask = null;
+      syncCardSelection();
+    }
     if (onArmoury) return onArmoury();
     if (!registries.balance.equipment.enabled) return;
     const equipView = typeof request === 'string' ? request : '';

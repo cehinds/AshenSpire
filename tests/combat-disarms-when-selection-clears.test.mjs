@@ -19,10 +19,24 @@
 // player could no longer see was chosen. Found by a review bot reading this
 // branch, and caused by this branch.
 //
-// THE RULE THIS FILE HOLDS: when the store goes EMPTY, combat drops its own
-// targeting and re-dresses. Only the empty case — a store that moves to another
-// card is the `cardinspectionselect` listener's business, and that listener
-// deliberately ignores a lit card outside the hand.
+// AND THAT FIX WAS HALF OF IT. The first version of this file rested on a claim
+// written into combat.js: that `selected` is set in exactly one place, the
+// inspect door's Play. IT IS NOT. Arming also happens at the drag/flick
+// `select()`, at the positional card key, and through `armSelf` — and none of
+// those light the store. `clearSelection()` RETURNS WITHOUT NOTIFYING when the
+// store is already empty, so on a keyboard-armed card the watcher never ran and
+// the Armoury left the same live aim behind. Found by the review bot reading the
+// fix itself.
+//
+// THE RULE THIS FILE HOLDS, in two halves that need each other:
+//   1. when the store goes EMPTY, combat drops its card targeting and re-dresses
+//      — the douse has already changed the glass under it. Only the empty case:
+//      a store that moves to another card is the `cardinspectionselect`
+//      listener's business, and that listener deliberately ignores a lit card
+//      outside the hand.
+//   2. opening the Armoury puts the aim down DIRECTLY, whatever armed it and
+//      whether or not any store ever knew — because the overlay covers the
+//      battlefield on every path.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { lightCard, clearSelection, onSelectionChange, resetSelection } from '../src/ui/components/cardSelection.js';
@@ -83,4 +97,39 @@ const inspection = strip(read('src/ui/components/cardInspection.js'));
 ok(/classList\.remove\('inspection-selected', 'inspection-info-visible', 'selected'\)/.test(inspection),
   "the douse still strips the combat hand card's `selected` class, which is why combat must be told");
 
-console.log(`PASS ${checks}/${checks}; combat drops its targeting when the shared selection is emptied under it`);
+
+// ---- and the Armoury does not wait to be told ---------------------------------
+// The half the store cannot cover. Read the body of `openCombatArmoury` up to
+// the `onArmoury` delegation: the disarm must be BEFORE it, or the host-routed
+// Armoury keeps the aim while the panel mounted here drops it.
+const armoury = combat.match(/function openCombatArmoury\(request = ''\) \{([\s\S]*?)\n  \}/);
+ok(!!armoury, 'combat.js still opens the Armoury through a function whose body can be read');
+const beforeDelegation = armoury[1].split('if (onArmoury)')[0];
+ok(armoury[1].includes('if (onArmoury)'), 'the Armoury can still be routed to the host');
+for (const field of ['selected', 'selfArm', 'selectedFlask']) {
+  ok(new RegExp(`${field} = null;`).test(beforeDelegation),
+    `opening the Armoury clears ${field} before the host delegation`);
+}
+ok(/syncCardSelection\(\);/.test(beforeDelegation),
+  'and re-dresses, so the enemies stop wearing `.targetable`');
+
+// The arming paths that never touch the store are the reason the direct clear
+// exists. If one of them started lighting the store this test would still pass —
+// but if they all vanished, the comment above would be wrong, so name them.
+ok(/if \(hostile\) \{ selected = inst\.instanceId;/.test(combat),
+  'the positional card key still arms `selected` directly');
+ok(/if \(pv\.needsTarget \|\| dragTargetMode === 'all'\) \{ selected = inst\.instanceId;/.test(combat),
+  'the drag/flick select still arms `selected` directly');
+
+// And the store really does stay silent on an empty clear — the exact reason a
+// watcher alone could not carry this.
+resetSelection();
+const quiet = [];
+const releaseQuiet = onSelectionChange((lit) => quiet.push(lit));
+clearSelection();
+ok(quiet.length === 0,
+  'clearSelection() on an ALREADY EMPTY store notifies nobody — so a keyboard-armed card needs the direct clear');
+releaseQuiet();
+resetSelection();
+
+console.log(`PASS ${checks}/${checks}; combat puts the aim down when the store empties AND when the Armoury opens`);
