@@ -3117,11 +3117,39 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    instrument a re-teach.
    The row carries its own ground: a transparent sticky control with the stage's
    content sliding under it is unreadable at the moment it matters. */
+.cz-stage {
+  /* How far above the scrollport's floor a SECOND sticky row has to rest, so it
+     clears the first. Authored once because CSS cannot ask how tall a sibling
+     is. MEASURED at 390x844 rather than guessed: the row's own box is 55px
+     (padding-block 10px + 2px around the kit's 44px tap floor), and the stage
+     row's painted bottom sits 9px above the scrollport's floor rather than on
+     it, because the modal body keeps that much beneath. 55 + 9. A first guess
+     of 56px left the two rows overlapping by 5px, which is how this number
+     came to be measured instead of reasoned. */
+  --cz-continue-row: 64px;
+}
 .cz-stage .modal-btnrow.end,
 .cz-stage .cc-primary-continue-row {
   position:sticky; bottom:0; z-index:2;
   background:linear-gradient(to top, var(--panel) 62%, transparent);
   padding-block:10px 2px; margin-block-start:8px;
+}
+/* TWO WAYS ON CAN BE STICKY AT ONCE, AND THEY MUST NOT SHARE THE BAND.
+   The character stage holds both: the nested `Continue` that closes Primary
+   Stats and opens the Keepsake, and the stage's own `Continue to equipment`.
+   MEASURED at 390x844 with Primary Stats open, both rested at exactly
+   top 693 / bottom 748 — the same 55px band, the same z-index — so the stage
+   row, later in the DOM, painted over the nested one. What a player saw at the
+   bottom of the glass was the DISABLED `Continue to equipment`, with the
+   actionable control hidden underneath it.
+   Both are needed: with the nested row made static it falls to 828, which is
+   71px below a band that ends at 757, so it cannot simply stop being sticky.
+   So they STACK — the nested row rests one row higher, and paints above, which
+   also keeps it legible while the two pass each other on a scroll.
+   The selector carries `.modal-btnrow` because the nested row wears `end` too,
+   and would otherwise lose the specificity contest with the rule above. */
+.cz-stage .modal-btnrow.cc-primary-continue-row {
+  bottom:var(--cz-continue-row); z-index:3;
 }
 /* A fold's summary is a control: it takes the tap floor and the kit's ring. */
 .cc-starting-fold > .cc-starting-summary {
