@@ -2279,7 +2279,7 @@
       "id": "WCM0",
       "name": "Meters and statuses",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2302,13 +2302,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-meters: CombatantMeterModel.js owns row heights and selected-only visibility from wireframeUi.combatantMeters; the combat layout adapter writes them as CSS variables."
     },
     {
       "id": "WCM1",
       "name": "Health meter",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2331,13 +2332,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "HP at least max(0.85rem, 14 physical px); compact current/maximum at 12 physical px; full accessible label kept."
     },
     {
       "id": "WCM2",
       "name": "Resource meter",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2360,13 +2362,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Half the HP height, at least 0.45rem; exact values in the tooltip and inspector (the row is too short for readable text). Selected-only by default."
     },
     {
       "id": "WCM3",
       "name": "Buildup meter",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2389,13 +2392,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Buildup rows share the secondary height; glyph nub kept. Selected-only by default."
     },
     {
       "id": "WCM4",
       "name": "Stance strip",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2418,7 +2422,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "The stance chip renders as a strip the size of HP in formation, after the buildup rows. Selected-only by default."
     },
     {
       "id": "WCM5",

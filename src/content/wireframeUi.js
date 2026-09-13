@@ -29,6 +29,15 @@ export const wireframeUi = freeze({
   inspector: { previewFraction: 0.38 },
   // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
   combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
+  // WCM0 lower meters. Screen-space minimums; they hold after perspective
+  // scaling because the depth scale zooms only the sprite. Secondary and
+  // buildup rows are half the HP height; stance matches HP.
+  combatantMeters: {
+    hpMinRem: 0.85, hpMinPx: 14, secondaryFraction: 0.5, secondaryMinRem: 0.45,
+    stanceMinRem: 0.85, valueTextPx: 12, gapPx: 3,
+    // Shown only while the combatant is selected; empty the list to show all.
+    selectedOnly: ['name', 'resource', 'buildup', 'stance'],
+  },
   footer: {
     circleMaxFraction: 0.2, pileMaxFraction: 0.1, endMaxFraction: 0.4,
     gapRem: 0.2, heightFraction: 0.95, minimumTargetPx: 44,
