@@ -83,6 +83,16 @@ reward.detail.back,common.back,,Return without collecting; your other choices ke
 reward.chooser.back,common.back,,Return to the spoils — the offer keeps.,
 reward.leave.question,,Leave these rewards and continue?,,
 reward.leave.confirm,,CONTINUE,Leave the spoils door with rows still unclaimed.,
+# ---- the world-journey atlas (W4b: select, then Enter) --------------------
+atlas.recenter,,Recenter,Frame the map on where you stand and the roads open to you.,Recenter
+atlas.enter,,Enter,"Travel the open road to the selected place, or open the place where you stand.",Enter
+atlas.enterNamed,,Enter {name},,
+atlas.inspect,,Details,Open the full view of the selected place.,Details
+atlas.context.aria,,Selected place,,
+atlas.status.here,,You are here.,,
+atlas.status.road,,A connected road leads here.,,
+atlas.status.far,,Explore connecting roads to reach this place.,,
+atlas.roads.title,,Open roads,,
 # ---- the merchant ---------------------------------------------------------
 shop.bar.cards,,CARDS,Cards the merchant will sell you.,
 shop.bar.armaments,,ARMAMENTS,Weapons and armour on the merchant's rack.,

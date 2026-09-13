@@ -803,7 +803,7 @@
       "id": "W4b",
       "name": "Map — 10 / 60 / 20 / 10",
       "parent": "W4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -820,13 +820,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
+        "structural": "Atlas: wireframe-atlas-selection.test.mjs passes (select, enter, context projection)",
+        "wide": "Atlas at 1280x800: header 9.0 / scene 63.2 / context 20.0 / footer 7.8 % of height; no screen scroll",
         "compact": "pending",
         "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "galaxyS24": "Atlas at 360x780: header 9.6 / scene 62.9 / context 20.0 / footer 7.5 %; no screen scroll",
+        "interactions": "Atlas: select then Enter travels via onTravel; second tap travels; Details opens the location dialog. Keyboard Enter not provable in the preview pane."
+      },
+      "notes": "World-journey atlas on feature/wireframe-atlas-bands: W4b bands, select-then-Enter, context band, Recenter/Enter footer. 390x844: 9.4 / 63.6 / 20.0 / 7.0 %. Scene ~63% because header and footer need less than 10%. Classic act map is on feature/wireframe-map-bands (#1023)."
     },
     {
       "id": "W4c",
@@ -3293,7 +3294,7 @@
       "id": "WGM0",
       "name": "Map composition",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3312,13 +3313,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas (src/ui/screens/worldAtlas.js) composes header, map scene, context band and Recenter/Enter footer. No region selector: a journey has one world map."
     },
     {
       "id": "WGM1",
       "name": "Map viewport",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3337,7 +3339,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas scene: the scrollport is the camera and fills the scene band (~63% of height)."
     },
     {
       "id": "WGM2",
@@ -3368,7 +3371,7 @@
       "id": "WGM3",
       "name": "Node button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3387,13 +3390,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas node buttons select a discovered place (aria-pressed ring); tapping the selected place again enters it."
     },
     {
       "id": "WGM4",
       "name": "Node details",
       "parent": "WCF4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3412,7 +3416,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas context band: region, name, road state and description of the selected place, open roads, sealed roads, guiding lights; capped at 20% and scrolls inside."
     },
     {
       "id": "WGM5",
@@ -3437,13 +3442,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Not applicable to the atlas: a journey has one world map."
     },
     {
       "id": "WGM6",
       "name": "Recenter button",
       "parent": "WCB4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3462,13 +3468,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas footer Recenter is the former \"You\" camera control."
     },
     {
       "id": "WGM7",
       "name": "Enter node button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3487,7 +3494,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas footer Enter travels a selected open road via onTravel, or opens the place where you stand; disabled for a place with no road."
     },
     {
       "id": "WGP0",

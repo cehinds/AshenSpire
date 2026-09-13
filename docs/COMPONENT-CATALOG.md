@@ -573,8 +573,11 @@ Combat card actions: selection reveals a circular Information button centered ab
 Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
 
 World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
-masks, inspectable landmark overlays, the route journal, and one native location
-dialog. Local points select a detail pane instead of opening nested dialogs. The
+masks, inspectable landmark overlays, and one native location dialog. It is laid
+out in W4b bands: a header, the map scene, and a context band for the selected
+place and its open roads. A Recenter / Enter footer closes the screen
+(`AtlasSelectionModel.js`: a tap selects, Enter travels or opens the current
+place). Local points select a detail pane instead of opening nested dialogs. The
 same renderer serves `world-atlas-preview.html`; its authoring controls and ID
 selector are isolated from the game. Actual service dispatch reuses the existing
 merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
