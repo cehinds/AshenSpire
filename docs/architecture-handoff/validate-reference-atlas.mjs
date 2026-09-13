@@ -64,6 +64,26 @@ try{
  check(sandbox.renderHUDComponent('WGH1').includes('#WCM1'),'HUD health does not link to shared meter');
  for(const bad of [-1,NaN,Infinity]){const config=structuredClone(hudConfig);config.sample.experience.value=bad;let rejected=false;try{sandbox.validateHudConfig(config);}catch{rejected=true;}check(rejected,`HUD accepted invalid XP ${bad}`);}
 }catch(error){failures.push(`HUD reference execution: ${error.stack}`);}
-const report={entries:data.length,views:data.reduce((sum,d)=>sum+(d.views?.length||0),0),inlineScripts:scripts.length,hudRenderers: hudCount,failures,scope:'Static completeness, file references, JavaScript syntax and isolated HUD execution. Browser layout and interaction not verified.'};
+
+// Cross-artifact checks: every JSON document parses and published IDs agree.
+let jsonCount=0;
+for(const file of fs.readdirSync(root).filter(file=>file.endsWith('.json'))){try{JSON.parse(read(file));jsonCount++;}catch(error){failures.push(file+': invalid JSON '+error.message);}}
+const catalogFiles=['component-wireframe-catalog.json','tooltip-wireframe-catalog.json','wireframe-catalog.json','card-wireframe-catalog.json'];
+const catalogIds=catalogFiles.flatMap(file=>JSON.parse(read(file)).map(entry=>entry.id));
+check(new Set(catalogIds).size===catalogIds.length,'Duplicate IDs across source catalogs');
+check(catalogIds.length===ids.size&&catalogIds.every(id=>ids.has(id)),'Published gallery differs from source catalog IDs');
+const {componentCompletionDefaults}=await import('./component-completion.mjs');
+check(JSON.stringify(JSON.parse(read('reference-defaults.json')).components)===JSON.stringify(componentCompletionDefaults),'Component JSON differs from source defaults');
+const grid=componentCompletionDefaults.groundGrid,anchors=grid.depthLoweringFractions.map((offset,row)=>row+offset);
+check(Math.abs((anchors[1]-anchors[0])-(anchors[2]-anchors[1]))<1e-9,'Formation depth gaps differ');
+check(grid.slotsPerSide===grid.rows*grid.columns,'Formation capacity differs from grid dimensions');
+check(componentCompletionDefaults.overlay.defenseAnchorByRole.player<.5&&componentCompletionDefaults.overlay.defenseAnchorByRole.enemy>.5,'Guard anchors are on wrong vertical sides');
+const focusContext={};vm.createContext(focusContext);vm.runInContext(read('combatant-focus.js'),focusContext);
+const focus=componentCompletionDefaults.combatantFocus;
+for(let row=0;row<3;row++){const normal=focusContext.rowPresentationScale(row,false,focus),selected=focusContext.rowPresentationScale(row,true,focus);check(selected.factor>normal.factor,'Selection shrinks row '+row);check(selected.zPriority>normal.zPriority,'Selection fails to focus row '+row);}
+const groups=[{availableWidth:300,availableHeight:250,actors:[{row:0,baseWidth:100,baseHeight:200}]},{availableWidth:240,availableHeight:250,actors:[{row:2,baseWidth:100,baseHeight:200}]}];
+check(focusContext.sharedCombatantBaseScale(groups,focus)===focusContext.sharedCombatantBaseScale([...groups].reverse(),focus),'Shared fit depends on faction ordering');
+
+const report={jsonFiles:jsonCount,entries:data.length,views:data.reduce((sum,d)=>sum+(d.views?.length||0),0),inlineScripts:scripts.length,hudRenderers: hudCount,failures,scope:'Static completeness, file references, JavaScript syntax and isolated HUD execution. Browser layout and interaction not verified.'};
 console.log(JSON.stringify(report,null,2));
 process.exitCode=failures.length?1:0;
