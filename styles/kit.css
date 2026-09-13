@@ -3094,7 +3094,22 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
-.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; }
+/* THE SUBSTEP'S WAY ON OUTRANKS THE STAGE'S SKIP.
+   The stage row above (`.cz-stage .modal-btnrow.end`) is pinned to the
+   scrollport floor at `z-index:2`, and this button is right-aligned in the same
+   band. MEASURED at 1366x768 with Main Hand open: scrolled so `Continue to Off
+   Hand` reaches the floor, the two overlap by 46.9px vertically and 203.7px
+   horizontally, and `elementFromPoint` at this button's own centre returned
+   `BUTTON.as-btn cz-next` — the player pressing the section's Continue was
+   reaching `Continue to seed`, SKIPPING the armament they had come to choose.
+   Below 700px the sticky rule further down already answers this with
+   `z-index:3`; above it this button is a static grid item, so it lost the paint
+   order to a later, positioned sibling. A grid item's containing block is its
+   own one-row grid area, so it cannot be made sticky here (the reason the
+   sticky rule is mobile-only) — but it does not need travel, only rank.
+   `position:relative` with no offsets moves nothing and changes no layout; it
+   only lets the z-index apply. */
+.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; position:relative; z-index:3; }
 /* The ready lift scales the button about its centre, and at the grid's right
    edge that is a 2px horizontal overflow (measured: section scrollWidth 1100
    against clientWidth 1098 at 1024 wide). Growing from the right edge keeps

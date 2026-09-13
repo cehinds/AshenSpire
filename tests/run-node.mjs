@@ -1010,6 +1010,12 @@ try {
   console.error('FAIL A spent beat belongs to the screen that spent it:', error);
 }
 try {
+  await import('./creation-continue-stacking.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error("FAIL The substep's way on outranks the stage's skip:", error);
+}
+try {
   await import('./hand-forwards-surface.test.mjs');
 } catch (error) {
   zoomExtra++;
