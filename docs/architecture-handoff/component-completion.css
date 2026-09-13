@@ -60,8 +60,8 @@
 .scene-demo .cc-hand{height:100%;min-height:0}
 .cc-reference .cc-hand.cc-hand-scroll{overflow-x:auto;overflow-y:hidden}
 .cc-reference .cc-hand-track{position:relative;min-height:0;max-width:none;overflow:visible}
-.cc-reference .cc-hand-track>.cc-native{position:absolute;min-width:0;max-width:none;flex:none;padding:0;margin:0;z-index:calc(var(--cc-hand-order) + 1);transition:transform .12s ease}
-.cc-reference .cc-hand-track>.cc-native:hover,.cc-reference .cc-hand-track>.cc-native:focus-within,.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){z-index:var(--cc-hand-active-order,100);transform:translateY(calc(0px - var(--cc-hand-lift)))}
+.cc-reference .cc-hand-track>.cc-native{position:absolute;min-width:0;max-width:none;flex:none;padding:0;margin:0;z-index:calc(var(--cc-hand-order) + 1);transition:none}
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){z-index:var(--cc-hand-active-order,100);transform:translateY(calc(0px - var(--cc-hand-lift)))}
 .cc-reference .cc-hand-track .cardhost{width:100%!important;height:100%!important;margin:0!important;min-width:0!important;max-width:none!important;aspect-ratio:var(--cc-card-ratio);container-type:inline-size}
 .cc-reference .cc-hand-track .cardbox{width:100%!important;height:100%!important;min-height:0!important;max-height:100%;aspect-ratio:var(--cc-card-ratio);overflow:hidden!important;grid-template-rows:10% 40% 40% 10%}
 .cc-reference .cc-hand-track .cardband,.cc-reference .cc-hand-track .cardbody,.cc-reference .cc-hand-track .cardart,.cc-reference .cc-hand-track .cardfooter{min-height:0!important;max-height:100%;overflow:hidden!important;overscroll-behavior:none}
@@ -93,8 +93,10 @@
 .cc-hand .cardhost > .status{display:none!important}
 /* The neutral hand is a shallow curved fan; focus straightens one card. */
 .cc-reference .cc-hand-track>.cc-native{transform-origin:center center;transform:translateY(var(--cc-hand-arch,0px)) rotate(var(--cc-hand-angle,0deg))}
-.cc-reference .cc-hand-track>.cc-native:hover,.cc-reference .cc-hand-track>.cc-native:focus-within{transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-active-order)}
+
 .cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-selected-order)}
 
 .cc-reference .cc-hand-track .info{top:calc(0px - var(--cc-hand-info-rise,1.75rem));bottom:auto}
 .cc-reference .cc-hand:not(.cc-hand-scroll){overflow-x:hidden}
+
+.cc-reference .cc-hand-track{user-select:none;-webkit-user-select:none;touch-action:pan-x}

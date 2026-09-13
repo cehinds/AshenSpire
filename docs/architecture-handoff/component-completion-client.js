@@ -113,7 +113,7 @@ function createComponentReferenceRenderers(configuration) {
         const sideSlots=slots.filter(s=>s.dataset.side===side).map(slot=>{const r=slot.getBoundingClientRect();return {slot,x:r.left+r.width/2-stage.left,y:r.top+r.height/2-stage.top,width:r.width};});
         const minX=side==='ally'?inset:stage.width/2+gap/2,maxX=side==='ally'?stage.width/2-gap/2:stage.width-inset;
         const left=Math.max(...group.map(m=>m.left)),right=Math.max(...group.map(m=>m.right));
-        const scale=sharedScale;
+        const scale=sharedScale*(c.displayScale??1);
         const originalMin=Math.min(...sideSlots.map(s=>s.x)),originalMax=Math.max(...sideSlots.map(s=>s.x));
         const infoHalf=Math.max((cfg().combatantLegibility.barMinWidthPx??64)/2,(cfg().combatantLegibility.infoSizePx??44)/2);
         const allowedMin=minX+Math.max(left*scale*peak,infoHalf),allowedMax=maxX-Math.max(right*scale*peak,infoHalf);
@@ -138,10 +138,11 @@ function createComponentReferenceRenderers(configuration) {
     const n=wrap('WGC5','cc-hand'),track=E('div','cc-hand-track');
     for(const id of cfg().hand.fixtureIds)track.append(cardNative(id,mode));n.append(track);
     const keepExclusiveSelection=event=>{const selected=event.target.closest('.cardhost.selected');if(!selected||!track.contains(selected))return;for(const other of track.querySelectorAll('.cardhost.selected')){if(other===selected)continue;other.classList.remove('selected');other.querySelector('.cardbox')?.setAttribute('aria-pressed','false');const info=other.querySelector('.info');if(info){info.classList.remove('visible');info.tabIndex=-1;}}};
+    n.addEventListener('dragstart',event=>event.preventDefault());
     n.addEventListener('click',keepExclusiveSelection);n.addEventListener('keydown',keepExclusiveSelection);
     let pending=false;
     const fit=()=>{if(!n.isConnected)return;const width=n.clientWidth,height=n.clientHeight;if(!width||!height)return;
-      const c=cfg(),hand={minCapacity:5,maxCapacity:15,narrowWidthRem:22,wideWidthRem:75,minCardWidthRem:5,maxCardWidthRem:9,minExposedTargetPx:44,selectedLiftRem:.5,minFontRem:.7,verticalInsetRem:.25,fanMaxDegrees:6,fanArchPx:8,bodyUpPx:10,...c.hand},rem=parseFloat(getComputedStyle(document.documentElement).fontSize),inset=c.spacing.insetRem*rem;
+      const c=cfg(),hand={minCapacity:5,maxCapacity:15,narrowWidthRem:22,wideWidthRem:75,minCardWidthRem:5,maxCardWidthRem:9,minExposedTargetPx:44,selectedLiftRem:.5,minFontRem:.7,verticalInsetRem:.25,fanMaxDegrees:6,fanArchPx:8,bodyUpPx:10,...c.hand},rem=parseFloat(getComputedStyle(document.documentElement).fontSize),inset=(hand.horizontalInsetRem??0.625)*rem;
       const ratio=hand.cardAspectRatio.split('/').map(Number),aspect=ratio[0]/ratio[1],fanRadians=hand.fanMaxDegrees*Math.PI/180,rotationHeightFactor=(1+Math.cos(fanRadians)+aspect*Math.sin(Math.abs(fanRadians)))/2;
       const lift=hand.selectedLiftRem*rem,headroom=(hand.inspectRiseRem??1.75)*rem+lift,verticalInset=hand.verticalInsetRem*rem;
       const usableWidth=Math.max(0,width-inset*2),usableHeight=Math.max(0,Math.min(height-headroom-verticalInset*2,(height-headroom-verticalInset)/rotationHeightFactor));

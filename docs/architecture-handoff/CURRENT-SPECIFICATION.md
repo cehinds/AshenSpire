@@ -149,3 +149,7 @@ Hand selection is exclusive within its hand: selecting a new card clears the pre
 The hand uses a curved fan with configurable angle and arc, raised within its section. Resolve one uniform card size from available height and the configured size bounds, preserving 5:8 proportions; five cards remain exposed on narrow hosts before horizontal overflow. The combatant inspect disk is 80% of its former diameter inside the same 44px touch target. Footer reference feedback is announced without covering controls. Sprite allocation is 92px with a 4.5rem lower-details reserve.
 
 The default hand fixture contains five cards and is centered as one fan. Its inspect control overlaps the card upper edge while retaining its hit target, reducing reserved blank space so cards can be larger without changing aspect ratio.
+
+Combatants apply a configurable 1.1 display multiplier after shared fitting. Guard and intent use a 13.2px minimum value font and 22px intent reserve. The hand inspect control overlaps the selected card upper edge to allow approximately 10% larger cards within the same section; the fan angle is 2.5 degrees.
+
+Hand hover does not change card position, rotation or paint order. Only explicit selection raises and straightens a card, preventing pointer-enter/leave oscillation along overlapping edges.

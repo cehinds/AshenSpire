@@ -493,6 +493,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -538,8 +539,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -559,8 +560,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -895,6 +897,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -940,8 +943,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -961,8 +964,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -1306,6 +1310,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -1351,8 +1356,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -1372,8 +1377,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -1715,6 +1721,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -1760,8 +1767,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -1781,8 +1788,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -2124,6 +2132,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -2169,8 +2178,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -2190,8 +2199,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -2533,6 +2543,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -2578,8 +2589,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -2599,8 +2610,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -2940,6 +2952,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -2985,8 +2998,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -3006,8 +3019,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -3342,6 +3356,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -3387,8 +3402,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -3408,8 +3423,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -3750,6 +3766,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -3795,8 +3812,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -3816,8 +3833,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -4157,6 +4175,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -4202,8 +4221,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -4223,8 +4242,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -4559,6 +4579,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -4604,8 +4625,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -4625,8 +4646,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -4965,6 +4987,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -5010,8 +5033,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -5031,8 +5054,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -5367,6 +5391,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -5412,8 +5437,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -5433,8 +5458,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -5769,6 +5795,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -5814,8 +5841,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -5835,8 +5862,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -6171,6 +6199,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -6216,8 +6245,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -6237,8 +6266,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -6580,6 +6610,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -6625,8 +6656,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -6646,8 +6677,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -6982,6 +7014,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -7027,8 +7060,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -7048,8 +7081,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -7386,6 +7420,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -7431,8 +7466,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -7452,8 +7487,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -7790,6 +7826,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -7835,8 +7872,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -7856,8 +7893,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -8192,6 +8230,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -8237,8 +8276,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -8258,8 +8297,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -8594,6 +8634,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -8639,8 +8680,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -8660,8 +8701,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -8998,6 +9040,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -9043,8 +9086,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -9064,8 +9107,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -9406,6 +9450,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -9451,8 +9496,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -9472,8 +9517,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -9808,6 +9854,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -9853,8 +9900,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -9874,8 +9921,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -10210,6 +10258,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -10255,8 +10304,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -10276,8 +10325,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -10614,6 +10664,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -10659,8 +10710,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -10680,8 +10731,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -11018,6 +11070,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -11063,8 +11116,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -11084,8 +11137,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -11422,6 +11476,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -11467,8 +11522,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -11488,8 +11543,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -11826,6 +11882,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -11871,8 +11928,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -11892,8 +11949,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -12228,6 +12286,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -12273,8 +12332,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -12294,8 +12353,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -12639,6 +12699,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -12684,8 +12745,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -12705,8 +12766,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -13050,6 +13112,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -13095,8 +13158,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -13116,8 +13179,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -13458,6 +13522,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -13503,8 +13568,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -13524,8 +13589,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -13866,6 +13932,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -13911,8 +13978,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -13932,8 +13999,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -14274,6 +14342,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -14319,8 +14388,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -14340,8 +14409,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -14682,6 +14752,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -14727,8 +14798,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -14748,8 +14819,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -15101,6 +15173,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -15146,8 +15219,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -15167,8 +15240,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -15514,6 +15588,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -15559,8 +15634,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -15580,8 +15655,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -15929,6 +16005,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -15974,8 +16051,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -15995,8 +16072,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -16344,6 +16422,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -16389,8 +16468,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -16410,8 +16489,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -16759,6 +16839,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -16804,8 +16885,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -16825,8 +16906,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -17175,6 +17257,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -17220,8 +17303,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -17241,8 +17324,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -18872,6 +18956,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -18917,8 +19002,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -18938,8 +19023,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -19270,6 +19356,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -19315,8 +19402,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -19336,8 +19423,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -19665,6 +19753,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -19710,8 +19799,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -19731,8 +19820,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -20062,6 +20152,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -20107,8 +20198,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -20128,8 +20219,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -20459,6 +20551,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -20504,8 +20597,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -20525,8 +20618,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -20854,6 +20948,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -20899,8 +20994,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -20920,8 +21015,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -21251,6 +21347,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -21296,8 +21393,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -21317,8 +21414,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -21648,6 +21746,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -21693,8 +21792,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -21714,8 +21813,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -22570,6 +22670,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -22615,8 +22716,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -22636,8 +22737,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -22983,6 +23085,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -23028,8 +23131,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -23049,8 +23152,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -23394,6 +23498,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -23439,8 +23544,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -23460,8 +23565,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -23805,6 +23911,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -23850,8 +23957,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -23871,8 +23978,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -24216,6 +24324,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -24261,8 +24370,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -24282,8 +24391,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -24625,6 +24735,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -24670,8 +24781,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -24691,8 +24802,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -25036,6 +25148,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -25081,8 +25194,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -25102,8 +25215,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -25447,6 +25561,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -25492,8 +25607,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -25513,8 +25628,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -25858,6 +25974,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -25903,8 +26020,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -25924,8 +26041,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -26263,6 +26381,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -26308,8 +26427,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -26329,8 +26448,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -26668,6 +26788,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -26713,8 +26834,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -26734,8 +26855,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -27072,6 +27194,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -27117,8 +27240,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -27138,8 +27261,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -27476,6 +27600,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -27521,8 +27646,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -27542,8 +27667,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -27881,6 +28007,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -27926,8 +28053,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -27947,8 +28074,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -28285,6 +28413,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -28330,8 +28459,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -28351,8 +28480,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -28687,6 +28817,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -28732,8 +28863,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -28753,8 +28884,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -29091,6 +29223,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -29136,8 +29269,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -29157,8 +29290,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -29493,6 +29627,7 @@
         ]
       },
       "groundGrid": {
+        "displayScale": 1.1,
         "rowScaleFactors": [
           0.9,
           0.95,
@@ -29538,8 +29673,8 @@
         "floor": true
       },
       "combatantLegibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -29559,8 +29694,9 @@
         "minimumHeightPx": 56
       },
       "hand": {
-        "inspectRiseRem": 1.75,
-        "fanMaxDegrees": 3,
+        "horizontalInsetRem": 0.625,
+        "inspectRiseRem": 0.5,
+        "fanMaxDegrees": 2.5,
         "fanArchPx": 8,
         "bodyUpPx": 0,
         "minimumHeightPx": 208,
@@ -39157,8 +39293,8 @@
         "stableAnchor": "sprite-baseline-center"
       },
       "legibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -39307,8 +39443,8 @@
         "stableAnchor": "sprite-baseline-center"
       },
       "legibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -39457,8 +39593,8 @@
         "stableAnchor": "sprite-baseline-center"
       },
       "legibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,
@@ -39607,8 +39743,8 @@
         "stableAnchor": "sprite-baseline-center"
       },
       "legibility": {
-        "intentRowMinPx": 20,
-        "valueFontMinPx": 12,
+        "intentRowMinPx": 22,
+        "valueFontMinPx": 13.2,
         "infoVisualScale": 0.8,
         "infoSizePx": 44,
         "infoFontPx": 16,

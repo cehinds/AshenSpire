@@ -21080,8 +21080,8 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
     "stableAnchor": "sprite-baseline-center"
   },
   "legibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -21423,8 +21423,8 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
     "stableAnchor": "sprite-baseline-center"
   },
   "legibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -21766,8 +21766,8 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
     "stableAnchor": "sprite-baseline-center"
   },
   "legibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -22117,8 +22117,8 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
     "stableAnchor": "sprite-baseline-center"
   },
   "legibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -24237,6 +24237,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -24282,8 +24283,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -24303,8 +24304,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -24721,6 +24723,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -24766,8 +24769,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -24787,8 +24790,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -25241,6 +25245,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -25286,8 +25291,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -25307,8 +25312,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -25752,6 +25758,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -25797,8 +25804,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -25818,8 +25825,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -26259,6 +26267,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -26304,8 +26313,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -26325,8 +26334,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -26744,6 +26754,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -26789,8 +26800,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -26810,8 +26821,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -27241,6 +27253,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -27286,8 +27299,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -27307,8 +27320,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -27725,6 +27739,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -27770,8 +27785,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -27791,8 +27806,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -28238,6 +28254,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -28283,8 +28300,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -28304,8 +28321,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -28747,6 +28765,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -28792,8 +28811,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -28813,8 +28832,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -29243,6 +29263,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -29288,8 +29309,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -29309,8 +29330,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -29748,6 +29770,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -29793,8 +29816,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -29814,8 +29837,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -30228,6 +30252,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -30273,8 +30298,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -30294,8 +30319,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -30720,6 +30746,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -30765,8 +30792,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -30786,8 +30813,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -31196,6 +31224,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -31241,8 +31270,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -31262,8 +31291,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -31713,6 +31743,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -31758,8 +31789,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -31779,8 +31810,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -32189,6 +32221,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -32234,8 +32267,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -32255,8 +32288,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -32670,6 +32704,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -32715,8 +32750,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -32736,8 +32771,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -33151,6 +33187,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -33196,8 +33233,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -33217,8 +33254,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -33627,6 +33665,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -33672,8 +33711,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -33693,8 +33732,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -34103,6 +34143,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -34148,8 +34189,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -34169,8 +34210,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -34584,6 +34626,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -34629,8 +34672,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -34650,8 +34693,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -35097,6 +35141,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -35142,8 +35187,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -35163,8 +35208,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -35581,6 +35627,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -35626,8 +35673,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -35647,8 +35694,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -36061,6 +36109,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -36106,8 +36155,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -36127,8 +36176,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -36554,6 +36604,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -36599,8 +36650,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -36620,8 +36671,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -37047,6 +37099,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -37092,8 +37145,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -37113,8 +37166,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -37536,6 +37590,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -37581,8 +37636,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -37602,8 +37657,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -38025,6 +38081,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -38070,8 +38127,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -38091,8 +38148,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -38517,6 +38575,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -38562,8 +38621,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -38583,8 +38642,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -39022,6 +39082,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -39067,8 +39128,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -39088,8 +39149,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -39527,6 +39589,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -39572,8 +39635,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -39593,8 +39656,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -40020,6 +40084,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -40065,8 +40130,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -40086,8 +40151,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -40509,6 +40575,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -40554,8 +40621,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -40575,8 +40642,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -40994,6 +41062,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -41039,8 +41108,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -41060,8 +41129,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -41479,6 +41549,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -41524,8 +41595,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -41545,8 +41616,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -41977,6 +42049,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -42022,8 +42095,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -42043,8 +42116,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -42458,6 +42532,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -42503,8 +42578,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -42524,8 +42599,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -42940,6 +43016,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -42985,8 +43062,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -43006,8 +43083,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -43422,6 +43500,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -43467,8 +43546,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -43488,8 +43567,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -43904,6 +43984,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -43949,8 +44030,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -43970,8 +44051,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -44402,6 +44484,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -44447,8 +44530,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -44468,8 +44551,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -47142,6 +47226,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -47187,8 +47272,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -47208,8 +47293,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -47642,6 +47728,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -47687,8 +47774,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -47708,8 +47795,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -48133,6 +48221,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -48178,8 +48267,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -48199,8 +48288,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -48613,6 +48703,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -48658,8 +48749,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -48679,8 +48770,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -49105,6 +49197,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -49150,8 +49243,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -49171,8 +49264,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -49580,6 +49674,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -49625,8 +49720,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -49646,8 +49741,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -50060,6 +50156,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -50105,8 +50202,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -50126,8 +50223,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -50540,6 +50638,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -50585,8 +50684,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -50606,8 +50705,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -52299,6 +52399,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -52344,8 +52445,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -52365,8 +52466,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -52801,6 +52903,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -52846,8 +52949,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -52867,8 +52970,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -53287,6 +53391,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -53332,8 +53437,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -53353,8 +53458,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -53773,6 +53879,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -53818,8 +53925,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -53839,8 +53946,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -54263,6 +54371,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -54308,8 +54417,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -54329,8 +54438,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -54744,6 +54854,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -54789,8 +54900,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -54810,8 +54921,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -55226,6 +55338,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -55271,8 +55384,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -55292,8 +55405,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -55708,6 +55822,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -55753,8 +55868,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -55774,8 +55889,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -56190,6 +56306,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -56235,8 +56352,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -56256,8 +56373,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -56695,6 +56813,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -56740,8 +56859,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -56761,8 +56880,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -57200,6 +57320,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -57245,8 +57366,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -57266,8 +57387,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -57693,6 +57815,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -57738,8 +57861,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -57759,8 +57882,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -58174,6 +58298,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -58219,8 +58344,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -58240,8 +58365,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -58663,6 +58789,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -58708,8 +58835,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -58729,8 +58856,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -59144,6 +59272,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -59189,8 +59318,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -59210,8 +59339,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -59636,6 +59766,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -59681,8 +59812,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -59702,8 +59833,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -60129,6 +60261,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -60174,8 +60307,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -60195,8 +60328,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
@@ -60721,6 +60855,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     ]
   },
   "groundGrid": {
+    "displayScale": 1.1,
     "rowScaleFactors": [
       0.9,
       0.95,
@@ -60766,8 +60901,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "floor": true
   },
   "combatantLegibility": {
-    "intentRowMinPx": 20,
-    "valueFontMinPx": 12,
+    "intentRowMinPx": 22,
+    "valueFontMinPx": 13.2,
     "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
@@ -60787,8 +60922,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
-    "inspectRiseRem": 1.75,
-    "fanMaxDegrees": 3,
+    "horizontalInsetRem": 0.625,
+    "inspectRiseRem": 0.5,
+    "fanMaxDegrees": 2.5,
     "fanArchPx": 8,
     "bodyUpPx": 0,
     "minimumHeightPx": 208,
