@@ -4,7 +4,11 @@
     "extraBarHeightRatio": 0.5,
     "stackGapRem": 0.2,
     "iconSizeRem": 1.575,
-    "defenseOffsetRatio": 0.5,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
     "enemyIntentVisible": true,
@@ -86,6 +90,14 @@
     "value_1": {
       "value": 1,
       "unit": "count"
+    },
+    "value_12Percent": {
+      "value": 12,
+      "unit": "%"
+    },
+    "value_88Percent": {
+      "value": 88,
+      "unit": "%"
     }
   }
 }

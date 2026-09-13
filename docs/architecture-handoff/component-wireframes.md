@@ -2220,7 +2220,7 @@ On dispose: release timers, observers and events
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -2234,7 +2234,7 @@ On dispose: release timers, observers and events
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -2251,7 +2251,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -2269,7 +2269,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -2381,7 +2381,7 @@ On dispose: release timers, observers and events
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2392,7 +2392,7 @@ On dispose: release timers, observers and events
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2406,7 +2406,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2421,7 +2421,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -2435,7 +2435,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Show active defense only. Anchor at config.overlay.defenseAnchorRatio of sprite height with config.overlay.defenseGapRem external gap. Player right, enemy left.
+// Show active defense only. Anchor at config.overlay.defenseAnchorByRole[role] of sprite height with config.overlay.defenseGapRem external gap. Player upper-right (12%), enemy lower-left (88%).
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)

@@ -70,7 +70,7 @@ function sizes(c,mode){
  ['intent','content-fit','readable line','frame','above sprite, below info','center / center','leading slot','shared gap','existing announced intent; tooltip; player hidden/enemy visible by configurable default'],
  ['aura','sprite bounds','sprite bounds','sprite','center','center / center','behind sprite layer','0','decorative, no pointer capture'],
  ['buffLayer','sprite width minus shared horizontal inset','100% sprite height','sprite','center','center / center','foreground effect layer','0','decorative; semantic buff remains in status model'],
- ['defense','3.5rem minimum','3.5rem minimum','sprite','right-center at 50% sprite height','center / center','badge overlay','0.5rem outside sprite; side follows facing','current block/defense model'],
+ ['defense','3.5rem minimum','3.5rem minimum','sprite','player upper-right at 12%; enemy lower-left at 88% sprite height','center / center','badge overlay','0.5rem outside sprite; side follows facing','current block/defense model'],
  ['sprite','100% component','H minus bars and statuses','frame','top-center','center / end','row 1','0','contain sprite; preserve intrinsic art ratio'],
  ['resources','100% component','HP height + 0.5 × HP height per extra resource','frame','below sprite','center / center','row 2; stacked meters','shared bar gap included','HP always; applicable extra resources from model'],
  ['resources.bar','100% component','HP: base height; other resources: half HP height','resources','next row','center / center','normal flow','shared gap','label + current/max; semantic color; never color-only'],

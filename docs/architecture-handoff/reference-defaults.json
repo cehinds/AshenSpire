@@ -462,7 +462,11 @@
       "liftRem": 0.25
     },
     "overlay": {
-      "defenseAnchorRatio": 0.5,
+      "defenseAnchorRatio": 0.12,
+      "defenseAnchorByRole": {
+        "player": 0.12,
+        "enemy": 0.88
+      },
       "defenseGapRem": 0.5,
       "playerIntent": false,
       "enemyIntent": true

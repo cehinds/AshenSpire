@@ -21734,7 +21734,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC4.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -21773,7 +21773,7 @@ H is component height, not screen height. The sprite receives remaining height a
 | WC4.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -21815,7 +21815,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -21858,7 +21858,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -21979,7 +21979,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "extraBarHeightRatio": 0.5,
     "stackGapRem": 0.2,
     "iconSizeRem": 1.575,
-    "defenseOffsetRatio": 0.5,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
     "enemyIntentVisible": true,
@@ -22099,7 +22103,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC4a.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4a.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4a.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4a.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22138,7 +22142,7 @@ H is component height, not screen height. The sprite receives remaining height a
 | WC4a.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4a.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4a.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4a.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22180,7 +22184,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4a.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4a.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4a.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4a.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22223,7 +22227,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4a.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4a.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4a.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4a.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4a.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4a.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4a.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22322,7 +22326,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "extraBarHeightRatio": 0.5,
     "stackGapRem": 0.2,
     "iconSizeRem": 1.575,
-    "defenseOffsetRatio": 0.5,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
     "enemyIntentVisible": true,
@@ -22442,7 +22450,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC4b.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4b.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4b.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4b.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22481,7 +22489,7 @@ H is component height, not screen height. The sprite receives remaining height a
 | WC4b.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4b.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4b.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4b.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22523,7 +22531,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4b.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4b.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4b.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4b.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22566,7 +22574,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4b.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4b.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4b.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4b.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4b.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4b.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4b.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22665,7 +22673,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "extraBarHeightRatio": 0.5,
     "stackGapRem": 0.2,
     "iconSizeRem": 1.575,
-    "defenseOffsetRatio": 0.5,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
     "enemyIntentVisible": true,
@@ -22785,7 +22797,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC4c.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4c.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4c.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4c.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22824,7 +22836,7 @@ H is component height, not screen height. The sprite receives remaining height a
 | WC4c.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4c.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4c.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4c.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22866,7 +22878,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC4c.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4c.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4c.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4c.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -22909,7 +22921,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC4c.intent | content-fit | readable line | frame | above sprite, below info | center / center | leading slot | shared gap | existing announced intent; tooltip; player hidden/enemy visible by configurable default |
 | WC4c.aura | sprite bounds | sprite bounds | sprite | center | center / center | behind sprite layer | 0 | decorative, no pointer capture |
 | WC4c.buffLayer | sprite width minus shared horizontal inset | 100% sprite height | sprite | center | center / center | foreground effect layer | 0 | decorative; semantic buff remains in status model |
-| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | right-center at 50% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
+| WC4c.defense | 3.5rem minimum | 3.5rem minimum | sprite | player upper-right at 12%; enemy lower-left at 88% sprite height | center / center | badge overlay | 0.5rem outside sprite; side follows facing | current block/defense model |
 | WC4c.sprite | 100% component | H minus bars and statuses | frame | top-center | center / end | row 1 | 0 | contain sprite; preserve intrinsic art ratio |
 | WC4c.resources | 100% component | HP height + 0.5 × HP height per extra resource | frame | below sprite | center / center | row 2; stacked meters | shared bar gap included | HP always; applicable extra resources from model |
 | WC4c.resources.bar | 100% component | HP: base height; other resources: half HP height | resources | next row | center / center | normal flow | shared gap | label + current/max; semantic color; never color-only |
@@ -23016,7 +23028,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "extraBarHeightRatio": 0.5,
     "stackGapRem": 0.2,
     "iconSizeRem": 1.575,
-    "defenseOffsetRatio": 0.5,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
     "enemyIntentVisible": true,
@@ -25184,7 +25200,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -25689,7 +25709,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -26230,7 +26254,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -26762,7 +26790,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -27290,7 +27322,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -27796,7 +27832,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -28314,7 +28354,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -28819,7 +28863,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -29353,7 +29401,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -29883,7 +29935,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -30400,7 +30456,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -30926,7 +30986,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -31427,7 +31491,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -31940,7 +32008,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -32437,7 +32509,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -32975,7 +33051,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -33472,7 +33552,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -33974,7 +34058,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -34476,7 +34564,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -34973,7 +35065,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -35470,7 +35566,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -35972,7 +36072,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -36255,7 +36359,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -36269,7 +36373,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -36286,7 +36390,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -36304,7 +36408,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
          Intent
       ┌─ aura ───┐
-      │ sprite  │  Defense ← midpoint
+      │ sprite  │  Defense ← role anchor
       │ + buff  │
       └─────────┘
 ```
@@ -36506,7 +36610,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -37011,7 +37119,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -37293,7 +37405,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -37304,7 +37416,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -37318,7 +37430,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -37333,7 +37445,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
  sprite             [◇ 8]
-         ← gap →    midpoint
+         ← gap →    role anchor
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -37350,7 +37462,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Show active defense only. Anchor at config.overlay.defenseAnchorRatio of sprite height with config.overlay.defenseGapRem external gap. Player right, enemy left.
+// Show active defense only. Anchor at config.overlay.defenseAnchorByRole[role] of sprite height with config.overlay.defenseGapRem external gap. Player upper-right (config.referenceTokens.value_12Percent.value), enemy lower-left (config.referenceTokens.value_88Percent.value).
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -37512,7 +37624,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -38026,7 +38142,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -38540,7 +38660,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -39050,7 +39174,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -39560,7 +39688,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -40073,7 +40205,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -40599,7 +40735,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -41125,7 +41265,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -41639,7 +41783,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -42149,7 +42297,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -42655,7 +42807,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -43161,7 +43317,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -43680,7 +43840,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -44182,7 +44346,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -44685,7 +44853,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -45188,7 +45360,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -45691,7 +45867,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -46210,7 +46390,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -48971,7 +49155,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -49492,7 +49680,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -50004,7 +50196,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -50505,7 +50701,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -51018,7 +51218,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -51514,7 +51718,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -52015,7 +52223,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -52516,7 +52728,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -54296,7 +54512,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -54819,7 +55039,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -55326,7 +55550,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -55833,7 +56061,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -56344,7 +56576,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -56846,7 +57082,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -57349,7 +57589,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -57852,7 +58096,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -58355,7 +58603,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -58881,7 +59133,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -59407,7 +59663,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -59921,7 +60181,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -60423,7 +60687,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -60933,7 +61201,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -61435,7 +61707,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -61948,7 +62224,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -62462,7 +62742,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
@@ -62838,7 +63122,11 @@ On dispose: release timers, observers and events
     "extraBarHeightRatio": 0.5,
     "stackGapRem": 0.2,
     "iconSizeRem": 1.575,
-    "defenseOffsetRatio": 0.5,
+    "defenseOffsetRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntentVisible": false,
     "enemyIntentVisible": true,
@@ -62920,6 +63208,14 @@ On dispose: release timers, observers and events
     "value_1": {
       "value": 1,
       "unit": "count"
+    },
+    "value_12Percent": {
+      "value": 12,
+      "unit": "%"
+    },
+    "value_88Percent": {
+      "value": 88,
+      "unit": "%"
     }
   }
 }
@@ -63075,7 +63371,11 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "liftRem": 0.25
   },
   "overlay": {
-    "defenseAnchorRatio": 0.5,
+    "defenseAnchorRatio": 0.12,
+    "defenseAnchorByRole": {
+      "player": 0.12,
+      "enemy": 0.88
+    },
     "defenseGapRem": 0.5,
     "playerIntent": false,
     "enemyIntent": true
