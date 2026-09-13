@@ -1790,7 +1790,7 @@
       "id": "WCB0",
       "name": "Buttons and inspection",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1817,7 +1817,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence; the nine size presets are still pending a consuming workspace."
     },
     {
       "id": "WCB1",
@@ -1885,7 +1886,7 @@
       "id": "WCB3",
       "name": "Primary / confirmation button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1912,13 +1913,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Primary role: green when ready, stronger when highlighted; destructive never green; End Turn uses the registered combatEndTurn exception."
     },
     {
       "id": "WCB4",
       "name": "Back / cancel button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1945,7 +1947,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Back/Close/Cancel/Leave carry the exit role: brown/gold at rest, red while highlighted; a sole exit in the primary slot is not green."
     },
     {
       "id": "WCB5",
@@ -1979,7 +1982,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Header exit carries the exit role; its face turns red under pointer, keyboard, or pad highlight. Square geometry from --iconbtn-size."
     },
     {
       "id": "WCF0",
@@ -2043,7 +2046,7 @@
       "id": "WCF2",
       "name": "Ordered active stack",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2066,7 +2069,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Ordered active stack from CombatantStackModel: HP, resources, buildup by fill, stance, icons; max five rows; excess buildup becomes ring pips."
     },
     {
       "id": "WCF3",
@@ -2391,7 +2395,7 @@
       "id": "WCM5",
       "name": "Status icon",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2414,13 +2418,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Status icons use the configured 1.575rem tile (reference rem at least 16 physical px); one non-wrapping row."
     },
     {
       "id": "WCM6",
       "name": "Icon overflow",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2443,7 +2448,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Overflow collapses to a final +N tile that opens the combatant inspector with every effect; co-op keeps its popover."
     },
     {
       "id": "WCO0",
@@ -2653,7 +2659,7 @@
       "id": "WCT1",
       "name": "Tooltip presenter",
       "parent": "WCT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2676,7 +2682,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js; not changed in this task."
     },
     {
       "id": "WGC0",
@@ -3087,7 +3094,7 @@
       "id": "WGH1",
       "name": "Vitality HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3118,7 +3125,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Already implemented: HUD_REFERENCE_MAX 200/20/20, track = max/reference, fill = current/max, no minimum track length, scaleByMax on the main HUD."
     },
     {
       "id": "WGH2",
@@ -4242,7 +4250,7 @@
       "id": "WT0",
       "name": "Shared tooltip",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -4257,7 +4265,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default; not changed in this task."
     },
     {
       "id": "WT1",

@@ -60,6 +60,62 @@ shared conversion helper. After converting them through `anchorLocalBox`, the
 full Node rerun completed with exit code 0. Targeted zoom checks also pass.
 Test logs and temporary images stay outside commits.
 
+## Combatant lower stack
+
+Branch `feature/wireframe-combatant-stack`, based on dev `3c72a6df`. WCF2 now
+has one pure plan, `src/ui/models/CombatantStackModel.js`, with values in
+`wireframeUi.combatantStack`.
+
+- Rows arrive already filtered by activity. Order: HP (always), other
+  resources, buildup ranked by fill, stance, then the status-icon row.
+- At most five rows. Stance and the icon row are reserved before optional
+  bars. Buildup that does not fit becomes a ring pip in the icon row.
+  Resources that do not fit stay readable in the inspector.
+- `procDisplayPlan` uses this plan. It replaces the former fixed cap of two
+  buildup bars, and arcane exposure counts as a resource row when it renders.
+- The icon row never wraps. Its capacity comes from the configured 1.575rem
+  tile plus its gap; a reference rem is at least 16 physical px, as in the
+  hand and footer plans. When icons overflow, the last tile is `+N`. Where
+  the combat screen registers the inspector, `+N` opens it with every
+  effect. Co-op keeps its popover.
+
+Browser evidence (emulation): at 390×844 an enemy with poise and three
+buildup meters showed HP, poise, two buildup bars, and an icon row. The
+third buildup became a ring pip. The player's `+N` opened the inspector
+with all six added effects.
+
+Limits: on narrow slots the contract tile size leaves room for few icons, so
+`+N` carries most effects there. The player's evade chip and Dodge receipt
+are ability chips outside this plan. WT0/WCT1 timing already runs through
+one tooltip service whose default delay is 1s. It is not changed here.
+## Control roles and appearance
+
+Branch `feature/wireframe-control-roles`, based on dev
+`3c72a6df`. COLOR-INTERACTION-CONTRACT §3 now has one resolver,
+`src/ui/models/ControlAppearance.js`. It applies the contract's precedence:
+absent, then unavailable/busy, then destructive, then exit, then primary, then
+utility/selection. Registered exceptions are validated by name.
+
+- The kit `button()` stamps `data-control-role`, derived from its weight
+  (a danger class is destructive), or from an explicit `role`. A registered
+  `exception` is stamped as `data-control-exception`.
+- Close (both shell builders), Back, Cancel, and Leave carry the exit role.
+  They stay brown/gold at rest and turn red under pointer, keyboard, or pad
+  highlight. A sole exit in the modal primary slot no longer receives
+  primary green.
+- `combatEndTurn` exception: a legal early End Turn stays neutral at rest and
+  turns green while highlighted. Spent actions still mark it ready. Legality is
+  unchanged.
+- The positive (ready) colours now live in one set of
+  `--control-positive-*` tokens.
+
+WGH1 needed no change. `HUD_REFERENCE_MAX` (200/20/20) scales each track by
+maximum/reference; the fill is current/maximum; there is no minimum track
+length; `balance.ui.hudBars.main.scaleByMax` is on.
+
+Not in this task: the nine size presets (WCB0). Grid button rows resolve
+percentages against their own tracks, so presets need a workspace migration
+that consumes them. They were not added as unused tokens.
 ## Combat bands and packed footer
 
 Branch `feature/wireframe-combat-footer`, based on dev `3c72a6df`. W4a band
