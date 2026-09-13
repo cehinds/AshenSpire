@@ -58,3 +58,10 @@ test('wide footers stay packed at their envelopes', () => {
   assert.ok(near(plan.pileWidth, available * 0.1) && near(plan.endWidth, available * 0.4));
   assert.ok(plan.groupWidth < 1440, 'leftover width centers the group');
 });
+
+test('a host too narrow for the floors is reported, not overflowed', () => {
+  // ~260 px physical (a fold cover screen): circles, pile floors and End Turn
+  // cannot all keep their minimums, so the packed grid must not apply.
+  const plan = packCombatFooter({ width: 260, height: 56, rem: 16 });
+  assert.equal(plan.supported, false);
+});

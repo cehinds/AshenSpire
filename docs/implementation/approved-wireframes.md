@@ -81,7 +81,11 @@ and co-op fallbacks.
 - Resolved conflict: on narrow hosts the 10% pile envelope is smaller than
   the 44 px target and the two-line Discard/Exhaust face. The target and a
   provisional `pileMinimumRem: 4` readable floor win; End Turn gives up
-  width. The owner should confirm or replace this floor.
+  width. The floor uses the same reference rem as the hand (at least 16
+  physical px), so it is 64 physical px, not CSS 4rem, and does not follow
+  the text-size setting. The owner should confirm or replace this floor.
+  Below about 290 px physical the floors cannot all fit; the footer reports
+  `data-footer-geometry="unsupported"` and keeps the unpacked layout.
 
 Browser evidence (emulation, animations finished):
 - 1440×860: circles 53.2 px, piles 142.7 px, End Turn 570.7 px, centered.

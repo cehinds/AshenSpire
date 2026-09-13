@@ -3540,16 +3540,16 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 /* WGC6: one centered, tightly packed five-track group sized by
    packCombatFooter(). Applies once the layout adapter has measured the row. */
-:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry] {
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']{
   --combat-control-size: var(--footer-circle) !important;
   grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);
   justify-content: center; align-items: center; gap: var(--footer-gap);
   width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
 }
-:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry] > * {
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> * {
   grid-column: span 1; grid-row: 1;
 }
-:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry] > .pile {
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label {

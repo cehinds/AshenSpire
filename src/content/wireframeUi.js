@@ -19,7 +19,8 @@ export const wireframeUi = freeze({
   footer: {
     circleMaxFraction: 0.2, pileMaxFraction: 0.1, endMaxFraction: 0.4,
     gapRem: 0.2, heightFraction: 0.95, minimumTargetPx: 44,
-    // Readable floor for the two-line Discard / Exhaust face on narrow hosts.
+    // Readable floor for the two-line Discard / Exhaust face on narrow hosts,
+    // in reference rems (at least 16 physical px each: 64 physical px).
     pileMinimumRem: 4,
   },
   formation: {
