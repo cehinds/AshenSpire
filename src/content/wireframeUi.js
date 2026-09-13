@@ -16,6 +16,8 @@ export const wireframeUi = freeze({
     fanAngleDegrees: 2.5, arcRem: 0.6, dragThresholdPx: 12,
   },
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56 },
+  // W1w: preview column share; the details pane takes the rest and scrolls.
+  inspector: { previewFraction: 0.38 },
   formation: {
     depth: [0.9, 0.95, 1], selectedGrowth: [1.1, 1.05, 1.1],
     displayScale: 1.1, floorFraction: 0.8, insetRem: 1,

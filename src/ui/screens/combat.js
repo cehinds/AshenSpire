@@ -24,7 +24,7 @@ import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
-import { combatantDetailBody } from '../components/combatantInspector.js';
+import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
 import { helpText } from '../../model/tooltipSettings.js';
@@ -71,6 +71,7 @@ import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../compo
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
@@ -554,6 +555,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         abilities,
         skills: abilities,
         statuses: abilities.filter(row => row.kind !== 'stance'),
+        entityId: 'player',
+        // No recorded play history, traits or lore for the player yet: unknown.
+        history: null, traits: null, lore: null,
       };
     }
 
@@ -566,6 +570,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       active: moveId === currentMoveId,
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
+    // movesHistory records each rolled intent; the newest entry is the current
+    // intent, so previous actions are the entries before it (oldest first).
+    const past = [...(entity.movesHistory || [])];
+    if (currentMoveId && past.at(-1) === currentMoveId) past.pop();
     return {
       role: 'enemy',
       name: def.name,
@@ -584,6 +592,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       moveCards: enemyMoveCards(def, { enemy: entity, preview: intent, registries }),
       skills,
       statuses: statusDetails(entity),
+      entityId: entity.id,
+      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId]) })),
+      traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
+      // No authored lore exists for enemies yet; unknown, not none.
+      lore: null,
     };
   }
 
@@ -595,19 +608,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
    * active effect — `combatantDetailBody`, the same sections the edge tray
    * renders, so the two can never drift.
    */
+  // W1w preview art: a fresh still from the same asset functions the field uses.
+  function inspectorPreviewSprite(subject) {
+    if (subject.role === 'player') {
+      const figure = figureSpec(registries, run.loadout, run.class);
+      return playerSprite(run.customization || {}, run.class, figure.armourId);
+    }
+    const enemy = combat.enemies.find((e) => e.id === subject.entityId);
+    if (!enemy) return null;
+    const def = registries.enemies.get(enemy.enemyId);
+    return enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp });
+  }
+
   function openCombatantDoor(subject, opener = document.activeElement) {
     if (!subject?.name) return;
     hideTooltip();
     const done = button({ label: 'Close', weight: 'primary', attrs: { 'data-focusable': 'true', title: helpText('close') } });
     const shell = openModal({
-      size: 'md',
+      size: 'lg',
       className: 'combatant-door',
       opener,
       eyebrow: subject.subtitle || 'Combatant',
       title: subject.name,
       closeLabel: `Close ${subject.name}`,
       bodyClassName: 'combatant-inspector-body',
-      body: (host) => host.replaceChildren(...combatantDetailBody(subject, { heading: false })),
+      body: (host) => host.replaceChildren(combatantInspectorLayout(subject, { sprite: inspectorPreviewSprite(subject), previewFraction: wireframeUi.inspector.previewFraction })),
       primary: done,
       footSize: 'short',
     });
