@@ -3,6 +3,7 @@ const freeze=value=>{Object.values(value).forEach(child=>{if(child&&typeof child
 export const cardReferenceConfig=freeze({
   geometry:{ratioWidth:5,ratioHeight:8,widthMinimum:'10rem',widthPreferred:'18vw',widthMaximum:'16rem',bands:{header:10,art:40,body:40,footer:10}},
   interaction:{inspectDelayMs:1000,tooltipDelayMs:1000},
+  costs:{order:['action','stamina','mana'],showZero:false,railWidthRem:1.8,insetRem:0.15,gapRem:0.1,fontRem:0.75,iconSizeRem:0.8,outlineColor:'#120e09',variableLabel:'X',providers:{action:{label:'Actions',glyph:'◆',icon:'diamond',color:'#d1aa60'},stamina:{label:'Stamina',glyph:'ϟ',icon:'bolt',color:'#88b96d'},mana:{label:'MP',glyph:'♦',icon:'droplet',color:'#79bcec'}},sampleOverrides:{WC1b:{stamina:2},WC1c:{mana:3}}},
   metadata:{ownedLabel:'Owned',unknown:'Unknown',empty:'None'},
   body:{maximumPreviewFacts:2,showFlavor:false},
   components:{identity:'WCI1',art:'WCI2',footer:'WCI3',inspect:'WCB1',action:'WCB2',facts:'WCF4'},
@@ -18,7 +19,7 @@ const playing='src/model/playingCard.js',equipment='src/model/equipmentCard.js',
 // parent array, so a curse cannot accidentally retain the parent attack badge.
 export const cardReferenceRegistry=freeze({
  WC0:{parent:null,name:'Reference card',kind:'card',glyph:'◇',headerState:'Known',rules:'A shared card face populated by its view model.',facts:[['Type','Reference']],rarity:'Common',owned:1,tags:[],construction:['feature:rules','feature:facts'],availability:null,flavor:'An illustrative card.',references:['src/ui/components/card.js','src/ui/components/cardInspection.js']},
- WC1:{parent:'WC0',name:'Measured Strike',kind:'playing',glyph:'⚔',headerState:'1 action',rules:'Deal 8 damage to one eligible enemy.',facts:[['Target','One enemy']],tags:['attack'],construction:['feature:rules','feature:facts','feature:availability'],availability:'Playable when an eligible target exists.',references:[playing,'src/ui/components/card.js']},
+ WC1:{parent:'WC0',name:'Measured Strike',kind:'playing',glyph:'⚔',headerState:'',costs:{action:1,stamina:0,mana:0,variable:false},rules:'Deal 8 damage to one eligible enemy.',facts:[['Target','One enemy']],tags:['attack'],construction:['feature:rules','feature:facts','feature:availability'],availability:'Playable when an eligible target exists.',references:[playing,'src/ui/components/card.js']},
  WC1a:{parent:'WC1',name:'Measured Strike'},
  WC1b:{parent:'WC1',name:'Brace',glyph:'⛨',rules:'Gain 6 defense.',facts:[['Target','Self']],tags:['skill'],availability:'Playable while the actor can act.'},
  WC1c:{parent:'WC1',name:'Ember Focus',glyph:'✦',rules:'Your next attack gains its projected bonus.',facts:[['Duration','Until consumed']],tags:['power'],availability:'Playable while the actor can act.'},
@@ -41,4 +42,4 @@ export const cardReferenceRegistry=freeze({
  WC4:{parent:'WC0',name:'Ashen Sentinel',kind:'combatant',glyph:'♟',headerState:'Enemy',rules:'An illustrative combatant.',facts:[['HP','32 / 40'],['Defense','8']],tags:['combatant'],references:['src/ui/components/combatantFrame.js','src/ui/components/combatantInspector.js'],geometry:'WC4 borderless sprite assembly; does not inherit WC0 item face'},
  WC4a:{parent:'WC4',size:'compact'},WC4b:{parent:'WC4',size:'standard'},WC4c:{parent:'WC4',size:'expanded'}
 });
-export const cardReferenceDescription='Illustrative executable documentation fixtures, not current game balance or generated production data. Current source references supply the model/render boundaries. Proposed WC0 geometry and shared selection remain owner-requested design changes.';
+export const cardReferenceDescription='Illustrative executable documentation fixtures, not current game balance or generated production data. Current source references supply the model/render boundaries. Projected playingCardModel.costs supplies action, mana, stamina and variable costs (src/model/playingCard.js). All present costs use one compact left rail below the header inside the art, ordered by configurable providers, so overlapping hands expose them. Each row uses an outlined icon and number without a box or background. Optional stamina/MP fixture overrides are illustrative only. Proposed WC0 geometry and shared selection remain owner-requested design changes.';

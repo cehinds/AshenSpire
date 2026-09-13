@@ -238,7 +238,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -550,7 +550,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -864,7 +864,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1220,7 +1220,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1573,7 +1573,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -1932,7 +1932,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2258,7 +2258,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2579,7 +2579,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -2899,7 +2899,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3225,7 +3225,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3532,7 +3532,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -3851,7 +3851,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4167,7 +4167,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4469,7 +4469,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -4776,7 +4776,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5081,7 +5081,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5379,7 +5379,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5681,7 +5681,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -5971,7 +5971,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6275,7 +6275,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6579,7 +6579,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -6890,7 +6890,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7201,7 +7201,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7507,7 +7507,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -7861,7 +7861,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8147,7 +8147,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8412,7 +8412,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8680,7 +8680,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -8954,7 +8954,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9224,7 +9224,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9492,7 +9492,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -9768,7 +9768,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10050,7 +10050,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10351,7 +10351,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -10635,7 +10635,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -11238,7 +11238,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -11829,7 +11829,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -12440,7 +12440,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `gameplayPreview`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [component-completion.css](component-completion.css), [scene-reference.css](scene-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -12832,10 +12832,10 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ {Registered content slots}     │
@@ -12868,10 +12868,10 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ {Registered content slots} │
@@ -12907,10 +12907,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ {Registered content      │
@@ -12948,10 +12948,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ {Registered content      │
@@ -13002,6 +13002,10 @@ FUNCTION ConstructCard(input):
     REQUIRE no unresolved exclusive-slot collision
     providers = ResolveAllowlistedProviders(components)
     model = ProjectImmutableValues(providers, definition, stateFacts)
+    // Read the authoritative cost projection; variable action cost uses the configured X label.
+    model.costs = ProjectRegisteredCostProfile(stateFacts, definition)
+    costRows = FilterAndOrderProjectedCosts(model.costs, config.cards.costs.order, config.cards.costs.providers)
+    RenderCompactLeftCostRail(costRows, config.cards.costs, top=ResolveHeaderBandHeight(config.cards.geometry) + ResolveInset(config.cards.costs.insetRem)) // Anchor below header inside art; render outlined icon and number only, no box/background.
     model.actions = DomainAvailableCommands(context, entityRef) // owning host only
     RETURN model with named slots and semantic actions
 
@@ -13059,7 +13063,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13130,6 +13134,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -13242,7 +13289,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 <!-- reference-metadata:end -->
 ### Wireframe WC1: Playing card
 
-**Parent: WC0.** Inherits card identity/art/tags; adds cost, targeting, and effect components.
+**Parent: WC0.** Inherits card identity/art/tags; adds a compact left-edge cost stack below the header inside the art containing every projected action/stamina/MP cost, followed by targeting and effect components. Costs come from playingCardModel.costs in src/model/playingCard.js; renderer does not calculate or invent costs.
 
 **Construction tags (proposed):** `card-kind:playing`. Inherit ancestor tag requirements; compatible feature tags attach additional components.
 
@@ -13251,13 +13298,14 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
-│ [Art / portrait]               │
+│ ◆ x   [Art / portrait]         │
+│ ϟ x   optional stamina         │
+│ ♢ x   optional MP              │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
-│ Cost / targeting               │
+│ Targeting                      │
 │ Effects / rules                │
 │ {Blocker if needed}            │
 ├────────────────────────────────┤
@@ -13276,7 +13324,8 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
-| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Targeting |
 | WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
 | WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
 | WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
@@ -13287,13 +13336,14 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
-│ [Art / portrait]           │
+│ ◆ x   [Art / portrait]     │
+│ ϟ x   optional stamina     │
+│ ♢ x   optional MP          │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
-│ Cost / targeting           │
+│ Targeting                  │
 │ Effects / rules            │
 │ {Blocker if needed}        │
 ├────────────────────────────┤
@@ -13312,7 +13362,8 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
-| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Targeting |
 | WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
 | WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
 | WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
@@ -13326,13 +13377,14 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
-│ Cost / targeting         │
+│ Targeting                │
 │ Effects / rules          │
 │ {Blocker if needed}      │
 ├──────────────────────────┤
@@ -13351,7 +13403,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
-| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Targeting |
 | WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
 | WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
 | WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
@@ -13366,13 +13419,14 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
-│ Cost / targeting         │
+│ Targeting                │
 │ Effects / rules          │
 │ {Blocker if needed}      │
 ├──────────────────────────┤
@@ -13391,7 +13445,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC1.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
-| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Cost / targeting |
+| WC1.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
+| WC1.body.detail1 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Targeting |
 | WC1.body.detail2 | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Effects / rules |
 | WC1.body.blocker | 100% usable body width | content-fit within body band | WC1.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
 | WC1.selection.outline | 100% card width | 100% card height | WC1.frame | perimeter | center / center | anchored overlay following visual card transform | 0; outline outside edge, no layout reflow | Shared owner selection glow |
@@ -13410,7 +13465,7 @@ model = WC0.ConstructCard(entityRef, instanceSnapshot, context)
 REQUIRE compiled family ancestry includes WC1
 // Selection is determined by validated tag rules, not a renderer switch.
 AttachFromMatchedRules:
-    WC1.body.detail1 ← registered provider for Cost / targeting
+    WC1.body.detail1 ← registered provider for Targeting
     WC1.body.detail2 ← registered provider for Effects / rules
 InheritParentIdentityArtBadgesPaletteFocusAndActionBehavior()
 ResolveFamilyBandOverride(); InheritSelectionAndDelayedInfoInspector()
@@ -13422,7 +13477,7 @@ RenderThroughSharedWC0(model)
 ON activation: DelegateToOwningPresenterAndExistingDomainCommand()
 ON unavailable: ShowReasonWithoutOfferingAnInvalidCommit()
 ON tag/state/context change: ReprojectMatchedSlotsWithoutChangingEntity()
-Inherits card identity/art/tags; adds cost, targeting, and effect components.
+Inherits card identity/art/tags; adds a compact left-edge cost stack below the header inside the art containing every projected action/stamina/MP cost, followed by targeting and effect components. Costs come from playingCardModel.costs in src/model/playingCard.js; renderer does not calculate or invent costs.
 Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 ```
 
@@ -13443,7 +13498,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13461,7 +13516,13 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
     "name": "Measured Strike",
     "kind": "playing",
     "glyph": "⚔",
-    "headerState": "1 action",
+    "headerState": "",
+    "costs": {
+      "action": 1,
+      "stamina": 0,
+      "mana": 0,
+      "variable": false
+    },
     "rules": "Deal 8 damage to one eligible enemy.",
     "facts": [
       [
@@ -13514,6 +13575,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -13635,10 +13739,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
-│ [Art / portrait]               │
+│ ◆ x   [Art / portrait]         │
+│ ϟ x   optional stamina         │
+│ ♢ x   optional MP              │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Damage / affected stat         │
@@ -13660,6 +13765,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1a.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
 | WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
 | WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -13671,10 +13777,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
-│ [Art / portrait]           │
+│ ◆ x   [Art / portrait]     │
+│ ϟ x   optional stamina     │
+│ ♢ x   optional MP          │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Damage / affected stat     │
@@ -13696,6 +13803,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1a.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
 | WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
 | WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -13710,10 +13818,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Damage / affected stat   │
@@ -13736,6 +13845,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1a.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
 | WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
 | WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -13751,10 +13861,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Damage / affected stat   │
@@ -13777,6 +13888,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC1a.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1a.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1a.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1a.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1a.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1a.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1a.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1a.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1a.body.detail1 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Damage / affected stat |
 | WC1a.body.detail2 | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target and effect preview |
 | WC1a.body.blocker | 100% usable body width | content-fit within body band | WC1a.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -13829,7 +13941,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -13877,6 +13989,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -13998,10 +14153,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
-│ [Art / portrait]               │
+│ ◆ x   [Art / portrait]         │
+│ ϟ x   optional stamina         │
+│ ♢ x   optional MP              │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Defense / utility effects      │
@@ -14023,6 +14179,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1b.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
 | WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
 | WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14034,10 +14191,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
-│ [Art / portrait]           │
+│ ◆ x   [Art / portrait]     │
+│ ϟ x   optional stamina     │
+│ ♢ x   optional MP          │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Defense / utility effects  │
@@ -14059,6 +14217,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1b.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
 | WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
 | WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14073,10 +14232,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Defense / utility        │
@@ -14099,6 +14259,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1b.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
 | WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
 | WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14114,10 +14275,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Defense / utility        │
@@ -14140,6 +14302,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC1b.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1b.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1b.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1b.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1b.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1b.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1b.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1b.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1b.body.detail1 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Defense / utility effects |
 | WC1b.body.detail2 | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Target / requirements |
 | WC1b.body.blocker | 100% usable body width | content-fit within body band | WC1b.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14192,7 +14355,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14252,6 +14415,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -14373,10 +14579,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
-│ [Art / portrait]               │
+│ ◆ x   [Art / portrait]         │
+│ ϟ x   optional stamina         │
+│ ♢ x   optional MP              │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Persistent effect              │
@@ -14398,6 +14605,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1c.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
 | WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
 | WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14409,10 +14617,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
-│ [Art / portrait]           │
+│ ◆ x   [Art / portrait]     │
+│ ϟ x   optional stamina     │
+│ ♢ x   optional MP          │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Persistent effect          │
@@ -14434,6 +14643,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1c.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
 | WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
 | WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14448,10 +14658,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Persistent effect        │
@@ -14473,6 +14684,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1c.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
 | WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
 | WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14488,10 +14700,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Persistent effect        │
@@ -14513,6 +14726,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC1c.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1c.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1c.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1c.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1c.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1c.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1c.body.detail1 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Persistent effect |
 | WC1c.body.detail2 | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Trigger / duration |
 | WC1c.body.blocker | 100% usable body width | content-fit within body band | WC1c.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14565,7 +14779,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -14625,6 +14839,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -14746,10 +15003,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
-│ [Art / portrait]               │
+│ ◆ x   [Art / portrait]         │
+│ ϟ x   optional stamina         │
+│ ♢ x   optional MP              │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Penalty / consequence          │
@@ -14771,6 +15029,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1d.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
 | WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14782,10 +15041,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
-│ [Art / portrait]           │
+│ ◆ x   [Art / portrait]     │
+│ ϟ x   optional stamina     │
+│ ♢ x   optional MP          │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Penalty / consequence      │
@@ -14807,6 +15067,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1d.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
 | WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14821,10 +15082,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Penalty / consequence    │
@@ -14847,6 +15109,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1d.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
 | WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14862,10 +15125,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Penalty / consequence    │
@@ -14888,6 +15152,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC1d.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1d.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1d.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1d.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1d.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1d.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1d.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1d.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1d.body.detail1 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Penalty / consequence |
 | WC1d.body.detail2 | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1d.body.blocker | 100% usable body width | content-fit within body band | WC1d.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -14940,7 +15205,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15001,6 +15266,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -15122,10 +15430,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
-│ [Art / portrait]               │
+│ ◆ x   [Art / portrait]         │
+│ ϟ x   optional stamina         │
+│ ♢ x   optional MP              │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Status effect / duration       │
@@ -15147,6 +15456,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1e.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
 | WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -15158,10 +15468,11 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
-│ [Art / portrait]           │
+│ ◆ x   [Art / portrait]     │
+│ ϟ x   optional stamina     │
+│ ♢ x   optional MP          │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Status effect / duration   │
@@ -15183,6 +15494,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 | WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1e.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
 | WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -15197,10 +15509,11 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Status effect / duration │
@@ -15223,6 +15536,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1e.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
 | WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -15238,10 +15552,11 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
-│ [Art / portrait]         │
+│ ◆ x   [Art / portrait]   │
+│ ϟ x   optional stamina   │
+│ ♢ x   optional MP        │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Status effect / duration │
@@ -15264,6 +15579,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | WC1e.body | 100% card width | config.cards.geometry.bands.body% of card height | WC1e.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Shared fact rows; scroll only when required |
 | WC1e.footer | 100% card width | config.cards.geometry.bands.footer% of card height | WC1e.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Metadata only |
 | WC1e.footer.metadata | available footer width minus shared inset | 100% usable footer height | WC1e.footer | bottom / full usable width | center / center | single-row footer grid item | shared inset token side inset; vertically centered in footer | Rarity left; owned count right |
+| WC1e.costs | config.cards.costs.railWidthRem | content-fit from active projected costs | WC1e.frame | top-left | start / start | normal grid flow | 0; shared gap between siblings | Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand |
 | WC1e.body.detail1 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Status effect / duration |
 | WC1e.body.detail2 | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Playability / removal rule |
 | WC1e.body.blocker | 100% usable body width | content-fit within body band | WC1e.body | next row, top to bottom | start / start | normal grid flow | shared inset token horizontal inset; rows share body budget | Omit when absent |
@@ -15316,7 +15632,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15377,6 +15693,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -15498,10 +15857,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Ownership / quantity           │
@@ -15534,10 +15893,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Ownership / quantity       │
@@ -15574,10 +15933,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Ownership / quantity     │
@@ -15615,10 +15974,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Ownership / quantity     │
@@ -15693,7 +16052,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -15755,6 +16114,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -15876,10 +16278,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Slot / requirements            │
@@ -15912,10 +16314,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Slot / requirements        │
@@ -15951,10 +16353,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Slot / requirements      │
@@ -15991,10 +16393,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Slot / requirements      │
@@ -16068,7 +16470,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16139,6 +16541,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -16260,10 +16705,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Damage / scaling               │
@@ -16298,10 +16743,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Damage / scaling           │
@@ -16339,10 +16784,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Damage / scaling         │
@@ -16381,10 +16826,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Damage / scaling         │
@@ -16461,7 +16906,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16509,6 +16954,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -16630,10 +17118,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Defense / resistance           │
@@ -16668,10 +17156,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Defense / resistance       │
@@ -16709,10 +17197,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Defense / resistance     │
@@ -16751,10 +17239,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Defense / resistance     │
@@ -16831,7 +17319,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -16895,6 +17383,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -17016,10 +17547,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Relic effect                   │
@@ -17052,10 +17583,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Relic effect               │
@@ -17091,10 +17622,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Relic effect             │
@@ -17132,10 +17663,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Relic effect             │
@@ -17210,7 +17741,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17276,6 +17807,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -17397,10 +17971,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Passive modifiers              │
@@ -17433,10 +18007,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Passive modifiers          │
@@ -17472,10 +18046,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Passive modifiers        │
@@ -17513,10 +18087,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Passive modifiers        │
@@ -17591,7 +18165,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -17639,6 +18213,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -17760,10 +18377,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Trigger condition              │
@@ -17796,10 +18413,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Trigger condition          │
@@ -17835,10 +18452,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Trigger condition        │
@@ -17876,10 +18493,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Trigger condition        │
@@ -17954,7 +18571,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18019,6 +18636,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -18140,10 +18800,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Charges / quantity             │
@@ -18176,10 +18836,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Charges / quantity         │
@@ -18215,10 +18875,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Charges / quantity       │
@@ -18255,10 +18915,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Charges / quantity       │
@@ -18332,7 +18992,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18405,6 +19065,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -18526,10 +19229,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Healing preview                │
@@ -18562,10 +19265,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Healing preview            │
@@ -18601,10 +19304,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Healing preview          │
@@ -18641,10 +19344,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Healing preview          │
@@ -18718,7 +19421,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -18766,6 +19469,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -18887,10 +19633,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Resource restoration           │
@@ -18923,10 +19669,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Resource restoration       │
@@ -18962,10 +19708,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Resource restoration     │
@@ -19002,10 +19748,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Resource restoration     │
@@ -19079,7 +19825,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19133,6 +19879,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -19254,10 +20043,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Utility effect / target        │
@@ -19290,10 +20079,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Utility effect / target    │
@@ -19329,10 +20118,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Utility effect / target  │
@@ -19369,10 +20158,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Utility effect / target  │
@@ -19446,7 +20235,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19501,6 +20290,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -19622,10 +20454,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Choice summary                 │
@@ -19659,10 +20491,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Choice summary             │
@@ -19699,10 +20531,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Choice summary           │
@@ -19740,10 +20572,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Choice summary           │
@@ -19818,7 +20650,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -19889,6 +20721,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -20010,10 +20885,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Class identity / role          │
@@ -20046,10 +20921,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Class identity / role      │
@@ -20085,10 +20960,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Class identity / role    │
@@ -20126,10 +21001,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Class identity / role    │
@@ -20204,7 +21079,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20252,6 +21127,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -20373,10 +21291,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
                (i)
 ┌────────────────────────────────┐
-│ {Name}            {Cost/state} │
+│ {Name}                         │
 ├────────────────────────────────┤
-│                                │
 │ [Art / portrait]               │
+│                                │
 │ {Meaningful tag badges}        │
 ├────────────────────────────────┤
 │ Starting equipment             │
@@ -20409,10 +21327,10 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
 ```text
              (i)
 ┌────────────────────────────┐
-│ {Name}        {Cost/state} │
+│ {Name}                     │
 ├────────────────────────────┤
-│                            │
 │ [Art / portrait]           │
+│                            │
 │ {Meaningful tag badges}    │
 ├────────────────────────────┤
 │ Starting equipment         │
@@ -20448,10 +21366,10 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Starting equipment       │
@@ -20488,10 +21406,10 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 ```text
             (i)
 ┌──────────────────────────┐
-│ {Name}      {Cost/state} │
+│ {Name}                   │
 ├──────────────────────────┤
-│                          │
 │ [Art / portrait]         │
+│                          │
 │ {Meaningful tag badges}  │
 ├──────────────────────────┤
 │ Starting equipment       │
@@ -20565,7 +21483,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -20630,6 +21548,49 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "interaction": {
     "inspectDelayMs": 1000,
     "tooltipDelayMs": 1000
+  },
+  "costs": {
+    "order": [
+      "action",
+      "stamina",
+      "mana"
+    ],
+    "showZero": false,
+    "railWidthRem": 1.8,
+    "insetRem": 0.15,
+    "gapRem": 0.1,
+    "fontRem": 0.75,
+    "iconSizeRem": 0.8,
+    "outlineColor": "#120e09",
+    "variableLabel": "X",
+    "providers": {
+      "action": {
+        "label": "Actions",
+        "glyph": "◆",
+        "icon": "diamond",
+        "color": "#d1aa60"
+      },
+      "stamina": {
+        "label": "Stamina",
+        "glyph": "ϟ",
+        "icon": "bolt",
+        "color": "#88b96d"
+      },
+      "mana": {
+        "label": "MP",
+        "glyph": "♦",
+        "icon": "droplet",
+        "color": "#79bcec"
+      }
+    },
+    "sampleOverrides": {
+      "WC1b": {
+        "stamina": 2
+      },
+      "WC1c": {
+        "mana": 3
+      }
+    }
   },
   "metadata": {
     "ownedLabel": "Owned",
@@ -20965,7 +21926,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21082,7 +22043,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "legibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -21330,7 +22291,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21425,7 +22386,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "legibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -21673,7 +22634,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -21768,7 +22729,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "legibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -22024,7 +22985,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `card`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [wireframe-gallery-template.html#style](wireframe-gallery-template.html#style), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22119,7 +23080,7 @@ Renderer binding: `card`. The HTML “Component composition” tab executes this
   "legibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -22255,7 +23216,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22465,7 +23426,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22675,7 +23636,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -22890,7 +23851,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 
 Renderer binding: `renderScreenReference`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [screen-reference.css](screen-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23143,7 +24104,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23457,7 +24418,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -23771,7 +24732,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24067,7 +25028,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24266,6 +25227,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -24285,7 +25248,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -24304,6 +25267,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -24319,7 +25288,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -24574,7 +25543,7 @@ Reuses the inspect source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -24752,6 +25721,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -24771,7 +25742,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -24790,6 +25761,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -24805,7 +25782,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -25091,7 +26068,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25274,6 +26251,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -25293,7 +26272,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -25312,6 +26291,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -25327,7 +26312,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -25609,7 +26594,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -25787,6 +26772,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -25806,7 +26793,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -25825,6 +26812,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -25840,7 +26833,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -26118,7 +27111,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26296,6 +27289,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -26315,7 +27310,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -26334,6 +27329,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -26349,7 +27350,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -26605,7 +27606,7 @@ Reuses the buttons source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -26783,6 +27784,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -26802,7 +27805,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -26821,6 +27824,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -26836,7 +27845,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -27087,7 +28096,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -27282,6 +28291,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -27301,7 +28312,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -27320,6 +28331,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -27335,7 +28352,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -27590,7 +28607,7 @@ Reuses the contract source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -27768,6 +28785,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -27787,7 +28806,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -27806,6 +28825,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -27821,7 +28846,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -28084,7 +29109,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28283,6 +29308,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -28302,7 +29329,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -28321,6 +29348,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -28336,7 +29369,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -28599,7 +29632,7 @@ Reuses the selection source boundary. Reference sample data and interaction styl
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -28794,6 +29827,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -28813,7 +29848,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -28832,6 +29867,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -28847,7 +29888,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -29114,7 +30155,7 @@ Reuses the inspector source boundary. Reference sample data and interaction styl
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29292,6 +30333,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -29311,7 +30354,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -29330,6 +30373,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -29345,7 +30394,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -29608,7 +30657,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -29799,6 +30848,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -29818,7 +30869,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -29837,6 +30888,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -29852,7 +30909,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -30103,7 +31160,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -30281,6 +31338,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -30300,7 +31359,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -30319,6 +31378,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -30334,7 +31399,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -30597,7 +31662,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -30775,6 +31840,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -30794,7 +31861,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -30813,6 +31880,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -30828,7 +31901,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -31075,7 +32148,7 @@ Reuses the identity source boundary. Reference sample data and interaction styli
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31253,6 +32326,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -31272,7 +32347,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -31291,6 +32366,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -31306,7 +32387,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -31569,7 +32650,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -31772,6 +32853,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -31791,7 +32874,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -31810,6 +32893,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -31825,7 +32914,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -32072,7 +33161,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32250,6 +33339,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -32269,7 +33360,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -32288,6 +33379,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -32303,7 +33400,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -32550,7 +33647,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -32733,6 +33830,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -32752,7 +33851,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -32771,6 +33870,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -32786,7 +33891,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -33033,7 +34138,7 @@ Reuses the meter source boundary. Reference sample data and interaction styling 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -33216,6 +34321,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -33235,7 +34342,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -33254,6 +34361,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -33269,7 +34382,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -33516,7 +34629,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -33694,6 +34807,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -33713,7 +34828,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -33732,6 +34847,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -33747,7 +34868,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -33994,7 +35115,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34172,6 +35293,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -34191,7 +35314,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -34210,6 +35333,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -34225,7 +35354,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -34472,7 +35601,7 @@ Reuses the status source boundary. The current working game renders status pips 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -34655,6 +35784,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -34674,7 +35805,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -34693,6 +35824,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -34708,7 +35845,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -34971,7 +36108,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35170,6 +36307,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -35189,7 +36328,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -35208,6 +36347,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -35223,7 +36368,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -35478,7 +36623,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -35656,6 +36801,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -35675,7 +36822,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -35694,6 +36841,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -35709,7 +36862,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -35960,7 +37113,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -36138,6 +37291,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -36157,7 +37312,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -36176,6 +37331,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -36191,7 +37352,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -36450,7 +37611,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -36633,6 +37794,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -36652,7 +37815,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -36671,6 +37834,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -36686,7 +37855,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -36945,7 +38114,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37128,6 +38297,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -37147,7 +38318,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -37166,6 +38337,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -37181,7 +38358,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -37436,7 +38613,7 @@ Reuses the overlay source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -37619,6 +38796,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -37638,7 +38817,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -37657,6 +38836,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -37672,7 +38857,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -37927,7 +39112,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38110,6 +39295,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -38129,7 +39316,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -38148,6 +39335,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -38163,7 +39356,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -38426,7 +39619,7 @@ Reuses the tooltip source boundary. Reference sample data and interaction stylin
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -38604,6 +39797,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -38623,7 +39818,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -38642,6 +39837,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -38657,7 +39858,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -38916,7 +40117,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39111,6 +40312,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -39130,7 +40333,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -39149,6 +40352,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -39164,7 +40373,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -39423,7 +40632,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -39618,6 +40827,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -39637,7 +40848,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -39656,6 +40867,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -39671,7 +40888,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -39930,7 +41147,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40113,6 +41330,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -40132,7 +41351,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -40151,6 +41370,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -40166,7 +41391,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -40421,7 +41646,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -40604,6 +41829,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -40623,7 +41850,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -40642,6 +41869,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -40657,7 +41890,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -40908,7 +42141,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41091,6 +42324,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -41110,7 +42345,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -41129,6 +42364,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -41144,7 +42385,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -41368,7 +42609,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Interpolate capacity between config.hand.minCapacity and maxCapacity over narrowWidthRem to wideWidthRem, then constrain by minExposedTargetPx. Every card has the same scale bounded by minCardWidthRem and maxCardWidthRem; no per-card fitting. Use one bounded uniform card scale for the entire hand and preserve aspect ratio inside its section; focus/selection raises a card above its neighbors. Keep the configured exposed touch area for each unselected card; if the bounded cards cannot fit, use one horizontal hand scroller rather than shrinking below minimum or clipping targets. Do not create inner-card or vertical scrollbars; summarize text and inspect full details. Do not implement draw or damage logic here.
+// Project stable hand cards through the shared WC1 renderer; reference fixtures resolve config.hand.fixtureIds through the registry. Interpolate capacity between config.hand.minCapacity and maxCapacity over narrowWidthRem to wideWidthRem, then constrain by minExposedTargetPx. Every card has the same scale bounded by minCardWidthRem and maxCardWidthRem; no per-card fitting. Use one bounded uniform card scale for the entire hand and preserve aspect ratio inside its section; focus/selection raises a card above its neighbors. Keep the configured exposed touch area for each unselected card; if the bounded cards cannot fit, use one horizontal hand scroller rather than shrinking below minimum or clipping targets. Do not create inner-card or vertical scrollbars; summarize text and inspect full details. Stable hit lanes remain selectable above the visual fan. Drag a card past config.hand.reorderThresholdPx to reorder the same card instance and snap to its nearest slot; Alt+Arrow keys provide the same operation. The single delayed inspect overlay is positioned entirely above the selected card and may escape the clipped hand. Do not implement draw or damage logic here.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -41395,7 +42636,7 @@ Reuses the hand source boundary. Reference sample data and interaction styling a
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -41578,6 +42819,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -41597,7 +42840,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -41616,6 +42859,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -41631,7 +42880,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -41879,7 +43128,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42078,6 +43327,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -42097,7 +43348,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -42116,6 +43367,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -42131,7 +43388,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -42383,7 +43640,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -42561,6 +43818,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -42580,7 +43839,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -42599,6 +43858,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -42614,7 +43879,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -42862,7 +44127,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43045,6 +44310,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -43064,7 +44331,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -43083,6 +44350,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -43098,7 +44371,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -43346,7 +44619,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -43529,6 +44802,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -43548,7 +44823,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -43567,6 +44842,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -43582,7 +44863,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -43830,7 +45111,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44013,6 +45294,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -44032,7 +45315,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -44051,6 +45334,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -44066,7 +45355,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -44326,7 +45615,7 @@ Reuses the footer source boundary. Current combat and pile/flask source provides
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css), [combatant-legibility.css](combatant-legibility.css)
 
 <details><summary>Model JSON</summary>
 
@@ -44513,6 +45802,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -44532,7 +45823,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -44551,6 +45842,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -44566,7 +45863,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -44835,7 +46132,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45091,7 +46388,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45324,7 +46621,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45557,7 +46854,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -45843,7 +47140,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46086,7 +47383,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46319,7 +47616,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46552,7 +47849,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -46794,7 +48091,7 @@ Current source anchors inform this proposed reference. Sample records are illust
 
 Renderer binding: `hudPlayground`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47052,7 +48349,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47255,6 +48552,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -47274,7 +48573,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -47293,6 +48592,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -47308,7 +48613,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -47570,7 +48875,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -47757,6 +49062,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -47776,7 +49083,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -47795,6 +49102,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -47810,7 +49123,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -48072,7 +49385,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48250,6 +49563,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -48269,7 +49584,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -48288,6 +49603,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -48303,7 +49624,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -48549,7 +49870,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -48732,6 +50053,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -48751,7 +50074,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -48770,6 +50093,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -48785,7 +50114,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -49043,7 +50372,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49226,6 +50555,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -49245,7 +50576,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -49264,6 +50595,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -49279,7 +50616,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -49525,7 +50862,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -49703,6 +51040,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -49722,7 +51061,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -49741,6 +51080,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -49756,7 +51101,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -50002,7 +51347,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50185,6 +51530,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -50204,7 +51551,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -50223,6 +51570,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -50238,7 +51591,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -50484,7 +51837,7 @@ Reuses the map source boundary. Reference sample data and interaction styling ar
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -50667,6 +52020,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -50686,7 +52041,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -50705,6 +52060,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -50720,7 +52081,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -50970,7 +52331,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51227,7 +52588,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51472,7 +52833,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51722,7 +53083,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -51967,7 +53328,7 @@ The existing equipment screen, equipment cards, modal shell and meters are sourc
 
 Renderer binding: `renderProgression`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [progression-reference.css](progression-reference.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -52225,7 +53586,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -52428,6 +53789,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -52447,7 +53810,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -52466,6 +53829,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -52481,7 +53850,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -52741,7 +54110,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -52932,6 +54301,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -52951,7 +54322,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -52970,6 +54341,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -52985,7 +54362,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -53237,7 +54614,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -53420,6 +54797,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -53439,7 +54818,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -53458,6 +54837,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -53473,7 +54858,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -53725,7 +55110,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -53908,6 +55293,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -53927,7 +55314,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -53946,6 +55333,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -53961,7 +55354,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -54217,7 +55610,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -54400,6 +55793,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -54419,7 +55814,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -54438,6 +55833,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -54453,7 +55854,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -54705,7 +56106,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -54883,6 +56284,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -54902,7 +56305,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -54921,6 +56324,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -54936,7 +56345,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -55184,7 +56593,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -55367,6 +56776,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -55386,7 +56797,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -55405,6 +56816,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -55420,7 +56837,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -55668,7 +57085,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -55851,6 +57268,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -55870,7 +57289,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -55889,6 +57308,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -55904,7 +57329,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -56152,7 +57577,7 @@ Reuses the dialogue source boundary. Current event screen renders authored prose
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -56335,6 +57760,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -56354,7 +57781,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -56373,6 +57800,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -56388,7 +57821,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -56655,7 +58088,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -56842,6 +58275,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -56861,7 +58296,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -56880,6 +58315,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -56895,7 +58336,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -57162,7 +58603,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -57349,6 +58790,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -57368,7 +58811,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -57387,6 +58830,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -57402,7 +58851,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -57661,7 +59110,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -57844,6 +59293,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -57863,7 +59314,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -57882,6 +59333,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -57897,7 +59354,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -58144,7 +59601,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -58327,6 +59784,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -58346,7 +59805,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -58365,6 +59824,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -58380,7 +59845,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -58631,7 +60096,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -58818,6 +60283,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -58837,7 +60304,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -58856,6 +60323,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -58871,7 +60344,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -59118,7 +60591,7 @@ Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -59301,6 +60774,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -59320,7 +60795,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -59339,6 +60814,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -59354,7 +60835,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -59617,7 +61098,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -59795,6 +61276,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -59814,7 +61297,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -59833,6 +61316,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -59848,7 +61337,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -60107,7 +61596,7 @@ Reuses the background source boundary. The current working game uses backdropCla
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -60290,6 +61779,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -60309,7 +61800,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -60328,6 +61819,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -60343,7 +61840,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,
@@ -60706,7 +62203,7 @@ Reuses the stage source boundary. Current stage derives safe formation geometry 
 
 Renderer binding: `renderCompletedComponent`. The HTML “Component composition” tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
 
-**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
+**Styles:** [component-completion.css](component-completion.css), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css), [card-costs.css](card-costs.css)
 
 <details><summary>Model JSON</summary>
 
@@ -60884,6 +62381,8 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "anchorXFraction": 0.5
   },
   "scene": {
+    "detailEdgeInsetPx": 4,
+    "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
     "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
@@ -60903,7 +62402,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
   "combatantLegibility": {
     "intentRowMinPx": 22,
     "valueFontMinPx": 13.2,
-    "infoVisualScale": 0.8,
+    "infoVisualScale": 0.64,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -60922,6 +62421,12 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minimumHeightPx": 56
   },
   "hand": {
+    "infoVisualSizePx": 28,
+    "infoHitSizePx": 44,
+    "infoGapPx": 4,
+    "reorderThresholdPx": 8,
+    "edgeScrollPx": 24,
+    "edgeScrollStepPx": 12,
     "horizontalInsetRem": 0.625,
     "inspectRiseRem": 0.5,
     "fanMaxDegrees": 2.5,
@@ -60937,7 +62442,7 @@ Renderer binding: `renderCompletedComponent`. The HTML “Component composition�
     "minCardWidthRem": 5,
     "maxCardWidthRem": 9,
     "minExposedTargetPx": 44,
-    "selectedLiftRem": 0.5,
+    "selectedLiftRem": 1,
     "cardWidthRem": 7,
     "cardAspectRatio": "5 / 8",
     "gapRem": 0.2,

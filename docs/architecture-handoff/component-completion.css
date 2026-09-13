@@ -100,3 +100,21 @@
 .cc-reference .cc-hand:not(.cc-hand-scroll){overflow-x:hidden}
 
 .cc-reference .cc-hand-track{user-select:none;-webkit-user-select:none;touch-action:pan-x}
+/* Stable selection lanes remain above every raised card; only the info portal escapes clipping. */
+.cc-reference .cc-hand-hit-layer{position:absolute;inset:0 auto auto 0;z-index:var(--cc-hand-selected-order,101);pointer-events:none;user-select:none;touch-action:pan-x}
+.cc-reference .cc-hand-hit-strip{position:absolute;display:block;margin:0!important;padding:0!important;border:0!important;border-radius:0;background:transparent!important;opacity:1;pointer-events:auto;touch-action:pan-x;min-width:0!important;min-height:0!important;box-shadow:none!important;cursor:pointer}
+.cc-reference .cc-hand-hit-strip:focus-visible{outline:.125rem solid var(--cc-gold);outline-offset:-.125rem}
+.cc-reference .cc-hand-track .info{visibility:hidden!important;pointer-events:none!important}
+.cc-reference .cc-hand-track>.cc-native:hover,.cc-reference .cc-hand-track>.cc-native:focus-within{transform:translateY(var(--cc-hand-arch,0px)) rotate(var(--cc-hand-angle,0deg));z-index:calc(var(--cc-hand-order) + 1)}
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-selected-order)}
+.cc-hand-info-portal{position:fixed;z-index:2147482000;display:grid;place-items:center;transform:translateX(-50%);box-sizing:border-box;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:.0625rem solid var(--gold,#d1ab61);border-radius:50%;background:var(--panel,#241b12);color:var(--text,#efe4ce);font:italic 1.2rem Georgia,serif;line-height:1;cursor:pointer;filter:drop-shadow(0 0 .25rem var(--gold,#d1ab61));pointer-events:auto}
+.cc-hand-info-portal[hidden]{display:none!important}
+.cc-hand-info-portal:focus-visible{outline:.125rem solid var(--gold,#d1ab61);outline-offset:.125rem}
+
+/* Stable selection lanes also support pointer and keyboard reordering. */
+.cc-reference .cc-hand-hit-strip{touch-action:none}
+.cc-reference .cc-hand-track>.cc-native.is-reordering{transform:translate(var(--cc-hand-drag-x,0px),calc(0px - var(--cc-hand-lift))) rotate(0deg)!important;z-index:var(--cc-hand-selected-order);transition:none}
+.cc-reference .cc-hand-announcement{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+.cc-hand-info-portal{isolation:isolate;background:transparent;border:0;filter:none;font-size:.875rem}
+.cc-hand-info-portal::before{content:'';position:absolute;z-index:-1;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:var(--cc-info-visual-size,28px);height:var(--cc-info-visual-size,28px);border:.0625rem solid var(--gold,#d1ab61);border-radius:50%;background:var(--panel,#241b12);filter:drop-shadow(0 0 .25rem var(--gold,#d1ab61))}

@@ -71,9 +71,10 @@ function createComponentReferenceRenderers(configuration) {
       // Allocate row baselines between readable overhead and the expanded-detail reserve.
       // Spacing adapts before any sprite fit; upper rows must not consume the sprite's entire height.
       const detailReserve=(cfg().scene.selectionDetailReserveRem??5)*rem,legibility=cfg().combatantLegibility;
-      const controlsReserve=(legibility.infoSizePx??44)+(n.querySelector('.combatant-intent:not([hidden])')?(legibility.intentRowMinPx??20):0)+cfg().spacing.gapRem*rem*2;
+      const baselineInset=Math.min(cfg().scene.baselineInsetPx??4,stage.height/4);
+      const controlsReserve=(n.querySelector('.combatant-intent:not([hidden])')?(legibility.intentRowMinPx??20):0)+cfg().spacing.gapRem*rem*2;
       const minimumSprite=cfg().scene.minimumSpriteHeightPx??84;
-      const lastFoot=Math.max(inset,stage.height-inset-detailReserve),firstFoot=Math.min(lastFoot,inset+controlsReserve+minimumSprite);
+      const lastFoot=Math.max(baselineInset,stage.height-baselineInset-detailReserve),firstFoot=Math.min(lastFoot,baselineInset+controlsReserve+minimumSprite);
       const rowStep=Math.max(0,(lastFoot-firstFoot)/Math.max(1,c.rows-1));
       for(const slot of slots){const r=slot.getBoundingClientRect(),originalY=r.top+r.height/2-stage.top,targetY=firstFoot+Number(slot.dataset.row)*rowStep;slot.dataset.verticalShift=String(targetY-originalY);slot.style.transform+=' translateY('+slot.dataset.verticalShift+'px)';}
       // Reset every actor before reading geometry; no post-paint correction and no accumulated transforms.
@@ -107,7 +108,7 @@ function createComponentReferenceRenderers(configuration) {
       let sharedScale=(typeof sharedCombatantBaseScale==='function'?sharedCombatantBaseScale(allocations,focus):focus.fit.maximumScale)*c.actorScale;
       const peak=Math.max(...focus.rowBase.map((base,row)=>base*focus.selectedGrowth[row]));
       // Reserve configured focus growth before selection; selection itself never refits any actor.
-      for(const m of models){const r=m.slot.getBoundingClientRect(),y=r.top+r.height/2-stage.top;sharedScale=Math.min(sharedScale,r.width/(m.width*peak));const legibility=cfg().combatantLegibility,controlReserve=(legibility.infoSizePx??44)+(m.intentPresent?Math.max(legibility.intentRowMinPx??20,legibility.valueFontMinPx??12):0)+cfg().spacing.gapRem*rem*2;if(m.spriteAbove>0)sharedScale=Math.min(sharedScale,Math.max(0,y-inset-controlReserve)/(m.spriteAbove*peak));if(m.below>0)sharedScale=Math.min(sharedScale,Math.max(0,stage.height-inset-y)/(m.below*peak));}
+      for(const m of models){const r=m.slot.getBoundingClientRect(),y=r.top+r.height/2-stage.top;sharedScale=Math.min(sharedScale,r.width/(m.width*peak));const legibility=cfg().combatantLegibility,controlReserve=(m.intentPresent?Math.max(legibility.intentRowMinPx??20,legibility.valueFontMinPx??12):0)+cfg().spacing.gapRem*rem*2;if(m.spriteAbove>0)sharedScale=Math.min(sharedScale,Math.max(0,y-baselineInset-controlReserve)/(m.spriteAbove*peak));if(m.below>0)sharedScale=Math.min(sharedScale,Math.max(0,stage.height-baselineInset-y)/(m.below*peak));}
       for(const side of bothSides){
         const group=models.filter(m=>m.side===side);if(!group.length)continue;
         const sideSlots=slots.filter(s=>s.dataset.side===side).map(slot=>{const r=slot.getBoundingClientRect();return {slot,x:r.left+r.width/2-stage.left,y:r.top+r.height/2-stage.top,width:r.width};});
@@ -115,19 +116,35 @@ function createComponentReferenceRenderers(configuration) {
         const left=Math.max(...group.map(m=>m.left)),right=Math.max(...group.map(m=>m.right));
         const scale=sharedScale*(c.displayScale??1);
         const originalMin=Math.min(...sideSlots.map(s=>s.x)),originalMax=Math.max(...sideSlots.map(s=>s.x));
-        const infoHalf=Math.max((cfg().combatantLegibility.barMinWidthPx??64)/2,(cfg().combatantLegibility.infoSizePx??44)/2);
-        const allowedMin=minX+Math.max(left*scale*peak,infoHalf),allowedMax=maxX-Math.max(right*scale*peak,infoHalf);
-        // Affine track fit preserves mirrored diagonal alignment; never nudge individual actors off slots.
-        const extent=originalMax-originalMin,available=Math.max(0,allowedMax-allowedMin),trackScale=extent>0?Math.min(1,available/extent):1;
-        const center=Math.max(allowedMin+extent*trackScale/2,Math.min(allowedMax-extent*trackScale/2,(originalMin+originalMax)/2));
-        for(const s of sideSlots){s.targetX=center+(s.x-(originalMin+originalMax)/2)*trackScale;const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px)) translateY('+s.slot.dataset.verticalShift+'px)';}
+        const frameHalf=Math.max(...group.map(m=>m.width))*scale*peak/2,bodyGap=cfg().spacing.gapRem*rem;
+        const allowedMin=minX+frameHalf+bodyGap,allowedMax=maxX-frameHalf-bodyGap;
+        // Use the full faction allocation for each row. Fitting all staggered
+        // rows as one affine track compressed the two columns on narrow phones.
+        const available=Math.max(0,allowedMax-allowedMin),rowCenter=(c.rows-1)/2;
+        const requestedStagger=stage.width*c.backRowOffsetPercent/100;
+        const minimumPitch=frameHalf*2+bodyGap;
+        const staggerRoom=Math.max(0,(available-minimumPitch*Math.max(0,c.columns-1))/Math.max(1,2*rowCenter));
+        const stagger=Math.min(requestedStagger,staggerRoom);
+        const staggerExtent=stagger*rowCenter,firstColumn=allowedMin+staggerExtent,lastColumn=allowedMax-staggerExtent;
+        for(const s of sideSlots){
+          const column=Number(s.slot.dataset.column),row=Number(s.slot.dataset.row);
+          const columnFraction=c.columns>1?column/(c.columns-1):.5;
+          const rowShift=(row-rowCenter)*stagger*(side==='ally'?1:-1);
+          s.targetX=firstColumn+(lastColumn-firstColumn)*columnFraction+rowShift;
+          const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px)) translateY('+s.slot.dataset.verticalShift+'px)';
+        }
         for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot),presentation=typeof rowPresentationScale==='function'?rowPresentationScale(m.row,m.selected,focus):{factor:focus.rowBase[m.row]*(m.selected?focus.selectedGrowth[m.row]:1),zPriority:m.selected?focus.focusZ:focus.rowZPriority[m.row]},actorScale=scale*presentation.factor;
           if(actorScale>0&&typeof applyCombatantLegibility==='function')applyCombatantLegibility(m.actor,actorScale,cfg().combatantLegibility);
           const host=m.actor.querySelector('.combatant-host'),intent=host.querySelector('.combatant-intent'),info=host.querySelector('.info'),overlayGap=cfg().spacing.gapRem*rem/Math.max(actorScale,Number.EPSILON);
           let above=m.spriteTop-overlayGap;
           if(intent&&!intent.hidden){intent.style.bottom='auto';intent.style.left=m.spriteCenter+'px';intent.style.transform='translateX(-50%)';above-=intent.offsetHeight;intent.style.top=above+'px';above-=overlayGap;}
-          if(info){info.style.bottom='auto';info.style.left=m.spriteCenter+'px';info.style.transform='translateX(-50%)';info.style.top=(above-info.offsetHeight)+'px';}
+          if(info){info.style.bottom='auto';info.style.left=m.spriteCenter+'px';info.style.transform='translateX(-50%)';info.style.top=Math.max(above-info.offsetHeight,m.foot+(inset-s.y)/actorScale)+'px';}
           m.actor.style.setProperty('--row-depth',1);m.actor.style.zIndex=String(presentation.zPriority);m.actor.style.transformOrigin='50% '+m.foot+'px';m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';m.actor.dataset.sharedBaseScale=String(scale);m.actor.dataset.presentationScale=String(actorScale);
+          // Expanded information may move upward; the sprite/shadow pivot stays fixed.
+          const detailParts=[...m.actor.querySelectorAll('.combatant-resources,.combatant-status,.combatant-nameplate')];
+          detailParts.forEach(part=>{part.style.position=part.classList.contains('combatant-nameplate')?part.style.position:'relative';part.style.translate='';});
+          if(m.selected){const detailBottom=Math.max(...detailParts.map(part=>part.getBoundingClientRect().bottom));const overflow=Math.max(0,detailBottom-(stage.bottom-(cfg().scene.detailEdgeInsetPx??4)));if(overflow)detailParts.forEach(part=>part.style.translate='0 '+(-overflow/actorScale)+'px');}
+
         }
       }
     };
@@ -135,14 +152,32 @@ function createComponentReferenceRenderers(configuration) {
     const observer=new ResizeObserver(schedule);observer.observe(n);const selectionObserver=new MutationObserver(schedule);band.querySelectorAll('.combatant-host').forEach(host=>selectionObserver.observe(host,{attributes:true,attributeFilter:['class']}));if(typeof statusObservers!=='undefined')statusObservers.push(observer,selectionObserver);schedule();return n;
   }
   function hand(mode){
-    const n=wrap('WGC5','cc-hand'),track=E('div','cc-hand-track');
-    for(const id of cfg().hand.fixtureIds)track.append(cardNative(id,mode));n.append(track);
+    const n=wrap('WGC5','cc-hand'),track=E('div','cc-hand-track'),hitLayer=E('div','cc-hand-hit-layer'),portal=E('button','cc-hand-info-portal','i');portal.type='button';portal.hidden=true;portal.setAttribute('aria-haspopup','dialog');document.body.append(portal);
+    for(const id of cfg().hand.fixtureIds)track.append(cardNative(id,mode));n.append(track,hitLayer);
     const keepExclusiveSelection=event=>{const selected=event.target.closest('.cardhost.selected');if(!selected||!track.contains(selected))return;for(const other of track.querySelectorAll('.cardhost.selected')){if(other===selected)continue;other.classList.remove('selected');other.querySelector('.cardbox')?.setAttribute('aria-pressed','false');const info=other.querySelector('.info');if(info){info.classList.remove('visible');info.tabIndex=-1;}}};
+    let portalFrame=false,disposed=false;
+    const placeInfo=()=>{portalFrame=false;if(!n.isConnected){portal.hidden=true;return;}const selected=track.querySelector('.cardhost.selected'),source=selected?.querySelector('.info'),box=selected?.querySelector('.cardbox');if(!source?.classList.contains('visible')||!box){portal.hidden=true;return;}const r=box.getBoundingClientRect(),clip=n.getBoundingClientRect();if(r.right<=clip.left||r.left>=clip.right){portal.hidden=true;return;}const rem=parseFloat(getComputedStyle(document.documentElement).fontSize),size=cfg().hand.infoHitSizePx??cfg().target.minRem*rem,gap=cfg().hand.infoGapPx??4;portal.style.setProperty('--cc-info-visual-size',(cfg().hand.infoVisualSizePx??28)+'px');portal.hidden=false;portal.setAttribute('aria-label',source.getAttribute('aria-label')||'Inspect selected card');portal.style.width=size+'px';portal.style.height=size+'px';portal.style.left=Math.max(size/2,Math.min(innerWidth-size/2,r.left+r.width/2))+'px';portal.style.top=Math.max(0,r.top-gap-size)+'px';portal.onclick=event=>{event.stopPropagation();source.click();};};
+    const scheduleInfo=()=>{if(disposed||portalFrame)return;portalFrame=true;requestAnimationFrame(placeInfo);};
+    const infoObserver=new MutationObserver(scheduleInfo);infoObserver.observe(track,{attributes:true,subtree:true,attributeFilter:['class']});
+    window.addEventListener('scroll',scheduleInfo,true);window.addEventListener('resize',scheduleInfo);
+    const announcement=E('span','cc-hand-announcement');announcement.setAttribute('aria-live','polite');n.append(announcement);
+    let layout={start:0,step:1},drag=null;
+    const reorder=(entry,hit,target)=>{const entries=[...track.children],from=entries.indexOf(entry);target=Math.max(0,Math.min(entries.length-1,target));if(from===target)return;entries.splice(from,1);entries.splice(target,0,entry);const hits=new Map([...hitLayer.children].map(h=>[h.dataset.instanceId,h]));for(const card of entries){track.append(card);hitLayer.append(hits.get(card.dataset.instanceId));}announcement.textContent='Card moved to position '+(target+1)+' of '+entries.length;fit();hit.focus({preventScroll:true});};
+    for(const [index,entry] of [...track.children].entries()){
+      const box=entry.querySelector('.cardbox'),hit=E('button','cc-hand-hit-strip'),instance='hand-card-'+index;entry.dataset.instanceId=instance;hit.dataset.instanceId=instance;hit.type='button';hit.dataset.cardIndex=index;if(box)box.tabIndex=-1;
+      hit.setAttribute('aria-label',(box?.getAttribute('aria-label')||'Select card')+'; '+instance);hit.setAttribute('aria-keyshortcuts','Alt+ArrowLeft Alt+ArrowRight');let suppressClick=false;
+      hit.onclick=event=>{event.stopPropagation();if(suppressClick){suppressClick=false;return;}box?.click();scheduleInfo();};
+      hit.onkeydown=event=>{if(event.altKey&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopPropagation();reorder(entry,hit,[...track.children].indexOf(entry)+(event.key==='ArrowRight'?1:-1));}};
+      hit.onpointerdown=event=>{if(event.button!==0)return;suppressClick=false;drag={entry,hit,id:event.pointerId,x:event.clientX,scroll:n.scrollLeft,index:[...track.children].indexOf(entry),active:false,target:0};hit.setPointerCapture(event.pointerId);};
+      hit.onpointermove=event=>{if(!drag||drag.hit!==hit||drag.id!==event.pointerId)return;const delta=event.clientX-drag.x;if(!drag.active&&Math.abs(delta)<(cfg().hand.reorderThresholdPx??8))return;drag.active=true;suppressClick=true;entry.classList.add('is-reordering');const r=n.getBoundingClientRect(),edge=cfg().hand.edgeScrollPx??24,scrollStep=cfg().hand.edgeScrollStepPx??12;if(event.clientX<r.left+edge)n.scrollLeft-=scrollStep;else if(event.clientX>r.right-edge)n.scrollLeft+=scrollStep;const offset=delta+n.scrollLeft-drag.scroll;entry.style.setProperty('--cc-hand-drag-x',offset+'px');drag.target=Math.max(0,Math.min(track.children.length-1,Math.round(drag.index+offset/layout.step)));hit.dataset.dropIndex=drag.target;scheduleInfo();};
+      const finish=event=>{if(!drag||drag.hit!==hit)return;const previous=drag;drag=null;entry.classList.remove('is-reordering');entry.style.removeProperty('--cc-hand-drag-x');delete hit.dataset.dropIndex;if(previous.active&&event.type!=='pointercancel')reorder(entry,hit,previous.target);if(hit.hasPointerCapture(event.pointerId))hit.releasePointerCapture(event.pointerId);scheduleInfo();};
+      hit.onpointerup=finish;hit.onpointercancel=finish;hitLayer.append(hit);
+    }
     n.addEventListener('dragstart',event=>event.preventDefault());
     n.addEventListener('click',keepExclusiveSelection);n.addEventListener('keydown',keepExclusiveSelection);
     let pending=false;
     const fit=()=>{if(!n.isConnected)return;const width=n.clientWidth,height=n.clientHeight;if(!width||!height)return;
-      const c=cfg(),hand={minCapacity:5,maxCapacity:15,narrowWidthRem:22,wideWidthRem:75,minCardWidthRem:5,maxCardWidthRem:9,minExposedTargetPx:44,selectedLiftRem:.5,minFontRem:.7,verticalInsetRem:.25,fanMaxDegrees:6,fanArchPx:8,bodyUpPx:10,...c.hand},rem=parseFloat(getComputedStyle(document.documentElement).fontSize),inset=(hand.horizontalInsetRem??0.625)*rem;
+      const c=cfg(),hand={minCapacity:5,maxCapacity:15,narrowWidthRem:22,wideWidthRem:75,minCardWidthRem:5,maxCardWidthRem:9,minExposedTargetPx:44,selectedLiftRem:1,minFontRem:.7,verticalInsetRem:.25,fanMaxDegrees:6,fanArchPx:8,bodyUpPx:10,...c.hand},rem=parseFloat(getComputedStyle(document.documentElement).fontSize),inset=(hand.horizontalInsetRem??0.625)*rem;
       const ratio=hand.cardAspectRatio.split('/').map(Number),aspect=ratio[0]/ratio[1],fanRadians=hand.fanMaxDegrees*Math.PI/180,rotationHeightFactor=(1+Math.cos(fanRadians)+aspect*Math.sin(Math.abs(fanRadians)))/2;
       const lift=hand.selectedLiftRem*rem,headroom=(hand.inspectRiseRem??1.75)*rem+lift,verticalInset=hand.verticalInsetRem*rem;
       const usableWidth=Math.max(0,width-inset*2),usableHeight=Math.max(0,Math.min(height-headroom-verticalInset*2,(height-headroom-verticalInset)/rotationHeightFactor));
@@ -161,13 +196,13 @@ function createComponentReferenceRenderers(configuration) {
       const scrolling=count>capacity&&extent+rotationExtraX*2>usableWidth;
       n.dataset.capacity=String(capacity);n.dataset.cardWidth=String(cardWidth);n.dataset.exposedTarget=String(Math.min(cardWidth,Math.max(0,step-rotationExtraX*2)));n.dataset.heightConstrained=String(constrained);n.setAttribute('aria-label',constrained?'Hand: allocated space is below the configured readable minimum':'Hand cards');
       n.classList.toggle('cc-hand-scroll',scrolling);n.style.setProperty('--cc-hand-active-order',count+1);n.style.setProperty('--cc-hand-selected-order',count+2);n.style.setProperty('--cc-hand-lift',lift+'px');n.style.setProperty('--cc-hand-info-rise',(hand.inspectRiseRem??1.75)+'rem');n.style.setProperty('--cc-hand-font-min',hand.minFontRem+'rem');
-      track.style.width=Math.max(width,extent+(inset+rotationExtraX)*2)+'px';track.style.height=height+'px';
-      const start=scrolling?inset+rotationExtraX:Math.max(inset+rotationExtraX,(width-extent)/2);
+      track.style.width=Math.max(width,extent+(inset+rotationExtraX)*2)+'px';track.style.height=height+'px';hitLayer.style.width=track.style.width;hitLayer.style.height=height+'px';
+      const start=scrolling?inset+rotationExtraX:Math.max(inset+rotationExtraX,(width-extent)/2);layout={start,step};
       const bodyTop=Math.max(headroom+verticalInset,Math.min(height-verticalInset-cardHeight-rotationExtraY,(height-cardHeight)/2-hand.bodyUpPx));
-      [...track.children].forEach((entry,index)=>{const t=count>1?index/(count-1)*2-1:0;entry.style.left=(start+index*step)+'px';entry.style.top=bodyTop+'px';entry.style.width=cardWidth+'px';entry.style.height=cardHeight+'px';entry.style.setProperty('--cc-hand-order',index);entry.style.setProperty('--cc-hand-angle',t*hand.fanMaxDegrees+'deg');entry.style.setProperty('--cc-hand-arch',(-hand.fanArchPx*(1-t*t))+'px');});
+      [...track.children].forEach((entry,index)=>{const t=count>1?index/(count-1)*2-1:0;entry.style.left=(start+index*step)+'px';entry.style.top=bodyTop+'px';entry.style.width=cardWidth+'px';entry.style.height=cardHeight+'px';entry.style.setProperty('--cc-hand-order',index);entry.style.setProperty('--cc-hand-angle',t*hand.fanMaxDegrees+'deg');entry.style.setProperty('--cc-hand-arch',(-hand.fanArchPx*(1-t*t))+'px');const hit=hitLayer.children[index];hit.dataset.cardIndex=index;hit.style.left=(start+index*step)+'px';hit.style.top=Math.max(0,bodyTop-lift)+'px';hit.style.width=(index===count-1?cardWidth:Math.min(cardWidth,step))+'px';hit.style.height=Math.min(height-Math.max(0,bodyTop-lift),cardHeight+lift)+'px';});scheduleInfo();
     };
     const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;fit();});};
-    const observer=new ResizeObserver(schedule);observer.observe(n);if(typeof statusObservers!=='undefined')statusObservers.push(observer);schedule();return n;
+    const observer=new ResizeObserver(schedule);observer.observe(n);const cleanup={disconnect(){disposed=true;observer.disconnect();infoObserver.disconnect();window.removeEventListener('scroll',scheduleInfo,true);window.removeEventListener('resize',scheduleInfo);portal.remove();}};if(typeof statusObservers!=='undefined')statusObservers.push(cleanup);schedule();return n;
   }
   function footerControl(id){if(id==="WGC11" && typeof hudPotionMarkup==="function"){const n=wrap(id,"cc-potions-control");n.innerHTML=hudStyleSheet()+hudPotionMarkup(hudDefaultConfig(),true);n.addEventListener("click",e=>{const b=e.target.closest("[data-hud-item]");if(b)signal(n,"Selected "+b.dataset.hudItem+". Target and confirmation belong to the host.");});return n;}const sample=cfg().samples.footer;const labels={WGC7:`${sample.actions} Actions`,WGC8:`Draw ${sample.draw}`,WGC9:'End turn',WGC10:`Discard ${sample.discard} / ${sample.exhaust}`,WGC11:`${sample.potions} Potions`};const large=['WGC7','WGC9','WGC11'].includes(id);const b=button(id,labels[id],(large?'large ':'small ')+(id==='WGC7'||id==='WGC11'?'round':''));if(id==='WGC9'&&sample.actions===0)b.classList.add('primary');return b;}
   function footer(){

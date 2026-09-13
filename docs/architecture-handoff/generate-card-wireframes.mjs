@@ -8,7 +8,7 @@ const root=dirname(fileURLToPath(import.meta.url));
 const cards=[];
 function card(id,parent,name,tags,fields,action,extra){cards.push({id,parent,name,tags,fields,action,extra});}
 card('WC0',null,'Master card',['presentable:card'],['{Registered content slots}','{Availability / reason}'],'Context action','All structural and optional components are resolved by validated tag rules. No label-based construction.');
-card('WC1','WC0','Playing card',['card-kind:playing'],['Cost / targeting','Effects / rules'],'Select / Play','Inherits card identity/art/tags; adds cost, targeting, and effect components.');
+card('WC1','WC0','Playing card',['card-kind:playing'],['Targeting','Effects / rules'],'Select / Play','Inherits card identity/art/tags; adds a compact left-edge cost stack below the header inside the art containing every projected action/stamina/MP cost, followed by targeting and effect components. Costs come from playingCardModel.costs in src/model/playingCard.js; renderer does not calculate or invent costs.');
 card('WC1a','WC1','Attack card',['ability:attack'],['Damage / affected stat','Target and effect preview'],'Select / Play','Use engine damage preview, including current modifiers; never calculate damage in renderer.');
 card('WC1b','WC1','Skill card',['ability:skill'],['Defense / utility effects','Target / requirements'],'Select / Play','The effect list is projected from the existing opcode/formula engine.');
 card('WC1c','WC1','Power card',['ability:power'],['Persistent effect','Trigger / duration'],'Select / Play','Persistent rules shown through registered trigger/duration components.');
@@ -53,8 +53,9 @@ function frame(c,mode){
 
  const width={wide:30,compact:26,portrait:24}[mode];const out=[' '.repeat(Math.floor((width+4-3)/2))+'(i)'+' '.repeat(Math.ceil((width+4-3)/2)), '┌'+'─'.repeat(width+2)+'┐'];
  const emit=text=>{let s=text;while(s.length>width){let i=s.lastIndexOf(' ',width);if(i<1)i=width;out.push('│ '+s.slice(0,i).padEnd(width)+' │');s=s.slice(i).trimStart();}out.push('│ '+s.padEnd(width)+' │');};
- emit('{Name}'+' '.repeat(width-6-12)+'{Cost/state}');out.push('├'+'─'.repeat(width+2)+'┤');
- emit('');emit('[Art / portrait]');emit('{Meaningful tag badges}');out.push('├'+'─'.repeat(width+2)+'┤');
+ const playing=c.id.startsWith('WC1');
+ emit('{Name}');out.push('├'+'─'.repeat(width+2)+'┤');
+ emit(playing?'◆ x   [Art / portrait]':'[Art / portrait]');emit(playing?'ϟ x   optional stamina':'');if(playing)emit('♢ x   optional MP');emit('{Meaningful tag badges}');out.push('├'+'─'.repeat(width+2)+'┤');
  c.fields.forEach(emit);emit('{Blocker if needed}');out.push('├'+'─'.repeat(width+2)+'┤');
  let label='Rarity       Owned: n';const spaces=width-2-label.length;
  if(spaces<0)throw new Error('Action too long');emit('['+' '.repeat(Math.floor(spaces/2))+label+' '.repeat(Math.ceil(spaces/2))+']');
@@ -83,6 +84,7 @@ function sizes(c,mode){
 
  // Card-local dimensions preserve one ratio in every viewport; vw/vh are host inputs only.
  const rows=[['frame','clamp(config.cards.geometry.widthMinimum, config.cards.geometry.widthPreferred, config.cards.geometry.widthMaximum)','resolved width × config.cards.geometry.ratioHeight / config.cards.geometry.ratioWidth','Uniform card envelope'],['header','100% card width','config.cards.geometry.bands.header% of card height','Name left; state right'],['header.title','remaining header width','100% header height','Top-left'],['header.state','content-fit','100% header height','Top-right if applicable'],['art','100% card width','config.cards.geometry.bands.art% of card height','Contain artwork; never stretch'],['art.tags','available art width minus shared inset','content-fit within art band','Meaningful tags bottom-left'],['body','100% card width','config.cards.geometry.bands.body% of card height','Shared fact rows; scroll only when required'],['footer','100% card width','config.cards.geometry.bands.footer% of card height','Metadata only'],['footer.metadata','available footer width minus shared inset','100% usable footer height','Rarity left; owned count right']];
+ if(c.id.startsWith('WC1'))rows.push(['costs','config.cards.costs.railWidthRem','content-fit from active projected costs','Art top-left at configured header band plus inset; outlined icon and number only, no boxes; action/stamina/MP stack remains exposed in a fanned hand']);
  c.fields.forEach((field,i)=>rows.push(['body.detail'+(i+1),'100% usable body width','content-fit within body band',field]));
  rows.push(['body.blocker','100% usable body width','content-fit within body band','Omit when absent'],['selection.outline','100% card width','100% card height','Shared owner selection glow'],['selection.info','config.components.target.minRem','config.components.target.minRem','Centered above owner; outside ratio envelope']);
  return '| Component ID | Width | Height | Relative to | Anchor | Align X / Y | Positioning | Offset / gap | Content / ownership |\n|---|---|---|---|---|---|---|---|---|\n'+rows.map(([slot,width,height,note])=>'| '+c.id+'.'+slot+' | '+width+' | '+height+' | '+positioning(c.id,slot,mode,note).map(value=>value.replace(/[0-9.]+vw/g,'shared inset token')).join(' | ')+' | '+note+' |').join('\n')+'\n\n';
@@ -136,6 +138,10 @@ FUNCTION ConstructCard(input):
     REQUIRE no unresolved exclusive-slot collision
     providers = ResolveAllowlistedProviders(components)
     model = ProjectImmutableValues(providers, definition, stateFacts)
+    // Read the authoritative cost projection; variable action cost uses the configured X label.
+    model.costs = ProjectRegisteredCostProfile(stateFacts, definition)
+    costRows = FilterAndOrderProjectedCosts(model.costs, config.cards.costs.order, config.cards.costs.providers)
+    RenderCompactLeftCostRail(costRows, config.cards.costs, top=ResolveHeaderBandHeight(config.cards.geometry) + ResolveInset(config.cards.costs.insetRem)) // Anchor below header inside art; render outlined icon and number only, no box/background.
     model.actions = DomainAvailableCommands(context, entityRef) // owning host only
     RETURN model with named slots and semantic actions
 

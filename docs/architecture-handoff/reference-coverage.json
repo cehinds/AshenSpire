@@ -18,7 +18,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -123,7 +124,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -228,7 +230,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -333,7 +336,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -522,6 +526,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -541,7 +547,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -560,6 +566,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -575,7 +587,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -744,7 +756,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -926,6 +939,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -945,7 +960,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -964,6 +979,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -979,7 +1000,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -1150,7 +1171,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -1339,6 +1361,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -1358,7 +1382,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -1377,6 +1401,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -1392,7 +1422,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -1561,7 +1591,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -1750,6 +1781,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -1769,7 +1802,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -1788,6 +1821,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -1803,7 +1842,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -1972,7 +2011,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -2161,6 +2201,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -2180,7 +2222,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -2199,6 +2241,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -2214,7 +2262,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -2383,7 +2431,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -2572,6 +2621,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -2591,7 +2642,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -2610,6 +2661,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -2625,7 +2682,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -2799,7 +2856,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -2981,6 +3039,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -3000,7 +3060,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -3019,6 +3079,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -3034,7 +3100,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -3203,7 +3269,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -3385,6 +3452,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -3404,7 +3473,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -3423,6 +3492,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -3438,7 +3513,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -3613,7 +3688,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -3795,6 +3871,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -3814,7 +3892,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -3833,6 +3911,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -3848,7 +3932,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -4022,7 +4106,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -4204,6 +4289,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -4223,7 +4310,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -4242,6 +4329,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -4257,7 +4350,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -4426,7 +4519,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -4608,6 +4702,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -4627,7 +4723,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -4646,6 +4742,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -4661,7 +4763,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -4834,7 +4936,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -5016,6 +5119,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -5035,7 +5140,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -5054,6 +5159,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -5069,7 +5180,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -5238,7 +5349,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -5420,6 +5532,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -5439,7 +5553,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -5458,6 +5572,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -5473,7 +5593,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -5642,7 +5762,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -5824,6 +5945,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -5843,7 +5966,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -5862,6 +5985,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -5877,7 +6006,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -6046,7 +6175,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -6228,6 +6358,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -6247,7 +6379,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -6266,6 +6398,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -6281,7 +6419,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -6457,7 +6595,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -6639,6 +6778,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -6658,7 +6799,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -6677,6 +6818,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -6692,7 +6839,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -6861,7 +7008,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -7043,6 +7191,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -7062,7 +7212,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -7081,6 +7231,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -7096,7 +7252,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -7267,7 +7423,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -7449,6 +7606,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -7468,7 +7627,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -7487,6 +7646,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -7502,7 +7667,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -7673,7 +7838,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -7855,6 +8021,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -7874,7 +8042,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -7893,6 +8061,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -7908,7 +8082,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -8077,7 +8251,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -8259,6 +8434,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -8278,7 +8455,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -8297,6 +8474,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -8312,7 +8495,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -8481,7 +8664,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -8663,6 +8847,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -8682,7 +8868,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -8701,6 +8887,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -8716,7 +8908,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -8887,7 +9079,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -9069,6 +9262,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -9088,7 +9283,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -9107,6 +9302,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -9122,7 +9323,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -9297,7 +9498,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -9479,6 +9681,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -9498,7 +9702,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -9517,6 +9721,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -9532,7 +9742,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -9701,7 +9911,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -9883,6 +10094,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -9902,7 +10115,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -9921,6 +10134,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -9936,7 +10155,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -10105,7 +10324,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -10287,6 +10507,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -10306,7 +10528,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -10325,6 +10547,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -10340,7 +10568,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -10511,7 +10739,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -10693,6 +10922,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -10712,7 +10943,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -10731,6 +10962,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -10746,7 +10983,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -10917,7 +11154,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -11099,6 +11337,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -11118,7 +11358,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -11137,6 +11377,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -11152,7 +11398,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -11323,7 +11569,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -11505,6 +11752,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -11524,7 +11773,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -11543,6 +11792,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -11558,7 +11813,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -11729,7 +11984,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -11911,6 +12167,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -11930,7 +12188,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -11949,6 +12207,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -11964,7 +12228,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -12133,7 +12397,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -12315,6 +12580,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -12334,7 +12601,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -12353,6 +12620,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -12368,7 +12641,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -12546,6 +12819,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -12728,6 +13002,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -12747,7 +13023,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -12766,6 +13042,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -12781,7 +13063,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -12959,6 +13241,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -13141,6 +13424,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -13160,7 +13445,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -13179,6 +13464,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -13194,7 +13485,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -13369,6 +13660,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -13551,6 +13843,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -13570,7 +13864,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -13589,6 +13883,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -13604,7 +13904,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -13779,6 +14079,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -13961,6 +14262,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -13980,7 +14283,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -13999,6 +14302,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -14014,7 +14323,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -14189,6 +14498,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -14371,6 +14681,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -14390,7 +14702,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -14409,6 +14721,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -14424,7 +14742,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -14599,6 +14917,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -14781,6 +15100,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -14800,7 +15121,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -14819,6 +15140,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -14834,7 +15161,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -15013,6 +15340,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -15202,6 +15530,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -15221,7 +15551,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -15240,6 +15570,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -15255,7 +15591,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -15428,6 +15764,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -15617,6 +15954,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -15636,7 +15975,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -15655,6 +15994,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -15670,7 +16015,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -15845,6 +16190,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -16034,6 +16380,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -16053,7 +16401,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -16072,6 +16420,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -16087,7 +16441,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -16262,6 +16616,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -16451,6 +16806,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -16470,7 +16827,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -16489,6 +16846,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -16504,7 +16867,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -16679,6 +17042,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -16868,6 +17232,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -16887,7 +17253,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -16906,6 +17272,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -16921,7 +17293,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -17097,6 +17469,7 @@
         "component-completion.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -17286,6 +17659,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -17305,7 +17680,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -17324,6 +17699,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -17339,7 +17720,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -17509,7 +17890,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -17650,7 +18032,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -17814,7 +18197,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -17956,7 +18340,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18102,7 +18487,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18250,7 +18636,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18380,7 +18767,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18521,7 +18909,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18663,7 +19052,8 @@
       "styles": [
         "hud-reference-client.js#hudStyleSheet",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18810,7 +19200,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -18985,6 +19376,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -19004,7 +19397,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -19023,6 +19416,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -19038,7 +19437,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -19210,7 +19609,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -19385,6 +19785,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -19404,7 +19806,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -19423,6 +19825,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -19438,7 +19846,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -19607,7 +20015,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -19782,6 +20191,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -19801,7 +20212,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -19820,6 +20231,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -19835,7 +20252,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -20006,7 +20423,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -20181,6 +20599,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -20200,7 +20620,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -20219,6 +20639,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -20234,7 +20660,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -20405,7 +20831,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -20580,6 +21007,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -20599,7 +21028,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -20618,6 +21047,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -20633,7 +21068,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -20802,7 +21237,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -20977,6 +21413,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -20996,7 +21434,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -21015,6 +21453,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -21030,7 +21474,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -21201,7 +21645,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -21376,6 +21821,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -21395,7 +21842,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -21414,6 +21861,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -21429,7 +21882,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -21600,7 +22053,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -21775,6 +22229,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -21794,7 +22250,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -21813,6 +22269,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -21828,7 +22290,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -22003,7 +22465,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -22104,7 +22567,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -22204,7 +22668,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -22304,7 +22769,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -22404,7 +22870,8 @@
       "styles": [
         "progression-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -22510,7 +22977,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -22699,6 +23167,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -22718,7 +23188,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -22737,6 +23207,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -22752,7 +23228,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -22925,7 +23401,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -23114,6 +23591,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -23133,7 +23612,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -23152,6 +23631,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -23167,7 +23652,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -23338,7 +23823,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -23527,6 +24013,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -23546,7 +24034,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -23565,6 +24053,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -23580,7 +24074,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -23751,7 +24245,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -23940,6 +24435,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -23959,7 +24456,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -23978,6 +24475,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -23993,7 +24496,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -24164,7 +24667,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -24353,6 +24857,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -24372,7 +24878,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -24391,6 +24897,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -24406,7 +24918,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -24575,7 +25087,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -24764,6 +25277,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -24783,7 +25298,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -24802,6 +25317,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -24817,7 +25338,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -24988,7 +25509,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -25177,6 +25699,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -25196,7 +25720,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -25215,6 +25739,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -25230,7 +25760,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -25401,7 +25931,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -25590,6 +26121,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -25609,7 +26142,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -25628,6 +26161,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -25643,7 +26182,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -25814,7 +26353,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -26003,6 +26543,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -26022,7 +26564,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -26041,6 +26583,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -26056,7 +26604,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -26228,7 +26776,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -26410,6 +26959,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -26429,7 +26980,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -26448,6 +26999,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -26463,7 +27020,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -26635,7 +27192,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -26817,6 +27375,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -26836,7 +27396,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -26855,6 +27415,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -26870,7 +27436,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -27041,7 +27607,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -27223,6 +27790,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -27242,7 +27811,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -27261,6 +27830,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -27276,7 +27851,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -27447,7 +28022,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -27629,6 +28205,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -27648,7 +28226,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -27667,6 +28245,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -27682,7 +28266,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -27854,7 +28438,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -28036,6 +28621,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -28055,7 +28642,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -28074,6 +28661,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -28089,7 +28682,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -28260,7 +28853,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -28442,6 +29036,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -28461,7 +29057,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -28480,6 +29076,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -28495,7 +29097,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -28664,7 +29266,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -28846,6 +29449,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -28865,7 +29470,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -28884,6 +29489,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -28899,7 +29510,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -29070,7 +29681,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -29252,6 +29864,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -29271,7 +29885,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -29290,6 +29904,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -29305,7 +29925,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -29474,7 +30094,8 @@
       "styles": [
         "component-completion.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -29656,6 +30277,8 @@
         "anchorXFraction": 0.5
       },
       "scene": {
+        "detailEdgeInsetPx": 4,
+        "baselineInsetPx": 4,
         "minimumSpriteHeightPx": 92,
         "selectionDetailReserveRem": 4.5,
         "groundContactDepthFraction": 0.3,
@@ -29675,7 +30298,7 @@
       "combatantLegibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -29694,6 +30317,12 @@
         "minimumHeightPx": 56
       },
       "hand": {
+        "infoVisualSizePx": 28,
+        "infoHitSizePx": 44,
+        "infoGapPx": 4,
+        "reorderThresholdPx": 8,
+        "edgeScrollPx": 24,
+        "edgeScrollStepPx": 12,
         "horizontalInsetRem": 0.625,
         "inspectRiseRem": 0.5,
         "fanMaxDegrees": 2.5,
@@ -29709,7 +30338,7 @@
         "minCardWidthRem": 5,
         "maxCardWidthRem": 9,
         "minExposedTargetPx": 44,
-        "selectedLiftRem": 0.5,
+        "selectedLiftRem": 1,
         "cardWidthRem": 7,
         "cardAspectRatio": "5 / 8",
         "gapRem": 0.2,
@@ -29881,7 +30510,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -29989,7 +30619,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30097,7 +30728,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30205,7 +30837,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30314,7 +30947,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30423,7 +31057,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30532,7 +31167,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30642,7 +31278,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30762,7 +31399,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30882,7 +31520,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -30993,7 +31632,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31110,7 +31750,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31219,7 +31860,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31329,7 +31971,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31439,7 +32082,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31550,7 +32194,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31661,7 +32306,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31771,7 +32417,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31881,7 +32528,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -31992,7 +32640,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32102,7 +32751,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32214,7 +32864,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32333,7 +32984,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32441,7 +33093,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32550,7 +33203,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32661,7 +33315,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32771,7 +33426,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32882,7 +33538,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -32995,7 +33652,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33113,7 +33771,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33222,7 +33881,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33331,7 +33991,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33440,7 +34101,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33549,7 +34211,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33658,7 +34321,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33765,7 +34429,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33872,7 +34537,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -33979,7 +34645,8 @@
       "styles": [
         "screen-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -34114,7 +34781,8 @@
         "component-completion.css",
         "scene-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -34429,6 +35097,7 @@
         "scene-reference.css",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -34736,7 +35405,8 @@
         "component-completion.css",
         "scene-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -35039,7 +35709,8 @@
         "component-completion.css",
         "scene-reference.css",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -35322,7 +35993,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -35378,6 +36050,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -35506,7 +36221,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -35562,6 +36278,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -35690,7 +36449,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -35746,6 +36506,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -35874,7 +36677,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -35930,6 +36734,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -36058,7 +36905,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -36114,6 +36962,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -36242,7 +37133,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -36298,6 +37190,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -36426,7 +37361,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -36482,6 +37418,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -36610,7 +37589,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -36666,6 +37646,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -36794,7 +37817,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -36850,6 +37874,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -36978,7 +38045,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -37034,6 +38102,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -37162,7 +38273,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -37218,6 +38330,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -37346,7 +38501,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -37402,6 +38558,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -37530,7 +38729,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -37586,6 +38786,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -37714,7 +38957,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -37770,6 +39014,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -37898,7 +39185,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -37954,6 +39242,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -38082,7 +39413,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -38138,6 +39470,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -38266,7 +39641,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -38322,6 +39698,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -38450,7 +39869,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -38506,6 +39926,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -38634,7 +40097,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -38690,6 +40154,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -38818,7 +40325,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -38874,6 +40382,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -39002,7 +40553,8 @@
       "styles": [
         "wireframe-gallery-template.html#style",
         "exit-component.css",
-        "combatant-legibility.css"
+        "combatant-legibility.css",
+        "card-costs.css"
       ]
     },
     "references": [
@@ -39058,6 +40610,49 @@
       "interaction": {
         "inspectDelayMs": 1000,
         "tooltipDelayMs": 1000
+      },
+      "costs": {
+        "order": [
+          "action",
+          "stamina",
+          "mana"
+        ],
+        "showZero": false,
+        "railWidthRem": 1.8,
+        "insetRem": 0.15,
+        "gapRem": 0.1,
+        "fontRem": 0.75,
+        "iconSizeRem": 0.8,
+        "outlineColor": "#120e09",
+        "variableLabel": "X",
+        "providers": {
+          "action": {
+            "label": "Actions",
+            "glyph": "◆",
+            "icon": "diamond",
+            "color": "#d1aa60"
+          },
+          "stamina": {
+            "label": "Stamina",
+            "glyph": "ϟ",
+            "icon": "bolt",
+            "color": "#88b96d"
+          },
+          "mana": {
+            "label": "MP",
+            "glyph": "♦",
+            "icon": "droplet",
+            "color": "#79bcec"
+          }
+        },
+        "sampleOverrides": {
+          "WC1b": {
+            "stamina": 2
+          },
+          "WC1c": {
+            "mana": 3
+          }
+        }
       },
       "metadata": {
         "ownedLabel": "Owned",
@@ -39199,6 +40794,7 @@
         "wireframe-gallery-template.html#style",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -39295,7 +40891,7 @@
       "legibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -39349,6 +40945,7 @@
         "wireframe-gallery-template.html#style",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -39445,7 +41042,7 @@
       "legibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -39499,6 +41096,7 @@
         "wireframe-gallery-template.html#style",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -39595,7 +41193,7 @@
       "legibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
@@ -39649,6 +41247,7 @@
         "wireframe-gallery-template.html#style",
         "exit-component.css",
         "combatant-legibility.css",
+        "card-costs.css",
         "combatant-legibility.css"
       ]
     },
@@ -39745,7 +41344,7 @@
       "legibility": {
         "intentRowMinPx": 22,
         "valueFontMinPx": 13.2,
-        "infoVisualScale": 0.8,
+        "infoVisualScale": 0.64,
         "infoSizePx": 44,
         "infoFontPx": 16,
         "barMinWidthPx": 0,
