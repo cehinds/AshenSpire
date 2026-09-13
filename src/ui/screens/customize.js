@@ -38,7 +38,7 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
-import { relicText, renderCard } from '../components/card.js';
+import { relicText, renderCard, scheduleCardFits } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
@@ -750,7 +750,25 @@ export function mountCustomize(app, {
             : 'Adds no combat cards with the other hand as it stands';
           const fold = el('details', { class: 'cc-starting-fold' });
           if (packageOpen.get(section.id)) fold.open = true;
-          fold.addEventListener('toggle', () => packageOpen.set(section.id, fold.open));
+          // A CARD MEASURED WHILE HIDDEN WAS NEVER MEASURED. renderCard schedules
+          // its one fit for the next frame, and inside a closed `<details>` that
+          // frame reads zeros — so `data-name`, `data-tag-rows` and above all
+          // `data-truncated` are written from nothing, and only an unrelated
+          // resize or a font load ever corrects them.
+          //
+          // MEASURED at 390x844 on opening the fold: all four faces read
+          // tag-rows 1 / truncated false. Forcing a re-fit at their real 90px
+          // width turns three of them to tag-rows 2 and flips ONE to truncated
+          // — a card whose text is clipped, wearing no chevron. That chevron is
+          // the whole affordance #987 and #998 exist for.
+          //
+          // So the fold asks for the fit when it opens. This is the same
+          // zero-rect trap that made an earlier probe of mine report a hidden
+          // button as on-screen, and that the equipment QA was walking into.
+          fold.addEventListener('toggle', () => {
+            packageOpen.set(section.id, fold.open);
+            if (fold.open && preview.cards.length) scheduleCardFits(grid.querySelectorAll('.card'));
+          });
           fold.append(
             el('summary', { class: 'cc-starting-summary' }, [
               el('b', { text: summary }),
