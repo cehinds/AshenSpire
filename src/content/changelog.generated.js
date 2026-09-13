@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1003",
-    "date": "2026-09-12",
-    "group": "2026-09-12",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
     "summary": "Choosing a weapon at character creation no longer buries the Continue button",
     "detail": "On a phone, opening a hand to pick an armament used to draw every combat card that armament gives you at full size, one after another, between the weapon you were looking at and the button that moves you on — almost four screens of scrolling to get back. Those cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\"); tap it to see them, and they are drawn small. That alone removes about two fifths of the scrolling. The Continue button at the end of each creation step now stays pinned to the bottom of the view instead of sitting at the end of everything, so it is always within reach once you have chosen.",
-    "build": "0.7.1.12",
+    "build": "0.7.1.13",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-1005",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "A written reference for how every screen is laid out",
+    "detail": "Nothing a player sees changes, and nothing in the game was rebuilt — this is documentation only, which is why it shares the previous build's stamp. The repository now carries a handoff describing the shell every screen is built from: where a title, an exit, a Back and a primary button sit; how a window, a confirmation, the main menu and an encounter differ from that shell and from each other; and what each part of a screen is allowed to take up at wide, compact and phone widths. It comes with a browsable gallery of those drawings and a check that the gallery and the written catalogue agree. The receipt is written here after the fact: the merge landed without one, which the project's own check caught on the next promotion.",
+    "build": "0.7.1.11",
+    "pullRequest": 1005,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1005"
   },
   {
     "id": "pr-1002",
