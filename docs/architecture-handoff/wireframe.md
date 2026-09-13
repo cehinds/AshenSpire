@@ -13054,7 +13054,7 @@ ON selectionChanged(selected):
     CancelPendingInfoTimerAndFade(); generation = NextSelectionGeneration()
     IF selected:
         ApplySharedSelectionOutline(); LiftVisuallyWithoutReflow()
-        owningHost.ShowContextAction(); HighlightDomainEligibleTargets()
+        IF cardKind is not combatant: owningHost.ShowApplicableContextAction(); HighlightDomainEligibleTargets()
         DisableCommitUntilRequiredTargetIsSelected()
         After(config.infoDelayMs = config.referenceTokens.value_1000.value):
             IF stillSelected AND mounted AND generationIsCurrent:
@@ -24609,7 +24609,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project domain action and readiness. Omit absent actions. Resolve the named width preset through config.buttonWidths.presets; choice controls use config.buttonWidths.choice, default half. Sibling actions share an equal gap-aware width; sole footer action spans the entire footer content width. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer. Compact HUD and packed combat-footer contexts retain their declared geometry exceptions.
+// Project domain action and readiness for applicable item and playing cards. Combatants do not own this host action: inspection uses delayed WCB1 and target selection uses the combatant itself. Omit absent actions. Resolve the named width preset through config.buttonWidths.presets; choice controls use config.buttonWidths.choice, default half. Sibling actions share an equal gap-aware width; sole footer action spans the entire footer content width. Await required target when applicable; revalidate once on commit. Never place Use inside metadata footer. Compact HUD and packed combat-footer contexts retain their declared geometry exceptions.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 
@@ -27524,7 +27524,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Observe owner selection once. Apply inherited glow to the entire visible assembly, including the active lower stack. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal.
+// Observe owner selection once. Apply inherited glow to the entire visible assembly, including the active lower stack. Reveal inspect after config.selection.revealDelayMs. Cancel pending reveal on deselection and disposal. Combatant selection exposes only the delayed inspect control; never create a separate Inspect or Eligible target action underneath. Clear stale item-card action UI when selecting a combatant.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -37633,7 +37633,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Use domain-eligible entity IDs for hit regions and keyboard navigation. Highlight eligible and selected targets without selecting impossible targets. Clear stale selection on model change.
+// Use domain-eligible entity IDs for hit regions and keyboard navigation. Highlight eligible and selected targets without selecting impossible targets. Clear stale selection on model change. Use the combatant hit region itself, never an additional Eligible target demo button.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)

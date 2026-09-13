@@ -207,7 +207,7 @@ ON selectionChanged(selected):
     CancelPendingInfoTimerAndFade(); generation = NextSelectionGeneration()
     IF selected:
         ApplySharedSelectionOutline(); LiftVisuallyWithoutReflow()
-        owningHost.ShowContextAction(); HighlightDomainEligibleTargets()
+        IF cardKind is not combatant: owningHost.ShowApplicableContextAction(); HighlightDomainEligibleTargets()
         DisableCommitUntilRequiredTargetIsSelected()
         After(config.infoDelayMs = config.referenceTokens.value_1000.value):
             IF stillSelected AND mounted AND generationIsCurrent:
