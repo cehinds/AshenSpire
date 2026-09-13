@@ -71,6 +71,7 @@ import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../compo
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { wireCombatLayout } from '../components/combatLayout.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
@@ -172,6 +173,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+  const combatLayout = wireCombatLayout(combatEl);
   let playerRest = 'idle';
   let readinessOrder = [];
   let visualPlans = new Map();
@@ -2201,6 +2203,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         enemyFrames.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
+        combatLayout.release();
         aimObserver?.disconnect();
         clearCardFeedback();
         pagerVeilObserver.disconnect();
