@@ -3608,6 +3608,22 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation'] .combatant .meters .bar.hp {
   height: max(.85rem, calc(14px / var(--ui-zoom, 1)));
 }
+/* WCM0: row heights from combatantMeterGeometry (the combat layout adapter).
+   HP carries the compact current/maximum at the value-text size; a secondary
+   or buildup row is too short for readable numbers, so its exact values live
+   in its tooltip and the inspector. Stance is a strip the size of HP. */
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters { gap: var(--combatant-meter-gap, calc(3px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .bar { height: var(--combatant-secondary-h, calc(10px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .bar { height: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .m-value { font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1; }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters [data-meter-row='resource'] .m-plate { display: none; }
+:root .combat[data-layout='formation']:not(.coop) .combatant .stance-chip[data-meter-row='stance'] {
+  display: flex; align-items: center; justify-content: center; gap: .25rem; box-sizing: border-box;
+  width: 100%; height: var(--combatant-stance-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); min-height: 0;
+  padding: 0 .3rem; border-radius: 3px; font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1;
+}
+/* Rows the configured list keeps for the selected combatant only. */
+:root .combat[data-layout='formation']:not(.coop) .combatant:not(.context-selected) [data-selected-only='true'] { display: none; }
 .card-inspection-modal .card-inspection-layout {
   display: grid; grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
   min-height: 0; height: 100%; gap: 2%; padding: 1rem;
@@ -3620,7 +3636,9 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .card-inspection-modal .card-inspection-details { min-height: 0; overflow-y: auto; overflow-x: hidden; }
 :root .combat[data-layout='formation'] .combatant .combatant-info { visibility: hidden; pointer-events: none; }
 :root .combat[data-layout='formation'] .combatant[data-inspect-ready='true'] .combatant-info { visibility: visible; pointer-events: auto; }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
+/* Solo combat reads the configured selected-only list (WCM0, data-selected-only);
+   co-op keeps its name-only rule. */
+:root .combat.coop[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
 :root .combat[data-layout='formation'] .combatant .sprite > .block-badge {
   right: auto; left: calc(100% + .5rem); top: 12%; bottom: auto; transform: translateY(-50%);
 }
