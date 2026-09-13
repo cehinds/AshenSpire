@@ -115,6 +115,37 @@ Limits:
   header; narrowing them means redesigning the shared HUD.
 - The zoom bar's ⊙ remains beside the footer's Recenter (the co-op map shares
   that bar).
+## Rewards claim status
+
+Branch `feature/wireframe-rewards`, based on dev `3c72a6df`. W1t's
+`{Status}` and claim-status regions now come from one model function,
+`rewardClaimStatus(plan, states)` in `src/model/rewardplan.js`, beside the
+reward menu it describes.
+
+- The reward door's head shows "{claimed} of {total} claimed", using the
+  shared `modal-head-status` slot that the piles viewer uses.
+- The body pairs the reward choices with a claim-status column. The column
+  lists every row as Taken, Skipped, Full (blocked), or Available. When a
+  card choice is still waiting, it adds "Required choice", an optional slot
+  that collapses otherwise. The two columns sit side by side on wide hosts
+  and stack on narrow hosts, as W1t specifies.
+- The new wording lives in `uiStrings.csv` (`reward.status.claimed`,
+  `reward.claim.heading`, `reward.state.available`,
+  `reward.claim.required`).
+- Select-then-confirm for card offers, and Back/primary footers, were
+  already in place and are unchanged.
+
+Browser evidence (emulation):
+- At 1280×800 the columns sit side by side and the head reads "2 of 6
+  claimed". After a card is chosen it reads "3 of 6 claimed" and the
+  required-choice line disappears.
+- At 390×844 the claim column stacks after the rewards with no horizontal
+  scroll.
+
+Limits: the reward door keeps its medium modal width over the battlefield
+rather than W1t's 95vw frame, so each wide column is narrow. On Windows,
+`tools/uistrings.mjs --check` reports 124 files as changed. The cause is
+backslash versus forward-slash paths; the check is not run in CI.
 ## Combatant lower stack
 
 Branch `feature/wireframe-combatant-stack`, based on dev `3c72a6df`. WCF2 now
