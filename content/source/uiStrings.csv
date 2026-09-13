@@ -120,6 +120,12 @@ shop.sell.confirm,,SELL IT,Hand it over for cinders.,
 # ---- the custom climb -----------------------------------------------------
 customRun.seat.group,,First seat,Which seat the climb opens in.,
 customRun.seat.seeded,,Seeded,The seed decides which seat the climb opens in.,
+# ---- settings (W1a) -------------------------------------------------------
+settings.title,,Settings,,
+settings.close,,Close Settings,,
+settings.done,,Done,Close Settings; every change is already saved.,
+settings.nav.sections,,Settings sections,The settings categories; one is shown at a time.,
+settings.nav.selector,,Settings section: {section},Show the list of settings sections.,Choose a section
 # ---- the combatant inspector (W1w) ----------------------------------------
 inspector.section.summary,,Summary,,
 inspector.section.state,,Current state,,

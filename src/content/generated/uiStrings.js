@@ -605,6 +605,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.title",
+    "extends": "",
+    "short": "Settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.close",
+    "extends": "",
+    "short": "Close Settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.done",
+    "extends": "",
+    "short": "Done",
+    "full": "Close Settings; every change is already saved.",
+    "tip": ""
+  },
+  {
+    "id": "settings.nav.sections",
+    "extends": "",
+    "short": "Settings sections",
+    "full": "The settings categories; one is shown at a time.",
+    "tip": ""
+  },
+  {
+    "id": "settings.nav.selector",
+    "extends": "",
+    "short": "Settings section: {section}",
+    "full": "Show the list of settings sections.",
+    "tip": "Choose a section"
+  },
+  {
     "id": "inspector.section.summary",
     "extends": "",
     "short": "Summary",

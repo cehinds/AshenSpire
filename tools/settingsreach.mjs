@@ -86,7 +86,11 @@ const READ = `(() => { const n=(v)=>+(+v).toFixed(2);
   const heads=[...host.querySelectorAll('.set-cat[data-member]')];
   const tabs=[...host.querySelectorAll('.set-tab')];
   const marks = tabs.length ? tabs : heads;
-  const kind = tabs.length ? 'tabs' : 'headings';
+  // W1a: a compact host wears ONE selector above the pane instead of the
+  // strip; it names the selected section and opens the same tabs in place.
+  // The selector is then the control the floor and the strip edges read.
+  const nav=host.querySelector('.set-railed[data-settings-nav="selector"] > .set-cat-select');
+  const kind = nav ? 'selector' : tabs.length ? 'tabs' : 'headings';
   const name=(e)=>(e.dataset.member||e.textContent||'').trim();
   // ON SCREEN = the mark's box intersects the scroller's visible box AND the
   // viewport. A rect that "would be" somewhere is not a thing a player sees.
@@ -100,14 +104,15 @@ const READ = `(() => { const n=(v)=>+(+v).toFixed(2);
   const step = Math.max(1, sc.clientHeight*${DRAG});
   const need = Math.max(0, deepest - sc.clientHeight*0.5);
   // With tabs every section is one TAP: nothing has to scroll to reach a name.
-  const drags = kind==='tabs' ? 0 : Math.ceil(need/step);
+  // With the selector it is two taps and still no scrolling.
+  const drags = kind==='headings' ? Math.ceil(need/step) : 0;
   // The floor, in device px. getBoundingClientRect is ALREADY post-zoom because
   // --ui-zoom is applied with body{zoom} — multiplying by it again is the error
   // that nearly cost me a night at #90, and 44.0-exactly was the tell.
   let floor=null, floorEg=null;
-  for (const e of tabs) { const r=e.getBoundingClientRect(); if(!r.height) continue;
-    if (floor===null || r.height<floor) { floor=n(r.height); floorEg=name(e); } }
-  const strip=host.querySelector('.set-tabs');
+  for (const e of (nav ? [nav, ...tabs] : tabs)) { const r=e.getBoundingClientRect(); if(!r.height) continue;
+    if (floor===null || r.height<floor) { floor=n(r.height); floorEg=e===nav ? 'selector' : name(e); } }
+  const strip=nav || host.querySelector('.set-tabs');
   return { kind, total: marks.length, names: marks.map(name), onScreen,
     onScreenN: onScreen.length, deepest: n(deepest), drags,
     scrollH: n(sc.scrollHeight), clientH: n(sc.clientHeight),
@@ -137,7 +142,8 @@ const EDGE_LONG = `(() => { const n=(v)=>+(+v).toFixed(2);
   const arrived = last.bottom <= Math.min(port.bottom, innerHeight)+1.5 && last.top >= Math.max(port.top,0)-1.5;
   // And the strip must still be there once you are at the bottom — a taxonomy
   // that scrolls away at row sixteen is the defect again, one screenful later.
-  const strip=host.querySelector('.set-tabs');
+  // On a compact host (W1a) the selector stands in for the strip.
+  const strip=host.querySelector('.set-railed[data-settings-nav="selector"] > .set-cat-select') || host.querySelector('.set-tabs');
   const stripStill = strip ? (() => { const r=strip.getBoundingClientRect();
     return r.bottom>Math.max(port.top,0)+0.5 && r.top<Math.min(port.bottom,innerHeight)-0.5; })() : null;
   sc.scrollTop = 0;
@@ -357,7 +363,7 @@ async function main() {
       const tops=[];
       for (const b of [...document.querySelectorAll('.set-tab')]) {
         b.click(); await new Promise(r=>setTimeout(r,260));
-        const s=document.querySelector('.set-tabs');
+        const s=document.querySelector('.set-railed[data-settings-nav="selector"] > .set-cat-select') || document.querySelector('.set-tabs');
         tops.push({ cat: b.dataset.member, top: n(s.getBoundingClientRect().top) });
       }
       return tops; })()`);

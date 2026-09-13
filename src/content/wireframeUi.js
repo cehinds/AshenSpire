@@ -105,4 +105,12 @@ export const wireframeUi = freeze({
     metadataSlots: { start: 'rarity', end: 'owned' },
     artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
   },
+  // W1a Settings. A category rail needs this host width, and every category
+  // at the tap floor must fit in the W1 body band (70% of the viewport);
+  // otherwise one selector sits above the pane. Gap and inset are the rail's
+  // budget, not its drawn values. Hysteresis stops a host at the edge flapping.
+  settings: {
+    railMinHostWidthRem: 60, bodyHeightFraction: 0.7,
+    railGapRem: 0.6, railInsetRem: 1.4, hysteresisRem: 1,
+  },
 });

@@ -868,3 +868,74 @@ inspection and roster stress cases; then integrate and verify dependent
 screen shells, equipment, progression, rewards, and remaining overlays against
 every coverage entry. No issue or draft implementation PR has been published
 for these uncommitted changes.
+
+## Settings workspace (W1a)
+
+Branch `feature/wireframe-settings`, based on dev `d2ea5bcd`. Settings keeps
+its rows, persistence, validation and capabilities; only the presentation
+changed, in both doors (the title modal and the in-run overlay's Settings
+tab), which share `renderSettings`.
+
+- Rail or selector: `src/ui/models/SettingsWorkspaceModel.js` decides from
+  the host width, the viewport height, one rem and the tap floor. A rail
+  needs `wireframeUi.settings.railMinHostWidthRem` (60) and room for every
+  category at the tap floor inside the W1 body band (70% of the viewport).
+  Otherwise one selector sits above the pane, naming the selected category;
+  it opens the same tab list in place and closes on a pick. A 1 rem
+  hysteresis stops a host at the edge from flapping. The result is written
+  as `data-settings-nav`; CSS measures nothing. This replaces a 600 px media
+  query and a `data-short` rule that decided the same thing a second way.
+- No pane heading. The pane used to print "Settings / category / tip" under a
+  door titled Settings, beside a tab already naming the category. The
+  selected tab labels the panel (`aria-labelledby`) and keeps its tooltip.
+- Header: title and exit only; the "Title" eyebrow is gone.
+- Help only where the effect is not obvious: seven rows (accent, screen
+  shake, music volume, sound effects, relics and seed in map header, motif
+  strength) are marked `selfEvident` and draw no note. Condition lines,
+  fullscreen status and applied readouts are feedback and always draw.
+- The first category is labelled Display, as in W1a (it read "Game").
+  Changelog and About stay in the rail after the four W1a categories.
+- New copy in `content/source/uiStrings.csv` (`settings.*`) via `t()`.
+
+Browser evidence (CDP emulation against `dist/AshenSpire.html`, title door
+via `?shot=title`, stored settings cleared):
+
+| Viewport | Zoom | Navigation | Header h / exit | Rail or selector | Pane | Page scroll |
+|---|---:|---|---|---|---|---:|
+| 1440×860 | 1.18 | rail | 78 / 44×44 | rail 203.5 w | 681.3×683.1 | 0 |
+| 1280×800 | 1.07 | rail | 74.9 / 44×44 | rail 184.6 w | 616.6×631 | 0 |
+| 390×844 | 0.90 | selector | 63 / 44×44 | 355.6×44 | 373.6×648.6 | 0 |
+| 375×667 | 0.85 | selector | 62 / 44×44 | 342.4×44 | 359.4×474.9 | 0 |
+| 844×390 | 0.62 | selector | 62.3 / 44×44 | 441.8×44 | 459.2×200.7 | 0 |
+
+- Headings: the only visible heading in the door is "Settings" at every
+  viewport; the pane has none. Display draws 12 notes for 14 rows.
+- Targets: every visible navigation, header and footer control is at least
+  44 px. Row controls are unchanged by this branch and some are not: choice
+  chips measure 41.6–42.8 px tall, several segmented chips 25–31 px wide on
+  wide hosts, and toggles 17.4–33 px tall.
+- Keyboard: `]` six times and `[` six times cycle all six categories and wrap
+  at every viewport (the LB/RB path runs the same ring). Selector hosts:
+  Enter on the selector opens six tabs with focus and the pad cursor on the
+  selected one, ArrowDown moves to Audio, Enter selects it, closes the list
+  and returns focus to the selector, now reading "Audio". Rail hosts
+  (1440×860, 1280×800): arrow keys move the pad cursor from the pane's
+  controls left onto the rail (it lands on Advanced), ArrowDown steps to
+  Changelog, and Enter selects it. Native focus does not follow the pad
+  cursor there; that is existing `input.js` behaviour.
+- In-run overlay at 390×844: selector shown, tabs closed, no pane heading,
+  no page scroll.
+
+Tools: `tools/settingsreach.mjs`, `tools/tapsize.mjs` and the T4 probe in
+`tools/watched-probes.json` now read the selector as the section control on
+compact hosts (a hidden tab measures zero). `settingsreach` could not
+measure here: it opens the bare bundle URL, which stops at the startup
+gate, so it finds no Settings button before any settings code runs. That
+navigation is unchanged by this branch and needs `?shot=title` (as
+`tools/about-changelog.mjs` uses); it was left for a separate fix.
+Playwright-based tools were not run.
+
+Limits: the rail/selector threshold is a budget, not a measurement of the
+drawn rail. The label change to Display and hiding seven notes are owner
+decisions to confirm. Escape closes the whole door even while the selector
+list is open. No gamepad was attached; the ring was driven by `[` and `]`.

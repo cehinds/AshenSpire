@@ -51,12 +51,16 @@
       "id": "W1a",
       "name": "Settings",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/settings.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SettingsWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -66,7 +70,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-settings. Rail (wide) or selector above the pane (compact) is chosen by SettingsWorkspaceModel from wireframeUi.settings; no pane heading; header is title + exit only; help hidden on seven self-evident rows; condition, status, applied lines and persistence unchanged. Browser-measured at 1440x860, 1280x800 (rail) and 390x844, 375x667, 844x390 (selector) with emulation only; verification states stay pending until the owner reviews. Changelog and About remain in the rail; Display is labelled Display (was Game)."
     },
     {
       "id": "W1b",
