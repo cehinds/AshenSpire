@@ -797,7 +797,7 @@
         "galaxyS24": "Reviewed at 360x780: page contained; hand has 7 local pixels of horizontal overflow. Not complete.",
         "interactions": "adjacent hand selection and card inspection verified; remaining interactions pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Bands now come from allocateCombatBands (10/55/30/5 with 208/56 px hand/footer minimums); 844x390 reports data-combat-geometry=unsupported. Full reference parity is NOT verified."
     },
     {
       "id": "W4b",
@@ -2889,13 +2889,13 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and provisional 4rem readable floor. Verified in emulation at 1440x860, 375x667, 360x780."
     },
     {
       "id": "WGC7",
       "name": "Actions remaining",
       "parent": "WCM2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2922,13 +2922,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Actions circle shares the packed footer diameter."
     },
     {
       "id": "WGC8",
       "name": "Draw pile button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2955,13 +2956,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Draw pile uses the shared pile track (touch target and readable floor on narrow hosts)."
     },
     {
       "id": "WGC9",
       "name": "End turn button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2988,13 +2990,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "End Turn shares the circle height and takes up to 40% of the footer."
     },
     {
       "id": "WGC10",
       "name": "Discard/exhaust button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3021,13 +3024,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Discard/Exhaust face fits its track without overflow at 375 and 360 px widths."
     },
     {
       "id": "WGC11",
       "name": "Potion control",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3054,7 +3058,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Potions circle shares the packed footer diameter; single footer control, none in the top HUD."
     },
     {
       "id": "WGH0",
