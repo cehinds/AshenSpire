@@ -55,7 +55,7 @@ import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
 import { resourceBars } from '../components/resbars.js';
-import { renderArcaneExposure } from '../components/arcaneExposure.js';
+import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
@@ -71,6 +71,8 @@ import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../compo
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { setStatusTrayOverflow } from '../components/statusTray.js';
+import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
@@ -841,13 +843,25 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // All three read the PACED view (dv) — the snapshot during playback, the
   // live entity otherwise — so meters move on their own beat (Sunna's gate).
   function procDisplayPlan(entity) {
-    const live = Object.entries(dv(entity).statuses || {})
+    const v = dv(entity);
+    const live = Object.entries(v.statuses || {})
       .filter(([sid, inst]) => {
         const def = registries.statuses.get(sid);
         return def && def.proc && inst.meter && inst.meter.value > 0;
       })
       .sort((a, b) => b[1].meter.value / b[1].meter.max - a[1].meter.value / a[1].meter.max);
-    return { bars: live.slice(0, 2).map(([sid]) => sid), pips: live.slice(2).map(([sid]) => sid) };
+    // WCF2 ordered active stack (models/CombatantStackModel.js): HP, other
+    // resources, buildup by fill, stance, icons; at most five rows. Buildup
+    // that does not fit joins the icon row as a ring pip.
+    const resources = resourceBarPlan(registries, 'model', v, entity, resDomains).map((bar) => bar.id);
+    if (entity.kind === 'enemy' && arcaneExposureReceipt(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents)) resources.push('arcaneExposure');
+    const icons = Object.entries(v.statuses || {}).filter(([sid, inst]) => {
+      const def = registries.statuses.get(sid);
+      return def && !(def.proc && (inst.meter ? inst.meter.value : inst.stacks) <= 0);
+    }).length;
+    const stack = planCombatantStack({ resources, buildups: live.map(([sid]) => sid), stance: Boolean(entity.stanceId), icons });
+    const buildups = new Set(live.map(([sid]) => sid));
+    return { bars: stack.bars.filter((id) => buildups.has(id)), pips: [...stack.promoted] };
   }
 
   function hasResistAgainst(entity, statusId) {
@@ -920,6 +934,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       answerOnTap(el, statusTip);
       row.appendChild(el);
     }
+    // The final +N tile opens the inspector, which lists every effect.
+    setStatusTrayOverflow(row, (opener) => openCombatantDoor(combatantSubject(entity.kind === 'enemy' ? 'enemy' : 'player', entity), opener));
     return row;
   }
 

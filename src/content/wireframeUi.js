@@ -16,6 +16,8 @@ export const wireframeUi = freeze({
     fanAngleDegrees: 2.5, arcRem: 0.6, dragThresholdPx: 12,
   },
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56 },
+  // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
+  combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
   formation: {
     depth: [0.9, 0.95, 1], selectedGrowth: [1.1, 1.05, 1.1],
     displayScale: 1.1, floorFraction: 0.8, insetRem: 1,
