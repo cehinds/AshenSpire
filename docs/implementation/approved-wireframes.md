@@ -463,6 +463,73 @@ Browser evidence (emulation, 1280×800 at UI zoom 1.07 and 390×844 at 0.9):
 
 Limits: the creation selectors still declare a 32 px corner control through
 `--card-info-size` (contested in #994/#996).
+## Button size presets
+
+Branch `feature/wireframe-button-sizes`, based on dev `d2ea5bcd`; issue #1042.
+The nine WCB0 sizes that the control-roles task left out now have one config
+block, `wireframeUi.buttons` (a mirror of `button-widths.json`), and one pure
+plan, `src/ui/models/ButtonSizeModel.js`. The kit writes the model's tokens
+onto `:root`, and `kit.css` only combines them. The two consumers below read
+the tokens, so none of them is declared and unused.
+
+- A size ID is width × height: {third 30%, half 50%, full 100%} ×
+  {standard, tall, double}. Heights are 2.75 reference rem × 1, 1.5 or 2. A
+  reference rem is at least 16 physical px, the same unit as the hand and
+  footer plans. Unknown sizes, groups or counts throw.
+- The kit `button({ size })` stamps `data-button-size`, which sets the
+  height. The width belongs to the group that owns the action region.
+- Every `modalFooter` plans a `footer` group. That covers the confirmation
+  door and every `openModal` and `pageDoor` foot. Siblings take equal shares
+  after the shared gap, and a sole action fills the foot. Its buttons are
+  `full-standard` of their share. The gap is now 0.5 reference rem (8
+  physical px); before, it was 0.5 CSS rem (5 px at the 10 px root).
+- The new `choiceRow()` gives every sibling one size (`half-standard` by
+  default). Each width is the preset capped by the equal share after gaps, so
+  a longer label never widens its button, and on narrow hosts labels wrap. A
+  sole choice keeps its preset, but never below the 8 rem readable minimum
+  and never wider than the host. The game-over door's "Run history / Return
+  to title" row is the first consumer; it replaces a `medium` ladder row.
+- The quarter preset stays in the config and the model but writes no token,
+  because nothing consumes it yet. The icon size matches the existing exit
+  square: `--iconbtn-size` is the tap floor, and its default of 44 equals
+  2.75 × 16. A test holds that agreement. Header exits, steppers, inspect,
+  map nodes, status icons and the packed WGC6 footer are unchanged.
+- `tests/wireframe-button-sizes.test.mjs` checks four things: that the
+  config matches `button-widths.json`, the size and group arithmetic, that
+  `kit.css` reads every token the model writes, and that it reads nothing
+  undefined.
+
+Browser evidence (emulation, source tree; CSS px after layout, compared with
+`resolveButtonGroupWidths` for the measured host):
+- 1440×860 (zoom 1.18): the game-over row is 518 px, so each of the two half
+  choices resolves to its 255.6 px share (half would be 259). The
+  confirmation foot is 400 px, giving two 196.6 px shares. The detail door's
+  sole Close fills its 540 px foot. Heights are 37.3 px (44 physical px) and
+  gaps are 8 physical px.
+- 390×844 (zoom 0.9) and 375×667 (zoom 0.85): the same rules hold on hosts of
+  341 and 395 px, and of 349 and 403 px. Every button is 44 physical px tall.
+  No label overflows its button, and nothing scrolls horizontally.
+- Primary buttons measure about 3 px wider, but only in
+  `getBoundingClientRect`. The difference is their existing lift
+  (`scale: 1.015`, `translate: 0 -2px`); their layout boxes (`offsetWidth`)
+  equal their siblings'.
+
+Limits:
+- Footer labels still never wrap. The shell's containment recipe
+  (`white-space: nowrap`, then ellipsis) is asserted by
+  `tools/modal-shell-contract.mjs` and follows the owner's 2026-09-03 rule "a
+  label never wraps". That conflicts with the specification's "narrow hosts
+  wrap labels". On this branch choice rows wrap and footers do not; that is
+  an owner decision.
+- The creation foot (`.cz-actions`) keeps its ladder-capped width once Begin
+  is ready. Other ladder rows (`buttonRow` short, medium, long, fill) are not
+  migrated.
+- Galaxy S24 (360×780) was not measured. The Playwright-based QA tools could
+  not run here, because there are no node_modules.
+- `tools/modal-shell-contract.mjs` reports 58 passed and 2 failed on both dev
+  `d2ea5bcd` and this branch. The two failures are "the footer appends every
+  way back before the one way forward" and "no rule reorders or re-spans the
+  foot primary". Both predate this branch and are unchanged by it.
 
 ## Remaining integration
 

@@ -37,6 +37,25 @@ export const wireframeUi = freeze({
     // Owner confirmed on 2026-09-13.
     pileMinimumRem: 4,
   },
+  // WCB0 button sizes (docs/architecture-handoff/button-widths.json). A size ID
+  // is width × height: {third, half, full} × {standard, tall, double}. Width
+  // presets are percent of the OWNING action region's content box, never of
+  // the viewport and never of the label. Heights, gaps and minimums are
+  // reference rems (at least 16 physical px each, as in the hand and footer).
+  // Header exits, steppers, inspect, map nodes, status icons and the packed
+  // combat footer keep their own declared geometry (iconSize is the exit's).
+  buttons: {
+    standardHeightRem: 2.75,
+    heightMultipliers: { standard: 1, tall: 1.5, double: 2 },
+    sizeWidths: ['third', 'half', 'full'],
+    presets: { quarter: 25, third: 30, half: 50, full: 100 },
+    choice: 'half',
+    minimumReadableRem: 8,
+    iconSizeRem: 2.75,
+    gapRem: 0.5,
+    footer: 'equalSharesAfterGaps',
+    singleFooter: 'full',
+  },
   formation: {
     depth: [0.9, 0.95, 1], selectedGrowth: [1.1, 1.05, 1.1],
     displayScale: 1.1, floorFraction: 0.8, insetRem: 1,

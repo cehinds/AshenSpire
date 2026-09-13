@@ -1819,6 +1819,14 @@
         {
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ButtonSizeModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/screens/gameover.js",
+          "existsOnImplementationBase": true
         }
       ],
       "verification": {
@@ -1829,7 +1837,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence; the nine size presets are still pending a consuming workspace."
+      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence. The nine size presets (third/half/full × standard/tall/double) live in wireframeUi.buttons and resolve through ButtonSizeModel.js; the kit writes their tokens onto :root. Consumers: every modalFooter (equal shares after gaps, a sole action fills the foot) and the game-over choice row (half preset capped by the equal share, labels wrap). Header exits, steppers, inspect, map nodes, status icons and the packed combat footer keep their own geometry. Other button rows still use the short/medium/long/fill ladder."
     },
     {
       "id": "WCB1",
@@ -1865,7 +1873,8 @@
       "id": "WCB2",
       "name": "Context action",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Choice groups use kit choiceRow(): siblings share one WCB0 preset (half by default) capped by the equal share after gaps. The game-over door is the first consumer; modal footers use equal shares. The selected-card full-width Use action is not migrated.",
       "phase": "shared-components",
       "sourceReferences": [
         {

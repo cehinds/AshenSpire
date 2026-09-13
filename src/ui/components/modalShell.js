@@ -34,6 +34,7 @@
 // for loss. `tone: 'danger'` is available and is meant to be rare.
 
 import { esc } from './tooltip.js';
+import { planButtonGroup } from '../models/ButtonSizeModel.js';
 
 /** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
 export const MODAL_CLOSE_GLYPH = '✕';
@@ -106,6 +107,13 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
   const visibleSecondary = secondary.filter(button => button && !button.hidden);
   const visiblePrimary = primary && !primary.hidden ? primary : null;
   actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
+  // WCB0: footer siblings take equal shares of the foot after gaps, and a sole
+  // action fills it (ButtonSizeModel). Each button is `full` of its share at
+  // the standard height; the label never picks the width.
+  const plan = planButtonGroup({ kind: 'footer', count: Number(actions.dataset.actionCount) });
+  actions.dataset.buttonGroup = plan.kind;
+  actions.dataset.buttonLayout = plan.layout;
+  for (const button of [...visibleSecondary, visiblePrimary]) if (button?.dataset) button.dataset.buttonSize = plan.size;
   for (const button of visibleSecondary) actions.appendChild(button);
   if (visiblePrimary) {
     // `className` and not `classList` — this component is mounted by tests that
