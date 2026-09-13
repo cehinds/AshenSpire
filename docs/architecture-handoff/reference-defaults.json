@@ -409,9 +409,9 @@
     },
     "combatantFocus": {
       "rowIds": [
-        "back",
+        "upper",
         "middle",
-        "front"
+        "lower"
       ],
       "rowBase": [
         0.9,
@@ -491,7 +491,17 @@
       "paddingRem": 1,
       "slotGapRem": 1.5,
       "centerGapRem": 3,
-      "centerGapPercent": 10,
+      "centerGapPercent": 3,
+      "centerGap": {
+        "narrowPercent": 3,
+        "widePercent": 5,
+        "narrowWidthPx": 375,
+        "wideWidthPx": 1200
+      },
+      "formationLayers": {
+        "frontRow": 0,
+        "backRow": 200
+      },
       "backRowOffsetPercent": 5,
       "minimumRowOffsetPx": 8,
       "actorScale": 1,
@@ -509,7 +519,7 @@
       "detailEdgeInsetPx": 4,
       "baselineInsetPx": 4,
       "minimumSpriteHeightPx": 92,
-      "selectionDetailReserveRem": 4.5,
+      "selectionDetailReserveRem": 3.5,
       "groundContactDepthFraction": 0.3,
       "actorBaselinePercent": 66.667,
       "actorHeightFraction": 0.72,

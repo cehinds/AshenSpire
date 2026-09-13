@@ -22010,9 +22010,9 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   ],
   "focus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -22353,9 +22353,9 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   ],
   "focus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -22696,9 +22696,9 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   ],
   "focus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -23047,9 +23047,9 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   ],
   "focus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -25131,9 +25131,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -25213,7 +25213,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -25231,7 +25241,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -25626,9 +25636,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -25708,7 +25718,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -25726,7 +25746,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -26157,9 +26177,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -26239,7 +26259,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -26257,7 +26287,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -26679,9 +26709,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -26761,7 +26791,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -26779,7 +26819,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27197,9 +27237,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -27279,7 +27319,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -27297,7 +27347,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27693,9 +27743,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -27775,7 +27825,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -27793,7 +27853,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -28201,9 +28261,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -28283,7 +28343,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -28301,7 +28371,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -28696,9 +28766,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -28778,7 +28848,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -28796,7 +28876,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29220,9 +29300,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -29302,7 +29382,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -29320,7 +29410,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29740,9 +29830,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -29822,7 +29912,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -29840,7 +29940,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -30247,9 +30347,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -30329,7 +30429,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -30347,7 +30457,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -30763,9 +30873,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -30845,7 +30955,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -30863,7 +30983,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -31254,9 +31374,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -31336,7 +31456,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -31354,7 +31484,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -31757,9 +31887,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -31839,7 +31969,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -31857,7 +31997,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32244,9 +32384,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -32326,7 +32466,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -32344,7 +32494,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32772,9 +32922,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -32854,7 +33004,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -32872,7 +33032,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -33259,9 +33419,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -33341,7 +33501,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -33359,7 +33529,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -33751,9 +33921,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -33833,7 +34003,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -33851,7 +34031,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34243,9 +34423,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -34325,7 +34505,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -34343,7 +34533,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34730,9 +34920,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -34812,7 +35002,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -34830,7 +35030,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -35217,9 +35417,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -35299,7 +35499,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -35317,7 +35527,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -35709,9 +35919,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -35791,7 +36001,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -35809,7 +36029,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -36233,9 +36453,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -36315,7 +36535,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -36333,7 +36563,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -36728,9 +36958,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -36810,7 +37040,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -36828,7 +37068,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37219,9 +37459,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -37301,7 +37541,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -37319,7 +37569,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37723,9 +37973,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -37805,7 +38055,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -37823,7 +38083,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -38227,9 +38487,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -38309,7 +38569,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -38327,7 +38597,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -38727,9 +38997,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -38809,7 +39079,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -38827,7 +39107,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39227,9 +39507,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -39309,7 +39589,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -39327,7 +39617,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39730,9 +40020,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -39812,7 +40102,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -39830,7 +40130,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40246,9 +40546,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -40328,7 +40628,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -40346,7 +40656,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40762,9 +41072,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -40844,7 +41154,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -40862,7 +41182,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -41266,9 +41586,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -41348,7 +41668,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -41366,7 +41696,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -41766,9 +42096,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -41848,7 +42178,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -41866,7 +42206,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -42262,9 +42602,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -42344,7 +42684,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -42362,7 +42712,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -42758,9 +43108,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -42840,7 +43190,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -42858,7 +43218,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -43267,9 +43627,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -43349,7 +43709,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -43367,7 +43737,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -43759,9 +44129,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -43841,7 +44211,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -43859,7 +44239,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -44252,9 +44632,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -44334,7 +44714,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -44352,7 +44742,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -44745,9 +45135,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -44827,7 +45217,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -44845,7 +45245,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -45238,9 +45638,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -45320,7 +45720,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -45338,7 +45748,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -45747,9 +46157,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -45829,7 +46239,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -45847,7 +46267,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -48498,9 +48918,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -48580,7 +49000,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -48598,7 +49028,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -49009,9 +49439,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -49091,7 +49521,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -49109,7 +49549,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -49511,9 +49951,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -49593,7 +50033,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -49611,7 +50061,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50002,9 +50452,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -50084,7 +50534,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -50102,7 +50562,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50505,9 +50965,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -50587,7 +51047,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -50605,7 +51075,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50991,9 +51461,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -51073,7 +51543,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -51091,7 +51571,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -51482,9 +51962,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -51564,7 +52044,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -51582,7 +52072,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -51973,9 +52463,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -52055,7 +52545,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -52073,7 +52573,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -53743,9 +54243,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -53825,7 +54325,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -53843,7 +54353,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -54256,9 +54766,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -54338,7 +54848,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -54356,7 +54876,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -54753,9 +55273,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -54835,7 +55355,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -54853,7 +55383,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55250,9 +55780,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -55332,7 +55862,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -55350,7 +55890,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55751,9 +56291,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -55833,7 +56373,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -55851,7 +56401,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -56243,9 +56793,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -56325,7 +56875,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -56343,7 +56903,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -56736,9 +57296,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -56818,7 +57378,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -56836,7 +57406,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -57229,9 +57799,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -57311,7 +57881,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -57329,7 +57909,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -57722,9 +58302,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -57804,7 +58384,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -57822,7 +58412,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -58238,9 +58828,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -58320,7 +58910,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -58338,7 +58938,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -58754,9 +59354,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -58836,7 +59436,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -58854,7 +59464,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -59258,9 +59868,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -59340,7 +59950,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -59358,7 +59978,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -59750,9 +60370,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -59832,7 +60452,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -59850,7 +60480,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -60250,9 +60880,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -60332,7 +60962,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -60350,7 +60990,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -60742,9 +61382,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -60824,7 +61464,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -60842,7 +61492,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -61245,9 +61895,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -61327,7 +61977,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -61345,7 +62005,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -61749,9 +62409,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -61831,7 +62491,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -61849,7 +62519,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -62147,7 +62817,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Selected actors use the highest configured paint priority. Refit only when host allocation, roster or unselected geometry changes.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Tag screen-outer columns back-row and inner columns front-row independently of upper/middle/lower depth. Add config.groundGrid.formationLayers to selection paint priority so back-row guards and intents remain above front-row actors. Interpolate the team gap with config.groundGrid.centerGap. Refit only when host allocation, roster or unselected geometry changes.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -62352,9 +63022,9 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   },
   "combatantFocus": {
     "rowIds": [
-      "back",
+      "upper",
       "middle",
-      "front"
+      "lower"
     ],
     "rowBase": [
       0.9,
@@ -62434,7 +63104,17 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "paddingRem": 1,
     "slotGapRem": 1.5,
     "centerGapRem": 3,
-    "centerGapPercent": 10,
+    "centerGapPercent": 3,
+    "centerGap": {
+      "narrowPercent": 3,
+      "widePercent": 5,
+      "narrowWidthPx": 375,
+      "wideWidthPx": 1200
+    },
+    "formationLayers": {
+      "frontRow": 0,
+      "backRow": 200
+    },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
     "actorScale": 1,
@@ -62452,7 +63132,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "detailEdgeInsetPx": 4,
     "baselineInsetPx": 4,
     "minimumSpriteHeightPx": 92,
-    "selectionDetailReserveRem": 4.5,
+    "selectionDetailReserveRem": 3.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,

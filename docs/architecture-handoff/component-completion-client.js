@@ -60,6 +60,9 @@ function createComponentReferenceRenderers(configuration) {
       if(!n.isConnected)return;const stage=n.getBoundingClientRect();if(!stage.width||!stage.height)return;
       const c=cfg().groundGrid,grid=n.querySelector('.cc-ground-grid'),ground=n.querySelector('.cc-floor');
       const all=[...band.querySelectorAll('.cc-native-actor')];if(!grid||!ground){all.forEach(a=>a.hidden=true);return;}
+      const gapConfig=c.centerGap, gapProgress=gapConfig?Math.max(0,Math.min(1,(stage.width-gapConfig.narrowWidthPx)/(gapConfig.wideWidthPx-gapConfig.narrowWidthPx))):0;
+      const centerGapPercent=gapConfig?gapConfig.narrowPercent+(gapConfig.widePercent-gapConfig.narrowPercent)*gapProgress:c.centerGapPercent;
+      grid.style.setProperty('--grid-center',centerGapPercent+'%');
       const rem=parseFloat(getComputedStyle(n).fontSize),inset=Math.min(c.paddingRem*rem,stage.width/4,stage.height/4);
       // Keep the existing floor contact center; clamp row spacing only when the host cannot contain it.
       const floorBox=ground.getBoundingClientRect(),centerY=floorBox.top-stage.top+floorBox.height*c.depthPercent/100;
@@ -102,7 +105,7 @@ function createComponentReferenceRenderers(configuration) {
         }
         return {...base,actor,slot,side,index,selected,row:Math.floor(index/c.columns)};
       }).filter(Boolean);
-      const gap=stage.width*c.centerGapPercent/100;
+      const gap=stage.width*centerGapPercent/100;
       const allocations=[];const bothSides=['ally','enemy'];
       for(const side of bothSides)for(let row=0;row<c.rows;row++){const rowActors=models.filter(m=>m.side===side&&m.row===row);if(rowActors.length)allocations.push({availableWidth:(stage.width-gap)/2-inset,availableHeight:stage.height*cfg().scene.actorHeightFraction,actors:rowActors.map(m=>({row,baseWidth:m.width,baseHeight:m.above+m.below}))});}
       let sharedScale=(typeof sharedCombatantBaseScale==='function'?sharedCombatantBaseScale(allocations,focus):focus.fit.maximumScale)*c.actorScale;
@@ -140,7 +143,9 @@ function createComponentReferenceRenderers(configuration) {
           let above=m.spriteTop-overlayGap;
           if(intent&&!intent.hidden){intent.style.bottom='auto';intent.style.left=m.spriteCenter+'px';intent.style.transform='translateX(-50%)';above-=intent.offsetHeight;intent.style.top=above+'px';above-=overlayGap;}
           if(info){info.style.bottom='auto';info.style.left=m.spriteCenter+'px';info.style.transform='translateX(-50%)';info.style.top=Math.max(above-info.offsetHeight,m.foot+(inset-s.y)/actorScale)+'px';}
-          m.actor.style.setProperty('--row-depth',1);m.actor.style.zIndex=String(presentation.zPriority);m.actor.style.transformOrigin='50% '+m.foot+'px';m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';m.actor.dataset.sharedBaseScale=String(scale);m.actor.dataset.presentationScale=String(actorScale);
+          m.actor.style.setProperty('--row-depth',1);const outerColumn=m.side==='ally'?0:c.columns-1,backRow=Number(m.slot.dataset.column)===outerColumn;
+          m.actor.dataset.formationRow=backRow?'back-row':'front-row';m.actor.classList.toggle('formation-back-row',backRow);m.actor.classList.toggle('formation-front-row',!backRow);
+          m.actor.style.zIndex=String(presentation.zPriority+(backRow?c.formationLayers.backRow:c.formationLayers.frontRow));m.actor.style.transformOrigin='50% '+m.foot+'px';m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';m.actor.dataset.sharedBaseScale=String(scale);m.actor.dataset.presentationScale=String(actorScale);
           // Expanded information may move upward; the sprite/shadow pivot stays fixed.
           const detailParts=[...m.actor.querySelectorAll('.combatant-resources,.combatant-status,.combatant-nameplate')];
           detailParts.forEach(part=>{part.style.position=part.classList.contains('combatant-nameplate')?part.style.position:'relative';part.style.translate='';});
