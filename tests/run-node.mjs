@@ -77,6 +77,14 @@ for (const r of results) {
 // in engine.test.js. Two files, no git conflict, and a suite that would have
 // printed "35." twice — the collision a merge cannot see.
 let zoomExtra = 0;
+{
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const files = ['wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'combat-formation.test.mjs', 'combat-sprite-scale.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
+  if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
+  console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);
+}
 let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
                     // two-homes defect these two lines exist to catch.
 {

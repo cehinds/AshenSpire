@@ -102,8 +102,11 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
   const actions = document.createElement('div');
   actions.className = 'modal-foot-actions modal-btnrow';
   actions.dataset.size = size;
-  for (const button of secondary) if (button) actions.appendChild(button);
-  if (primary) {
+  const visibleSecondary = secondary.filter(button => button && !button.hidden);
+  const visiblePrimary = primary && !primary.hidden ? primary : null;
+  actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
+  for (const button of visibleSecondary) actions.appendChild(button);
+  if (visiblePrimary) {
     // `className` and not `classList` — this component is mounted by tests that
     // drive it in a minimal DOM (tests/confirmation-modal.test.mjs), and a
     // shared piece of chrome must not need more of the platform than the
@@ -442,6 +445,7 @@ export function openModal({
   const panel = document.createElement('section');
   panel.className = `modal${className ? ` ${className}` : ''}`;
   panel.dataset.size = size;
+  panel.dataset.wireframe = role === 'alertdialog' ? 'W2' : 'W1';
   panel.setAttribute('role', role);
   panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', titleId);

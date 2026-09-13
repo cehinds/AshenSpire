@@ -1,33 +1,51 @@
 {
   "referenceCommit": "dcb3d1cd",
-  "implementationBase": "3c70be90",
+  "implementationBase": "1b72522d",
   "note": "Coverage is implementation status, not a claim of visual parity. Missing source references are proposed or owner-local seams; integrate through current production authorities.",
   "entries": [
     {
       "id": "W0",
       "name": "Master shell",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "W1",
       "name": "Base workspace / modal",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "W1a",
@@ -40,7 +58,15 @@
           "file": "src/ui/screens/settings.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1b",
@@ -57,7 +83,15 @@
           "file": "src/ui/screens/smithServices.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1c",
@@ -74,7 +108,15 @@
           "file": "src/ui/components/statAllocationCard.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1d",
@@ -87,7 +129,15 @@
           "file": "src/ui/screens/shop.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1e",
@@ -104,7 +154,15 @@
           "file": "src/ui/models/ArmouryModels.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1f",
@@ -117,7 +175,15 @@
           "file": "src/ui/screens/compendium.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1g",
@@ -130,7 +196,15 @@
           "file": "src/ui/screens/profileArchive.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1h",
@@ -143,7 +217,15 @@
           "file": "src/ui/components/piles.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1i",
@@ -156,7 +238,15 @@
           "file": "src/ui/components/smithUpgradeModal.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1j",
@@ -169,7 +259,15 @@
           "file": "src/ui/screens/smithServices.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1k",
@@ -182,7 +280,15 @@
           "file": "src/ui/screens/smithServices.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1l",
@@ -195,7 +301,15 @@
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1m",
@@ -208,7 +322,15 @@
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1n",
@@ -221,7 +343,15 @@
           "file": "src/ui/screens/equipment.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1o",
@@ -232,9 +362,17 @@
       "sourceReferences": [
         {
           "file": "src/ui/components/cardInspection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1p",
@@ -251,7 +389,15 @@
           "file": "src/ui/models/CombatantInspectorModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1q",
@@ -264,7 +410,15 @@
           "file": "src/ui/components/flask.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1r",
@@ -277,7 +431,15 @@
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1s",
@@ -290,7 +452,15 @@
           "file": "src/ui/screens/rest.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1t",
@@ -303,7 +473,15 @@
           "file": "src/ui/screens/reward.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1u",
@@ -316,7 +494,15 @@
           "file": "src/ui/screens/event.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1v",
@@ -329,13 +515,21 @@
           "file": "src/ui/screens/shop.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1w",
       "name": "Entity inspector",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -346,7 +540,16 @@
           "file": "src/ui/models/CombatantInspectorModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "W2",
@@ -359,7 +562,15 @@
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W2a",
@@ -372,7 +583,15 @@
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W2b",
@@ -385,7 +604,15 @@
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W2c",
@@ -398,7 +625,15 @@
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W2d",
@@ -411,7 +646,15 @@
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W2e",
@@ -424,7 +667,15 @@
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W3",
@@ -437,7 +688,15 @@
           "file": "src/ui/screens/title.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W3a",
@@ -450,7 +709,15 @@
           "file": "src/ui/screens/title.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W3b",
@@ -463,7 +730,15 @@
           "file": "src/ui/screens/title.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W4",
@@ -484,13 +759,21 @@
           "file": "src/ui/screens/event.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W4a",
       "name": "Combat — tightly packed footer",
       "parent": "W4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -505,7 +788,16 @@
           "file": "src/ui/screens/event.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "targeted tests passed",
+        "wide": "reviewed; incomplete",
+        "compact": "short landscape has unresolved legibility limits",
+        "iphoneSE": "reviewed; incomplete",
+        "galaxyS24": "Reviewed at 360x780: page contained; hand has 7 local pixels of horizontal overflow. Not complete.",
+        "interactions": "adjacent hand selection and card inspection verified; remaining interactions pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "W4b",
@@ -526,7 +818,15 @@
           "file": "src/ui/screens/event.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W4c",
@@ -547,7 +847,15 @@
           "file": "src/ui/screens/event.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC0",
@@ -562,17 +870,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC1",
@@ -587,17 +904,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC1a",
@@ -612,17 +938,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC1b",
@@ -637,17 +972,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC1c",
@@ -662,17 +1006,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC1d",
@@ -687,17 +1040,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC1e",
@@ -712,17 +1074,26 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC2",
@@ -737,17 +1108,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2a",
@@ -762,17 +1141,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2a1",
@@ -787,17 +1174,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2a2",
@@ -812,17 +1207,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2b",
@@ -837,17 +1240,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2b1",
@@ -862,17 +1273,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2b2",
@@ -887,17 +1306,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2c",
@@ -912,17 +1339,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2c1",
@@ -937,17 +1372,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2c2",
@@ -962,17 +1405,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC2c3",
@@ -987,17 +1438,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC3",
@@ -1012,17 +1471,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC3a",
@@ -1037,17 +1504,25 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC3b",
@@ -1062,23 +1537,31 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/collectibleCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/cardSelection.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC4",
       "name": "Combatant card",
       "parent": "WC0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1087,19 +1570,28 @@
         },
         {
           "file": "src/ui/components/combatantOverhead.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/models/CombatantInspectorModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "Reviewed in rebuilt standalone at 1440x860: selection preserved measured ground anchors and base sprite scales. Full roster/visual parity pending.",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC4a",
       "name": "Compact combatant",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1108,13 +1600,22 @@
         },
         {
           "file": "src/ui/components/combatantOverhead.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/models/CombatantInspectorModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "Reviewed in rebuilt standalone at 1440x860: selection preserved measured ground anchors and base sprite scales. Full roster/visual parity pending.",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WC4b",
@@ -1129,13 +1630,21 @@
         },
         {
           "file": "src/ui/components/combatantOverhead.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/models/CombatantInspectorModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WC4c",
@@ -1150,13 +1659,21 @@
         },
         {
           "file": "src/ui/components/combatantOverhead.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/models/CombatantInspectorModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1x",
@@ -1171,7 +1688,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -1185,7 +1702,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1x1",
@@ -1200,7 +1725,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -1214,7 +1739,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "W1x2",
@@ -1229,7 +1762,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -1243,7 +1776,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCB0",
@@ -1268,7 +1809,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCB1",
@@ -1289,7 +1838,15 @@
           "file": "src/ui/components/combatantInspector.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCB2",
@@ -1314,7 +1871,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCB3",
@@ -1339,7 +1904,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCB4",
@@ -1364,13 +1937,21 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCB5",
       "name": "Exit button",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1389,7 +1970,16 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WCF0",
@@ -1410,7 +2000,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCF1",
@@ -1431,7 +2029,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCF2",
@@ -1452,7 +2058,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCF3",
@@ -1473,7 +2087,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCF4",
@@ -1494,7 +2116,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCI0",
@@ -1515,7 +2145,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCI1",
@@ -1536,7 +2174,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCI2",
@@ -1557,7 +2203,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCI3",
@@ -1578,7 +2232,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM0",
@@ -1599,7 +2261,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM1",
@@ -1620,7 +2290,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM2",
@@ -1641,7 +2319,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM3",
@@ -1662,7 +2348,15 @@
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM4",
@@ -1683,7 +2377,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM5",
@@ -1704,7 +2406,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCM6",
@@ -1725,7 +2435,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCO0",
@@ -1746,7 +2464,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCO1",
@@ -1767,7 +2493,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCO2",
@@ -1788,7 +2522,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCO3",
@@ -1809,7 +2551,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCO4",
@@ -1830,13 +2580,21 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCO5",
       "name": "Ground shadow",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1851,7 +2609,16 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WCT0",
@@ -1872,7 +2639,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WCT1",
@@ -1893,7 +2668,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC0",
@@ -1914,13 +2697,21 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC1",
       "name": "Battlefield stage",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -1935,7 +2726,16 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WGC2",
@@ -1956,7 +2756,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC3",
@@ -1977,7 +2785,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC4",
@@ -1998,13 +2814,21 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC5",
       "name": "Hand region",
       "parent": "WC1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2019,13 +2843,22 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WGC6",
       "name": "Packed action footer",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2044,7 +2877,16 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WGC7",
@@ -2069,7 +2911,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC8",
@@ -2094,7 +2944,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC9",
@@ -2119,7 +2977,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC10",
@@ -2144,7 +3010,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGC11",
@@ -2169,7 +3043,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH0",
@@ -2186,7 +3068,15 @@
           "file": "src/ui/components/hudmeta.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH1",
@@ -2215,7 +3105,15 @@
           "file": "src/content/resources.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH2",
@@ -2232,7 +3130,15 @@
           "file": "src/ui/models/QuickAccessPanelModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH3",
@@ -2249,7 +3155,15 @@
           "file": "src/ui/models/QuickAccessPanelModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH4",
@@ -2268,9 +3182,17 @@
         },
         {
           "file": "src/ui/components/runHud.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH5",
@@ -2282,7 +3204,15 @@
         {
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH6",
@@ -2299,7 +3229,15 @@
           "file": "src/ui/models/InventoryBeltModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH7",
@@ -2316,7 +3254,15 @@
           "file": "src/ui/models/RunHeaderModel.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGH8",
@@ -2333,7 +3279,15 @@
           "file": "src/ui/components/flask.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM0",
@@ -2350,7 +3304,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM1",
@@ -2367,7 +3329,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM2",
@@ -2384,7 +3354,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM3",
@@ -2401,7 +3379,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM4",
@@ -2418,7 +3404,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM5",
@@ -2435,7 +3429,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM6",
@@ -2452,7 +3454,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGM7",
@@ -2469,7 +3479,15 @@
           "file": "styles/map.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGP0",
@@ -2484,7 +3502,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -2498,7 +3516,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGP1",
@@ -2513,7 +3539,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -2527,7 +3553,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGP2",
@@ -2542,7 +3576,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -2556,7 +3590,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGP3",
@@ -2571,7 +3613,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -2585,7 +3627,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGP4",
@@ -2600,7 +3650,7 @@
         },
         {
           "file": "src/ui/components/equipmentCard.js",
-          "existsOnImplementationBase": false
+          "existsOnImplementationBase": true
         },
         {
           "file": "src/ui/components/modalShell.js",
@@ -2614,7 +3664,15 @@
           "file": "PROGRESSION-SPECIFICATION.md",
           "existsOnImplementationBase": false
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ0",
@@ -2639,7 +3697,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ1",
@@ -2664,7 +3730,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ2",
@@ -2689,7 +3763,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ3",
@@ -2714,7 +3796,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ4",
@@ -2739,7 +3829,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ5",
@@ -2764,7 +3862,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ6",
@@ -2789,7 +3895,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ7",
@@ -2814,7 +3928,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGQ8",
@@ -2839,7 +3961,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS0",
@@ -2860,7 +3990,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS1",
@@ -2881,7 +4019,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS2",
@@ -2902,7 +4048,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS3",
@@ -2923,7 +4077,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS4",
@@ -2944,7 +4106,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS5",
@@ -2965,7 +4135,15 @@
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS6",
@@ -2986,7 +4164,15 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS7",
@@ -3007,13 +4193,21 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WGS8",
       "name": "Ground formation grid",
       "parent": "WGS7",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3028,7 +4222,16 @@
           "file": "styles/combat.css",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      },
+      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
     },
     {
       "id": "WT0",
@@ -3041,7 +4244,15 @@
           "file": "src/ui/components/tooltip.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WT1",
@@ -3054,7 +4265,15 @@
           "file": "src/ui/components/tooltip.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WT2",
@@ -3067,7 +4286,15 @@
           "file": "src/ui/components/tooltip.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     },
     {
       "id": "WT3",
@@ -3080,7 +4307,24 @@
           "file": "src/ui/components/tooltip.js",
           "existsOnImplementationBase": true
         }
-      ]
+      ],
+      "verification": {
+        "structural": "pending",
+        "wide": "pending",
+        "compact": "pending",
+        "iphoneSE": "pending",
+        "galaxyS24": "pending",
+        "interactions": "pending"
+      }
     }
-  ]
+  ],
+  "rebasedImplementationCommit": "18a44b28",
+  "validation": {
+    "nodeSuite": "Passed: node tests/run-node.mjs, exit 0 after overlay coordinate correction",
+    "build": "Passed: node tools/launch.mjs --build-only",
+    "shipped": "Passed: six checks",
+    "buildversion": "Passed: eight checks",
+    "reference": "Passed: 152 entries, 608 views, no consistency failures",
+    "visual": "Partial browser review only; no wireframe marked complete"
+  }
 }
