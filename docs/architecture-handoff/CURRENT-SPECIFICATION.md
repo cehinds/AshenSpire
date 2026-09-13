@@ -145,3 +145,7 @@ Combatant inspect legibility: the selected info control remains a44px square wit
 
 Combatant sizing uses the sprite frame width for horizontal fit, excluding external intent and guard badges. The default formation scale is 1 and the minimum sprite-height allocation is 84px; row depth and selection growth remain unchanged.
 Hand selection is exclusive within its hand: selecting a new card clears the previous selected state, lift, glow, aria-pressed value and delayed inspect control. Stale inspect timers cannot reveal an unselected card.
+
+The hand uses a curved fan with configurable angle and arc, raised within its section. Resolve one uniform card size from available height and the configured size bounds, preserving 5:8 proportions; five cards remain exposed on narrow hosts before horizontal overflow. The combatant inspect disk is 80% of its former diameter inside the same 44px touch target. Footer reference feedback is announced without covering controls. Sprite allocation is 92px with a 4.5rem lower-details reserve.
+
+The default hand fixture contains five cards and is centered as one fan. Its inspect control overlaps the card upper edge while retaining its hit target, reducing reserved blank space so cards can be larger without changing aspect ratio.

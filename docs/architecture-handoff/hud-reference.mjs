@@ -1,6 +1,6 @@
 export const hudConfig = {
-  context: 'combat', enabled: true, layoutPreset: 'proposed', hudMode: 'expanded',
-  layers: { header: true, class: true, cinders: true, position: true, vitality: true, health: true, mana: true, stamina: true, armoury: true, menu: true, rail: true, relics: true, potions: true, experience: true, chargeFlasks: true, modeGrip: false },
+  context: 'combat', enabled: true, layoutPreset: 'proposed',
+  layers: { header: true, class: true, cinders: true, position: true, vitality: true, health: true, mana: true, stamina: true, armoury: true, menu: true, rail: true, relics: true, potions: true, experience: true, chargeFlasks: true },
   vitality: { referenceMaximum: { health: 200, mana: 20, stamina: 20 }, maximumWidthPercent: 100, scaleByMaximum: true },
   potions: { placement: 'footerOnly', componentId: 'WGC11', contentsComponentId: 'WGH8', openIntent: 'openPotions', combineChargeFlasks: true, combineCarriedPotions: true },
   experience: { contexts: ['combat'], color: '#398bd1', heightRem: 0.35, animationMs: 650, awardPreview: 15 },
@@ -20,7 +20,6 @@ export const hudSources = {
   WGH6: ['src/ui/components/hudmeta.js#inventoryBeltHtml', 'src/ui/models/InventoryBeltModel.js'],
   WGH7: ['src/ui/components/hudmeta.js#runHeaderStripHtml', 'src/ui/models/RunHeaderModel.js'],
   WGH8: ['src/ui/components/hudmeta.js#quickAccessPanelHtml', 'src/ui/components/flask.js'],
-  WGH9: ['PROPOSED: baseline compatibility view of current checkout src/ui/models/HudModeModel.js at 3c70be90; file absent in documentation baseline']
 };
 const behavior = `INPUT snapshot, context, config, commandRegistry
 // This is a reference projection. Never award XP or spend inventory in a view.
@@ -45,7 +44,6 @@ ON action(intent): commandRegistry.dispatch(intent)
 ON configurationChanged: ReprojectAndRender(); RestoreFocusedControl()`;
 export const hudDefinitions = [
 ['WGH8','Potions contents','WCB2','[WGC11 Potions]\n    └─ on open: [HP ×2] [MP ×1] [Smoke vial ×1]','Shared footer Potions control contents; WGC11 owns presentation','inside footer WGC11 disclosure; never in top HUD','shared Potions content host width','content-fit; action height config.layout.actionHeightRem','// Proposed owner correction supersedes separate flask buttons.\nentries = ProjectPotionEntries(snapshot.chargeFlasks, snapshot.carriedPotions, config.potions)\nRenderInsideSharedControl(config.potions.componentId, entries)\n// Footer-only placement applies to current and proposed preview presets.\n// Data keeps charge providers separate from owned item instances; view combines references only.\nOnChoose(entry): EmitRegisteredUseIntent(entry.id); DomainRevalidatesChargesAndTarget()'],
-['WGH9','HUD mode grip','WCB2','[⌃ Compact HUD / ⌄ Expand HUD]','Current-checkout expanded/compact HUD model','HUD bottom center','content-fit','config.layout.actionHeightRem','// Compatibility reference to current checkout HudModeModel.\nProjectNextMode(config.hudMode)\nOnActivate: SetPresentationMode(nextMode); RecomposeActiveLayers()'],
 ['WGH0','HUD composition contract','WCF2','[WGH7 Run header]\n[WGH1 Vitality] [WGH2 Armoury] [WGH3 Menu]\n[WGH6 Relics rail]\n[WGH5 Experience strip when configured]','WGH4 concrete composition; WGS2 shared scene slot','scene top; shared parent bounds','100% host width','content-fit within configured scene band',behavior],
 ['WGH1','Vitality HUD','WCF2','Generated from hudConfig','WGH4; WGS2; combat and map HUD','primary row left; align meter edges','remaining primary row width','active meters × config.layout.meterHeightRem',`INPUT resource snapshot, config.vitality, availableWidth
 // Current source resourceBarPlan separates track length from fill.
@@ -115,7 +113,6 @@ export function buildHudDiagram(id,mode='wide',config=hudConfig) {
     if(config.layers.vitality)lines.push(...meters);
     lines.push([config.layers.armoury?'[Armoury]':'',config.layers.menu?'[Menu]':''].filter(Boolean).join(' '));
     if(config.layers.rail&&config.layers.relics)lines.push(relics);
-    if(config.layers.modeGrip)lines.push('[HUD mode: '+config.hudMode+']');
     const xp=config.layers.experience&&config.experience.contexts.includes(config.context)?'\n'+experienceDiagram(config,width):'';
     return framedDiagram(lines.filter(Boolean),width)+xp;
   }

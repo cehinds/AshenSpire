@@ -44,8 +44,7 @@
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 80,
@@ -56,7 +55,6 @@
       "context": "combat",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -72,8 +70,7 @@
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -175,8 +172,7 @@
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -187,7 +183,6 @@
       "context": "map",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -203,8 +198,7 @@
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -305,8 +299,7 @@
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -317,7 +310,6 @@
       "context": "town",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -333,8 +325,7 @@
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [

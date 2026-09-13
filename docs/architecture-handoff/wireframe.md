@@ -10629,7 +10629,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 - [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/map.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 - [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/event.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8), [WGH9](wireframe-gallery.html#WGH9)
+**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [component-completion-client.js](component-completion-client.js), [hud-reference-client.js](hud-reference-client.js), [scene-reference-client.js](scene-reference-client.js)
 
@@ -10687,8 +10687,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 80,
@@ -10699,7 +10698,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "combat",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -10715,8 +10713,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -10832,8 +10829,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 80,
@@ -10844,7 +10840,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "combat",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -10860,8 +10855,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -10927,7 +10921,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
     "context": "combat",
     "enabled": true,
     "layoutPreset": "proposed",
-    "hudMode": "expanded",
     "layers": {
       "header": true,
       "class": true,
@@ -10943,8 +10936,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "relics": true,
       "potions": true,
       "experience": true,
-      "chargeFlasks": true,
-      "modeGrip": false
+      "chargeFlasks": true
     },
     "vitality": {
       "referenceMaximum": {
@@ -11240,7 +11232,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 - [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/map.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 - [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/event.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8), [WGH9](wireframe-gallery.html#WGH9)
+**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [component-completion-client.js](component-completion-client.js), [hud-reference-client.js](hud-reference-client.js), [scene-reference-client.js](scene-reference-client.js), [combatant-legibility.js](combatant-legibility.js), [combatant-focus.js](combatant-focus.js), [combatant-focus.mjs](combatant-focus.mjs)
 
@@ -11298,8 +11290,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 80,
@@ -11310,7 +11301,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "combat",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -11326,8 +11316,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -11443,8 +11432,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 80,
@@ -11455,7 +11443,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "combat",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -11471,8 +11458,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -11538,7 +11524,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
     "context": "combat",
     "enabled": true,
     "layoutPreset": "proposed",
-    "hudMode": "expanded",
     "layers": {
       "header": true,
       "class": true,
@@ -11554,8 +11539,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "relics": true,
       "potions": true,
       "experience": true,
-      "chargeFlasks": true,
-      "modeGrip": false
+      "chargeFlasks": true
     },
     "vitality": {
       "referenceMaximum": {
@@ -11839,7 +11823,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 - [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/map.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 - [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/event.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGM1](wireframe-gallery.html#WGM1), [WGM2](wireframe-gallery.html#WGM2), [WGM3](wireframe-gallery.html#WGM3), [WGM4](wireframe-gallery.html#WGM4), [WGM5](wireframe-gallery.html#WGM5), [WGM6](wireframe-gallery.html#WGM6), [WGM7](wireframe-gallery.html#WGM7), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8), [WGH9](wireframe-gallery.html#WGH9)
+**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGM1](wireframe-gallery.html#WGM1), [WGM2](wireframe-gallery.html#WGM2), [WGM3](wireframe-gallery.html#WGM3), [WGM4](wireframe-gallery.html#WGM4), [WGM5](wireframe-gallery.html#WGM5), [WGM6](wireframe-gallery.html#WGM6), [WGM7](wireframe-gallery.html#WGM7), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [component-completion-client.js](component-completion-client.js), [hud-reference-client.js](hud-reference-client.js), [scene-reference-client.js](scene-reference-client.js)
 
@@ -11892,8 +11876,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -11904,7 +11887,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "map",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -11920,8 +11902,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -12032,8 +12013,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -12044,7 +12024,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "map",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -12060,8 +12039,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -12127,7 +12105,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
     "context": "combat",
     "enabled": true,
     "layoutPreset": "proposed",
-    "hudMode": "expanded",
     "layers": {
       "header": true,
       "class": true,
@@ -12143,8 +12120,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "relics": true,
       "potions": true,
       "experience": true,
-      "chargeFlasks": true,
-      "modeGrip": false
+      "chargeFlasks": true
     },
     "vitality": {
       "referenceMaximum": {
@@ -12458,7 +12434,7 @@ Executable documentation with illustrative records; no domain or persistence mut
 - [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/map.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 - [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/3c70be9014063e2a6216d4e3196d2a04d4438229/src/ui/screens/event.js#L1) ‚Äî Current owner checkout (including inspected local edits)
 
-**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGQ1](wireframe-gallery.html#WGQ1), [WGQ2](wireframe-gallery.html#WGQ2), [WGQ3](wireframe-gallery.html#WGQ3), [WGQ4](wireframe-gallery.html#WGQ4), [WGQ5](wireframe-gallery.html#WGQ5), [WGQ6](wireframe-gallery.html#WGQ6), [WGQ7](wireframe-gallery.html#WGQ7), [WGQ8](wireframe-gallery.html#WGQ8), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8), [WGH9](wireframe-gallery.html#WGH9)
+**Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGQ1](wireframe-gallery.html#WGQ1), [WGQ2](wireframe-gallery.html#WGQ2), [WGQ3](wireframe-gallery.html#WGQ3), [WGQ4](wireframe-gallery.html#WGQ4), [WGQ5](wireframe-gallery.html#WGQ5), [WGQ6](wireframe-gallery.html#WGQ6), [WGQ7](wireframe-gallery.html#WGQ7), [WGQ8](wireframe-gallery.html#WGQ8), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
 **Actual reference code:** [wireframe-gallery-template.html](wireframe-gallery-template.html), [component-completion-client.js](component-completion-client.js), [hud-reference-client.js](hud-reference-client.js), [scene-reference-client.js](scene-reference-client.js)
 
@@ -12510,8 +12486,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -12522,7 +12497,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "town",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -12538,8 +12512,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -12649,8 +12622,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "WGH5",
       "WGH6",
       "WGH7",
-      "WGH8",
-      "WGH9"
+      "WGH8"
     ],
     "background": {
       "floorHeightPercent": 35,
@@ -12661,7 +12633,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "context": "town",
       "enabled": true,
       "layoutPreset": "proposed",
-      "hudMode": "expanded",
       "layers": {
         "header": true,
         "class": true,
@@ -12677,8 +12648,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
         "relics": true,
         "potions": true,
         "experience": true,
-        "chargeFlasks": false,
-        "modeGrip": false
+        "chargeFlasks": false
       },
       "experience": {
         "contexts": [
@@ -12744,7 +12714,6 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
     "context": "combat",
     "enabled": true,
     "layoutPreset": "proposed",
-    "hudMode": "expanded",
     "layers": {
       "header": true,
       "class": true,
@@ -12760,8 +12729,7 @@ Renderer binding: `gameplayPreview`. The HTML ‚ÄúComponent composition‚Äù tab ex
       "relics": true,
       "potions": true,
       "experience": true,
-      "chargeFlasks": true,
-      "modeGrip": false
+      "chargeFlasks": true
     },
     "vitality": {
       "referenceMaximum": {
@@ -21114,6 +21082,7 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   "legibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -21456,6 +21425,7 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   "legibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -21798,6 +21768,7 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   "legibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -22148,6 +22119,7 @@ Renderer binding: `card`. The HTML ‚ÄúComponent composition‚Äù tab executes this
   "legibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -24293,8 +24265,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -24312,6 +24284,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -24330,6 +24303,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -24349,9 +24326,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -24774,8 +24749,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -24793,6 +24768,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -24811,6 +24787,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -24830,9 +24810,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -25291,8 +25269,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -25310,6 +25288,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -25328,6 +25307,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -25347,9 +25330,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -25799,8 +25780,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -25818,6 +25799,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -25836,6 +25818,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -25855,9 +25841,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -26303,8 +26287,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -26322,6 +26306,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -26340,6 +26325,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -26359,9 +26348,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -26785,8 +26772,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -26804,6 +26791,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -26822,6 +26810,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -26841,9 +26833,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -27279,8 +27269,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27298,6 +27288,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -27316,6 +27307,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -27335,9 +27330,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -27760,8 +27753,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -27779,6 +27772,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -27797,6 +27791,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -27816,9 +27814,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -28270,8 +28266,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -28289,6 +28285,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -28307,6 +28304,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -28326,9 +28327,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -28776,8 +28775,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -28795,6 +28794,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -28813,6 +28813,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -28832,9 +28836,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -29269,8 +29271,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29288,6 +29290,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -29306,6 +29309,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -29325,9 +29332,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -29771,8 +29776,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -29790,6 +29795,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -29808,6 +29814,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -29827,9 +29837,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -30248,8 +30256,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -30267,6 +30275,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -30285,6 +30294,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -30304,9 +30317,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -30737,8 +30748,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -30756,6 +30767,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -30774,6 +30786,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -30793,9 +30809,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -31210,8 +31224,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -31229,6 +31243,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -31247,6 +31262,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -31266,9 +31285,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -31724,8 +31741,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -31743,6 +31760,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -31761,6 +31779,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -31780,9 +31802,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -32197,8 +32217,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32216,6 +32236,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -32234,6 +32255,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -32253,9 +32278,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -32675,8 +32698,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -32694,6 +32717,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -32712,6 +32736,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -32731,9 +32759,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -33153,8 +33179,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -33172,6 +33198,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -33190,6 +33217,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -33209,9 +33240,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -33626,8 +33655,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -33645,6 +33674,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -33663,6 +33693,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -33682,9 +33716,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -34099,8 +34131,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34118,6 +34150,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -34136,6 +34169,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -34155,9 +34192,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -34577,8 +34612,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -34596,6 +34631,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -34614,6 +34650,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -34633,9 +34673,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -35087,8 +35125,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -35106,6 +35144,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -35124,6 +35163,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -35143,9 +35186,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -35568,8 +35609,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -35587,6 +35628,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -35605,6 +35647,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -35624,9 +35670,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -36045,8 +36089,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -36064,6 +36108,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -36082,6 +36127,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -36101,9 +36150,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -36535,8 +36582,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -36554,6 +36601,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -36572,6 +36620,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -36591,9 +36643,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -37025,8 +37075,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37044,6 +37094,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -37062,6 +37113,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -37081,9 +37136,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -37511,8 +37564,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -37530,6 +37583,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -37548,6 +37602,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -37567,9 +37625,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -37997,8 +38053,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -38016,6 +38072,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -38034,6 +38091,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -38053,9 +38114,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -38486,8 +38545,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -38505,6 +38564,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -38523,6 +38583,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -38542,9 +38606,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -38988,8 +39050,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39007,6 +39069,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -39025,6 +39088,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -39044,9 +39111,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -39490,8 +39555,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39509,6 +39574,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -39527,6 +39593,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -39546,9 +39616,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -39980,8 +40048,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -39999,6 +40067,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -40017,6 +40086,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -40036,9 +40109,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -40466,8 +40537,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40485,6 +40556,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -40503,6 +40575,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -40522,9 +40598,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -40948,8 +41022,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -40967,6 +41041,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -40985,6 +41060,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -41004,9 +41083,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -41430,8 +41507,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -41449,6 +41526,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -41467,6 +41545,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -41486,9 +41568,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -41925,8 +42005,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -41944,6 +42024,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -41962,6 +42043,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -41981,9 +42066,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -42403,8 +42486,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -42422,6 +42505,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -42440,6 +42524,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -42459,9 +42547,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -42882,8 +42968,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -42901,6 +42987,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -42919,6 +43006,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -42938,9 +43029,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -43361,8 +43450,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -43380,6 +43469,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -43398,6 +43488,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -43417,9 +43511,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -43840,8 +43932,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -43859,6 +43951,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -43877,6 +43970,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -43896,9 +43993,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -44335,8 +44430,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -44354,6 +44449,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -44372,6 +44468,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -44391,9 +44491,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -44702,7 +44800,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -44718,8 +44815,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -44960,7 +45056,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -44976,8 +45071,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -45195,7 +45289,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -45211,8 +45304,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -45430,7 +45522,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -45446,8 +45537,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -45718,7 +45808,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -45734,8 +45823,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -45963,7 +46051,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -45979,8 +46066,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -46198,7 +46284,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -46214,8 +46299,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -46433,7 +46517,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -46449,8 +46532,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -46677,7 +46759,6 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -46693,244 +46774,7 @@ Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab exec
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
-  },
-  "vitality": {
-    "referenceMaximum": {
-      "health": 200,
-      "mana": 20,
-      "stamina": 20
-    },
-    "maximumWidthPercent": 100,
-    "scaleByMaximum": true
-  },
-  "potions": {
-    "placement": "footerOnly",
-    "componentId": "WGC11",
-    "contentsComponentId": "WGH8",
-    "openIntent": "openPotions",
-    "combineChargeFlasks": true,
-    "combineCarriedPotions": true
-  },
-  "experience": {
-    "contexts": [
-      "combat"
-    ],
-    "color": "#398bd1",
-    "heightRem": 0.35,
-    "animationMs": 650,
-    "awardPreview": 15
-  },
-  "diagram": {
-    "columns": {
-      "wide": 62,
-      "compact": 48,
-      "portraitSE": 40,
-      "portraitS24": 42
-    },
-    "trackColumns": 20,
-    "labelColumns": 8
-  },
-  "layout": {
-    "gapRem": 0.35,
-    "insetRem": 0.5,
-    "meterHeightRem": 1.15,
-    "actionHeightRem": 2.75,
-    "radiusRem": 0.25
-  },
-  "colors": {
-    "background": "#211a12",
-    "gold": "#d5af68",
-    "text": "#eee2ca",
-    "health": "#668c46",
-    "mana": "#478dbc",
-    "stamina": "#bf9949"
-  },
-  "sample": {
-    "className": "Warden",
-    "cinders": 120,
-    "act": 1,
-    "floor": 4,
-    "health": {
-      "value": 32,
-      "maximum": 40
-    },
-    "mana": {
-      "value": 6,
-      "maximum": 10
-    },
-    "stamina": {
-      "value": 8,
-      "maximum": 10
-    },
-    "experience": {
-      "value": 40,
-      "maximum": 100
-    },
-    "relics": [
-      "Ash seal",
-      "Ember charm"
-    ],
-    "potions": [
-      "Smoke vial √ó1"
-    ],
-    "chargeFlasks": [
-      "HP √ó2",
-      "MP √ó1"
-    ]
-  }
-}
-```
-
-</details>
-<!-- reference-metadata:end -->
-## Wireframe WGH9: HUD mode grip
-
-**Parent: WCB2.** Use cases: Current-checkout expanded/compact HUD model. Owner selection propagates to the component; no duplicated selected state.
-
-**Wide**
-
-```text
-[‚åÉ Compact HUD / ‚åÑ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-**Compact**
-
-```text
-[‚åÉ Compact HUD / ‚åÑ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-**Portrait / iPhone SE (3rd generation)**
-
-Reference viewport: 375 √ó 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
-
-
-```text
-[‚åÉ Compact HUD / ‚åÑ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-
-**Portrait / Galaxy S24**
-
-Reference viewport: 360 √ó 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
-
-
-```text
-[‚åÉ Compact HUD / ‚åÑ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-**Language-agnostic pseudocode**
-
-```text
-// Load and validate pseudocode-config.json once; inject config into this component.
-// Config entries carry units; convert through the shared layout adapter.
-// Wireframe IDs are identifiers. Domain facts come from the model, not config.
-INPUT: immutable component model, owner state, context, layout tokens
-// Compatibility reference to current checkout HudModeModel.
-ProjectNextMode(config.hudMode)
-OnActivate: SetPresentationMode(nextMode); RecomposeActiveLayers()
-On model change: reproject registered values; preserve stable identity
-On dispose: release timers, observers and events
-```
-
-
-<!-- reference-metadata:start -->
-**Source description and inheritance**
-
-Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
-
-- PROPOSED: baseline compatibility view of current checkout src/ui/models/HudModeModel.js at 3c70be90; file absent in documentation baseline
-
-**Referenced components:** [WCB2](wireframe-gallery.html#WCB2)
-
-**Actual reference code:** [hud-reference-client.js](hud-reference-client.js), [hud-reference.mjs](hud-reference.mjs)
-
-Renderer binding: `hudPlayground`. The HTML ‚ÄúComponent composition‚Äù tab executes this implementation with the model below. Production source excerpts are references, not scripts embedded into the game.
-
-**Styles:** [hud-reference-client.js#hudStyleSheet](hud-reference-client.js#hudStyleSheet), [exit-component.css](exit-component.css), [combatant-legibility.css](combatant-legibility.css)
-
-<details><summary>Model JSON</summary>
-
-```json
-{
-  "className": "Warden",
-  "cinders": 120,
-  "act": 1,
-  "floor": 4,
-  "health": {
-    "value": 32,
-    "maximum": 40
-  },
-  "mana": {
-    "value": 6,
-    "maximum": 10
-  },
-  "stamina": {
-    "value": 8,
-    "maximum": 10
-  },
-  "experience": {
-    "value": 40,
-    "maximum": 100
-  },
-  "relics": [
-    "Ash seal",
-    "Ember charm"
-  ],
-  "potions": [
-    "Smoke vial √ó1"
-  ],
-  "chargeFlasks": [
-    "HP √ó2",
-    "MP √ó1"
-  ]
-}
-```
-
-</details>
-
-<details><summary>Configuration defaults JSON</summary>
-
-```json
-{
-  "context": "combat",
-  "enabled": true,
-  "layoutPreset": "proposed",
-  "hudMode": "expanded",
-  "layers": {
-    "header": true,
-    "class": true,
-    "cinders": true,
-    "position": true,
-    "vitality": true,
-    "health": true,
-    "mana": true,
-    "stamina": true,
-    "armoury": true,
-    "menu": true,
-    "rail": true,
-    "relics": true,
-    "potions": true,
-    "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {
@@ -47326,8 +47170,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -47345,6 +47189,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -47363,6 +47208,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -47382,9 +47231,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -47823,8 +47670,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -47842,6 +47689,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -47860,6 +47708,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -47879,9 +47731,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -48311,8 +48161,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -48330,6 +48180,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -48348,6 +48199,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -48367,9 +48222,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -48788,8 +48641,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -48807,6 +48660,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -48825,6 +48679,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -48844,9 +48702,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -49277,8 +49133,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -49296,6 +49152,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -49314,6 +49171,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -49333,9 +49194,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -49749,8 +49608,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -49768,6 +49627,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -49786,6 +49646,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -49805,9 +49669,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -50226,8 +50088,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50245,6 +50107,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -50263,6 +50126,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -50282,9 +50149,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -50703,8 +50568,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -50722,6 +50587,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -50740,6 +50606,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -50759,9 +50629,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -52459,8 +52327,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -52478,6 +52346,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -52496,6 +52365,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -52515,9 +52388,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -52958,8 +52829,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -52977,6 +52848,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -52995,6 +52867,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -53014,9 +52890,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -53441,8 +53315,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -53460,6 +53334,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -53478,6 +53353,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -53497,9 +53376,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -53924,8 +53801,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -53943,6 +53820,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -53961,6 +53839,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -53980,9 +53862,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -54411,8 +54291,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -54430,6 +54310,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -54448,6 +54329,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -54467,9 +54352,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -54889,8 +54772,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -54908,6 +54791,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -54926,6 +54810,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -54945,9 +54833,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -55368,8 +55254,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55387,6 +55273,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -55405,6 +55292,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -55424,9 +55315,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -55847,8 +55736,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -55866,6 +55755,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -55884,6 +55774,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -55903,9 +55797,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -56326,8 +56218,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -56345,6 +56237,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -56363,6 +56256,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -56382,9 +56279,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -56828,8 +56723,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -56847,6 +56742,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -56865,6 +56761,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -56884,9 +56784,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -57330,8 +57228,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -57349,6 +57247,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -57367,6 +57266,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -57386,9 +57289,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -57820,8 +57721,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -57839,6 +57740,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -57857,6 +57759,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -57876,9 +57782,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -58298,8 +58202,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -58317,6 +58221,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -58335,6 +58240,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -58354,9 +58263,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -58784,8 +58691,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -58803,6 +58710,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -58821,6 +58729,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -58840,9 +58752,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -59262,8 +59172,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -59281,6 +59191,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -59299,6 +59210,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -59318,9 +59233,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -59751,8 +59664,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -59770,6 +59683,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -59788,6 +59702,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -59807,9 +59725,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -60241,8 +60157,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -60260,6 +60176,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -60278,6 +60195,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -60297,9 +60218,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {
@@ -60830,8 +60749,8 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "anchorXFraction": 0.5
   },
   "scene": {
-    "minimumSpriteHeightPx": 84,
-    "selectionDetailReserveRem": 5,
+    "minimumSpriteHeightPx": 92,
+    "selectionDetailReserveRem": 4.5,
     "groundContactDepthFraction": 0.3,
     "actorBaselinePercent": 66.667,
     "actorHeightFraction": 0.72,
@@ -60849,6 +60768,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
   "combatantLegibility": {
     "intentRowMinPx": 20,
     "valueFontMinPx": 12,
+    "infoVisualScale": 0.8,
     "infoSizePx": 44,
     "infoFontPx": 16,
     "barMinWidthPx": 0,
@@ -60867,6 +60787,10 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
     "minimumHeightPx": 56
   },
   "hand": {
+    "inspectRiseRem": 1.75,
+    "fanMaxDegrees": 3,
+    "fanArchPx": 8,
+    "bodyUpPx": 0,
     "minimumHeightPx": 208,
     "verticalInsetRem": 0.25,
     "minFontRem": 0.7,
@@ -60886,9 +60810,7 @@ Renderer binding: `renderCompletedComponent`. The HTML ‚ÄúComponent composition‚
       "WC1b",
       "WC1c",
       "WC1a",
-      "WC1b",
-      "WC1c",
-      "WC1a"
+      "WC1b"
     ]
   },
   "tooltip": {

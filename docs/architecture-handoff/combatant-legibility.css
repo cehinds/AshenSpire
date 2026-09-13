@@ -152,3 +152,7 @@
   white-space: nowrap;
   overflow: hidden;
 }
+
+/* The visible inspect disk is smaller while the transparent hit area stays 44px. */
+.combatant-legible .info{background:transparent!important;border-color:transparent!important;isolation:isolate;font-size:calc(var(--combatant-legible-info-font) * var(--combatant-info-visual-scale,.8))!important}
+.combatant-legible .info::before{content:"";position:absolute;inset:calc((1 - var(--combatant-info-visual-scale,.8)) * 50%);border:1px solid var(--gold);border-radius:50%;background:var(--panel);z-index:-1;pointer-events:none}

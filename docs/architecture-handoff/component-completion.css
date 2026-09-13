@@ -91,3 +91,10 @@
 
 /* Hand actions belong to the combat interaction surface, not a second panel below each card. */
 .cc-hand .cardhost > .status{display:none!important}
+/* The neutral hand is a shallow curved fan; focus straightens one card. */
+.cc-reference .cc-hand-track>.cc-native{transform-origin:center center;transform:translateY(var(--cc-hand-arch,0px)) rotate(var(--cc-hand-angle,0deg))}
+.cc-reference .cc-hand-track>.cc-native:hover,.cc-reference .cc-hand-track>.cc-native:focus-within{transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-active-order)}
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-selected-order)}
+
+.cc-reference .cc-hand-track .info{top:calc(0px - var(--cc-hand-info-rise,1.75rem));bottom:auto}
+.cc-reference .cc-hand:not(.cc-hand-scroll){overflow-x:hidden}

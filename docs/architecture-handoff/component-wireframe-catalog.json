@@ -594,17 +594,6 @@
     ]
   },
   {
-    "id": "WGH9",
-    "name": "HUD mode grip",
-    "parent": "WCB2",
-    "orientations": [
-      "wide",
-      "compact",
-      "iphoneSE",
-      "galaxyS24"
-    ]
-  },
-  {
     "id": "WGM0",
     "name": "Map composition",
     "parent": null,

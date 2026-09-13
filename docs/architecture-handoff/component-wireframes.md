@@ -4407,68 +4407,6 @@ On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
 
-## Wireframe WGH9: HUD mode grip
-
-**Parent: WCB2.** Use cases: Current-checkout expanded/compact HUD model. Owner selection propagates to the component; no duplicated selected state.
-
-**Wide**
-
-```text
-[⌃ Compact HUD / ⌄ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-**Compact**
-
-```text
-[⌃ Compact HUD / ⌄ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-**Portrait / iPhone SE (3rd generation)**
-
-Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
-
-
-```text
-[⌃ Compact HUD / ⌄ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-
-**Portrait / Galaxy S24**
-
-Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimensions resolve against this viewport. Browser chrome and text scaling require separate device validation.
-
-
-```text
-[⌃ Compact HUD / ⌄ Expand HUD]
-```
-
-| Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
-|---|---|---|---|---|---|---|---|---|
-| WGH9.root | content-fit | config.layout.actionHeightRem | owning component slot | HUD bottom center | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
-
-**Language-agnostic pseudocode**
-
-```text
-INPUT: immutable component model, owner state, context, layout tokens
-// Compatibility reference to current checkout HudModeModel.
-ProjectNextMode(config.hudMode)
-OnActivate: SetPresentationMode(nextMode); RecomposeActiveLayers()
-On model change: reproject registered values; preserve stable identity
-On dispose: release timers, observers and events
-```
-
 ## Wireframe WGM0: Map composition
 
 **Parent: none.** Use cases: Map composition reusable component family. Owner selection propagates to the component; no duplicated selected state.

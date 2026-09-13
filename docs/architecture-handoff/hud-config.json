@@ -2,7 +2,6 @@
   "context": "combat",
   "enabled": true,
   "layoutPreset": "proposed",
-  "hudMode": "expanded",
   "layers": {
     "header": true,
     "class": true,
@@ -18,8 +17,7 @@
     "relics": true,
     "potions": true,
     "experience": true,
-    "chargeFlasks": true,
-    "modeGrip": false
+    "chargeFlasks": true
   },
   "vitality": {
     "referenceMaximum": {

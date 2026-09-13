@@ -81,7 +81,6 @@
     "context": "combat",
     "enabled": true,
     "layoutPreset": "proposed",
-    "hudMode": "expanded",
     "layers": {
       "header": true,
       "class": true,
@@ -97,8 +96,7 @@
       "relics": true,
       "potions": true,
       "experience": true,
-      "chargeFlasks": true,
-      "modeGrip": false
+      "chargeFlasks": true
     },
     "vitality": {
       "referenceMaximum": {
@@ -463,8 +461,8 @@
       "anchorXFraction": 0.5
     },
     "scene": {
-      "minimumSpriteHeightPx": 84,
-      "selectionDetailReserveRem": 5,
+      "minimumSpriteHeightPx": 92,
+      "selectionDetailReserveRem": 4.5,
       "groundContactDepthFraction": 0.3,
       "actorBaselinePercent": 66.667,
       "actorHeightFraction": 0.72,
@@ -482,6 +480,7 @@
     "combatantLegibility": {
       "intentRowMinPx": 20,
       "valueFontMinPx": 12,
+      "infoVisualScale": 0.8,
       "infoSizePx": 44,
       "infoFontPx": 16,
       "barMinWidthPx": 0,
@@ -500,6 +499,10 @@
       "minimumHeightPx": 56
     },
     "hand": {
+      "inspectRiseRem": 1.75,
+      "fanMaxDegrees": 3,
+      "fanArchPx": 8,
+      "bodyUpPx": 0,
       "minimumHeightPx": 208,
       "verticalInsetRem": 0.25,
       "minFontRem": 0.7,
@@ -519,9 +522,7 @@
         "WC1b",
         "WC1c",
         "WC1a",
-        "WC1b",
-        "WC1c",
-        "WC1a"
+        "WC1b"
       ]
     },
     "tooltip": {

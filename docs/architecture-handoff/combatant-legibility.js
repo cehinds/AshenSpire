@@ -14,6 +14,7 @@ function applyCombatantLegibility(actor, scale, config) {
   const compensation = Math.max(1, 1 / scale);
   actor.classList.add('combatant-legible');
   actor.style.setProperty('--combatant-legibility-compensation', String(compensation));
+  actor.style.setProperty('--combatant-info-visual-scale',config.infoVisualScale??0.8);
   const screenTokens = { valueFontMinPx: ['value-font',12], infoSizePx: ['info-size',44], infoFontPx: ['info-font',16] };
   for (const [key,[token,fallback]] of Object.entries(screenTokens)) {
     const value=config[key] ?? fallback;
