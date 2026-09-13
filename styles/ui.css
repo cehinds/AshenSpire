@@ -841,7 +841,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .mount-row.is-extra > em { color: var(--gold); }
 .mount-card-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 6px 0 10px; }
 .mount-card-list .card { cursor: pointer; }
-.mount-card-list .card.selected { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The picked card wears the game's shared chosen ring (`.is-chosen`, kit.css); the stables no longer draw a gold one of their own. */
 
 /* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
    `letter-spacing` adds its space after the LAST glyph as well as between the
