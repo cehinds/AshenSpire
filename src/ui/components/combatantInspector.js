@@ -15,6 +15,10 @@ import { decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
+import { projectCombatantInspector as projectSections } from '../models/CombatantInspectorSections.js';
+import { t } from '../strings.js';
+
+const projectCombatantInspector = (subject) => projectSections(subject, t);
 import { attachTooltip, esc } from './tooltip.js';
 import { helpText } from '../../model/tooltipSettings.js';
 import { el, eyebrow, titleS, hairline, labelStack, meter, meters, row, statusText } from '../kit/index.js';
@@ -71,24 +75,67 @@ function abilitySection(abilities) {
  * tooltip to see more details"). A second copy of these sections is exactly
  * how the tray and the door would drift.
  */
+// The two empty states never share wording (W1w: unknown and none are distinct).
+function factRows(section) {
+  if (section.knowledge !== 'known') {
+    const empty = row({ label: t(`inspector.empty.${section.knowledge}`), tag: 'div', disabled: true, className: 'combatant-inspector-row' });
+    empty.dataset.knowledge = section.knowledge;
+    return [empty];
+  }
+  return section.rows.map((r) => row({
+    label: r.label, status: [r.value, r.detail].filter(Boolean).join(' · '), tag: 'div', className: 'combatant-inspector-row',
+  }));
+}
+
+function projectedSection(section, content = factRows(section)) {
+  return el('section', { class: 'combatant-inspector-section', dataset: { section: section.id, knowledge: section.knowledge } }, [
+    eyebrow(section.title), hairline(), ...content,
+  ]);
+}
+
 export function combatantDetailBody(subject, { heading = true } = {}) {
   if (!subject?.name) throw new Error('combatantDetailBody requires a named subject');
   // `heading: false` for a door whose HEAD already names the subject — the
   // tray has no head, so it keeps the LabelStack.
-  const effects = el('section', { class: 'combatant-inspector-section' }, [eyebrow('Active effects')]);
-  const tags = el('div', { class: 'inspection-tags' });
-  for (const status of subject.statuses || []) tags.append(inspectionTag(status.name, status.detail));
-  if (tags.childElementCount) effects.append(tags);
-  else effects.append(statusText('No active effects.'));
+  const view = projectCombatantInspector(subject);
+  const byId = Object.fromEntries(view.sections.map((s) => [s.id, s]));
+  let abilities = projectedSection(byId.abilities);
+  if (byId.abilities.knowledge === 'known') {
+    abilities = subject.abilities ? abilitySection(subject.abilities)
+      : subject.moveCards ? renderEnemyMoveCards(subject.moveCards)
+        : section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.');
+    abilities.dataset.section = 'abilities';
+    abilities.dataset.knowledge = 'known';
+  }
   return [
-    el('div', { class: 'combatant-inspector-summary' }, [
-      heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
-      resourceMeters(subject.resources),
-    ]),
-    ...(subject.intent && !subject.moveCards?.some(card => card.active) ? [section('Current intent', [subject.intent], 'No current intent.')] : []),
-    subject.abilities ? abilitySection(subject.abilities) : subject.moveCards ? renderEnemyMoveCards(subject.moveCards) : section(subject.skillLabel || 'Skills', subject.skills, 'No active skills.'),
-    ...(!subject.abilities && (subject.statuses || []).length ? [effects] : []),
-  ].map(decorateKeywords);
+    heading ? labelStack({ label: subject.name, hint: subject.subtitle || '' }) : null,
+    projectedSection(byId.summary),
+    projectedSection(byId.state),
+    projectedSection(byId.history),
+    abilities,
+    projectedSection(byId.traits),
+    projectedSection(byId.lore),
+  ].filter(Boolean).map(decorateKeywords);
+}
+
+/** The W1w preview: only sprite, name and HP, bounded and aspect-preserving. */
+export function combatantInspectorPreview({ name, hp = null, sprite = null }) {
+  const art = el('div', { class: 'combatant-inspector-art' });
+  if (sprite) art.append(sprite);
+  return el('div', { class: 'combatant-inspector-preview' }, [
+    art, labelStack({ label: name }), hp ? resourceMeters([hp]) : null,
+  ]);
+}
+
+/** Preview left, details right; only the details pane scrolls. */
+export function combatantInspectorLayout(subject, { sprite = null, previewFraction = 0.38 } = {}) {
+  const view = projectCombatantInspector(subject);
+  const layout = el('div', { class: 'combatant-inspector-layout' }, [
+    combatantInspectorPreview({ name: view.preview.name, hp: view.preview.hp, sprite }),
+    el('div', { class: 'combatant-inspector-details' }, combatantDetailBody(subject, { heading: false })),
+  ]);
+  layout.style.setProperty('--inspector-preview-fraction', String(previewFraction));
+  return layout;
 }
 
 export function mountCombatantInspector(host, model, { onToggle = null } = {}) {

@@ -16,6 +16,8 @@ export const wireframeUi = freeze({
     fanAngleDegrees: 2.5, arcRem: 0.6, dragThresholdPx: 12,
   },
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56 },
+  // W1w: preview column share; the details pane takes the rest and scrolls.
+  inspector: { previewFraction: 0.38 },
   // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
   combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
   footer: {

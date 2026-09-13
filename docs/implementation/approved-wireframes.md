@@ -60,6 +60,33 @@ shared conversion helper. After converting them through `anchorLocalBox`, the
 full Node rerun completed with exit code 0. Targeted zoom checks also pass.
 Test logs and temporary images stay outside commits.
 
+## Combatant inspector
+
+Branch `feature/wireframe-combatant-inspector`, based on dev `3c72a6df`.
+W1w/W1p now have one DOM-free projection,
+`src/ui/models/CombatantInspectorSections.js`, rendered by
+`combatantDetailBody`. The door and the edge tray share it.
+
+- The combat door is a two-column layout. The left preview is only sprite,
+  name, and HP; it is a fresh still from the field's own asset functions,
+  with no intent, defense, aura, or overlays. The right details take the
+  rest of the width and are the only part that scrolls. The preview share is
+  `wireframeUi.inspector.previewFraction` (0.38).
+- Section order: Summary (HP, intent, defense), Current state, Previous
+  actions newest first, Known abilities, Known traits, Lore last.
+- Each section is `known`, `none`, or `unknown`, and the two empty
+  states never share wording ("None." and "Unknown.").
+- Previous actions come from `enemy.movesHistory` with the current intent's
+  entry excluded. Traits are the enemy's tags. Lore is unknown because no
+  enemy lore is authored yet.
+
+Limits:
+- No knowledge-filtering system exists for combatants yet, so everything
+  the engine knows is shown. Weaknesses and resistances are not authored,
+  so traits list tags only.
+- The player's play history, traits, and lore are reported as unknown.
+- The door's Close is still a primary button on this base; #1013 gives
+  exits their own role.
 ## Main menu save preview
 
 Branch `feature/wireframe-title-menu`, based on dev `3c72a6df`.
