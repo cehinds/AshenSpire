@@ -596,5 +596,89 @@ export const uiStrings = [
     "short": "Seeded",
     "full": "The seed decides which seat the climb opens in.",
     "tip": ""
+  },
+  {
+    "id": "inspector.section.summary",
+    "extends": "",
+    "short": "Summary",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.state",
+    "extends": "",
+    "short": "Current state",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.history",
+    "extends": "",
+    "short": "Previous actions",
+    "full": "Moves this fighter has performed; the newest first.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.abilities",
+    "extends": "",
+    "short": "Known abilities",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.traits",
+    "extends": "",
+    "short": "Known traits",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.lore",
+    "extends": "",
+    "short": "Lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.intent",
+    "extends": "",
+    "short": "Intent",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.defense",
+    "extends": "",
+    "short": "Defense",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.block",
+    "extends": "",
+    "short": "{amount} Block",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.empty.none",
+    "extends": "",
+    "short": "None.",
+    "full": "Known to be empty.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.empty.unknown",
+    "extends": "",
+    "short": "Unknown.",
+    "full": "Not revealed yet.",
+    "tip": ""
   }
 ];

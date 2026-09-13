@@ -378,7 +378,7 @@
       "id": "W1p",
       "name": "Combatant inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -397,7 +397,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Sections: Summary (HP/intent/defense), Current state, Previous actions newest first (movesHistory), Known abilities, Known traits (tags), Lore (unknown until authored). No knowledge filter exists yet."
     },
     {
       "id": "W1q",
@@ -550,7 +551,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Combatant door is a two-column W1w layout: sprite/name/HP preview (0.38) left, ordered details right; only details scroll. Unknown and none are distinct."
     },
     {
       "id": "W2",
@@ -2111,7 +2112,7 @@
       "id": "WCF4",
       "name": "Inspector facts",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2134,7 +2135,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Inspector facts render as uniform label/value rows from CombatantInspectorSections; empty states say None. or Unknown."
     },
     {
       "id": "WCI0",
