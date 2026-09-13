@@ -79,7 +79,7 @@ function createComponentReferenceRenderers(configuration) {
       const minimumSprite=cfg().scene.minimumSpriteHeightPx??84;
       const lastFoot=Math.max(baselineInset,stage.height-baselineInset-detailReserve),firstFoot=Math.min(lastFoot,baselineInset+controlsReserve+minimumSprite);
       const rowStep=Math.max(0,(lastFoot-firstFoot)/Math.max(1,c.rows-1));
-      for(const slot of slots){const r=slot.getBoundingClientRect(),originalY=r.top+r.height/2-stage.top,targetY=firstFoot+Number(slot.dataset.row)*rowStep;slot.dataset.verticalShift=String(targetY-originalY);slot.style.transform+=' translateY('+slot.dataset.verticalShift+'px)';}
+      for(const slot of slots){const r=slot.getBoundingClientRect(),originalY=r.top+r.height/2-stage.top,targetY=firstFoot+(Number(slot.dataset.row)+(c.depthLoweringFractions?.[Number(slot.dataset.row)]??0))*rowStep;slot.dataset.verticalShift=String(targetY-originalY);slot.style.transform+=' translateY('+slot.dataset.verticalShift+'px)';}
       // Reset every actor before reading geometry; no post-paint correction and no accumulated transforms.
       all.forEach(a=>{a.hidden=false;a.classList.remove('combatant-legible');a.style.transform='none';a.style.left='0';a.style.top='0';});
       const focus=cfg().combatantFocus||{rowIds:['back','middle','front'],rowBase:[.9,.95,1],selectedGrowth:[1.1,1.05,1.1],rowZPriority:[10,20,30],focusZ:100,fit:{maximumScale:1,minimumScale:.01,inset:0,gap:0}};
@@ -134,7 +134,9 @@ function createComponentReferenceRenderers(configuration) {
           const column=Number(s.slot.dataset.column),row=Number(s.slot.dataset.row);
           const columnFraction=c.columns>1?column/(c.columns-1):.5;
           const rowShift=(row-rowCenter)*stagger*(side==='ally'?1:-1);
-          s.targetX=firstColumn+(lastColumn-firstColumn)*columnFraction+rowShift;
+          const frontRow=column!==(side==='ally'?0:c.columns-1);
+          const retreat=frontRow?Math.min(stage.width*(c.frontRowRetreatPercent??0)/100,Math.max(0,lastColumn-firstColumn)*.15):0;
+          s.targetX=firstColumn+(lastColumn-firstColumn)*columnFraction+rowShift+retreat*(side==='ally'?-1:1);
           const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px)) translateY('+s.slot.dataset.verticalShift+'px)';
         }
         for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot),presentation=typeof rowPresentationScale==='function'?rowPresentationScale(m.row,m.selected,focus):{factor:focus.rowBase[m.row]*(m.selected?focus.selectedGrowth[m.row]:1),zPriority:m.selected?focus.focusZ:focus.rowZPriority[m.row]},actorScale=scale*presentation.factor;

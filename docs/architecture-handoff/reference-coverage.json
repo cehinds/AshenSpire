@@ -529,6 +529,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -957,6 +963,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -1394,6 +1406,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -1829,6 +1847,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -2264,6 +2288,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -2699,6 +2729,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -3132,6 +3168,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -3560,6 +3602,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -3994,6 +4042,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -4427,6 +4481,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -4855,6 +4915,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -5287,6 +5353,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -5715,6 +5787,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -6143,6 +6221,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -6571,6 +6655,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -7006,6 +7096,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -7434,6 +7530,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -7864,6 +7966,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -8294,6 +8402,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -8722,6 +8836,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -9150,6 +9270,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -9580,6 +9706,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -10014,6 +10146,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -10442,6 +10580,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -10870,6 +11014,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -11300,6 +11450,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -11730,6 +11886,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -12160,6 +12322,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -12590,6 +12758,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -13018,6 +13192,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -13455,6 +13635,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -13892,6 +14078,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -14326,6 +14518,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -14760,6 +14958,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -15194,6 +15398,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -15628,6 +15838,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -16073,6 +16289,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -16512,6 +16734,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -16953,6 +17181,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -17394,6 +17628,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -17835,6 +18075,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -18277,6 +18523,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -20009,6 +20261,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -20433,6 +20691,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -20854,6 +21118,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -21277,6 +21547,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -21700,6 +21976,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -22121,6 +22403,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -22544,6 +22832,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -22967,6 +23261,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -23920,6 +24220,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -24359,6 +24665,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -24796,6 +25108,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -25233,6 +25551,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -25670,6 +25994,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -26105,6 +26435,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -26542,6 +26878,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -26979,6 +27321,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -27416,6 +27764,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -27847,6 +28201,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -28278,6 +28638,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -28708,6 +29074,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -29138,6 +29510,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -29569,6 +29947,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -29999,6 +30383,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -30427,6 +30817,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -30857,6 +31253,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },
@@ -31285,6 +31687,12 @@
         },
         "backRowOffsetPercent": 5,
         "minimumRowOffsetPx": 8,
+        "depthLoweringFractions": [
+          0.25,
+          0.2,
+          0
+        ],
+        "frontRowRetreatPercent": 2,
         "actorScale": 1,
         "showGuides": true
       },

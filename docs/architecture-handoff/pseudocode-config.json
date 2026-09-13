@@ -98,6 +98,10 @@
     "value_88Percent": {
       "value": 88,
       "unit": "%"
+    },
+    "value_15Percent": {
+      "value": 15,
+      "unit": "%"
     }
   }
 }

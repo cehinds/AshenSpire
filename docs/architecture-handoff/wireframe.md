@@ -25246,6 +25246,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -25755,6 +25761,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -26300,6 +26312,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -26836,6 +26854,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -27368,6 +27392,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -27878,6 +27908,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -28400,6 +28436,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -28909,6 +28951,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -29447,6 +29495,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -29981,6 +30035,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -30502,6 +30562,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -31032,6 +31098,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -31537,6 +31609,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -32054,6 +32132,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -32555,6 +32639,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -33097,6 +33187,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -33598,6 +33694,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -34104,6 +34206,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -34610,6 +34718,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -35111,6 +35225,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -35612,6 +35732,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -36118,6 +36244,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -36656,6 +36788,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -37165,6 +37303,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -37670,6 +37814,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -38188,6 +38338,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -38706,6 +38862,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -39220,6 +39382,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -39734,6 +39902,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -40251,6 +40425,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -40781,6 +40961,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -41311,6 +41497,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -41829,6 +42021,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -42343,6 +42541,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -42853,6 +43057,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -43363,6 +43573,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -43886,6 +44102,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -44392,6 +44614,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -44899,6 +45127,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -45406,6 +45640,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -45913,6 +46153,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -46436,6 +46682,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -49201,6 +49453,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -49726,6 +49984,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -50242,6 +50506,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -50747,6 +51017,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -51264,6 +51540,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -51764,6 +52046,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -52269,6 +52557,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -52774,6 +53068,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -54558,6 +54858,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -55085,6 +55391,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -55596,6 +55908,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -56107,6 +56425,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -56622,6 +56946,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -57128,6 +57458,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -57635,6 +57971,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -58142,6 +58484,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -58649,6 +58997,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -59179,6 +59533,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -59709,6 +60069,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -60227,6 +60593,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -60733,6 +61105,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -61247,6 +61625,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -61753,6 +62137,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -62270,6 +62660,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -62788,6 +63184,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
@@ -63101,7 +63503,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Tag screen-outer columns back-row and inner columns front-row independently of upper/middle/lower depth. Add config.groundGrid.formationLayers to selection paint priority so back-row guards and intents remain above front-row actors. Interpolate the team gap with config.groundGrid.centerGap. Refit only when host allocation, roster or unselected geometry changes.
+// Compose two equal ground regions with config.groundGrid fixed padding, slot gaps and center gap. Reserve six slots per side in two columns and three staggered rows, even when empty. Fill row-major from left to right. Row depth comes from config.groundGrid.rowStepRem. Assign stable ordered allies and enemies to slots from the left. Anchor WCO5 centers to slot centers. Clamp counts to slot capacity; preserve empty slots without recentering. Cache unselected sprite envelopes per category and compute a shared base fit across both factions. Selection-only details never enter the fit. Apply config.groundGrid.actorScale multiplied by configured row base and selected growth through rowPresentationScale; preserve the sprite-foot ground anchor. Lower upper/middle depth anchors by config.groundGrid.depthLoweringFractions of a row step, leaving the lower anchor fixed. Retreat inner columns toward their own side by config.groundGrid.frontRowRetreatPercent of field width, capped at config.referenceTokens.value_15Percent.value of column spacing. Tag screen-outer columns back-row and inner columns front-row independently of upper/middle/lower depth. Add config.groundGrid.formationLayers to selection paint priority so back-row guards and intents remain above front-row actors. Interpolate the team gap with config.groundGrid.centerGap. Refit only when host allocation, roster or unselected geometry changes.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -63215,6 +63617,10 @@ On dispose: release timers, observers and events
     },
     "value_88Percent": {
       "value": 88,
+      "unit": "%"
+    },
+    "value_15Percent": {
+      "value": 15,
       "unit": "%"
     }
   }
@@ -63417,6 +63823,12 @@ Renderer binding: `renderCompletedComponent`. The HTML â€œComponent compositionâ
     },
     "backRowOffsetPercent": 5,
     "minimumRowOffsetPx": 8,
+    "depthLoweringFractions": [
+      0.25,
+      0.2,
+      0
+    ],
+    "frontRowRetreatPercent": 2,
     "actorScale": 1,
     "showGuides": true
   },
