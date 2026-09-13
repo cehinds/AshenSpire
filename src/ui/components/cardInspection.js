@@ -2,6 +2,7 @@ import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat } from './cardSelection.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -74,11 +75,14 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     if (row.reason) button.title = row.reason;
     return button;
   });
-  const shell = openModal({ title, eyebrow: 'Card information', size: 'lg',
+  const back = document.createElement('button');
+  back.type = 'button'; back.textContent = 'Back'; back.className = 'card-inspection-back';
+  const shell = openModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener,
     primary: buttons[0] || null,
-    secondary: buttons.slice(1),
+    secondary: [back, ...buttons.slice(1)],
     body: cardInspectionLayout(card, details) });
+  back.addEventListener('click', shell.close);
   for (const button of buttons) {
     button.addEventListener('click', () => {
       // Re-read rather than trusting the row this button was drawn from: the
@@ -133,12 +137,16 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   const revealDelayMs = () => {
     const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
     const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
-    return Number.isFinite(ms) && ms >= 0 ? ms : 125;
+    return Number.isFinite(ms) && ms >= 0 ? ms : wireframeUi.card.inspectDelayMs;
   };
   const revealInfo = () => {
-    if (card.classList.contains('inspection-info-visible')) return;
-    clearTimeout(revealTimer);
-    revealTimer = setTimeout(() => card.classList.add('inspection-info-visible'), revealDelayMs());
+    if (revealTimer !== null || card.classList.contains('inspection-info-visible')) return;
+    revealTimer = setTimeout(() => {
+      revealTimer = null;
+      if (card.isConnected && card.classList.contains('inspection-selected')) {
+        card.classList.add('inspection-info-visible');
+      }
+    }, revealDelayMs());
   };
   const identity = card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
   // HOW THIS CARD PUTS ITSELF OUT. The store calls this on the card that was
@@ -146,13 +154,15 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // reveal is cancelled with it: otherwise it lands after the card has lost
   // selection, showing an information button on a card nobody chose.
   const douse = () => {
-    card.classList.remove('inspection-selected', 'inspection-info-visible');
+    card.classList.remove('inspection-selected', 'inspection-info-visible', 'selected');
+    card.setAttribute('aria-pressed', 'false');
     card.removeAttribute('aria-current');
     card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
   };
   const select = () => {
     lightCard(identity, douse);
     card.classList.add('inspection-selected');
+    card.setAttribute('aria-pressed', 'true');
     card.setAttribute('aria-current', 'true');
     revealInfo();
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
@@ -174,6 +184,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   });
   card.addEventListener('cardinspectioncancelreveal', () => {
     clearTimeout(revealTimer);
+    revealTimer = null;
     card.classList.remove('inspection-info-visible');
   });
   // TRUNCATED IS NEVER A DEAD END, AND IT IS STILL THE SAME TWO BEATS

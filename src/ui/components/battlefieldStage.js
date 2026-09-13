@@ -4,6 +4,7 @@ import { combatFormation } from '../models/CombatFormationModel.js';
 import { fitStatusTray } from './statusTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -51,31 +52,29 @@ export function wireBattlefieldStage(field, model) {
       const geometry = combatSpriteGeometry(sprite, schedule);
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
-      const overhead = frame.querySelector('.combatant-leading');
-      const info = overhead.querySelector('.combatant-info');
-      // Reserve the full stack even while Information is collapsed. Selection
-      // must never change sprite proportions, feet, or health-bar positions.
-      const hiddenInfoHeight = info && getComputedStyle(info).display === 'none'
-        ? parseFloat(getComputedStyle(info).height) * zoom
-          + (overhead.querySelector('.intent') ? parseFloat(getComputedStyle(overhead).rowGap) * zoom : 0)
-        : 0;
       return { slot, frame, stack, sprite, ratio, ...geometry,
-        // Keep the overhead controls below the turn banner as well as the HUD.
-        leading: Math.max(28, overhead.getBoundingClientRect().height + hiddenInfoHeight) + 28 };
+        // Reading controls do not change the unselected fitting envelope.
+        leading: Math.min(66, fieldRect.height * .25) };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio } = actor;
-      const { scale, x, visibleHeight } = sizes.find(size => size.id === slot.id);
+      const fitted = sizes.find(size => size.id === slot.id);
+      const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[slot.row] : 1;
+      const scale = fitted.scale * wireframeUi.formation.displayScale * growth;
+      const x = fitted.x;
+      const visibleHeight = fitted.visibleHeight * wireframeUi.formation.displayScale * growth;
       sprite.style.zoom = String(scale / zoom);
       sprite.firstElementChild.style.top = `${footOffset}px`;
       const paintedHeight = boxHeight * scale;
       const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
-      frame.style.zIndex = 'auto';
-      sprite.style.zIndex = String(10 - slot.row);
-      frame.dataset.formationRow = String(slot.row);
+      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
+      sprite.style.zIndex = String(slot.row);
+      frame.dataset.formationRow = slot.formationRow;
+      frame.dataset.formationDepth = String(slot.row);
+      frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
@@ -91,6 +90,8 @@ export function wireBattlefieldStage(field, model) {
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };
+  const combatHost = field.closest('.combat');
+  combatHost.addEventListener('combatantselectionchange', schedule);
   const resizeObserver = new ResizeObserver(schedule);
   resizeObserver.observe(field);
   // CSS zoom can move the rendered floor without changing the observed
@@ -104,6 +105,7 @@ export function wireBattlefieldStage(field, model) {
     if (!field.isConnected) release();
   });
   const release = () => {
+    combatHost.removeEventListener('combatantselectionchange', schedule);
     cancelAnimationFrame(frameRequest);
     resizeObserver.disconnect();
     layoutObserver.disconnect();
