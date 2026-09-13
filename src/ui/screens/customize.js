@@ -765,10 +765,40 @@ export function mountCustomize(app, {
           // So the fold asks for the fit when it opens. This is the same
           // zero-rect trap that made an earlier probe of mine report a hidden
           // button as on-screen, and that the equipment QA was walking into.
+          const refitCards = () => { if (preview.cards.length) scheduleCardFits(grid.querySelectorAll('.card')); };
           fold.addEventListener('toggle', () => {
             packageOpen.set(section.id, fold.open);
-            if (fold.open && preview.cards.length) scheduleCardFits(grid.querySelectorAll('.card'));
+            if (fold.open) refitCards();
           });
+          // THE FOLD IS NOT THE ONLY THING THAT CAN BE HIDING THESE CARDS.
+          // A fold restored open — the player had it open, went back to Class,
+          // changed class, and returned — is built ALREADY OPEN while the
+          // equipment stage itself is still shut, so its toggle never fires
+          // while the cards are measurable, and revealing the outer section
+          // does not toggle the inner fold. Same zeros, a different ancestor.
+          //
+          // Rather than chase each ancestor that could be shut, ask the one
+          // question that actually matters: when do these cards HAVE A BOX?
+          // A ResizeObserver answers exactly that — a hidden element reports
+          // 0x0 and reports a real size the moment it is rendered — whichever
+          // thing was hiding it. It disconnects on the first answer, so it is
+          // one shot per restored-open fold, not a standing subscription on a
+          // pane renderEquipment repaints after every choice.
+          //
+          // AN INTERSECTION OBSERVER WAS TRIED FIRST AND DOES NOT WORK, which
+          // is worth the line: it asks whether the element is ON SCREEN, and
+          // a restored fold is rendered far below the fold of a long section,
+          // so it never intersects and never fires. Measured: the cards stayed
+          // at the hidden-measure values until an unrelated resize. Rendered
+          // and visible are not the same question.
+          if (fold.open && preview.cards.length && typeof ResizeObserver === 'function') {
+            const measurable = new ResizeObserver((entries, self) => {
+              if (!entries.some((entry) => entry.contentRect.height > 0)) return;
+              self.disconnect();
+              refitCards();
+            });
+            measurable.observe(grid);
+          }
           fold.append(
             el('summary', { class: 'cc-starting-summary' }, [
               el('b', { text: summary }),
