@@ -3622,6 +3622,28 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
+/* W4a short landscape: allocateCombatBands() chose rails. The footer row is
+   gone; the same WGC6 grid overlays the hand band and wraps the hand:
+   (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) > .hand-area {
+  grid-template-columns: var(--wireframe-rail-width) minmax(0, 1fr) var(--wireframe-rail-width);
+  grid-template-rows: minmax(0, 1fr); grid-template-areas: 'lead hand trail';
+  column-gap: var(--wireframe-rail-gap);
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] {
+  grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-pile-width) var(--footer-circle);
+  grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
+  row-gap: var(--footer-gap); align-content: stretch;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > * {
+  grid-row: 3; pointer-events: auto;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label {
   font-size: calc(12px / var(--ui-zoom, 1));
 }

@@ -37,8 +37,9 @@ authoritative. Shared modal footer actions use equal tracks.
   that a proposed adapter exists.
 - Progression XP/practice examples do not authorize new mechanics. SPEC.md
   remains authoritative; do not turn illustrative reference data into gameplay.
-- The hand/footer minimums leave insufficient readable battlefield height at
-  844×390. The compact landscape appearance remains unresolved, not verified.
+- Stacked, the hand/footer minimums leave insufficient readable battlefield
+  height at 844×390. Short landscape now folds the footer into rails beside
+  the hand and plans supported; see "Compact landscape combat".
 
 ## Validation evidence and limits
 
@@ -50,7 +51,8 @@ Browser checks covered 1440×860, 375×667, 360×780, and 844×390. On iPhone SE
 selecting an adjacent card changed exclusive selection without spending an
 action; its information control opened the real inspector, and Back restored
 focus. Wide selection preserved the measured ground anchors and shared base
-sprite scales. Compact landscape remains too compressed. Full drag/snapping,
+sprite scales. Compact landscape was too compressed then; the rails
+arrangement below addresses it. Full drag/snapping,
 all roster sizes, and all dependent screens still need browser verification.
 
 Generated HTML was rebuilt with `node tools/launch.mjs --build-only`.
@@ -286,7 +288,8 @@ and co-op fallbacks.
   (physical, after `--ui-zoom`); the battlefield absorbs the difference.
   When the remainder cannot hold one readable combatant (minimum sprite plus
   detail reserve), the root carries `data-combat-geometry="unsupported"`.
-  844×390 reports unsupported; text and targets are not shrunk.
+  Stacked, 844×390 is unsupported; text and targets are not shrunk. The
+  rails arrangement in "Compact landscape combat" now supports it.
 - Footer: one centered, gap-first grid. Actions and Potions share one circle
   at 95% of footer height, capped at 20% of the width; End Turn shares that
   height up to 40%; Draw and Discard use up to 10%.
@@ -306,8 +309,9 @@ Browser evidence (emulation, animations finished):
 - A live resize from 375×667 to 360×780 re-planned the bands and tracks
   without remounting.
 
-Limits: compact landscape still needs an owner decision (suggest rotation,
-scroll, or relax minimums). `tools/combat-action-row.mjs`, which is not in
+Limits: compact landscape needed an owner decision; the owner asked for it
+to be supported, and "Compact landscape combat" records the result.
+`tools/combat-action-row.mjs`, which is not in
 CI, still describes edge-anchored Actions and Potions. The packed-centered
 WGC6 contract supersedes that and the tool needs updating. The hidden
 preview pane throttles animation frames, so measurements were taken after
@@ -593,6 +597,67 @@ combatant), measured against the drawn art:
 | 390×844 | enemy | left | 8.0 px | 0.879 | 56 px | 13.2 px |
 
 The stance aura's box equals its pose stage in both shapes, at z-index −1.
+## Compact landscape combat
+
+Branch `feature/wireframe-compact-landscape`, based on dev `d2ea5bcd`. The
+owner asked that 844×390 be supported, using the HTML reference.
+`allocateCombatBands` in `src/ui/models/CombatLayout.js` now takes the host
+width. When the stacked W4a plan cannot hold one readable combatant, it tries
+a rails arrangement. `wireframeUi.combat.shortHostRails` switches it.
+
+- Rails: the footer row goes. The same WGC6 grid overlays the hand band and
+  wraps the hand: (Actions)[Draw] on the leading rail, [End Turn] over
+  [Discard](Potions) on the trailing rail. Order, the lower row's shared
+  baseline, and sizes match the packed row on a minimum footer: circles at
+  95% of the 56 px footer minimum, piles at the 44 px target and 64 px
+  readable floor. `packCombatRails` owns every number.
+- Hand: keeps its 208 px minimum when it can. It yields to the battlefield
+  only down to one whole 5rem card with its lift, arc, and insets
+  (`minimumHandHeight`, 161.6 physical px). `handLayout` still sizes cards,
+  text, and exposed touch widths.
+- Supported only if the battlefield then holds the minimum sprite plus detail
+  reserve and the hand between the rails exposes five minimum cards at 44 px.
+  Otherwise the root keeps `data-combat-geometry="unsupported"`: 844×330, or a
+  440 px wide short host, which stays stacked.
+- Stacked hosts plan exactly as before. A test compares plans with and
+  without width at 1440×860, 1280×800, 390×844, 375×667, and 360×780.
+- Why rails: stacked needs 39 (HUD) + 148 (one combatant) + 56 (footer) + 162
+  (one minimum card) = 405 px against 390, before the 208 px hand minimum.
+  Moving the footer beside the hand frees 56 px of height and uses spare
+  width. The reference's (A)[D][END TURN][E](P) order, sizes, and baseline
+  survive; only the row wraps. Rotation or scrolling would not be "supported
+  without page scrolling".
+
+Browser evidence (emulation, `?shot=combat`, reduced motion):
+- 844×390 (zoom 0.62, short-wide): rails, supported. HUD 39, battlefield 148,
+  hand 597×203 px, cards 113×174, sprites 54 px visible (dev: battlefield 87,
+  sprites 44). Circles 53.2 px, piles 64×44, End Turn 120×53. Every control
+  and all five card lanes hit-test to themselves; no page scroll or overlap.
+  A tap selected a card and its inspect control stayed reachable above it.
+  Slashing Strike took an enemy from 16 to 9 HP; a held End Turn reached
+  turn 2. Rotating to 390×844 re-planned stacked, and back to rails, without
+  remounting.
+- 915×412: rails, battlefield 163, hand 668×208.
+- 740×360 and 667×375: rails plans are supported (battlefield 148, hands 176
+  and 190 high). By default the upright gate still covers both
+  (`data-short="true"`; under 1200 local px wide). With Short-screen warning
+  off the board shows whole.
+- 1440×860, 1280×800, 390×844, 375×667, 360×780: band, card, and control
+  measurements identical to dev.
+- Map (`?shot=map`) and reward (`?shot=reward`) at 844×390: no page scroll.
+  The reward door fits; its rewards column scrolls inside. The map scene
+  band is only about 110 px tall.
+- `hudparity` reports the same 9 findings at 844×340 as dev (HUD top row,
+  metadata priority, vertical lines; three poses).
+
+Limits: at 844×390 the battlefield gets exactly its configured minimum, so
+sprites stay small; more battlefield means smaller cards, an owner call. The
+top 13 px of each enemy intent badge sits under the HUD band. The
+formation's leading reserve is a quarter of the field; this predates the
+change and was worse on dev. Formation layout ignores safe-area insets, so
+rails touch the edges on notched phones. The gate at 740×360 and 667×375 is
+a separate measured decision (`gateBelowH`, `shortWideMinH`). Playwright QA
+tools could not run here.
 
 ## Remaining integration
 

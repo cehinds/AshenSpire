@@ -24,7 +24,9 @@ export const wireframeUi = freeze({
     exposedTargetPx: 44, selectedLiftRem: 1, verticalInsetRem: 0.25,
     fanAngleDegrees: 2.5, arcRem: 0.6, dragThresholdPx: 12,
   },
-  combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56 },
+  // shortHostRails: when the stacked bands leave no readable combatant (short
+  // landscape, e.g. 844x390), the footer row folds into rails beside the hand.
+  combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56, shortHostRails: true },
   // W1w: preview column share; the details pane takes the rest and scrolls.
   inspector: { previewFraction: 0.38 },
   // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
