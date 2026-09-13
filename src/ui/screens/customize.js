@@ -735,7 +735,15 @@ export function mountCustomize(app, {
           // asked. `packageOpen` remembers the answer per section for the life
           // of the screen: renderEquipment repaints this pane on every choice,
           // and a fold that forgets is one you re-open after every tap.
-          const kinds = new Set(preview.cards.map(({ ref }) => registries.cards.get(ref.cardId)?.type).filter(Boolean));
+          // DISTINCT CARDS, NOT BROAD TYPES. This counted `type` — attack, skill,
+          // power — and the summary exists so a player can compare two armaments
+          // WITHOUT opening the fold, which that number cannot do: measured on a
+          // Reaver, the straight sword and the greatsword both resolve to exactly
+          // {attack, skill}, so both read "2 kinds" and the line said the same
+          // thing about two different weapons. Counting distinct cardIds says 3
+          // for each, and what actually differs — Guard Counter against Sundering
+          // Hew — is the named card behind the fold.
+          const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
           const summary = preview.cards.length
             ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
               + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
