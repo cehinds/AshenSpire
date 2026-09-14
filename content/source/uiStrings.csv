@@ -186,3 +186,18 @@ event.status.limited,,{available} of {total} available,A price closes some respo
 event.status.resolved,,Resolved,Your response is taken; continue when ready.,
 event.continue,,Continue,Move on from this event.,Continue
 event.continue.combat,,Steel yourself,The event leads into a fight.,Steel yourself
+# ---- the Armoury (W1e / W1n) ----------------------------------------------
+armoury.title,,Armoury,"Your character, equipment, inventory and deck.",Armoury
+armoury.close,,Close Armoury,,
+armoury.categories,,Armoury categories,,
+armoury.detail.prompt,,Select an item to see its details and available actions.,,
+armoury.compare.title,,Compared with equipped,,
+armoury.compare.replaces,,Replaces {name} in {slot},,
+armoury.compare.fills,,Fills the empty {slot} position,,
+armoury.compare.removes,,Removes {name} from {slot},,
+armoury.compare.role,,{label} {before} → {after},,
+armoury.compare.unchanged,,Combat values unchanged,,
+armoury.eligibility.ready,,Available: {action},,
+armoury.eligibility.blocked,,Unavailable: {reason},,
+armoury.eligibility.short,,Requirement not met: {requirements},,
+armoury.eligibility.requirement,,{attribute} {required} (have {actual}),,

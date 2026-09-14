@@ -2953,7 +2953,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-character :is(.armoury-fold, details) > summary { min-height: calc(48px / var(--ui-zoom, 1)); height: auto; }
 .armoury .armoury-character summary :is(.as-status, .fold-summary) { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .armoury .armoury-character summary { overflow: hidden; }
-.armoury .armoury-head .modal-tab { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); }
 .armoury .armoury-position-summary .on { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
 .armoury .armoury-position-summary :is(.od, .om) { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
 .armoury[data-responsive='phone'] .armoury-content, .armoury[data-responsive='phone'] .armoury-body { display: flex; flex-direction: column; gap: 1.2rem; }
@@ -3010,12 +3009,68 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    clip every hit spark to a border, and would look harmless in review because
    nothing else in this file mentions the layers. Hence this paragraph. */
 .armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
-/* ONE ROW OF TABS ON A PHONE. The 2x2 grid put the close control in a cell
-   beside the tabs and the second row of views under the first (measured
-   390x844, 2026-09-11). Four views at 13 px fit one row beside the close;
-   the strip scrolls sideways before it ever wraps. */
-.armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: flex; flex-wrap: nowrap; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.armoury[data-responsive='phone'] .armoury-head .modal-tab { flex: 1 0 auto; min-width: 0; padding-inline: .3rem; white-space: nowrap; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+/* W1e / W1n — THE ARMOURY ON THE W1 SHELL. One title and the close in the
+   head; the views are the category rail (kit .as-railed), beside the pane on
+   wide hosts and above it on narrow ones; the footer holds Back and the
+   selected item's action. Only the pane, or the pane's two columns, scrolls.
+   The narrow rail is a grid of equal cells: every category stays visible and
+   none scrolls sideways (the old head tab strip did, measured 390x844). */
+.armoury > .modal-body.armoury-shell-body { display: flex; flex-direction: column; overflow: hidden; padding: 0; gap: 0; }
+.armoury .armoury-shell-body > .as-railed.armoury-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+.armoury .armoury-railed > .armoury-pane { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* The active view fills the pane. The inventory page's `align-items: start`
+   (written for its old two-column grid) shrank Equipment to its content. */
+.armoury .armoury-railed .armoury-content > .armoury-body { align-self: stretch; }
+:root[data-layout='narrow'] .armoury .armoury-railed > .as-rail.armoury-views {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr));
+  overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.6rem var(--modal-inset); gap: 0.4rem;
+}
+:root[data-layout='narrow'] .armoury .armoury-views > .as-railitem { text-align: center; padding-inline: 0.3rem; }
+/* The active pane's split: the item collection beside (wide) or above (phone)
+   the selected item's detail. Tracks come from wireframeUi.armoury through
+   --armoury-collection-track / --armoury-detail-track (equipment.js draw). */
+.armoury[data-view='hybrid'] .armoury-railed > .armoury-pane { overflow: hidden; }
+.armoury[data-view='hybrid'] .armoury-content,
+.armoury[data-view='hybrid'] .armoury-inventory { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.armoury .armoury-inventory > .ep-list.armoury-split {
+  flex: 1 1 auto; min-height: 0; display: grid; column-gap: 1.2rem;
+  grid-template-columns: minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.armoury .ep-list.armoury-split > .armoury-selection-context { grid-column: 1 / -1; grid-row: 1; }
+.armoury .ep-list.armoury-split > .armoury-item-collection { grid-column: 1; grid-row: 2; }
+.armoury .ep-list.armoury-split > .armoury-item-detail { grid-column: 2; grid-row: 2; border-left: 1px solid var(--line); padding-left: 1.2rem; }
+.armoury .ep-list.armoury-split > :is(.armoury-item-collection, .armoury-item-detail) { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.armoury .ep-list.armoury-split.is-empty > .armoury-item-collection { grid-column: 1 / -1; }
+.armoury[data-split='rows'] .armoury-inventory > .ep-list.armoury-split {
+  grid-template-columns: minmax(0, 1fr); row-gap: 0.8rem;
+  grid-template-rows: auto minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+}
+.armoury[data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-column: 1; grid-row: 3; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+.armoury .armoury-item-detail > .disc-reveal { margin: 0; }
+/* The shared equipment inspection is laid out for a 450px face (220px art
+   beside its details) and stacks only under the phone media rule below. The
+   Armoury's detail columns can be narrower than that on any viewport, so they
+   stack it the same way, measured on the column itself (a container query). */
+.armoury :is(.armoury-item-detail, .armoury-position-grid-detail) { container: armoury-detail / inline-size; }
+/* Scoped under .armoury so these outrank the base inspection rules that come
+   later in this file (same specificity would lose on source order). */
+@container armoury-detail (max-width: 480px) {
+  .armoury .card-inspection-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .armoury .card-inspection-art { width: 100%; max-width: 100%; margin-inline: auto; }
+  .armoury .card-inspection-art > :is(.equipment-poker-card, .card) { width: 160px; height: auto; aspect-ratio: 5 / 7; margin-inline: auto; }
+  .armoury .card-inspection-art > .inspection-tags { justify-content: center; }
+}
+.armoury .armoury-selection-facts { display: flex; flex-direction: column; gap: 0.4rem; margin-block: 0.6rem; }
+.armoury .armoury-selection-facts > .as-status { white-space: normal; overflow: visible; }
+/* W1e Equipment in its grid presentation: the slot tiles beside their detail. */
+.armoury .armoury-position-grid-groups {
+  display: grid; gap: 1.2rem; align-items: start;
+  grid-template-columns: minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+}
+.armoury .armoury-position-grid-groups > .armoury-position-grid-detail { position: sticky; top: 0; }
+.armoury[data-split='rows'] .armoury-position-grid-groups { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-split='rows'] .armoury-position-grid-groups > .armoury-position-grid-detail { position: static; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
 .equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }

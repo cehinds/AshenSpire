@@ -47,6 +47,10 @@ export const wireframeUi = freeze({
     frameWidthVw: 95, frameHeightVh: 90, headerMinVh: 10, footerMinVh: 10,
     sideInsetVw: 2.5, topInsetVh: 2, columnGapVw: 2, rowGapVh: 2,
   },
+  // W1e/W1n: the Armoury pane's item collection and the selected item's
+  // detail share the active pane (31.95/31.95 and 44/44 in the drawings, so
+  // one half each). Wide hosts put them side by side; phone hosts stack them.
+  armoury: { collectionShare: 0.5, compactCollectionShare: 0.5 },
   // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
   combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
   // WCM0 lower meters. Screen-space minimums; they hold after perspective
