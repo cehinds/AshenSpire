@@ -26,6 +26,21 @@ export function overlayGeometry({ zoom = 1, rem = 16 } = {}, config = wireframeU
   });
 }
 
+// WCO1 headroom. The overhead stack (Inspect over the intent) stands on the
+// sprite's visible top, but never rises into the HUD band above the field. On
+// a short field the stack comes down over the sprite rather than shrinking:
+// its minimums and its order hold. One frame and unit for every input:
+// `anchor` is the stack's resting bottom edge, `height` the stack's own
+// height and `ceiling` the HUD band's bottom edge. Returns the bottom edge.
+export function overheadStackBottom({ anchor, height, ceiling = 0 }) {
+  for (const [name, value] of Object.entries({ anchor, height, ceiling })) {
+    if (!Number.isFinite(value)) throw new Error(`overhead stack: ${name} must be a finite number`);
+  }
+  if (height < 0) throw new Error('overhead stack: height must be zero or more');
+  const floor = ceiling + height;
+  return Object.freeze({ bottom: Math.max(anchor, floor), clamped: anchor < floor });
+}
+
 // Whether a role shows its intent above the sprite. Enemies do by default; the
 // player has no intent of its own today, and the override stays configurable.
 export function intentVisible(role, config = wireframeUi.overlay) {

@@ -3871,6 +3871,29 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
 :root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
 :root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
+/* Notched hosts held sideways: the device's safe-area insets (combat.css's
+   --safe-*-local, zero on every other host) keep the rails and the hand they
+   wrap, the formation, and the HUD's two ends off the notch. The layout
+   adapter plans the rails for the width left between the insets. */
+:root .combat[data-layout='formation']:not(.coop) > .hand-area {
+  padding-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
+}
+:root .combat[data-layout='formation']:not(.coop) > .field {
+  margin-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
+}
+:root .combat[data-layout='formation']:not(.coop) > .topbar {
+  padding-inline: max(1.6rem, var(--safe-left-local, 0px)) max(1.6rem, var(--safe-right-local, 0px));
+}
+/* The relic and potion belt hangs from the band's padding edge, so the
+   band's padding does not move it; it takes the insets itself. */
+:root .combat[data-layout='formation']:not(.coop) .shared-hud .hud-bottom {
+  left: max(1.6rem, var(--safe-left-local, 0px)); right: max(1.6rem, var(--safe-right-local, 0px));
+}
+@media (max-height: 500px) {
+  :root .combat[data-layout='formation']:not(.coop) > .topbar {
+    padding-inline: max(calc(8px / var(--ui-zoom, 1)), var(--safe-left-local, 0px)) max(calc(8px / var(--ui-zoom, 1)), var(--safe-right-local, 0px));
+  }
+}
 :root .combat[data-layout='formation'] .combatant .meters .bar .label {
   font-size: calc(12px / var(--ui-zoom, 1));
 }

@@ -653,12 +653,12 @@ Browser evidence (emulation, `?shot=combat`, reduced motion):
 
 Limits: at 844×390 the battlefield gets exactly its configured minimum, so
 sprites stay small; more battlefield means smaller cards, an owner call. The
-top 13 px of each enemy intent badge sits under the HUD band. The
-formation's leading reserve is a quarter of the field; this predates the
-change and was worse on dev. Formation layout ignores safe-area insets, so
-rails touch the edges on notched phones. The gate at 740×360 and 667×375 is
-a separate measured decision (`gateBelowH`, `shortWideMinH`). Playwright QA
-tools could not run here.
+gate at 740×360 and 667×375 is a separate measured decision (`gateBelowH`,
+`shortWideMinH`). Playwright QA tools could not run here. The intents under
+the HUD band and the missing notch margins are fixed; see "Compact landscape:
+HUD headroom and notch margins". The formation's leading reserve is still a
+quarter of the field, so on these hosts the intent now comes down over the
+top of the sprite.
 ## Map header: W4b's 10 vh
 
 Branch `feature/wireframe-map-header`, based on dev `d2ea5bcd`. The owner
@@ -1560,3 +1560,93 @@ plate, not a foreground layer. `environments.js` still carries
 rule gives a keyboard-focused target the solid outline, but keyboard
 targeting was not verified: CDP key events did not reach the shortcut
 handler. Playwright-based tools were not run.
+## Compact landscape: HUD headroom and notch margins
+
+Branch `claude/compact-landscape-headroom-safearea`, based on dev `8797fc9a`,
+issue #1076. This fixes two defects that "Compact landscape combat" left open.
+Neither needed an owner call.
+
+- **Headroom (WCO1).** `overheadStackBottom` in
+  `src/ui/models/CombatOverlayModel.js` clamps the overhead stack (Inspect
+  over the intent), so its top edge never rises above the HUD band's bottom.
+  - On every refit, `battlefieldStage` measures each stack's height and the
+    band's bottom edge. It refits again when a stack changes size, for example
+    when Inspect appears.
+  - The stack keeps its minimums and its order. On a short field it moves
+    down over the top of the sprite instead.
+  - The sprite fit, the formation and `wireframeUi.overlay` are unchanged. A
+    stack that already clears the band does not move.
+- **Relic row.** The relic row's box spans the band's width just under the
+  HUD row. On desktop it took presses on the top of every intent; on short
+  hosts it already let them through. It now lets presses through on every
+  combat host, and the relics themselves still respond.
+- **Notch margins.** kit.css applies combat.css's `--safe-*-local` insets
+  (the device's `env(safe-area-inset-left/right)` divided by the UI zoom):
+  - The hand band is padded, and the battlefield is inset by margins.
+  - The HUD's two ends and the relic/potion belt use `max(existing, inset)`.
+  - Both HTML heads already carried `viewport-fit=cover`.
+  - The layout adapter plans the rails for the width between the insets. It
+    re-plans when that padding changes.
+
+  Every inset is zero on hosts without a notch, so nothing moves there.
+
+Browser evidence (headless Chrome 152, CDP emulation, `?shot=combat`, reduced
+motion, Short-screen warning off). Each figure is the top of the intent or
+Inspect minus the bottom of the HUD band; negative means it sits under the
+band. The "Selected" columns select enemy 1 and wait for its Inspect.
+
+| Viewport | HUD band | Intent at rest, dev → branch | Selected intent, dev → branch | Selected Inspect, dev → branch |
+|---|---|---|---|---|
+| 844×390 | 39 px | −13 → 0 | −18.4 → +48 | −66.4 → 0 |
+| 915×412 | 41.2 px | −7.5 → 0 | −12.4 → +48 | −60.5 → 0 |
+| 740×360 | 36 px | −13 → 0 | −18.4 → +48 | −66.4 → 0 |
+| 667×375 | 37.5 px | −13 → 0 | −18.4 → +48 | −66.4 → 0 |
+| 1440×860 | 86 px | +29.1 (same) | +14.3 → +48 | −33.7 → 0 |
+| 1280×800 | 80 px | +28.3 (same) | +15.2 → +48 | −32.8 → 0 |
+| 390×844 | 84.4 px | +119 (same) | +113.6 (same) | +65.6 (same) |
+| 375×667 | 66.7 px | +62.2 (same) | +57 (same) | +9 (same) |
+
+- Hit tests (nine points on each control): at the rails and desktop sizes, no
+  intent point and no Inspect point lands on another element. Inspect misses
+  only its four corners, as every round control does. On dev, the HUD, or on
+  desktop the relic row, took the top points of every intent.
+- Every other measurement matches dev at all eight sizes: bands, sprite
+  sizes and feet, hand and card boxes, rail and footer controls, topbar
+  padding, HUD and formation edges. No page scrolls.
+- Notch emulation: 47 px insets left and right, set with CDP
+  `Emulation.setSafeAreaInsetsOverride`; `env()` read 47px. Checked at
+  844×390, 915×412, 740×360 and 667×375:
+  - Every size planned rails, supported.
+  - Rail controls, the HUD's ends and the relic belt sit exactly 47 px from
+    each edge. On dev they sat at 0, 0 and 9.9 px.
+  - Formation meters sit 63 px in (16 + 47).
+  - The hand keeps five cards at their dev widths: 502.9 px at 844×390, down
+    to 325.8 px at 667×375. Every control and card hit-tests to itself.
+
+Tools:
+- `hudparity --only-shape 844x340`: 15 findings on dev and 15 on this
+  branch, the same five in each pose (P8 top row, P8 metadata priority, P1V
+  vertical). The full run reported 27 on dev and 34 here. The difference is
+  P0 population misses, which move between cells from run to run, including
+  map cells this branch does not touch. A pose that misses population
+  reports no other findings, which is why dev showed 9 at 844×340 before.
+- `hudbars`: 22 assertions ok on both dev and this branch, with no A11
+  failure in either run.
+- `combat-test-browser.mjs`: stops at the same point on dev and here, after
+  52 passes, at "Unreachable hover target .hand .card .cost".
+
+Limits:
+- When an enemy is selected at 844×390, Inspect (44 px), its gap and the
+  intent (48 px) stack 96 px tall in a 148 px field. The Inspect and intent
+  cover most of the selected sprite, which is 59 px tall. An unselected
+  intent covers the top 7 px of a 54 px sprite. Keeping the art clear needs
+  an owner call: Inspect beside the intent on short hosts, or a taller
+  battlefield with smaller cards.
+- The relic belt still hangs under the HUD row. With enough relics to wrap
+  across, its slots would draw over enemy intents, as they do on dev.
+- In portrait (390×844, 375×667) the two enemies' intents overlap each other
+  by about 8 px, as on dev.
+- The bottom inset (the home indicator) is not applied. The rails' lower row
+  sits at the bottom corners, clear of the centred indicator.
+- Safe areas were emulated through CDP, not tested on a phone. Playwright
+  tools did not run. The rotate-your-phone threshold is unchanged.

@@ -1401,4 +1401,9 @@
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }
+/* WCO1 headroom: on every host the relic row's box spans the band's width
+   under the HUD row, over the enemies' intent and Inspect controls. Only the
+   relics themselves answer a press. */
+:root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
+:root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
 

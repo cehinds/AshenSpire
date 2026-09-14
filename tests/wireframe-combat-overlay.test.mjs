@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { overlayGeometry, intentVisible, OVERLAY_ROLES } from '../src/ui/models/CombatOverlayModel.js';
+import { overlayGeometry, intentVisible, OVERLAY_ROLES, overheadStackBottom } from '../src/ui/models/CombatOverlayModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 
 const near = (a, b) => Math.abs(a - b) < 1e-9;
@@ -36,4 +36,29 @@ test('an anchor off the sprite or on no side is refused', () => {
   const bad = (anchor) => ({ ...wireframeUi.overlay, defenseAnchorByRole: { ...wireframeUi.overlay.defenseAnchorByRole, enemy: anchor } });
   assert.throws(() => overlayGeometry({}, bad({ side: 'top', heightFraction: 0.5 })), /side left or right/);
   assert.throws(() => overlayGeometry({}, bad({ side: 'left', heightFraction: 1.2 })), /0\.\.1/);
+});
+
+test('the overhead stack rests on the sprite when the field has headroom', () => {
+  const placed = overheadStackBottom({ anchor: 120, height: 48, ceiling: 0 });
+  assert.equal(placed.bottom, 120);
+  assert.equal(placed.clamped, false);
+  assert.ok(Object.isFrozen(placed));
+});
+
+test('the overhead stack never rises into the HUD band, and keeps its height', () => {
+  // 844x390 at zoom 0.62: the intent (48 physical px) rested 13 px under the
+  // 39 px band; selected, Inspect (44) and its gap (4) rose above the screen.
+  const zoom = 0.62;
+  for (const height of [48 / zoom, (44 + 4 + 48) / zoom]) {
+    const placed = overheadStackBottom({ anchor: 35 / zoom, height, ceiling: 0 });
+    assert.equal(placed.clamped, true);
+    assert.ok(Math.abs(placed.bottom - height) < 1e-9, 'the top edge meets the band, nothing shrinks');
+  }
+  const below = overheadStackBottom({ anchor: 10, height: 30, ceiling: 5 });
+  assert.equal(below.bottom, 35, 'a band that reaches into the field lifts the floor with it');
+});
+
+test('overhead stack inputs must be finite, and the height not negative', () => {
+  assert.throws(() => overheadStackBottom({ anchor: NaN, height: 10 }), /anchor/);
+  assert.throws(() => overheadStackBottom({ anchor: 0, height: -1 }), /zero or more/);
 });
