@@ -153,7 +153,7 @@
       "id": "W1e",
       "name": "Armoury",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -163,6 +163,10 @@
         {
           "file": "src/ui/models/ArmouryModels.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ArmouryWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -172,7 +176,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Head: one title (Armoury) and the close; the views moved from head tabs to the W1 category rail (kit .as-railed; above the pane on narrow hosts, as a wrapping grid). Saved view ids grid/rack/hybrid/cards are unchanged; labels stay the authored Character/Equipment/Inventory/Cards (four categories, not the drawing's three). Footer: Back, plus the selected Inventory item's action. Equipment's grid presentation places the tiles beside the shared detail; its list presentation keeps each position's detail in place."
     },
     {
       "id": "W1f",
@@ -349,12 +354,20 @@
       "id": "W1n",
       "name": "Inventory selection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/equipment.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/disclosure.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ArmouryWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -364,7 +377,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Rendered inside W1e's Inventory category, one shell. Items stay the existing disclosure faces; the selected item's reveal renders in a separate detail column (mountDisclosure revealHost). The detail adds Compared with equipped (what the position holds and moved role values, from the candidate receipt) and an eligibility line (canEquip/equipTransitionReceipt refusals; requirement shortfalls stated as facts because equipPiece does not refuse on them). The footer's primary is the same act as the card, through the same hold. Comparison presentation stays the authored tooltip hold preview for the full receipt."
     },
     {
       "id": "W1o",

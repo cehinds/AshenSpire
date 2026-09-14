@@ -1101,6 +1101,110 @@ Limits:
   `world-atlas-qa`) were updated where needed but not run. `scroll-cue-bleed` still names `.screen`
   as the shop's scrollport, and on this screen that no longer scrolls; it
   needs re-aiming at `.shop-offers`, with its plants.
+## Armoury on the W1 shell
+
+Branch `feature/wireframe-armoury`, based on dev `d2ea5bcd`. W1e is the
+Armoury's shell and W1n its Inventory body, rendered inside it: one shell,
+not two. Presentation only; no item, stat, comparison, persistence or
+equip rule changed.
+
+- Head: one title, Armoury, and the close. The views left the head's tab
+  strip for the W1 category rail (kit `.as-railed`): beside the pane on
+  wide hosts, above it on narrow hosts, where it is a grid of equal cells
+  that never scrolls sideways. Rail items keep `role=tab`,
+  `aria-selected`, `data-modal-tab` and `data-member` under
+  `[data-surface="armouryView"]`, so the tools' selectors still resolve.
+- Saved ids are unchanged: the views `grid`, `rack`, `hybrid` and `cards`
+  (`meta.settings.equipView`) and `armouryArmamentView`. The rail shows
+  the authored labels Character, Equipment, Inventory and Cards.
+- The pane split comes from `wireframeUi.armoury` (0.5 / 0.5, the
+  drawings' 31.95 / 31.95 and 44 / 44) through
+  `src/ui/models/ArmouryWorkspaceModel.js`, tested by
+  `tests/wireframe-armoury.test.mjs`. Columns on wide hosts, rows on phone
+  hosts (the Armoury's own 760 px breakpoint).
+- Inventory (W1n): the disclosure keeps its faces in the collection and
+  renders the selected item's reveal in its own detail column
+  (`mountDisclosure` gains additive `revealHost` and `onReveal` options).
+  Before a selection that column carries the instruction. The reveal adds
+  "Compared with equipped" (what the target position holds and the role
+  values that move, from the candidate receipt) and an eligibility line
+  (the `canEquip` or `equipTransitionReceipt` refusal; unmet attribute
+  minima are stated as a fact, because `equipPiece` does not refuse on
+  them).
+- Footer: Back (it leaves, like the close and Escape) and, for a selected
+  Inventory item with an equipment position, that item's action. It runs
+  the same act through the same hold as the card; a refused change keeps
+  its control and its reason. With no selection, Back spans the footer.
+- Equipment in its grid presentation puts the slot tiles beside the shared
+  detail, and the active view fills the pane instead of hugging its
+  content.
+- The shared equipment inspection stacks inside a narrow Armoury detail
+  column (a container query), as it already did under the phone media
+  rule.
+- Copy: `armoury.*` rows in `uiStrings.csv`. `ArmouryModels.js` lost two
+  literals (copy baseline 10 to 8).
+
+Tools: `ui-sweep` R6 now asks for the compact rail contract (above the
+pane, inside the rail, no sideways scroll) instead of head tabs beside
+the close. `armoury-inventory-disclosure` finds the face in the list
+rather than among the reveal's siblings.
+
+Browser evidence (headless Chrome over CDP, `?shot=map`, emulated
+viewports, source tree):
+- 1440×860 (zoom 1.18): modal 1133×740, head 78 px, rail 204 px with four
+  170×44 items, pane 917×582, footer 78 px. Inventory splits 430 | 430;
+  Equipment's grid presentation 417 | 417.
+- 1280×800 (1.07): modal 1027×689, rail 185 px (154×44 items), pane
+  831×537, Inventory 389 | 389.
+- 390×844 (0.90, narrow): the rail sits above the pane as one row of four
+  86×44 cells with no sideways scroll; pane 374×546; Inventory stacks
+  256 over 256; footer Back 176 and the action 178 on one row.
+- 375×667 (0.85, narrow): four 83×44 cells; pane 359×394; Inventory
+  stacks 181 over 181; footer 169 and 172.
+- 844×390 (0.62, short-wide, not narrow): the rail stays left (107 px,
+  89×44 items); pane 486×208; Inventory 231 | 231.
+- Every viewport and view: no page scroll and no horizontal overflow in
+  the pane. Rail items, the close (44×44) and the footer buttons are at
+  least 44 px.
+- Equip: at every viewport, a real mouse hold on the footer's action
+  unequipped Wayfarer Plate, and a hold on the footer's "Equip to Armour"
+  put it back, with no refusal notice.
+- Keyboard: at 1440×860 and 1280×800 the shared cursor reaches the rail
+  with ArrowLeft, ArrowDown moves to the next category and Enter selects
+  it.
+  At 390×844 and 375×667 ArrowDown from the close reaches the rail,
+  ArrowLeft moves along it and Enter opens the chosen category; at 844×390
+  ArrowLeft reaches the rail and ArrowUp moves along it. The rail adds no
+  arrow handler of its own, so the cursor never double-steps.
+- Tools: `armoury-arrival-figure` 42/42; `ui-sweep --only armoury` passes
+  (R6 at 390×844); `armoury-inventory-disclosure` 27 passed, 3 failed, the
+  same three as dev. It was run from a scratch copy with its 8 s map wait
+  raised to 60 s because this machine was heavily loaded.
+
+Limits:
+- The drawings show three categories (Character, Inventory, Hybrid); the
+  game authors four views with other labels. Ids and labels were kept.
+  Renaming or merging them is an owner decision.
+- Compact landscape (844×390) is not `narrow`, so the rail stays at the
+  left, as on every kit W1 door. The W1 compact drawing puts it above;
+  choosing between them is an owner decision.
+- Equipment's list presentation (the default) keeps each position's
+  detail in place; only the grid presentation splits.
+- The full comparison receipt stays behind the authored hold preview
+  (`armouryUi.json` `comparison.presentation: "tooltip"`); `"inline"`
+  would put it in the detail column.
+- Only the Inventory fills the footer's primary. Equipment's Change and
+  Equip stay on the position cards.
+- Inventory faces are still the large equipment cards (`inventoryFace`,
+  which #1049 also edits), so a stacked phone collection shows about one
+  card at a time.
+- The shared inspection's tags are 29 to 36 px tall (18 px at 844×390),
+  under the 44 px target; that component is unchanged here. Equipment's
+  Change buttons are 40×44 at 844×390, the same on dev.
+- Same on dev: `armoury-inventory-disclosure` fails the same three checks
+  (model panel, hold fill, hold preview), `modal-shell-contract` has its
+  two known failures, `ui-components` fails C12, and `uistrings --check`
+  is red on Windows path separators. Playwright-based tools were not run.
 
 ## Remaining integration
 

@@ -27,8 +27,9 @@
 //   R5 CREATION  stacked (phone), the class list sits above the preview pane;
 //                at the desk the selected armour's info button lies inside its
 //                card, not over the section header.
-//   R6 ARMOURY   on a phone every view tab and the close control share one
-//                row.
+//   R6 ARMOURY   on a phone every view sits in the W1 category rail above the
+//                pane, inside the rail's width, with no sideways scroll (W1e;
+//                the views are no longer head tabs beside the close).
 //   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
 //
 // Usage:
@@ -132,7 +133,8 @@ for (const state of wanted) {
     if (!ready) { check(false, `${state.name} rendered`, 'landmark never appeared'); continue; }
     if (state.then === 'armoury') {
       await click('#open-armoury');
-      const up = await until(`!!document.querySelector('.armoury .modal-tab')`);
+      // W1e: the views are the category rail now, not head tabs.
+      const up = await until(`!!document.querySelector('.armoury [data-surface="armouryView"] [data-member]')`);
       await wait(500);
       if (!up) { check(false, 'armoury opened from the map band'); continue; }
     }
@@ -171,8 +173,11 @@ for (const state of wanted) {
       }
     }
     if (state.name === 'armoury' && shape.mobile) {
-      const head = await ev(`(()=>{const tabs=[...document.querySelectorAll('.armoury-head .modal-tab')].map(t=>Math.round(t.getBoundingClientRect().top));const close=Math.round(document.querySelector('#armoury-close').getBoundingClientRect().top);return {tabs,close}})()`);
-      check(head.tabs.length >= 3 && head.tabs.every((t) => Math.abs(t - head.close) <= 2), `R6 ${cell}: every view tab shares one row with the close control`, JSON.stringify(head));
+      // W1e (FRONTEND-WIREFRAMES rule 11): compact hosts put the category rail
+      // above the pane. The old R6 asked for head tabs beside the close; the
+      // views are no longer head tabs, so R6 now asks for the rail contract.
+      const rail = await ev(`(()=>{const r=document.querySelector('.armoury [data-surface="armouryView"]');const pane=document.querySelector('.armoury-pane');const rr=r.getBoundingClientRect();const items=[...r.querySelectorAll('[data-member]')].map(t=>t.getBoundingClientRect());return {items:items.length,inside:items.every(b=>b.left>=rr.left-1&&b.right<=rr.right+1),sideways:r.scrollWidth>r.clientWidth+1,above:Math.round(rr.bottom)<=Math.round(pane.getBoundingClientRect().top)+1}})()`);
+      check(rail.items >= 3 && rail.inside && !rail.sideways && rail.above, `R6 ${cell}: every Armoury category sits in the rail above the pane with no sideways scroll`, JSON.stringify(rail));
     }
     if (state.name === 'smith') {
       const smith = await ev(`(()=>({modal:!!document.querySelector('.smith-candidate-region'),shrine:!!document.querySelector('#rest-opt')}))()`);

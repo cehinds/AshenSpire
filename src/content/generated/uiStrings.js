@@ -1037,5 +1037,103 @@ export const uiStrings = [
     "short": "Steel yourself",
     "full": "The event leads into a fight.",
     "tip": "Steel yourself"
+  },
+  {
+    "id": "armoury.title",
+    "extends": "",
+    "short": "Armoury",
+    "full": "Your character, equipment, inventory and deck.",
+    "tip": "Armoury"
+  },
+  {
+    "id": "armoury.close",
+    "extends": "",
+    "short": "Close Armoury",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.categories",
+    "extends": "",
+    "short": "Armoury categories",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.detail.prompt",
+    "extends": "",
+    "short": "Select an item to see its details and available actions.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.title",
+    "extends": "",
+    "short": "Compared with equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.replaces",
+    "extends": "",
+    "short": "Replaces {name} in {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.fills",
+    "extends": "",
+    "short": "Fills the empty {slot} position",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.removes",
+    "extends": "",
+    "short": "Removes {name} from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.role",
+    "extends": "",
+    "short": "{label} {before} → {after}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.unchanged",
+    "extends": "",
+    "short": "Combat values unchanged",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.ready",
+    "extends": "",
+    "short": "Available: {action}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.blocked",
+    "extends": "",
+    "short": "Unavailable: {reason}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.short",
+    "extends": "",
+    "short": "Requirement not met: {requirements}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.requirement",
+    "extends": "",
+    "short": "{attribute} {required} (have {actual})",
+    "full": "",
+    "tip": ""
   }
 ];
