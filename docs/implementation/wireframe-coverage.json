@@ -2901,7 +2901,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and provisional 4rem readable floor. Verified in emulation at 1440x860, 375x667, 360x780."
+      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and the owner-confirmed 4rem (64 physical px) readable floor. Verified in emulation at 1440x860, 375x667, 360x780."
     },
     {
       "id": "WGC7",

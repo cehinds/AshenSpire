@@ -74,7 +74,8 @@ standard runs use; the world-journey atlas follows in its own branch.
   - Keyboard and gamepad activation reach the same click path, so pressing
     confirm twice on a node also travels.
   - A repeat pick enters only once the selection has stood
-    `wireframeUi.map.repeatPickDelayMs` (400 ms, provisional), so a fast
+    `wireframeUi.map.repeatPickDelayMs` (400 ms, kept by the owner on
+    2026-09-13), so a fast
     double tap selects but never travels in one gesture.
 - **Context band (WGM4).** Below the scene, the band shows the selected
   node's floor, kind, and description from the same `NODE_TYPES` table the
@@ -290,11 +291,11 @@ and co-op fallbacks.
   at 95% of footer height, capped at 20% of the width; End Turn shares that
   height up to 40%; Draw and Discard use up to 10%.
 - Resolved conflict: on narrow hosts the 10% pile envelope is smaller than
-  the 44 px target and the two-line Discard/Exhaust face. The target and a
-  provisional `pileMinimumRem: 4` readable floor win; End Turn gives up
-  width. The floor uses the same reference rem as the hand (at least 16
-  physical px), so it is 64 physical px, not CSS 4rem, and does not follow
-  the text-size setting. The owner should confirm or replace this floor.
+  the 44 px target and the two-line Discard/Exhaust face. The target and the
+  `pileMinimumRem: 4` readable floor win; End Turn gives up width. The floor
+  uses the same reference rem as the hand (at least 16 physical px), so it is
+  64 physical px, not CSS 4rem, and does not follow the text-size setting.
+  The owner confirmed this floor on 2026-09-13.
   Below about 290 px physical the floors cannot all fit; the footer reports
   `data-footer-geometry="unsupported"` and keeps the unpacked layout.
 
