@@ -30,6 +30,10 @@
 //                clips at its padding box, and clear of the section header it
 //                used to straddle (#994). Until then this row looked for the
 //                badge INSIDE the card, on a chip that has never carried one.
+//                The desk row runs TWICE: once under this file's reduced-motion
+//                fixture, and once through ?shotSettings at normal motion and UI
+//                size S — the case the shared fixture cannot see, because
+//                reduced motion drops the focus lift the head room must clear.
 //   R6 ARMOURY   on a phone every view tab and the close control share one
 //                row.
 //   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
@@ -43,8 +47,10 @@
 // Exit 0 = every fact held; 1 = a finding; 2 = no browser / bad arguments.
 //
 // BOUNDARY. Headless Chromium, emulated shapes, `?shot=` fixtures with
-// reducedMotion on. It asserts geometry and DOM facts, not legibility or
-// taste; the review that produced it is docs work, not this file's.
+// reducedMotion on — except where a row says otherwise and re-navigates through
+// ?shotSettings for itself (R5's second desk pass). It asserts geometry and DOM
+// facts, not legibility or taste; the review that produced it is docs work, not
+// this file's.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -168,7 +174,6 @@ for (const state of wanted) {
         const order = await ev(`(()=>({classes:Math.round(document.querySelector('#cz-classes').getBoundingClientRect().top),preview:Math.round(document.querySelector('.cc-class-preview-host').getBoundingClientRect().top)}))()`);
         check(order.classes < order.preview, `R5 ${cell}: the class list stands above the preview pane`, JSON.stringify(order));
       } else {
-        await click('[data-face="equipment"]'); await click('[data-face="armour"]'); await wait(300);
         // THE BADGE IS ABOVE THE CARD, and the three facts that makes true are
         // separate: it hangs clear of the face, it is WHOLE inside the scrollport
         // (which clips at its padding box, so the head room is what is really
@@ -176,10 +181,24 @@ for (const state of wanted) {
         // straddle. The old form read `.equip-chip.on .card-info-button` — a
         // selector for a chip that carries no badge, so the check answered null
         // and had been RED on dev rather than guarding anything (#994).
-        await click('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');
-        const info = await ev(`(()=>{const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');if(!card)return null;const b=card.querySelector('.card-info-button');if(!b)return {found:false};const cs=getComputedStyle(b);const shown=cs.visibility==='visible'&&cs.opacity!=='0';const r=b.getBoundingClientRect();const c=card.getBoundingClientRect();const port=card.closest('.cc-card-selectors');const p=port&&port.getBoundingClientRect();const fold=card.closest('details');const face=fold&&fold.querySelector('summary.disc-face');const f=face&&face.getBoundingClientRect();return {found:true,shown,above:r.bottom<=c.top+1,whole:!p||r.top>=p.top-0.5,clearsFace:!!f&&r.top>=f.bottom-0.5,face:face?face.textContent.trim().slice(0,16):null,top:Math.round(r.top),cardTop:Math.round(c.top),portTop:p?Math.round(p.top):null,faceBottom:f?Math.round(f.bottom):null}})()`);
-        check(!!info && info.found && info.shown && info.above && info.whole && info.clearsFace,
-          `R5 ${cell}: the selected armour's information badge stands above its card, whole inside the scrollport and clear of the section face`, JSON.stringify(info));
+        // TWICE, BECAUSE THE SWEEP'S OWN FIXTURE HIDES A CASE: this file asks
+        // for reduced motion, which drops the focus lift, and the head room has
+        // to clear the lift too. The second pass goes back through ?shotSettings
+        // — the real door — for normal motion at UI size S, the smallest named
+        // size and so the largest zoom-compensated badge. That pass is what
+        // caught the 0.8 px the first one could not see (#994).
+        for (const pass of [{ tag: 'reduced motion, Auto size', settings: null }, { tag: 'normal motion, UI size S', settings: { uiScale: 's' } }]) {
+          if (pass.settings) {
+            await send('Page.navigate', { url: `${served.url}?shot=${state.q}&shotSettings=${encodeURIComponent(JSON.stringify(pass.settings))}` }, sessionId);
+            if (!await until(state.ready)) { check(false, `R5 ${cell} (${pass.tag}): creation rendered`, 'landmark never appeared'); continue; }
+            await wait(700);
+          }
+          await click('[data-face="equipment"]'); await click('[data-face="armour"]'); await wait(300);
+          await click('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');
+          const info = await ev(`(()=>{const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');if(!card)return null;const b=card.querySelector('.card-info-button');if(!b)return {found:false};const cs=getComputedStyle(b);const shown=cs.visibility==='visible'&&cs.opacity!=='0';const r=b.getBoundingClientRect();const c=card.getBoundingClientRect();const port=card.closest('.cc-card-selectors');const ps=port&&getComputedStyle(port);const pr=port&&port.getBoundingClientRect();const clip=pr?pr.top+parseFloat(ps.borderTopWidth):null;const fold=card.closest('details');const face=fold&&fold.querySelector('summary.disc-face');const f=face&&face.getBoundingClientRect();return {found:true,shown,lift:getComputedStyle(card).transform,zoom:getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom').trim(),above:r.bottom<=c.top+1,whole:clip==null||r.top>=clip-0.5,clearsFace:!!f&&r.top>=f.bottom-0.5,face:face?face.textContent.trim().slice(0,16):null,slack:clip==null?null:Math.round((r.top-clip)*10)/10,top:Math.round(r.top),cardTop:Math.round(c.top),faceBottom:f?Math.round(f.bottom):null}})()`);
+          check(!!info && info.found && info.shown && info.above && info.whole && info.clearsFace,
+            `R5 ${cell} (${pass.tag}): the selected armour's information badge stands above its card, whole inside the scrollport and clear of the section face`, JSON.stringify(info));
+        }
       }
     }
     if (state.name === 'armoury' && shape.mobile) {
