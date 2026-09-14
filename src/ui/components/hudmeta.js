@@ -6,16 +6,19 @@
 //   1. class left, Cinders centred, Act/Floor right;
 //   2. the meters (components/resbars.js, the kit Meter) and, on the right,
 //      full-height Armoury and Menu controls;
-//   below the band: relic Slots left and every potion control right. Crimson
-//      and Azure live there too, without becoming utility inventory entries.
+//   below the band: relic Slots left and, only on a screen with no footer HUD,
+//      the potion tiles right. Combat's potions are the footer's Potions
+//      control (WGC11 listing WGH8), never this rail.
 // The character name, portrait, sigil, screen-context line, build/seed/source,
 // fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.
+// A part whose WGH0 layer is off (models/RunHudLayerModel.js) is absent from
+// the model, so it draws nothing here and reserves no row, track or gap.
 // The classes that are not `as-*` are HOOKS the instruments read; kit.css
 // draws nothing for them and no stylesheet may any more.
 import { esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
-import { childModel } from '../models/ComponentModel.js';
+import { childModel, optionalChildModel } from '../models/ComponentModel.js';
 import { el, html, iconButton } from '../kit/index.js';
 
 function attrsOf(componentAttrs) {
@@ -26,15 +29,22 @@ function attrsOf(componentAttrs) {
   return out;
 }
 
+// Render an optional child through `render`, or nothing when it is filtered out.
+const part = (parent, component, render, variant = null) => {
+  const child = optionalChildModel(parent, component, variant);
+  return child ? render(child) : '';
+};
+
 // The left track is deliberately terse: class only. It identifies the active
 // kit without restoring the older portrait/name/context stack.
 export function identityClusterHtml(model) {
+  const { className, label } = model.properties;
   return html(el('div', {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)),
-    class: 'hud-identity as-statstrip', 'aria-label': `Class: ${model.properties.className}`,
+    class: 'hud-identity as-statstrip', 'aria-label': `${label}: ${className}`,
   }, el('span', { class: 'as-chip hud-class' }, [
-    el('span', { class: 'ck', text: 'Class' }),
-    el('span', { class: 'cv', text: model.properties.className }),
+    el('span', { class: 'ck', text: label }),
+    el('span', { class: 'cv', text: className }),
   ])));
 }
 
@@ -43,25 +53,27 @@ export function cindersCounterHtml(model) {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)), class: 'hud-center as-statstrip',
     role: 'status', 'aria-live': model.accessibility.live, 'aria-label': model.accessibility.label,
   }, el('span', { class: 'as-chip hud-cinders' }, [
-    el('span', { class: 'ck', text: 'Cinders' }),
+    el('span', { class: 'ck', text: model.properties.label }),
     el('span', { class: 'cv', text: `⛁ ${model.properties.value}` }),
   ])));
 }
 
+// A field's value, then its detail when it has one (the act's seat name).
 function metadataFieldHtml(model) {
+  const { label, value, detail = null } = model.properties;
   return el('span', {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)),
     class: `as-chip hud-${model.variant}`,
   }, [
-    el('span', { class: 'ck', text: model.properties.label }),
-    el('span', { class: 'cv', text: String(model.properties.value) }),
+    el('span', { class: 'ck', text: label }),
+    el('span', { class: 'cv', text: detail ? `${value} · ${detail}` : String(value) }),
   ]);
 }
 
 export function buildMetadataTrailHtml(model) {
   return html(el('div', {
     ...attrsOf(uiComponentAttrs(model.component, model.variant)),
-    class: 'hud-run-meta as-statstrip trail', 'aria-label': 'Run position',
+    class: 'hud-run-meta as-statstrip trail', 'aria-label': model.properties.label,
   }, [
     metadataFieldHtml(childModel(model, UI.metadataField, 'act')),
     metadataFieldHtml(childModel(model, UI.metadataField, 'floor')),
@@ -71,9 +83,9 @@ export function buildMetadataTrailHtml(model) {
 // One baseline with three negotiating tracks: class, Cinders, Act/Floor.
 export function runHeaderStripHtml(model) {
   return `<div class="hud-info-row as-band-row thirds" ${uiComponentAttrs(model.component, model.variant)}>
-    ${identityClusterHtml(childModel(model, UI.identityCluster))}
-    ${cindersCounterHtml(childModel(model, UI.cindersCounter))}
-    ${buildMetadataTrailHtml(childModel(model, UI.buildMetadataTrail))}
+    ${part(model, UI.identityCluster, identityClusterHtml)}
+    ${part(model, UI.cindersCounter, cindersCounterHtml)}
+    ${part(model, UI.buildMetadataTrail, buildMetadataTrailHtml)}
   </div>`;
 }
 
@@ -95,8 +107,6 @@ export function vitalsPanelHtml(model) {
 // options bag that silently accepts a pair nobody draws is how the pair comes
 // back by accident.
 export function quickAccessPanelHtml(model) {
-  const armoury = childModel(model, UI.armouryControl);
-  const menu = childModel(model, UI.quickMenuControl);
   const button = (control, extra = {}) => html(iconButton({
     glyph: control.properties.glyph, label: control.accessibility.label, id: control.properties.id,
     className: 'topbar-btn',
@@ -104,25 +114,25 @@ export function quickAccessPanelHtml(model) {
   }));
   return `<section class="hud-control-grid as-cluster stack" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions as-cluster">
-      ${button(armoury)}
-      ${button(menu, { 'data-action-hint': 'menu' })}
+      ${part(model, UI.armouryControl, (armoury) => button(armoury))}
+      ${part(model, UI.quickMenuControl, (menu) => button(menu, { 'data-action-hint': 'menu' }))}
     </div>
   </section>`;
 }
 
 export function primaryHudRowHtml(model) {
   return `<div class="hud-resource-row as-band-row" ${uiComponentAttrs(model.component, model.variant)}>
-    ${vitalsPanelHtml(childModel(model, UI.vitalsPanel))}
-    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel))}
+    ${part(model, UI.vitalsPanel, vitalsPanelHtml)}
+    ${part(model, UI.quickAccessPanel, quickAccessPanelHtml)}
   </div>`;
 }
 
 export function inventoryBeltHtml(model) {
-  const relics = childModel(model, UI.relicTray);
-  const potions = childModel(model, UI.potionTray);
-  return `<div class="hud-bottom as-band-row fold" ${uiComponentAttrs(model.component, model.variant)}>
-    <div class="relics hud-relics as-cluster wrap grow" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>
-    <div class="hud-potions as-cluster end${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>
+  const relics = optionalChildModel(model, UI.relicTray);
+  const potions = optionalChildModel(model, UI.potionTray);
+  return `<div class="hud-bottom as-band-row fold" ${uiComponentAttrs(model.component, model.variant)}>${relics ? `
+    <div class="relics hud-relics as-cluster wrap grow" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>` : ''}${potions ? `
+    <div class="hud-potions as-cluster end${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>` : ''}
   </div>`;
 }
 
@@ -136,10 +146,10 @@ export function sharedRunHudHtml(model) {
   // the player, and combat passes none.
   return `<header class="topbar combat-hud shared-hud as-band stack${headerClass ? ` ${esc(headerClass)}` : ''}"${layout ? ` data-hud-layout="${esc(layout)}"` : ''} data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top as-cluster stack">
-      ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
-      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}${orientationHtml ? `
+      ${part(model, UI.runHeaderStrip, runHeaderStripHtml)}
+      ${part(model, UI.primaryHudRow, primaryHudRowHtml)}${orientationHtml ? `
       ${orientationHtml}` : ''}
-      ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
+      ${part(model, UI.inventoryBelt, inventoryBeltHtml)}
     </div>
     ${overlayHtml}
   </header>`;

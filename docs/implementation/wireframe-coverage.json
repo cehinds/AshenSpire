@@ -3226,7 +3226,8 @@
       "id": "WGH2",
       "name": "Armoury control",
       "parent": "WCB2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the Armoury control sits right of the vitals, before Menu, at the 44 px tap floor, dispatching the host open-armoury command; a host without an Armoury removes it. It is now a WGH0 layer (wireframeUi.hud.layers.armoury) and has no flask siblings in the model. Not changed: the face stays the icon glyph with an accessible name, not the drawn visible label, and combat at 844x390 still draws it 44x32 inside the 39 px band (combat.css short-landscape rule; the sizing contract names no HUD minimum). Both are owner decisions.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3251,7 +3252,8 @@
       "id": "WGH3",
       "name": "Menu control",
       "parent": "WCB2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the Menu control sits far right of the primary row at the tap floor, opens the quick-nav (or Settings) and quicknav restores focus to it on dismissal. It is now a WGH0 layer (wireframeUi.hud.layers.menu). Same two owner decisions as WGH2: visible label, and 44x32 in combat at 844x390.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3326,7 +3328,8 @@
       "id": "WGH6",
       "name": "Relic rail",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Relic rail: one tile renderer for combat and the rooms (components/relicRail.js); every tile now carries its stable relic id (rooms lacked it) and opens the shared collectible card. Relics and the rail are WGH0 layers. Combat renders no potion tray at all (before: an empty hidden one). Rooms without a footer HUD (shop, rest, event) keep their flask tiles in the rail while wireframeUi.hud.potions.roomRail is true, because that rail is the only place a charge flask is drunk or a carried one dropped outside combat; false applies the footer-only rule there too. Owner decision. The map still hides its rail (relics off the map, as before).",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3351,7 +3354,8 @@
       "id": "WGH7",
       "name": "Run header strip",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Run header: class, Cinders and Act/Floor tracks are WGH0 layers filtered before layout (a track that is off leaves no gap). Labels are uiStrings rows (hud.class, hud.cinders, hud.act, hud.floor, hud.position) via t(); the act seat is its own semantic field (RunHudViewModel seat), printed after the act number, instead of being concatenated into the act value. Rendered text unchanged.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3376,7 +3380,8 @@
       "id": "WGH8",
       "name": "Potions contents",
       "parent": "WCB2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Potions contents: one pure projection (src/ui/models/PotionContentsModel.js) of the HP and MP charge flasks and the carried consumables with counts. Carried flasks of one kind are one entry with a count (Use spends the first slot); hotkeys F/G/H follow their entries by action id. Config hides either category (wireframeUi.hud.potions.chargeFlasks / carried). Combat footer Potions (WGC11) lists it; the room rail tiles read the same projection and carried tiles now show their count. Count copy agrees in number via uiStrings (fixes \"1 charges\"). Use still goes through the hold/confirm beat and targeting.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4146,7 +4151,8 @@
       "id": "WGS2",
       "name": "Shared HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Shared HUD: combat, map and rooms still render the one RunHudViewModel/sharedRunHudHtml. WGH0 layers (wireframeUi.hud.layers) and the potion rule (models/RunHudLayerModel.js) are decided before layout; defaults draw exactly what dev drew except combat no longer carries an empty hidden potion tray. Map-compact (PR #1052) unchanged. Not done: the spec default of stamina off in scene HUDs (hudparity P1 requires HP/MP/SP; resource rows are content/resources.js) and WGH5 (XP blocked on plan 12.5).",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4175,7 +4181,8 @@
       "id": "WGS3",
       "name": "HUD identity",
       "parent": "WCI1",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "HUD identity: same WGH7 header contract (class / Cinders / Act-Floor), labels from uiStrings, seat as a semantic field; each track is a layer.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4204,7 +4211,8 @@
       "id": "WGS4",
       "name": "HUD resource strip",
       "parent": "WCM2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the resource strip is the shared resbars (one resourceBarPlan for map, combat and rooms, 200/20/20 references). Vitality is now a WGH0 layer; the rows themselves remain content/resources.js decisions.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4233,7 +4241,8 @@
       "id": "WGS5",
       "name": "HUD menu button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the HUD Menu button is the WGH3 slot, right-aligned, separate from WGH2 Armoury. Visible label is an owner decision (see WGH2).",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {

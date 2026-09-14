@@ -1275,5 +1275,68 @@ export const uiStrings = [
     "short": "{attribute} {required} (have {actual})",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "hud.class",
+    "extends": "",
+    "short": "Class",
+    "full": "The class this run is played as.",
+    "tip": ""
+  },
+  {
+    "id": "hud.cinders",
+    "extends": "",
+    "short": "Cinders",
+    "full": "{amount} cinders",
+    "tip": ""
+  },
+  {
+    "id": "hud.act",
+    "extends": "",
+    "short": "ACT",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "hud.floor",
+    "extends": "",
+    "short": "FLOOR",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "hud.position",
+    "extends": "",
+    "short": "Run position",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.charge",
+    "extends": "",
+    "short": "{count} charge",
+    "full": "{count} charge remaining",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.charges",
+    "extends": "",
+    "short": "{count} charges",
+    "full": "{count} charges remaining",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.carried",
+    "extends": "",
+    "short": "{count} carried potion",
+    "full": "{count} carried potion",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.carriedMany",
+    "extends": "",
+    "short": "{count} carried potions",
+    "full": "{count} carried potions",
+    "tip": ""
   }
 ];
