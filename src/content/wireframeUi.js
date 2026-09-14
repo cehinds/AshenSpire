@@ -139,4 +139,14 @@ export const wireframeUi = freeze({
     frameWidth: 0.95, frameHeight: 0.9, railWidth: 0.216,
     railMinRem: 11, railMaxRem: 24, columnGap: 0.02, rowGap: 0.02,
   },
+  // WT0 shared tooltip. The presenter's measured rungs (tooltip.js) remain
+  // its only size system; this names the wireframe each rung draws: small is
+  // WT1 compact, medium WT2 standard, and large and expanded are both WT3
+  // (same width, expanded only reaches further down). The arrow is WT0.arrow,
+  // 0.75 × 0.375 reference rems on the edge facing the trigger, kept
+  // arrowInsetRem clear of the frame's corners.
+  tooltip: {
+    wireframeByRung: { small: 'WT1', medium: 'WT2', large: 'WT3', expanded: 'WT3' },
+    arrowWidthRem: 0.75, arrowHeightRem: 0.375, arrowInsetRem: 0.5,
+  },
 });

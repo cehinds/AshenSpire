@@ -672,6 +672,20 @@ input[type="range"] { min-height: var(--tap-floor); }
   pointer-events: none;
 }
 #tooltip-2 { z-index: 1001; }
+/* WT0.ARROW — on the edge facing the trigger, pointing at its centre after
+   any flip or shift (tooltip.js pointArrow, TooltipPlacementModel). It lies
+   outside the panel, so it is `fixed`: the panel's overflow clip does not
+   reach a fixed descendant, and both share the zoomed body's local px. */
+#tooltip::after, #tooltip-2::after {
+  content: none; position: fixed; pointer-events: none;
+  left: var(--tip-arrow-left, 0px); top: var(--tip-arrow-top, 0px);
+  width: var(--tip-arrow-w, 0px); height: var(--tip-arrow-h, 0px);
+  background: var(--gold);
+}
+#tooltip[data-arrow="bottom"]::after, #tooltip-2[data-arrow="bottom"]::after { content: ''; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+#tooltip[data-arrow="top"]::after, #tooltip-2[data-arrow="top"]::after { content: ''; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+#tooltip[data-arrow="left"]::after, #tooltip-2[data-arrow="left"]::after { content: ''; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
+#tooltip[data-arrow="right"]::after, #tooltip-2[data-arrow="right"]::after { content: ''; clip-path: polygon(0 0, 100% 50%, 0 100%); }
 /* THE RUNGS DIFFER BY HEIGHT: small a value and a line; medium prose and a
    short list; large an effect and a glossary; expanded is large extended
    down. A tooltip never scrolls and never clips: it steps up, and past

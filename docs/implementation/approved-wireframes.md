@@ -1370,3 +1370,110 @@ Limits:
   use, End Turn and reward Continue no longer wear "STATE CHANGE" when they
   can be undone. They still print the generic review line, because they
   author no message; they are W2 instances outside W2a/W2e.
+## Tooltips (WCT0 / WT1 / WT2 / WT3)
+
+Branch `claude/tooltip-wireframes-wt`, based on dev `8797fc9a`. One
+presenter (`tooltip.js`, two panels) keeps every existing behaviour; this
+names its sizes after the wireframes and fixes the four places it failed
+CURRENT-SPECIFICATION "Tooltips".
+
+- Sizes: no second size system. The presenter still measures content into
+  four height rungs and steps up until it fits. `wireframeUi.tooltip`
+  names the wireframe each rung draws: small is WT1, medium WT2, large and
+  expanded WT3 (same width; expanded only reaches further down). `fitRung`
+  stamps it as `data-wireframe` on `#tooltip` / `#tooltip-2`. The rung list
+  now lives once, as `TooltipPlacementModel.TOOLTIP_RUNGS`;
+  `tooltipWireframeConfig` refuses a mapping that drops a rung, names
+  another id, leaves one of WT1–WT3 undrawn, or runs backwards.
+- Arrow (WT0.arrow, new): 0.75 × 0.375 reference rems (12 × 6 physical px)
+  on the panel edge that faces the trigger, pointing at its centre after
+  any flip or shift, held 0.5 reference rem clear of the corners.
+  `tooltipArrow` (pure) computes the box; `pointArrow` writes `data-arrow`
+  and four custom properties; `#tooltip::after` draws it in gold as a
+  `fixed` triangle, so the panel's overflow clip does not cut it. It is
+  re-pointed with the panel on resize. `data-arrow="none"` when the panel
+  sits on its trigger.
+- Flip below: `placeAnchored`'s `'above'` intent tried right and left
+  before under. It now tries under first, which is what its own comment
+  already said. Only `tooltip.js` places with `'above'` (flask and
+  quick-nav use `'under'`), so no other surface moves.
+- Pending timer: a repeated hover or focus on the element already counting
+  down restarted the countdown. It now keeps it.
+- Unchanged: delays, cancellation paths, the two levels, the stick, the
+  veil/scene watch, rung sizes, the tap-to-select rule, and `map.css`'s
+  removal of the tooltip-selected outline on map nodes.
+
+Browser evidence (CDP emulation against the source tree, `?shot=combat`,
+the shipped tooltip module driven through real `Input` mouse and key
+events; triggers 48 px; scratch probe kept outside the repo).
+
+Before, dev at 1440×860: a second `pointerenter` 600 ms into the wait
+opened the panel at 1621 ms (after: 1003); a second focus at 300 ms opened
+at 816 ms (after: 524); a trigger at the top edge put its panel beside it
+(right, or left at the top-right corner) instead of below; no panel had an
+arrow; no panel carried a wireframe id.
+
+| Viewport | Zoom | Hover | Repeat | Top-edge trigger | Arrow off centre | WT1 panel (short) | WT3 panel (list) | Modal | Page scroll |
+|---|---:|---:|---:|---|---:|---|---|---|---:|
+| 1440×860 | 1.18 | 1011 ms | 1003 ms | below | 0.01 px | 300.9×51 (20.9vw) | 442.5×153.3 (30.7vw) | above veil, hit | 0 |
+| 1280×800 | 1.07 | 1013 ms | 1013 ms | below | 0 px | 272.8×46.5 (21.3vw) | 401.3×139.1 (31.3vw) | above veil, hit | 0 |
+| 390×844 | 0.90 | 1007 ms | 1009 ms | below | 0 px | 229.5×39.4 (58.8vw) | 337.5×117.3 (86.5vw) | above veil, hit | 0 |
+| 375×667 | 0.85 | 1014 ms | 1010 ms | below | 0 px | 216.8×37.3 (57.8vw) | 318.8×110.9 (85vw) | above veil, hit | 0 |
+| 844×390 | 0.62 | 1022 ms | 1022 ms | below | 0 px | 158.1×27.8 (18.7vw) | 232.5×81.4 (27.5vw) | above veil, hit | 0 |
+
+The table is the final run: 215 of 215 checks pass, 43 per viewport.
+"Repeat" is the open time with a second `pointerenter` fired 600 ms in.
+
+- Delay: the 0.5 s setting opens at 502–514 ms. Focus (`gpfocus`) opens
+  at 516–600 ms at every viewport; see Limits.
+- Cancel: leaving, blur, Escape, an outside press and removing the trigger
+  before the delay each leave the panel closed at every viewport; Escape
+  and an outside press also close an open panel.
+- Pointer transition: moving from the trigger across the gap into the
+  panel keeps it open for 1.2 s; leaving both closes it after the close
+  delay.
+- Placement: eight trigger spots per viewport (centre, four edges, three
+  corners); every panel stays inside the viewport, and the arrow sits on
+  the edge facing its trigger (0–0.01 px from that edge).
+- Modal layer: a trigger inside a real `openModal` door opens its panel
+  above the veil (`z-index` 1000 over 500); the panel is the topmost
+  element at its centre.
+- Real trigger: the combat HUD's first hint, hovered for real, opens after
+  1003–1010 ms below the HUD with a 12 × 6 px arrow on its centre: WT2
+  371.7×148 (25.8vw) at 1440×860, 283.5×113.4 (72.7vw) at 390×844, and
+  WT1 158.1×54.4 (18.7vw) at 844×390.
+- Touch (390×844, 375×667): the first tap selects the detail and opens
+  nothing; the second opens it at once.
+- Targets: the panels carry no controls in these readings; probe triggers
+  are 48 px. The HUD hint triggers are not 44 px tall; see Limits.
+- Trigger parent: an earlier run placed each probe trigger directly in
+  `<body>` and failed 7 of 215 geometry checks. Edge triggers at 390×844
+  and top and bottom triggers at 844×390 opened beside, and one arrow sat
+  46.7 px off its trigger. That is the existing `clear` preference, not the
+  reorder: the panel keeps off the trigger's parent, and there `<body>`
+  overlapped the space above more than the space beside. Above comes
+  before right and left in both orders. With each trigger in its own
+  group, as real hints are, every check passes.
+
+Tools: `tools/placement.mjs` gives the same 12 findings as dev, line for
+line (P3 expects hover tooltips on hand cards, which e305c64b removed; P5
+finds no flask slots on `?shot=combat`). `tools/tooltippersist.mjs` stops
+on Windows before any check: it imports `serve.mjs` by a raw `d:` path.
+That predates this branch and was left alone. `tools/tooltip-review-qa.mjs`
+is Playwright and was not run.
+
+Limits: focus opens after its own 500 ms (`tooltipHelp.focusMs`, from
+e305c64b) and tap is select-then-explain (owner, 2026-09-11); the spec's
+line asks for the configurable 1 s for both, so that is an owner decision.
+Panel widths are the rungs' rem widths, not the wireframe's vw nominals
+(WT1 12vw wide host / 36vw portrait, WT2 20vw / 60vw, WT3 28vw / 84vw):
+WT1 measures 18.7–58.8vw. The panel still aligns to the trigger's start
+edge rather than its centre, and the gap stays `--place-gap` 14 px, not
+0.5rem; the arrow points at the centre either way. Content past the
+expanded rung still scrolls inside the panel unless the surface routes it
+to inspection (`expand: true`). The arrow is clipped for the 150 ms rung
+step reveal. A hint whose parent is a page-sized container can still open
+beside its trigger, by the `clear` preference above. The HUD hint triggers
+measure 87.4×19.4 px at 1440×860, 72×15.7 px at 390×844 and 44×32 px at
+844×390, below the 44 px target; they are HUD labels this branch does not
+change. Emulation only: no touch device, no gamepad.
