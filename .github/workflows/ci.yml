@@ -248,6 +248,29 @@ jobs:
         # which is exactly what bundle.mjs:435's WARNING was.
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs --selftest
 
+      - name: Parse gate — the bundler's own known-bad corpus
+        # NOTHING RAN THIS FILE, and that is the defect it was written to prevent
+        # happening to something else. `tools/bundle.test.mjs` was in no workflow
+        # at all, so when the ordinal rule changed under case 1a and the bundle
+        # outgrew case 6v's fixed 600 KB cut, three assertions went red and stayed
+        # red — a corpus nobody watches rots exactly the way §8's required-coverage
+        # list rotted, which is the sentence at the top of case 7.
+        #
+        # UBUNTU ONLY, and it is a budget, not an oversight: this suite runs the
+        # REAL bundler against ~20 disposable checkouts and each one writes a
+        # 57 MB artifact, so it is about five minutes on one runner and a quarter
+        # of an hour across the matrix. Its claims are about the gate's REFUSALS,
+        # which are platform-independent; the platform claim is dirorder's and
+        # `reproducible`'s, and both already run on all three.
+        #
+        # UNWRAPPED, like the world-atlas step above: the file prints per-case
+        # PASS/FAIL lines and exits 1 on any FAIL, but no counted verdict, so the
+        # door would read it as SILENCE. Giving it one is a change to this tool's
+        # output contract and belongs with whoever wants the wrapper, not with
+        # the fix that made the corpus green again.
+        if: matrix.os == 'ubuntu-latest'
+        run: node tools/bundle.test.mjs
+
       - name: Directory order — the corpus history already wrote
         # HERE, in the matrix job, and not in `reproducible`: the claim under test is
         # that the comparator produces the SAME order on every runner, so it belongs
