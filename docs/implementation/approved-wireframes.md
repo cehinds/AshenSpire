@@ -2106,3 +2106,94 @@ effect text states them. Row one shows the hand only when no attribute
 requirement is authored (every armament is `either` today). Wide, compact,
 iPhone SE and Galaxy S24 host geometry was not re-measured beyond the two
 viewports above.
+## Tool upkeep
+
+Branch `claude/repair-stale-qa-tools`, based on dev `8797fc9a` (#1080).
+Only tools changed; no game source, stylesheet or bundle was edited. Each tool
+was run on dev before the change and on the branch after, in headless Chrome
+driven over CDP with `CHROME` set. Playwright-based tools were not run.
+
+- `tools/ui-components.mjs` C12: matches the current call,
+  `actRouteStripHtml({ title: actTitle(run.actNumber, …) })`. Since the W4b
+  header (#1052), `actTitle` also receives the seat name, so the check pins
+  the call and its first argument and lets the rest vary. Dev: C12 red.
+  Branch: 21/21 contracts hold, and `--selftest` sees 26/26 plants red.
+- `tools/scroll-cue-bleed.mjs`: measures the Shop at its two W1d
+  scrollports, `.shop-offers` and `.shop-detail`, as the surfaces
+  `shop-offers` and `shop-detail` (`--surface shop` selects both).
+  `.screen.shop-workspace` never scrolls, so on dev every Shop cell passed
+  with 0 px of travel and measured nothing. At 360×640 the offers pane now
+  travels 806 px (Text M) and 1785 px (Text XL), each with a measured
+  right-edge cue. The three plants now target these panes:
+  - the house thumb the panes inherit from `.as-pane`;
+  - a cue forced to show in an emptied offers pane;
+  - a pane drawn with `scrollbar-width: none`.
+
+  `--selftest-source` catches 3/3 and the clean copy passes. Navigation
+  waits are 45 s, because a cold `?shot=` boot ran past the old 12 s limit
+  on this host. Full run: GREEN across 65 cells. On phones the offers pane travels 505 to
+  1785 px, and 580 px at 1200×730. The detail pane never travels, and no
+  cue is left standing.
+- `tools/combat-action-row.mjs` (not in CI) asserts the WGC6 footer,
+  (Actions) [Draw] [End Turn] [Discard] (Potions), in one grid on a supported
+  `packCombatFooter` plan. Each size is read back from the `--footer-*`
+  properties the layout adapter wrote:
+  - circles share the model diameter;
+  - piles take the pile width and target height, and End Turn takes the
+    End Turn width;
+  - the controls are separated by the model gap;
+  - on a stacked host the group is centred.
+
+  On a rails host (844×390), (Actions)[Draw] must lead the hand and End
+  Turn must stand over [Discard](Potions). The tool also changed how it
+  measures:
+  - round controls are hit-tested inside their circle;
+  - cards and pagers are clipped to their scroll area before overlap is
+    tested;
+  - the W1h pile viewer closes by its single Close;
+  - on narrow hosts the Exhaust rail item is scrolled into view the way a
+    swipe does, and the tool says when that was needed.
+
+  Co-op is held to its own rail: Actions and End Turn in flow under the
+  hand, at opposite edges. The plants moved to the WGC6 and co-op rules.
+  Dev: exit 1, with 240 findings before the co-op probe crashed. Branch:
+  GREEN, solo 112 and co-op 2; the Exhaust rail item needed rail travel in
+  24 narrow cells. `--selftest-source`: 10/10 plants caught (7 narrow, 1 wide, 2
+  co-op), and each clean copy passes. The centring
+  plant runs on 1200×730, because on a phone the packed group fills the
+  whole row.
+- `tools/settingsreach.mjs` passes the startup gate with a real CDP Enter
+  press, as `tools/startup-gate.mjs` does. It keeps the durable boot,
+  because `?shot=title` runs on memory storage and the tool sets Text size
+  and reads the remembered section through real storage. It waits on the
+  page, not on fixed sleeps. Four more readings from before W1a were
+  repaired:
+  - the Display scroller is found from its last row, because the pane sits
+    inside the settings host;
+  - the selector is judged against the door, not the pane;
+  - the tooltip ruler polls through the player's delay and starts each fire
+    from a tooltip closed by `tooltip.js`, with the Actions orb as the
+    known-good control, since cards no longer carry one;
+  - the stored-category edge reboots before reading.
+
+  Dev: exit 2, no Settings button in any cell. Branch: OK across 8 cells,
+  with 6/6 tabs answering both hover and the pad. Door 2 (two tab sets in
+  the in-run overlay) still skips as it did on dev; the OK line now says so
+  instead of claiming it.
+- `tools/profile-surface-drive.mjs`, `tools/restore-settings-drive.mjs`,
+  `tools/profile-first-run.mjs`: unchanged. The startup gate is not the
+  root cause. Title → Profile was removed in `e5df3fec`: `title.js` voids
+  `onProfile`, and Settings says it does not duplicate the drawer. So no
+  player door reaches `openProfileArchive`, only `?shot=profile`. All three
+  also used fixed sleeps shorter than a cold boot here. Dev and branch:
+  exit 1, before any Profile screen.
+- `tools/map-camera-persistence.mjs`: #1039 is still open, so the tool was
+  left alone and not run.
+- `tools/plantsites-baseline.json` was re-recorded, because the
+  scroll-cue-bleed and combat-action-row plant sites were replaced.
+
+Limits: on narrow hosts the pile viewer's rail shows one pile name at a
+time, and Exhaust starts off the edge until the rail scrolls; that is
+recorded, not judged. The comment beside the Shop pane rule in
+`styles/kit.css` says the thumb colour comes from `.screen`; it comes from
+`.as-pane`. Both are left for the owner.

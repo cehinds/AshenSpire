@@ -130,11 +130,15 @@ const EDGE_LONG = `(() => { const n=(v)=>+(+v).toFixed(2);
   if(!host) return {error:'settings never opened'};
   const t=[...host.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Display');
   if (t) t.click();
-  let sc=host.parentElement;
-  while (sc && sc!==document.body && !(sc.scrollHeight > sc.clientHeight + 1)) sc=sc.parentElement;
-  if (!sc || sc===document.body) sc = host.closest('.modal, .overlay-body') || host;
   const rows=[...host.querySelectorAll('.set-row')];
   if (!rows.length) return {error:'no rows in Display'};
+  // W1a: the pane (.set-panel, an .as-pane) is the scrollport and it sits
+  // INSIDE the settings host, so the scroller is found from the last row
+  // upward. Walking up from the host, as this did before W1a, skipped the
+  // pane, found no scroller, and reported every cell as a trapped last row.
+  let sc=rows[rows.length-1].parentElement;
+  while (sc && sc!==document.body && !(sc.scrollHeight > sc.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(sc).overflowY))) sc=sc.parentElement;
+  if (!sc || sc===document.body) sc = host.closest('.modal, .overlay-body') || host;
   const scrolls = sc.scrollHeight > sc.clientHeight + 1;
   sc.scrollTop = sc.scrollHeight;
   const last=rows[rows.length-1].getBoundingClientRect();
@@ -143,9 +147,13 @@ const EDGE_LONG = `(() => { const n=(v)=>+(+v).toFixed(2);
   // And the strip must still be there once you are at the bottom — a taxonomy
   // that scrolls away at row sixteen is the defect again, one screenful later.
   // On a compact host (W1a) the selector stands in for the strip.
+  // Judged against the DOOR and the viewport, not the pane: since W1a the pane
+  // is the scroller and the selector sits above it, outside the pane's box by
+  // design, so a pane-relative test would call a standing selector gone.
   const strip=host.querySelector('.set-railed[data-settings-nav="selector"] > .set-cat-select') || host.querySelector('.set-tabs');
+  const door=(host.closest('.modal, .overlay-body') || host).getBoundingClientRect();
   const stripStill = strip ? (() => { const r=strip.getBoundingClientRect();
-    return r.bottom>Math.max(port.top,0)+0.5 && r.top<Math.min(port.bottom,innerHeight)-0.5; })() : null;
+    return r.height>0.5 && r.bottom>Math.max(door.top,0)+0.5 && r.top<Math.min(door.bottom,innerHeight)-0.5; })() : null;
   sc.scrollTop = 0;
   return { rows: rows.length, scrolls, lastRowArrives: arrived,
     lastBottom: n(last.bottom), portBottom: n(Math.min(port.bottom,innerHeight)),
@@ -182,10 +190,52 @@ async function main() {
   await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
   const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw'); return r.result.value; };
+  // WAIT ON THE PAGE, NEVER ON THE CLOCK. Every fixed sleep this file used to
+  // take (1.5-2.2 s after a navigation) read a page that had not mounted yet:
+  // a cold boot on a loaded host was measured at 13.5 s to the startup gate
+  // (2026-09-13), and a tool that answers "no Settings button" about a page
+  // still loading is measuring the machine.
+  const until = async (expression, label, timeoutMs = 60000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (await ev(expression).catch(() => false)) return;
+      await wait(120);
+    }
+    throw new Error(`timed out after ${timeoutMs} ms waiting for ${label}`);
+  };
+  // THE STARTUP GATE (#229). A durable boot lands on the "press Enter"
+  // threshold; the title, and its Settings button, mount only after one
+  // complete physical press. The press is a real CDP key event, down then up,
+  // the input tools/startup-gate.mjs drives for its A5 Enter reveal; a DOM
+  // click would not be the player's door. `?shot=title` would skip the gate,
+  // but a shot boot runs on memory storage and never reads sote_meta_v1, and
+  // this tool sets Text size and reads the remembered section through real
+  // storage — so it keeps the durable boot and passes the gate the way a
+  // player does.
+  const pressEnter = async () => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, S);
+    await wait(60);
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, S);
+  };
+  const bootTitle = async () => {
+    await cdp.send('Page.navigate', { url: BASE }, S);
+    await until(`!!document.querySelector('.startup-gate, .title-screen')`, 'the startup gate or the title');
+    if (await ev(`!!document.querySelector('.startup-gate')`)) {
+      await pressEnter();
+      await until(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`, 'the title after the startup press');
+    }
+  };
+  const settingsOpen = `!!document.querySelector('[data-settings-host]')`;
 
   const fails = []; let cells = 0;
   const openSettings = `(()=>{ const b=[...document.querySelectorAll('button')].find(x=>/settings/i.test(x.textContent));
     if(!b) return 'no Settings button'; b.click(); return true; })()`;
+
+  // The first cell writes its Text size into localStorage BEFORE navigating;
+  // on about:blank that write throws and the cell would measure the default
+  // size under an "S" label. Stand on the app's origin once first.
+  await cdp.send('Page.navigate', { url: BASE }, S);
+  await until(`document.readyState !== 'loading'`, 'the first page');
 
   console.log('\nshape      text  kind      names on screen / total   drags to last   deepest px   tab floor(dev px)   strip h');
   for (const sh of SHAPES) {
@@ -195,10 +245,10 @@ async function main() {
       // The text size is set the way a PLAYER sets it — through stored settings
       // the app reads at boot — never by writing html{font-size} from outside.
       await ev(`localStorage.setItem('sote_meta_v1', JSON.stringify({settings:{textSize:${JSON.stringify(size)}}}))`).catch(() => {});
-      await cdp.send('Page.navigate', { url: BASE }, S);
-      await wait(1500);
+      await bootTitle();
       const opened = await ev(openSettings);
       if (opened !== true) { fails.push(`${sh.tag}/${size}: ${opened}`); continue; }
+      await until(settingsOpen, `${sh.tag}/${size} Settings`);
       await wait(450);
       const r = await ev(READ);
       cells++;
@@ -244,34 +294,67 @@ async function main() {
   // The element is `#tooltip`, an id, NOT `.tooltip` — checked in
   // src/ui/components/tooltip.js rather than guessed. The guess is what cost
   // the first run of this file.
-  const FIRE = `const fire = async (el, how) => {
-      const pre = document.getElementById('tooltip'); if (pre) pre.style.display='none';
+  // Each fire starts from a CLOSED tooltip, closed by tooltip.js itself. Hiding
+  // the panel by style (what this did before) left tooltip.js holding it open
+  // for its target, so the next hover or pad focus on that same element
+  // returned early and read as silence: the door focuses its selected tab on
+  // open, and the hover test leaves each tab's tooltip open into the pad test.
+  const FIRE = `const settleClosed = async () => {
+      document.activeElement?.blur?.();
+      for (const e of document.querySelectorAll('[data-tip-attached]')) {
+        e.dispatchEvent(new PointerEvent('pointerleave', {bubbles:true}));
+        e.dispatchEvent(new CustomEvent('gpblur'));
+      }
+      const t0 = performance.now();
+      while (performance.now() - t0 < 2500) {
+        const t = document.getElementById('tooltip');
+        if (!t || getComputedStyle(t).display !== 'block') return;
+        await new Promise(r=>setTimeout(r, 60));
+      }
+      const t = document.getElementById('tooltip'); if (t) t.style.display='none';
+    };
+    const fire = async (el, how) => {
+      await settleClosed();
       if (how==='hover') el.dispatchEvent(new PointerEvent('pointerenter', {bubbles:true, clientX:20, clientY:20}));
       else el.dispatchEvent(new CustomEvent('gpfocus'));
-      await new Promise(r=>setTimeout(r, 340));
-      const t = document.getElementById('tooltip');
-      const shown = !!(t && getComputedStyle(t).display === 'block' && (t.innerText||'').trim());
+      // The open delay is the player's tooltipDelay setting (250-1500 ms,
+      // src/content/tooltipHelp.js), so a single look at 340 ms read a
+      // tooltip still waiting to open. Poll until it shows or 2.5 s pass.
+      let t = null, shown = false;
+      const t0 = performance.now();
+      while (performance.now() - t0 < 2500) {
+        await new Promise(r=>setTimeout(r, 60));
+        t = document.getElementById('tooltip');
+        shown = !!(t && getComputedStyle(t).display === 'block' && (t.innerText||'').trim());
+        if (shown) break;
+      }
       const text = shown ? (t.innerText||'').trim().replace(/\\s+/g,' ').slice(0,70) : '';
       el.dispatchEvent(new PointerEvent('pointerleave', {bubbles:true}));
       el.dispatchEvent(new CustomEvent('gpblur'));
       await new Promise(r=>setTimeout(r, 80));
       return { shown, text };
     };`;
-  await cdp.send('Page.navigate', { url: BASE + '?shot=combat' }, S); await wait(2200);
+  await cdp.send('Page.navigate', { url: BASE + '?shot=combat' }, S);
+  await until(`!!document.querySelector('.combat .hand .card')`, 'the combat hand'); await wait(300);
+  // THE POSITIVE CONTROL MOVED. A hand card carried its own hover tooltip
+  // until WCB1 gave every card one delayed inspect control (card.js no longer
+  // calls attachTooltip), so the card became a control that can only answer
+  // "no". The Actions orb still attaches one (screens/combat.js), and it is
+  // the known-good element on the same screen.
   const controls = await ev(`(async () => { ${FIRE}
-    const card = document.querySelector('.card');
+    const known = document.querySelector('.combat .energy-orb');
     const plain = document.querySelector('h1, .combat') || document.body;
-    return { positive: card ? await fire(card,'hover') : {shown:null,text:'no .card on the combat screen'},
-             positivePad: card ? await fire(card,'pad') : {shown:null,text:''},
+    return { positive: known ? await fire(known,'hover') : {shown:null,text:'no .energy-orb on the combat screen'},
+             positivePad: known ? await fire(known,'pad') : {shown:null,text:''},
              negative: await fire(plain,'hover') };
   })()`);
-  console.log(`  ruler check — POSITIVE (a card, known to carry one): hover=${controls.positive.shown} pad=${controls.positivePad.shown}  ${JSON.stringify(controls.positive.text)}`);
+  console.log(`  ruler check — POSITIVE (the Actions orb, known to carry one): hover=${controls.positive.shown} pad=${controls.positivePad.shown}  ${JSON.stringify(controls.positive.text)}`);
   console.log(`  ruler check — NEGATIVE (an element with none):       hover=${controls.negative.shown}`);
   if (controls.positive.shown !== true) fails.push('RULER BROKEN: the positive control shows no tooltip, so every tooltip number below is meaningless');
   if (controls.negative.shown !== false) fails.push('RULER BROKEN: the negative control shows a tooltip — this probe answers yes to anything');
 
-  await cdp.send('Page.navigate', { url: BASE }, S); await wait(1500);
-  await ev(openSettings); await wait(400);
+  await bootTitle();
+  await ev(openSettings); await until(settingsOpen, 'Settings for the tooltip probe'); await wait(400);
   const tips = await ev(`(async () => { ${FIRE}
     const out = { tabs: [] };
     for (const b of document.querySelectorAll('.set-tab')) {
@@ -313,7 +396,8 @@ async function main() {
   // Door 2: settings INSIDE the overlay. Two strips on screen, one pair of
   // bumpers. The ruling is the OUTER strip keeps them, so ] must move the
   // OVERLAY tab and leave the settings tab where it was.
-  await cdp.send('Page.navigate', { url: BASE + '?shot=map' }, S); await wait(1800);
+  await cdp.send('Page.navigate', { url: BASE + '?shot=map' }, S);
+  await until(`!!document.querySelector('.map-scroll .map-node')`, 'the map'); await wait(300);
   const door2 = await ev(`(async () => {
     const m=[...document.querySelectorAll('button')].find(b=>/menu|☰/i.test(b.textContent)||b.classList.contains('open-menu'));
     if(!m) return {skip:'no menu button on the map'};
@@ -334,6 +418,7 @@ async function main() {
     const setAfter=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
     return { setBefore, setAfter, ovBefore, ovAfter, settingsTabsPresent };
   })()`);
+  const door2Skipped = !!door2.skip;
   if (door2.skip) console.log(`  SKIP door 2 — ${door2.skip}`);
   else {
     console.log(`  door 2 (overlay → Settings): ${door2.settingsTabsPresent} settings tabs on screen inside ${'the overlay strip'}`);
@@ -357,8 +442,8 @@ async function main() {
   for (const sh of SHAPES) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: sh.w, height: sh.h, deviceScaleFactor: sh.dsf, mobile: sh.dsf > 1 }, S);
     await ev(`localStorage.removeItem('sote_meta_v1')`).catch(() => {});
-    await cdp.send('Page.navigate', { url: BASE }, S); await wait(1600);
-    await ev(openSettings); await wait(450);
+    await bootTitle();
+    await ev(openSettings); await until(settingsOpen, `${sh.tag} Settings for the strip`); await wait(450);
     const move = await ev(`(async () => { const n=(v)=>+(+v).toFixed(2);
       const tops=[];
       for (const b of [...document.querySelectorAll('.set-tab')]) {
@@ -380,7 +465,7 @@ async function main() {
   // this whole change is against. It rides in `meta.settings`, the free bag
   // every other setting uses — no save-schema change. Observed BOTH ways.
   console.log('\npersistence — the section you were on, and the section that no longer exists');
-  await cdp.send('Page.navigate', { url: BASE }, S); await wait(1600);
+  await bootTitle();
   const persist = await ev(`(async () => {
     const open = () => [...document.querySelectorAll('button')].find(x=>/settings/i.test(x.textContent)).click();
     const close = () => { const b=document.getElementById('set-close'); if(b) b.click(); };
@@ -397,12 +482,21 @@ async function main() {
     const meta=JSON.parse(localStorage.getItem('sote_meta_v1')||'{}');
     meta.settings=meta.settings||{}; meta.settings.settingsCategory='Lore';
     localStorage.setItem('sote_meta_v1', JSON.stringify(meta));
-    open(); await new Promise(r=>setTimeout(r,500));
+    return { first, stored, reopened };
+  })()`);
+  // THE STORED NAME IS READ AT BOOT. Within one session the open settings
+  // live in memory, so reopening after a raw storage write re-read memory
+  // (it opened on Audio) and never asked the question. Boot again through
+  // the real gate, as a player returning later would, and then open.
+  await bootTitle();
+  Object.assign(persist, await ev(`(async () => {
+    [...document.querySelectorAll('button')].find(x=>/settings/i.test(x.textContent)).click();
+    await new Promise(r=>setTimeout(r,500));
     const afterBogus=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
     const tabsAfterBogus=document.querySelectorAll('.set-tab').length;
     const panelText=(document.querySelector('.set-panel')||{innerText:''}).innerText.trim().length;
-    return { first, stored, reopened, afterBogus, tabsAfterBogus, panelText };
-  })()`);
+    return { afterBogus, tabsAfterBogus, panelText };
+  })()`));
   console.log(`  opened on ${JSON.stringify(persist.first)} · tapped Audio · stored ${JSON.stringify(persist.stored)} · reopened on ${JSON.stringify(persist.reopened)}`);
   console.log(`  stored "Lore" (a category nothing files under) → opens on ${JSON.stringify(persist.afterBogus)}, ${persist.tabsAfterBogus} tabs, ${persist.panelText} chars in the panel`);
   if (persist.stored !== 'Audio') fails.push(`persistence: the choice was not written to meta.settings (got ${JSON.stringify(persist.stored)})`);
@@ -416,7 +510,10 @@ async function main() {
   } else {
     console.log('\nsettingsreach: OK — every category name on screen at open, every selector over the 44 device-px floor,');
     console.log('  the long section still scrolls to its last row, the strip stays put, both bumper directions wrap,');
-    console.log('  and the outer strip keeps the bumpers where two tab sets meet.');
+    // A skipped door is not a held one: say which, rather than claiming it.
+    console.log(door2Skipped
+      ? '  and door 2 (two tab sets) was SKIPPED, not measured — see the SKIP line above.'
+      : '  and the outer strip keeps the bumpers where two tab sets meet.');
   }
   console.log('\nBOUNDARY: linux headless chromium; two shapes; title-screen door for the table; nothing on Windows;');
   console.log('  no gamepad attached (the ring is driven by [ and ], which is the same code path input.js runs for LB/RB);');
