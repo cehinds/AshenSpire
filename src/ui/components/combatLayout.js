@@ -2,10 +2,19 @@ import { allocateCombatBands, packCombatFooter } from '../models/CombatLayout.js
 import { combatantMeterGeometry } from '../models/CombatantMeterModel.js';
 import { overlayGeometry, OVERLAY_ROLES } from '../models/CombatOverlayModel.js';
 
+// Horizontal padding of a band host, in its local px. kit.css pads the hand
+// band by the device's safe-area insets (zero on hosts without a notch).
+function inlinePadding(el) {
+  if (!el) return 0;
+  const style = getComputedStyle(el);
+  return (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+}
+
 // Measures the combat root once per frame and writes the band and footer plans
 // as custom properties. CSS owns placement; the model owns every number.
 export function wireCombatLayout(combatEl) {
   const row = combatEl.querySelector('.combat-action-row');
+  const handArea = combatEl.querySelector(':scope > .hand-area');
   let frame = 0;
   let observer = null;
 
@@ -14,7 +23,10 @@ export function wireCombatLayout(combatEl) {
     if (!combatEl.isConnected) { release(); return; }
     const zoom = combatEl.getBoundingClientRect().width / combatEl.clientWidth || 1;
     const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
-    const bands = allocateCombatBands({ width: combatEl.clientWidth, height: combatEl.clientHeight, zoom, rem });
+    // The plan gets the width between the safe-area insets, so the rails and
+    // the hand they wrap stay clear of a notch.
+    const width = combatEl.clientWidth - inlinePadding(handArea);
+    const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem });
     combatEl.style.setProperty('--wireframe-band-hud', bands.hud + 'px');
     combatEl.style.setProperty('--wireframe-band-hand', bands.hand + 'px');
     combatEl.style.setProperty('--wireframe-band-footer', bands.footer + 'px');
@@ -47,7 +59,7 @@ export function wireCombatLayout(combatEl) {
     // Measure the band's host, not the row: the row's own width is what this
     // plan sets, and a pre-plan cap on it would otherwise feed back.
     const host = row.parentElement || combatEl;
-    const footer = bands.rails || packCombatFooter({ width: host.clientWidth, height: bands.footer, zoom, rem });
+    const footer = bands.rails || packCombatFooter({ width: host.clientWidth - inlinePadding(host), height: bands.footer, zoom, rem });
     row.style.setProperty('--footer-gap', footer.gap + 'px');
     row.style.setProperty('--footer-circle', footer.diameter + 'px');
     row.style.setProperty('--footer-pile-width', footer.pileWidth + 'px');
@@ -67,6 +79,8 @@ export function wireCombatLayout(combatEl) {
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(schedule);
     observer.observe(combatEl);
+    // Its content box narrows when the safe-area padding arrives or changes.
+    if (handArea) observer.observe(handArea);
   }
   apply();
   return { apply, release };

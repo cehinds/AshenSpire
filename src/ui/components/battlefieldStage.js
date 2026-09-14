@@ -5,6 +5,12 @@ import { fitStatusTray } from './statusTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { overheadStackBottom } from '../models/CombatOverlayModel.js';
+import { sceneLayers } from '../models/SceneLayerModel.js';
+import { targetOutline } from '../models/TargetLayerModel.js';
+import { ENVIRONMENTS } from '../../content/environments.js';
+
+const sceneById = (id) => ENVIRONMENTS.flatMap(region => region.scenes).find(scene => scene.id === id) || null;
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -31,6 +37,9 @@ export function wireBattlefieldStage(field, model) {
     combat.dataset.layout = 'formation';
     const fieldRect = field.getBoundingClientRect();
     const zoom = fieldRect.width / field.clientWidth || 1;
+    // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
+    const hudBand = combat.querySelector(':scope > .topbar');
+    const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
@@ -52,13 +61,19 @@ export function wireBattlefieldStage(field, model) {
       const geometry = combatSpriteGeometry(sprite, schedule);
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
-      return { slot, frame, stack, sprite, ratio, ...geometry,
+      const leadingHost = frame.querySelector('.combatant-leading');
+      return { slot, frame, stack, sprite, ratio, ...geometry, leadingHost,
+        // The overhead stack's own height (Inspect, when shown, over the
+        // intent), in local px, for the headroom clamp below.
+        leadingHeight: leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0,
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.min(66, fieldRect.height * .25) };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
     for (const actor of actors) {
-      const { slot, frame, stack, sprite, boxHeight, footOffset, ratio } = actor;
+      const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
+      // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
+      if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
       const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[slot.row] : 1;
       const scale = fitted.scale * wireframeUi.formation.displayScale * growth;
@@ -78,7 +93,14 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
-      frame.style.setProperty('--overhead-top', `${(paintedHeight - visibleHeight - 6) / zoom}px`);
+      // WCO1 headroom: the stack rests 6 px above the art's visible top, but its
+      // top edge never rises above the HUD band's bottom (field-local px,
+      // like `local`). On a short field it comes down over the sprite instead.
+      const overhead = overheadStackBottom({
+        anchor: local.top + (paintedHeight - visibleHeight - 6) / zoom, height: leadingHeight, ceiling,
+      });
+      frame.style.setProperty('--overhead-top', `${overhead.bottom - local.top}px`);
+      frame.dataset.overheadClamped = String(overhead.clamped);
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);
@@ -95,11 +117,30 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--art-right', `${(artRect.right - hostRect.left) / zoom}px`);
       sprite.style.setProperty('--art-top', `${(artRect.top - hostRect.top) / zoom}px`);
       sprite.style.setProperty('--art-height', `${artRect.height / zoom}px`);
+      // WGC4: the target outline is drawn on this zoomed host; hold it at its
+      // physical minimum (sprite px, since the host's screen scale is `scale`).
+      const outline = targetOutline({ scale });
+      sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
+      sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     }
     for (const frame of frames) fitStatusTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
     combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
     combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
+    // WGS1: crop the scene's painted plate so its ground line meets the floor
+    // band (WGS7) and its sky fills the rest (WGS6). Feet are not moved.
+    const backdrop = combat.querySelector('.environment-backdrop');
+    const art = backdrop?.querySelector(':scope > svg');
+    if (art) {
+      const layers = sceneLayers({ width: backdrop.clientWidth, height: fieldRect.height / zoom, scene: sceneById(backdrop.dataset.scene) });
+      if (layers.skyline.viewBox) art.setAttribute('viewBox', layers.skyline.viewBox.join(' '));
+      backdrop.dataset.sceneFit = layers.aligned ? 'floor' : 'cover';
+      backdrop.dataset.skyline = layers.skyline.visible ? 'on' : 'off';
+      backdrop.dataset.floor = layers.floor.visible ? 'on' : 'off';
+      // Screen px below the battlefield's top edge (relative, so it cannot go
+      // stale when the whole board shifts without resizing).
+      backdrop.dataset.floorTop = String(layers.floor.top * zoom);
+    }
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

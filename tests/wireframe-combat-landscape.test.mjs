@@ -53,6 +53,25 @@ test('the hand between the rails exposes five minimum cards at the touch target'
   }
 });
 
+test('notch insets narrow the rails plan without breaking it', () => {
+  // 47 physical px each side: an iPhone's landscape safe area. The adapter
+  // passes the width left between the insets.
+  for (const [width, height, zoom] of [[844, 390, 0.62], [915, 412, 0.62], [740, 360, 0.62], [667, 375, 0.62]]) {
+    const at = `${width}x${height}`;
+    const inner = (width - 47 * 2) / zoom;
+    const bands = allocateCombatBands({ width: inner, height: height / zoom, zoom, rem: 16 / zoom });
+    const open = plan(width, height, zoom);
+    assert.equal(bands.arrangement, 'rails', at);
+    assert.equal(bands.supported, true, at);
+    assert.ok(near(bands.rails.railWidth * 2 + bands.rails.gap * 2 + bands.rails.handWidth, inner), `${at}: rails and hand fill the safe width`);
+    assert.ok(near(open.rails.handWidth - bands.rails.handWidth, 94 / zoom), `${at}: only the hand gives up the insets`);
+    assert.deepEqual([bands.hud, bands.battlefield, bands.hand], [open.hud, open.battlefield, open.hand], `${at}: heights unchanged`);
+    const rem = 16 / zoom;
+    const hand = handLayout({ width: bands.rails.handWidth, height: bands.hand, count: 5, rem, zoom });
+    assert.ok(hand.span <= bands.rails.handWidth + 1e-6 && hand.step * zoom >= 44 - 1e-6, `${at}: five cards still fit at the touch target`);
+  }
+});
+
 test('portrait and desktop plan exactly as before', () => {
   for (const [width, height, zoom] of [[1440, 860, 1.18], [1280, 800, 1.07], [390, 844, 0.9], [375, 667, 0.85], [360, 780, 0.83]]) {
     const withWidth = plan(width, height, zoom);

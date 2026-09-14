@@ -100,13 +100,25 @@ export const wireframeUi = freeze({
   },
   formation: {
     depth: [0.9, 0.95, 1], selectedGrowth: [1.1, 1.05, 1.1],
-    displayScale: 1.1, floorFraction: 0.8, insetRem: 1,
+    displayScale: 1.1, insetRem: 1,
     detailReserveRem: 3.5, minimumSpritePx: 92,
     horizontalStepFraction: 0.05, minimumStepPx: 8,
     innerRetreatFraction: 0.02, maxRetreatSpacingFraction: 0.15,
     gapNarrowFraction: 0.03, gapWideFraction: 0.05,
     backLayer: 200, frontLayer: 0, focusPriority: 100,
   },
+  // WGS1 background composition: WGS6 skyline and WGS7 floor. Each scene is
+  // one painted plate; it fills the battlefield and its authored ground line
+  // sits at the floor band's top, so the field is floorFraction ground and the
+  // rest sky (CURRENT-SPECIFICATION: 80% ground, 20% sky). bleedFraction
+  // over-scales the plate so its atlas edges never show. With floor off the
+  // plate is a centred cover crop; with skyline off no plate is painted.
+  // Neither toggle moves the formation's feet.
+  scene: { skyline: true, floor: true, floorFraction: 0.8, bleedFraction: 0.02 },
+  // WGC4 target layer: the dashed outline on each eligible target and the
+  // solid one on the active target, authored in sprite px (2 / 6, as before)
+  // and held at physical minimums after the formation's depth zoom.
+  targetLayer: { outlinePx: 2, outlineMinPx: 2, offsetPx: 6, offsetMinPx: 4 },
   // WCO0 combat overlays (CURRENT-SPECIFICATION: WC4, the 13.2px value font,
   // and the accepted guard geometry). Badges and text are never mirrored.
   overlay: {
@@ -124,11 +136,20 @@ export const wireframeUi = freeze({
     metadataSlots: { start: 'rarity', end: 'owned' },
     artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
   },
-  // W1a Settings. A category rail needs this host width, and every category
-  // at the tap floor must fit in the W1 body band (70% of the viewport);
-  // otherwise one selector sits above the pane. Gap and inset are the rail's
-  // budget, not its drawn values. Hysteresis stops a host at the edge flapping.
-  settings: {
+  // WC2a1–WC2c3 possession sub-variants. The face shows this many detail
+  // lines in its fact region and this many entries in its effect region;
+  // the rest stay on the card (hidden) so the inspection lists every one.
+  // One effect entry: at a 280 px card the heading and a second entry do not
+  // fit the 54 px effect row above the physical type floor.
+  possession: { faceLines: 2, faceEffects: 1 },
+  // W1 category navigation, shared by every categorized W1 surface (Settings,
+  // Shop, Armoury, Compendium, Profile, the pile viewer). A category rail needs
+  // this host width, and every category at the tap floor must fit in the W1
+  // body band (70% of the viewport); otherwise one [Category ▾] selector sits
+  // above the pane (rule 11: never a horizontal strip). Gap and inset are the
+  // rail's budget, not its drawn values. Hysteresis stops a host at the edge
+  // flapping. (These numbers were W1a's `settings` block.)
+  categoryNav: {
     railMinHostWidthRem: 60, bodyHeightFraction: 0.7,
     railGapRem: 0.6, railInsetRem: 1.4, hysteresisRem: 1,
   },
@@ -139,4 +160,39 @@ export const wireframeUi = freeze({
     frameWidth: 0.95, frameHeight: 0.9, railWidth: 0.216,
     railMinRem: 11, railMaxRem: 24, columnGap: 0.02, rowGap: 0.02,
   },
+  // WT0 shared tooltip. The presenter's measured rungs (tooltip.js) remain
+  // its only size system; this names the wireframe each rung draws: small is
+  // WT1 compact, medium WT2 standard, and large and expanded are both WT3
+  // (same width, expanded only reaches further down). The arrow is WT0.arrow,
+  // 0.75 × 0.375 reference rems on the edge facing the trigger, kept
+  // arrowInsetRem clear of the frame's corners.
+  tooltip: {
+    wireframeByRung: { small: 'WT1', medium: 'WT2', large: 'WT3', expanded: 'WT3' },
+    arrowWidthRem: 0.75, arrowHeightRem: 0.375, arrowInsetRem: 0.5,
+  },
+  // WGH0 / WGS2 shared run HUD (CURRENT-SPECIFICATION: the HUD contract and
+  // "Potions ownership"). Layers are filtered before layout: a layer that is
+  // off draws nothing and leaves no row or gap; `header` and `rail` switch
+  // their whole row. Which resource rows exist is content/resources.js's
+  // business, not a layer here.
+  // Potions: WGC11 in the combat footer is the one Potions control and WGH8
+  // is its contents, charge flasks and carried consumables in one projection
+  // (models/PotionContentsModel.js); either category can be hidden. The top
+  // HUD never draws potions where a footer HUD exists. `roomRail` keeps the
+  // flask tiles in the rail of the screens that have no footer HUD (shop,
+  // rest, event; the map hides its rail): that rail is the only place a
+  // charge flask is drunk, or a carried one dropped, outside combat. false
+  // applies the footer-only rule there too; that is an owner decision.
+  hud: {
+    layers: {
+      header: true, class: true, cinders: true, position: true,
+      vitality: true, armoury: true, menu: true, rail: true, relics: true,
+    },
+    potions: { chargeFlasks: true, carried: true, roomRail: true },
+  },
+  // W1i Smith upgrade, W1j Extract card, W1k Install card. The item list is
+  // the workspace's left column at W1i's 44 of the 90 usable width (floored
+  // and capped so a name stays readable); the selected item's pane takes the
+  // rest. Compact hosts fold the list into one selector above the pane.
+  smith: { candidatesWidth: 0.44, candidatesMinRem: 14, candidatesMaxRem: 60 },
 });
