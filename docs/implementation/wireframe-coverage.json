@@ -249,12 +249,16 @@
       "id": "W1i",
       "name": "Smith upgrade",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/smithUpgradeModal.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SmithWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -264,17 +268,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/smith-w1ijk-workspace: W1 frame (workspaceFrame) with no category rail; the candidates are the left column (kit rail via the shared categoryNav, 44vw from wireframeUi.smith) and fold into one [Selection ▾] selector on compact hosts; the pane shows the selected item, stats/requirements/affected cards, and the Stone cost pinned last. Header title + exit only; footer Back + Upgrade. Measured by CDP at 1440x860, 1280x800, 390x844, 375x667 and 844x390 (no page scroll, targets >= 44 px). Upgrade flow, hold/confirm and two-tap candidate policy unchanged. Owner review pending."
     },
     {
       "id": "W1j",
       "name": "Extract card",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/mountServiceModal.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -285,17 +294,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/smith-w1ijk-workspace: same W1 frame as W1i; the pane registers selected item, mount selector, the extraction preview (the card that leaves and what the mount then shows) once a mount is chosen, and the pinned cost. Follows the wide ASCII (items beside the pane) rather than the table's three stacked rows. A fresh class kit carries no extractable card, so the Shrine shot offers no extraction: the flow was proved on a run built in-page from source modules (Greatsword's Sundering Hew). Owner review pending."
     },
     {
       "id": "W1k",
       "name": "Install card",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/mountServiceModal.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -306,7 +320,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/smith-w1ijk-workspace: same W1 frame as W1i; the pane registers selected item, mount selector, the compatible deck-card selector once a mount is chosen, the install preview once a card is chosen, and the pinned cost. Dependent mount/card choices still clear when the parent changes (smithServices.js, unchanged). Proved by CDP after an extraction emptied the mount on an in-page run. Owner review pending."
     },
     {
       "id": "W1l",

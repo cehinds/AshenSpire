@@ -184,4 +184,9 @@ export const wireframeUi = freeze({
     },
     potions: { chargeFlasks: true, carried: true, roomRail: true },
   },
+  // W1i Smith upgrade, W1j Extract card, W1k Install card. The item list is
+  // the workspace's left column at W1i's 44 of the 90 usable width (floored
+  // and capped so a name stays readable); the selected item's pane takes the
+  // rest. Compact hosts fold the list into one selector above the pane.
+  smith: { candidatesWidth: 0.44, candidatesMinRem: 14, candidatesMaxRem: 60 },
 });

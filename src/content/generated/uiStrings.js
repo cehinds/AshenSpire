@@ -752,6 +752,90 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "smith.selector.none",
+    "extends": "",
+    "short": "Choose an item",
+    "full": "Choose the item the smith will work on.",
+    "tip": "Choose an item"
+  },
+  {
+    "id": "smith.items.upgrade",
+    "extends": "",
+    "short": "Items available to upgrade",
+    "full": "The items the smith can upgrade.",
+    "tip": ""
+  },
+  {
+    "id": "smith.items.mount",
+    "extends": "",
+    "short": "Items with a mount to work on",
+    "full": "The items with a mount the smith can work on.",
+    "tip": ""
+  },
+  {
+    "id": "smith.pane.status",
+    "extends": "",
+    "short": "{purse} · {n} eligible",
+    "full": "You hold {purse}; {n} items are eligible.",
+    "tip": ""
+  },
+  {
+    "id": "smith.row.tier",
+    "extends": "",
+    "short": "Tier {from} → {to}",
+    "full": "Upgrading takes this item from tier {from} to tier {to}.",
+    "tip": ""
+  },
+  {
+    "id": "smith.row.mountOne",
+    "extends": "",
+    "short": "{where} · 1 mount",
+    "full": "This item is {where} and has one mount.",
+    "tip": ""
+  },
+  {
+    "id": "smith.row.mountMany",
+    "extends": "",
+    "short": "{where} · {n} mounts",
+    "full": "This item is {where} and has {n} mounts.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.fallback",
+    "extends": "",
+    "short": "The mount then shows {card}.",
+    "full": "After extraction the mount shows its fallback card {card}.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.fallbackNone",
+    "extends": "",
+    "short": "The mount then shows nothing.",
+    "full": "After extraction the mount is empty.",
+    "tip": ""
+  },
+  {
+    "id": "smith.heading.deck",
+    "extends": "",
+    "short": "From your deck",
+    "full": "Deck cards this mount takes.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.extract",
+    "extends": "",
+    "short": "{card} leaves {item} and joins your deck.",
+    "full": "Extraction lifts {card} out of {item} and adds it to your deck.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.install",
+    "extends": "",
+    "short": "{card} leaves your deck and is seated in {item}.",
+    "full": "Seating moves {card} out of your deck and into {item}.",
+    "tip": ""
+  },
+  {
     "id": "shop.price",
     "extends": "",
     "short": "{cost} cinders",
