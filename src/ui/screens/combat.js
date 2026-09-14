@@ -511,6 +511,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (lit !== null || (!selected && !selfArm)) return;
     selected = null;
     selfArm = null;
+    // The stage, THEN the sync. `syncCardSelection` dresses what is already
+    // drawn; the 1-9 target keycap is not a class it can toggle — `renderEnemies`
+    // BUILDS it, gated on `targeting`, so only a repaint can take it away.
+    // (`selectedFlask` is deliberately untouched above, and a raised flask keeps
+    // `targeting` true, so the repaint is what decides — not this call site.)
+    renderCombatantStage();
     syncCardSelection();
   });
 
@@ -2289,6 +2295,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       selected = null;
       selfArm = null;
       selectedFlask = null;
+      // THE STAGE HAS TO BE REPAINTED, NOT JUST RE-DRESSED. `syncCardSelection`
+      // toggles classes on nodes that already exist; the 1-9 target keycap is
+      // not a class. `renderEnemies` APPENDS it to `.combatant-leading` while
+      // `targeting` holds, and its renderKey names `targeting`, so the badge
+      // only leaves on a repaint. Without this, opening the Armoury put the aim
+      // down and left every enemy still wearing its number — while those same
+      // number keys had gone back to selecting cards in hand.
+      renderCombatantStage();
       syncCardSelection();
     }
     if (onArmoury) return onArmoury();

@@ -140,6 +140,29 @@ ok(/if \(hostile\) \{ selected = inst\.instanceId;/.test(combat),
 ok(/if \(pv\.needsTarget \|\| dragTargetMode === 'all'\) \{ selected = inst\.instanceId;/.test(combat),
   'the drag/flick select still arms `selected` directly');
 
+// ---- the stage is REPAINTED, not merely re-dressed --------------------------
+// `syncCardSelection` toggles classes on nodes that already exist. The 1-9
+// target keycap is not a class: `renderEnemies` APPENDS it to
+// `.combatant-leading` while `targeting` holds, and its renderKey names
+// `targeting`, so nothing short of a repaint takes it off again. A disarm that
+// only re-dressed left every enemy wearing its number while those same number
+// keys had gone back to selecting cards in hand.
+ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(beforeDelegation),
+  'opening the Armoury repaints the combatant stage BEFORE it re-dresses');
+// The store watcher has the same gap and the same fix. It clears `selected` and
+// `selfArm` only, so a raised flask still holds `targeting` — which is exactly
+// why the repaint decides rather than the call site.
+const watchBody = combat.match(/onSelectionChange\(\(lit\) => \{[\s\S]*?\n  \}\);/);
+ok(!!watchBody, 'the selection watcher can still be read');
+ok(/renderCombatantStage\(\);\s*\n\s*syncCardSelection\(\);/.test(watchBody[0]),
+  'the store watcher repaints the combatant stage before it re-dresses');
+// And the keycap really is built by the renderer rather than toggled, which is
+// the fact both assertions above depend on.
+ok(/if \(enemy\.alive && targeting\) \{/.test(combat),
+  'the target keycap is still built under `targeting` by renderEnemies');
+ok(!/enemy-key/.test(combat.match(/function syncCardSelection\(\)[\s\S]*?\n  \}/)[0]),
+  'syncCardSelection still does not touch the keycap, so only a repaint can');
+
 // And the store really does stay silent on an empty clear — the exact reason a
 // watcher alone could not carry this.
 resetSelection();
