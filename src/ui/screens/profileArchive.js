@@ -42,11 +42,11 @@
 
 import {
   el, pane, prose, detailCard, button, buttonRow, statusText, fold, openModal, flavour, options,
-  eyebrow, titleM, subtitle, railed, railItem,
+  eyebrow, titleM, subtitle, railed, railItem, categoryNav,
 } from '../kit/index.js';
 import { t } from '../strings.js';
 import { PROFILE_CATEGORIES, profileWorkspaceView } from '../models/ProfileWorkspaceModel.js';
-import { workspaceFrame, categoryNav, markCurrent, land } from '../components/w1Workspace.js';
+import { workspaceFrame, markCurrent, land } from '../components/w1Workspace.js';
 
 // Human time, not a log line — same rule as the notice screen (Sunna).
 function humanTime(iso) {
@@ -249,8 +249,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
     container.dataset.profileCategory = view.current;
     markCurrent(items, view.current);
     view.categories.forEach((category, i) => { counts[i].textContent = String(category.count); });
-    const count = view.categories.find((category) => category.selected).count;
-    nav.sync(`${t(`profile.category.${view.current}`)} ${count}`);
+    // The selector's face ("Set-aside runs 2") follows the selection on its own.
     recordsSlot.setAttribute('aria-labelledby', `prof-kind-${view.current}`);
     // DRAFT COPY: the empty state must not read as a failure — an empty drawer
     // is the good outcome, and this screen is most often opened by someone
@@ -264,7 +263,7 @@ export function renderProfileSection(container, { saves, onRestored }) {
   }
   paint();
 
-  container.replaceChildren(railed(nav.node, pane({
+  container.replaceChildren(railed(nav, pane({
     children: el('div', { class: 'w1-split' }, [identity, recordsSlot]),
     attrs: { class: 'prof-archive' },
   })));

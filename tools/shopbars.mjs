@@ -214,9 +214,19 @@ async function main() {
     console.log(`\n  ${shape}`);
 
     await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
-    await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail');
+    // The first mount of the unbundled module route can pass 20 s on a
+    // loaded machine (measured 21.4 s, 2026-09-14), so it gets a minute.
+    await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail', 60000);
     await wait(600);
+    // W1 rule 11: a compact frame draws the kit's one [Category ▾] selector
+    // above the pane and keeps the rail closed under it (kit/categoryNav.js).
+    // S1 asks for every item ON THE GLASS, so it opens the list the way a
+    // finger does, reads, and closes it again before S2 onward.
+    const compact = await ev(`(() => { const t = document.querySelector('.shop-workspace .as-catnav-toggle');
+      if (!t || !t.getClientRects().length) return false; t.click(); return true; })()`);
+    if (compact) await wait(250);
     const arrival = await ev(READ);
+    if (compact) { await ev(`document.querySelector('.shop-workspace .as-catnav-toggle').click(); true`); await wait(200); }
 
     // S1 — the roster, both directions, and every item speaks.
     const drawn = arrival.bars.map((b) => b.key);
@@ -296,7 +306,7 @@ async function main() {
 
     // S6 — his toggle: ABSENT, not greyed. The harness settings door.
     await cdp.send('Page.navigate', { url: `${base}?shot=shop&shotSettings=${encodeURIComponent('{"shopSell":false}')}` }, S);
-    await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail, toggle off');
+    await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail, toggle off', 60000);
     await wait(400);
     const off = await ev(READ);
     const offKeys = off.bars.map((b) => b.key);

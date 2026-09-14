@@ -50,8 +50,12 @@ export function equipmentCardModel(registries, piece) {
  * shrinks to stay whole instead of being cut. `idealCh` is expressed against
  * the card's own width, so the face scales with the card and not the viewport.
  */
-export function equipmentCardTokens(config = balance.ui.equipmentCard) {
-  const { regions, text, frameWidthPx, frameHeightPx, paddingPx, gapPx } = config;
+export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [] } = {}) {
+  const { text, frameWidthPx, frameHeightPx, paddingPx, gapPx } = config;
+  // A region the card has nothing to put in (a relic or potion has no tag
+  // badges) takes no floor, so its height is spare for the regions that grow.
+  const regions = Object.fromEntries(Object.entries(config.regions)
+    .map(([key, spec]) => [key, collapse.includes(key) ? { ...spec, minPx: 0, grow: 0 } : spec]));
   const order = Object.keys(regions);
   const gaps = gapPx * Math.max(0, order.length - 1);
   const budget = frameHeightPx - paddingPx * 2 - gaps;

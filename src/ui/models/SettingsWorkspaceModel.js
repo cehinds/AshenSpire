@@ -1,13 +1,11 @@
 // src/ui/models/SettingsWorkspaceModel.js — W1a Settings, decided without a DOM.
 //
-// Three presentation questions, each answered from numbers the caller measured
-// and the budget in `wireframeUi.settings`:
+// Three presentation questions:
 //
-//   1. RAIL OR SELECTOR. W1 puts categories in a left rail on wide hosts and a
-//      single selector above the pane on compact ones. A rail needs the host to
-//      be wide enough for rail plus pane, and needs every category to fit at the
-//      tap floor inside the W1 body band. When either fails, the selector is
-//      used. A small hysteresis keeps a host near the edge from flapping.
+//   1. RAIL OR SELECTOR. Every categorized W1 surface asks the same model,
+//      models/CategoryNavModel.js (`categoryNavPlan`, budget in
+//      `wireframeUi.categoryNav`), and the kit's categoryNav wires the answer.
+//      `settingsNavigationPlan` is that one function under its W1a name.
 //   2. WHICH CATEGORY IS NEXT for the LB/RB and [ / ] ring: wrap at both ends.
 //   3. WHICH ROWS SHOW HELP. W1a shows help only where a setting's effect is
 //      not obvious. Live feedback (a condition note, a capability status) is
@@ -15,57 +13,12 @@
 //
 // Nothing here reads the document or changes a setting.
 
-import { wireframeUi } from '../../content/wireframeUi.js';
+import { CATEGORY_NAV_MODES, categoryNavPlan } from './CategoryNavModel.js';
 
-export const SETTINGS_NAV_MODES = Object.freeze(['rail', 'selector']);
+export const SETTINGS_NAV_MODES = CATEGORY_NAV_MODES;
 
-const positive = (value) => Number.isFinite(value) && value > 0;
-
-/**
- * settingsNavigationPlan(measure, config) → { mode, measured, … }
- *
- * `measure` is in the host's own CSS px (after dividing out --ui-zoom):
- *   hostWidthPx       width of the container Settings is drawn into
- *   viewportHeightPx  visible viewport height
- *   rootFontPx        one rem
- *   itemMinHeightPx   a category control's resolved min-height (the tap floor)
- *   categoryCount     categories that will draw
- *   current           the mode now on screen, for hysteresis (optional)
- *
- * An unmeasured host (not laid out yet) keeps `current`, or starts as a rail,
- * and reports `measured: false`; the caller measures again once it has a box.
- */
-export function settingsNavigationPlan(measure = {}, config = wireframeUi.settings) {
-  const {
-    hostWidthPx, viewportHeightPx, rootFontPx, itemMinHeightPx,
-    categoryCount = 0, current = null,
-  } = measure;
-  const kept = SETTINGS_NAV_MODES.includes(current) ? current : 'rail';
-  if (!positive(hostWidthPx) || !positive(viewportHeightPx) || !positive(rootFontPx)) {
-    return Object.freeze({ mode: kept, measured: false });
-  }
-  const count = Math.max(0, Math.floor(categoryCount));
-  const rem = rootFontPx;
-  const item = positive(itemMinHeightPx) ? itemMinHeightPx : 0;
-  const railHeightPx = count * item
-    + Math.max(0, count - 1) * config.railGapRem * rem
-    + 2 * config.railInsetRem * rem;
-  const bodyHeightPx = viewportHeightPx * config.bodyHeightFraction;
-  const minWidthPx = config.railMinHostWidthRem * rem;
-  // Leaving the selector for a rail needs a clear margin; staying a rail does not.
-  const margin = kept === 'selector' ? config.hysteresisRem * rem : 0;
-  const fitsWidth = hostWidthPx >= minWidthPx + margin;
-  const fitsHeight = bodyHeightPx >= railHeightPx + margin;
-  return Object.freeze({
-    mode: fitsWidth && fitsHeight ? 'rail' : 'selector',
-    measured: true,
-    fitsWidth,
-    fitsHeight,
-    minWidthPx,
-    railHeightPx,
-    bodyHeightPx,
-  });
-}
+/** settingsNavigationPlan(measure, config) — see CategoryNavModel.categoryNavPlan. */
+export const settingsNavigationPlan = categoryNavPlan;
 
 /** stepCategory(categories, current, delta) → the next id, wrapping at both ends. */
 export function stepCategory(categories, current, delta) {

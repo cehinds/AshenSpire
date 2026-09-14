@@ -170,9 +170,13 @@ export function tab({ label, selected = false, member = '', id = '', className =
     text: label,
   });
 }
-export function railItem({ label, current = false, member = '', id = '', className = '', attrs = {} } = {}) {
-  return el('button', {
-    ...attrs, type: 'button', id: id || null, role: attrs.role || 'tab',
+export function railItem({ label, current = false, member = '', id = '', tag = 'button', className = '', attrs = {} } = {}) {
+  // A row that hosts its own control (the inspection door's `i`) cannot be a
+  // <button>, because buttons do not nest: `tag` draws the same item as a
+  // focusable element of another kind.
+  const native = tag === 'button';
+  return el(tag, {
+    ...attrs, type: native ? 'button' : null, tabindex: native ? null : (attrs.tabindex ?? '0'), id: id || null, role: attrs.role || 'tab',
     class: cls('as-railitem', current ? 'on' : '', className),
     'aria-current': current ? 'true' : null,
     'aria-selected': current ? 'true' : 'false',
@@ -433,7 +437,19 @@ export function pane({ eyebrow: eb = '', title = '', subtitle: sub = '', childre
     children,
   ]);
 }
-export const railed = (railNode, paneNode, attrs = {}) => el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [railNode, paneNode]);
+/**
+ * railed(rail | nav, pane, attrs) — body A, the NavRail beside a Pane. Pass a
+ * kit categoryNav instead of a bare rail and the host gets the compact
+ * `[Category ▾]` selector too (W1, rule 11): rail on wide hosts, selector
+ * above the pane on compact ones, decided by CategoryNavModel.
+ */
+export const railed = (railNode, paneNode, attrs = {}) => {
+  const nav = railNode && railNode.isCategoryNav ? railNode : null;
+  const host = el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [nav ? nav.rail : railNode, paneNode]);
+  return nav ? nav.attach(host) : host;
+};
+import { categoryNav, landControl } from './categoryNav.js';
+export { categoryNav, landControl };
 /** popover({ caption, groups: [[row, …], …], attrs }) — Eyebrow cap + hairline-grouped rows. */
 export function popover({ caption = '', groups = [], attrs = {}, className = '' } = {}) {
   return el('div', { ...attrs, class: cls('as-pop', className) }, [

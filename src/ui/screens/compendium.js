@@ -139,9 +139,9 @@ import { ownership, modEffectLine } from '../../model/loadout.js';
 import { LOCK_COPY, armamentKindLabel } from '../uiContent.js';
 import { t } from '../strings.js';
 import { compendiumView, entryDetail } from '../models/CompendiumModel.js';
-import { workspaceFrame, categoryNav, markCurrent, land } from '../components/w1Workspace.js';
+import { workspaceFrame, markCurrent, land } from '../components/w1Workspace.js';
 import {
-  el, railed, railItem, pane, optionCard, options, artWell, button, statusText, detailCard, pageDoor, prose,
+  el, railed, railItem, categoryNav, pane, optionCard, options, artWell, button, statusText, detailCard, pageDoor, prose,
 } from '../kit/index.js';
 
 /** A piece's mods, written the way a player reads them. The second regex over
@@ -264,7 +264,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     eyebrow: t('compendium.eyebrow', { held: view.held, total: view.total }),
     title: t('compendium.title'),
     size: 'xl',
-    body: railed(nav.node, panel),
+    body: railed(nav, panel),
     bodyClassName: 'compendium-body',
     primary: back,
     footSize: 'short',
@@ -308,9 +308,9 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
   function render() {
     view = compendiumView(drawnEntries, { current, selectedId, labelOf });
     current = view.current;
+    // The selector's face ("Swords 3/9") follows the selection on its own.
     markCurrent(items, current);
     const cat = view.categories.find((c) => c.selected);
-    nav.sync(cat ? `${cat.label} ${cat.have}/${cat.total}` : '');
     panel.setAttribute('aria-labelledby', `cp-kind-${current}`);
     grid.setAttribute('aria-label', cat ? cat.label : '');
     grid.replaceChildren(...view.entries.map(({ piece, reveal }) => {

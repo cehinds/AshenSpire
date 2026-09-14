@@ -10,7 +10,7 @@ import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { setTabRing, hasTabRing, focusElement } from '../input.js';
+import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
@@ -23,9 +23,9 @@ import {
 } from '../../model/mapknowledge.js';
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
-import { openModal, button } from '../kit/index.js';
+import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
-import { settingsNavigationPlan, settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
+import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
@@ -1272,16 +1272,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"${cat === current ? ' aria-current="true"' : ''}`
         + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
       // W1a COMPACT: one selector above the pane, naming the selected
-      // category. It is drawn at every size and shown only when the model
-      // says `selector`; it opens the SAME tabs, so every tool, tooltip and
-      // ring that reads `.set-tab` reads one set either way.
-      const label = categoryLabel(current);
-      const selector = `<button type="button" class="as-railitem set-cat-select" id="set-cat-select"`
-        + ` aria-expanded="false" aria-controls="set-tabs"`
-        + ` aria-label="${esc(t('settings.nav.selector', { section: label }))}">`
-        + `<span class="set-cat-select-label">${esc(label)}</span>`
-        + `<span class="set-cat-select-glyph" aria-hidden="true">▾</span></button>`;
-      html = `<div class="as-railed set-railed" data-settings-nav="rail">${selector}`
+      // category — the kit's categoryNav, added below once the markup is in
+      // the page. It opens the SAME tabs, so every tool, tooltip and ring that
+      // reads `.set-tab` reads one set either way.
+      html = `<div class="as-railed set-railed" data-settings-nav="rail">`
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
@@ -1478,14 +1472,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // the claim, and a `let` read before its declaration is a crash, not a false.
   let claimedRing = false;
   // Assigned below once the strip exists; declared here for the same reason.
-  let planNav = () => {};
-  let navObserver = null;
+  let nav = null;
 
   // Auto's applied value moves with the window even though the setting does not.
   // ONE listener per open, not one per tab switch: the readout lives on a row
   // inside Display, so a player who visits Display four times would otherwise
   // collect four handlers that all write the same number.
-  const onResize = () => { refreshApplied(container, settings); planNav(); };
+  const onResize = () => { refreshApplied(container, settings); };
   window.addEventListener('resize', onResize);
   const onFullscreenChange = () => syncFullscreen();
   const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
@@ -1504,7 +1497,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     document.removeEventListener('fullscreenerror', onFullscreenError);
     document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
-    navObserver?.disconnect();
+    nav?.release();
     obs.disconnect();
   });
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
@@ -1515,60 +1508,28 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   // ---- the strip: selection, tooltips, and the ring ------------------------
 
+  // RAIL OR SELECTOR is the kit's W1 category navigation (kit/categoryNav.js,
+  // CategoryNavModel): the same component, model and budget as every other
+  // categorized W1 surface. It adopts the `.set-tabs` rail drawn above, puts
+  // the `[Section ▾]` selector (`.set-cat-select`) before it, and Escape with
+  // its list open closes the list, not Settings. `data-settings-nav` and
+  // `data-nav-open` mirror its state for the instruments that read them.
   const railed = container.querySelector('.set-railed');
-  const selectorBtn = container.querySelector('.set-cat-select');
-  const zoomOf = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
-  // Native focus and the unified pad cursor move together, or the pad keeps
-  // pointing at a control that has just been hidden.
-  const moveFocusTo = (el) => {
-    if (!el) return;
-    el.focus({ preventScroll: true });
-    focusElement(el);
-  };
-  const navOpen = () => railed.hasAttribute('data-nav-open');
-  const setNavOpen = (open) => {
-    railed.toggleAttribute('data-nav-open', open);
-    selectorBtn.setAttribute('aria-expanded', String(open));
-  };
-  const syncSelector = () => {
-    const label = categoryLabel(current);
-    selectorBtn.querySelector('.set-cat-select-label').textContent = label;
-    selectorBtn.setAttribute('aria-label', t('settings.nav.selector', { section: label }));
-  };
-
-  // RAIL OR SELECTOR, asked of the model with this host's own box. Measured in
-  // local CSS px: rects are post-zoom, so they are divided back by --ui-zoom.
-  planNav = () => {
-    if (!railed.isConnected) return;
-    const zoom = zoomOf();
-    const was = railed.dataset.settingsNav;
-    const plan = settingsNavigationPlan({
-      hostWidthPx: container.getBoundingClientRect().width / zoom,
-      viewportHeightPx: window.innerHeight / zoom,
-      rootFontPx: parseFloat(getComputedStyle(document.documentElement).fontSize),
-      itemMinHeightPx: parseFloat(getComputedStyle(container.querySelector('.set-tab')).minHeight),
-      categoryCount: cats.length,
-      current: was,
-    });
-    if (!plan.measured || plan.mode === was) return;
-    railed.dataset.settingsNav = plan.mode;
-    const focused = document.activeElement;
-    const tabHadFocus = !!(focused && focused.classList?.contains('set-tab') && railed.contains(focused));
-    setNavOpen(false);
-    if (plan.mode === 'selector' && tabHadFocus) moveFocusTo(selectorBtn);
-    if (plan.mode === 'rail' && focused === selectorBtn) moveFocusTo(railed.querySelector('.set-tab.on'));
-  };
-  if (typeof ResizeObserver !== 'undefined') {
-    navObserver = new ResizeObserver(() => planNav());
-    navObserver.observe(container);
-  }
-  planNav();
-
-  selectorBtn.addEventListener('click', () => {
-    const open = !navOpen();
-    setNavOpen(open);
-    if (open) moveFocusTo(railed.querySelector('.set-tab.on'));
+  nav = categoryNav({
+    items: [...container.querySelectorAll('.set-tab')],
+    rail: container.querySelector('.set-tabs'),
+    ariaLabel: t('settings.nav.sections'),
+    choose: (cat) => selectCategory(cat),
+    label: (section) => t('settings.nav.selector', { section }),
+    face: (item) => categoryLabel(item.dataset.member),
+    toggleClass: 'set-cat-select',
+    toggleId: 'set-cat-select',
+    onChange: ({ mode, open }) => {
+      railed.dataset.settingsNav = mode;
+      railed.toggleAttribute('data-nav-open', open);
+    },
   });
+  nav.attach(railed);
 
   function selectCategory(cat) {
     if (!cats.includes(cat) || cat === current) return;
@@ -1586,7 +1547,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.setAttribute('aria-selected', String(on));
     });
-    syncSelector();
     const panel = container.querySelector('.set-panel');
     if (!panel) return;
     panel.innerHTML = categoryHtml(cat, settings, saves);
@@ -1598,16 +1558,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     wire();
   }
 
+  // Selection is the nav's `choose`; a pick from the opened selector list
+  // closes it and hands focus back to the selector, which now names the pick.
   container.querySelectorAll('.set-tab').forEach((b) => {
-    b.addEventListener('click', () => {
-      selectCategory(b.dataset.member);
-      // A pick from the opened selector list closes it and hands focus back
-      // to the selector, which now names the pick.
-      if (navOpen()) {
-        setNavOpen(false);
-        moveFocusTo(selectorBtn);
-      }
-    });
     // Law 3 clause 4: hover AND the pad/keyboard focus cursor. `title=` alone
     // does not satisfy it — touch and gamepad players never see one.
     attachTooltip(b, () => `<b>${esc(categoryLabel(b.dataset.member))}</b><br>${esc(categoryTip(b.dataset.member))}`);
@@ -1627,6 +1580,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const step = (d) => selectCategory(stepCategory(cats, current, d));
     setTabRing({ prev: () => step(-1), next: () => step(1) });
   }
+  return { nav };
 }
 
 /**
@@ -1660,6 +1614,7 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
   offline?.addEventListener('click', onOffline);
   // W1a header: the title and the exit, nothing above them. The old eyebrow
   // ("Title") named the door it was opened from, which W1a does not carry.
+  let rendered = null;
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
@@ -1667,11 +1622,12 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => renderSettings(host, { settings, onChange, saves }),
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves }); },
     secondary: offline ? [offline] : [],
     primary: done,
     footSize: 'short',
   });
   done.addEventListener('click', door.close);
-  door.veil.querySelector('.set-tab.on, #set-close')?.focus({ preventScroll: true });
+  // The selected tab on a rail; the [Section ▾] selector on a compact host.
+  (rendered?.nav?.start() || door.veil.querySelector('#set-close'))?.focus({ preventScroll: true });
 }

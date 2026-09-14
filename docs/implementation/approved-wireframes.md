@@ -653,12 +653,12 @@ Browser evidence (emulation, `?shot=combat`, reduced motion):
 
 Limits: at 844×390 the battlefield gets exactly its configured minimum, so
 sprites stay small; more battlefield means smaller cards, an owner call. The
-top 13 px of each enemy intent badge sits under the HUD band. The
-formation's leading reserve is a quarter of the field; this predates the
-change and was worse on dev. Formation layout ignores safe-area insets, so
-rails touch the edges on notched phones. The gate at 740×360 and 667×375 is
-a separate measured decision (`gateBelowH`, `shortWideMinH`). Playwright QA
-tools could not run here.
+gate at 740×360 and 667×375 is a separate measured decision (`gateBelowH`,
+`shortWideMinH`). Playwright QA tools could not run here. The intents under
+the HUD band and the missing notch margins are fixed; see "Compact landscape:
+HUD headroom and notch margins". The formation's leading reserve is still a
+quarter of the field, so on these hosts the intent now comes down over the
+top of the sprite.
 ## Map header: W4b's 10 vh
 
 Branch `feature/wireframe-map-header`, based on dev `d2ea5bcd`. The owner
@@ -1284,3 +1284,825 @@ Limits: the rail/selector threshold is a budget, not a measurement of the
 drawn rail. The label change to Display and hiding seven notes are owner
 decisions to confirm. Escape closes the whole door even while the selector
 list is open. No gamepad was attached; the ring was driven by `[` and `]`.
+
+## Service and Quit confirmations (W2a / W2e)
+
+Branch `claude/w2a-w2e-confirmation-audit`, based on dev `8797fc9a`. Every
+W2a and W2e review was audited against W2 in the browser and in code. All of
+them go through the one door, `openConfirmationModal`. Only the gaps changed;
+the hold and second-beat policies did not.
+
+- **Already conforming everywhere:**
+  - a question title and a 44×44 close control top-right;
+  - Back bottom-left with the action-named primary bottom-right (WCB0 footer);
+  - Back takes initial focus; Escape and the close control cancel;
+  - `aria-modal`; W2e stays an alertdialog.
+- **W2e Quit Without Saving** had no target. It now names the run it leaves,
+  e.g. "Reaver · Slot 1 · Act 1 · Floor 0 · 62/62 HP". The class and slot are
+  followed by the save slots' own `slotFacts`, so the two cannot disagree.
+  The title keeps the actual operation's label ("Quit without saving?").
+  The message is unchanged.
+- **W2a merchant and Shrine reviews** (via `beatArmer`) printed the generic
+  line "Review this change before confirming…". Buy also wore the category
+  eyebrow "STATE CHANGE", and each title crammed in the cost ("Buy X for N
+  cinders? You have M."). They now fill the three W2 slots from
+  `src/ui/models/ConfirmationReviewModel.js`:
+  - Buy card/relic/flask: "Buy this card?", then the offer, then "Spend 242
+    of your 999 cinders (757 left). The card joins your deck."
+  - Burn: "Burn this card?", then the card, then the exact cinders.
+  - Sell: "Sell this flask?", then the item, then the price.
+  - Rest: "Rest at this Shrine?", then the Shrine with HP and Mana, then the
+    exact heal and whether you stay or leave.
+- **Burn is an alertdialog now.** `action.removeCard` is DESTRUCTIVE in the
+  ConfirmationRegistry, but the review was a plain dialog. `beatArmer` takes
+  an optional `policyAction` and reads its tone through
+  `registries.framework.confirmationTone`. The secondbeat profile rule
+  still applies, so W2b Delete is unchanged.
+- **Smith upgrade and mount install/extract** said "Keep reviewing" on the
+  way out. It is Back (`common.back`). Their titles, details card and
+  blocked state were already W2.
+- **Shared door.** It had a generic "Confirm"/"Careful" eyebrow fallback,
+  which is gone: the eyebrow is a concrete tag or nothing. There is a new
+  optional `target` slot (`.confirmation-target`, kit `as-title-s`) above the
+  message, added to `aria-describedby`. Callers that pass no target,
+  including W2b/W2c/W2d, render exactly as before.
+- **Copy.** New rows in `uiStrings.csv`: `shop.review.*`, `rest.review.*`,
+  `confirm.eyebrow.permanent`, `quit.review.target`.
+- **Tests.** `tests/wireframe-confirmation.test.mjs` (7 tests), registered in
+  `run-node.mjs`.
+
+Browser evidence (CDP, source `index.html`). The reviews were Quit (`?shot=map`
+quick menu), Buy, Burn and Sell (`?shot=shop`), Rest, and Smith upgrade
+(`?shot=rest`):
+
+| Viewport | Dialog (w×h, Quit / Buy / Smith) | Page overflow | Body scroll | Back → primary x |
+|---|---|---:|---:|---|
+| 1440×860 | 507×308 / 507×281 / 507×488 | 0 | 0 | 484 → 722–958 |
+| 390×844 | 376×244 / 376×223 / 376×394 | 0 | 0 | 17 → 198–374 |
+| 844×390 | 267×249 / 267×210 / 267×374 | 0 | 0 | 298 → 425–547 |
+
+- Roles at every viewport: Quit and Burn are `alertdialog`; Buy, Sell,
+  Rest and Smith are `dialog`. Focus lands on `.confirmation-cancel`.
+- Every dialog fits inside the viewport.
+- Every target line is filled except Smith's, whose title already names the
+  item.
+
+Tools:
+- `holdconfirm` shows the 1 finding over 137 checks it has on dev
+  (`smithExtract` and `smithInstall` draw no control at `?shot=rest`).
+- `modal-shell-contract` is 58 passed with its two known failures.
+- `confirmation-modal` (browser) was not rerun.
+- Standalone, the confirmation-modal node contract throws importing
+  `tooltip.js` in its fake DOM. It throws identically on a clean dev export,
+  and it passes inside `run-node.mjs`.
+- Playwright-based tools were not run.
+
+Limits:
+- Mount install/extract reviews were checked in code only; `?shot=rest` does
+  not offer those services.
+- The dev Sell review was read from code (my first probe missed its tile).
+- Owner decision: W2's wireframe shows no eyebrow at all. The concrete
+  consequence tags ("CANNOT BE UNDONE", "LEAVES THE RUN", "PERMANENT FOR THIS
+  RUN") still sit as the eyebrow above the question. Moving them into the
+  body consequence slot is a shared-door change that also moves W2b–W2d, so it
+  was left alone.
+- The eyebrow change reaches every `beatArmer` review. Event choice, flask
+  use, End Turn and reward Continue no longer wear "STATE CHANGE" when they
+  can be undone. They still print the generic review line, because they
+  author no message; they are W2 instances outside W2a/W2e.
+## Tooltips (WCT0 / WT1 / WT2 / WT3)
+
+Branch `claude/tooltip-wireframes-wt`, based on dev `8797fc9a`. One
+presenter (`tooltip.js`, two panels) keeps every existing behaviour; this
+names its sizes after the wireframes and fixes the four places it failed
+CURRENT-SPECIFICATION "Tooltips".
+
+- Sizes: no second size system. The presenter still measures content into
+  four height rungs and steps up until it fits. `wireframeUi.tooltip`
+  names the wireframe each rung draws: small is WT1, medium WT2, large and
+  expanded WT3 (same width; expanded only reaches further down). `fitRung`
+  stamps it as `data-wireframe` on `#tooltip` / `#tooltip-2`. The rung list
+  now lives once, as `TooltipPlacementModel.TOOLTIP_RUNGS`;
+  `tooltipWireframeConfig` refuses a mapping that drops a rung, names
+  another id, leaves one of WT1–WT3 undrawn, or runs backwards.
+- Arrow (WT0.arrow, new): 0.75 × 0.375 reference rems (12 × 6 physical px)
+  on the panel edge that faces the trigger, pointing at its centre after
+  any flip or shift, held 0.5 reference rem clear of the corners.
+  `tooltipArrow` (pure) computes the box; `pointArrow` writes `data-arrow`
+  and four custom properties; `#tooltip::after` draws it in gold as a
+  `fixed` triangle, so the panel's overflow clip does not cut it. It is
+  re-pointed with the panel on resize. `data-arrow="none"` when the panel
+  sits on its trigger.
+- Flip below: `placeAnchored`'s `'above'` intent tried right and left
+  before under. It now tries under first, which is what its own comment
+  already said. Only `tooltip.js` places with `'above'` (flask and
+  quick-nav use `'under'`), so no other surface moves.
+- Pending timer: a repeated hover or focus on the element already counting
+  down restarted the countdown. It now keeps it.
+- Unchanged: delays, cancellation paths, the two levels, the stick, the
+  veil/scene watch, rung sizes, the tap-to-select rule, and `map.css`'s
+  removal of the tooltip-selected outline on map nodes.
+
+Browser evidence (CDP emulation against the source tree, `?shot=combat`,
+the shipped tooltip module driven through real `Input` mouse and key
+events; triggers 48 px; scratch probe kept outside the repo).
+
+Before, dev at 1440×860: a second `pointerenter` 600 ms into the wait
+opened the panel at 1621 ms (after: 1003); a second focus at 300 ms opened
+at 816 ms (after: 524); a trigger at the top edge put its panel beside it
+(right, or left at the top-right corner) instead of below; no panel had an
+arrow; no panel carried a wireframe id.
+
+| Viewport | Zoom | Hover | Repeat | Top-edge trigger | Arrow off centre | WT1 panel (short) | WT3 panel (list) | Modal | Page scroll |
+|---|---:|---:|---:|---|---:|---|---|---|---:|
+| 1440×860 | 1.18 | 1011 ms | 1003 ms | below | 0.01 px | 300.9×51 (20.9vw) | 442.5×153.3 (30.7vw) | above veil, hit | 0 |
+| 1280×800 | 1.07 | 1013 ms | 1013 ms | below | 0 px | 272.8×46.5 (21.3vw) | 401.3×139.1 (31.3vw) | above veil, hit | 0 |
+| 390×844 | 0.90 | 1007 ms | 1009 ms | below | 0 px | 229.5×39.4 (58.8vw) | 337.5×117.3 (86.5vw) | above veil, hit | 0 |
+| 375×667 | 0.85 | 1014 ms | 1010 ms | below | 0 px | 216.8×37.3 (57.8vw) | 318.8×110.9 (85vw) | above veil, hit | 0 |
+| 844×390 | 0.62 | 1022 ms | 1022 ms | below | 0 px | 158.1×27.8 (18.7vw) | 232.5×81.4 (27.5vw) | above veil, hit | 0 |
+
+The table is the final run: 215 of 215 checks pass, 43 per viewport.
+"Repeat" is the open time with a second `pointerenter` fired 600 ms in.
+
+- Delay: the 0.5 s setting opens at 502–514 ms. Focus (`gpfocus`) opens
+  at 516–600 ms at every viewport; see Limits.
+- Cancel: leaving, blur, Escape, an outside press and removing the trigger
+  before the delay each leave the panel closed at every viewport; Escape
+  and an outside press also close an open panel.
+- Pointer transition: moving from the trigger across the gap into the
+  panel keeps it open for 1.2 s; leaving both closes it after the close
+  delay.
+- Placement: eight trigger spots per viewport (centre, four edges, three
+  corners); every panel stays inside the viewport, and the arrow sits on
+  the edge facing its trigger (0–0.01 px from that edge).
+- Modal layer: a trigger inside a real `openModal` door opens its panel
+  above the veil (`z-index` 1000 over 500); the panel is the topmost
+  element at its centre.
+- Real trigger: the combat HUD's first hint, hovered for real, opens after
+  1003–1010 ms below the HUD with a 12 × 6 px arrow on its centre: WT2
+  371.7×148 (25.8vw) at 1440×860, 283.5×113.4 (72.7vw) at 390×844, and
+  WT1 158.1×54.4 (18.7vw) at 844×390.
+- Touch (390×844, 375×667): the first tap selects the detail and opens
+  nothing; the second opens it at once.
+- Targets: the panels carry no controls in these readings; probe triggers
+  are 48 px. The HUD hint triggers are not 44 px tall; see Limits.
+- Trigger parent: an earlier run placed each probe trigger directly in
+  `<body>` and failed 7 of 215 geometry checks. Edge triggers at 390×844
+  and top and bottom triggers at 844×390 opened beside, and one arrow sat
+  46.7 px off its trigger. That is the existing `clear` preference, not the
+  reorder: the panel keeps off the trigger's parent, and there `<body>`
+  overlapped the space above more than the space beside. Above comes
+  before right and left in both orders. With each trigger in its own
+  group, as real hints are, every check passes.
+
+Tools: `tools/placement.mjs` gives the same 12 findings as dev, line for
+line (P3 expects hover tooltips on hand cards, which e305c64b removed; P5
+finds no flask slots on `?shot=combat`). `tools/tooltippersist.mjs` stops
+on Windows before any check: it imports `serve.mjs` by a raw `d:` path.
+That predates this branch and was left alone. `tools/tooltip-review-qa.mjs`
+is Playwright and was not run.
+
+Limits: focus opens after its own 500 ms (`tooltipHelp.focusMs`, from
+e305c64b) and tap is select-then-explain (owner, 2026-09-11); the spec's
+line asks for the configurable 1 s for both, so that is an owner decision.
+Panel widths are the rungs' rem widths, not the wireframe's vw nominals
+(WT1 12vw wide host / 36vw portrait, WT2 20vw / 60vw, WT3 28vw / 84vw):
+WT1 measures 18.7–58.8vw. The panel still aligns to the trigger's start
+edge rather than its centre, and the gap stays `--place-gap` 14 px, not
+0.5rem; the arrow points at the centre either way. Content past the
+expanded rung still scrolls inside the panel unless the surface routes it
+to inspection (`expand: true`). The arrow is clipped for the 150 ms rung
+step reveal. A hint whose parent is a page-sized container can still open
+beside its trigger, by the `clear` preference above. The HUD hint triggers
+measure 87.4×19.4 px at 1440×860, 72×15.7 px at 390×844 and 44×32 px at
+844×390, below the 44 px target; they are HUD labels this branch does not
+change. Emulation only: no touch device, no gamepad.
+## Combat composition and scene layers (WGC0, WGC2–WGC4, WC4b/c, WGS0/1/6/7, W4)
+
+Branch `claude/combat-composition-scene-layers`, based on dev `8797fc9a`.
+Most of this family was already on dev. Two gaps were real: the scene plate
+ignored the floor band, and the target layer thinned on phones and outlived
+its command.
+
+- WGS1 Background composition, WGS6 Skyline, WGS7 Floor:
+  `src/ui/models/SceneLayerModel.js`. Each scene is one painted plate, so
+  skyline and floor are two regions of it. The plate covers the battlefield
+  undistorted, and its authored ground line (`floorStart` in
+  `content/environments.js`) sits at the floor band's top edge. That gives
+  80% ground and 20% sky, as CURRENT-SPECIFICATION's accepted formation says.
+  `wireframeUi.scene` holds `floorFraction` 0.8 (moved from the unused
+  `formation.floorFraction`), `bleedFraction` 0.02 and the two toggles. The
+  battlefield stage writes the crop as the SVG `viewBox` and drops the
+  1.06/1.02 CSS zoom about the centre, which would move the ground. Combat
+  and co-op share the stage, so both get it. Feet are untouched.
+- Toggles: `scene.floor: false` falls back to a centred cover crop, and
+  `scene.skyline: false` paints no plate. Neither moves an actor.
+- WGC4 Target layer: `src/ui/models/TargetLayerModel.js` is the one home for
+  eligibility (living enemies while a targeted card or flask is armed) and
+  for the outline geometry (`wireframeUi.targetLayer`). `combat.js` applies
+  it from selection changes and from every `render()`.
+  - Defect fixed on the way: on dev, selection toggled `targetable` directly,
+    and the frame update only removes classes it added itself. After a play,
+    both enemies kept the dashed outline.
+  - A defeated enemy is never highlighted.
+  - The outline and its offset are authored in sprite px (2 / 6, as before)
+    and held at 2 / 4 physical px under the depth zoom. Browsers floor these
+    to whole device pixels, so the model asks for half a pixel of headroom.
+  - Required targeting still gates the command: a card that needs an enemy
+    arms instead of playing.
+- Already met, no change: WGC0 (HUD, battlefield, hand and packed footer
+  from the W4a band plan, with one Potions control). WGC2 and WGC3 (mirrored
+  reserved slots by stable id, shared category fit, row and selected-growth
+  factors at the foot anchor, intent by role). W4 (its combat and map bodies
+  are W4a and W4b; this branch changes neither band plan; W4c dialogue was
+  not assessed).
+- WC4b Standard and WC4c Expanded: their anatomy is on dev through
+  WCM0–WCM4, WCO1–WCO3, WCF3 and WCB1. The fixed clamp sizes are not built,
+  because no production host uses a fixed-size combatant: formation fit sizes
+  the battlefield, and W1w bounds the inspector preview.
+
+Browser evidence (CDP emulation, `?shot=combat`, reduced motion, scene
+`pale-marches-2`). "Ground" is where the painted ground line falls, as a
+fraction of field height, read through the SVG's screen CTM. Dev values use
+the same formula, which matched a dev probe of this scene within 0.002.
+
+| Viewport | Zoom | Plan | Field px | Ground dev → branch | Highest foot | Outline / offset px, dev → branch | Scroll |
+|---|---:|---|---|---|---:|---|---:|
+| 1440×860 | 1.18 | stacked | 1440×459.9 | 0.457 → 0.1998 | 0.504 | 3/11 → 3/11 | 0 |
+| 1280×800 | 1.07 | stacked | 1280×423.9 | 0.457 → 0.1999 | 0.502 | 3/9 → 3/9 | 0 |
+| 390×844 | 0.90 | stacked | 390×450.4 | 0.479 → 0.1994 | 0.503 | 1/4 → 2/4 | 0 |
+| 375×667 | 0.85 | stacked | 375×336.4 | 0.480 → 0.1997 | 0.498 | 1/4 → 2/4 | 0 |
+| 360×780 | 0.83 | stacked | 360×411.9 | 0.480 → 0.2003 | 0.502 | — → 2/4 | 0 |
+| 844×390 | 0.62 | rails | 844×148 | 0.420 → 0.1997 | 0.641 | 1/2 → 2/4 | 0 |
+
+- All 20 scenes, full 6-v-6 formation (analytic, same formula): on dev the
+  ground line fell between 0.19 and 0.74 of the field, and back-tier feet
+  stood above the painted ground in 3, 3, 3, 6 and 2 of 20 scenes at the
+  five viewports above. On the branch it is 0.200 everywhere, with 0/20.
+- Tap-to-play at all six viewports: tap the first hand card (it arms both
+  enemies), then tap the first enemy. Hand 5 → 4, enemy 16 → 9 HP, then
+  `data-target-layer="idle"` with 0 targetable and 0 aiming. On desktop, hover gives the solid active
+  outline.
+- Co-op (`?shot=coop`, 390×844 and 1440×860, scene `cinder-reach-3`): ground
+  0.1994 / 0.1997, floor top 0.200, feet from 0.502.
+- Targets: every combat button at least 44 px, except the two HUD icon
+  buttons at 844×390 (44×32), which are the same on dev.
+- `hudparity --only-shape 844x340`: 15 findings, 140 checks passed, identical
+  to dev today (dev has moved since the 9 recorded earlier).
+
+Limits: phones now crop the plate harder. At 390×844 it is drawn at
+1.12–1.63× instead of 0.90×, because 80% ground needs more of the painting's
+ground than a phone field shows. That is an owner decision; `floorFraction`
+tunes it. There is no separate skyline or ground-cutout art, so
+`scene.groundCutout` has no counterpart and the floor is a region of the
+plate, not a foreground layer. `environments.js` still carries
+`fieldRatio: 0.6` (the earlier 60% ground review); nothing reads it. A CSS
+rule gives a keyboard-focused target the solid outline, but keyboard
+targeting was not verified: CDP key events did not reach the shortcut
+handler. Playwright-based tools were not run.
+## Compact landscape: HUD headroom and notch margins
+
+Branch `claude/compact-landscape-headroom-safearea`, based on dev `8797fc9a`,
+issue #1076. This fixes two defects that "Compact landscape combat" left open.
+Neither needed an owner call.
+
+- **Headroom (WCO1).** `overheadStackBottom` in
+  `src/ui/models/CombatOverlayModel.js` clamps the overhead stack (Inspect
+  over the intent), so its top edge never rises above the HUD band's bottom.
+  - On every refit, `battlefieldStage` measures each stack's height and the
+    band's bottom edge. It refits again when a stack changes size, for example
+    when Inspect appears.
+  - The stack keeps its minimums and its order. On a short field it moves
+    down over the top of the sprite instead.
+  - The sprite fit, the formation and `wireframeUi.overlay` are unchanged. A
+    stack that already clears the band does not move.
+- **Relic row.** The relic row's box spans the band's width just under the
+  HUD row. On desktop it took presses on the top of every intent; on short
+  hosts it already let them through. It now lets presses through on every
+  combat host, and the relics themselves still respond.
+- **Notch margins.** kit.css applies combat.css's `--safe-*-local` insets
+  (the device's `env(safe-area-inset-left/right)` divided by the UI zoom):
+  - The hand band is padded, and the battlefield is inset by margins.
+  - The HUD's two ends and the relic/potion belt use `max(existing, inset)`.
+  - Both HTML heads already carried `viewport-fit=cover`.
+  - The layout adapter plans the rails for the width between the insets. It
+    re-plans when that padding changes.
+
+  Every inset is zero on hosts without a notch, so nothing moves there.
+
+Browser evidence (headless Chrome 152, CDP emulation, `?shot=combat`, reduced
+motion, Short-screen warning off). Each figure is the top of the intent or
+Inspect minus the bottom of the HUD band; negative means it sits under the
+band. The "Selected" columns select enemy 1 and wait for its Inspect.
+
+| Viewport | HUD band | Intent at rest, dev → branch | Selected intent, dev → branch | Selected Inspect, dev → branch |
+|---|---|---|---|---|
+| 844×390 | 39 px | −13 → 0 | −18.4 → +48 | −66.4 → 0 |
+| 915×412 | 41.2 px | −7.5 → 0 | −12.4 → +48 | −60.5 → 0 |
+| 740×360 | 36 px | −13 → 0 | −18.4 → +48 | −66.4 → 0 |
+| 667×375 | 37.5 px | −13 → 0 | −18.4 → +48 | −66.4 → 0 |
+| 1440×860 | 86 px | +29.1 (same) | +14.3 → +48 | −33.7 → 0 |
+| 1280×800 | 80 px | +28.3 (same) | +15.2 → +48 | −32.8 → 0 |
+| 390×844 | 84.4 px | +119 (same) | +113.6 (same) | +65.6 (same) |
+| 375×667 | 66.7 px | +62.2 (same) | +57 (same) | +9 (same) |
+
+- Hit tests (nine points on each control): at the rails and desktop sizes, no
+  intent point and no Inspect point lands on another element. Inspect misses
+  only its four corners, as every round control does. On dev, the HUD, or on
+  desktop the relic row, took the top points of every intent.
+- Every other measurement matches dev at all eight sizes: bands, sprite
+  sizes and feet, hand and card boxes, rail and footer controls, topbar
+  padding, HUD and formation edges. No page scrolls.
+- Notch emulation: 47 px insets left and right, set with CDP
+  `Emulation.setSafeAreaInsetsOverride`; `env()` read 47px. Checked at
+  844×390, 915×412, 740×360 and 667×375:
+  - Every size planned rails, supported.
+  - Rail controls, the HUD's ends and the relic belt sit exactly 47 px from
+    each edge. On dev they sat at 0, 0 and 9.9 px.
+  - Formation meters sit 63 px in (16 + 47).
+  - The hand keeps five cards at their dev widths: 502.9 px at 844×390, down
+    to 325.8 px at 667×375. Every control and card hit-tests to itself.
+
+Tools:
+- `hudparity --only-shape 844x340`: 15 findings on dev and 15 on this
+  branch, the same five in each pose (P8 top row, P8 metadata priority, P1V
+  vertical). The full run reported 27 on dev and 34 here. The difference is
+  P0 population misses, which move between cells from run to run, including
+  map cells this branch does not touch. A pose that misses population
+  reports no other findings, which is why dev showed 9 at 844×340 before.
+- `hudbars`: 22 assertions ok on both dev and this branch, with no A11
+  failure in either run.
+- `combat-test-browser.mjs`: stops at the same point on dev and here, after
+  52 passes, at "Unreachable hover target .hand .card .cost".
+
+Limits:
+- When an enemy is selected at 844×390, Inspect (44 px), its gap and the
+  intent (48 px) stack 96 px tall in a 148 px field. The Inspect and intent
+  cover most of the selected sprite, which is 59 px tall. An unselected
+  intent covers the top 7 px of a 54 px sprite. Keeping the art clear needs
+  an owner call: Inspect beside the intent on short hosts, or a taller
+  battlefield with smaller cards.
+- The relic belt still hangs under the HUD row. With enough relics to wrap
+  across, its slots would draw over enemy intents, as they do on dev.
+- In portrait (390×844, 375×667) the two enemies' intents overlap each other
+  by about 8 px, as on dev.
+- The bottom inset (the home indicator) is not applied. The rails' lower row
+  sits at the bottom corners, clear of the centred indicator.
+- Safe areas were emulated through CDP, not tested on a phone. Playwright
+  tools did not run. The rotate-your-phone threshold is unchanged.
+## Shared run HUD (WGH2, WGH3, WGH6–WGH8, WGS2–WGS5)
+
+Branch `claude/hud-remaining-wireframes`, based on dev `8797fc9a`; issue
+#1075. WGH5 (Experience strip) is skipped: it shows XP, and progression
+(XP and proficiency) is blocked on owner decisions (plan §12.5). WGH0,
+WGH1, WGH4 and WGS8 were already in progress and are not re-opened.
+
+- WGH0 layers are data: `wireframeUi.hud.layers` (header, class, cinders,
+  position, vitality, armoury, menu, rail, relics). The pure
+  `models/RunHudLayerModel.js` resolves them per place before layout; a
+  layer that is off contributes no model child, so it leaves no row, track
+  or gap. Defaults draw exactly what dev drew.
+- Potions ownership: `FOOTER_HUD_PLACES` is combat. Combat's top HUD no
+  longer renders a potion tray at all (dev rendered an empty, hidden one),
+  and Quick Access no longer models the charge flasks as siblings of
+  Armoury and Menu.
+- WGH8: `models/PotionContentsModel.js` is the one projection of the HP and
+  MP charge flasks and the carried consumables, each with its count.
+  Carried flasks of one kind are one entry with a count and the slots that
+  hold them; Use spends the first slot, through the unchanged hold/confirm
+  beat and targeting. Flask hotkeys (F/G/H) open the entry that owns their
+  action id rather than a list position. `wireframeUi.hud.potions` hides
+  either category. The combat footer Potions list (WGC11) and the room rail
+  tiles both read it. Count copy is `potions.count.*` in uiStrings, so the
+  Azure Flask reads "1 charge" (dev: "1 charges").
+- WGH6: `components/relicRail.js` is the one relic tile renderer for
+  combat and the rooms. Room tiles now carry `data-relic-id` (dev: only
+  combat's did) and open the shared collectible card as before.
+- WGH7 / WGS3: the header labels are uiStrings rows (`hud.class`,
+  `hud.cinders`, `hud.act`, `hud.floor`, `hud.position`) through `t()`, and
+  the act's seat is its own model field printed after the act number,
+  instead of text concatenated into the act value. Rendered text is
+  unchanged.
+- WGH2, WGH3, WGS4, WGS5 were already met (see limits); they gained layer
+  switches only. The map-compact header (PR #1052) is untouched.
+- `tools/hudparity.mjs`: four selftest plants re-aimed at the refactored
+  `hudmeta.js` lines (the Cinders label and the Act/Floor trail's
+  accessible name now come from the model). Same mutations, same expected
+  findings; `plantsites --write-baseline` changed only that tool's digest.
+
+Browser evidence (CDP emulation against `dist/AshenSpire.html` over
+`tools/serve.mjs`, `?shot=map|combat|shop|rest|event`, 25 cells):
+
+| Viewport | Zoom | HUD h: map / combat / rooms | Armoury, Menu | Page scroll |
+|---|---:|---|---|---:|
+| 1440×860 | 1.18 | 86 / 86 / 95.3 | 44×44 | 0 |
+| 1280×800 | 1.07 | 80 / 80 / 88.6 | 44×44 | 0 |
+| 390×844 | 0.90 | 84.4 / 84.4 / 104.8 | 44×44 | 0 |
+| 375×667 | 0.85 | 66.7 / 66.7 / 101.9 | 44×44 | 0 |
+| 844×390 | 0.62 | 52 / 39 / 73 | 44×44; combat 44×32 | 0 |
+
+- Geometry is identical to dev in every cell; no page exceptions.
+- Combat, every viewport: no potion tray in the top HUD; the footer
+  Potions list shows Crimson Flask "3 charges", Azure Flask "1 charge",
+  and the two carried flasks with `data-potion-count`.
+- Shop: the rail shows Crimson ×3, Azure ×1 and the carried Crimson Flask
+  now with its count pill (dev: none). Rest and event: the two charge
+  tiles. Relic tiles carry `forsakenMedallion` on every room.
+- Map: the rail stays hidden, as on dev.
+
+Instruments (headless Chrome, `CHROME` set):
+
+- `tests/run-node.mjs`: 138 passed, 0 failed. The new
+  `tests/wireframe-run-hud.test.mjs` (9 tests) runs inside the wireframe
+  line, which now counts 26 test files.
+- `hudparity`: the same 33 finding keys as dev `8797fc9a`. On the map
+  that is P8 top-row and P1V at every shape; on combat at 844×340 it is
+  P8 top-row, P8/metadata-priority and P1V. The full run lost eight cells
+  to 25 s mount timeouts under machine load (P0, no page exceptions).
+  Rerunning those cells alone (1440×860 high, 320×640 low and shipped,
+  844×340 shipped) measured all of them, with dev's 11 keys.
+- `hudparity --selftest` (22 plants): every `hudmeta.js` plant is caught
+  by its own named red, including the four re-aimed here. One
+  `styles/combat.css` plant, "visible resource cards paint through the
+  centred Cinders receipt", is red for the wrong reason. Its named red
+  needs combat's 844×340 top row, which dev already leaves unmeasured
+  (Cinders centre 0). The selftest was not re-run on dev.
+- `hudbars`: 22 assertions ok, on dev and on this branch. A11 passes at
+  both shapes.
+- `verify-shipped`: 6 OK. `buildversion --check`: 8 OK.
+  `plantsites --check`: OK.
+- Two gates fail, exactly as they do on dev: `flaskbox --source-selftest`
+  (1 MISS) and the `hud-potion-followup` source gate (S2–S9).
+
+Limits: the visible "⚔ Armoury" / "☰ Menu" labels drawn in WGH2/WGH3 are
+not added; the band keeps its icon controls with accessible names. Combat
+at 844×390 still draws Armoury and Menu 44×32 inside its 39 px band (a
+short-landscape rule in `styles/combat.css`); the sizing contract names
+physical minimums for the hand and footer only, so a HUD floor is an owner
+decision. Rooms without a footer HUD (shop, rest, event) keep their flask
+tiles in the rail (`wireframeUi.hud.potions.roomRail`), because that rail
+is the only place a charge flask is drunk, or a carried one dropped,
+outside combat; `false` applies the footer-only rule there and removes
+that capability. The specification's "stamina off by default in scene
+HUDs" is not applied: resource rows are `content/resources.js`'s, and
+hudparity P1 requires HP, MP and SP on both screens. Playwright-based
+tools were not run; no gamepad was attached.
+## One W1 category selector for every workspace (W1a, W1d, W1e, W1f, W1g, W1h)
+
+Branch `claude/w1-compact-category-selector`, based on dev `8797fc9a`
+(issue #1081). FRONTEND-WIREFRAMES rule 11: a menu with several categories is
+W1, a rail beside the pane on wide screens and the same navigation above the
+pane on compact ones, never horizontal tabs or an accordion; the W1 compact
+wireframes draw one `[Category ▾]` selector. Dev had two selectors decided
+two ways (Settings measured, Compendium/Profile on `data-layout`), and the
+Shop, the pile viewer and the Armoury laid the rail down as a strip (or a
+grid of cells) on narrow hosts.
+
+- One model: `src/ui/models/CategoryNavModel.js`. `categoryNavPlan` chooses
+  rail or selector from the host's width, the viewport height, one rem, the
+  tap floor and the category count, with hysteresis (the W1a rule, now for
+  every surface). `categoryNavKey` answers Escape (close, and only while a
+  compact list is open), Home and End; arrows and Enter stay the input
+  router's. `categoryNavLanding`, `categoryNavAfterPick` and
+  `categoryNavFace` say where the cursor goes and what the selector reads.
+  The budget moved from `wireframeUi.settings` to a new
+  `wireframeUi.categoryNav` block with the same numbers;
+  `settingsNavigationPlan` is now that one function. Tests:
+  `tests/wireframe-category-nav.test.mjs` (in `tests/run-node.mjs`'s
+  wireframe line), covering the six surfaces' category counts at the five
+  viewports and a check that no top-level key of `wireframeUi` is declared
+  twice.
+- One kit component: `src/ui/kit/categoryNav.js`, exported by the kit, with
+  `railed(nav, pane)`. It writes `data-cat-nav="rail|selector"` and
+  `data-cat-open` on the `.as-railed` host and kit.css keys off them. The
+  compact form is one selector (`.as-catnav-toggle`, gold, at the tap floor)
+  above the pane. It opens the same rail as a vertical list over the pane's
+  area; the list scrolls inside itself, never the page, and the pane is
+  `visibility: hidden` while it is open so the cursor cannot reach behind it.
+  The selector reads the selected item's label and status ("Cards 5 for
+  sale", "Swords 3/9") and follows `aria-selected` by itself.
+- Used by all six categorized W1 surfaces: Settings (adopts its `.set-tabs`;
+  `#set-cat-select.set-cat-select`, `data-settings-nav` and `data-nav-open`
+  are kept for the instruments), Shop (`data-shop-rail` now mirrors the
+  nav's decision), Armoury, Compendium and Profile (the private selector in
+  `components/w1Workspace.js` is gone), and the pile viewer (its own
+  arrow-key handler is gone).
+- Strips removed: the kit's `:root[data-layout='narrow'] .as-railed > .as-rail
+  { flex-direction: row }`, the Shop's top-rail strip, the Armoury's narrow
+  grid of view cells, the `.w1-nav*` rules and Settings' selector rules in
+  `styles/ui.css`.
+- Hooks: rail items keep `role=tab`, `aria-selected`, `data-member`,
+  `data-modal-tab` and `data-shop-category`; the pile items gained
+  `data-member`. Stable selector ids: `set-cat-select`, `shop-cat-select`,
+  `armoury-view-select`.
+- Escape: one `window` capture listener, installed when the kit loads and so
+  ahead of every door's own (modalShell on `document`, the in-run overlay on
+  `window`, the Armoury on `document`), claims Escape only while a compact
+  list is open and closes that list. The pad's B arrives as the same
+  synthetic Escape. This fixes the W1a limit above.
+- Settings row controls at the tap floor (`--tap-floor`), with behaviour
+  unchanged. Toggles: the kit's `.as-toggle::after` already asked for the
+  floor, but `button { overflow: hidden }` clipped it to the pill, so the
+  pill now overflows and the pseudo spans the floor on both axes. Choice and
+  segmented chips: each chip's own `::after` spans the floor's height, the
+  chip clips with a margin (`overflow: clip; overflow-clip-margin`) so a long
+  label still ellipsizes, and the segment stops clipping its chips. A chip
+  narrower than the floor takes the floor as its width, because chips sit
+  edge to edge and have no free space beside them to borrow. Wrapped rows of
+  five or more chips stand 2 px apart, so no chip's floor overlaps the row
+  below. Row buttons (Open, Reset) take the floor's width.
+- Copy: `nav.categorySelector` in `content/source/uiStrings.csv`.
+
+Browser evidence (CDP emulation against `dist/AshenSpire.html` through
+`tools/serve.mjs` and `tools/browser.mjs`, scratch probe, stored settings
+cleared; DPR 1, so CSS px are physical; hit spans are found with
+`elementFromPoint`, binary-searched to 0.05 px along each control's centre
+lines):
+
+| Viewport | Zoom | Settings (6) | Shop (7) | Armoury (4) | Compendium (3) | Profile (2) | Piles (2) |
+|---|---:|---|---|---|---|---|---|
+| 1440×860 | 1.18 | rail | rail | rail | rail | rail | rail |
+| 1280×800 | 1.07 | rail | rail | rail | rail | rail | rail |
+| 390×844 | 0.90 | selector | selector | selector | selector | selector | selector |
+| 375×667 | 0.85 | selector | selector | selector | selector | selector | selector |
+| 844×390 | 0.62 | selector | selector | rail | rail | rail | rail |
+
+- Every cell: the rail is one vertical column with no sideways scroll, and
+  page scroll is 0 × 0. Rail items and the selector are at least 44 px (the
+  selector is 44 px tall and 325–783 px wide); head exits and footer buttons
+  are at least 44 px.
+- Compact list open (all 24 selector cells): every category in one vertical
+  list, at least 44 px each, its box inside the viewport, and the pane hidden.
+  Where the pane area is short the list scrolls inside itself: the Shop at
+  375×667 and 844×390, Settings at 844×390. The Shop's list at 844×390 is
+  99 px tall (about two items visible) because the run band, head and foot
+  take the rest.
+- Escape (a trusted key) with the list open closes the list, leaves the door
+  open and puts focus on the selector, in all 24 cells; the pad's synthetic
+  Escape does the same. With the list closed, Escape still closes Settings,
+  the Armoury, Profile and the pile viewer. The Shop and the Compendium have
+  no Escape exit; the kit's listener acts only while a list is open.
+  Against dev's committed bundle at 390×844, Escape with Settings' list open
+  closes all of Settings; on this branch it closes the list only.
+- Keyboard through the router, in every selector cell (844×390 included):
+  Enter on the selector opens the list with the cursor on the selected
+  category, ArrowDown moves to the next, Enter picks it, the list closes, and
+  the cursor returns to the selector, which now names the pick.
+- Settings rows. Visited: Display, Audio, Accessibility and the four Advanced
+  groups, which hold 22 toggles, 83 choice chips, 16 segmented tabs, 3
+  ranges, 3 number fields, 1 text field, Open and Reset. Every control's hit
+  span is at least 44 px (43.9 is the search tolerance against a 44 px
+  floor). The dev figures are the W1a section's; before the 2 px row gap,
+  this branch measured 41 px on wrapped chip rows.
+
+| Viewport | Toggle drawn → hit | Chip height drawn → hit | Narrowest chip | Segmented height → hit | Open |
+|---|---|---|---:|---|---:|
+| 1440×860 | 61.4×33.0 → 61.9×44.9 | 41.6 → ≥ 43.9 | 44.0 | 41.6 → 44.9 | 81.2×44 |
+| 1280×800 | 55.6×30.0 → 56.6×44.9 | 41.9 → ≥ 43.9 | 44.0 | 41.9 → 44.9 | 73.8×44 |
+| 390×844 | 46.8×25.2 → 47.8×44.2 | 42.2 → ≥ 43.9 | 64.6 | 42.2 → 44.9 | 62.4×44 |
+| 375×667 | 44.2×23.8 → 45.0×44.0 | 42.3 → ≥ 43.9 | 62.4 | 42.3 → 44.9 | 59.0×44 |
+| 844×390 | 32.2×17.4 → 44.9×44.0 | 42.8 → 44.9 | 44.0 | 42.8 → 44.9 | 44.0×44 |
+
+Tools: `tools/shopbars.mjs` S1 now opens the compact selector before it
+reads every item on the glass; `tools/ui-sweep.mjs` R6 asks for the selector
+contract (one selector above the pane that opens the views as a vertical
+list); `tools/combat-hud-menus.mjs` opens the `[Pile ▾]` selector before
+choosing Exhaust on a compact shape. `tools/tapsize.mjs` and
+`tools/settingsreach.mjs` read `.set-cat-select`, which the kit's selector
+keeps. `shopbars` and `ui-sweep` also wait up to a minute for their first
+mount: the unbundled module route they open took 21.4 s to mount the Shop
+here, past their 20 s and 15 s waits, and both timed out before any check
+ran. Runs: `shopbars` all green, 12 checks (390×844 through the selector,
+1200×730 on the rail). `ui-sweep --only armoury` passes R6 at 390×844 (one
+selector above the pane, four views in a vertical list, no sideways scroll). `combat-hud-menus`: 13
+passed and 4 failed. The pile viewer's checks pass at the desktop shape;
+the four failures are the combat action-row geometry and the potion menu,
+which this branch does not touch, and the potion failure stops the run
+before the phone shape. `tapsize --quick` stops with "timed out waiting for
+the overlay strip", and it does so identically against dev's committed
+bundle. `settingsreach` still finds no Settings button at the bare bundle
+URL (the startup gate, as recorded above). Playwright-based tools were not
+run.
+
+Limits: the threshold is still a budget, not a measurement of the drawn rail.
+Chips narrower than the floor (S, L, XL) are now 44 px wide, a change of
+drawn width that is an owner decision to confirm; their height and every
+other control's drawn size are unchanged. In rail mode at 1440×860, Escape
+does not close Settings on dev or on this branch; that is unchanged here. No
+gamepad was attached; B was driven as the poller's synthetic Escape. Galaxy
+S24 was not measured. The unbundled module route (`/?shot=…`) took about
+21 s to mount the Shop on this loaded machine, and drive C: was nearly full
+during the browser runs.
+## Smith services on the W1 workspace (W1i / W1j / W1k)
+
+Branch `claude/smith-w1ijk-workspace`, based on dev `8797fc9a`. The Smith's
+three doors (Upgrade an Item, Extract a Card, Seat a Card) are W1 children
+with no categories, so they draw no category rail. One pure model,
+`src/ui/models/SmithWorkspaceModel.js`, decides the item rows, the compact
+selector's face and which pane slots each service registers; the item
+column's share is `wireframeUi.smith`. Every fact still comes from
+`SmithSelectionModel` and `MountServiceModel`, and every commit still goes
+through `smithServices.js` / the Shrine, unchanged.
+
+- **Frame (W1).** `workspaceFrame` gives all three doors the W1 share of the
+  viewport (95 × 90, centred). The header is the title and its exit only:
+  the "Shrine action" eyebrow and the LEAVES/STAYS badge are gone. The
+  footer is Back on the left and the service's verb on the right, equal
+  halves; the consequence sentence moved out of the footer note.
+- **Item column.** One kit `railItem` row per candidate (small art, name,
+  "Tier 0 → 1" or "worn · 1 mount", and the owned-count pill), built by the
+  shared `categoryNav` with `role=listbox`. Wide hosts show it as the left
+  column at W1i's 44vw (clamped to 14–60rem); compact hosts fold it into one
+  `[Selection ▾]` selector above the pane that opens the same rows as a list
+  (rule 11: no tabs, no accordion). The rows are divs (`railItem` gained a
+  `tag` option) because the shared inspection door hangs its `i` inside them.
+- **Two taps kept.** Each row is bound to the inspection door before the
+  navigation listens, so on touch the first tap lights the row and reveals
+  its `i`, and the second chooses it (Constantine, 2026-09-12). Mouse and
+  keyboard choose on one press, as before.
+- **Pane (selection body).** A status line ("1 Smithing Stone · 3
+  eligible"), then a DetailCard with only the slots the service declares, in
+  the drawings' order:
+  - W1i: selected item (art, name, tier step, owned count, kind and tags,
+    which moved here from the old candidate cards), current → proposed stats
+    and requirements, every affected card, then the cost.
+  - W1j: selected item, mount selector, and once a mount is chosen the
+    extraction preview (the card, "Sundering Hew leaves Greatsword and joins
+    your deck.", and what the mount then shows), then the cost.
+  - W1k: selected item, mount selector, the compatible deck cards once a
+    mount is chosen, the install preview once a card is chosen, then the
+    cost. Dependent choices still clear when a parent changes.
+  - The cost row (REQ/AVAIL and any shortfall) is pinned at the foot of the
+    scrolling card; the consequence line closes the pane. With nothing
+    selected the pane shows the service's instruction.
+- **Unchanged.** Plans, prices, revalidation, `armOptionDecision` (one tap
+  reviews, a held press commits, a blocked action explains), focus
+  containment, Escape/veil/✕ as Back, and the upgrade and receipt paths. An
+  open compact list takes Escape first; the next Escape leaves the door.
+- **Wording.** New copy in `uiStrings.csv`: `smith.selector.none`,
+  `smith.items.*`, `smith.pane.status`, `smith.row.*`, `smith.preview.*`,
+  `smith.heading.deck`.
+- **Tools.** `armament-smithing-ui` reaches candidates through the compact
+  selector, reads kind and tags from the selected item's head, checks the
+  centred W1 frame instead of a full-viewport pane, expects selector + Back
+  + Upgrade on compact hosts, and gains `COMPACT-LIST`. `holdconfirm` opens
+  the Smith list before its two-tap candidate helper and its census.
+- **Tests.** `tests/wireframe-smith-workspace.test.mjs` (5 tests) runs inside
+  the existing wireframe line of `tests/run-node.mjs`.
+
+Browser evidence (CDP emulation against the source tree; W1i through
+`?shot=rest&shotSmithingStones=1`, W1j and W1k on a run built in the page
+from source modules, see Limits):
+
+| Viewport | Zoom | Frame | Header / exit | Items | Pane | Footer buttons | Page scroll |
+|---|---:|---|---|---|---|---|---:|
+| 1440×860 | 1.18 | 1368×774 | 78 / 44×44 | rail 633 w | 722×616 | 663 + 672 × 44 | 0 |
+| 1280×800 | 1.07 | 1216×720 | 74.9 / 44×44 | rail 562 w | 641×568 | 588 + 597 × 44 | 0 |
+| 390×844 | 0.90 | 370.5×759.6 | 63 / 44×44 | selector 350.5×44 | 368.5×575.8 | 171 + 174 × 44 | 0 |
+| 375×667 | 0.85 | 356.3×600.3 | 62 / 44×44 | selector 337.3×44 | 354.3×419.1 | 165 + 167 × 44 | 0 |
+| 844×390 | 0.62 | 801.8×351 | 62.3 / 44×44 | rail 370 w | 428×224 | 387 + 393 × 44 | 0 |
+
+- The same frame, header, item column, pane and footer measure identically
+  for all three doors at each size. The only visible heading is the door's
+  title. The cost row stays inside the card at every size.
+- Targets: every row, selector, mount row, deck card, fold, Back and verb is
+  at least 44 px and centre-hit-testable, open compact list included. The one
+  smaller control is the shared card `i` on W1k's deck cards (40.5 px), drawn
+  by `renderCard` and unchanged here.
+- Flows, at every size: Upgrade → review "Upgrade Straight Sword? … 1/1" →
+  confirm left for the map. Extract → review → confirm moved Sundering Hew
+  from Greatsword into the deck (10 → 11 cards). Seat, on the emptied mount,
+  → review → confirm moved it back (11 → 10). Compact: Escape closed the open
+  list and kept the door.
+- `armament-smithing-ui`: 73 passed, 9 failed. On dev `8797fc9a` it is 66
+  passed, 15 failed.
+  - The 9 REDs all fail on dev too: SELECTED-NAME-TYPE and ROLE-USAGE at both
+    sizes, ARMOURY-RECEIPT and ARMOURY-CARDS at both sizes, and
+    COOP-SHOT-DOOR.
+  - The four FIT checks and the two 390×844 TARGETS checks that fail on dev
+    now pass, and COMPACT-LIST is new.
+  - Two earlier runs died at the tool's fixed 15 s first load, with CPU at
+    100% under other sessions' suites. That is a load-induced timeout,
+    identical on dev under the same load; the 60 s-wait probe above is the
+    functional evidence.
+- `holdconfirm` on dev `8797fc9a`: 1 finding over 137 checks, the Shrine smith
+  census's "2 absent: smithExtract, smithInstall" already recorded above. The
+  branch run did not finish inside the time budget under that load.
+- `run-node` 138 passed, 0 failed. One run under load failed only its
+  `linkcheck --selftest` line (no result line). Run alone, the selftest
+  passes: 5/5 planted breakages go red and the clean tree comes back with 0.
+
+Limits:
+- A fresh class kit carries no card tagged `extractable`, so the Shrine shot
+  offers no extraction and no seating. W1j and W1k were driven through
+  `openMountService` on a run built in the page (the first armament whose
+  mount holds an extractable card: Greatsword), not reached from a Shrine.
+  No reach door was added.
+- W1j/W1k's tables stack items, mounts and preview as three rows; their wide
+  drawings put the items beside the pane, as W1i does. This branch follows
+  the drawings; the owner should confirm.
+- At 844×390 the host is `data-layout=wide`, so the items stay a rail beside
+  a 224 px pane, as the Shop does; W1's compact drawing puts a selector
+  above.
+- The consequence sentence left the footer for the pane's last line, beside
+  the cost; the LEAVES/STAYS badge is gone from the header. Both are owner
+  decisions to confirm. Extract and install cost 0 Stones under the current
+  balance, so their shortfall row was not exercised.
+- Playwright tools (`card-inspection-qa`, `world-atlas-qa`) were not run;
+  their Smith selectors (`.smith-candidate-card`, `.card-info-button`,
+  `.smith-upgrade-modal .modal-close`) still exist.
+## Possession sub-variants (WC2a1, WC2a2, WC2b1, WC2b2, WC2c1–WC2c3)
+
+Branch `claude/possession-subvariants`, based on dev `8797fc9a`. The one
+poker canvas still draws every possession card; a new DOM-free
+`src/ui/models/PossessionVariantModel.js` decides which wireframe rows each
+of its regions carries, from the item's own data. No row switches on an item
+id, and a row the data cannot state is left off and recorded in the model's
+`omitted` list rather than filled in. Families compose: four relics are both
+WC2b1 and WC2b2.
+
+- Classification: armour is `kind: 'armor'` or the `item:armor` tag; an
+  armament is a weapon because it authors the hand it is held in. A relic is
+  passive when `passives` sets a modifier or key, triggered when it authors
+  `triggers`. A potion's purpose comes from each effect opcode: `heal` →
+  WC2c1, `restore<Resource>` naming a registered resource → WC2c2, any other
+  op → WC2c3; a scripted effect states no purpose.
+- WC2a1 weapon: row one is Hand / requirements (the authored attribute
+  requirement, else the authored hand, now read from `hand` instead of a
+  literal). Detail one keeps Attack / Defense / Weight. The effect row is
+  Granted card package: the weapon-art card name(s) from `weaponCardPackage`,
+  then the authored modifiers.
+- WC2a2 armour: detail one is the authored Poise threshold; row one keeps the
+  class-outfit requirement; the effect row is Granted modifiers.
+- WC2b1 / WC2b2 relic: row one reads Relic / Active while owned (it used to
+  call every relic Passive, and 48 of 55 are triggered). The fact region
+  becomes two text lines, detail one of each family first: `Passive:` the
+  numeric modifiers as authored, `Trigger:` the event labels; then
+  `Affects:` and `Limit:` (once per combat / per turn / No limit). The effect
+  row is the relic's effect text.
+- WC2c1–WC2c3 potion: row one names the purpose (Potion · Healing). Lines:
+  `Heals 25% of max HP`, `Restores 1 MP` (marked with the registered MP
+  tint), `Strength 2 · Self`, `Crimson Blight 4 · Enemy`, `Block 15 · Self`;
+  `Charges: n` only when a host passes `charges`.
+- Face budget (`wireframeUi.possession`): two lines, one effect entry. Later
+  rows stay on the card with `hidden`, so the inspection lists all of them;
+  a hidden effect entry shows the existing `…`.
+- A card with no tag badges (every relic and potion) collapses the empty tag
+  row (`equipmentCardTokens(…, { collapse: ['tags'] })`); the effect row gets
+  its 14 px, so two-line relic text is no longer cut. Artwork stays 270 px.
+- The Damage / Defense value cells drop their row padding and value margin
+  so value and label fit the solved 40 px row.
+- New copy is `possession.*` in `content/source/uiStrings.csv`; the model is
+  covered by `tests/wireframe-possession-variants.test.mjs` (in the run-node
+  wireframe line) and a collapse case in `tests/equipmentCard.test.mjs`.
+
+Browser evidence (CDP against `item-cards-preview.html`, all 103 item cards,
+each 280 px wide at card scale 0.8; the same probe on a dev `8797fc9a` tree):
+
+| Viewport | Page scroll | Cards with a clipped or overflowing region | Of which relic / potion |
+|---|---:|---|---|
+| 1280×800, dev | 0 | 103 of 103 | 60 of 60 |
+| 1280×800, branch | 0 | 22 of 103 | 0 of 62 |
+| 390×844, dev | 0 | 103 of 103 | 60 of 60 |
+| 390×844, branch | 0 | 22 of 103 | 0 of 62 |
+
+- The 22 remaining are weapons whose tag row is wider than the card
+  (333–397 px in 310 px); that row is unchanged from dev and not a WC2a1 row.
+- Region heights (layout px): equipment art 268, row one 20, detail one 39
+  (content 39, was 44 on dev), tags 18, effects 54, flavour 13, footer 16;
+  relic and potion tags 0, effects 68, flavour 17.
+- Ellipsis (text kept whole in its tooltip and the inspection): five relic
+  effect texts past two lines and Cutpurse's Coin's paired `Limit:` line.
+- Inspection of Forsaken Medallion lists the two face-hidden lines; the
+  greatsword inspection lists its weapon art and all three modifiers; the
+  flask door (no registries) still reads `Restores 1 MP`. No page errors.
+
+Tools: `tools/armament-smithing-ui.mjs` (CDP) reports 66 passed, 15 failed,
+the same 15 RED checks by name as on dev `8797fc9a`. Two earlier runs here
+stopped at its 15 s wait for the Shrine Smith option, while other jobs
+shared the machine: boot served from the worktree root took 16–27 s. The
+same query served from a clean tree reaches the option in 2.0–3.0 s with
+this branch's sources and 2.2–9.9 s with dev's, so the branch does not slow
+boot. Its screenshots under `docs/preview/` were restored, not committed.
+`tools/weapon-card-preview.mjs` (CDP) stops at "Timed out: preview and art"
+on dev and on this branch alike, before any card check; it was not fixed
+here. `tools/onevocab.mjs` passes 7/7: the model names all three declared
+relic-modifier tags, including `resource.attributeTier`, which no shipped
+relic uses yet. Its self-test catches 12 of 12 plants.
+`tools/character-creation-check.mjs` (CDP, clicks the creation equipment
+cards) passes 128/128. Served from clean trees, dev `8797fc9a` gives the
+same check list.
+Playwright-based tools (`card-inspection-qa`, `starting-equipment-qa`,
+`tooltip-review-qa`) were not run. The selectors they read
+(`.equipment-poker-card`, `.epc-name`, `.epc-flavor`, `.epc-art img`,
+`.card-info-button`) are unchanged by this branch.
+
+Limits: WC2a Equipped comparison is still not built (the face has no loadout).
+No per-weapon attribute scaling, armour weight or armour resistance is
+authored, so those parts of their rows are absent. The heal line is the
+authored base amount, not a live capped preview. No host passes potion
+charges yet. Trigger `if` conditions are not described beyond the event; the
+effect text states them. Row one shows the hand only when no attribute
+requirement is authored (every armament is `either` today). Wide, compact,
+iPhone SE and Galaxy S24 host geometry was not re-measured beyond the two
+viewports above.
