@@ -433,7 +433,19 @@ export function pane({ eyebrow: eb = '', title = '', subtitle: sub = '', childre
     children,
   ]);
 }
-export const railed = (railNode, paneNode, attrs = {}) => el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [railNode, paneNode]);
+/**
+ * railed(rail | nav, pane, attrs) — body A, the NavRail beside a Pane. Pass a
+ * kit categoryNav instead of a bare rail and the host gets the compact
+ * `[Category ▾]` selector too (W1, rule 11): rail on wide hosts, selector
+ * above the pane on compact ones, decided by CategoryNavModel.
+ */
+export const railed = (railNode, paneNode, attrs = {}) => {
+  const nav = railNode && railNode.isCategoryNav ? railNode : null;
+  const host = el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [nav ? nav.rail : railNode, paneNode]);
+  return nav ? nav.attach(host) : host;
+};
+import { categoryNav, landControl } from './categoryNav.js';
+export { categoryNav, landControl };
 /** popover({ caption, groups: [[row, …], …], attrs }) — Eyebrow cap + hairline-grouped rows. */
 export function popover({ caption = '', groups = [], attrs = {}, className = '' } = {}) {
   return el('div', { ...attrs, class: cls('as-pop', className) }, [

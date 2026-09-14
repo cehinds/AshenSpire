@@ -17,7 +17,7 @@ import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
 import { carriedIds } from '../../model/loadout.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale } from '../../model/armamentTrading.js';
 import { openModal, modalHead, modalFooter } from '../components/modalShell.js';
-import { button, statusText, el, rail, railItem } from '../kit/index.js';
+import { button, statusText, el, railItem, categoryNav } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t } from '../strings.js';
 import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationReviewModel.js';
@@ -590,7 +590,16 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       item.addEventListener('click', () => showCategory(key));
       return item;
     });
-    railed.prepend(rail(railItems, { class: 'shop-rail', 'aria-label': t('shop.rail.aria') }));
+    // The kit's W1 category navigation: the rail beside the pane on wide
+    // frames, one [Category ▾] selector above it on compact ones (rule 11: no
+    // horizontal strip). `data-shop-rail` mirrors the nav's own decision so
+    // the frame's grid and the nav can never disagree.
+    const nav = categoryNav({
+      items: railItems, ariaLabel: t('shop.rail.aria'), railAttrs: { class: 'shop-rail' }, toggleId: 'shop-cat-select',
+      onChange: ({ mode }) => { root.dataset.shopRail = mode === 'rail' ? 'side' : 'top'; },
+    });
+    railed.prepend(nav.rail);
+    nav.attach(railed);
     const footHost = document.createElement('div');
     footHost.className = 'shop-foot-host';
     frame.appendChild(footHost);
@@ -779,10 +788,13 @@ function wireShopLayout(root) {
     if (!root.isConnected) { release(); return; }
     const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     const plan = shopWorkspaceLayout({ width: frame.clientWidth, bodyHeight: body.clientHeight, rem });
+    // Rail or selector is the kit categoryNav's decision (it writes
+    // data-shop-rail); this plan sizes the rail when there is one and lays
+    // out the pane.
     root.dataset.shopMode = plan.mode;
-    root.dataset.shopRail = plan.rail;
     root.dataset.shopPane = plan.pane;
-    root.style.setProperty('--shop-rail-width', `${plan.railWidth}px`);
+    if (plan.railWidth > 0) root.style.setProperty('--shop-rail-width', `${plan.railWidth}px`);
+    else root.style.removeProperty('--shop-rail-width');
     root.style.setProperty('--shop-offers-fr', `${plan.offersFr}fr`);
     root.style.setProperty('--shop-detail-fr', `${plan.detailFr}fr`);
     root.style.setProperty('--shop-gap', `${plan.gap}px`);

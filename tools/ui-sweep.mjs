@@ -27,9 +27,10 @@
 //   R5 CREATION  stacked (phone), the class list sits above the preview pane;
 //                at the desk the selected armour's info button lies inside its
 //                card, not over the section header.
-//   R6 ARMOURY   on a phone every view sits in the W1 category rail above the
-//                pane, inside the rail's width, with no sideways scroll (W1e;
-//                the views are no longer head tabs beside the close).
+//   R6 ARMOURY   on a phone the views are the W1 [Category ▾] selector above
+//                the pane, and it opens every view as a vertical list inside
+//                the rail's width with no sideways scroll (W1e, rule 11; the
+//                views are no longer head tabs beside the close).
 //   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
 //
 // Usage:
@@ -126,7 +127,9 @@ for (const state of wanted) {
   for (const shape of [...SHAPES, ...(state.extraShapes || [])]) {
     await send('Emulation.setDeviceMetricsOverride', { width: shape.w, height: shape.h, deviceScaleFactor: 1, mobile: shape.mobile }, sessionId);
     await send('Page.navigate', { url: `${served.url}?shot=${state.q}&shotSettings=${settings}` }, sessionId);
-    const ready = await until(state.ready);
+    // The first mount of the unbundled module route can pass 15 s on a
+    // loaded machine (the merchant measured 21.4 s, 2026-09-14): a minute.
+    const ready = await until(state.ready, 60000);
     await wait(700);
     const cell = `${state.name} ${shape.w}x${shape.h}`;
     console.log(`\n  ${cell}`);
@@ -173,11 +176,12 @@ for (const state of wanted) {
       }
     }
     if (state.name === 'armoury' && shape.mobile) {
-      // W1e (FRONTEND-WIREFRAMES rule 11): compact hosts put the category rail
-      // above the pane. The old R6 asked for head tabs beside the close; the
-      // views are no longer head tabs, so R6 now asks for the rail contract.
-      const rail = await ev(`(()=>{const r=document.querySelector('.armoury [data-surface="armouryView"]');const pane=document.querySelector('.armoury-pane');const rr=r.getBoundingClientRect();const items=[...r.querySelectorAll('[data-member]')].map(t=>t.getBoundingClientRect());return {items:items.length,inside:items.every(b=>b.left>=rr.left-1&&b.right<=rr.right+1),sideways:r.scrollWidth>r.clientWidth+1,above:Math.round(rr.bottom)<=Math.round(pane.getBoundingClientRect().top)+1}})()`);
-      check(rail.items >= 3 && rail.inside && !rail.sideways && rail.above, `R6 ${cell}: every Armoury category sits in the rail above the pane with no sideways scroll`, JSON.stringify(rail));
+      // W1e (FRONTEND-WIREFRAMES rule 11): a compact host draws the kit's one
+      // [Category ▾] selector above the pane (kit/categoryNav.js), and it
+      // opens the same rail as a vertical list — never a strip, never a grid
+      // of cells. R6 opens it, reads the list, and closes it again.
+      const rail = await ev(`(()=>{const host=document.querySelector('.armoury .as-railed[data-cat-nav]');const toggle=host&&host.querySelector(':scope > .as-catnav-toggle');const r=document.querySelector('.armoury [data-surface="armouryView"]');const pane=document.querySelector('.armoury-pane');if(!host||!toggle||!r)return {host:!!host,toggle:!!toggle};const tr=toggle.getBoundingClientRect();const above=Math.round(tr.bottom)<=Math.round(pane.getBoundingClientRect().top)+1;toggle.click();const rr=r.getBoundingClientRect();const items=[...r.querySelectorAll('[data-member]')].map(t=>t.getBoundingClientRect());const out={mode:host.dataset.catNav,items:items.length,selector:Math.round(tr.height)>=44,above,vertical:items.every((b,i)=>i===0||b.top>=items[i-1].bottom-1),inside:items.every(b=>b.left>=rr.left-1&&b.right<=rr.right+1),sideways:r.scrollWidth>r.clientWidth+1};toggle.click();return out;})()`);
+      check(rail.mode === 'selector' && rail.items >= 3 && rail.selector && rail.above && rail.vertical && rail.inside && !rail.sideways, `R6 ${cell}: the Armoury categories are one [Category ▾] selector above the pane that opens them as a vertical list with no sideways scroll`, JSON.stringify(rail));
     }
     if (state.name === 'smith') {
       const smith = await ev(`(()=>({modal:!!document.querySelector('.smith-candidate-region'),shrine:!!document.querySelector('#rest-opt')}))()`);

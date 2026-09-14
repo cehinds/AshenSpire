@@ -15,7 +15,7 @@ import { markUiComponent } from './uiComponents.js';
 import { modalHead } from './modalShell.js';
 import {
   el, blocker, face, pill, tagChip, artWell, titleS, eyebrow, prose, flavour, kitLine, kitItem, optionCard, options, statusText,
-  rail, railItem, modalFooter,
+  railItem, categoryNav, modalFooter,
 } from '../kit/index.js';
 
 export function renderArmouryOverlay(model) {
@@ -35,8 +35,9 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
   const stats = descendantModel(model, UI.armouryStatsPanel);
   // W1e: THE ARMOURY IS A W1 WORKSPACE ON THE KIT'S SHELL. The head carries
   // the one title and the close IconButton in the corner every door uses. The
-  // views are the category rail (kit `.as-railed`: beside the pane on wide
-  // hosts, above it on narrow ones), never a strip of head tabs. The pane is
+  // views are the kit's W1 category navigation (kit categoryNav: a rail beside
+  // the pane on wide hosts, one [Category ▾] selector above it on compact
+  // ones), never a strip of head tabs nor a grid of cells. The pane is
   // the active view's body; the footer holds Back and, when the selected item
   // has one, its action. The rail items keep the tab semantics and the
   // `data-surface="armouryView"` / `data-member` / `data-modal-tab` hooks the
@@ -65,11 +66,17 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
   if (model.properties.notice) {
     pane.prepend(blocker(model.properties.notice, { attrs: { class: 'armoury-notice', role: 'status' } }));
   }
-  const railNode = rail(switcher.properties.views.map((view) => railItem({
-    label: view.label, current: !!view.active, member: view.id, id: `armoury-view-${view.id}`, className: 'armoury-view',
-    attrs: { dataset: { modalTab: view.id, focusable: 'true' }, 'aria-controls': 'armoury-pane' },
-  })), { class: 'armoury-views', 'aria-label': switcher.accessibility.label, dataset: { surface: 'armouryView' } });
+  const nav = categoryNav({
+    items: switcher.properties.views.map((view) => railItem({
+      label: view.label, current: !!view.active, member: view.id, id: `armoury-view-${view.id}`, className: 'armoury-view',
+      attrs: { dataset: { modalTab: view.id, focusable: 'true' }, 'aria-controls': 'armoury-pane' },
+    })),
+    ariaLabel: switcher.accessibility.label, toggleId: 'armoury-view-select',
+    railAttrs: { class: 'armoury-views', dataset: { surface: 'armouryView' } },
+  });
+  const railNode = nav.rail;
   pane.before(railNode);
+  nav.attach(wrap.querySelector('.armoury-railed'));
   const selectedView = railNode.querySelector('[aria-selected="true"]');
   if (selectedView) pane.setAttribute('aria-labelledby', selectedView.id);
   const head = modalHead({
@@ -113,6 +120,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
     close: wrap.querySelector('.armoury-close'),
     viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
     rail: railNode,
+    nav,
     pane,
     setPrimary,
   };

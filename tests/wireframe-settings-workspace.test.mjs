@@ -4,7 +4,8 @@ import { settingsNavigationPlan, stepCategory, settingsRowShowsHelp, SETTINGS_NA
 import { wireframeUi } from '../src/content/wireframeUi.js';
 import { settingsRow, settingsRowHtml, settingsCategories, categoryHandler } from '../src/ui/screens/settings.js';
 
-const cfg = wireframeUi.settings;
+// W1a's budget is the shared W1 category-navigation budget (CategoryNavModel).
+const cfg = wireframeUi.categoryNav;
 // Local CSS px at 10 px/rem (text size M), tap floor 44 px, six categories.
 const base = { rootFontPx: 10, itemMinHeightPx: 44, categoryCount: 6 };
 
