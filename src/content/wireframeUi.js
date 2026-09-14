@@ -136,11 +136,14 @@ export const wireframeUi = freeze({
     metadataSlots: { start: 'rarity', end: 'owned' },
     artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
   },
-  // W1a Settings. A category rail needs this host width, and every category
-  // at the tap floor must fit in the W1 body band (70% of the viewport);
-  // otherwise one selector sits above the pane. Gap and inset are the rail's
-  // budget, not its drawn values. Hysteresis stops a host at the edge flapping.
-  settings: {
+  // W1 category navigation, shared by every categorized W1 surface (Settings,
+  // Shop, Armoury, Compendium, Profile, the pile viewer). A category rail needs
+  // this host width, and every category at the tap floor must fit in the W1
+  // body band (70% of the viewport); otherwise one [Category ▾] selector sits
+  // above the pane (rule 11: never a horizontal strip). Gap and inset are the
+  // rail's budget, not its drawn values. Hysteresis stops a host at the edge
+  // flapping. (These numbers were W1a's `settings` block.)
+  categoryNav: {
     railMinHostWidthRem: 60, bodyHeightFraction: 0.7,
     railGapRem: 0.6, railInsetRem: 1.4, hysteresisRem: 1,
   },

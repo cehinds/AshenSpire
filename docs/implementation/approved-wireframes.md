@@ -1747,3 +1747,149 @@ that capability. The specification's "stamina off by default in scene
 HUDs" is not applied: resource rows are `content/resources.js`'s, and
 hudparity P1 requires HP, MP and SP on both screens. Playwright-based
 tools were not run; no gamepad was attached.
+## One W1 category selector for every workspace (W1a, W1d, W1e, W1f, W1g, W1h)
+
+Branch `claude/w1-compact-category-selector`, based on dev `8797fc9a`
+(issue #1081). FRONTEND-WIREFRAMES rule 11: a menu with several categories is
+W1, a rail beside the pane on wide screens and the same navigation above the
+pane on compact ones, never horizontal tabs or an accordion; the W1 compact
+wireframes draw one `[Category ▾]` selector. Dev had two selectors decided
+two ways (Settings measured, Compendium/Profile on `data-layout`), and the
+Shop, the pile viewer and the Armoury laid the rail down as a strip (or a
+grid of cells) on narrow hosts.
+
+- One model: `src/ui/models/CategoryNavModel.js`. `categoryNavPlan` chooses
+  rail or selector from the host's width, the viewport height, one rem, the
+  tap floor and the category count, with hysteresis (the W1a rule, now for
+  every surface). `categoryNavKey` answers Escape (close, and only while a
+  compact list is open), Home and End; arrows and Enter stay the input
+  router's. `categoryNavLanding`, `categoryNavAfterPick` and
+  `categoryNavFace` say where the cursor goes and what the selector reads.
+  The budget moved from `wireframeUi.settings` to a new
+  `wireframeUi.categoryNav` block with the same numbers;
+  `settingsNavigationPlan` is now that one function. Tests:
+  `tests/wireframe-category-nav.test.mjs` (in `tests/run-node.mjs`'s
+  wireframe line), covering the six surfaces' category counts at the five
+  viewports and a check that no top-level key of `wireframeUi` is declared
+  twice.
+- One kit component: `src/ui/kit/categoryNav.js`, exported by the kit, with
+  `railed(nav, pane)`. It writes `data-cat-nav="rail|selector"` and
+  `data-cat-open` on the `.as-railed` host and kit.css keys off them. The
+  compact form is one selector (`.as-catnav-toggle`, gold, at the tap floor)
+  above the pane. It opens the same rail as a vertical list over the pane's
+  area; the list scrolls inside itself, never the page, and the pane is
+  `visibility: hidden` while it is open so the cursor cannot reach behind it.
+  The selector reads the selected item's label and status ("Cards 5 for
+  sale", "Swords 3/9") and follows `aria-selected` by itself.
+- Used by all six categorized W1 surfaces: Settings (adopts its `.set-tabs`;
+  `#set-cat-select.set-cat-select`, `data-settings-nav` and `data-nav-open`
+  are kept for the instruments), Shop (`data-shop-rail` now mirrors the
+  nav's decision), Armoury, Compendium and Profile (the private selector in
+  `components/w1Workspace.js` is gone), and the pile viewer (its own
+  arrow-key handler is gone).
+- Strips removed: the kit's `:root[data-layout='narrow'] .as-railed > .as-rail
+  { flex-direction: row }`, the Shop's top-rail strip, the Armoury's narrow
+  grid of view cells, the `.w1-nav*` rules and Settings' selector rules in
+  `styles/ui.css`.
+- Hooks: rail items keep `role=tab`, `aria-selected`, `data-member`,
+  `data-modal-tab` and `data-shop-category`; the pile items gained
+  `data-member`. Stable selector ids: `set-cat-select`, `shop-cat-select`,
+  `armoury-view-select`.
+- Escape: one `window` capture listener, installed when the kit loads and so
+  ahead of every door's own (modalShell on `document`, the in-run overlay on
+  `window`, the Armoury on `document`), claims Escape only while a compact
+  list is open and closes that list. The pad's B arrives as the same
+  synthetic Escape. This fixes the W1a limit above.
+- Settings row controls at the tap floor (`--tap-floor`), with behaviour
+  unchanged. Toggles: the kit's `.as-toggle::after` already asked for the
+  floor, but `button { overflow: hidden }` clipped it to the pill, so the
+  pill now overflows and the pseudo spans the floor on both axes. Choice and
+  segmented chips: each chip's own `::after` spans the floor's height, the
+  chip clips with a margin (`overflow: clip; overflow-clip-margin`) so a long
+  label still ellipsizes, and the segment stops clipping its chips. A chip
+  narrower than the floor takes the floor as its width, because chips sit
+  edge to edge and have no free space beside them to borrow. Wrapped rows of
+  five or more chips stand 2 px apart, so no chip's floor overlaps the row
+  below. Row buttons (Open, Reset) take the floor's width.
+- Copy: `nav.categorySelector` in `content/source/uiStrings.csv`.
+
+Browser evidence (CDP emulation against `dist/AshenSpire.html` through
+`tools/serve.mjs` and `tools/browser.mjs`, scratch probe, stored settings
+cleared; DPR 1, so CSS px are physical; hit spans are found with
+`elementFromPoint`, binary-searched to 0.05 px along each control's centre
+lines):
+
+| Viewport | Zoom | Settings (6) | Shop (7) | Armoury (4) | Compendium (3) | Profile (2) | Piles (2) |
+|---|---:|---|---|---|---|---|---|
+| 1440×860 | 1.18 | rail | rail | rail | rail | rail | rail |
+| 1280×800 | 1.07 | rail | rail | rail | rail | rail | rail |
+| 390×844 | 0.90 | selector | selector | selector | selector | selector | selector |
+| 375×667 | 0.85 | selector | selector | selector | selector | selector | selector |
+| 844×390 | 0.62 | selector | selector | rail | rail | rail | rail |
+
+- Every cell: the rail is one vertical column with no sideways scroll, and
+  page scroll is 0 × 0. Rail items and the selector are at least 44 px (the
+  selector is 44 px tall and 325–783 px wide); head exits and footer buttons
+  are at least 44 px.
+- Compact list open (all 24 selector cells): every category in one vertical
+  list, at least 44 px each, its box inside the viewport, and the pane hidden.
+  Where the pane area is short the list scrolls inside itself: the Shop at
+  375×667 and 844×390, Settings at 844×390. The Shop's list at 844×390 is
+  99 px tall (about two items visible) because the run band, head and foot
+  take the rest.
+- Escape (a trusted key) with the list open closes the list, leaves the door
+  open and puts focus on the selector, in all 24 cells; the pad's synthetic
+  Escape does the same. With the list closed, Escape still closes Settings,
+  the Armoury, Profile and the pile viewer. The Shop and the Compendium have
+  no Escape exit; the kit's listener acts only while a list is open.
+  Against dev's committed bundle at 390×844, Escape with Settings' list open
+  closes all of Settings; on this branch it closes the list only.
+- Keyboard through the router, in every selector cell (844×390 included):
+  Enter on the selector opens the list with the cursor on the selected
+  category, ArrowDown moves to the next, Enter picks it, the list closes, and
+  the cursor returns to the selector, which now names the pick.
+- Settings rows. Visited: Display, Audio, Accessibility and the four Advanced
+  groups, which hold 22 toggles, 83 choice chips, 16 segmented tabs, 3
+  ranges, 3 number fields, 1 text field, Open and Reset. Every control's hit
+  span is at least 44 px (43.9 is the search tolerance against a 44 px
+  floor). The dev figures are the W1a section's; before the 2 px row gap,
+  this branch measured 41 px on wrapped chip rows.
+
+| Viewport | Toggle drawn → hit | Chip height drawn → hit | Narrowest chip | Segmented height → hit | Open |
+|---|---|---|---:|---|---:|
+| 1440×860 | 61.4×33.0 → 61.9×44.9 | 41.6 → ≥ 43.9 | 44.0 | 41.6 → 44.9 | 81.2×44 |
+| 1280×800 | 55.6×30.0 → 56.6×44.9 | 41.9 → ≥ 43.9 | 44.0 | 41.9 → 44.9 | 73.8×44 |
+| 390×844 | 46.8×25.2 → 47.8×44.2 | 42.2 → ≥ 43.9 | 64.6 | 42.2 → 44.9 | 62.4×44 |
+| 375×667 | 44.2×23.8 → 45.0×44.0 | 42.3 → ≥ 43.9 | 62.4 | 42.3 → 44.9 | 59.0×44 |
+| 844×390 | 32.2×17.4 → 44.9×44.0 | 42.8 → 44.9 | 44.0 | 42.8 → 44.9 | 44.0×44 |
+
+Tools: `tools/shopbars.mjs` S1 now opens the compact selector before it
+reads every item on the glass; `tools/ui-sweep.mjs` R6 asks for the selector
+contract (one selector above the pane that opens the views as a vertical
+list); `tools/combat-hud-menus.mjs` opens the `[Pile ▾]` selector before
+choosing Exhaust on a compact shape. `tools/tapsize.mjs` and
+`tools/settingsreach.mjs` read `.set-cat-select`, which the kit's selector
+keeps. `shopbars` and `ui-sweep` also wait up to a minute for their first
+mount: the unbundled module route they open took 21.4 s to mount the Shop
+here, past their 20 s and 15 s waits, and both timed out before any check
+ran. Runs: `shopbars` all green, 12 checks (390×844 through the selector,
+1200×730 on the rail). `ui-sweep --only armoury` passes R6 at 390×844 (one
+selector above the pane, four views in a vertical list, no sideways scroll). `combat-hud-menus`: 13
+passed and 4 failed. The pile viewer's checks pass at the desktop shape;
+the four failures are the combat action-row geometry and the potion menu,
+which this branch does not touch, and the potion failure stops the run
+before the phone shape. `tapsize --quick` stops with "timed out waiting for
+the overlay strip", and it does so identically against dev's committed
+bundle. `settingsreach` still finds no Settings button at the bare bundle
+URL (the startup gate, as recorded above). Playwright-based tools were not
+run.
+
+Limits: the threshold is still a budget, not a measurement of the drawn rail.
+Chips narrower than the floor (S, L, XL) are now 44 px wide, a change of
+drawn width that is an owner decision to confirm; their height and every
+other control's drawn size are unchanged. In rail mode at 1440×860, Escape
+does not close Settings on dev or on this branch; that is unchanged here. No
+gamepad was attached; B was driven as the poller's synthetic Escape. Galaxy
+S24 was not measured. The unbundled module route (`/?shot=…`) took about
+21 s to mount the Shop on this loaded machine, and drive C: was nearly full
+during the browser runs.

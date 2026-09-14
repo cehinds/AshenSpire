@@ -230,8 +230,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 .as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
 .as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
 .as-toggle:disabled { opacity: 0.55; cursor: default; }
-/* The drawn pill is 2.8rem tall; the finger gets the tap floor around it. */
-.as-toggle::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--tap-floor)); transform: translateY(-50%); }
+/* The drawn pill is 2.8rem × 5.2rem; the finger gets the tap floor around it
+   on both axes. `overflow: visible` because `button { overflow: hidden }`
+   (CONTAINMENT, above) clipped this pseudo to the pill: measured 17–33 px of
+   hit area, the pill's own height, before 2026-09-14. */
+.as-toggle { overflow: visible; }
+.as-toggle::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
 
 /* StatePill — binary state, scannable down a column. */
 .as-pill {
@@ -2650,8 +2654,8 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 .pile-body .as-cardgrid { justify-content: center; }
 .pile-empty { padding: 2rem; }
 /* W1h: rail | pane. The pane holds the pile beside the selected card's
-   reading; compact hosts put the rail above (kit .as-railed) and the reading
-   under the pile. Only the two columns scroll. */
+   reading; compact hosts put the kit's [Pile ▾] selector above the pane and
+   the reading under the pile. Only the two columns scroll. */
 .spent-pile-modal .pile-body { display: flex; min-height: 0; }
 .spent-pile-modal .pile-body > .as-railed { flex: 1 1 auto; min-height: 0; width: 100%; }
 .spent-pile-modal .pile-pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; min-height: 0; padding-inline-start: 2.5vw; }
@@ -3024,22 +3028,16 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    nothing else in this file mentions the layers. Hence this paragraph. */
 .armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
 /* W1e / W1n — THE ARMOURY ON THE W1 SHELL. One title and the close in the
-   head; the views are the category rail (kit .as-railed), beside the pane on
-   wide hosts and above it on narrow ones; the footer holds Back and the
-   selected item's action. Only the pane, or the pane's two columns, scrolls.
-   The narrow rail is a grid of equal cells: every category stays visible and
-   none scrolls sideways (the old head tab strip did, measured 390x844). */
+   head; the views are the kit's W1 category navigation (a rail beside the
+   pane on wide hosts, one [Category ▾] selector above it on compact ones);
+   the footer holds Back and the selected item's action. Only the pane, or
+   the pane's two columns, scrolls. */
 .armoury > .modal-body.armoury-shell-body { display: flex; flex-direction: column; overflow: hidden; padding: 0; gap: 0; }
 .armoury .armoury-shell-body > .as-railed.armoury-railed { flex: 1 1 auto; min-height: 0; height: auto; }
 .armoury .armoury-railed > .armoury-pane { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow-y: auto; overflow-x: hidden; }
 /* The active view fills the pane. The inventory page's `align-items: start`
    (written for its old two-column grid) shrank Equipment to its content. */
 .armoury .armoury-railed .armoury-content > .armoury-body { align-self: stretch; }
-:root[data-layout='narrow'] .armoury .armoury-railed > .as-rail.armoury-views {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr));
-  overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.6rem var(--modal-inset); gap: 0.4rem;
-}
-:root[data-layout='narrow'] .armoury .armoury-views > .as-railitem { text-align: center; padding-inline: 0.3rem; }
 /* The active pane's split: the item collection beside (wide) or above (phone)
    the selected item's detail. Tracks come from wireframeUi.armoury through
    --armoury-collection-track / --armoury-detail-track (equipment.js draw). */
@@ -3214,12 +3212,9 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .shop-frame > .shop-railed { flex: 1 1 auto; min-height: 0; height: auto; grid-template-columns: var(--shop-rail-width, 17.25rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 .shop-frame > .shop-foot-host > .modal-foot { padding-block: 0.6rem; }
 :root .shop-workspace[data-shop-rail='side'] .shop-railed > .shop-rail { flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+/* Compact: the kit's [Category ▾] selector above the pane (kit.css W1
+   CATEGORY NAVIGATION); data-shop-rail mirrors its decision. */
 :root .shop-workspace[data-shop-rail='top'] .shop-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-:root .shop-workspace[data-shop-rail='top'] .shop-railed > .shop-rail {
-  flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 0.6rem var(--modal-inset);
-  border-right: 0; border-bottom: 1px solid var(--line); scrollbar-width: thin;
-}
-:root .shop-workspace[data-shop-rail='top'] .shop-rail > .as-railitem { flex: 0 0 auto; width: auto; flex-wrap: nowrap; }
 .shop-rail > .as-railitem.with-status > .as-status { color: inherit; opacity: 0.8; }
 .shop-pane { min-height: 0; overflow: hidden; padding-block: 0.8rem; }
 .as-pane > .shop-pane-head { flex: 0 0 auto; margin-bottom: 0.6rem; }
@@ -4010,9 +4005,6 @@ button[data-button-size] {
 .as-choicerow[data-button-count='1'] > button { min-width: min(var(--button-minimum), 100%); }
 .as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
 .modal-close { aspect-ratio: 1; flex: none; padding: 0; }
-:root[data-layout='narrow'] .as-railed { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); }
-:root[data-layout='narrow'] .as-railed > .as-rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
-:root[data-layout='narrow'] .as-railed > .as-rail > * { flex: 0 0 auto; }
 .hand-overlay { position: relative; }
 .hand-overlay > .hand-info-portal {
   position: absolute; z-index: 500; transform: translateX(-50%);
@@ -4052,9 +4044,6 @@ button[data-button-size] {
   grid-template-columns: clamp(var(--w1-rail-min), calc(100vw / var(--ui-zoom, 1) * var(--w1-rail)), var(--w1-rail-max)) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
 }
-.w1-nav { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
-.w1-nav > .as-rail { flex: 1 1 auto; min-height: 0; border-right: 0; }
-.w1-nav-toggle { display: none; }
 .w1-workspace .as-railitem { min-height: var(--tap-floor); }
 .w1-workspace .as-railed > .as-pane { min-height: 0; overflow: hidden; }
 .w1-workspace .as-pane > .w1-split { flex: 1 1 auto; min-height: 0; }
@@ -4075,22 +4064,47 @@ button[data-button-size] {
 .prof-identity, .prof-records { display: flex; flex-direction: column; gap: 0.9rem; }
 .prof-identity > .as-title-m { margin: 0; }
 .prof-records > .as-status:empty { display: none; }
-/* Compact: the same navigation above the pane, as one [Category ▾] selector
-   that opens the rail as a list under it (rule 11: no horizontal category
-   tabs, no accordion); the two slots stack. */
-:root[data-layout='narrow'] .w1-workspace > .modal-body > .as-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-:root[data-layout='narrow'] .w1-nav { position: relative; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.6rem var(--modal-inset); }
-:root[data-layout='narrow'] .w1-nav-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; width: 100%; min-height: var(--tap-floor); }
-:root[data-layout='narrow'] .w1-nav > .as-rail { display: none; }
-:root[data-layout='narrow'] .w1-nav[data-open='true'] > .as-rail {
-  display: flex; flex-direction: column; position: absolute; z-index: 5; top: 100%; left: var(--modal-inset); right: var(--modal-inset);
-  max-height: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * 0.5); overflow: auto;
-  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-}
-/* While the list is open it is the only thing to choose: the pane under it
-   leaves the cursor's reach (input.js skips hidden controls) until it closes. */
-:root[data-layout='narrow'] .w1-nav[data-open='true'] + .as-pane { visibility: hidden; }
+/* Compact: the category navigation is the kit's [Category ▾] selector (see
+   W1 CATEGORY NAVIGATION below); the pane's two slots stack. */
 :root[data-layout='narrow'] .w1-split {
   grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
   column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
 }
+
+/* ═══ W1 CATEGORY NAVIGATION — kit/categoryNav.js ═══════════════════════════ */
+/* ONE component for every categorized W1 surface (Settings, Shop, Armoury,
+   Compendium, Profile, the pile viewer). models/CategoryNavModel.js decides
+   rail or selector from the host's own box and the budget in
+   wireframeUi.categoryNav, and the kit writes the answer as data-cat-nav on
+   the .as-railed host; this sheet measures nothing.
+   rail      the NavRail beside the pane (the .as-railed defaults above).
+   selector  rule 11's compact form: one [Category ▾] control above the pane
+             that opens the SAME rail as a list under it (data-cat-open).
+             Never a horizontal strip, never an accordion. */
+.as-catnav-toggle { display: none; }
+.as-railed[data-cat-nav] { position: relative; }
+:root .as-railed.as-railed[data-cat-nav='selector'] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+:root .as-railed[data-cat-nav='selector'] > .as-catnav-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  grid-column: 1; grid-row: 1; width: auto; min-width: 0; min-height: var(--tap-floor);
+  margin: 0.6rem var(--modal-inset);
+  color: var(--gold); border-color: var(--gold); background: rgba(var(--accent-rgb), 0.08);
+}
+.as-catnav-face { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-catnav-caret { flex: 0 0 auto; transition: transform 0.15s ease; }
+.as-railed[data-cat-open='true'] > .as-catnav-toggle > .as-catnav-caret { transform: rotate(180deg); }
+:root .as-railed[data-cat-nav='selector'] > :not(.as-rail):not(.as-catnav-toggle) { grid-column: 1; grid-row: 2; }
+:root .as-railed[data-cat-nav='selector'] > .as-rail { display: none; }
+/* The open list drops over the pane's area, as tall as that area and no
+   taller, and scrolls inside itself; the page never scrolls. */
+:root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > .as-rail {
+  display: flex; flex-direction: column; flex-wrap: nowrap; position: absolute; z-index: 5;
+  grid-column: 1; grid-row: 2; top: 0; bottom: auto; left: var(--modal-inset); right: var(--modal-inset);
+  max-height: 100%; overflow-x: hidden; overflow-y: auto; padding: 0.6rem; gap: 0.45rem;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+:root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > .as-rail > * { flex: 0 0 auto; width: 100%; min-height: var(--tap-floor); }
+/* While the list is open it is the only thing to choose: the pane under it
+   leaves the cursor's reach (input.js skips hidden controls) until it closes. */
+:root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > :not(.as-rail):not(.as-catnav-toggle) { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .as-catnav-caret { transition: none; } }

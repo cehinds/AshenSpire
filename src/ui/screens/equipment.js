@@ -69,7 +69,7 @@ import {
 // and styles/ui.css draws nothing for this screen any more.
 import {
   el, eyebrow, titleS, subtitle, statusText, flavour, prose, pill, tagChip, artWell, detailCard, optionCard, options, optionGrid,
-  face, row, button, chip, statStrip, kitLine, kitItem, blocker,
+  face, row, button, chip, statStrip, kitLine, kitItem, blocker, landControl,
 } from '../kit/index.js';
 
 const CFG = () => balance.equipment;
@@ -748,6 +748,9 @@ export function mountEquipment(host, {
   // The footer's primary slot (W1e "Equip if available"). draw() binds it to
   // the panel it just rendered; the Inventory's selection fills it.
   let setFooterPrimary = () => {};
+  // The views' kit categoryNav from the latest draw: its start() is the rail
+  // item on wide hosts and the [Category ▾] selector on compact ones.
+  let armouryNav = null;
   const shellCopy = () => ({
     title: t('armoury.title'), closeLabel: t('armoury.close'), railLabel: t('armoury.categories'),
   });
@@ -1952,6 +1955,7 @@ export function mountEquipment(host, {
     back.addEventListener('click', close);
     const rendered = renderArmouryPanel(panelModel, wrap, { back });
     setFooterPrimary = rendered.setPrimary;
+    armouryNav = rendered.nav;
     const panel = rendered.panel;
     panel.dataset.viewMode = viewMode().label;
     panel.dataset.pane = viewMode().pane;
@@ -2096,7 +2100,9 @@ export function mountEquipment(host, {
         }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
-        wrap.querySelector('[data-surface="armouryView"] [aria-selected="true"]')?.focus({ preventScroll: true });
+        // The selected view on a rail; the selector (which now names it) when
+        // the views are the compact [Category ▾] list.
+        landControl(armouryNav?.start());
       });
     }
   }
@@ -2110,9 +2116,12 @@ export function mountEquipment(host, {
 
   const focusArmouryDestination = () => {
     if (!destinationPlan || !wrap.isConnected) return;
-    const target = destinationPlan.region
+    let target = destinationPlan.region
       ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`)
       : wrap.querySelector(`[data-surface="armouryView"] [data-member="${destinationPlan.view}"]`);
+    // A compact host keeps the views in the closed [Category ▾] list: the
+    // selector, which names the destination view, is where focus lands.
+    if (target && !destinationPlan.region && !target.getClientRects().length) target = armouryNav?.start() || null;
     if (!target) return;
     target.focus({ preventScroll: true });
     target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });

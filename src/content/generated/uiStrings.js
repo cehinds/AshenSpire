@@ -885,6 +885,13 @@ export const uiStrings = [
     "tip": "Choose a section"
   },
   {
+    "id": "nav.categorySelector",
+    "extends": "",
+    "short": "{categories}: {current}",
+    "full": "Show the list of {categories}.",
+    "tip": ""
+  },
+  {
     "id": "inspector.section.summary",
     "extends": "",
     "short": "Summary",

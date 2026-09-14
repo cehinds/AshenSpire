@@ -171,6 +171,9 @@ for(const shape of SHAPES) {
  await screenshot(page,shape,'.combat-action-row','hud');
  await trustedClick(page,shape,'.pile.spent');
  check(await page.evaluate('document.querySelector(".spent-pile-modal [role=tab][aria-selected=true]").dataset.modalTab==="discard"'),shape.name+': starts in discard');
+ // W1h: a compact host keeps the piles in the kit's one [Pile ▾] selector
+ // (rule 11, kit/categoryNav.js); open it the way a finger does, then choose.
+ if (await page.evaluate('(()=>{const t=document.querySelector(".spent-pile-modal .as-catnav-toggle");return !!t&&t.getClientRects().length>0;})()')) await trustedClick(page,shape,'.spent-pile-modal .as-catnav-toggle');
  await trustedClick(page,shape,'.spent-pile-modal [data-modal-tab=exhaust]');
  check(await page.evaluate('document.querySelector(".spent-pile-modal [role=tab][aria-selected=true]").dataset.modalTab==="exhaust"'),shape.name+': exhaust separate');
  await screenshot(page,shape,'.spent-pile-modal','piles');
