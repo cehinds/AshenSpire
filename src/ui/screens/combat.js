@@ -74,7 +74,9 @@ import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { setStatusTrayOverflow } from '../components/statusTray.js';
 import { planCombatantStack } from '../models/CombatantStackModel.js';
+import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
+import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 
@@ -1108,7 +1110,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         wrap.appendChild(meterEl);
       }
     }
+    // WCM0: each row names its kind; the configured kinds wait for selection.
+    for (const row of wrap.children) {
+      markMeterRow(row, row.dataset.res === 'hp' ? 'hp' : row.classList.contains('procbar') ? 'buildup' : 'resource');
+    }
     return wrap;
+  }
+
+  function markMeterRow(node, kind) {
+    node.dataset.meterRow = kind;
+    if (meterRowSelectedOnly(kind)) node.dataset.selectedOnly = 'true';
+    return node;
   }
 
   // Block is a StatePill in the frost tone, filled: a number a player reads off
@@ -1176,6 +1188,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       });
       if (st.icon) chip.prepend(glyph(st.icon, { class: 'ic' }));
       bindAbilityBadge(chip, p, p.stanceId);
+      // WCM4: in formation the chip is the stance strip, after the buildup rows.
+      markMeterRow(chip, 'stance');
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
@@ -1207,7 +1221,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
       sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId),
       blockBadge: blockBadge(p),
-      name: labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }),
+      name: markMeterRow(labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
     };
@@ -1265,7 +1279,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const leading = [];
-      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentEl(enemy));
+      // WCO1: Inspect above the intent; the intent shows per the overlay config.
+      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentVisible('enemy') ? intentEl(enemy) : null);
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -1301,7 +1316,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         leading,
         sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy),
-        name: nm,
+        name: markMeterRow(nm, 'name'),
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
       };

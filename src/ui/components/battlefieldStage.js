@@ -82,6 +82,19 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);
+      // WCO2: the guard badge lives inside this zoomed host. Publish the zoom
+      // and the visible artwork's box (local px, relative to the host) so the
+      // badge can counter-zoom and anchor to the art rather than inheriting
+      // the sprite's scale (which left it a few px tall on phones).
+      const hostRect = sprite.getBoundingClientRect();
+      // The drawn frame, not its wrapper: an enemy's pose stage is narrower
+      // than the frame it paints, which overhangs the host.
+      const artRect = (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect();
+      sprite.style.setProperty('--sprite-zoom', String(scale / zoom));
+      sprite.style.setProperty('--art-left', `${(artRect.left - hostRect.left) / zoom}px`);
+      sprite.style.setProperty('--art-right', `${(artRect.right - hostRect.left) / zoom}px`);
+      sprite.style.setProperty('--art-top', `${(artRect.top - hostRect.top) / zoom}px`);
+      sprite.style.setProperty('--art-height', `${artRect.height / zoom}px`);
     }
     for (const frame of frames) fitStatusTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();

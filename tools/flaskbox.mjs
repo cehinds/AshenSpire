@@ -394,24 +394,31 @@ async function main() {
         // the tap a player's road gained: open the bar, then buy. The old
         // selector would find nothing and B0 would call the stock missing,
         // which is this tool's own smaller-confident-number failure.
+        // RE-AIMED AGAIN 2026-09-13 (W1d / W1v): the bars became a category
+        // rail and a purchase is select-then-act — the FLASKS rail item, a
+        // flask tile to select it, then the footer's Buy, whose beat is the
+        // same shopBuy review modal.
         await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
-        await until(`!!document.querySelector('[data-face="bar:flasks"]')`, 'shop');
+        await until(`!!document.querySelector('#shop-cat-flasks')`, 'shop');
         await wait(500);
-        // A PURCHASE IS A DECISION (shop.js arm(el, 'shopBuy')): the tap on a
-        // row opens the review modal and the second beat is its BUY IT —
-        // pressed, as a player presses it, never bypassed.
+        // A PURCHASE IS A DECISION (shop.js arm(primary, 'shopBuy')): the
+        // footer's Buy opens the review modal and the second beat is its
+        // BUY IT — pressed, as a player presses it, never bypassed.
         const bought = await ev(`(async () => { let n = 0;
           const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           for (let pass = 0; pass < 6; pass++) {
-            const face = document.querySelector('[data-face="bar:flasks"]');
-            if (face && face.getAttribute('aria-expanded') !== 'true') face.click();
+            const cat = document.querySelector('#shop-cat-flasks');
+            if (cat && cat.getAttribute('aria-selected') !== 'true') cat.click();
             // The shelf's rows are the flasks (a rendered collectible card each
-            // since 2026-09, no .flask-identity inside); an affordable one is
-            // armed as a shopBuy decision. NO BACKTICKS HERE: this is a template.
-            // The rendered collectible card replaced the old identity block.
+            // since 2026-09, no .flask-identity inside); an affordable one
+            // selects, and the footer arms its shopBuy decision. NO BACKTICKS
+            // HERE: this is a template.
             const row = [...document.querySelectorAll('#shop-flasks .class-pick')]
-              .find((el) => el.dataset.beatAction === 'shopBuy' && !el.classList.contains('locked'));
-            if (!row) break; row.click(); await sleep(250);
+              .find((el) => !el.classList.contains('locked'));
+            if (!row) break; row.click(); await sleep(150);
+            const primary = document.querySelector('#shop-primary');
+            if (!primary || primary.disabled || primary.dataset.beatAction !== 'shopBuy') break;
+            primary.click(); await sleep(250);
             const buy = document.querySelector('.confirmation-modal .confirmation-confirm');
             if (!buy) break; buy.click(); await sleep(400); n++; }
           return n; })()`);

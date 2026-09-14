@@ -39,6 +39,7 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { button, buttonRow, el, popover, row } from '../kit/index.js';
 import { t } from '../strings.js';
 import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
+import { MAP_HEADER_LAYOUT, sizeMapHeader } from '../components/mapHeader.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -103,8 +104,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
-      ${runHudHtml({ registries, run, meta, place: 'map', headerClass: 'map-header' })}
-      ${actRouteStripHtml({ title: actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
+      <!-- W4b: in its 10 vh map context, with the route strip laid out inside it (components/mapHeader.js). -->
+      ${runHudHtml({
+        registries, run, meta, place: 'map', headerClass: 'map-header', layout: MAP_HEADER_LAYOUT,
+        orientationHtml: actRouteStripHtml({ title: actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) }),
+      })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   // Bars, relics, flasks, Armoury and Menu: components/runHud.js fills the
@@ -114,6 +118,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange,
     remount: () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls }),
   });
+  // W4b's 10 vh header takes its height NOW, before the board mounts: the
+  // board checks a saved fit camera against the scene's height (see below).
+  sizeMapHeader(app);
 
   // ---- THE BOARD -------------------------------------------------------
   //
@@ -276,6 +283,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   let frameA = 0;
   let frameB = 0;
   const recenterAfterSettle = () => {
+    // The header follows the viewport first, so the camera settles against
+    // the scene height it will actually have.
+    if (app.querySelector('.mapscreen')) sizeMapHeader(app);
     cancelAnimationFrame(frameA);
     cancelAnimationFrame(frameB);
     frameA = requestAnimationFrame(() => {

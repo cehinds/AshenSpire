@@ -56,13 +56,17 @@ export function seatNameOf(registries, run) {
   return registries.seats.has(id) ? registries.seats.get(id).name : null;
 }
 
-export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header' }) {
+export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header', layout = '', orientationHtml = '' }) {
   const map = run.mapGraph;
   const className = registries.classes.get(run.class).name;
   const seatName = seatNameOf(registries, run);
   return hudShellHtml(runHudViewModel({
     place,
     headerClass,
+    // W4b: the map opts into its 10 vh header ('map-compact', sized by
+    // components/mapHeader.js); every other room passes nothing.
+    layout,
+    orientationHtml,
     cinders: run.cinders,
     // `Act <tier> · <seat name>` (SPEC §13.2) — the chip prints its value as
     // text, so the seat rides in the value rather than a new field.

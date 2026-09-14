@@ -10,7 +10,7 @@ import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { setTabRing, hasTabRing } from '../input.js';
+import { setTabRing, hasTabRing, focusElement } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
@@ -24,6 +24,8 @@ import {
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
+import { t } from '../strings.js';
+import { settingsNavigationPlan, settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
@@ -188,7 +190,9 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
     choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
     note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
-  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
+  // `selfEvident`: W1a shows help only where the effect is not obvious. The
+  // note stays on the row as the one place the sentence lives; it is not drawn.
+  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
@@ -197,10 +201,10 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal', selfEvident: true,
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
-  { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
+  { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
@@ -210,9 +214,9 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
     note: 'Show your relic icons in the map header bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true,
     note: 'Show the run seed in the map header bar.' },
   // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
   //
@@ -271,9 +275,9 @@ const ROWS = [
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
     note: 'Turn music and sound effects on. Music also has a quick toggle beside the HUD.' },
-  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
+  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume', selfEvident: true,
     note: 'Ambient score for the title, map, and battles.' },
-  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
+  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects', selfEvident: true,
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
   { cat: 'Advanced', advancedGroup: 'Debug', key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
@@ -502,10 +506,9 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
 export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
 
-const CATEGORY_LABELS = {
-  Display: 'Game',
-  Accessibility: 'Accessibility',
-};
+// W1a names the first category Display, as its id already is. (It read "Game"
+// from f17d9a2e; restoring that is one entry here.)
+const CATEGORY_LABELS = {};
 
 function categoryLabel(cat) {
   return CATEGORY_LABELS[cat] || cat;
@@ -646,7 +649,9 @@ export function settingOn(settings, key) {
 }
 
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
-  const note = rowNote(settings, r);
+  // W1a: help only where the effect is not obvious. Condition and status lines
+  // are feedback, and settingsRowShowsHelp always keeps them.
+  const note = settingsRowShowsHelp(r) ? rowNote(settings, r) : '';
   const condition = typeof r.note === 'function'
     ? ` data-setting-condition="${r.key}" aria-live="polite"`
     : '';
@@ -657,8 +662,8 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label">${r.label}</span>
-        <span class="ls-hint set-note"${status}>${note}</span>${extra}
+        <span class="ls-label">${r.label}</span>${note ? `
+        <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
   const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
   if (r.type === 'text') {
@@ -1182,8 +1187,10 @@ function categoryHtml(cat, settings, saves) {
       + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
-  const heading = `<header class="set-section-head"><span class="as-eyebrow">Settings</span><h3 class="as-title-m">${esc(categoryLabel(cat))}</h3>`
-    + `<p class="as-subtitle">${esc(categoryTip(cat))}</p></header><hr class="as-hairline">`;
+  // NO PANE HEADING (W1a). It printed "Settings / <category> / <tip>" under a
+  // door already titled Settings, beside a tab already naming the category.
+  // The selected tab is the pane's identity: the panel is labelled by it
+  // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
     const stored = settings[ADVANCED_CAT_KEY];
     const active = ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
@@ -1201,10 +1208,10 @@ function categoryHtml(cat, settings, saves) {
         + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
         + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
     }).join('');
-    return `${heading}<div class="as-pane-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>${groups}`;
+    return `<div class="as-pane-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>${groups}`;
   }
-  if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
-  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
+  if (h.mount) return `<div class="${h.mount}"></div>`;
+  return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
 }
 
 /**
@@ -1264,8 +1271,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const tabs = cats.map((cat) => `<button class="as-railitem set-tab${cat === current ? ' on' : ''}" type="button"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"${cat === current ? ' aria-current="true"' : ''}`
         + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
-      html = `<div class="as-railed set-railed"><div class="as-rail set-tabs" role="tablist" aria-label="Settings sections"`
-        + ` data-surface="settingsCategory">${tabs}</div>`
+      // W1a COMPACT: one selector above the pane, naming the selected
+      // category. It is drawn at every size and shown only when the model
+      // says `selector`; it opens the SAME tabs, so every tool, tooltip and
+      // ring that reads `.set-tab` reads one set either way.
+      const label = categoryLabel(current);
+      const selector = `<button type="button" class="as-railitem set-cat-select" id="set-cat-select"`
+        + ` aria-expanded="false" aria-controls="set-tabs"`
+        + ` aria-label="${esc(t('settings.nav.selector', { section: label }))}">`
+        + `<span class="set-cat-select-label">${esc(label)}</span>`
+        + `<span class="set-cat-select-glyph" aria-hidden="true">▾</span></button>`;
+      html = `<div class="as-railed set-railed" data-settings-nav="rail">${selector}`
+        + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
+        + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
     }
@@ -1459,12 +1477,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
   let claimedRing = false;
+  // Assigned below once the strip exists; declared here for the same reason.
+  let planNav = () => {};
+  let navObserver = null;
 
   // Auto's applied value moves with the window even though the setting does not.
   // ONE listener per open, not one per tab switch: the readout lives on a row
   // inside Display, so a player who visits Display four times would otherwise
   // collect four handlers that all write the same number.
-  const onResize = () => refreshApplied(container, settings);
+  const onResize = () => { refreshApplied(container, settings); planNav(); };
   window.addEventListener('resize', onResize);
   const onFullscreenChange = () => syncFullscreen();
   const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
@@ -1483,6 +1504,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     document.removeEventListener('fullscreenerror', onFullscreenError);
     document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
+    navObserver?.disconnect();
     obs.disconnect();
   });
   if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
@@ -1492,6 +1514,61 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (!grouped || !cats.length) return;
 
   // ---- the strip: selection, tooltips, and the ring ------------------------
+
+  const railed = container.querySelector('.set-railed');
+  const selectorBtn = container.querySelector('.set-cat-select');
+  const zoomOf = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  // Native focus and the unified pad cursor move together, or the pad keeps
+  // pointing at a control that has just been hidden.
+  const moveFocusTo = (el) => {
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    focusElement(el);
+  };
+  const navOpen = () => railed.hasAttribute('data-nav-open');
+  const setNavOpen = (open) => {
+    railed.toggleAttribute('data-nav-open', open);
+    selectorBtn.setAttribute('aria-expanded', String(open));
+  };
+  const syncSelector = () => {
+    const label = categoryLabel(current);
+    selectorBtn.querySelector('.set-cat-select-label').textContent = label;
+    selectorBtn.setAttribute('aria-label', t('settings.nav.selector', { section: label }));
+  };
+
+  // RAIL OR SELECTOR, asked of the model with this host's own box. Measured in
+  // local CSS px: rects are post-zoom, so they are divided back by --ui-zoom.
+  planNav = () => {
+    if (!railed.isConnected) return;
+    const zoom = zoomOf();
+    const was = railed.dataset.settingsNav;
+    const plan = settingsNavigationPlan({
+      hostWidthPx: container.getBoundingClientRect().width / zoom,
+      viewportHeightPx: window.innerHeight / zoom,
+      rootFontPx: parseFloat(getComputedStyle(document.documentElement).fontSize),
+      itemMinHeightPx: parseFloat(getComputedStyle(container.querySelector('.set-tab')).minHeight),
+      categoryCount: cats.length,
+      current: was,
+    });
+    if (!plan.measured || plan.mode === was) return;
+    railed.dataset.settingsNav = plan.mode;
+    const focused = document.activeElement;
+    const tabHadFocus = !!(focused && focused.classList?.contains('set-tab') && railed.contains(focused));
+    setNavOpen(false);
+    if (plan.mode === 'selector' && tabHadFocus) moveFocusTo(selectorBtn);
+    if (plan.mode === 'rail' && focused === selectorBtn) moveFocusTo(railed.querySelector('.set-tab.on'));
+  };
+  if (typeof ResizeObserver !== 'undefined') {
+    navObserver = new ResizeObserver(() => planNav());
+    navObserver.observe(container);
+  }
+  planNav();
+
+  selectorBtn.addEventListener('click', () => {
+    const open = !navOpen();
+    setNavOpen(open);
+    if (open) moveFocusTo(railed.querySelector('.set-tab.on'));
+  });
 
   function selectCategory(cat) {
     if (!cats.includes(cat) || cat === current) return;
@@ -1509,6 +1586,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.setAttribute('aria-selected', String(on));
     });
+    syncSelector();
     const panel = container.querySelector('.set-panel');
     if (!panel) return;
     panel.innerHTML = categoryHtml(cat, settings, saves);
@@ -1521,7 +1599,15 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }
 
   container.querySelectorAll('.set-tab').forEach((b) => {
-    b.addEventListener('click', () => selectCategory(b.dataset.member));
+    b.addEventListener('click', () => {
+      selectCategory(b.dataset.member);
+      // A pick from the opened selector list closes it and hands focus back
+      // to the selector, which now names the pick.
+      if (navOpen()) {
+        setNavOpen(false);
+        moveFocusTo(selectorBtn);
+      }
+    });
     // Law 3 clause 4: hover AND the pad/keyboard focus cursor. `title=` alone
     // does not satisfy it — touch and gamepad players never see one.
     attachTooltip(b, () => `<b>${esc(categoryLabel(b.dataset.member))}</b><br>${esc(categoryTip(b.dataset.member))}`);
@@ -1538,11 +1624,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // already held.
   if (!hasTabRing()) {
     claimedRing = true;
-    const step = (d) => {
-      const i = cats.indexOf(current);
-      const at = i < 0 ? 0 : i;
-      selectCategory(cats[(at + d + cats.length) % cats.length]);
-    };
+    const step = (d) => selectCategory(stepCategory(cats, current, d));
     setTabRing({ prev: () => step(-1), next: () => step(1) });
   }
 }
@@ -1573,16 +1655,17 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null })
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
-  const done = button({ label: 'Done', weight: 'primary', id: 'set-close' });
+  const done = button({ label: t('settings.done'), weight: 'primary', id: 'set-close' });
   const offline = onOffline ? button({ label: offlinePlay.title, id: 'settings-download' }) : null;
   offline?.addEventListener('click', onOffline);
+  // W1a header: the title and the exit, nothing above them. The old eyebrow
+  // ("Title") named the door it was opened from, which W1a does not carry.
   const door = openModal({
     size: 'lg',
     className: 'settings-modal',
     titleId: 'settings-modal-title',
-    eyebrow: 'Title',
-    title: 'Settings',
-    closeLabel: 'Close Settings',
+    title: t('settings.title'),
+    closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
     body: (host) => renderSettings(host, { settings, onChange, saves }),
     secondary: offline ? [offline] : [],

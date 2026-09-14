@@ -15,6 +15,7 @@ import { markUiComponent } from './uiComponents.js';
 import { modalHead } from './modalShell.js';
 import {
   el, blocker, face, pill, tagChip, artWell, titleS, eyebrow, prose, flavour, kitLine, kitItem, optionCard, options, statusText,
+  rail, railItem, modalFooter,
 } from '../kit/index.js';
 
 export function renderArmouryOverlay(model) {
@@ -25,58 +26,74 @@ export function renderArmouryOverlay(model) {
   return wrap;
 }
 
-export function renderArmouryPanel(model, wrap) {
+export function renderArmouryPanel(model, wrap, { back = null, primary = null } = {}) {
   const header = childModel(model, UI.armouryHeader);
   const switcher = childModel(header, UI.armouryViewSwitcher);
   const body = descendantModel(model, UI.armouryBody);
   const inventory = descendantModel(model, UI.armouryInventory);
   const cards = descendantModel(model, UI.armouryCardStrip);
   const stats = descendantModel(model, UI.armouryStatsPanel);
-  // THE ARMOURY IS AN XL DOOR ON THE KIT'S SHELL: the views are the head's tab
-  // strip (a tab strip is what marks a door as a place), the close is the
-  // IconButton in the same corner as every other door, and everything under
-  // the hairline is the surface's own body. The two splitters are the kit's
-  // `.as-splitter`; a refusal shown in place is the kit's Blocker.
+  // W1e: THE ARMOURY IS A W1 WORKSPACE ON THE KIT'S SHELL. The head carries
+  // the one title and the close IconButton in the corner every door uses. The
+  // views are the category rail (kit `.as-railed`: beside the pane on wide
+  // hosts, above it on narrow ones), never a strip of head tabs. The pane is
+  // the active view's body; the footer holds Back and, when the selected item
+  // has one, its action. The rail items keep the tab semantics and the
+  // `data-surface="armouryView"` / `data-member` / `data-modal-tab` hooks the
+  // tools read. A refusal shown in place is the kit's Blocker.
   wrap.innerHTML = `
-    <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-size="xl" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
+    <div class="modal armoury${model.properties.picking ? ' picking' : ''}" data-size="xl" data-wireframe="W1" data-wireframe-child="W1e" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-labelledby="armoury-title">
       <div class="modal-body armoury-shell-body">
-      <div class="armoury-subject armoury-content">
-        <div class="armoury-body">
-          <div class="armoury-left"></div>
-          <div class="armoury-right"></div>
+        <div class="as-railed armoury-railed">
+          <div class="as-pane armoury-pane" id="armoury-pane" role="tabpanel">
+            <div class="armoury-subject armoury-content">
+              <div class="armoury-body">
+                <div class="armoury-left"></div>
+                <div class="armoury-right"></div>
+              </div>
+              <section class="armoury-inventory"></section>
+            </div>
+            <div class="armoury-trays">
+              <div class="armoury-strip"></div>
+              <section class="armoury-stats-tray"></section>
+            </div>
+          </div>
         </div>
-        <section class="armoury-inventory"></section>
-      </div>
-      <div class="armoury-trays">
-        <div class="armoury-strip"></div>
-        <section class="armoury-stats-tray"></section>
-      </div>
       </div>
     </div>`;
+  const pane = wrap.querySelector('.armoury-pane');
   if (model.properties.notice) {
-    wrap.querySelector('.armoury-shell-body').prepend(blocker(model.properties.notice, { attrs: { class: 'armoury-notice', role: 'status' } }));
+    pane.prepend(blocker(model.properties.notice, { attrs: { class: 'armoury-notice', role: 'status' } }));
   }
+  const railNode = rail(switcher.properties.views.map((view) => railItem({
+    label: view.label, current: !!view.active, member: view.id, id: `armoury-view-${view.id}`, className: 'armoury-view',
+    attrs: { dataset: { modalTab: view.id, focusable: 'true' }, 'aria-controls': 'armoury-pane' },
+  })), { class: 'armoury-views', 'aria-label': switcher.accessibility.label, dataset: { surface: 'armouryView' } });
+  pane.before(railNode);
+  const selectedView = railNode.querySelector('[aria-selected="true"]');
+  if (selectedView) pane.setAttribute('aria-labelledby', selectedView.id);
   const head = modalHead({
-    tabs: switcher.properties.views.map((view) => ({ id: view.id, label: view.label, selected: !!view.active })),
+    title: header.properties.title,
+    titleId: 'armoury-title',
     showMenuButton: false,
-    closeLabel: 'Close Armoury',
+    closeLabel: header.properties.closeLabel,
   });
   head.classList.add('armoury-head');
-  head.setAttribute('aria-label', header.properties.title);
-  const strip = head.querySelector('.modal-tabs');
-  strip.classList.add('armoury-views');
-  strip.dataset.surface = 'armouryView';
-  strip.setAttribute('aria-label', switcher.accessibility.label);
-  strip.querySelectorAll('.modal-tab').forEach((tabButton, index) => {
-    const view = switcher.properties.views[index];
-    tabButton.dataset.member = view.id;
-    if (view.active) tabButton.classList.add('on');
-  });
   const close = head.querySelector('.modal-close');
   close.id = 'armoury-close';
   close.classList.add('armoury-close');
   wrap.querySelector('.armoury').prepend(head);
   const panel = wrap.querySelector('.armoury');
+  // The footer: Back bottom-left, the primary bottom-right; alone, Back spans
+  // the foot. `setPrimary` swaps the primary slot when the selection changes.
+  const setPrimary = (primaryNode) => {
+    const foot = modalFooter({ secondary: back ? [back] : [], primary: primaryNode, size: 'medium' });
+    foot.classList.add('armoury-foot');
+    const current = panel.querySelector(':scope > .armoury-foot');
+    if (current) current.replaceWith(foot); else panel.appendChild(foot);
+    return foot;
+  };
+  setPrimary(primary);
   markUiComponent(panel, model.component, model.variant);
   markUiComponent(wrap.querySelector('.armoury-head'), header.component, header.variant);
   markUiComponent(wrap.querySelector('.armoury-views'), switcher.component, switcher.variant);
@@ -95,6 +112,9 @@ export function renderArmouryPanel(model, wrap) {
     trays: wrap.querySelector('.armoury-trays'),
     close: wrap.querySelector('.armoury-close'),
     viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
+    rail: railNode,
+    pane,
+    setPrimary,
   };
 }
 

@@ -894,42 +894,40 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   outline-offset: -3px;
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
-/* The rail folds on a short height as well as a narrow width (the media
-   query below): a landscape phone is 844 wide and 390 tall, and a two-column
-   rail inside a door that is 86% of that leaves the panel a few rows. The
-   height answer is the decider's own `data-short`, written by main.js. */
-:root[data-short='true'] .modal .set-railed { display: flex; flex-direction: column; min-height: 0; }
-:root[data-short='true'] .modal .set-railed > .set-tabs {
-  display: flex; flex-direction: row; flex: 0 0 auto;
-  gap: .5rem; padding: .7rem;
-  overflow-x: auto; overflow-y: hidden;
+/* W1a CATEGORY NAVIGATION. Which one Settings wears is decided by
+   src/ui/models/SettingsWorkspaceModel.js and written as data-settings-nav;
+   this sheet measures nothing (it replaces a 600px media query and a
+   data-short rule that decided the same thing a second way).
+   rail      the kit NavRail beside the pane.
+   selector  one control above the pane naming the selected category; it opens
+             the same tab list in place (data-nav-open) and closes on a pick. */
+/* Specific enough to beat kit.css's `.as-railitem { display: block }`, which
+   loads after this sheet; the selector rule below is more specific still. */
+.set-railed > .set-cat-select.as-railitem { display: none; }
+.set-railed.as-railed[data-settings-nav='selector'] {
+  display: flex; flex-direction: column; min-height: 0;
+}
+.set-railed.as-railed[data-settings-nav='selector'] > .set-cat-select {
+  display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+  flex: 0 0 auto; width: auto; margin: var(--modal-inset) var(--modal-inset) 0;
+  min-height: var(--tap-floor);
+  color: var(--gold); border-color: var(--gold); background: rgba(var(--accent-rgb), 0.08);
+}
+.set-cat-select-glyph { flex: 0 0 auto; transition: transform .15s ease; }
+.set-railed[data-nav-open] .set-cat-select-glyph { transform: rotate(180deg); }
+.set-railed.as-railed[data-settings-nav='selector'] > .set-tabs.as-rail { display: none; }
+.set-railed.as-railed[data-settings-nav='selector'][data-nav-open] > .set-tabs.as-rail {
+  display: flex; flex-direction: column; flex: 0 1 auto; min-height: 0; max-height: 60%;
+  overflow-x: hidden; overflow-y: auto;
   border-right: 0; border-bottom: 1px solid var(--line);
-  scrollbar-width: thin;
 }
-:root[data-short='true'] .modal .set-railed > .set-tabs > .set-tab {
-  flex: 0 0 auto; width: auto; min-width: max-content;
-  min-height: var(--tap-floor); padding-inline: 1.2rem;
+.set-railed.as-railed[data-settings-nav='selector'] > .set-tabs.as-rail > .set-tab {
+  flex: 0 0 auto; width: 100%; min-height: var(--tap-floor);
 }
-:root[data-short='true'] .modal .set-railed > .set-panel { flex: 1 1 auto; min-height: 0; width: 100%; }
-@media (max-width: 600px) {
-  .modal .set-railed {
-    display: flex; flex-direction: column; min-height: 0;
-  }
-  .modal .set-railed > .set-tabs {
-    display: flex; flex-direction: row; flex: 0 0 auto;
-    gap: .5rem; padding: .7rem;
-    overflow-x: auto; overflow-y: hidden;
-    border-right: 0; border-bottom: 1px solid var(--line);
-    scrollbar-width: thin;
-  }
-  .modal .set-railed > .set-tabs > .set-tab {
-    flex: 0 0 auto; width: auto; min-width: max-content;
-    min-height: var(--tap-floor); padding-inline: 1.2rem;
-  }
-  .modal .set-railed > .set-panel {
-    flex: 1 1 auto; min-height: 0; width: 100%;
-  }
+.set-railed.as-railed[data-settings-nav='selector'] > .set-panel {
+  flex: 1 1 auto; min-height: 0; width: 100%;
 }
+@media (prefers-reduced-motion: reduce) { .set-cat-select-glyph { transition: none; } }
 @media (max-width: 600px) {
   .modal .set-panel .r-trail:has(> .choice-group) {
     flex-basis: 100%; width: 100%; max-width: 100%;

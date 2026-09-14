@@ -364,6 +364,13 @@ function glossaryEntry(registries, kind, id) {
   return { name: display.name, tooltip: statusTooltipText(display) };
 }
 
+/** W1h: the read-only reading a pile viewer shows beside its collection —
+ *  the same body the card's own inspect door and tooltip use. */
+export function cardDetailHtml(registries, ref) {
+  const def = resolveCard(registries, ref);
+  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
+}
+
 function cardTooltip(registries, def, tokens, liveCosts = null) {
   // Cost numbers come from the framework profile (or the preview's already
   // resolved live costs, when the card is in play) and the resource words from

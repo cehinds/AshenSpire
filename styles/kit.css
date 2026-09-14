@@ -1091,13 +1091,14 @@ input[type="range"] { min-height: var(--tap-floor); }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
 
-/* ═══ EVENT — body C on the page ═══════════════════════════════════════════ */
-/* The event is a decision: the door's head names it, the body is ArtWell +
-   prose + OptionCards, the foot carries the way on. It stands on the page
-   rather than over one, so it wears the door's box without the veil. */
-.event-door { width: 57rem; max-width: 100%; }
-.event-door .as-decide > .as-artwell { margin: 0 auto 1.2rem; }
-.event-door .as-decide > .as-prose { margin-bottom: 1.5rem; }
+/* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
+/* The head names the event and its {Status}; the narrative (ArtWell + prose)
+   stands beside the responses, stacked on narrow hosts; the foot holds
+   Continue, allowed once a response is taken. It stands on the page rather
+   than over one, so it wears the door's box without the veil. The frame is
+   the CHOICE BODY block below. */
+.event-narrative > .as-artwell { margin: 0 auto 1.2rem; }
+.event-narrative > .as-prose { margin: 0; }
 .event-door .as-options { text-align: left; }
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
@@ -1112,6 +1113,32 @@ input[type="range"] { min-height: var(--tap-floor); }
    390x844 on 2026-09-11 with the "fix" in the file. `.ev-choices` lifts this
    to (0,5,0), which is the smallest step that actually wins. */
 .event-door .ev-choices .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ═══ CHOICE BODY — the W1 frame for W1s Rest and W1u Event ═══════════════ */
+/* Shares arrive as custom properties from ChoiceBodyModel (wireframeUi
+   .choiceBody), divided by --ui-zoom so each is a share of the visible
+   viewport. The frame takes what the run HUD leaves, capped at its nominal
+   height; only the body scrolls. Fallbacks are first-paint values only. */
+.screen.choice-screen { justify-content: flex-start; gap: 0; padding-inline: var(--choice-outer-x, 2.4rem); padding-bottom: var(--choice-outer-y, 2.4rem); }
+.modal.choice-door { flex: 1 1 auto; min-height: 0; width: var(--choice-frame-width, 100%); max-width: 100%; max-height: var(--choice-frame-height, 100%); }
+.choice-door > .modal-head { flex-wrap: wrap; row-gap: 0.4rem; box-sizing: border-box; min-height: var(--choice-head-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-head .modal-head-id h2 { white-space: normal; }
+.choice-door > .modal-head > .modal-head-actions { flex: 0 1 auto; min-width: 0; align-self: center; }
+.choice-door > .modal-body { padding: var(--choice-inset-top, var(--modal-inset)) var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot { box-sizing: border-box; min-height: var(--choice-foot-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot > .modal-foot-actions { flex: 1 1 auto; margin-left: 0; }
+/* The two body slots: side by side on wide hosts, stacked on narrow ones. */
+.choice-body-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--choice-column-gap, 1.5rem); row-gap: var(--choice-row-gap, 1rem); align-items: start; }
+:root[data-layout='narrow'] .choice-body-columns { grid-template-columns: minmax(0, 1fr); }
+.choice-body-columns > * { min-width: 0; }
+.choice-body .class-row.shrine-option-list { width: 100%; max-width: none; margin-inline: 0; }
+/* W1s availability column: what arrival restored, then each choice's state. */
+.choice-status { display: grid; gap: 0.6rem; align-content: start; }
+.screen .choice-status .rest-refill { margin: 0; max-width: none; text-align: left; }
+.choice-status-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.choice-status-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.choice-status-row[data-state='available'] .choice-status-state { color: var(--gold); }
+.choice-status-row:is([data-state='unavailable'], [data-state='used']) .choice-status-state { color: var(--muted); }
 
 /* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
 /* The head is the kit's (tab strip = the views, IconButton close in the same
@@ -2469,39 +2496,104 @@ body.pad-mode .as-keycap.float { display: none; }
    StatStrip whose two ends are Eyebrows with a rail between them. It is a
    receipt — no pointer, nothing to tap — and it leaves the HUD's right gutter
    free so the utility rail never lands on it. */
-/* THE STRIP CLEARS THE BAND'S GRIP, which hangs half its own height below the
-   HUD's bottom edge (§ BAND: `translate(-50%, 50%)` of a 2.2rem pill = 11 px of
-   overhang). The map is the one screen with READ TEXT directly under the band,
-   and measured at 1200x730 ?shot=map the grip's box ran 183->188 straight over
-   the top of "ACT I — THE FALLOW MARCHES" (title top 183, grip bottom 188).
-   12 px of top padding is that overhang plus a hairline, and it is padding
-   rather than margin so the strip's own ground still meets the band's. */
-.mapscreen > .act-route-strip {
-  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
-  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
-  border-bottom: 1px solid var(--line); background: var(--bg-raise);
-  pointer-events: none; user-select: none; cursor: default;
+/* ═══ MAP HEADER — W4b's 10 vh band (owner: "10 vh for w4b") ══════════════
+   The map draws the SAME run HUD in a host context, `data-hud-layout=
+   "map-compact"`, with its route strip laid out inside it. Combat and the
+   rooms never set the attribute, so nothing below reaches them.
+   HEIGHT comes from ui/models/MapHeaderLayout.js through components/
+   mapHeader.js as unitless physical px: 10% of the visible height, never less
+   than one tap row plus its insets. Divided by the page zoom here, so it lands
+   on glass as computed.
+   COMPOSITION is a grid on `.hud-top`; the resource row dissolves into it so
+   the meters and the Armoury / Menu pair are cells of the same grid.
+     narrow  facts   | actions        wide  route | facts  | actions
+             meters  | actions              route | meters | actions
+             route   | actions
+   Text keeps a physical floor (10 px labels) rather than scaling with the band;
+   what yields first is detail — the act chip's seat name ellipsizes (the route
+   line carries the act's name), then the narrow route line drops. */
+.shared-hud[data-hud-layout="map-compact"] {
+  --mh-inset: calc(var(--map-header-inset-px, 4) * 1px / var(--ui-zoom, 1));
+  --mh-gap: calc(var(--map-header-gap-px, 2) * 1px / var(--ui-zoom, 1));
+  box-sizing: border-box; justify-content: center; gap: 0;
+  height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1)); min-height: 0;
+  padding: var(--mh-inset) 2.5%;
 }
-.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
-.mapscreen > .act-route-strip .map-orientation-progress {
-  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-  align-items: center; gap: 8px; margin: 0; width: 100%;
+.shared-hud[data-hud-layout="map-compact"] > .hud-top {
+  display: grid; height: 100%; min-height: 0; min-width: 0;
+  align-content: center; align-items: center;
+  column-gap: calc(12px / var(--ui-zoom, 1)); row-gap: var(--mh-gap);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info actions" "meters actions" "route actions";
 }
-.mapscreen > .act-route-strip .map-orientation-progress .as-eyebrow { font-size: 0.9rem; letter-spacing: 0.12em; }
-.mapscreen > .act-route-strip [data-role="boss"] { color: var(--ember); }
-.mapscreen > .act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
-.mapscreen > .act-route-strip .map-orientation-rail::after {
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] > .hud-top {
+  grid-template-columns: fit-content(32%) minmax(0, 1fr) auto;
+  grid-template-areas: "route info actions" "route meters actions";
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] > .hud-top {
+  grid-template-areas: "info actions" "meters actions";
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] .act-route-strip { display: none; }
+.shared-hud[data-hud-layout="map-compact"] .hud-resource-row { display: contents; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row { grid-area: info; min-width: 0; gap: calc(8px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
+.shared-hud[data-hud-layout="map-compact"] .hud-control-grid { grid-area: actions; align-self: center; }
+/* One fact line, still three tracks so Cinders stays centred. Each outer track
+   holds its own facts: a chip may shrink, and the class name and the act's
+   seat name ellipsize inside their track instead of running into Cinders
+   (the route strip carries the act's full name). Keys and numbers never do. */
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row > .as-statstrip { min-width: 0; margin: 0; flex-wrap: nowrap; }
+/* The trail FILLS its track and packs right, rather than the kit's
+   `justify-self: end` (§ BAND thirds), which sizes it to its max-content and
+   lets it run left over Cinders on a phone instead of yielding. */
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .hud-run-meta { justify-self: stretch; justify-content: flex-end; gap: 0 calc(8px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip { display: flex; flex: 0 0 auto; min-width: 0; white-space: nowrap; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) { flex: 0 1 auto; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip > .ck { flex: 0 0 auto; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) > .cv {
+  display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* One meter line: HP, MP and SP side by side instead of stacked. */
+.shared-hud[data-hud-layout="map-compact"] .resbars {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  column-gap: calc(10px / var(--ui-zoom, 1)); row-gap: 0;
+}
+.shared-hud[data-hud-layout="map-compact"] .resbars > .resline { min-width: 0; gap: calc(6px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
+/* THE ROUTE STRIP is a receipt — no pointer, nothing to tap: the act's name as
+   a Title·S beside (narrow) or over (wide) a StatStrip whose two ends are
+   Eyebrows with a rail between them. */
+.act-route-strip {
+  box-sizing: border-box; pointer-events: none; user-select: none; cursor: default;
+}
+.shared-hud[data-hud-layout="map-compact"] .act-route-strip {
+  grid-area: route; min-width: 0; width: auto; margin: 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, auto) minmax(4rem, 1fr); align-items: center;
+  column-gap: calc(8px / var(--ui-zoom, 1)); row-gap: calc(3px / var(--ui-zoom, 1));
+  border: 0; background: none;
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] .act-route-strip {
+  grid-template-columns: minmax(0, 1fr); align-self: center;
+  padding-inline-end: calc(12px / var(--ui-zoom, 1)); border-right: 1px solid var(--line);
+}
+.act-route-strip > .as-title-s {
+  margin: 0; min-width: 0; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.2;
+  letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(1.5rem, 1fr) auto;
+  align-items: center; gap: calc(6px / var(--ui-zoom, 1)); margin: 0; width: 100%; min-width: 0;
+}
+.act-route-strip .map-orientation-progress .as-eyebrow { font-size: max(0.9rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.2; letter-spacing: 0.1em; }
+/* Narrow: the title already stands at the rail's start, so ENTRANCE yields. */
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip [data-role="start"] { display: none; }
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip .map-orientation-progress { grid-template-columns: minmax(1.5rem, 1fr) auto; }
+.act-route-strip [data-role="boss"] { color: var(--ember); }
+.act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.act-route-strip .map-orientation-rail::after {
   content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
   border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
   transform: translateY(-50%) rotate(45deg);
-}
-@media (max-width: 700px) {
-  /* Percentage, never a viewport unit: the body is zoomed, so 80% of the Map
-     surface stays 80% on glass. The right margin is the HUD's utility gutter. */
-  .mapscreen > .act-route-strip {
-    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
-    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
-  }
 }
 /* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
    BESIDE the board and never over it (styles/map.css says why). The bar has no
@@ -2543,6 +2635,18 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 .flask-inspect-body { padding: var(--modal-inset); }
 .pile-body .as-cardgrid { justify-content: center; }
 .pile-empty { padding: 2rem; }
+/* W1h: rail | pane. The pane holds the pile beside the selected card's
+   reading; compact hosts put the rail above (kit .as-railed) and the reading
+   under the pile. Only the two columns scroll. */
+.spent-pile-modal .pile-body { display: flex; min-height: 0; }
+.spent-pile-modal .pile-body > .as-railed { flex: 1 1 auto; min-height: 0; width: 100%; }
+.spent-pile-modal .pile-pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; min-height: 0; padding-inline-start: 2.5vw; }
+.spent-pile-modal :is(.pile-collection, .pile-detail) { min-height: 0; overflow: auto; }
+.spent-pile-modal .pile-detail { padding: var(--modal-inset); border-left: 1px solid var(--line); font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.5; color: var(--ink-dim); }
+.spent-pile-modal .pile-detail .tt-title { font-size: calc(18px / var(--ui-zoom, 1)); font-weight: 600; color: var(--parchment); margin-bottom: .4em; }
+.spent-pile-modal .pile-detail .ti-meta { display: flex; gap: .6em; align-items: center; margin-bottom: .6em; }
+:root[data-layout='narrow'] .spent-pile-modal .pile-pane { grid-template-columns: minmax(0, 1fr); padding-inline-start: 0; }
+:root[data-layout='narrow'] .spent-pile-modal .pile-detail { border-left: 0; border-top: 1px solid var(--line); }
 
 /* THE BOSS SPLASH is Eyebrow + Title·L + Ornament on a near-black veil. The
    veil and the beats are FX (the animation lives in styles/combat.css); what is
@@ -2849,7 +2953,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-character :is(.armoury-fold, details) > summary { min-height: calc(48px / var(--ui-zoom, 1)); height: auto; }
 .armoury .armoury-character summary :is(.as-status, .fold-summary) { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .armoury .armoury-character summary { overflow: hidden; }
-.armoury .armoury-head .modal-tab { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); }
 .armoury .armoury-position-summary .on { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
 .armoury .armoury-position-summary :is(.od, .om) { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
 .armoury[data-responsive='phone'] .armoury-content, .armoury[data-responsive='phone'] .armoury-body { display: flex; flex-direction: column; gap: 1.2rem; }
@@ -2906,12 +3009,68 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    clip every hit spark to a border, and would look harmless in review because
    nothing else in this file mentions the layers. Hence this paragraph. */
 .armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
-/* ONE ROW OF TABS ON A PHONE. The 2x2 grid put the close control in a cell
-   beside the tabs and the second row of views under the first (measured
-   390x844, 2026-09-11). Four views at 13 px fit one row beside the close;
-   the strip scrolls sideways before it ever wraps. */
-.armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: flex; flex-wrap: nowrap; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.armoury[data-responsive='phone'] .armoury-head .modal-tab { flex: 1 0 auto; min-width: 0; padding-inline: .3rem; white-space: nowrap; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+/* W1e / W1n — THE ARMOURY ON THE W1 SHELL. One title and the close in the
+   head; the views are the category rail (kit .as-railed), beside the pane on
+   wide hosts and above it on narrow ones; the footer holds Back and the
+   selected item's action. Only the pane, or the pane's two columns, scrolls.
+   The narrow rail is a grid of equal cells: every category stays visible and
+   none scrolls sideways (the old head tab strip did, measured 390x844). */
+.armoury > .modal-body.armoury-shell-body { display: flex; flex-direction: column; overflow: hidden; padding: 0; gap: 0; }
+.armoury .armoury-shell-body > .as-railed.armoury-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+.armoury .armoury-railed > .armoury-pane { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* The active view fills the pane. The inventory page's `align-items: start`
+   (written for its old two-column grid) shrank Equipment to its content. */
+.armoury .armoury-railed .armoury-content > .armoury-body { align-self: stretch; }
+:root[data-layout='narrow'] .armoury .armoury-railed > .as-rail.armoury-views {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6rem), 1fr));
+  overflow: visible; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.6rem var(--modal-inset); gap: 0.4rem;
+}
+:root[data-layout='narrow'] .armoury .armoury-views > .as-railitem { text-align: center; padding-inline: 0.3rem; }
+/* The active pane's split: the item collection beside (wide) or above (phone)
+   the selected item's detail. Tracks come from wireframeUi.armoury through
+   --armoury-collection-track / --armoury-detail-track (equipment.js draw). */
+.armoury[data-view='hybrid'] .armoury-railed > .armoury-pane { overflow: hidden; }
+.armoury[data-view='hybrid'] .armoury-content,
+.armoury[data-view='hybrid'] .armoury-inventory { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.armoury .armoury-inventory > .ep-list.armoury-split {
+  flex: 1 1 auto; min-height: 0; display: grid; column-gap: 1.2rem;
+  grid-template-columns: minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.armoury .ep-list.armoury-split > .armoury-selection-context { grid-column: 1 / -1; grid-row: 1; }
+.armoury .ep-list.armoury-split > .armoury-item-collection { grid-column: 1; grid-row: 2; }
+.armoury .ep-list.armoury-split > .armoury-item-detail { grid-column: 2; grid-row: 2; border-left: 1px solid var(--line); padding-left: 1.2rem; }
+.armoury .ep-list.armoury-split > :is(.armoury-item-collection, .armoury-item-detail) { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.armoury .ep-list.armoury-split.is-empty > .armoury-item-collection { grid-column: 1 / -1; }
+.armoury[data-split='rows'] .armoury-inventory > .ep-list.armoury-split {
+  grid-template-columns: minmax(0, 1fr); row-gap: 0.8rem;
+  grid-template-rows: auto minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+}
+.armoury[data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-column: 1; grid-row: 3; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+.armoury .armoury-item-detail > .disc-reveal { margin: 0; }
+/* The shared equipment inspection is laid out for a 450px face (220px art
+   beside its details) and stacks only under the phone media rule below. The
+   Armoury's detail columns can be narrower than that on any viewport, so they
+   stack it the same way, measured on the column itself (a container query). */
+.armoury :is(.armoury-item-detail, .armoury-position-grid-detail) { container: armoury-detail / inline-size; }
+/* Scoped under .armoury so these outrank the base inspection rules that come
+   later in this file (same specificity would lose on source order). */
+@container armoury-detail (max-width: 480px) {
+  .armoury .card-inspection-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .armoury .card-inspection-art { width: 100%; max-width: 100%; margin-inline: auto; }
+  .armoury .card-inspection-art > :is(.equipment-poker-card, .card) { width: 160px; height: auto; aspect-ratio: 5 / 7; margin-inline: auto; }
+  .armoury .card-inspection-art > .inspection-tags { justify-content: center; }
+}
+.armoury .armoury-selection-facts { display: flex; flex-direction: column; gap: 0.4rem; margin-block: 0.6rem; }
+.armoury .armoury-selection-facts > .as-status { white-space: normal; overflow: visible; }
+/* W1e Equipment in its grid presentation: the slot tiles beside their detail. */
+.armoury .armoury-position-grid-groups {
+  display: grid; gap: 1.2rem; align-items: start;
+  grid-template-columns: minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+}
+.armoury .armoury-position-grid-groups > .armoury-position-grid-detail { position: sticky; top: 0; }
+.armoury[data-split='rows'] .armoury-position-grid-groups { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-split='rows'] .armoury-position-grid-groups > .armoury-position-grid-detail { position: static; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
 .equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
@@ -3021,6 +3180,60 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors:has(.poker-equipment-choice),
   #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
 }
+
+/* ═══ W1d / W1v — THE MERCHANT AS A WORKSPACE (screens/shop.js) ═══════════
+   One frame under the run band: W0 head, a category rail beside the pane
+   (above it on compact hosts), the W1v pane of offers and the selected
+   offer's detail, and the W0 foot. The page never scrolls; only the offers
+   and the detail do. ShopWorkspaceModel.js owns every number and shop.js
+   writes them as custom properties and data attributes. */
+.screen.shop-workspace { overflow: hidden; gap: 0; padding-inline: 2.5%; padding-bottom: 1rem; }
+.shop-frame {
+  --modal-inset: 1.4rem;
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+  width: 100%;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden;
+}
+.shop-frame > .modal-head { padding-block: 0.6rem; }
+/* The rail is its own scrollport: on a short host its items scroll inside it
+   and never run under the foot (measured at 844x390, where they did). */
+.shop-frame > .shop-railed { flex: 1 1 auto; min-height: 0; height: auto; grid-template-columns: var(--shop-rail-width, 17.25rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.shop-frame > .shop-foot-host > .modal-foot { padding-block: 0.6rem; }
+:root .shop-workspace[data-shop-rail='side'] .shop-railed > .shop-rail { flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+:root .shop-workspace[data-shop-rail='top'] .shop-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+:root .shop-workspace[data-shop-rail='top'] .shop-railed > .shop-rail {
+  flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 0.6rem var(--modal-inset);
+  border-right: 0; border-bottom: 1px solid var(--line); scrollbar-width: thin;
+}
+:root .shop-workspace[data-shop-rail='top'] .shop-rail > .as-railitem { flex: 0 0 auto; width: auto; flex-wrap: nowrap; }
+.shop-rail > .as-railitem.with-status > .as-status { color: inherit; opacity: 0.8; }
+.shop-pane { min-height: 0; overflow: hidden; padding-block: 0.8rem; }
+.as-pane > .shop-pane-head { flex: 0 0 auto; margin-bottom: 0.6rem; }
+.as-pane > .shop-body { flex: 1 1 auto; min-height: 0; display: grid; gap: var(--shop-gap, 1rem); }
+.shop-workspace[data-shop-pane='columns'] .shop-body { grid-template-columns: minmax(0, var(--shop-offers-fr, 1fr)) minmax(0, var(--shop-detail-fr, 1fr)); }
+.shop-workspace[data-shop-pane='stacked'] .shop-body { grid-template-rows: minmax(0, 1fr) auto; }
+.shop-workspace[data-shop-pane='stacked'] .shop-detail { max-height: var(--shop-detail-max, 50%); }
+.shop-body > .shop-detail[hidden] { display: none; }
+/* The two scrollports. `scrollbar-color` inherits from `.screen`, so the
+   product thumb reads the same here as on every other page. */
+.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.shop-offers > .shop-shelf { max-width: none; width: 100%; padding: 2px; }
+.shop-offers > .shop-services { display: flex; flex-direction: column; gap: 1rem; }
+.shop-offers > .shop-services .class-row, .shop-offers > .shop-services > #shop-remove { max-width: none; }
+/* A narrow `.class-row` stacks as a column, where the kit's `flex: 1 1 26rem`
+   on `.class-pick` becomes a 260 px HEIGHT: the remove, smith and sell tiles
+   each stood a third of a phone tall around one line of text (measured at
+   390x844). In the offers a tile keeps its content height. */
+:root[data-layout='narrow'] .shop-offers .class-row > .class-pick { flex: 0 0 auto; }
+.shop-offer.is-selected > .card, .shop-offer.is-selected > .shop-inspect-card, .shop-offer.is-selected > div > .card { outline: 2px solid var(--gold); outline-offset: 3px; }
+.shop-offer.class-pick.is-selected { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.shop-offer-avail { display: block; white-space: normal; color: var(--muted); }
+.shop-detail { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--panel); }
+.shop-detail > .shop-detail-name { margin: 0; }
+.shop-detail > .shop-detail-desc { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.4; }
+.shop-detail > .as-status { white-space: normal; text-align: left; align-self: flex-start; }
+.shop-detail > .shop-detail-price { color: var(--gold); }
+.shop-detail > .shop-detail-avail.is-available { color: var(--parchment); }
 /* Shared inspection: 270px artwork + 180px information within the 450px face. */
 .equipment-poker-card .epc-frame,
 .collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
@@ -3741,12 +3954,50 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
   width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
 }
+/* W4a short landscape: allocateCombatBands() chose rails. The footer row is
+   gone; the same WGC6 grid overlays the hand band and wraps the hand:
+   (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) > .hand-area {
+  grid-template-columns: var(--wireframe-rail-width) minmax(0, 1fr) var(--wireframe-rail-width);
+  grid-template-rows: minmax(0, 1fr); grid-template-areas: 'lead hand trail';
+  column-gap: var(--wireframe-rail-gap);
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] {
+  grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-pile-width) var(--footer-circle);
+  grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
+  row-gap: var(--footer-gap); align-content: stretch;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > * {
+  grid-row: 3; pointer-events: auto;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
 :root .combat[data-layout='formation'] .combatant .meters .bar .label {
   font-size: calc(12px / var(--ui-zoom, 1));
 }
 :root .combat[data-layout='formation'] .combatant .meters .bar.hp {
   height: max(.85rem, calc(14px / var(--ui-zoom, 1)));
 }
+/* WCM0: row heights from combatantMeterGeometry (the combat layout adapter).
+   HP carries the compact current/maximum at the value-text size; a secondary
+   or buildup row is too short for readable numbers, so its exact values live
+   in its tooltip and the inspector. Stance is a strip the size of HP. */
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters { gap: var(--combatant-meter-gap, calc(3px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .bar { height: var(--combatant-secondary-h, calc(10px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .bar { height: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .m-value { font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1; }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters [data-meter-row='resource'] .m-plate { display: none; }
+:root .combat[data-layout='formation']:not(.coop) .combatant .stance-chip[data-meter-row='stance'] {
+  display: flex; align-items: center; justify-content: center; gap: .25rem; box-sizing: border-box;
+  width: 100%; height: var(--combatant-stance-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); min-height: 0;
+  padding: 0 .3rem; border-radius: 3px; font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1;
+}
+/* Rows the configured list keeps for the selected combatant only. */
+:root .combat[data-layout='formation']:not(.coop) .combatant:not(.context-selected) [data-selected-only='true'] { display: none; }
 .card-inspection-modal .card-inspection-layout {
   display: grid; grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
   min-height: 0; height: 100%; gap: 2%; padding: 1rem;
@@ -3759,12 +4010,42 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .card-inspection-modal .card-inspection-details { min-height: 0; overflow-y: auto; overflow-x: hidden; }
 :root .combat[data-layout='formation'] .combatant .combatant-info { visibility: hidden; pointer-events: none; }
 :root .combat[data-layout='formation'] .combatant[data-inspect-ready='true'] .combatant-info { visibility: visible; pointer-events: auto; }
-:root .combat[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
+/* Solo combat reads the configured selected-only list (WCM0, data-selected-only);
+   co-op keeps its name-only rule. */
+:root .combat.coop[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
+/* WCO2: the guard badge sits outside the sprite on its role's side, at its
+   role's height (overlay.defenseAnchorByRole via the combat layout adapter);
+   the fallbacks are the same accepted geometry. Never mirrored. */
 :root .combat[data-layout='formation'] .combatant .sprite > .block-badge {
-  right: auto; left: calc(100% + .5rem); top: 12%; bottom: auto; transform: translateY(-50%);
+  right: var(--defense-right-player, auto); left: var(--defense-left-player, calc(100% + .5rem));
+  top: var(--defense-top-player, 12%); bottom: auto; transform: translateY(-50%);
 }
 :root .combat[data-layout='formation'] .combatant.enemy .sprite > .block-badge {
-  left: auto; right: calc(100% + .5rem); top: 88%;
+  left: var(--defense-left-enemy, auto); right: var(--defense-right-enemy, calc(100% + .5rem)); top: var(--defense-top-enemy, 88%);
+}
+/* The badge sits inside the zoomed sprite host (battlefieldStage). It undoes
+   that zoom and anchors to the visible art's box, published by the stage:
+   --s is 1 for the right edge and 0 for the left; --f the height fraction. */
+:root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge {
+  --s: var(--defense-right-player, 1); --f: var(--defense-fraction-player, .12);
+  /* Out of the host's flex row: a relative badge was offset from its place
+     after the art, which is why it floated far from the sprite. */
+  position: absolute;
+  zoom: calc(1 / var(--sprite-zoom, 1));
+  left: calc(var(--art-left, 0px) + (var(--art-right, 100%) - var(--art-left, 0px)) * var(--s) + var(--defense-gap, .5rem) * (2 * var(--s) - 1));
+  right: auto; bottom: auto;
+  top: calc(var(--art-top, 0px) + var(--art-height, 100%) * var(--f));
+  transform: translate(calc((var(--s) - 1) * 100%), -50%);
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  min-width: var(--defense-min, 3.5rem); min-height: var(--defense-min, 3.5rem);
+  font-size: max(1.2rem, var(--overlay-value-font, calc(13.2px / var(--ui-zoom, 1)))); line-height: 1;
+}
+:root .combat[data-layout='formation']:not(.coop) .combatant.enemy .sprite > .block-badge {
+  --s: var(--defense-right-enemy, 0); --f: var(--defense-fraction-enemy, .88);
+}
+/* WCO1: the intent keeps its minimum height and value font. */
+:root .combat[data-layout='formation']:not(.coop) .combatant-leading .intent {
+  min-height: max(calc(48px / var(--ui-zoom, 1)), var(--intent-min, 2.8rem));
 }
 :root .combat[data-layout='formation'] .combatant .sprite::before {
   content: ''; position: absolute; left: 50%; bottom: 0;
@@ -3773,10 +4054,43 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 .modal-foot-actions[data-action-count] {
   display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr);
-  width: 100%; min-width: 0; gap: .5rem;
+  width: 100%; min-width: 0; gap: var(--button-gap);
 }
 .modal-foot-actions[data-action-count] > button { width: 100%; min-width: 0; max-width: none; }
 .modal-foot-actions[data-action-count='0'] { display: none; }
+/* WCB0 BUTTON SIZES. Every value comes from wireframeUi.buttons through
+   ButtonSizeModel.buttonSizeTokens(), written onto :root by the kit; this
+   block only combines them. A reference rem is at least 16 physical px (the
+   hand and footer plans' unit), so heights neither shrink with the zoom nor
+   with the 10px root. Widths belong to the group that owns the action region:
+   the footer above divides it into equal shares after the shared gap (a sole
+   action fills it); a choice row gives every sibling one preset of the row,
+   capped by the equal share, and wraps labels rather than sizing to them. */
+:root {
+  --button-reference-rem: max(calc(16px / var(--ui-zoom, 1)), 1rem);
+  --button-gap: calc(var(--button-gap-rem, 0) * var(--button-reference-rem));
+  --button-minimum: calc(var(--button-minimum-rem, 0) * var(--button-reference-rem));
+}
+button[data-button-size$='-standard'] { --button-height-multiplier: var(--button-height-standard); }
+button[data-button-size$='-tall'] { --button-height-multiplier: var(--button-height-tall); }
+button[data-button-size$='-double'] { --button-height-multiplier: var(--button-height-double); }
+button[data-button-size] {
+  min-height: max(var(--tap-floor), calc(var(--button-standard-rem, 0) * var(--button-height-multiplier, 1) * var(--button-reference-rem)));
+}
+.as-choicerow {
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+  gap: var(--button-gap); width: 100%; min-width: 0; box-sizing: border-box;
+}
+.as-choicerow > button[data-button-size^='third-'] { --button-preset: var(--button-third); }
+.as-choicerow > button[data-button-size^='half-'] { --button-preset: var(--button-half); }
+.as-choicerow > button[data-button-size^='full-'] { --button-preset: var(--button-full); }
+.as-choicerow > button {
+  flex: 0 0 auto; box-sizing: border-box; min-width: 0; max-width: 100%;
+  width: min(var(--button-preset), calc((100% - (var(--button-count) - 1) * var(--button-gap)) / var(--button-count)));
+  white-space: normal; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.2;
+}
+.as-choicerow[data-button-count='1'] > button { min-width: min(var(--button-minimum), 100%); }
+.as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
 .modal-close { aspect-ratio: 1; flex: none; padding: 0; }
 :root[data-layout='narrow'] .as-railed { grid-template-columns: minmax(0,1fr); grid-template-rows: auto minmax(0,1fr); }
 :root[data-layout='narrow'] .as-railed > .as-rail { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
@@ -3801,4 +4115,64 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
   transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
+}
+
+/* ═══ W1 WORKSPACE — W1f Compendium, W1g Profile ═══════════════════════════ */
+/* The frame is the wireframe's share of the visible viewport; the shares are
+   wireframeUi.workspace, written as custom properties by
+   components/w1Workspace.js. Head and foot size to their controls, the body
+   takes the rest, and only the pane's two slots scroll: never the page. */
+:root .modal.w1-workspace[data-size] {
+  width: min(calc(100vw / var(--ui-zoom, 1) * var(--w1-frame-w)), 100%);
+  height: min(calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-frame-h)), 100%);
+  max-width: 100%;
+}
+.screen.compendium { padding: 0; overflow: hidden; }
+.w1-workspace > .modal-body { display: flex; min-height: 0; padding: 0; overflow: hidden; }
+.w1-workspace > .modal-body > .as-railed {
+  flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
+  grid-template-columns: clamp(var(--w1-rail-min), calc(100vw / var(--ui-zoom, 1) * var(--w1-rail)), var(--w1-rail-max)) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.w1-nav { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--line); }
+.w1-nav > .as-rail { flex: 1 1 auto; min-height: 0; border-right: 0; }
+.w1-nav-toggle { display: none; }
+.w1-workspace .as-railitem { min-height: var(--tap-floor); }
+.w1-workspace .as-railed > .as-pane { min-height: 0; overflow: hidden; }
+.w1-workspace .as-pane > .w1-split { flex: 1 1 auto; min-height: 0; }
+.w1-split {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
+  column-gap: calc(100vw / var(--ui-zoom, 1) * var(--w1-col-gap));
+}
+.w1-split > * { min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+/* W1f: the entry list scrolls its grid; the detail is the selected entry. */
+.w1-split > .cp-list { display: flex; flex-direction: column; overflow: hidden; }
+.cp-list > .cp-grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; }
+.cp-detail { display: flex; flex-direction: column; gap: 0.9rem; }
+.cp-detail > .as-artwell { align-self: center; flex: 0 0 auto; }
+.cp-detail:not([data-state='held']) > .as-artwell img { filter: brightness(0) invert(1); opacity: 0.72; }
+.cp-detail:not([data-state='held']) > .as-detailcard { border-style: dashed; }
+.cp-detail-card > .cp-mod { margin-top: 0.5rem; }
+/* W1g: identity beside the records. */
+.prof-identity, .prof-records { display: flex; flex-direction: column; gap: 0.9rem; }
+.prof-identity > .as-title-m { margin: 0; }
+.prof-records > .as-status:empty { display: none; }
+/* Compact: the same navigation above the pane, as one [Category ▾] selector
+   that opens the rail as a list under it (rule 11: no horizontal category
+   tabs, no accordion); the two slots stack. */
+:root[data-layout='narrow'] .w1-workspace > .modal-body > .as-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+:root[data-layout='narrow'] .w1-nav { position: relative; border-right: 0; border-bottom: 1px solid var(--line); padding: 0.6rem var(--modal-inset); }
+:root[data-layout='narrow'] .w1-nav-toggle { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; width: 100%; min-height: var(--tap-floor); }
+:root[data-layout='narrow'] .w1-nav > .as-rail { display: none; }
+:root[data-layout='narrow'] .w1-nav[data-open='true'] > .as-rail {
+  display: flex; flex-direction: column; position: absolute; z-index: 5; top: 100%; left: var(--modal-inset); right: var(--modal-inset);
+  max-height: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * 0.5); overflow: auto;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+/* While the list is open it is the only thing to choose: the pane under it
+   leaves the cursor's reach (input.js skips hidden controls) until it closes. */
+:root[data-layout='narrow'] .w1-nav[data-open='true'] + .as-pane { visibility: hidden; }
+:root[data-layout='narrow'] .w1-split {
+  grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
 }
