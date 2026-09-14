@@ -8,9 +8,109 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-14",
     "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
     "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
-    "build": "0.7.1.52",
+    "build": "0.7.1.53",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-1091",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "This record catches up with the second batch of rebuilt screens",
+    "detail": "Nothing you see changes. Nine changes merged since the last catch-up had no line here, because they were merged in a way the project's receipts check cannot see. Each now has its line with the build it shipped in, so the changelog under Settings, About lists them too.",
+    "build": "0.7.1.51",
+    "pullRequest": 1091,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1091"
+  },
+  {
+    "id": "pr-1089",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The project's own checks measure today's screens again",
+    "detail": "Nothing you see changes. Four of the project's checks had fallen behind the rebuilt screens: one looked for scrolling where the merchant no longer scrolls, one expected the combat buttons at the screen edges, one read an old version of the map's route strip, and one could not get past the title screen to reach Settings. Each now walks the game as it is.",
+    "build": "0.7.1.50",
+    "pullRequest": 1089,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1089"
+  },
+  {
+    "id": "pr-1090",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Equipment, relic and potion cards say what kind of thing they are",
+    "detail": "A weapon's card now shows its hand or requirements, its attack, defense and weight, and the card it grants; armour shows its poise; a relic says whether it works on its own or when something happens, and how often; a potion says what it heals, restores or grants. Only facts the game already knows are shown. Relic and potion cards no longer cut off their last line of text, and a relic's first line now reads \"Active while owned\" instead of calling every relic passive.",
+    "build": "0.7.1.50",
+    "pullRequest": 1090,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1090"
+  },
+  {
+    "id": "pr-1088",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The Smith's three services open as one workspace",
+    "detail": "Upgrading, extracting a card and installing a card now share one window: your items on a list at the left, or one selector on a phone, and the item you pick described beside it, step by step, with the Smithing Stone cost at the bottom. Back and the action share the bottom row. Every cost and confirmation is unchanged.",
+    "build": "0.7.1.49",
+    "pullRequest": 1088,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1088"
+  },
+  {
+    "id": "pr-1087",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Every list of categories behaves the same way on a phone",
+    "detail": "The merchant, the Armoury, the discard pile, the compendium, your profile and Settings now all fold their categories into one button on a narrow screen, which opens the full list, instead of a row of buttons you had to scroll sideways. In Settings, Escape closes that open list rather than Settings itself, and every toggle and choice is a comfortable size to tap.",
+    "build": "0.7.1.48",
+    "pullRequest": 1087,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1087"
+  },
+  {
+    "id": "pr-1084",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The top band shows your relics the same way everywhere, and one Potions list",
+    "detail": "Relics in combat and in the merchant, Shrine and event screens now look and open the same way. Your flasks and carried potions form one list with counts, so several of the same potion show as one entry, and \"1 charges\" now reads \"1 charge\". Using a potion asks exactly as before.",
+    "build": "0.7.1.47",
+    "pullRequest": 1084,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1084"
+  },
+  {
+    "id": "pr-1086",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Enemy intentions stay clear of the top band, and controls stay clear of a phone's notch",
+    "detail": "On a phone held sideways the top of each enemy's intention, and the information button above it, sat under the top band; on a wide screen the information button did too once an enemy was selected. Both now sit fully below it. On phones with a notch, the buttons beside your hand keep clear of the screen's edges.",
+    "build": "0.7.1.46",
+    "pullRequest": 1086,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1086"
+  },
+  {
+    "id": "pr-1079",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Every battlefield stands on its painted ground",
+    "detail": "Each place's painting is now fitted so its ground meets the fighters' feet, so no one floats above the floor in any scene. When a card needs a target, the enemies you can pick show one clear outline that stays readable on a phone and disappears once you have played the card.",
+    "build": "0.7.1.45",
+    "pullRequest": 1079,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1079"
+  },
+  {
+    "id": "pr-1078",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Explanations point at what they explain",
+    "detail": "An explanation now has a small arrow toward the thing you are hovering, opens below it when there is no room above, and waits its full second even if you brush over the same thing twice.",
+    "build": "0.7.1.44",
+    "pullRequest": 1078,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1078"
+  },
+  {
+    "id": "pr-1085",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Confirmations name what they will do",
+    "detail": "Buying, selling, burning a card, resting and quitting now ask a plain question, name the thing involved, and state exactly what it costs or loses, with Back on the left. Quitting names the run you are leaving, and burning a card is treated as the permanent choice it is.",
+    "build": "0.7.1.43",
+    "pullRequest": 1085,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1085"
   },
   {
     "id": "pr-1072",

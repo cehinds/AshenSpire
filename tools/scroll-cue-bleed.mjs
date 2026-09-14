@@ -51,47 +51,73 @@ const PHONES = [[360, 640], [390, 844], [412, 915]];
 const SHAPES = [...PHONES, [1200, 730]];
 const TEXTS = ['M', 'XL'];
 const UI_SIZES = ['s', 'xl'];
+// THE SHOP IS A W1 WORKSPACE (W1d/W1v, #1069): `.screen.shop-workspace` is
+// `overflow: hidden` and never travels; the offers list and the selected
+// offer's detail are the two scrollports (styles/kit.css § the two
+// scrollports). Each is its own surface so each port carries its own cue
+// verdict; `--surface shop` selects both. The ready selector waits for the
+// layout adapter's first plan (data-shop-pane) as well as the footer, so the
+// panes are measured at their settled size.
+const SHOP_READY = '.shop-workspace[data-shop-pane] #leave-shop';
 const SURFACES = [
   { name: 'customize', shot: 'customize', ready: '.cz-scroll', port: '.cz-scroll', axis: 'y' },
   { name: 'map', shot: 'map', extra: { shotSeed: 'SHOWCASE' }, ready: '.map-scroll .map-node', port: '.map-scroll', axis: 'y' },
-  { name: 'shop', shot: 'shop', ready: '#leave-shop', port: '.screen', axis: 'y' },
+  { name: 'shop-offers', group: 'shop', shot: 'shop', ready: SHOP_READY, port: '.shop-offers', axis: 'y' },
+  { name: 'shop-detail', group: 'shop', shot: 'shop', ready: SHOP_READY, port: '.shop-detail', axis: 'y' },
 ];
+const surfaceSelected = (surface) => !onlySurface || onlySurface === surface.name || onlySurface === surface.group;
+// A cold ?shot= boot on a loaded Windows host has been measured past 12 s
+// (the startup gate alone took 13.5 s to mount on 2026-09-13), so a 12 s
+// wait reported UNKNOWN about the machine, not the page.
+const NAV_WAIT_MS = 45000;
+// The kit rule that makes the two shop panes the scrollports. The artifact
+// twin refuses to run against a standalone that predates it.
+const SHOP_PANE_SEAM = '.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }';
 
 async function runSelftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
   const common = {
     tool: 'scroll-cue-bleed.mjs',
     args: ['--only', '360x640', '--surface', 'shop'],
-    timeoutMs: 180000,
+    timeoutMs: 300000,
     plants: [
       {
-        name: 'travel keeps moving while the product thumb paint disappears',
-        file: 'styles/ui.css',
-        find: '  scrollbar-width: thin; scrollbar-color: var(--line) transparent;',
-        replace: '  scrollbar-width: thin; scrollbar-color: transparent transparent;',
-        expectRed: /vertical travel without a visible right-edge cue/,
+        // The panes set no scrollbar-color of their own; they inherit the
+        // house thumb from their `.as-pane` (styles/kit.css § HOUSEKEEPING,
+        // "the scroll owners inside a door"), not from `.screen` as the
+        // comment beside the pane rule says — measured: a transparent
+        // `.screen` thumb left the offers cue at 152 component px. The plant
+        // enters on that rule's unique selector line so it stays one line.
+        name: 'offers travel keeps moving while the inherited house thumb paint disappears',
+        file: 'styles/kit.css',
+        find: '.modal-body, .as-body, .as-pane, .as-rail, .as-pop, .modal .set-panel {',
+        replace: '.modal-body, .as-body, .as-pane, .as-rail, .as-pop, .modal .set-panel { scrollbar-color: transparent transparent !important;',
+        expectRed: /shop-offers .*vertical travel without a visible right-edge cue/,
       },
       {
-        name: 'a forced cue stands after shop content is made to fit',
+        name: 'a forced cue stands in the offers pane after its shelves are made to fit',
         file: 'styles/ui.css',
-        append: `#shop-cards, #shop-items, #remove-opt, #leave-shop { display: none !important; }
-.screen::after { content: ''; position: fixed; right: 0; top: 160px; width: 8px; height: 48px; background: var(--line); }`,
-        expectRed: /cue stands with no scroll/,
+        append: `.shop-offers > .shop-shelf { display: none !important; }
+.shop-offers { position: relative; }
+.shop-offers::after { content: ''; position: absolute; right: 0; top: 8px; width: 8px; height: 48px; background: var(--line); }`,
+        expectRed: /shop-offers .*cue stands with no scroll/,
       },
       {
-        name: 'the retired inner shop scrollport traps the terminal cost tag again',
-        file: 'styles/ui.css',
-        find: ":root[data-layout='narrow'] #shop-cards.reward-row { max-width: 100%; }",
-        replace: ":root[data-layout='narrow'] #shop-cards.reward-row { overflow-x: auto; max-width: 100%; }",
-        expectRed: /span\.mini leaf remains beyond y max endpoint/,
+        name: 'the offers pane keeps its travel but draws no scrollbar at all',
+        file: 'styles/kit.css',
+        // Literal, not SHOP_PANE_SEAM: tools/plantsites.mjs can only verify a
+        // find-string it can read.
+        find: '.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }',
+        replace: '.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }',
+        expectRed: /shop-offers .*vertical travel without a visible right-edge cue/,
       },
     ],
   };
   const source = await doorSelftest(common);
   if (source || selftestSource) return source;
   const rootArtifact = resolve(ROOT, 'AshenSpire.html');
-  if (!existsSync(rootArtifact) || !readFileSync(rootArtifact, 'utf8').includes("#shop-cards.reward-row { max-width: 100%; }")) {
-    console.error('scroll-cue-bleed --selftest: UNKNOWN — AshenSpire.html does not contain the current #29 seam; regenerate the standalone once after the artifact lane clears.');
+  if (!existsSync(rootArtifact) || !readFileSync(rootArtifact, 'utf8').includes(SHOP_PANE_SEAM)) {
+    console.error('scroll-cue-bleed --selftest: UNKNOWN — AshenSpire.html does not contain the W1d shop pane seam; regenerate the standalone once after the artifact lane clears.');
     return 2;
   }
   const artifactPlants = common.plants.map((p) => ({
@@ -371,7 +397,7 @@ async function main() {
     };
     const until = async (expression, label) => {
       const start = Date.now();
-      while (Date.now() - start < 12000) { if (await ev(expression).catch(() => false)) return; await wait(120); }
+      while (Date.now() - start < NAV_WAIT_MS) { if (await ev(expression).catch(() => false)) return; await wait(120); }
       throw new Error(`timed out waiting for ${label}`);
     };
     const urlFor = (shot, settings, extra = {}) => {
@@ -391,6 +417,10 @@ async function main() {
     const cue = async (selector, axis, cueOff = false) => {
       if (cueOff) await ev(`(() => { let s=document.getElementById('__cue_off'); if(!s){s=document.createElement('style');s.id='__cue_off';document.head.appendChild(s)} s.textContent=${JSON.stringify(`${selector}{scrollbar-color:transparent transparent!important}${selector}::-webkit-scrollbar-thumb{background:transparent!important;border-color:transparent!important;box-shadow:none!important}${selector}::after{display:none!important}`)}; return true })()`);
       else await ev(`document.getElementById('__cue_off')?.remove(); true`);
+      // A port that is absent or unpainted cannot be photographed; say so
+      // rather than cropping a zero-size clip and reporting noise as a cue.
+      const shown = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e) return false; const r=e.getBoundingClientRect(); return r.width>1&&r.height>1; })()`);
+      if (!shown) throw new Error(`scrollport ${selector} is not rendered`);
       const meta = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); const r=e.getBoundingClientRect(); const axis=${JSON.stringify(axis)}; e.scrollLeft=0;e.scrollTop=0; return {x:r.left,y:r.top,w:r.width,h:r.height,vw:innerWidth,vh:innerHeight,travel:axis==='x'?e.scrollWidth-e.clientWidth:e.scrollHeight-e.clientHeight}; })()`);
       const band = 12;
       const clip = axis === 'x'
@@ -422,7 +452,7 @@ async function main() {
           // The wide control needs one supported profile, not four duplicate cells.
           if (!phone && (textSize !== 'M' || uiScale !== 's')) continue;
           for (const surface of SURFACES) {
-            if (onlySurface && onlySurface !== surface.name) continue;
+            if (!surfaceSelected(surface)) continue;
             const appliedUi = phone ? uiScale : 'auto';
             const settings = { textSize, uiScale: appliedUi };
             await cdp.send('Page.navigate', { url: urlFor(surface.shot, settings, surface.extra) }, S);
@@ -449,7 +479,8 @@ async function main() {
             // repair: the known-bad is 360x640 at Text M / UI S. The broader
             // XL/XL portrait and M/Auto desktop captures remain the acceptance
             // overview; this extra cell is the defect itself, not a substitute.
-            const shopBeforeAfter = width === 360 && surface.name === 'shop'
+            // Both shop ports share one page, so the offers row owns the photo.
+            const shopBeforeAfter = width === 360 && surface.name === 'shop-offers'
               && textSize === 'M' && uiScale === 's';
             if (shopBeforeAfter || (phone && textSize === 'XL' && uiScale === 'xl') || (!phone && textSize === 'M')) {
               await fullShot(`${surface.name}-${width}x${height}-text-${textSize.toLowerCase()}-ui-${appliedUi}`);
@@ -493,7 +524,7 @@ async function main() {
       console.error(`\nRED — ${failures.length} focused failure(s)`); for (const f of failures) console.error(`  - ${f}`);
     } else console.log('\nGREEN — every painted box is recoverable and every traveling port has a measured cue.');
     console.log('\nBOUNDARY: Chromium only; UI size S/XL, Text M/XL, three portrait shapes plus 1200x730 Auto control.');
-    console.log('          .hand qualifies horizontal/bottom-band only; map qualifies vertical/right-edge.');
+    console.log('          .hand qualifies horizontal/bottom-band only; map and the two W1d shop panes qualify vertical/right-edge.');
     return failures.length ? 1 : 0;
   } finally {
     if (cdp) cdp.close(); await dropBrowser(); if (server) server.close();
