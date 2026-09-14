@@ -2707,7 +2707,7 @@
       "id": "WCT0",
       "name": "Tooltip components",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2721,6 +2721,14 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
+          "existsOnImplementationBase": true
         }
       ],
       "verification": {
@@ -2730,7 +2738,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. One presenter (tooltip.js) with two panels; its four measured rungs map onto WT1/WT2/WT3 through wireframeUi.tooltip (no second size system) and stamp data-wireframe. WT0.arrow added (TooltipPlacementModel.tooltipArrow, kit.css #tooltip::after). Browser-measured with CDP emulation at 1440x860, 1280x800, 390x844, 375x667 and 844x390; verification states stay pending until the owner reviews. See approved-wireframes.md, Tooltips."
     },
     {
       "id": "WCT1",
@@ -2760,7 +2769,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js; not changed in this task."
+      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js. Branch claude/tooltip-wireframes-wt: a repeated hover/focus on the element already counting down no longer restarts its timer; the arrow is pointed after every placement and on resize; fitRung stamps data-wireframe. Delays, cancellation paths, levels and the stick are otherwise unchanged."
     },
     {
       "id": "WGC0",
@@ -4348,17 +4357,21 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default; not changed in this task."
+      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default. Branch claude/tooltip-wireframes-wt: 'above' now flips below before going sideways (fx.js placeAnchored), the WT0 arrow follows the trigger after flip/shift, and a repeated event keeps the pending timer. Focus keeps its own 500 ms and tap keeps select-then-explain; both differ from the spec's 1s line and are left for the owner."
     },
     {
       "id": "WT1",
       "name": "Compact tooltip",
       "parent": "WT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -4369,17 +4382,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. The presenter's small rung draws WT1 (wireframeUi.tooltip.wireframeByRung) and the panel carries data-wireframe=\"WT1\". Width stays the rung's 25.5rem, not the 12vw/18vw/36vw nominal; owner to decide."
     },
     {
       "id": "WT2",
       "name": "Standard tooltip",
       "parent": "WT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -4390,17 +4408,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. The presenter's medium rung (also its fallback) draws WT2 and the panel carries data-wireframe=\"WT2\". Width stays the rung's 31.5rem, not the 20vw/30vw/60vw nominal; owner to decide."
     },
     {
       "id": "WT3",
       "name": "Expanded tooltip",
       "parent": "WT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -4411,7 +4434,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. The presenter's large and expanded rungs both draw WT3 (same 37.5rem width; expanded only reaches further down) and the panel carries data-wireframe=\"WT3\". Content past the expanded rung still scrolls inside the panel unless the surface routes it to inspection (expand: true); owner to decide."
     }
   ],
   "rebasedImplementationCommit": "b07b8747",
