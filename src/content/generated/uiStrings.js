@@ -591,6 +591,160 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.title",
+    "extends": "",
+    "short": "Merchant",
+    "full": "The wandering merchant's stall.",
+    "tip": "Merchant"
+  },
+  {
+    "id": "shop.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "Leave the merchant and return to the road.",
+    "tip": "Leave"
+  },
+  {
+    "id": "shop.purse",
+    "extends": "",
+    "short": "{cinders} cinders",
+    "full": "You carry {cinders} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.rail.aria",
+    "extends": "",
+    "short": "Merchant shelves",
+    "full": "Choose which of the merchant's shelves to browse.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.services",
+    "extends": "",
+    "short": "SERVICES",
+    "full": "Work the merchant or his smith does on what you already own.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.forSale",
+    "extends": "",
+    "short": "{n} for sale",
+    "full": "{n} offers on this shelf.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.soldOut",
+    "extends": "",
+    "short": "sold out",
+    "full": "Nothing is left on this shelf.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.willTake",
+    "extends": "",
+    "short": "{n} he will take",
+    "full": "The merchant will buy {n} of your goods.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.nothingWanted",
+    "extends": "",
+    "short": "nothing he wants",
+    "full": "The merchant wants none of what you carry.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.servicesOpen",
+    "extends": "",
+    "short": "{n} of {total} open",
+    "full": "{n} of {total} services are open to you now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.price",
+    "extends": "",
+    "short": "{cost} cinders",
+    "full": "Costs {cost} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.price.back",
+    "extends": "",
+    "short": "{price} cinders back",
+    "full": "The merchant pays {price} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.ready",
+    "extends": "",
+    "short": "Available",
+    "full": "You can take this now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.cinders",
+    "extends": "",
+    "short": "Not enough cinders",
+    "full": "You cannot afford this yet.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.full",
+    "extends": "",
+    "short": "Flask slots full",
+    "full": "Every flask slot is taken.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.locked",
+    "extends": "",
+    "short": "Unavailable",
+    "full": "This service is not open to you now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.buy",
+    "extends": "",
+    "short": "Buy · {cost} cinders",
+    "full": "Buy the selected offer for {cost} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.sell",
+    "extends": "",
+    "short": "Sell · {price} cinders",
+    "full": "Sell the selected item for {price} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.open",
+    "extends": "",
+    "short": "Open",
+    "full": "Open the selected service.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.remove",
+    "extends": "",
+    "short": "Choose a card",
+    "full": "Show the deck cards the merchant can burn.",
+    "tip": ""
+  },
+  {
+    "id": "shop.detail.none",
+    "extends": "",
+    "short": "Nothing selected",
+    "full": "Select an offer to read it here.",
+    "tip": ""
+  },
+  {
+    "id": "shop.detail.aria",
+    "extends": "",
+    "short": "Selected offer",
+    "full": "The offer you selected and what it costs.",
+    "tip": ""
+  },
+  {
     "id": "customRun.seat.group",
     "extends": "",
     "short": "First seat",
