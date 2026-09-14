@@ -290,6 +290,363 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "possession.effects.package",
+    "extends": "",
+    "short": "Granted card package",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.modifiers",
+    "extends": "",
+    "short": "Granted modifiers",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.relic",
+    "extends": "",
+    "short": "Relic effect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.use",
+    "extends": "",
+    "short": "Use effect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.package.art",
+    "extends": "",
+    "short": "Weapon art: {name}",
+    "full": "The weapon art card this armament grants while equipped.",
+    "tip": ""
+  },
+  {
+    "id": "possession.package.none",
+    "extends": "",
+    "short": "No granted cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.modifiers.none",
+    "extends": "",
+    "short": "No granted modifiers",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.hand.either",
+    "extends": "",
+    "short": "Either hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.mode.passive",
+    "extends": "",
+    "short": "Passive",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.mode.triggered",
+    "extends": "",
+    "short": "Triggered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.purpose.healing",
+    "extends": "",
+    "short": "Healing",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.purpose.resource",
+    "extends": "",
+    "short": "Resource",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.purpose.utility",
+    "extends": "",
+    "short": "Utility",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.passive",
+    "extends": "",
+    "short": "Passive: {list}",
+    "full": "Authored passive modifiers. They apply while the relic is owned.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.affects",
+    "extends": "",
+    "short": "Affects: {list}",
+    "full": "The resources and statistics this relic's passive modifiers change.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.trigger",
+    "extends": "",
+    "short": "Trigger: {list}",
+    "full": "The events that fire this relic. Any further condition is stated in its effect text.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.limit",
+    "extends": "",
+    "short": "Limit: {list}",
+    "full": "How often each triggered effect can fire. No cooldown is authored.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.maxResource",
+    "extends": "",
+    "short": "Max {resource} {amount}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.resourceTier",
+    "extends": "",
+    "short": "Max {resource} {amount} per {points} {attribute}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.schoolDamage",
+    "extends": "",
+    "short": "{school} damage {amount}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.schoolStat",
+    "extends": "",
+    "short": "{school} damage",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.school.magic",
+    "extends": "",
+    "short": "Magic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.runeGainMult",
+    "extends": "",
+    "short": "Cinder gain",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.eliteExtraCardReward",
+    "extends": "",
+    "short": "Elite card choices",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.poiseThresholdAdd",
+    "extends": "",
+    "short": "Poise threshold",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.flaskPowerMult",
+    "extends": "",
+    "short": "Flask strength",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.revealUnknown",
+    "extends": "",
+    "short": "Unknown locations",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.shrineHealMult",
+    "extends": "",
+    "short": "Shrine healing",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.shrineNoRest",
+    "extends": "",
+    "short": "Shrine rest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.powerCostReduction",
+    "extends": "",
+    "short": "Power card cost",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.damageDealt",
+    "extends": "",
+    "short": "Damage dealt",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.combatStart",
+    "extends": "",
+    "short": "Combat start",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.healed",
+    "extends": "",
+    "short": "Healed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.playerTurnStart",
+    "extends": "",
+    "short": "Turn start",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.hpLost",
+    "extends": "",
+    "short": "HP lost",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.cardPlayed",
+    "extends": "",
+    "short": "Card played",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.enemyStaggered",
+    "extends": "",
+    "short": "Enemy staggered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.meterFilled",
+    "extends": "",
+    "short": "Meter filled",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.enemyDied",
+    "extends": "",
+    "short": "Enemy defeated",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.limit.once",
+    "extends": "",
+    "short": "Once per combat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.limit.perTurn",
+    "extends": "",
+    "short": "{count} per turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.limit.none",
+    "extends": "",
+    "short": "No limit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.heal.percent",
+    "extends": "",
+    "short": "Heals {pct}% of max HP",
+    "full": "The authored base amount before relic and flask modifiers. Healing never exceeds max HP.",
+    "tip": ""
+  },
+  {
+    "id": "possession.heal.flat",
+    "extends": "",
+    "short": "Heals {amount} HP",
+    "full": "The authored base amount before relic and flask modifiers. Healing never exceeds max HP.",
+    "tip": ""
+  },
+  {
+    "id": "possession.resource.restore",
+    "extends": "",
+    "short": "Restores {amount} {resource}",
+    "full": "The authored base amount before relic and flask modifiers.",
+    "tip": ""
+  },
+  {
+    "id": "possession.utility.status",
+    "extends": "",
+    "short": "{status} {stacks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.utility.block",
+    "extends": "",
+    "short": "Block {amount}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.utility.line",
+    "extends": "",
+    "short": "{effect} · {target}",
+    "full": "The effect this potion applies and who receives it.",
+    "tip": ""
+  },
+  {
+    "id": "possession.target.self",
+    "extends": "",
+    "short": "Self",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.target.enemy",
+    "extends": "",
+    "short": "Enemy",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.charges",
+    "extends": "",
+    "short": "Charges: {count}",
+    "full": "Charges remaining on this carried potion.",
+    "tip": ""
+  },
+  {
     "id": "reward.flask.blocked",
     "extends": "",
     "short": "A {name} — but your flask slots are full. It stays in the mud.",
