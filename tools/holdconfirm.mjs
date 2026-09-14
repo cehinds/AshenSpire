@@ -497,6 +497,13 @@ async function main() {
   // the Smith must hold it. A tool that only counted would pass on the
   // one-tap regression, which is the one that cost a player a choice.
   const smithHolds = () => ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`);
+  // W1i (2026-09-14): on a compact host the Smith's item list is folded into
+  // one selector above the pane. A thumb opens it before it can reach a
+  // candidate; opening it spends no beat on the candidate itself.
+  const openSmithList = async () => {
+    const p = await pointOf('.smith-upgrade-modal .as-catnav-toggle');
+    if (p) { await press(p, 30); await wait(250); }
+  };
   const cardIsLit = () => ev(`!!document.querySelector('.smith-candidate-card.inspection-selected')`);
   const selectSmithCandidate = async (p, { assert = null } = {}) => {
     await press(p, 30); await wait(300);
@@ -1117,7 +1124,7 @@ async function main() {
       // third reaches the card's own choose) — measured 2026-09-11, and a
       // finding for the owner, not this census's to hide: the census presses
       // the card as many times as a thumb has to, and the count is on record.
-      for (const opener of ['#shop-cat-services', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '#shop-cat-sell', '[data-title-action="load"]']) {
+      for (const opener of ['#shop-cat-services', '#smith-opt', '.smith-candidate-region .as-catnav-toggle', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '#shop-cat-sell', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1480,6 +1487,7 @@ async function main() {
       // must explain the block through the same review modal, publish the ARIA
       // state, and never acquire a direct hold-commit path.
       await press(await pointOf('#smith-opt'), 30); await wait(300);
+      await openSmithList();
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const cardP = await pointOf('.smith-candidate-card');
       if (!cardP) ok(`the Smith modal offers an armament candidate`, false, 'no .smith-candidate-card — nothing to review');
@@ -1539,6 +1547,7 @@ async function main() {
       // commit directly, and the shared modal owns the preview and target laws.
       await openShot('rest', { shotSmithingStones: 1 });
       await press(await pointOf('#smith-opt'), 30); await wait(300);
+      await openSmithList();
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       await selectSmithCandidate(await pointOf('.smith-candidate-card'), { assert: ok });
       const ready = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
@@ -1669,6 +1678,7 @@ async function main() {
       const sp = await step('#smith-opt', 'the Smith opener');
       if (!sp) continue;
       await press(sp, 30); await wait(250);
+      await openSmithList();
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const cp = await step('.smith-candidate-card', 'the first Smith candidate');
       if (!cp) continue;

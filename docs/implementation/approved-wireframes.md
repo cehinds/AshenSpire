@@ -1893,3 +1893,121 @@ gamepad was attached; B was driven as the poller's synthetic Escape. Galaxy
 S24 was not measured. The unbundled module route (`/?shot=…`) took about
 21 s to mount the Shop on this loaded machine, and drive C: was nearly full
 during the browser runs.
+## Smith services on the W1 workspace (W1i / W1j / W1k)
+
+Branch `claude/smith-w1ijk-workspace`, based on dev `8797fc9a`. The Smith's
+three doors (Upgrade an Item, Extract a Card, Seat a Card) are W1 children
+with no categories, so they draw no category rail. One pure model,
+`src/ui/models/SmithWorkspaceModel.js`, decides the item rows, the compact
+selector's face and which pane slots each service registers; the item
+column's share is `wireframeUi.smith`. Every fact still comes from
+`SmithSelectionModel` and `MountServiceModel`, and every commit still goes
+through `smithServices.js` / the Shrine, unchanged.
+
+- **Frame (W1).** `workspaceFrame` gives all three doors the W1 share of the
+  viewport (95 × 90, centred). The header is the title and its exit only:
+  the "Shrine action" eyebrow and the LEAVES/STAYS badge are gone. The
+  footer is Back on the left and the service's verb on the right, equal
+  halves; the consequence sentence moved out of the footer note.
+- **Item column.** One kit `railItem` row per candidate (small art, name,
+  "Tier 0 → 1" or "worn · 1 mount", and the owned-count pill), built by the
+  shared `categoryNav` with `role=listbox`. Wide hosts show it as the left
+  column at W1i's 44vw (clamped to 14–60rem); compact hosts fold it into one
+  `[Selection ▾]` selector above the pane that opens the same rows as a list
+  (rule 11: no tabs, no accordion). The rows are divs (`railItem` gained a
+  `tag` option) because the shared inspection door hangs its `i` inside them.
+- **Two taps kept.** Each row is bound to the inspection door before the
+  navigation listens, so on touch the first tap lights the row and reveals
+  its `i`, and the second chooses it (Constantine, 2026-09-12). Mouse and
+  keyboard choose on one press, as before.
+- **Pane (selection body).** A status line ("1 Smithing Stone · 3
+  eligible"), then a DetailCard with only the slots the service declares, in
+  the drawings' order:
+  - W1i: selected item (art, name, tier step, owned count, kind and tags,
+    which moved here from the old candidate cards), current → proposed stats
+    and requirements, every affected card, then the cost.
+  - W1j: selected item, mount selector, and once a mount is chosen the
+    extraction preview (the card, "Sundering Hew leaves Greatsword and joins
+    your deck.", and what the mount then shows), then the cost.
+  - W1k: selected item, mount selector, the compatible deck cards once a
+    mount is chosen, the install preview once a card is chosen, then the
+    cost. Dependent choices still clear when a parent changes.
+  - The cost row (REQ/AVAIL and any shortfall) is pinned at the foot of the
+    scrolling card; the consequence line closes the pane. With nothing
+    selected the pane shows the service's instruction.
+- **Unchanged.** Plans, prices, revalidation, `armOptionDecision` (one tap
+  reviews, a held press commits, a blocked action explains), focus
+  containment, Escape/veil/✕ as Back, and the upgrade and receipt paths. An
+  open compact list takes Escape first; the next Escape leaves the door.
+- **Wording.** New copy in `uiStrings.csv`: `smith.selector.none`,
+  `smith.items.*`, `smith.pane.status`, `smith.row.*`, `smith.preview.*`,
+  `smith.heading.deck`.
+- **Tools.** `armament-smithing-ui` reaches candidates through the compact
+  selector, reads kind and tags from the selected item's head, checks the
+  centred W1 frame instead of a full-viewport pane, expects selector + Back
+  + Upgrade on compact hosts, and gains `COMPACT-LIST`. `holdconfirm` opens
+  the Smith list before its two-tap candidate helper and its census.
+- **Tests.** `tests/wireframe-smith-workspace.test.mjs` (5 tests) runs inside
+  the existing wireframe line of `tests/run-node.mjs`.
+
+Browser evidence (CDP emulation against the source tree; W1i through
+`?shot=rest&shotSmithingStones=1`, W1j and W1k on a run built in the page
+from source modules, see Limits):
+
+| Viewport | Zoom | Frame | Header / exit | Items | Pane | Footer buttons | Page scroll |
+|---|---:|---|---|---|---|---|---:|
+| 1440×860 | 1.18 | 1368×774 | 78 / 44×44 | rail 633 w | 722×616 | 663 + 672 × 44 | 0 |
+| 1280×800 | 1.07 | 1216×720 | 74.9 / 44×44 | rail 562 w | 641×568 | 588 + 597 × 44 | 0 |
+| 390×844 | 0.90 | 370.5×759.6 | 63 / 44×44 | selector 350.5×44 | 368.5×575.8 | 171 + 174 × 44 | 0 |
+| 375×667 | 0.85 | 356.3×600.3 | 62 / 44×44 | selector 337.3×44 | 354.3×419.1 | 165 + 167 × 44 | 0 |
+| 844×390 | 0.62 | 801.8×351 | 62.3 / 44×44 | rail 370 w | 428×224 | 387 + 393 × 44 | 0 |
+
+- The same frame, header, item column, pane and footer measure identically
+  for all three doors at each size. The only visible heading is the door's
+  title. The cost row stays inside the card at every size.
+- Targets: every row, selector, mount row, deck card, fold, Back and verb is
+  at least 44 px and centre-hit-testable, open compact list included. The one
+  smaller control is the shared card `i` on W1k's deck cards (40.5 px), drawn
+  by `renderCard` and unchanged here.
+- Flows, at every size: Upgrade → review "Upgrade Straight Sword? … 1/1" →
+  confirm left for the map. Extract → review → confirm moved Sundering Hew
+  from Greatsword into the deck (10 → 11 cards). Seat, on the emptied mount,
+  → review → confirm moved it back (11 → 10). Compact: Escape closed the open
+  list and kept the door.
+- `armament-smithing-ui`: 73 passed, 9 failed. On dev `8797fc9a` it is 66
+  passed, 15 failed.
+  - The 9 REDs all fail on dev too: SELECTED-NAME-TYPE and ROLE-USAGE at both
+    sizes, ARMOURY-RECEIPT and ARMOURY-CARDS at both sizes, and
+    COOP-SHOT-DOOR.
+  - The four FIT checks and the two 390×844 TARGETS checks that fail on dev
+    now pass, and COMPACT-LIST is new.
+  - Two earlier runs died at the tool's fixed 15 s first load, with CPU at
+    100% under other sessions' suites. That is a load-induced timeout,
+    identical on dev under the same load; the 60 s-wait probe above is the
+    functional evidence.
+- `holdconfirm` on dev `8797fc9a`: 1 finding over 137 checks, the Shrine smith
+  census's "2 absent: smithExtract, smithInstall" already recorded above. The
+  branch run did not finish inside the time budget under that load.
+- `run-node` 138 passed, 0 failed. One run under load failed only its
+  `linkcheck --selftest` line (no result line). Run alone, the selftest
+  passes: 5/5 planted breakages go red and the clean tree comes back with 0.
+
+Limits:
+- A fresh class kit carries no card tagged `extractable`, so the Shrine shot
+  offers no extraction and no seating. W1j and W1k were driven through
+  `openMountService` on a run built in the page (the first armament whose
+  mount holds an extractable card: Greatsword), not reached from a Shrine.
+  No reach door was added.
+- W1j/W1k's tables stack items, mounts and preview as three rows; their wide
+  drawings put the items beside the pane, as W1i does. This branch follows
+  the drawings; the owner should confirm.
+- At 844×390 the host is `data-layout=wide`, so the items stay a rail beside
+  a 224 px pane, as the Shop does; W1's compact drawing puts a selector
+  above.
+- The consequence sentence left the footer for the pane's last line, beside
+  the cost; the LEAVES/STAYS badge is gone from the header. Both are owner
+  decisions to confirm. Extract and install cost 0 Stones under the current
+  balance, so their shortfall row was not exercised.
+- Playwright tools (`card-inspection-qa`, `world-atlas-qa`) were not run;
+  their Smith selectors (`.smith-candidate-card`, `.card-info-button`,
+  `.smith-upgrade-modal .modal-close`) still exist.

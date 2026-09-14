@@ -170,9 +170,13 @@ export function tab({ label, selected = false, member = '', id = '', className =
     text: label,
   });
 }
-export function railItem({ label, current = false, member = '', id = '', className = '', attrs = {} } = {}) {
-  return el('button', {
-    ...attrs, type: 'button', id: id || null, role: attrs.role || 'tab',
+export function railItem({ label, current = false, member = '', id = '', tag = 'button', className = '', attrs = {} } = {}) {
+  // A row that hosts its own control (the inspection door's `i`) cannot be a
+  // <button>, because buttons do not nest: `tag` draws the same item as a
+  // focusable element of another kind.
+  const native = tag === 'button';
+  return el(tag, {
+    ...attrs, type: native ? 'button' : null, tabindex: native ? null : (attrs.tabindex ?? '0'), id: id || null, role: attrs.role || 'tab',
     class: cls('as-railitem', current ? 'on' : '', className),
     'aria-current': current ? 'true' : null,
     'aria-selected': current ? 'true' : 'false',
