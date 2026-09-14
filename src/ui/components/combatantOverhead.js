@@ -2,7 +2,7 @@ import { attachTooltip, hideTooltip, esc } from './tooltip.js';
 import { intentBadge } from '../uiContent.js';
 import { glyph } from '../kit/index.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { wireframeUi } from '../../content/wireframeUi.js';
+import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
 const inspectTimers = new WeakMap();
 
@@ -19,7 +19,7 @@ export function selectCombatantInfo(root, id) {
       delete frame.dataset.inspectReady;
       if (selected) inspectTimers.set(frame, setTimeout(() => {
         if (frame.isConnected && frame.classList.contains('context-selected')) frame.dataset.inspectReady = 'true';
-      }, wireframeUi.card.inspectDelayMs));
+      }, selectionRevealDelayMs()));
     }
   }
   root.dispatchEvent(new CustomEvent('combatantselectionchange'));

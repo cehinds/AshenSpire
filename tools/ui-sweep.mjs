@@ -30,8 +30,10 @@
 //                clips at its padding box, and clear of the section header it
 //                used to straddle (#994). Until then this row looked for the
 //                badge INSIDE the card, on a chip that has never carried one.
-//   R6 ARMOURY   on a phone every view tab and the close control share one
-//                row.
+//   R6 ARMOURY   on a phone the views are the W1 [Category ▾] selector above
+//                the pane, and it opens every view as a vertical list inside
+//                the rail's width with no sideways scroll (W1e, rule 11; the
+//                views are no longer head tabs beside the close).
 //   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
 //
 // Usage:
@@ -128,14 +130,17 @@ for (const state of wanted) {
   for (const shape of [...SHAPES, ...(state.extraShapes || [])]) {
     await send('Emulation.setDeviceMetricsOverride', { width: shape.w, height: shape.h, deviceScaleFactor: 1, mobile: shape.mobile }, sessionId);
     await send('Page.navigate', { url: `${served.url}?shot=${state.q}&shotSettings=${settings}` }, sessionId);
-    const ready = await until(state.ready);
+    // The first mount of the unbundled module route can pass 15 s on a
+    // loaded machine (the merchant measured 21.4 s, 2026-09-14): a minute.
+    const ready = await until(state.ready, 60000);
     await wait(700);
     const cell = `${state.name} ${shape.w}x${shape.h}`;
     console.log(`\n  ${cell}`);
     if (!ready) { check(false, `${state.name} rendered`, 'landmark never appeared'); continue; }
     if (state.then === 'armoury') {
       await click('#open-armoury');
-      const up = await until(`!!document.querySelector('.armoury .modal-tab')`);
+      // W1e: the views are the category rail now, not head tabs.
+      const up = await until(`!!document.querySelector('.armoury [data-surface="armouryView"] [data-member]')`);
       await wait(500);
       if (!up) { check(false, 'armoury opened from the map band'); continue; }
     }
@@ -183,8 +188,12 @@ for (const state of wanted) {
       }
     }
     if (state.name === 'armoury' && shape.mobile) {
-      const head = await ev(`(()=>{const tabs=[...document.querySelectorAll('.armoury-head .modal-tab')].map(t=>Math.round(t.getBoundingClientRect().top));const close=Math.round(document.querySelector('#armoury-close').getBoundingClientRect().top);return {tabs,close}})()`);
-      check(head.tabs.length >= 3 && head.tabs.every((t) => Math.abs(t - head.close) <= 2), `R6 ${cell}: every view tab shares one row with the close control`, JSON.stringify(head));
+      // W1e (FRONTEND-WIREFRAMES rule 11): a compact host draws the kit's one
+      // [Category ▾] selector above the pane (kit/categoryNav.js), and it
+      // opens the same rail as a vertical list — never a strip, never a grid
+      // of cells. R6 opens it, reads the list, and closes it again.
+      const rail = await ev(`(()=>{const host=document.querySelector('.armoury .as-railed[data-cat-nav]');const toggle=host&&host.querySelector(':scope > .as-catnav-toggle');const r=document.querySelector('.armoury [data-surface="armouryView"]');const pane=document.querySelector('.armoury-pane');if(!host||!toggle||!r)return {host:!!host,toggle:!!toggle};const tr=toggle.getBoundingClientRect();const above=Math.round(tr.bottom)<=Math.round(pane.getBoundingClientRect().top)+1;toggle.click();const rr=r.getBoundingClientRect();const items=[...r.querySelectorAll('[data-member]')].map(t=>t.getBoundingClientRect());const out={mode:host.dataset.catNav,items:items.length,selector:Math.round(tr.height)>=44,above,vertical:items.every((b,i)=>i===0||b.top>=items[i-1].bottom-1),inside:items.every(b=>b.left>=rr.left-1&&b.right<=rr.right+1),sideways:r.scrollWidth>r.clientWidth+1};toggle.click();return out;})()`);
+      check(rail.mode === 'selector' && rail.items >= 3 && rail.selector && rail.above && rail.vertical && rail.inside && !rail.sideways, `R6 ${cell}: the Armoury categories are one [Category ▾] selector above the pane that opens them as a vertical list with no sideways scroll`, JSON.stringify(rail));
     }
     if (state.name === 'smith') {
       const smith = await ev(`(()=>({modal:!!document.querySelector('.smith-candidate-region'),shrine:!!document.querySelector('#rest-opt')}))()`);

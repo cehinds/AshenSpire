@@ -53,6 +53,7 @@ export function openConfirmationModal({
   confirmLabel = 'Continue',
   cancelLabel = 'Back',
   consequence = '',
+  target = '',
   detailsHtml = '',
   tone = 'normal',
   onConfirm,
@@ -71,7 +72,12 @@ export function openConfirmationModal({
 
   // BODY C — one question, two answers, at the sm rung: the shell's head
   // (the consequence as eyebrow, the act as title, the one close box), the
-  // message as prose, what is at stake in a DetailCard, the foot's two buttons.
+  // target it acts on, the message as prose, what is at stake in a DetailCard,
+  // the foot's two buttons.
+  //
+  // W2 (FRONTEND-WIREFRAMES "W2 — Confirmation"): no generic eyebrow. The
+  // eyebrow is the caller's concrete consequence tag or nothing — never a
+  // "Confirm" / "Careful" category word standing over the real question.
   const dialog = document.createElement('section');
   dialog.className = `modal confirmation-modal${tone === 'danger' ? ' danger' : ''}`;
   dialog.dataset.size = 'sm';
@@ -83,7 +89,7 @@ export function openConfirmationModal({
   markUiComponent(dialog, component, tone);
 
   const header = modalHead({
-    eyebrow: consequence || (tone === 'danger' ? 'Careful' : 'Confirm'),
+    eyebrow: consequence,
     title: title || 'Confirm action',
     titleId: 'confirmation-modal-title',
     closeLabel: cancelLabel,
@@ -92,6 +98,13 @@ export function openConfirmationModal({
   header.querySelector?.('.modal-close')?.classList.add('confirmation-close');
   header.querySelector?.('.modal-eyebrow')?.classList.add('confirmation-eyebrow');
 
+  // W2.body.target — the exact thing the answer acts on (an item, a card, the
+  // current run). An optional slot: absent, it draws nothing and the message
+  // reclaims the space.
+  const targetLine = target
+    ? el('p', { class: 'as-title-s confirmation-target', id: 'confirmation-modal-target' }, String(target))
+    : null;
+  if (targetLine) dialog.setAttribute('aria-describedby', 'confirmation-modal-target confirmation-modal-copy');
   const copy = prose(message || '', { id: 'confirmation-modal-copy', class: 'confirmation-copy' });
 
   const details = document.createElement('div');
@@ -118,7 +131,7 @@ export function openConfirmationModal({
   markUiComponent(confirmButton, UI.confirmationAction, tone);
   // The house order, from the one home: way out left, way forward right.
   const footer = modalFooter({ secondary: [cancelButton], primary: confirmButton, className: 'confirmation-footer', size: 'long' });
-  const body = el('div', { class: 'modal-body' }, el('div', { class: 'as-decide confirmation-body' }, [copy, details]));
+  const body = el('div', { class: 'modal-body' }, el('div', { class: 'as-decide confirmation-body' }, [targetLine, copy, details]));
   dialog.append(header, body, footer);
   veil.appendChild(dialog);
   document.body.appendChild(veil);

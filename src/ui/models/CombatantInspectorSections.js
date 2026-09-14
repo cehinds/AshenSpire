@@ -3,9 +3,22 @@
 // defense), current state, previous actions newest first, known abilities,
 // known traits, lore last. Every section says whether it is `known`, `none`
 // (known to be empty) or `unknown` (not revealed); the two empty states never
-// share wording. The preview carries only name and HP beside the sprite.
+// share wording. The preview carries the name and the pool meters (HP, MP,
+// Poise) beside the sprite.
 
 export const INSPECTOR_SECTION_ORDER = Object.freeze(['summary', 'state', 'history', 'abilities', 'traits', 'lore']);
+
+// The side preview's meters, in stack order (owner follow-up: restore the
+// HP/MP/Poise meters the tray lost). HP is shown whenever the subject has it;
+// MP and Poise only when the combatant actually has that pool (max > 0).
+export const INSPECTOR_PREVIEW_METERS = Object.freeze(['HP', 'MP', 'Poise']);
+
+export function previewMeters(resources = []) {
+  return INSPECTOR_PREVIEW_METERS
+    .map((label) => resources.find((r) => r.label === label))
+    .filter((r) => r && (r.label === 'HP' || Number(r.max) > 0))
+    .map((r) => Object.freeze({ ...r }));
+}
 
 const freezeRows = (rows) => Object.freeze(rows.map((row) => Object.freeze({ value: '', detail: '', ...row })));
 const disclose = (rows) => (rows == null
@@ -45,7 +58,11 @@ export function projectCombatantInspector(subject, text = (id) => id) {
     lore: { title: text('inspector.section.lore'), ...disclose(subject.lore == null ? null : subject.lore.map((line) => ({ label: line }))) },
   };
   return Object.freeze({
-    preview: Object.freeze({ name: subject.name, hp: hp ? Object.freeze({ ...hp }) : null }),
+    preview: Object.freeze({
+      name: subject.name,
+      hp: hp ? Object.freeze({ ...hp }) : null,
+      meters: Object.freeze(previewMeters(resources)),
+    }),
     sections: Object.freeze(INSPECTOR_SECTION_ORDER.map((id) => Object.freeze({ id, ...sections[id] }))),
   });
 }

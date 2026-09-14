@@ -514,6 +514,7 @@ export function mountRewards(app, {
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
       const el = renderCard(registries, { cardId, upgraded: false }, {
+        owned: run.deck.filter((c) => c.cardId === cardId).length,
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: states.card ? t('reward.card.alreadyTaken') : true },

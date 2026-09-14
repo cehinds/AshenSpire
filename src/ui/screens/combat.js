@@ -1,6 +1,7 @@
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
+import { targetLayer } from '../models/TargetLayerModel.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
@@ -61,6 +62,9 @@ import { beatArmer } from '../../framework/optionDecision.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { potionContents, potionCountStringId } from '../models/PotionContentsModel.js';
+import { mountRelicRail } from '../components/relicRail.js';
+import { t, tFull } from '../strings.js';
 import { armHold, holdMs, HOLD_DRAG_SETTLE_MS } from '../components/holdconfirm.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
@@ -76,6 +80,7 @@ import { setStatusTrayOverflow } from '../components/statusTray.js';
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
+import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 
@@ -345,39 +350,44 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     wireCard: (el, entry) => entry.preview ? wireCardInput(el, entry.inst, entry.preview, entry.affordable) : null,
   });
 
+  // WGC11 lists the WGH8 contents: ONE projection (models/PotionContentsModel.js)
+  // of the charge flasks and the carried consumables, each carried kind once
+  // with its count. A carried entry's Use spends its first slot.
   function potionEntries() {
     const p = combat.player;
-    return [
-      ...CHARGE_FLASK_KINDS.map((kind, index) => {
-        const charges = p.flaskCharges?.[kind + 'Current'] || 0;
-        return { def: chargeFlaskDefinition(registries, kind), options: { chargeKind: kind, remaining: charges, charges, useActionId: 'flask' + (index + 1) } };
-      }),
-      ...p.flasks.map((item, slot) => ({ def: registries.flasks.get(item.flaskId), options: { slot, remaining: 1, useActionId: slot === 0 ? 'flask3' : null } })),
-    ];
+    return potionContents({ chargeKinds: CHARGE_FLASK_KINDS, flaskCharges: p.flaskCharges, carried: p.flasks }).entries.map((entry) => (
+      entry.category === 'charge'
+        ? { entry, def: chargeFlaskDefinition(registries, entry.kind), options: { chargeKind: entry.kind, remaining: entry.count, charges: entry.count, useActionId: entry.useActionId } }
+        : { entry, def: registries.flasks.get(entry.flaskId), options: { slot: entry.slots[0], remaining: entry.count, useActionId: entry.useActionId } }
+    ));
   }
 
+  // `shortcut` is the flask action a key pressed (flask1..flask3); the entry
+  // that owns it opens folded out. Found by action, not by list position.
   function openPotions(shortcut = null) {
     const opener = $('.combat-potions');
     const entries = potionEntries();
+    const shortcutIndex = shortcut == null ? -1 : entries.findIndex((row) => row.options.useActionId === shortcut);
     let shell;
     shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
-      entries.forEach((entry, index) => {
-        const { def, options } = entry;
+      entries.forEach((row, index) => {
+        const { def, options, entry } = row;
         const { slot = null, chargeKind = null, remaining, charges } = options;
+        const countId = potionCountStringId(entry);
         const canUse = !busy && !combat.result && combat.phase === 'player' && remaining > 0;
         const reason = remaining <= 0 ? 'No charges remaining' : !canUse ? 'Wait for your turn' : '';
         const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(row => row.id === 'use');
         const use = button({ label: 'Use', disabled: !action.enabled, className: 'potion-use', attrs: { 'aria-label': 'Use ' + def.name } });
         const fold = el('details', { class: 'armoury-card-row potion-fold' });
         if (chargeKind) { fold.dataset.chargeKind = chargeKind; fold.dataset.charges = String(charges); }
-        else fold.dataset.potionSlot = String(slot);
+        else { fold.dataset.potionSlot = String(slot); fold.dataset.potionCount = String(remaining); }
         const summary = optionCard({ tag: 'summary', name: def.name,
           art: flaskPresentation(def, { showName: false }),
           description: flaskDetailLines(def, { charges }).join(' '),
-          meta: charges == null ? '1 carried potion' : charges + ' charges', trail: [use], arrow: true });
+          meta: t(countId, { count: remaining }), trail: [use], arrow: true });
         const detail = detailCard({ eyebrow: 'Potion', name: def.name + ' details',
           line: def.textTemplate || '', meta: def.targeted ? 'Choose an enemy after Use.' : 'Applies to your character.',
-          children: [flavour(charges == null ? '1 carried potion' : charges + ' charges remaining'), reason ? flavour(reason) : null] });
+          children: [flavour(tFull(countId, { count: remaining })), reason ? flavour(reason) : null] });
         fold.append(summary, detail);
         const moveUse = () => {
           if (fold.open) {
@@ -401,7 +411,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           },
         });
         host.appendChild(fold);
-        if (index === shortcut) { fold.open = true; moveUse(); }
+        if (index === shortcutIndex) { fold.open = true; moveUse(); }
       });
       if (!entries.length) host.appendChild(flavour('No potions carried.'));
     } });
@@ -512,6 +522,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     selfArm = null;
     syncCardSelection();
   });
+  // WGC4: the one writer of the target layer. Selection changes and board
+  // rebuilds both land here. render() skips frames whose key is unchanged and
+  // only removes classes it added itself, so a highlight toggled on selection
+  // used to outlive the play or cancel that ended it.
+  function applyTargetLayer() {
+    const layer = targetLayer({ armed: !!selected || selectedFlask != null, enemies: combat.enemies });
+    combatEl.dataset.targetLayer = layer.active ? 'armed' : 'idle';
+    combatEl.querySelectorAll('.combatant.enemy').forEach(enemy => enemy.classList.toggle('targetable', layer.eligibleIds.includes(enemy.dataset.eid)));
+  }
 
   // Selection changes presentation only; every input waits for confirmation.
   function syncCardSelection() {
@@ -528,7 +547,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
     const def = active && resolveCard(registries, findInst(active));
     player?.classList.toggle('skill-selected', def?.type === 'skill');
-    combatEl.querySelectorAll('.enemy:not(.dead)').forEach(enemy => enemy.classList.toggle('targetable', !!selected));
+    applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
     refreshAim();
@@ -864,6 +883,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderCombatantStage();
     renderHand();
     renderControls();
+    applyTargetLayer();
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
@@ -883,20 +903,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // only on the combat character card's model surface; it is deliberately
     // absent from this shared map/combat top HUD.
     const host = $('.topbar .resbars-host');
-    host.innerHTML = '';
-    const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
-    host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
-    host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
-    const relics = $('.topbar .relics');
-    relics.innerHTML = '';
-    for (const rid of p.relicIds) {
-      const def = registries.relics.get(rid);
-      const el = slot({ art: def.icon || '◆', small: true, tag: 'button', label: def.name, className: 'relic', attrs: { dataset: { relicId: rid } } });
-      markUiComponent(el, UI.relicSlot);
-      el.addEventListener('click', () => openCollectibleInspection(registries, def, 'Relic', el));
-      attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
-      relics.appendChild(el);
+    if (host) {
+      host.innerHTML = '';
+      const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
+      host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
+      host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     }
+    // WGH6: the same relic tile renderer the rooms use (components/relicRail.js);
+    // a HUD whose relic layer is off has no rail and draws none.
+    mountRelicRail($('.topbar .relics'), registries, p.relicIds);
     // Combat potions live in the bottom menu; the shared map HUD is unchanged.
     // Quick Access no longer carries a charge-flask tray — Crimson and Azure
     // moved into the potion belt — so the tray is looked up optionally rather
@@ -1269,6 +1284,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id);
     }
     const targeting = selected || selectedFlask != null;
+    // WGC4: one eligibility home; a defeated enemy is never highlighted.
+    const eligibleTargets = targetLayer({ armed: !!targeting, enemies: combat.enemies }).eligibleIds;
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
@@ -1278,7 +1295,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const renderKey = JSON.stringify([artKey, enemy, dv(enemy), combat.player, targeting, selectedCombatantId, living.map(e => e.id), disp ? disp.arcaneEvents : recentArcaneEvents, readSettings()]);
       if (record?.renderKey === renderKey) continue;
       const leading = [];
-      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentEl(enemy));
+      // WCO1: Inspect above the intent; the intent shows per the overlay config.
+      if (enemy.alive) leading.push(combatantInfo(def.name, opener => openCombatantDoor(combatantSubject('enemy', enemy), opener)), intentVisible('enemy') ? intentEl(enemy) : null);
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -1310,7 +1328,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const slots = {
         role: 'enemy',
         entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
+        classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy),
@@ -1892,7 +1910,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        openPotions(slot);
+        openPotions(`flask${slot + 1}`);
         return;
       }
     }
@@ -2221,8 +2239,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // screen that MAKES "context-specific" mean something: the draw and discard
   // piles are real destinations that exist nowhere else, and today the only way
   // to them is two small corner targets a thumb has to find.
+  // Absent when the WGH0 menu layer is off (models/RunHudLayerModel.js).
   const menuBtn = $('#combat-menu');
-  if (onMenu) {
+  if (onMenu && menuBtn) {
     menuBtn.addEventListener('click', (e) => {
       if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
@@ -2247,8 +2266,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // MENU table. Armoury is the canonical equipment name in every context.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
-    attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row?.label || helpText('armouryTitle'))}</div>${esc(onArmoury ? helpText('armouryTest') : row?.tip || helpText('armoury'))}`);
-    attachTooltip(menuBtn, () =>
+    if ($('#combat-armoury')) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row?.label || helpText('armouryTitle'))}</div>${esc(onArmoury ? helpText('armouryTest') : row?.tip || helpText('armoury'))}`);
+    if (menuBtn) attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(onArmoury ? 'Test build details and return to build selection.' : quickNavMode() === 'off'
         ? 'Armoury, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
@@ -2311,7 +2330,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       },
     });
   }
-  $('#combat-armoury').addEventListener('click', (event) => openCombatArmoury(event.currentTarget.dataset.equipView || ''));
+  $('#combat-armoury')?.addEventListener('click', (event) => openCombatArmoury(event.currentTarget.dataset.equipView || ''));
 
   render();
 

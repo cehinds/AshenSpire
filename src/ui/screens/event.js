@@ -13,8 +13,11 @@ import { isEngaged, focusFirst } from '../input.js';
 import { isBindingChoice } from '../../framework/confirmationRule.js';
 import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
-import { el, html, modalHead, modalFooter, artWell, prose, options, optionCard, decide, button } from '../kit/index.js';
+import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
+import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
+import { t } from '../strings.js';
 
 export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud = null }) {
   const def = registries.events.get(eventId);
@@ -43,30 +46,41 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, h
   // bound is what the fix adds (Law 2: named container, proven inside it).
   // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
   // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
-  // THE EVENT IS BODY C ON THE PAGE (kit §05/§12): the door's head names it,
-  // the body is ArtWell + prose + one OptionCard per choice, the foot carries
-  // the way on once a choice has been made. It stands on the page rather
-  // than over one, so it wears the door's box without the veil.
-  const head = modalHead({ eyebrow: 'Event', title: def.name, closeLabel: 'Event' });
-  head.querySelector('.modal-close').hidden = true; // a decision has no way out but a choice
-  const door = el('section', { class: 'modal event-door', dataset: { size: 'md' }, role: 'region', 'aria-label': def.name }, [
-    head,
-    el('div', { class: 'modal-body' }, decide({
-      children: [
-        artWell({ glyph: def.art || '❖' }),
-        prose(def.text),
-        options([], { id: 'choices', class: 'ev-choices' }),
-      ],
-    })),
-  ]);
+  //
+  // W1u — THE EVENT IS A CHOICE BODY ON THE PAGE. The head names it and says
+  // where the decision stands ({Status}); the body is the authored narrative
+  // beside the responses (side by side wide, stacked narrow); the foot holds
+  // Continue, which is allowed once a response is taken. It stands on the page
+  // rather than over one, and it has no close control: a decision has no way
+  // out but a response.
+  const status = (s) => (s.phase === 'resolved' ? t('event.status.resolved')
+    : s.phase === 'limited' ? t('event.status.limited', { available: s.available, total: s.total })
+    : t('event.status.choose'));
+  const cont = button({ label: t('event.continue'), weight: 'primary', id: 'event-continue', disabled: true });
   app.innerHTML = '';
   if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
-  const screen = el('div', { class: 'screen event-screen room-screen' }, door);
+  const screen = el('div', { class: 'screen event-screen room-screen' });
   app.appendChild(screen);
+  const door = mountChoiceBody(screen, {
+    className: 'event-door',
+    eyebrow: 'Event',
+    title: def.name,
+    choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
+      artWell({ glyph: def.art || '❖' }),
+      prose(def.text),
+    ]),
+    consequences: el('div', { class: 'choice-body-responses event-responses' },
+      options([], { id: 'choices', class: 'ev-choices' })),
+    foot: modalFooter({ primary: cont, size: 'fill', className: 'choice-foot' }),
+  });
   if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
 
   const box = app.querySelector('#choices');
   const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
+  // What each response is (priced, binding) and whether it can be taken now —
+  // the facts the head's {Status} projects. Collected while the bars are built,
+  // from the same predicates that build them.
+  const responses = [];
   visibleChoices.forEach(({ choice, index: i }, visibleIndex) => {
     // Each choice is the kit's OptionCard: its label is the title; a price
     // or a binding consequence rides as data the instruments read.
@@ -124,8 +138,10 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, h
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
+    const affordable = meets(choice.requires);
+    responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 
-    if (!meets(choice.requires)) {
+    if (!affordable) {
       btn.disabled = true;
       btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
     } else {
@@ -151,6 +167,10 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, h
     }
     box.appendChild(btn);
   });
+  setChoiceStatus(door, status(eventResponseStatus(responses)));
+  // Continue is in the foot from the start and allowed only once a response
+  // is taken; until then it is disabled, never a way out.
+  cont.addEventListener('click', () => { if (!cont.disabled) onDone(); });
 
   // Smart default (keyboard/gamepad): land on the first available choice.
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
@@ -162,11 +182,12 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, h
     // about — one screen's worth is nothing, thirteen floors of it is not.
     while (disarmers.length) disarmers.pop()();
     box.innerHTML = '';
-    // The result reads as the decision's own sentence; the way on is the foot's primary.
+    // The result reads as the decision's own sentence, in the responses slot;
+    // the way on is the foot's primary, now allowed.
     box.appendChild(prose(text, { class: 'as-flavor event-result' }));
-    const cont = button({ label: run.combatEntered ? 'Steel yourself' : 'Continue', weight: 'primary' });
-    cont.addEventListener('click', onDone);
-    door.appendChild(modalFooter({ primary: cont, size: 'medium' }));
+    setChoiceStatus(door, status(eventResponseStatus(responses, { resolved: true })));
+    cont.textContent = run.combatEntered ? t('event.continue.combat') : t('event.continue');
+    cont.disabled = false;
     if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }

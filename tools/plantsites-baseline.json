@@ -142,7 +142,7 @@
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
-      "digest": "6bc20cf585308b00"
+      "digest": "4c54bc7ac015d844"
     },
     "tools/combat-save.mjs": {
       "count": 3,
@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "6bbfdd0e052593bc"
+      "digest": "dfa85ef10b6c4276"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -218,7 +218,7 @@
     },
     "tools/hudparity.mjs": {
       "count": 18,
-      "digest": "39c6558a1814857d"
+      "digest": "8e95fe8e9f0ee98e"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
@@ -286,11 +286,11 @@
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
-      "digest": "e8cd56b68de1aec8"
+      "digest": "024e3beb3c87065c"
     },
     "tools/shopbars.mjs": {
       "count": 4,
-      "digest": "8912fdfc15ac61d4"
+      "digest": "68ce8fbfc038e5aa"
     },
     "tools/short-landscape-support.mjs": {
       "count": 2,

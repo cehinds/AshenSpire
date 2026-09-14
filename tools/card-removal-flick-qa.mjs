@@ -173,7 +173,7 @@ try {
     window.removalQA = run;
     mountShop(document.querySelector('#app'), { registries, run, meta: { settings: { holdConfirm: 'off' } }, onLeave() {}, onChanged() { stampDeck(registries, run); } });
   });
-  await page.locator('[data-face="bar:remove"]').click();
+  await page.locator('#shop-cat-services').click();
   await page.locator('#remove-opt').click();
   const strike = page.locator('#remove-grid .card[data-card-id="strike"]').first();
   check(await strike.count() === 1, 'merchant lists basic Strikes');
