@@ -20,6 +20,7 @@ import { openModal, modalHead, modalFooter } from '../components/modalShell.js';
 import { button, statusText, el, rail, railItem } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t } from '../strings.js';
+import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationReviewModel.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
@@ -208,8 +209,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders });
       if (!avail.available) wrap.appendChild(availLine(avail));
       const buy = {
-        question: `Buy ${def.name} for ${item.cost} cinders? You have ${run.cinders}.`,
-        confirmLabel: t('shop.buy.confirm'),
+        ...purchaseReview({ kind: 'card', name: def.name, cost: item.cost, cinders: run.cinders }),
         onConfirm: () => {
           run.cinders -= item.cost;
           run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
@@ -288,7 +288,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       addOffer('relics', {
         ref: relicRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,
-        action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem(def.name, item.cost, 'cinders', () => {
+        action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem('relic', def.name, item.cost, () => {
           run.cinders -= item.cost;
           run.relics.push(item.id);
           syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
@@ -309,7 +309,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       addOffer('flasks', {
         ref: flaskRefs[i], tile, name: def.name, desc: def.textTemplate || '',
         price: t('shop.price', { cost: item.cost }), avail,
-        action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem(def.name, item.cost, 'cinders', () => {
+        action: { kind: 'buy', label: t('shop.action.buy', { cost: item.cost }), enabled: avail.available, beat: { id: 'shopBuy', opts: buyItem('flask', def.name, item.cost, () => {
           run.cinders -= item.cost;
           run.flasks.push({ flaskId: item.id });
           stock.flasks.splice(i, 1);
@@ -373,9 +373,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         onChanged();
         render();
       };
-      const burnQuestion = () => (burning
-        ? `Burn ${burning.def.name} out of the deck? ${burnCost()} cinders, and the card is gone.`
-        : 'Burn a card out of the deck?');
+      // W2a: the brazier's review names the lit card and the exact cost. Card
+      // removal is DESTRUCTIVE in the ConfirmationRegistry (action.removeCard),
+      // so the review is an alertdialog with the red primary.
+      const litBurn = () => burnReview({ name: burning ? burning.def.name : null, cost: burnCost(), cinders: run.cinders });
       run.deck.forEach((inst) => {
         // Basic attacks are run-owned even when equipment supplies their face.
         if (!canRemoveDeckCard(inst)) return;
@@ -396,8 +397,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           hintHost: wrap,
           // The card's own beat always speaks for the card under the finger,
           // whatever the grid last highlighted.
-          question: () => `Burn ${def.name} out of the deck? ${burnCost()} cinders, and the card is gone.`,
+          question: () => burnReview({ name: def.name, cost: burnCost(), cinders: run.cinders }).question,
+          target: def.name,
+          message: () => burnReview({ name: def.name, cost: burnCost(), cinders: run.cinders }).message,
           confirmLabel: t('shop.burn.confirm'),
+          policyAction: 'action.removeCard',
           onConfirm: () => {
             burning = { inst, def };
             commitBurn();
@@ -406,8 +410,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         grid.appendChild(wrap);
       });
       arm(burnConfirm, 'shopRemove', {
-        question: burnQuestion,
+        question: () => litBurn().question,
+        target: () => litBurn().target,
+        message: () => litBurn().message,
         confirmLabel: t('shop.burn.confirm'),
+        policyAction: 'action.removeCard',
         onConfirm: commitBurn,
       });
       grid.after(burnConfirm);
@@ -527,8 +534,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           ref: goodRefs[i], tile, name: row.def.name, desc: row.desc,
           price: t('shop.price.back', { price: row.price }), avail: offerAvailability(),
           action: { kind: 'sell', label: t('shop.action.sell', { price: row.price }), enabled: true, beat: { id: 'shopSell', opts: {
-            question: `Sell ${row.def.name} back to the merchant? ${row.price} cinders, and it is gone.`,
-            confirmLabel: t('shop.sell.confirm'),
+            ...sellReview({ kind: row.kind, name: row.def.name, price: row.price }),
             onConfirm: () => {
               if (row.kind === 'relic') {
                 run.relics.splice(row.at, 1);
@@ -666,12 +672,8 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     layout = wireShopLayout(root);
   }
 
-  function buyItem(name, cost, costWord, onConfirm) {
-    return {
-      question: `Buy ${name} for ${cost} ${costWord}? You have ${run.cinders} cinders.`,
-      confirmLabel: t('shop.buy.confirm'),
-      onConfirm,
-    };
+  function buyItem(kind, name, cost, onConfirm) {
+    return { ...purchaseReview({ kind, name, cost, cinders: run.cinders }), onConfirm };
   }
 
   function openWeaponArt(item, card) {

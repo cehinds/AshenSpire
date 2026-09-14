@@ -68,6 +68,7 @@ import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
+import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
 import { openSaveSlotSelector, slotFacts } from './ui/components/saveSlotSelector.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
@@ -1023,6 +1024,12 @@ function loadActiveSlot({ returnFocusElement } = {}) {
 function quitWithoutSaving({ returnFocusElement } = {}) {
   openConfirmationModal({
     title: 'Quit without saving?',
+    // W2e: the run this leaves, named the way its save slot names it.
+    target: run ? runIdentity({
+      className: registries.classes.has(run.class) ? registries.classes.get(run.class).name : run.class,
+      slot: activeSlot,
+      facts: slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }),
+    }) : '',
     message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
     confirmLabel: 'Quit without saving',
     consequence: 'LEAVES THE RUN',

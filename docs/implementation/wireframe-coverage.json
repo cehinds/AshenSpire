@@ -615,7 +615,7 @@
       "id": "W2a",
       "name": "Service confirmation",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -630,7 +630,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Merchant Buy (card/relic/flask), Burn and Sell, and Shrine Rest now fill W2's slots from ui/models/ConfirmationReviewModel.js: question title, target line (.confirmation-target), exact cinders/HP consequence. No STATE CHANGE eyebrow or generic review line. Burn is an alertdialog because action.removeCard is DESTRUCTIVE. Smith upgrade and mount install/extract read Back, not 'Keep reviewing'. CDP evidence at 1440x860, 390x844 and 844x390. Open: consequence tag as eyebrow vs body (owner decision)."
     },
     {
       "id": "W2b",
@@ -699,7 +700,7 @@
       "id": "W2e",
       "name": "Quit confirmation",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -714,7 +715,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Quit Without Saving now names the run it leaves: class, slot, and the same act/floor/HP facts the save slots print. Title, message, alertdialog tone (policy.discardUnsavedProgress) and Back focus are unchanged. The title keeps the actual operation's label ('Quit without saving?'), not the gallery's 'Leave this run?'. CDP evidence at 1440x860, 390x844 and 844x390."
     },
     {
       "id": "W3",

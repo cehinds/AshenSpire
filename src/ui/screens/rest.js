@@ -46,6 +46,7 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 import { mountChoiceBody } from '../components/choiceBody.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
+import { restReview } from '../models/ConfirmationReviewModel.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -337,10 +338,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: multiUse
-        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
-        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
-      confirmLabel: 'REST',
+      // W2a: question, the Shrine and the pools it acts on, the exact recovery.
+      ...restReview({ shrine: t('rest.title'), heal, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
       onConfirm: () => {
         run.hp = Math.min(run.maxHp, run.hp + heal);
         run.mana = run.maxMana;

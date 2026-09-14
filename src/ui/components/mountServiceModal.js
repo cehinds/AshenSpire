@@ -15,6 +15,7 @@ import { imageHintAttrs } from '../imageHints.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { renderCard } from './card.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
+import { t } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { openModal } from './modalShell.js';
 import { bindCardInspection } from './cardInspection.js';
@@ -262,7 +263,8 @@ export function mountMountServiceModal(host, initialModel, {
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(p),
         confirmLabel: `${p.verb} (${selected.cost})`,
-        cancelLabel: 'Keep reviewing',
+        // W2: the way out is Back (bottom-left), the same word every review wears.
+        cancelLabel: t('common.back'),
         onCommit: commitSelected,
         canCommit: () => Boolean(currentModel.properties.canConfirm),
         blockedTitle: `Cannot ${p.verb.toLowerCase()} yet`,
