@@ -5,6 +5,7 @@ import { fitStatusTray } from './statusTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { overheadStackBottom } from '../models/CombatOverlayModel.js';
 import { sceneLayers } from '../models/SceneLayerModel.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { ENVIRONMENTS } from '../../content/environments.js';
@@ -36,6 +37,9 @@ export function wireBattlefieldStage(field, model) {
     combat.dataset.layout = 'formation';
     const fieldRect = field.getBoundingClientRect();
     const zoom = fieldRect.width / field.clientWidth || 1;
+    // WCO1 headroom: the HUD band's bottom edge, in the field's local px.
+    const hudBand = combat.querySelector(':scope > .topbar');
+    const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
@@ -57,13 +61,19 @@ export function wireBattlefieldStage(field, model) {
       const geometry = combatSpriteGeometry(sprite, schedule);
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
-      return { slot, frame, stack, sprite, ratio, ...geometry,
+      const leadingHost = frame.querySelector('.combatant-leading');
+      return { slot, frame, stack, sprite, ratio, ...geometry, leadingHost,
+        // The overhead stack's own height (Inspect, when shown, over the
+        // intent), in local px, for the headroom clamp below.
+        leadingHeight: leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0,
         // Reading controls do not change the unselected fitting envelope.
         leading: Math.min(66, fieldRect.height * .25) };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
     for (const actor of actors) {
-      const { slot, frame, stack, sprite, boxHeight, footOffset, ratio } = actor;
+      const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
+      // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
+      if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
       const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[slot.row] : 1;
       const scale = fitted.scale * wireframeUi.formation.displayScale * growth;
@@ -83,7 +93,14 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
-      frame.style.setProperty('--overhead-top', `${(paintedHeight - visibleHeight - 6) / zoom}px`);
+      // WCO1 headroom: the stack rests 6 px above the art's visible top, but its
+      // top edge never rises above the HUD band's bottom (field-local px,
+      // like `local`). On a short field it comes down over the sprite instead.
+      const overhead = overheadStackBottom({
+        anchor: local.top + (paintedHeight - visibleHeight - 6) / zoom, height: leadingHeight, ceiling,
+      });
+      frame.style.setProperty('--overhead-top', `${overhead.bottom - local.top}px`);
+      frame.dataset.overheadClamped = String(overhead.clamped);
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);
