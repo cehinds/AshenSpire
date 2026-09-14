@@ -34,6 +34,9 @@
 //                fixture, and once through ?shotSettings at normal motion and UI
 //                size S — the case the shared fixture cannot see, because
 //                reduced motion drops the focus lift the head room must clear.
+//                A third term raises --inspect-size and --inspect-gap the way
+//                main.js does and asserts the reserved room grows with the badge
+//                rather than staying at today's numbers.
 //   R6 ARMOURY   on a phone every view sits in the W1 category rail above the
 //                pane, inside the rail's width, with no sideways scroll (W1e;
 //                the views are no longer head tabs beside the close).
@@ -201,6 +204,15 @@ for (const state of wanted) {
           check(!!info && info.found && info.shown && info.above && info.whole && info.clearsFace,
             `R5 ${cell} (${pass.tag}): the selected armour's information badge stands above its card, whole inside the scrollport and clear of the section face`, JSON.stringify(info));
         }
+        // AND THE ROOM IS THE BADGE'S OWN, not a copy of today's numbers. The
+        // head and row gap read --inspect-size and --inspect-gap, which main.js
+        // writes from wireframeUi.inspect; typing those defaults into the rule
+        // instead let a bigger badge outgrow its room (at sizeRem 4 / gapPx 20 it
+        // clipped 17.3 px). This raises both tokens the way main.js does and
+        // asserts the room moved with them (#994).
+        const grown = await ev(`(()=>{const r=document.documentElement;const keep=[r.style.getPropertyValue('--inspect-size'),r.style.getPropertyValue('--inspect-gap')];r.style.setProperty('--inspect-size','calc(4 * max(16px / var(--ui-zoom, 1), 1rem))');r.style.setProperty('--inspect-gap','calc(20px / var(--ui-zoom, 1))');const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');const b=card&&card.querySelector('.card-info-button');const port=card&&card.closest('.cc-card-selectors');let out={found:!!b};if(b&&port){const ps=getComputedStyle(port);const clip=port.getBoundingClientRect().top+parseFloat(ps.borderTopWidth);const rr=b.getBoundingClientRect();out={found:true,badge:Math.round(rr.height),head:ps.paddingTop,rowGap:ps.rowGap,slack:Math.round((rr.top-clip)*10)/10,whole:rr.top>=clip-0.5};}keep[0]?r.style.setProperty('--inspect-size',keep[0]):r.style.removeProperty('--inspect-size');keep[1]?r.style.setProperty('--inspect-gap',keep[1]):r.style.removeProperty('--inspect-gap');return out})()`);
+        check(!!grown && grown.found && grown.whole,
+          `R5 ${cell}: a bigger shared badge takes the room with it — the head and row gap follow --inspect-size and --inspect-gap`, JSON.stringify(grown));
       }
     }
     if (state.name === 'armoury' && shape.mobile) {
