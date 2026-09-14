@@ -1650,3 +1650,100 @@ Limits:
   sits at the bottom corners, clear of the centred indicator.
 - Safe areas were emulated through CDP, not tested on a phone. Playwright
   tools did not run. The rotate-your-phone threshold is unchanged.
+## Shared run HUD (WGH2, WGH3, WGH6–WGH8, WGS2–WGS5)
+
+Branch `claude/hud-remaining-wireframes`, based on dev `8797fc9a`; issue
+#1075. WGH5 (Experience strip) is skipped: it shows XP, and progression
+(XP and proficiency) is blocked on owner decisions (plan §12.5). WGH0,
+WGH1, WGH4 and WGS8 were already in progress and are not re-opened.
+
+- WGH0 layers are data: `wireframeUi.hud.layers` (header, class, cinders,
+  position, vitality, armoury, menu, rail, relics). The pure
+  `models/RunHudLayerModel.js` resolves them per place before layout; a
+  layer that is off contributes no model child, so it leaves no row, track
+  or gap. Defaults draw exactly what dev drew.
+- Potions ownership: `FOOTER_HUD_PLACES` is combat. Combat's top HUD no
+  longer renders a potion tray at all (dev rendered an empty, hidden one),
+  and Quick Access no longer models the charge flasks as siblings of
+  Armoury and Menu.
+- WGH8: `models/PotionContentsModel.js` is the one projection of the HP and
+  MP charge flasks and the carried consumables, each with its count.
+  Carried flasks of one kind are one entry with a count and the slots that
+  hold them; Use spends the first slot, through the unchanged hold/confirm
+  beat and targeting. Flask hotkeys (F/G/H) open the entry that owns their
+  action id rather than a list position. `wireframeUi.hud.potions` hides
+  either category. The combat footer Potions list (WGC11) and the room rail
+  tiles both read it. Count copy is `potions.count.*` in uiStrings, so the
+  Azure Flask reads "1 charge" (dev: "1 charges").
+- WGH6: `components/relicRail.js` is the one relic tile renderer for
+  combat and the rooms. Room tiles now carry `data-relic-id` (dev: only
+  combat's did) and open the shared collectible card as before.
+- WGH7 / WGS3: the header labels are uiStrings rows (`hud.class`,
+  `hud.cinders`, `hud.act`, `hud.floor`, `hud.position`) through `t()`, and
+  the act's seat is its own model field printed after the act number,
+  instead of text concatenated into the act value. Rendered text is
+  unchanged.
+- WGH2, WGH3, WGS4, WGS5 were already met (see limits); they gained layer
+  switches only. The map-compact header (PR #1052) is untouched.
+- `tools/hudparity.mjs`: four selftest plants re-aimed at the refactored
+  `hudmeta.js` lines (the Cinders label and the Act/Floor trail's
+  accessible name now come from the model). Same mutations, same expected
+  findings; `plantsites --write-baseline` changed only that tool's digest.
+
+Browser evidence (CDP emulation against `dist/AshenSpire.html` over
+`tools/serve.mjs`, `?shot=map|combat|shop|rest|event`, 25 cells):
+
+| Viewport | Zoom | HUD h: map / combat / rooms | Armoury, Menu | Page scroll |
+|---|---:|---|---|---:|
+| 1440×860 | 1.18 | 86 / 86 / 95.3 | 44×44 | 0 |
+| 1280×800 | 1.07 | 80 / 80 / 88.6 | 44×44 | 0 |
+| 390×844 | 0.90 | 84.4 / 84.4 / 104.8 | 44×44 | 0 |
+| 375×667 | 0.85 | 66.7 / 66.7 / 101.9 | 44×44 | 0 |
+| 844×390 | 0.62 | 52 / 39 / 73 | 44×44; combat 44×32 | 0 |
+
+- Geometry is identical to dev in every cell; no page exceptions.
+- Combat, every viewport: no potion tray in the top HUD; the footer
+  Potions list shows Crimson Flask "3 charges", Azure Flask "1 charge",
+  and the two carried flasks with `data-potion-count`.
+- Shop: the rail shows Crimson ×3, Azure ×1 and the carried Crimson Flask
+  now with its count pill (dev: none). Rest and event: the two charge
+  tiles. Relic tiles carry `forsakenMedallion` on every room.
+- Map: the rail stays hidden, as on dev.
+
+Instruments (headless Chrome, `CHROME` set):
+
+- `tests/run-node.mjs`: 138 passed, 0 failed. The new
+  `tests/wireframe-run-hud.test.mjs` (9 tests) runs inside the wireframe
+  line, which now counts 26 test files.
+- `hudparity`: the same 33 finding keys as dev `8797fc9a`. On the map
+  that is P8 top-row and P1V at every shape; on combat at 844×340 it is
+  P8 top-row, P8/metadata-priority and P1V. The full run lost eight cells
+  to 25 s mount timeouts under machine load (P0, no page exceptions).
+  Rerunning those cells alone (1440×860 high, 320×640 low and shipped,
+  844×340 shipped) measured all of them, with dev's 11 keys.
+- `hudparity --selftest` (22 plants): every `hudmeta.js` plant is caught
+  by its own named red, including the four re-aimed here. One
+  `styles/combat.css` plant, "visible resource cards paint through the
+  centred Cinders receipt", is red for the wrong reason. Its named red
+  needs combat's 844×340 top row, which dev already leaves unmeasured
+  (Cinders centre 0). The selftest was not re-run on dev.
+- `hudbars`: 22 assertions ok, on dev and on this branch. A11 passes at
+  both shapes.
+- `verify-shipped`: 6 OK. `buildversion --check`: 8 OK.
+  `plantsites --check`: OK.
+- Two gates fail, exactly as they do on dev: `flaskbox --source-selftest`
+  (1 MISS) and the `hud-potion-followup` source gate (S2–S9).
+
+Limits: the visible "⚔ Armoury" / "☰ Menu" labels drawn in WGH2/WGH3 are
+not added; the band keeps its icon controls with accessible names. Combat
+at 844×390 still draws Armoury and Menu 44×32 inside its 39 px band (a
+short-landscape rule in `styles/combat.css`); the sizing contract names
+physical minimums for the hand and footer only, so a HUD floor is an owner
+decision. Rooms without a footer HUD (shop, rest, event) keep their flask
+tiles in the rail (`wireframeUi.hud.potions.roomRail`), because that rail
+is the only place a charge flask is drunk, or a carried one dropped,
+outside combat; `false` applies the footer-only rule there and removes
+that capability. The specification's "stamina off by default in scene
+HUDs" is not applied: resource rows are `content/resources.js`'s, and
+hudparity P1 requires HP, MP and SP on both screens. Playwright-based
+tools were not run; no gamepad was attached.

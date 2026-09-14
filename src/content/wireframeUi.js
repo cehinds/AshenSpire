@@ -161,4 +161,24 @@ export const wireframeUi = freeze({
     wireframeByRung: { small: 'WT1', medium: 'WT2', large: 'WT3', expanded: 'WT3' },
     arrowWidthRem: 0.75, arrowHeightRem: 0.375, arrowInsetRem: 0.5,
   },
+  // WGH0 / WGS2 shared run HUD (CURRENT-SPECIFICATION: the HUD contract and
+  // "Potions ownership"). Layers are filtered before layout: a layer that is
+  // off draws nothing and leaves no row or gap; `header` and `rail` switch
+  // their whole row. Which resource rows exist is content/resources.js's
+  // business, not a layer here.
+  // Potions: WGC11 in the combat footer is the one Potions control and WGH8
+  // is its contents, charge flasks and carried consumables in one projection
+  // (models/PotionContentsModel.js); either category can be hidden. The top
+  // HUD never draws potions where a footer HUD exists. `roomRail` keeps the
+  // flask tiles in the rail of the screens that have no footer HUD (shop,
+  // rest, event; the map hides its rail): that rail is the only place a
+  // charge flask is drunk, or a carried one dropped, outside combat. false
+  // applies the footer-only rule there too; that is an owner decision.
+  hud: {
+    layers: {
+      header: true, class: true, cinders: true, position: true,
+      vitality: true, armoury: true, menu: true, rail: true, relics: true,
+    },
+    potions: { chargeFlasks: true, carried: true, roomRail: true },
+  },
 });
