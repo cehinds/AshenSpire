@@ -5,6 +5,11 @@ import { fitStatusTray } from './statusTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { sceneLayers } from '../models/SceneLayerModel.js';
+import { targetOutline } from '../models/TargetLayerModel.js';
+import { ENVIRONMENTS } from '../../content/environments.js';
+
+const sceneById = (id) => ENVIRONMENTS.flatMap(region => region.scenes).find(scene => scene.id === id) || null;
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -95,11 +100,30 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--art-right', `${(artRect.right - hostRect.left) / zoom}px`);
       sprite.style.setProperty('--art-top', `${(artRect.top - hostRect.top) / zoom}px`);
       sprite.style.setProperty('--art-height', `${artRect.height / zoom}px`);
+      // WGC4: the target outline is drawn on this zoomed host; hold it at its
+      // physical minimum (sprite px, since the host's screen scale is `scale`).
+      const outline = targetOutline({ scale });
+      sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
+      sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     }
     for (const frame of frames) fitStatusTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
     combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
     combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
+    // WGS1: crop the scene's painted plate so its ground line meets the floor
+    // band (WGS7) and its sky fills the rest (WGS6). Feet are not moved.
+    const backdrop = combat.querySelector('.environment-backdrop');
+    const art = backdrop?.querySelector(':scope > svg');
+    if (art) {
+      const layers = sceneLayers({ width: backdrop.clientWidth, height: fieldRect.height / zoom, scene: sceneById(backdrop.dataset.scene) });
+      if (layers.skyline.viewBox) art.setAttribute('viewBox', layers.skyline.viewBox.join(' '));
+      backdrop.dataset.sceneFit = layers.aligned ? 'floor' : 'cover';
+      backdrop.dataset.skyline = layers.skyline.visible ? 'on' : 'off';
+      backdrop.dataset.floor = layers.floor.visible ? 'on' : 'off';
+      // Screen px below the battlefield's top edge (relative, so it cannot go
+      // stale when the whole board shifts without resizing).
+      backdrop.dataset.floorTop = String(layers.floor.top * zoom);
+    }
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

@@ -1,6 +1,7 @@
 import { openCollectibleInspection } from '../components/collectibleCard.js';
 import { combatantInfo, combatantIntent, selectCombatantInfo } from '../components/combatantOverhead.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
+import { targetLayer } from '../models/TargetLayerModel.js';
 import { touchPoint, recordFlickPoint, flickVerdict, nearestFlickTarget } from '../models/TouchFlickModel.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
 import { combatEffectPlan, combatEffectTags, combatEffectTargetIds } from '../../model/combatEffects.js';
@@ -466,6 +467,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     refreshAim();
   });
 
+  // WGC4: the one writer of the target layer. Selection changes and board
+  // rebuilds both land here. render() skips frames whose key is unchanged and
+  // only removes classes it added itself, so a highlight toggled on selection
+  // used to outlive the play or cancel that ended it.
+  function applyTargetLayer() {
+    const layer = targetLayer({ armed: !!selected || selectedFlask != null, enemies: combat.enemies });
+    combatEl.dataset.targetLayer = layer.active ? 'armed' : 'idle';
+    combatEl.querySelectorAll('.combatant.enemy').forEach(enemy => enemy.classList.toggle('targetable', layer.eligibleIds.includes(enemy.dataset.eid)));
+  }
+
   // Selection changes presentation only; every input waits for confirmation.
   function syncCardSelection() {
     const active = selected || selfArm;
@@ -481,7 +492,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
     const def = active && resolveCard(registries, findInst(active));
     player?.classList.toggle('skill-selected', def?.type === 'skill');
-    combatEl.querySelectorAll('.enemy:not(.dead)').forEach(enemy => enemy.classList.toggle('targetable', !!selected));
+    applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();
     refreshAim();
@@ -817,6 +828,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     renderCombatantStage();
     renderHand();
     renderControls();
+    applyTargetLayer();
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
@@ -1222,6 +1234,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       stageFor(record.box)?.dispose?.(); record.box.remove(); enemyFrames.delete(id);
     }
     const targeting = selected || selectedFlask != null;
+    // WGC4: one eligibility home; a defeated enemy is never highlighted.
+    const eligibleTargets = targetLayer({ armed: !!targeting, enemies: combat.enemies }).eligibleIds;
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
@@ -1264,7 +1278,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const slots = {
         role: 'enemy',
         entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
+        classNames: [dv(enemy).alive ? '' : 'dead', eligibleTargets.includes(enemy.id) ? 'targetable' : '', selectedCombatantId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: record ? null : enemySprite(enemyAppearance[def.id] ? { ...def, id: enemyAppearance[def.id] } : def, { ...dv(enemy), maxHp: enemy.maxHp }),
         blockBadge: blockBadge(enemy),

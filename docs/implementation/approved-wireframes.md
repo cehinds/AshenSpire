@@ -1477,3 +1477,86 @@ beside its trigger, by the `clear` preference above. The HUD hint triggers
 measure 87.4×19.4 px at 1440×860, 72×15.7 px at 390×844 and 44×32 px at
 844×390, below the 44 px target; they are HUD labels this branch does not
 change. Emulation only: no touch device, no gamepad.
+## Combat composition and scene layers (WGC0, WGC2–WGC4, WC4b/c, WGS0/1/6/7, W4)
+
+Branch `claude/combat-composition-scene-layers`, based on dev `8797fc9a`.
+Most of this family was already on dev. Two gaps were real: the scene plate
+ignored the floor band, and the target layer thinned on phones and outlived
+its command.
+
+- WGS1 Background composition, WGS6 Skyline, WGS7 Floor:
+  `src/ui/models/SceneLayerModel.js`. Each scene is one painted plate, so
+  skyline and floor are two regions of it. The plate covers the battlefield
+  undistorted, and its authored ground line (`floorStart` in
+  `content/environments.js`) sits at the floor band's top edge. That gives
+  80% ground and 20% sky, as CURRENT-SPECIFICATION's accepted formation says.
+  `wireframeUi.scene` holds `floorFraction` 0.8 (moved from the unused
+  `formation.floorFraction`), `bleedFraction` 0.02 and the two toggles. The
+  battlefield stage writes the crop as the SVG `viewBox` and drops the
+  1.06/1.02 CSS zoom about the centre, which would move the ground. Combat
+  and co-op share the stage, so both get it. Feet are untouched.
+- Toggles: `scene.floor: false` falls back to a centred cover crop, and
+  `scene.skyline: false` paints no plate. Neither moves an actor.
+- WGC4 Target layer: `src/ui/models/TargetLayerModel.js` is the one home for
+  eligibility (living enemies while a targeted card or flask is armed) and
+  for the outline geometry (`wireframeUi.targetLayer`). `combat.js` applies
+  it from selection changes and from every `render()`.
+  - Defect fixed on the way: on dev, selection toggled `targetable` directly,
+    and the frame update only removes classes it added itself. After a play,
+    both enemies kept the dashed outline.
+  - A defeated enemy is never highlighted.
+  - The outline and its offset are authored in sprite px (2 / 6, as before)
+    and held at 2 / 4 physical px under the depth zoom. Browsers floor these
+    to whole device pixels, so the model asks for half a pixel of headroom.
+  - Required targeting still gates the command: a card that needs an enemy
+    arms instead of playing.
+- Already met, no change: WGC0 (HUD, battlefield, hand and packed footer
+  from the W4a band plan, with one Potions control). WGC2 and WGC3 (mirrored
+  reserved slots by stable id, shared category fit, row and selected-growth
+  factors at the foot anchor, intent by role). W4 (its combat and map bodies
+  are W4a and W4b; this branch changes neither band plan; W4c dialogue was
+  not assessed).
+- WC4b Standard and WC4c Expanded: their anatomy is on dev through
+  WCM0–WCM4, WCO1–WCO3, WCF3 and WCB1. The fixed clamp sizes are not built,
+  because no production host uses a fixed-size combatant: formation fit sizes
+  the battlefield, and W1w bounds the inspector preview.
+
+Browser evidence (CDP emulation, `?shot=combat`, reduced motion, scene
+`pale-marches-2`). "Ground" is where the painted ground line falls, as a
+fraction of field height, read through the SVG's screen CTM. Dev values use
+the same formula, which matched a dev probe of this scene within 0.002.
+
+| Viewport | Zoom | Plan | Field px | Ground dev → branch | Highest foot | Outline / offset px, dev → branch | Scroll |
+|---|---:|---|---|---|---:|---|---:|
+| 1440×860 | 1.18 | stacked | 1440×459.9 | 0.457 → 0.1998 | 0.504 | 3/11 → 3/11 | 0 |
+| 1280×800 | 1.07 | stacked | 1280×423.9 | 0.457 → 0.1999 | 0.502 | 3/9 → 3/9 | 0 |
+| 390×844 | 0.90 | stacked | 390×450.4 | 0.479 → 0.1994 | 0.503 | 1/4 → 2/4 | 0 |
+| 375×667 | 0.85 | stacked | 375×336.4 | 0.480 → 0.1997 | 0.498 | 1/4 → 2/4 | 0 |
+| 360×780 | 0.83 | stacked | 360×411.9 | 0.480 → 0.2003 | 0.502 | — → 2/4 | 0 |
+| 844×390 | 0.62 | rails | 844×148 | 0.420 → 0.1997 | 0.641 | 1/2 → 2/4 | 0 |
+
+- All 20 scenes, full 6-v-6 formation (analytic, same formula): on dev the
+  ground line fell between 0.19 and 0.74 of the field, and back-tier feet
+  stood above the painted ground in 3, 3, 3, 6 and 2 of 20 scenes at the
+  five viewports above. On the branch it is 0.200 everywhere, with 0/20.
+- Tap-to-play at all six viewports: tap the first hand card (it arms both
+  enemies), then tap the first enemy. Hand 5 → 4, enemy 16 → 9 HP, then
+  `data-target-layer="idle"` with 0 targetable and 0 aiming. On desktop, hover gives the solid active
+  outline.
+- Co-op (`?shot=coop`, 390×844 and 1440×860, scene `cinder-reach-3`): ground
+  0.1994 / 0.1997, floor top 0.200, feet from 0.502.
+- Targets: every combat button at least 44 px, except the two HUD icon
+  buttons at 844×390 (44×32), which are the same on dev.
+- `hudparity --only-shape 844x340`: 15 findings, 140 checks passed, identical
+  to dev today (dev has moved since the 9 recorded earlier).
+
+Limits: phones now crop the plate harder. At 390×844 it is drawn at
+1.12–1.63× instead of 0.90×, because 80% ground needs more of the painting's
+ground than a phone field shows. That is an owner decision; `floorFraction`
+tunes it. There is no separate skyline or ground-cutout art, so
+`scene.groundCutout` has no counterpart and the floor is a region of the
+plate, not a foreground layer. `environments.js` still carries
+`fieldRatio: 0.6` (the earlier 60% ground review); nothing reads it. A CSS
+rule gives a keyboard-focused target the solid outline, but keyboard
+targeting was not verified: CDP key events did not reach the shortcut
+handler. Playwright-based tools were not run.
