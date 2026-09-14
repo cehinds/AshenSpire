@@ -591,6 +591,97 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.review.buy.card",
+    "extends": "",
+    "short": "Buy this card?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.card.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The card joins your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.relic",
+    "extends": "",
+    "short": "Buy this relic?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.relic.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The relic is yours for the rest of the run.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.flask",
+    "extends": "",
+    "short": "Buy this flask?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.flask.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The flask takes a free flask slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn",
+    "extends": "",
+    "short": "Burn this card?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The card leaves your deck for good.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn.none",
+    "extends": "",
+    "short": "Burn a card out of the deck?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn.none.message",
+    "extends": "",
+    "short": "Choose the card to burn first. Burning costs {cost} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.relic",
+    "extends": "",
+    "short": "Sell this relic?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.flask",
+    "extends": "",
+    "short": "Sell this flask?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.message",
+    "extends": "",
+    "short": "The merchant pays {price} cinders. It is gone for good; he does not sell it back.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.title",
     "extends": "",
     "short": "Merchant",
@@ -966,6 +1057,55 @@ export const uiStrings = [
     "extends": "",
     "short": "{available} of {total} available",
     "full": "How many of this Shrine's choices you can take now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.question",
+    "extends": "",
+    "short": "Rest at this Shrine?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.target",
+    "extends": "",
+    "short": "{shrine} · {hp}/{maxHp} HP · {mana}/{maxMana} Mana",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.leave",
+    "extends": "",
+    "short": "Heal {heal} HP and restore Mana, then leave this Shrine.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.stay",
+    "extends": "",
+    "short": "Heal {heal} HP and restore Mana. You stay at this Shrine and leave when you choose.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.confirm",
+    "extends": "",
+    "short": "REST",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "confirm.eyebrow.permanent",
+    "extends": "",
+    "short": "CANNOT BE UNDONE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "quit.review.target",
+    "extends": "",
+    "short": "{className} · Slot {slot} · {facts}",
+    "full": "",
     "tip": ""
   },
   {

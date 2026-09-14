@@ -1284,3 +1284,89 @@ Limits: the rail/selector threshold is a budget, not a measurement of the
 drawn rail. The label change to Display and hiding seven notes are owner
 decisions to confirm. Escape closes the whole door even while the selector
 list is open. No gamepad was attached; the ring was driven by `[` and `]`.
+
+## Service and Quit confirmations (W2a / W2e)
+
+Branch `claude/w2a-w2e-confirmation-audit`, based on dev `8797fc9a`. Every
+W2a and W2e review was audited against W2 in the browser and in code. All of
+them go through the one door, `openConfirmationModal`. Only the gaps changed;
+the hold and second-beat policies did not.
+
+- **Already conforming everywhere:**
+  - a question title and a 44×44 close control top-right;
+  - Back bottom-left with the action-named primary bottom-right (WCB0 footer);
+  - Back takes initial focus; Escape and the close control cancel;
+  - `aria-modal`; W2e stays an alertdialog.
+- **W2e Quit Without Saving** had no target. It now names the run it leaves,
+  e.g. "Reaver · Slot 1 · Act 1 · Floor 0 · 62/62 HP". The class and slot are
+  followed by the save slots' own `slotFacts`, so the two cannot disagree.
+  The title keeps the actual operation's label ("Quit without saving?").
+  The message is unchanged.
+- **W2a merchant and Shrine reviews** (via `beatArmer`) printed the generic
+  line "Review this change before confirming…". Buy also wore the category
+  eyebrow "STATE CHANGE", and each title crammed in the cost ("Buy X for N
+  cinders? You have M."). They now fill the three W2 slots from
+  `src/ui/models/ConfirmationReviewModel.js`:
+  - Buy card/relic/flask: "Buy this card?", then the offer, then "Spend 242
+    of your 999 cinders (757 left). The card joins your deck."
+  - Burn: "Burn this card?", then the card, then the exact cinders.
+  - Sell: "Sell this flask?", then the item, then the price.
+  - Rest: "Rest at this Shrine?", then the Shrine with HP and Mana, then the
+    exact heal and whether you stay or leave.
+- **Burn is an alertdialog now.** `action.removeCard` is DESTRUCTIVE in the
+  ConfirmationRegistry, but the review was a plain dialog. `beatArmer` takes
+  an optional `policyAction` and reads its tone through
+  `registries.framework.confirmationTone`. The secondbeat profile rule
+  still applies, so W2b Delete is unchanged.
+- **Smith upgrade and mount install/extract** said "Keep reviewing" on the
+  way out. It is Back (`common.back`). Their titles, details card and
+  blocked state were already W2.
+- **Shared door.** It had a generic "Confirm"/"Careful" eyebrow fallback,
+  which is gone: the eyebrow is a concrete tag or nothing. There is a new
+  optional `target` slot (`.confirmation-target`, kit `as-title-s`) above the
+  message, added to `aria-describedby`. Callers that pass no target,
+  including W2b/W2c/W2d, render exactly as before.
+- **Copy.** New rows in `uiStrings.csv`: `shop.review.*`, `rest.review.*`,
+  `confirm.eyebrow.permanent`, `quit.review.target`.
+- **Tests.** `tests/wireframe-confirmation.test.mjs` (7 tests), registered in
+  `run-node.mjs`.
+
+Browser evidence (CDP, source `index.html`). The reviews were Quit (`?shot=map`
+quick menu), Buy, Burn and Sell (`?shot=shop`), Rest, and Smith upgrade
+(`?shot=rest`):
+
+| Viewport | Dialog (w×h, Quit / Buy / Smith) | Page overflow | Body scroll | Back → primary x |
+|---|---|---:|---:|---|
+| 1440×860 | 507×308 / 507×281 / 507×488 | 0 | 0 | 484 → 722–958 |
+| 390×844 | 376×244 / 376×223 / 376×394 | 0 | 0 | 17 → 198–374 |
+| 844×390 | 267×249 / 267×210 / 267×374 | 0 | 0 | 298 → 425–547 |
+
+- Roles at every viewport: Quit and Burn are `alertdialog`; Buy, Sell,
+  Rest and Smith are `dialog`. Focus lands on `.confirmation-cancel`.
+- Every dialog fits inside the viewport.
+- Every target line is filled except Smith's, whose title already names the
+  item.
+
+Tools:
+- `holdconfirm` shows the 1 finding over 137 checks it has on dev
+  (`smithExtract` and `smithInstall` draw no control at `?shot=rest`).
+- `modal-shell-contract` is 58 passed with its two known failures.
+- `confirmation-modal` (browser) was not rerun.
+- Standalone, the confirmation-modal node contract throws importing
+  `tooltip.js` in its fake DOM. It throws identically on a clean dev export,
+  and it passes inside `run-node.mjs`.
+- Playwright-based tools were not run.
+
+Limits:
+- Mount install/extract reviews were checked in code only; `?shot=rest` does
+  not offer those services.
+- The dev Sell review was read from code (my first probe missed its tile).
+- Owner decision: W2's wireframe shows no eyebrow at all. The concrete
+  consequence tags ("CANNOT BE UNDONE", "LEAVES THE RUN", "PERMANENT FOR THIS
+  RUN") still sit as the eyebrow above the question. Moving them into the
+  body consequence slot is a shared-door change that also moves W2b–W2d, so it
+  was left alone.
+- The eyebrow change reaches every `beatArmer` review. Event choice, flask
+  use, End Turn and reward Continue no longer wear "STATE CHANGE" when they
+  can be undone. They still print the generic review line, because they
+  author no message; they are W2 instances outside W2a/W2e.

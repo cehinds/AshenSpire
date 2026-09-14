@@ -21,6 +21,7 @@ import {
 import { renderCard } from './card.js';
 // The interaction router goes through the framework's adopted door.
 import { armOptionDecision } from '../../framework/optionDecision.js';
+import { t } from '../strings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { FOLD_GLYPH } from './foldGlyph.js';
 
@@ -323,7 +324,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
         consequence: 'PERMANENT FOR THIS RUN',
         detailsHtml: confirmationDetails(selected),
         confirmLabel: `Upgrade (${selected.cost})`,
-        cancelLabel: 'Keep reviewing',
+        // W2: the way out is Back (bottom-left), the same word every review wears.
+        cancelLabel: t('common.back'),
         onCommit: commitSelected,
         canCommit: () => Boolean(currentModel.properties.canConfirm),
         blockedTitle: `Cannot upgrade ${selected.name}`,
