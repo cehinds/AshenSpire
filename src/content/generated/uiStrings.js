@@ -591,6 +591,160 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.title",
+    "extends": "",
+    "short": "Merchant",
+    "full": "The wandering merchant's stall.",
+    "tip": "Merchant"
+  },
+  {
+    "id": "shop.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "Leave the merchant and return to the road.",
+    "tip": "Leave"
+  },
+  {
+    "id": "shop.purse",
+    "extends": "",
+    "short": "{cinders} cinders",
+    "full": "You carry {cinders} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.rail.aria",
+    "extends": "",
+    "short": "Merchant shelves",
+    "full": "Choose which of the merchant's shelves to browse.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.services",
+    "extends": "",
+    "short": "SERVICES",
+    "full": "Work the merchant or his smith does on what you already own.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.forSale",
+    "extends": "",
+    "short": "{n} for sale",
+    "full": "{n} offers on this shelf.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.soldOut",
+    "extends": "",
+    "short": "sold out",
+    "full": "Nothing is left on this shelf.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.willTake",
+    "extends": "",
+    "short": "{n} he will take",
+    "full": "The merchant will buy {n} of your goods.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.nothingWanted",
+    "extends": "",
+    "short": "nothing he wants",
+    "full": "The merchant wants none of what you carry.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.servicesOpen",
+    "extends": "",
+    "short": "{n} of {total} open",
+    "full": "{n} of {total} services are open to you now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.price",
+    "extends": "",
+    "short": "{cost} cinders",
+    "full": "Costs {cost} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.price.back",
+    "extends": "",
+    "short": "{price} cinders back",
+    "full": "The merchant pays {price} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.ready",
+    "extends": "",
+    "short": "Available",
+    "full": "You can take this now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.cinders",
+    "extends": "",
+    "short": "Not enough cinders",
+    "full": "You cannot afford this yet.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.full",
+    "extends": "",
+    "short": "Flask slots full",
+    "full": "Every flask slot is taken.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.locked",
+    "extends": "",
+    "short": "Unavailable",
+    "full": "This service is not open to you now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.buy",
+    "extends": "",
+    "short": "Buy · {cost} cinders",
+    "full": "Buy the selected offer for {cost} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.sell",
+    "extends": "",
+    "short": "Sell · {price} cinders",
+    "full": "Sell the selected item for {price} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.open",
+    "extends": "",
+    "short": "Open",
+    "full": "Open the selected service.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.remove",
+    "extends": "",
+    "short": "Choose a card",
+    "full": "Show the deck cards the merchant can burn.",
+    "tip": ""
+  },
+  {
+    "id": "shop.detail.none",
+    "extends": "",
+    "short": "Nothing selected",
+    "full": "Select an offer to read it here.",
+    "tip": ""
+  },
+  {
+    "id": "shop.detail.aria",
+    "extends": "",
+    "short": "Selected offer",
+    "full": "The offer you selected and what it costs.",
+    "tip": ""
+  },
+  {
     "id": "customRun.seat.group",
     "extends": "",
     "short": "First seat",
@@ -603,6 +757,41 @@ export const uiStrings = [
     "short": "Seeded",
     "full": "The seed decides which seat the climb opens in.",
     "tip": ""
+  },
+  {
+    "id": "settings.title",
+    "extends": "",
+    "short": "Settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.close",
+    "extends": "",
+    "short": "Close Settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.done",
+    "extends": "",
+    "short": "Done",
+    "full": "Close Settings; every change is already saved.",
+    "tip": ""
+  },
+  {
+    "id": "settings.nav.sections",
+    "extends": "",
+    "short": "Settings sections",
+    "full": "The settings categories; one is shown at a time.",
+    "tip": ""
+  },
+  {
+    "id": "settings.nav.selector",
+    "extends": "",
+    "short": "Settings section: {section}",
+    "full": "Show the list of settings sections.",
+    "tip": "Choose a section"
   },
   {
     "id": "inspector.section.summary",
@@ -686,6 +875,265 @@ export const uiStrings = [
     "extends": "",
     "short": "Unknown.",
     "full": "Not revealed yet.",
+    "tip": ""
+  },
+  {
+    "id": "compendium.title",
+    "extends": "",
+    "short": "Compendium",
+    "full": "Every armament the Spire keeps.",
+    "tip": ""
+  },
+  {
+    "id": "compendium.eyebrow",
+    "extends": "",
+    "short": "Armaments · {held} of {total} held",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.close",
+    "extends": "",
+    "short": "Close compendium",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.kinds",
+    "extends": "",
+    "short": "Armament kinds",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.unknown",
+    "extends": "",
+    "short": "Unknown {kind}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.categories",
+    "extends": "",
+    "short": "Set-aside kinds",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.category.meta",
+    "extends": "",
+    "short": "Profiles",
+    "full": "Profiles set aside in this device’s drawer.",
+    "tip": ""
+  },
+  {
+    "id": "profile.category.run",
+    "extends": "",
+    "short": "Runs",
+    "full": "Runs set aside in this device’s drawer.",
+    "tip": ""
+  },
+  {
+    "id": "profile.empty.meta",
+    "extends": "",
+    "short": "No profiles have been set aside.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.empty.run",
+    "extends": "",
+    "short": "No runs have been set aside.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.eyebrow",
+    "extends": "",
+    "short": "Rest",
+    "full": "Recover and use this Shrine's services before moving on.",
+    "tip": ""
+  },
+  {
+    "id": "rest.title",
+    "extends": "",
+    "short": "Shrine of Ember",
+    "full": "The Shrine you are resting at.",
+    "tip": ""
+  },
+  {
+    "id": "rest.status.available",
+    "extends": "",
+    "short": "{available} of {total} available",
+    "full": "How many of this Shrine's choices you can take now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.consequences.heading",
+    "extends": "",
+    "short": "Availability",
+    "full": "Whether each choice here can be taken now; its own line says why not.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.available",
+    "extends": "",
+    "short": "Available",
+    "full": "You can take this now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.unavailable",
+    "extends": "",
+    "short": "Unavailable",
+    "full": "This cannot be taken now; the choice's own line says why.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.used",
+    "extends": "",
+    "short": "Rested",
+    "full": "You have already rested at this Shrine.",
+    "tip": ""
+  },
+  {
+    "id": "rest.continue",
+    "extends": "",
+    "short": "Continue",
+    "full": "Leave the Shrine and return to the map.",
+    "tip": "Continue"
+  },
+  {
+    "id": "event.status.choose",
+    "extends": "",
+    "short": "Choose a response",
+    "full": "Every response here is open to you.",
+    "tip": ""
+  },
+  {
+    "id": "event.status.limited",
+    "extends": "",
+    "short": "{available} of {total} available",
+    "full": "A price closes some responses for now.",
+    "tip": ""
+  },
+  {
+    "id": "event.status.resolved",
+    "extends": "",
+    "short": "Resolved",
+    "full": "Your response is taken; continue when ready.",
+    "tip": ""
+  },
+  {
+    "id": "event.continue",
+    "extends": "",
+    "short": "Continue",
+    "full": "Move on from this event.",
+    "tip": "Continue"
+  },
+  {
+    "id": "event.continue.combat",
+    "extends": "",
+    "short": "Steel yourself",
+    "full": "The event leads into a fight.",
+    "tip": "Steel yourself"
+  },
+  {
+    "id": "armoury.title",
+    "extends": "",
+    "short": "Armoury",
+    "full": "Your character, equipment, inventory and deck.",
+    "tip": "Armoury"
+  },
+  {
+    "id": "armoury.close",
+    "extends": "",
+    "short": "Close Armoury",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.categories",
+    "extends": "",
+    "short": "Armoury categories",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.detail.prompt",
+    "extends": "",
+    "short": "Select an item to see its details and available actions.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.title",
+    "extends": "",
+    "short": "Compared with equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.replaces",
+    "extends": "",
+    "short": "Replaces {name} in {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.fills",
+    "extends": "",
+    "short": "Fills the empty {slot} position",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.removes",
+    "extends": "",
+    "short": "Removes {name} from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.role",
+    "extends": "",
+    "short": "{label} {before} → {after}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.unchanged",
+    "extends": "",
+    "short": "Combat values unchanged",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.ready",
+    "extends": "",
+    "short": "Available: {action}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.blocked",
+    "extends": "",
+    "short": "Unavailable: {reason}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.short",
+    "extends": "",
+    "short": "Requirement not met: {requirements}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.requirement",
+    "extends": "",
+    "short": "{attribute} {required} (have {actual})",
+    "full": "",
     "tip": ""
   }
 ];

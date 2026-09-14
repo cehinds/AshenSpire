@@ -39,7 +39,13 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
 // a KitLine with a StatPair and a delta. The `.flask-*` / `.level-cinder-*`
 // names stay on the kit elements because tools/flaskbox.mjs reads them.
-import { el, html, row, stepper, statusText, subtitle, statPair } from '../kit/index.js';
+import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFooter } from '../kit/index.js';
+// W1s: the Shrine is a choice body — the options beside their availability,
+// the head's {Status} from the same facts, Continue in the foot when the
+// Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
+import { mountChoiceBody } from '../components/choiceBody.js';
+import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
+import { t } from '../strings.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -171,12 +177,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     ]),
   ]));
 
-  app.innerHTML = `
-    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
-    <div class="screen room-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
-      <h2>Shrine of Ember</h2>
-      <p class="subtitle">The gold light holds, for now</p>
-      ${refillLineHtml(registries, refill)}
+  // W1s: the option cards are the choice body's first slot, their markup
+  // unchanged. The Shrine's name moves to the head's title, and the flavour
+  // subtitle under it goes (FRONTEND-WIREFRAMES §4: no redundant shrine
+  // introduction). The refill sentence moves to the second slot, below.
+  const choicesHtml = `
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
@@ -274,8 +279,49 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
         </div>
       </div>
-      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
-    </div>`;
+    `;
+
+  app.innerHTML = `
+    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
+    <div class="screen room-screen rest-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem"></div>`;
+  // W1s {Status} and availability: one fact per offered choice, read off the
+  // same plans that build and wire the cards above — never re-derived.
+  const offeredChoices = [
+    { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && multiUse && rested },
+    { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
+    extract && { id: 'extract', selector: '#extract-opt', available: extract.available },
+    install && { id: 'install', selector: '#install-opt', available: install.available },
+    { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
+    { id: 'level', selector: '#level-opt', available: level.offerable },
+  ].filter(Boolean);
+  const availability = restChoiceStatus(offeredChoices);
+  // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
+  // cards). A single-use Shrine has none — taking a choice is the way on — so
+  // its reserved foot collapses rather than inventing a way to leave.
+  const leave = multiUse ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
+  const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
+  mountChoiceBody(app.querySelector('.rest-screen'), {
+    className: 'rest-door',
+    eyebrow: t('rest.eyebrow'),
+    title: t('rest.title'),
+    status: t('rest.status.available', { available: availability.available, total: availability.total }),
+    choices: el('div', { class: 'choice-body-choices rest-choices', html: choicesHtml }),
+    consequences,
+    foot: leave ? modalFooter({ primary: leave, size: 'fill', className: 'choice-foot' }) : null,
+  });
+  // The second slot: what arriving already restored, then each choice's state.
+  // The names are read off the mounted cards, so a choice keeps one title.
+  consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
+  consequences.append(
+    el('h3', { class: 'as-eyebrow', text: t('rest.consequences.heading') }),
+    el('ul', { class: 'choice-status-list' }, availability.rows.map((entry) => {
+      const card = app.querySelector(offeredChoices.find((choice) => choice.id === entry.id).selector);
+      return el('li', { class: 'choice-status-row', dataset: { option: entry.id, state: entry.state } }, [
+        el('span', { class: 'choice-status-name', text: (card?.querySelector('h3, .on')?.textContent || entry.id).trim() }),
+        el('span', { class: 'choice-status-state', text: t(`rest.state.${entry.state}`) }),
+      ]);
+    })),
+  );
 
   if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => remount() });
 
@@ -287,7 +333,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     const element = app.querySelector(selector);
     if (element) markUiComponent(element, UI.shrineOptionCard, variant);
   }
-  const leave = app.querySelector('#shrine-leave');
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {

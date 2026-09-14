@@ -41,6 +41,16 @@ export const wireframeUi = freeze({
   combat: { bands: [10, 55, 30, 5], footerMinimumPx: 56, shortHostRails: true },
   // W1w: preview column share; the details pane takes the rest and scrolls.
   inspector: { previewFraction: 0.38 },
+  // W1s Rest / W1u Event (choice body): nominal shares of the visible game
+  // viewport. The frame takes what the run HUD leaves, capped at these.
+  choiceBody: {
+    frameWidthVw: 95, frameHeightVh: 90, headerMinVh: 10, footerMinVh: 10,
+    sideInsetVw: 2.5, topInsetVh: 2, columnGapVw: 2, rowGapVh: 2,
+  },
+  // W1e/W1n: the Armoury pane's item collection and the selected item's
+  // detail share the active pane (31.95/31.95 and 44/44 in the drawings, so
+  // one half each). Wide hosts put them side by side; phone hosts stack them.
+  armoury: { collectionShare: 0.5, compactCollectionShare: 0.5 },
   // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
   combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
   // WCM0 lower meters. Screen-space minimums; they hold after perspective
@@ -51,6 +61,15 @@ export const wireframeUi = freeze({
     stanceMinRem: 0.85, valueTextPx: 12, gapPx: 3,
     // Shown only while the combatant is selected; empty the list to show all.
     selectedOnly: ['name', 'resource', 'buildup', 'stance'],
+  },
+  // W1d / W1v merchant workspace. The rail takes W1's 21.6 of the 95 frame
+  // width (clamped to readable rems); offers and detail split the pane evenly
+  // with a gap. Below `wideMinRem` of frame width the rail moves above the
+  // pane and the detail stacks under the offers, taking at most
+  // `detailMaxFraction` of the body so the offers keep the larger share.
+  shop: {
+    railFraction: 21.6 / 95, railMinRem: 11, railMaxRem: 28,
+    offersFraction: 0.5, gapRem: 1, wideMinRem: 60, detailMaxFraction: 0.5,
   },
   footer: {
     circleMaxFraction: 0.2, pileMaxFraction: 0.1, endMaxFraction: 0.4,
@@ -104,5 +123,20 @@ export const wireframeUi = freeze({
   identity: {
     metadataSlots: { start: 'rarity', end: 'owned' },
     artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
+  },
+  // W1a Settings. A category rail needs this host width, and every category
+  // at the tap floor must fit in the W1 body band (70% of the viewport);
+  // otherwise one selector sits above the pane. Gap and inset are the rail's
+  // budget, not its drawn values. Hysteresis stops a host at the edge flapping.
+  settings: {
+    railMinHostWidthRem: 60, bodyHeightFraction: 0.7,
+    railGapRem: 0.6, railInsetRem: 1.4, hysteresisRem: 1,
+  },
+  // W1 workspace (W1f Compendium, W1g Profile): frame share of the viewport,
+  // the wide rail (21.6vw, floored and capped for readability) and the gaps
+  // between the pane's two slots (2vw beside each other, 2vh stacked).
+  workspace: {
+    frameWidth: 0.95, frameHeight: 0.9, railWidth: 0.216,
+    railMinRem: 11, railMaxRem: 24, columnGap: 0.02, rowGap: 0.02,
   },
 });

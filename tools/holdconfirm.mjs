@@ -1099,6 +1099,11 @@ async function main() {
       // open", the exact inversion the useFlask note above records. Bar faces
       // first, then the rows they reveal; a selector that matches nothing
       // still presses nothing, so non-shop surfaces are untouched.
+      // THE BARS BECAME A CATEGORY RAIL (W1d / W1v, 2026-09-13): the openers
+      // are the rail's SERVICES and SELL items. Every shelf stays mounted
+      // (hidden) while another is shown, so the burn grid opened under
+      // SERVICES is still in the document after SELL is pressed, and SELL's
+      // selected offer arms the footer action with `shopSell`.
       // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title
       // menu is five verbs and the slot rows with their delete control open
       // behind LOAD. Observed red without this press at dev = e5d9c981
@@ -1112,7 +1117,7 @@ async function main() {
       // third reaches the card's own choose) — measured 2026-09-11, and a
       // finding for the owner, not this census's to hide: the census presses
       // the card as many times as a thumb has to, and the count is on record.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
+      for (const opener of ['#shop-cat-services', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '#shop-cat-sell', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1715,11 +1720,12 @@ async function main() {
   {
     console.log(`\n  THE MERCHANT — burning a card out of the deck for good`);
     await openShot('shop');
-    // The REMOVE bar first (E2 / #247): the brazier sits behind a fold now,
-    // and a folded control has no point to press.
-    await ev(`(() => { const b = document.querySelector('[data-face="bar:remove"]'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
+    // The SERVICES rail item first (W1d, 2026-09-13; the REMOVE bar before
+    // it, E2 / #247): the brazier sits on a shelf the rail shows, and a
+    // hidden control has no point to press.
+    await ev(`(() => { const b = document.querySelector('#shop-cat-services'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
     await wait(120);
-    const bar = await pointOf('[data-face="bar:remove"]');
+    const bar = await pointOf('#shop-cat-services');
     if (bar) { await press(bar, 30); await wait(250); }
     await ev(`(() => { const b = document.querySelector('#remove-opt'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
     await wait(120);

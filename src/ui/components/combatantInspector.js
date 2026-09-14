@@ -119,12 +119,17 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
   ].filter(Boolean).map(decorateKeywords);
 }
 
-/** The W1w preview: only sprite, name and HP, bounded and aspect-preserving. */
-export function combatantInspectorPreview({ name, hp = null, sprite = null }) {
+/**
+ * The W1w preview: sprite and name, bounded and aspect-preserving, over the
+ * pool meters (HP, MP, Poise — only those the combatant has). The meters are
+ * `resourceMeters`, the same stacked Meters the edge tray drew its pools with.
+ */
+export function combatantInspectorPreview({ name, hp = null, meters: pools = null, sprite = null }) {
   const art = el('div', { class: 'combatant-inspector-art', dataset: { identityPart: 'artwork', artworkAnchor: artworkAnchor('inspector') } });
   if (sprite) art.append(sprite);
+  const rows = pools || (hp ? [hp] : []);
   return el('div', { class: 'combatant-inspector-preview' }, [
-    art, labelStack({ label: name, attrs: { dataset: { identityPart: 'name' } } }), hp ? resourceMeters([hp]) : null,
+    art, labelStack({ label: name, attrs: { dataset: { identityPart: 'name' } } }), rows.length ? resourceMeters(rows) : null,
   ]);
 }
 
@@ -132,7 +137,7 @@ export function combatantInspectorPreview({ name, hp = null, sprite = null }) {
 export function combatantInspectorLayout(subject, { sprite = null, previewFraction = 0.38 } = {}) {
   const view = projectCombatantInspector(subject);
   const layout = el('div', { class: 'combatant-inspector-layout' }, [
-    combatantInspectorPreview({ name: view.preview.name, hp: view.preview.hp, sprite }),
+    combatantInspectorPreview({ name: view.preview.name, hp: view.preview.hp, meters: view.preview.meters, sprite }),
     el('div', { class: 'combatant-inspector-details' }, combatantDetailBody(subject, { heading: false })),
   ]);
   layout.style.setProperty('--inspector-preview-fraction', String(previewFraction));
