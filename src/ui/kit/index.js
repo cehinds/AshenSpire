@@ -18,6 +18,7 @@
 // that read the page; kit.css draws nothing for those names.
 
 import { resolveControlRole, assertControlException } from '../models/ControlAppearance.js';
+import { resolveButtonSize, planButtonGroup, buttonSizeTokens } from '../models/ButtonSizeModel.js';
 import {
   buttonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, modalHead as shellModalHead,
   modalFooter as shellModalFooter, modalCloseButton as shellModalCloseButton, modalCloseButtonHtml as shellModalCloseButtonHtml,
@@ -114,9 +115,11 @@ export function iconButton({ glyph, label, id = '', className = '', attrs = {} }
     'aria-label': label, title: attrs.title ?? label, text: glyph,
   });
 }
-/** button({ label, weight: 'secondary'|'primary'|'danger', role?, exception?, ... }) — three weights, no fourth;
- *  `role` names the appearance role when the weight alone does not (an exit). */
-export function button({ label, weight = 'secondary', role = null, exception = null, id = '', className = '', disabled = false, attrs = {} } = {}) {
+/** button({ label, weight: 'secondary'|'primary'|'danger', role?, exception?, size?, ... }) — three weights, no fourth;
+ *  `role` names the appearance role when the weight alone does not (an exit).
+ *  `size` is a WCB0 size ID ('half-tall'): it sets the height here; the width
+ *  is resolved by the group that owns the action region (choiceRow, a footer). */
+export function button({ label, weight = 'secondary', role = null, exception = null, size = null, id = '', className = '', disabled = false, attrs = {} } = {}) {
   const node = el('button', {
     ...attrs, type: attrs.type || 'button', id: id || null,
     class: cls('as-btn', weight === 'primary' ? 'primary' : '', weight === 'danger' ? 'danger' : '', className),
@@ -125,9 +128,39 @@ export function button({ label, weight = 'secondary', role = null, exception = n
   // One appearance role per control (models/ControlAppearance.js).
   node.dataset.controlRole = resolveControlRole({ role, weight, className });
   if (assertControlException(exception)) node.dataset.controlException = exception;
+  if (size != null) node.dataset.buttonSize = resolveButtonSize(size).id;
   if (disabled) node.disabled = true;
   return node;
 }
+/**
+ * choiceRow({ buttons, size }) — sibling options (WCB0/WCB2). Every sibling
+ * wears one size (default: the configured choice preset, half), capped by its
+ * equal share after gaps, so edges align whatever the labels say; a narrow
+ * host keeps the shared width and wraps labels. Not for footers (modalFooter)
+ * or icon, stepper, inspect, map-node or packed-combat controls.
+ */
+export function choiceRow({ buttons = [], size = null, attrs = {}, className = '' } = {}) {
+  const members = buttons.filter(Boolean);
+  const plan = planButtonGroup({ kind: 'choice', count: members.length, size });
+  for (const member of members) member.dataset.buttonSize = plan.size;
+  return el('div', {
+    ...attrs, class: cls('as-choicerow', attrs.class, className), role: attrs.role || 'group',
+    dataset: { ...(attrs.dataset || {}), buttonGroup: plan.kind, buttonCount: plan.count },
+    style: { '--button-count': plan.count },
+  }, members);
+}
+/**
+ * The WCB0 tokens kit.css reads, written once onto :root from
+ * wireframeUi.buttons (ButtonSizeModel.buttonSizeTokens). Applied when the kit
+ * loads, so every entry that builds kit controls carries them; a host without
+ * a document (node tests) is skipped.
+ */
+export function applyButtonSizeTokens(root = typeof document === 'undefined' ? null : document.documentElement) {
+  if (typeof root?.style?.setProperty !== 'function') return false;
+  for (const [name, value] of Object.entries(buttonSizeTokens())) root.style.setProperty(name, value);
+  return true;
+}
+applyButtonSizeTokens();
 export function tab({ label, selected = false, member = '', id = '', className = '', attrs = {} } = {}) {
   return el('button', {
     ...attrs, type: 'button', id: id || null, role: 'tab',

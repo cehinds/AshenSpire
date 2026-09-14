@@ -283,6 +283,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "card.meta.owned",
+    "extends": "",
+    "short": "Owned: {count}",
+    "full": "Copies of this card already in your deck.",
+    "tip": ""
+  },
+  {
     "id": "reward.flask.blocked",
     "extends": "",
     "short": "A {name} — but your flask slots are full. It stays in the mud.",

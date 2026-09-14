@@ -17,6 +17,7 @@ import { renderTray } from './trayComponents.js';
 import { renderEnemyMoveCards } from './enemyMoveCards.js';
 import { projectCombatantInspector as projectSections } from '../models/CombatantInspectorSections.js';
 import { t } from '../strings.js';
+import { artworkAnchor } from '../models/IdentityModel.js';
 
 const projectCombatantInspector = (subject) => projectSections(subject, t);
 import { attachTooltip, esc } from './tooltip.js';
@@ -120,10 +121,10 @@ export function combatantDetailBody(subject, { heading = true } = {}) {
 
 /** The W1w preview: only sprite, name and HP, bounded and aspect-preserving. */
 export function combatantInspectorPreview({ name, hp = null, sprite = null }) {
-  const art = el('div', { class: 'combatant-inspector-art' });
+  const art = el('div', { class: 'combatant-inspector-art', dataset: { identityPart: 'artwork', artworkAnchor: artworkAnchor('inspector') } });
   if (sprite) art.append(sprite);
   return el('div', { class: 'combatant-inspector-preview' }, [
-    art, labelStack({ label: name }), hp ? resourceMeters([hp]) : null,
+    art, labelStack({ label: name, attrs: { dataset: { identityPart: 'name' } } }), hp ? resourceMeters([hp]) : null,
   ]);
 }
 
