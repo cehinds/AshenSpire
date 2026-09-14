@@ -136,6 +136,12 @@ export const wireframeUi = freeze({
     metadataSlots: { start: 'rarity', end: 'owned' },
     artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
   },
+  // WC2a1–WC2c3 possession sub-variants. The face shows this many detail
+  // lines in its fact region and this many entries in its effect region;
+  // the rest stay on the card (hidden) so the inspection lists every one.
+  // One effect entry: at a 280 px card the heading and a second entry do not
+  // fit the 54 px effect row above the physical type floor.
+  possession: { faceLines: 2, faceEffects: 1 },
   // W1 category navigation, shared by every categorized W1 surface (Settings,
   // Shop, Armoury, Compendium, Profile, the pile viewer). A category rail needs
   // this host width, and every category at the tap floor must fit in the W1

@@ -1228,7 +1228,7 @@
       "id": "WC2a1",
       "name": "Weapon card",
       "parent": "WC2a",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1255,13 +1255,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Weapon card rows from PossessionVariantModel (an authored hand makes it a weapon; no id switch). Row one is Hand / requirements: the authored attribute requirement, else the authored hand label. Detail one keeps intrinsic Attack / Defense / Weight (no per-weapon attribute scaling is authored, so scaling is omitted). Effect row is Granted card package: weapon-art card names from weaponCardPackage, then the authored modifiers; the face shows one entry and the rest stay hidden and listed in inspection. WC2a Equipped comparison is still not built."
     },
     {
       "id": "WC2a2",
       "name": "Armor card",
       "parent": "WC2a",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1288,7 +1289,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Armour (kind armor / item:armor tag). Detail one shows the authored Poise threshold (no armour defense or resistance values are authored); row one keeps the class-outfit requirement (no armour weight is authored); effect row is Granted modifiers from the authored mods."
     },
     {
       "id": "WC2b",
@@ -1328,7 +1330,7 @@
       "id": "WC2b1",
       "name": "Passive relic",
       "parent": "WC2b",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1355,13 +1357,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Passive relic (passives.modifiers, or any set passive key). Lines: Passive: numeric modifiers as authored (Max HP +10, Cinder gain x1.25); Affects: the resources/stats they touch. Flag keys have no number, so only Affects names them. Row one reads Relic / Active while owned; modes lead the lines."
     },
     {
       "id": "WC2b2",
       "name": "Triggered relic",
       "parent": "WC2b",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1388,7 +1391,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Triggered relic (triggers[]); coexists with WC2b1 on 4 relics. Lines: Trigger: event labels from trigger.on; Limit: once per combat / limitPerTurn / No limit (paired with events when gates differ). If-conditions stay in the effect text; the trigger DSL authors no cooldown."
     },
     {
       "id": "WC2c",
@@ -1428,7 +1432,7 @@
       "id": "WC2c1",
       "name": "Healing consumable",
       "parent": "WC2c",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1455,13 +1459,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Healing consumable (effect op heal): Heals N% of max HP / Heals N HP from the authored amount. A live capped preview is not built (no card host supplies HP). Charges line appears only when a host passes charges; none does yet."
     },
     {
       "id": "WC2c2",
       "name": "Resource consumable",
       "parent": "WC2c",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1488,13 +1493,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Resource consumable (op restore<Resource> naming a registered resource): Restores N <resource>, marked with the registered resource tint (MP #315c9b), not a generic green."
     },
     {
       "id": "WC2c3",
       "name": "Utility consumable",
       "parent": "WC2c",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1521,7 +1527,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Utility consumable (any other op): <Status> <stacks> or Block N, then target (Self / Enemy). A scripted effect (Wondrous Draught) states no purpose and attaches no sub-variant."
     },
     {
       "id": "WC3",

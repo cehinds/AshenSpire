@@ -3457,6 +3457,23 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-effects:has(.epc-bonus + .epc-bonus)::after { content:'…'; position:absolute; right:0; bottom:0; }
 .epc-frame > .epc-tags { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .epc-tag { display:inline-block; margin-right:3px; }
+/* WC2a1–WC2c3 possession sub-variants. PossessionVariantModel decides which
+   rows a region carries and how many the face shows (wireframeUi.possession);
+   rows past that budget carry `hidden` and stay listed in the inspection. */
+.equipment-poker-card .epc-frame [hidden] { display:none !important; }
+.equipment-poker-card .epc-facts[data-layout='lines'] { display:flex; flex-direction:column; justify-content:center; gap:1px; padding:2px 0; }
+.epc-facts[data-layout='lines'] > .epc-line { display:block; min-width:0; font:13px/1.2 Arial,sans-serif; color:#e5dccb; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* WC2c2: the registered resource tint marks the row; the text keeps its contrast. */
+.epc-facts[data-layout='lines'] > .epc-line[style*='--line-tint'] { border-inline-start:3px solid var(--line-tint); padding-inline-start:5px; }
+.equipment-poker-card[data-possession] .epc-bonus + .epc-bonus:not([hidden]) { display:-webkit-box; margin-top:0; }
+.equipment-poker-card[data-possession] .epc-effects[data-entries='many'] .epc-bonus { -webkit-line-clamp:1; }
+.equipment-poker-card[data-possession] .epc-effects:not([data-more]) .epc-bonus { padding-right:0; }
+.equipment-poker-card[data-possession] .epc-effects:has(.epc-bonus + .epc-bonus):not([data-more])::after { content:none; }
+/* WC2a1/WC2a2 detail one (Damage / Defense values): value over label inside the
+   solved 40 px row. The 22 px value's normal line box, its margin and the row
+   padding measured 44 px, spilling into the tag row. */
+.equipment-poker-card[data-possession] .epc-facts:not([data-layout='lines']) { padding-block:0; align-items:center; }
+.equipment-poker-card[data-possession] .epc-fact strong { line-height:1; margin-bottom:0; }
 /* Detail surfaces disclose the complete label, even when compact faces truncate. */
 .modal-head-id h2, .as-head-id h2, .as-tip .tt-title {
   font-size: clamp(calc(16px / var(--ui-zoom, 1)), 2rem, calc(22px / var(--ui-zoom, 1))); white-space: normal; overflow: visible;

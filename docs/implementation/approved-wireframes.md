@@ -2011,3 +2011,98 @@ Limits:
 - Playwright tools (`card-inspection-qa`, `world-atlas-qa`) were not run;
   their Smith selectors (`.smith-candidate-card`, `.card-info-button`,
   `.smith-upgrade-modal .modal-close`) still exist.
+## Possession sub-variants (WC2a1, WC2a2, WC2b1, WC2b2, WC2c1–WC2c3)
+
+Branch `claude/possession-subvariants`, based on dev `8797fc9a`. The one
+poker canvas still draws every possession card; a new DOM-free
+`src/ui/models/PossessionVariantModel.js` decides which wireframe rows each
+of its regions carries, from the item's own data. No row switches on an item
+id, and a row the data cannot state is left off and recorded in the model's
+`omitted` list rather than filled in. Families compose: four relics are both
+WC2b1 and WC2b2.
+
+- Classification: armour is `kind: 'armor'` or the `item:armor` tag; an
+  armament is a weapon because it authors the hand it is held in. A relic is
+  passive when `passives` sets a modifier or key, triggered when it authors
+  `triggers`. A potion's purpose comes from each effect opcode: `heal` →
+  WC2c1, `restore<Resource>` naming a registered resource → WC2c2, any other
+  op → WC2c3; a scripted effect states no purpose.
+- WC2a1 weapon: row one is Hand / requirements (the authored attribute
+  requirement, else the authored hand, now read from `hand` instead of a
+  literal). Detail one keeps Attack / Defense / Weight. The effect row is
+  Granted card package: the weapon-art card name(s) from `weaponCardPackage`,
+  then the authored modifiers.
+- WC2a2 armour: detail one is the authored Poise threshold; row one keeps the
+  class-outfit requirement; the effect row is Granted modifiers.
+- WC2b1 / WC2b2 relic: row one reads Relic / Active while owned (it used to
+  call every relic Passive, and 48 of 55 are triggered). The fact region
+  becomes two text lines, detail one of each family first: `Passive:` the
+  numeric modifiers as authored, `Trigger:` the event labels; then
+  `Affects:` and `Limit:` (once per combat / per turn / No limit). The effect
+  row is the relic's effect text.
+- WC2c1–WC2c3 potion: row one names the purpose (Potion · Healing). Lines:
+  `Heals 25% of max HP`, `Restores 1 MP` (marked with the registered MP
+  tint), `Strength 2 · Self`, `Crimson Blight 4 · Enemy`, `Block 15 · Self`;
+  `Charges: n` only when a host passes `charges`.
+- Face budget (`wireframeUi.possession`): two lines, one effect entry. Later
+  rows stay on the card with `hidden`, so the inspection lists all of them;
+  a hidden effect entry shows the existing `…`.
+- A card with no tag badges (every relic and potion) collapses the empty tag
+  row (`equipmentCardTokens(…, { collapse: ['tags'] })`); the effect row gets
+  its 14 px, so two-line relic text is no longer cut. Artwork stays 270 px.
+- The Damage / Defense value cells drop their row padding and value margin
+  so value and label fit the solved 40 px row.
+- New copy is `possession.*` in `content/source/uiStrings.csv`; the model is
+  covered by `tests/wireframe-possession-variants.test.mjs` (in the run-node
+  wireframe line) and a collapse case in `tests/equipmentCard.test.mjs`.
+
+Browser evidence (CDP against `item-cards-preview.html`, all 103 item cards,
+each 280 px wide at card scale 0.8; the same probe on a dev `8797fc9a` tree):
+
+| Viewport | Page scroll | Cards with a clipped or overflowing region | Of which relic / potion |
+|---|---:|---|---|
+| 1280×800, dev | 0 | 103 of 103 | 60 of 60 |
+| 1280×800, branch | 0 | 22 of 103 | 0 of 62 |
+| 390×844, dev | 0 | 103 of 103 | 60 of 60 |
+| 390×844, branch | 0 | 22 of 103 | 0 of 62 |
+
+- The 22 remaining are weapons whose tag row is wider than the card
+  (333–397 px in 310 px); that row is unchanged from dev and not a WC2a1 row.
+- Region heights (layout px): equipment art 268, row one 20, detail one 39
+  (content 39, was 44 on dev), tags 18, effects 54, flavour 13, footer 16;
+  relic and potion tags 0, effects 68, flavour 17.
+- Ellipsis (text kept whole in its tooltip and the inspection): five relic
+  effect texts past two lines and Cutpurse's Coin's paired `Limit:` line.
+- Inspection of Forsaken Medallion lists the two face-hidden lines; the
+  greatsword inspection lists its weapon art and all three modifiers; the
+  flask door (no registries) still reads `Restores 1 MP`. No page errors.
+
+Tools: `tools/armament-smithing-ui.mjs` (CDP) reports 66 passed, 15 failed,
+the same 15 RED checks by name as on dev `8797fc9a`. Two earlier runs here
+stopped at its 15 s wait for the Shrine Smith option, while other jobs
+shared the machine: boot served from the worktree root took 16–27 s. The
+same query served from a clean tree reaches the option in 2.0–3.0 s with
+this branch's sources and 2.2–9.9 s with dev's, so the branch does not slow
+boot. Its screenshots under `docs/preview/` were restored, not committed.
+`tools/weapon-card-preview.mjs` (CDP) stops at "Timed out: preview and art"
+on dev and on this branch alike, before any card check; it was not fixed
+here. `tools/onevocab.mjs` passes 7/7: the model names all three declared
+relic-modifier tags, including `resource.attributeTier`, which no shipped
+relic uses yet. Its self-test catches 12 of 12 plants.
+`tools/character-creation-check.mjs` (CDP, clicks the creation equipment
+cards) passes 128/128. Served from clean trees, dev `8797fc9a` gives the
+same check list.
+Playwright-based tools (`card-inspection-qa`, `starting-equipment-qa`,
+`tooltip-review-qa`) were not run. The selectors they read
+(`.equipment-poker-card`, `.epc-name`, `.epc-flavor`, `.epc-art img`,
+`.card-info-button`) are unchanged by this branch.
+
+Limits: WC2a Equipped comparison is still not built (the face has no loadout).
+No per-weapon attribute scaling, armour weight or armour resistance is
+authored, so those parts of their rows are absent. The heal line is the
+authored base amount, not a live capped preview. No host passes potion
+charges yet. Trigger `if` conditions are not described beyond the event; the
+effect text states them. Row one shows the hand only when no attribute
+requirement is authored (every armament is `either` today). Wide, compact,
+iPhone SE and Galaxy S24 host geometry was not re-measured beyond the two
+viewports above.
