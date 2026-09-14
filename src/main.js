@@ -72,6 +72,8 @@ import { openSaveSlotSelector, slotFacts } from './ui/components/saveSlotSelecto
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
+import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
+import { inspectControlCss } from './ui/models/InspectControlModel.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -269,6 +271,15 @@ if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAv
 }
 document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
 document.documentElement.style.setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`);
+// WCF3: every selected card and combatant wears this one glow (config-owned).
+document.documentElement.style.setProperty('--selection-glow', selectionGlowFilter());
+// WCB1: the one inspect control's size, label and rise (config-owned).
+{
+  const inspect = inspectControlCss();
+  document.documentElement.style.setProperty('--inspect-size', inspect.size);
+  document.documentElement.style.setProperty('--inspect-label', inspect.label);
+  document.documentElement.style.setProperty('--inspect-gap', inspect.gap);
+}
 const HUD_PRESENTATION = UI.hudPresentation || {};
 const projectHudToken = (key, min, max, cssName, unit) => {
   const value = Number(HUD_PRESENTATION[key]);

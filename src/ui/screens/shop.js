@@ -126,10 +126,12 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: render });
 
     const cardsRow = app.querySelector('#shop-cards');
+    // WCI3: an offer's metadata band ends with how many the deck already holds.
+    const ownedCopies = (cardId) => run.deck.filter((c) => c.cardId === cardId).length;
     stock.cards.forEach((item, i) => {
       const wrap = document.createElement('div');
       wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px';
-      const el = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true });
+      const el = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true, owned: ownedCopies(item.id) });
       const tag = document.createElement('span');
       tag.className = 'mini';
       tag.textContent = `${item.cost} cinders`;
@@ -178,7 +180,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     if (!(stock.armaments || []).length) armamentsRow.appendChild(statusText('No armaments for sale on this visit.'));
     const artsRow = app.querySelector('#shop-weapon-arts');
     for (const item of stock.weaponArts || []) {
-      const card = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true });
+      const card = renderCard(registries, { cardId: item.id, upgraded: false }, { small: true, owned: ownedCopies(item.id) });
       card.setAttribute('role', 'button');
       card.tabIndex = 0;
       card.addEventListener('keydown', (event) => {

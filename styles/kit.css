@@ -787,7 +787,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card.rarity-rare { border-color: var(--gold); }
 .card.rarity-special { border-color: #6a3a7a; }
 /* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
-.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.2); }
+.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); filter: var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
@@ -915,6 +915,14 @@ input[type="range"] { min-height: var(--tap-floor); }
   border-top: 1px solid var(--line-soft); color: var(--muted);
   font-size: 0.9rem; text-transform: capitalize;
 }
+/* WCI3: the owned count holds the end of the band even when rarity is absent. */
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-slot="end"] { margin-inline-start: auto; }
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-kind="owned"] { text-transform: none; white-space: nowrap; }
+/* WCI2: contained artwork keeps its intrinsic ratio; the anchor only says
+   where the spare room goes (around it, or above a figure on its baseline). */
+[data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
+[data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
+[data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
 /* Truncated is never a dead end: the chevron says there is more. */
 
 /* Truncated is never a dead end: the chevron says there is more. On a face
@@ -2924,7 +2932,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-bonus + .epc-bonus { margin-top:3px; }
 .epc-flavor { font:italic 12px/1.3 Georgia,serif; color:#baa98c; padding-top:6px; border-top:1px solid #5e4c32; }
 .epc-footer { display:flex; justify-content:space-between; gap:8px; font:10px/1.1 Arial,sans-serif; color:#ac9c7f; text-transform:uppercase; letter-spacing:.04em; }
-.epc-footer > :last-child { color:var(--accent); }
+/* WC2: metadata only — rarity at the start, the owned count at the end. */
+.epc-footer > [data-meta-kind="rarity"] { color:var(--accent); }
+.epc-footer > [data-meta-slot="end"] { margin-inline-start:auto; }
+.epc-footer > [data-meta-kind="owned"] { text-transform:none; }
+/* WC2a body row one: slot, then requirements, in the one type band. */
+.epc-type { display:flex; justify-content:center; align-items:center; gap:.5em; }
+.epc-type > .epc-requirement { text-transform:none; letter-spacing:.02em; font-weight:400; color:#d1ba82; }
+.epc-type > .epc-requirement::before { content:'·'; margin-inline-end:.5em; color:var(--accent); }
+.epc-type > span { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-type > span:first-child { flex:0 1 auto; }
+.epc-type > .epc-requirement { flex:0 1 auto; }
 .equipment-poker-card [tabindex]:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .equipment-poker-inspection { min-width:0; width:100%; }
 .equipment-poker-explanations { margin-top:12px; font:14px/1.5 Arial,sans-serif; color:#eee3ca; text-align:left; overflow-wrap:anywhere; }
@@ -3043,14 +3061,16 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
 /* One drawn face for both information controls; the size is a variable so the
-   card's control reads the tap floor while the combatant's keeps the 36px the
-   overhead layout was fitted around (docs/qa/combatant-overhead). */
+   WCB1: every host's control is the one shared circle (--inspect-size, a
+   44 physical px target, with a 16 px label) unless the host declares its own
+   --card-info-size (only the creation corner still does). */
 .card-inspection-target > .card-info-button,
-.combatant-leading > .combatant-info { box-sizing:border-box; width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
-.combatant-leading > .combatant-info { --card-info-size: 36px; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
+.combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
-.inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
+/* WCF3: the selected card and its inspect control share one glow. The hand
+   moves that control into an overlay, so the portal wears the same filter. */
+.inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,190px) minmax(0,1fr); }
@@ -3361,7 +3381,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
 
 /* Equipment disclosure preserves the shared above-card placement. */
-.equipment-poker-card > .card-info-button { width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); }
+.equipment-poker-card > .card-info-button { width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); }
 @media (pointer:coarse) {
   .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
   .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
@@ -3764,11 +3784,12 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 .hand-overlay { position: relative; }
 .hand-overlay > .hand-info-portal {
   position: absolute; z-index: 500; transform: translateX(-50%);
-  width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
-  min-width: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+  --inspect-box: var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
   border: 1px solid var(--gold); border-radius: 50%; padding: 0;
   display: grid; place-items: center; background: var(--bg); color: var(--gold);
-  visibility: visible; pointer-events: auto; font-size: calc(16px / var(--ui-zoom, 1));
+  visibility: visible; pointer-events: auto; font-size: var(--inspect-label, calc(16px / var(--ui-zoom, 1)));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }

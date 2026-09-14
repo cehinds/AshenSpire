@@ -1,4 +1,5 @@
 import { anchorLocalBox } from '../fx.js';
+import { inspectControlRisePx } from '../models/InspectControlModel.js';
 
 // The hand is the only horizontal scroller. Its inspection control lives in
 // the enclosing overlay so clipping the fan cannot clip the reading door.
@@ -32,7 +33,8 @@ export function mountHandInspectionOverlay(hand) {
     const anchor = owner.getBoundingClientRect();
     const local = anchorLocalBox(hand.parentElement, {
       left: anchor.left + anchor.width / 2,
-      top: anchor.top - 48,
+      // WCB1: the control's size plus its gap, in physical px like the rect.
+      top: anchor.top - inspectControlRisePx(),
       width: 0,
       height: 0,
     });

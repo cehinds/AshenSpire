@@ -313,6 +313,157 @@ WGC6 contract supersedes that and the tool needs updating. The hidden
 preview pane throttles animation frames, so measurements were taken after
 forcing a render.
 
+## Identity and artwork (WCI0–WCI3)
+
+Branch `feature/wireframe-identity`, based on dev `d2ea5bcd`. The rules the
+three identity parts share live in one pure model,
+`src/ui/models/IdentityModel.js`, with values in `wireframeUi.identity`.
+Cards, combatants and the inspector preview stamp `data-identity-part`
+(`name`, `artwork`, `metadata`) on the parts they own; the values stay with
+the owner.
+
+- **WCI3 metadata band.** `metadataFooter` puts rarity at the start and
+  "Owned: n" at the end (`identity.metadataSlots`). A fact the surface cannot
+  state is absent, never a blank label or an invented zero. Offers pass the
+  run's deck count: reward cards, shop cards and weapon arts, and the draft
+  (its picks so far). Deck, pile and hand views pass none, so their band
+  shows rarity alone. No action enters the band. The wording is
+  `card.meta.owned` in `uiStrings.csv`.
+- **WCI2 artwork.** `artworkAnchor(host)`: cards and the inspector preview
+  centre their artwork; combatants stand it on the baseline. Artwork is
+  contained at its intrinsic ratio. Facing still mirrors only the `.facing`
+  art layer, and no text, meter or badge lives inside it.
+- **WCI1 nameplate.** The card header, the combatant nameplate and the
+  inspector preview title are the name parts. The combatant nameplate is the
+  card child directly above the meters, HP first.
+
+Browser evidence (emulation, `?shot=shop` and `?shot=combat`, 1280×800 and
+390×844):
+- Shop cards: rarity starts 3.9 px (3.3 px on the phone) from the band's
+  left edge, and "Owned: 0" ends the same distance from its right. The band
+  is 9.9% of the card height, against the wireframe's 10%. Nothing overflows.
+- Combat: with each combatant selected, its nameplate sits 3 px (the meter
+  gap) above the HP row, for the player and both enemies at both sizes.
+
+Limits:
+- Equipment cards were WC2's; the section below moves them onto the same
+  metadata band.
+- Co-op reward and shop offers do not pass an owned count.
+- Unselected combatants hide their names in formation (the selected-only
+  default, kept by #1029), so adjacency was measured with each one selected.
+
+## Possession cards (WC2, WC2a, WC2b, WC2c)
+
+Branch `feature/wireframe-possession-card`, stacked on
+`feature/wireframe-identity` (#1036). Equipment, relic and potion cards share
+one poker canvas (`equipmentCard.js`, with `collectibleCard.js` supplying
+relic and potion presentations). That canvas now follows WC2 and WC2a:
+
+- **Footer:** metadata only, built by WCI3's `metadataFooter`. Rarity starts
+  the band; "Owned: n" ends it when the host knows the count. The requirement
+  no longer sits there.
+- **Body row one, "Slot / requirements":** the type band shows the slot or
+  type label, then the requirement (for example "Weapon · Blade · Requires
+  STR 10"). Both keep their own tooltips and shrink with an ellipsis rather
+  than overflow.
+- **Owned counts:** the Armoury inventory passes each row's `count`, and the
+  Smith's candidates pass `inventoryCount`. Creation, shop, reward and preview
+  hosts pass none, so the band shows rarity alone.
+
+Browser evidence (emulation, `item-cards-preview.html`, 1280×800 and
+390×844):
+- All 103 equipment, relic and potion cards start the footer with rarity. No
+  footer overflows, and no type band clips.
+- An armament rendered with `owned: 2` ends the band with "Owned: 2", flush
+  with the right edge.
+
+Limits:
+- WC2a's "Equipped comparison" row is not built.
+- The weapon/armour and relic/consumable sub-variants (WC2a1–WC2c3) share
+  this canvas; their own rows are not added.
+## Selection effect (WCF0, WCF1, WCF3)
+
+Branch `feature/wireframe-selection-effect`, based on dev `d2ea5bcd`. WCF3's
+one shared glow and the reveal delay come from one pure model,
+`src/ui/models/SelectionEffectModel.js`, with values in
+`wireframeUi.selection` (`glowRem: 0.35`, `revealDelayMs: 1000`).
+
+- **One glow per owner.** `main.js` writes `selectionGlowFilter()` to `:root`
+  as `--selection-glow`: a gold `drop-shadow` whose radius is 0.35 reference
+  rems (at least 16 physical px each, as in the hand and footer plans), not
+  the game's 10 px root.
+  - A selected card wears it as a filter, so its inspect control, a child,
+    glows with it. The hand moves that control into an overlay, so the portal
+    wears the same filter.
+  - A selected combatant wears it on its whole `.combatant-stack`: intent,
+    the delayed inspect control, art, name and the lower stack.
+- **No per-child marks.** These are removed:
+  - the combatant card's own drop-shadow;
+  - the card's 3 px `inspection-selected` outline;
+  - the `.card.selected` glow box-shadow;
+  - the hand's parchment outline;
+  - the mount list's outline.
+
+  Elevation shadows and the gold border stay; they are not glow.
+- **One reveal delay.** `selection.revealDelayMs` replaces
+  `wireframeUi.card.inspectDelayMs` and the equipment card's own
+  `balance.ui…info.revealDelayMs`. Card inspection, equipment cards and
+  combatant inspection all read it.
+- **WCF1.** `ComponentModel.js` already validates and freezes component
+  records. Owner selection is the only selected state: the card selection
+  store for cards, and `context-selected` for combatants.
+
+Browser evidence (emulation, `?shot=combat`, 1280×800 at UI zoom 1.07 and
+390×844 at 0.9):
+- The glow radius resolves to 5.23 local px at zoom 1.07 and 6.22 at 0.9.
+  Both are 5.6 physical px, 0.35 reference rems. At the game's 10 px root, a
+  plain `0.35rem` would have given 3.5 px.
+- A selected enemy's stack carries the one gold drop-shadow. Its card has no
+  filter, and no other gold glow exists inside the stack. Its inspect control
+  is inside the glow and appears after the delay.
+- A selected hand card and its portalled inspect control both carry the same
+  filter, with no outline.
+
+Limits:
+- The reward door's green "chosen" highlight is a separate state tied to
+  Confirm and stays as it is.
+- The creation selectors keep their corner inspect control (contested in
+  #994/#996).
+- The inspect control's own size and label are WCB1's (next section).
+
+## Inspect control (WCB1)
+
+Branch `feature/wireframe-inspect-control`, stacked on
+`feature/wireframe-selection-effect` (#1037). One control for every
+selectable card, combatant and inventory tile, from
+`src/ui/models/InspectControlModel.js` with values in `wireframeUi.inspect`
+(`sizeRem: 2.75`, `labelPx: 16`, `gapPx: 10`).
+
+- `main.js` writes `--inspect-size` (2.75 reference rems, a 44 physical px
+  target), `--inspect-label` (16 physical px) and `--inspect-gap` (10
+  physical px) to `:root`.
+- The card, equipment card, combatant and hand-portal controls all read
+  them. Removed:
+  - the combatant's 36 px override;
+  - the card's tap-floor size;
+  - the equipment card's raw 44 CSS px (and `balance.ui…info.sizePx`);
+  - the 20 px label.
+- The hand overlay places its portal `inspectControlRisePx()` (size + gap)
+  above the card instead of a hard-coded 48 px.
+- The reveal still waits `selection.revealDelayMs`. The combatant control
+  stays above the intent, centred on the sprite.
+
+Browser evidence (emulation, 1280×800 at UI zoom 1.07 and 390×844 at 0.9):
+- **Combatant control:** 44×44 physical px with a 16 px label, 4 px above the
+  intent, horizontally centred on the sprite art (offset 0).
+- **Hand portal:** 44×44 with a 16 px label, 10 px above the selected card,
+  centred on it.
+- **Equipment card control** (`item-cards-preview.html`): 44×44 with a 16 px
+  label, 10 px above the card, centred.
+
+Limits: the creation selectors still declare a 32 px corner control through
+`--card-info-size` (contested in #994/#996).
+
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant

@@ -1106,7 +1106,7 @@
       "id": "WC2",
       "name": "Possession card",
       "parent": "WC0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1133,13 +1133,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Possession card on the shared equipment poker canvas (equipmentCard.js). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2a",
       "name": "Equipment card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1166,7 +1167,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Equipment card: body row one is Slot / requirements (type label, then requirement). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label. Equipped comparison row not built."
     },
     {
       "id": "WC2a1",
@@ -1238,7 +1240,7 @@
       "id": "WC2b",
       "name": "Relic card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1265,7 +1267,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Relic card through renderCollectibleCard (same canvas). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2b1",
@@ -1337,7 +1340,7 @@
       "id": "WC2c",
       "name": "Consumable card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1364,7 +1367,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Consumable (potion) card through renderCollectibleCard (same canvas). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2c1",
@@ -1831,7 +1835,7 @@
       "id": "WCB1",
       "name": "Inspect control",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1854,7 +1858,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "InspectControlModel.js with wireframeUi.inspect (sizeRem 2.75, labelPx 16, gapPx 10). main.js writes --inspect-size / --inspect-label / --inspect-gap; card, equipment card, combatant and hand-portal controls all read them (one 44 physical px circle, 16 px label, 10 px above the owner; combatant control above the intent). The reveal delay is selection.revealDelayMs. Only the creation corner still declares its own --card-info-size."
     },
     {
       "id": "WCB2",
@@ -1995,7 +2000,7 @@
       "id": "WCF0",
       "name": "Component foundations",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2018,13 +2023,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Foundations: ComponentModel.js (immutable, serializable, validated records) plus the WCF3 selection effect from wireframeUi.selection via SelectionEffectModel.js."
     },
     {
       "id": "WCF1",
       "name": "Component contract",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2047,7 +2053,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "componentModel() validates the registered id, serializable properties/tokens/accessibility, Behavior Models and child Component Models, and freezes the record; owner selection is the only selected state (cards: cardSelection store; combatants: context-selected)."
     },
     {
       "id": "WCF2",
@@ -2083,7 +2090,7 @@
       "id": "WCF3",
       "name": "Selection effect",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2106,7 +2113,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "One shared glow, selectionGlowFilter() = drop-shadow(0 0 0.35rem var(--gold)), written once to :root as --selection-glow. It is applied to the whole owner: a selected card (its inspect control is a child; the hand portal wears the same filter) and a selected combatant's whole stack (intent, inspect, art, name, lower stack). Per-child outlines and glow shadows removed. Reveal delay has one home, selection.revealDelayMs (1000 ms), read by card inspection, equipment cards and combatant inspection."
     },
     {
       "id": "WCF4",
@@ -2142,7 +2150,7 @@
       "id": "WCI0",
       "name": "Identity and artwork",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2165,13 +2173,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "IdentityModel.js (IDENTITY_PARTS name/artwork/metadata) with wireframeUi.identity. Cards, combatants and the inspector preview stamp data-identity-part on the parts they own; values stay with the owner."
     },
     {
       "id": "WCI1",
       "name": "Nameplate",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2194,13 +2203,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Card header, combatant nameplate and inspector title carry data-identity-part=name. The combatant nameplate is the card child directly above the meters (HP first)."
     },
     {
       "id": "WCI2",
       "name": "Sprite / artwork",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2223,13 +2233,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "artworkAnchor(host): card and inspector centre, combatant bottom (baseline); artwork keeps its intrinsic ratio (object-fit contain). Facing mirrors only the .facing art layer, never text or controls."
     },
     {
       "id": "WCI3",
       "name": "Metadata footer",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2252,7 +2263,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "metadataFooter: rarity at the start, Owned: n at the end (wireframeUi.identity.metadataSlots); an unstated fact is absent. Reward, shop and draft offers pass the deck count; deck and pile views omit it. Equipment cards keep their own footer (WC2)."
     },
     {
       "id": "WCM0",

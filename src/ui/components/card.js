@@ -16,6 +16,18 @@ import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
+import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
+import { t } from '../strings.js';
+
+// WCI3: rarity at the start of the band, the owned count at the end, each only
+// when the surface can state it. No domain action ever belongs in this band.
+function metadataBand(rarity, owned) {
+  const band = metadataFooter({ rarity, owned });
+  const slot = (name, entry) => (entry
+    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? t('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
+    : '');
+  return `<div class="card-metadata" data-identity-part="metadata">${slot('start', band.start)}${slot('end', band.end)}</div>`;
+}
 
 /**
  * Static token values straight off the def (for reward/pile/deck views).
@@ -152,8 +164,8 @@ export function renderCard(registries, ref, opts = {}) {
       `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
     ).join('')}</div>` +
 
-    `<div class="cname">${esc(model.name)}</div>` +
-    `<div class="art"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+    `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
+    `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
@@ -163,7 +175,7 @@ export function renderCard(registries, ref, opts = {}) {
       : '') + '</div>' +
     `<div class="cd-body"><div class="ctype">${esc(model.type.label)}</div>` +
     `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>` +
-    `<div class="card-metadata"><span>${esc(def.rarity || '')}</span></div>`;
+    metadataBand(def.rarity, opts.owned);
 
   // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
   // row defer to `+N`, and the text takes what the budget leaves. CSS cannot

@@ -8,7 +8,13 @@ const freeze = (value) => {
   return value;
 };
 export const wireframeUi = freeze({
-  card: { ratio: 5 / 8, bands: [1, 4, 4, 1], inspectDelayMs: 1000 },
+  card: { ratio: 5 / 8, bands: [1, 4, 4, 1] },
+  // WCF3: one shared glow on a selected owner (card or combatant); its inspect
+  // control appears once the selection has stood this long.
+  selection: { glowRem: 0.35, revealDelayMs: 1000 },
+  // WCB1: one inspect circle for every card, combatant and tile — a 2.75
+  // reference-rem (44 physical px) target, 16 px label, hung 10 px above.
+  inspect: { sizeRem: 2.75, labelPx: 16, gapPx: 10 },
   // W4b: a repeat pick enters only after the selection has stood this long.
   // Owner kept 400 ms on 2026-09-13.
   map: { repeatPickDelayMs: 400 },
@@ -40,5 +46,12 @@ export const wireframeUi = freeze({
     gapNarrowFraction: 0.03, gapWideFraction: 0.05,
     backLayer: 200, frontLayer: 0, focusPriority: 100,
     guardAnchor: { player: 0.12, enemy: 0.88 }, guardGapRem: 0.5,
+  },
+  // WCI0 identity and artwork. The metadata band names what each end holds;
+  // contained artwork sits centred on cards and inspector previews and stands
+  // on its baseline in combat. Only artwork mirrors for facing.
+  identity: {
+    metadataSlots: { start: 'rarity', end: 'owned' },
+    artworkAnchorByHost: { card: 'center', inspector: 'center', combatant: 'bottom' },
   },
 });
