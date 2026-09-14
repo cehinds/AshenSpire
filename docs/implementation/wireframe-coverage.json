@@ -788,7 +788,7 @@
       "id": "W4",
       "name": "Gameplay / encounter regions",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -805,13 +805,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "W4a/W4b band models and tests unchanged; 138/138 node suite",
+        "wide": "Combat field 1440x459.9 (1440x860) and 1280x423.9 (1280x800), stacked; no page scroll",
+        "compact": "844x390: rails arrangement, field 844x148, no page scroll; HUD icon buttons 44x32 (pre-existing)",
+        "iphoneSE": "375x667: field 375x336.4, no page scroll",
+        "galaxyS24": "360x780: stacked, no page scroll",
+        "interactions": "Card play on a tapped enemy verified at every viewport"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Parent host verified through its combat body: shared HUD, battlefield, hand and footer bands (W4a) and the map body (W4b) are its registered variants; this branch changes neither band plan. W4c dialogue was not assessed. Full reference parity is NOT verified."
     },
     {
       "id": "W4a",
@@ -1670,7 +1671,7 @@
       "id": "WC4b",
       "name": "Standard combatant",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1687,19 +1688,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
+        "structural": "No size-variant host exists",
+        "wide": "Anatomy verified by the meters/overlays branches",
         "compact": "pending",
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Anatomy already met through WCM0-WCM4, WCO1-WCO3, WCF3 and WCB1 (name above HP, intent above sprite, guard at 12%/88%, half-height secondary rows, 1.575rem icons, whole-assembly glow, delayed inspect). The fixed clamp(12rem, 18vw, 16rem) size is not built: the battlefield sizes combatants by shared formation fit and the inspector preview has its own bounds, so no production host uses a standard-size combatant. Owner call if one is wanted."
     },
     {
       "id": "WC4c",
       "name": "Expanded combatant",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1716,13 +1718,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
+        "structural": "No size-variant host exists",
+        "wide": "Anatomy verified by the meters/overlays branches",
         "compact": "pending",
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). As WC4b: anatomy met; the expanded clamp(16rem, 24vw, 20rem) size has no production host (formation fit sizes battlefield combatants; W1w bounds the inspector preview). Not built. Owner call if one is wanted."
     },
     {
       "id": "W1x",
@@ -2775,7 +2778,7 @@
       "id": "WGC0",
       "name": "Combat composition",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2792,13 +2795,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Composition order and band plan unchanged",
+        "wide": "CDP emulation, ?shot=combat, reduced motion; no page scroll at 1440x860, 1280x800, 390x844, 375x667, 360x780 and 844x390 (rails)",
+        "compact": "844x390 rails: footer folds beside the hand (compact-landscape branch); unchanged",
+        "iphoneSE": "Verified at 375x667",
+        "galaxyS24": "Verified at 360x780",
+        "interactions": "Select card, tap enemy, card plays (hand 5 to 4, enemy 16 to 9 HP)"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Already met: HUD, battlefield (WGC1), hand (WGC5) and packed footer (WGC6) compose from the W4a band plan (allocateCombatBands) with the Potions control as the single WGC11. No change needed. Full reference parity is NOT verified."
     },
     {
       "id": "WGC1",
@@ -2834,7 +2838,7 @@
       "id": "WGC2",
       "name": "Player placement",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2851,19 +2855,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "combat-formation and scene-layer tests: every foot of a 6v6 formation is on the floor band",
+        "wide": "Player foot at 0.504 (1440x860) and 0.502 (1280x800) of field height",
+        "compact": "844x390: foot 0.641",
+        "iphoneSE": "375x667: foot 0.498",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Selection growth and inspect unchanged"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Already met: CombatFormationModel places allies from the left in the six reserved mirrored slots by stable actor id; the player faces right, its intent is hidden by overlay.intentVisibleByRole, and it shares the enemies' unselected category fit before row and selected-growth factors at the fixed foot anchor. Feet now stand on the WGS7 floor band at every viewport. Full reference parity is NOT verified."
     },
     {
       "id": "WGC3",
       "name": "Enemy placements",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2880,19 +2885,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Mirror symmetry covered by combat-formation tests",
+        "wide": "Enemy feet share the player tier (0.504 at 1440x860)",
+        "compact": "844x390: 0.641",
+        "iphoneSE": "375x667: 0.498",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Tap-to-play on an enemy verified at every viewport"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Already met: enemies take the mirrored slots from the right with the same combatant component and category fit; intent visible by role default; names and controls are not mirrored. Full reference parity is NOT verified."
     },
     {
       "id": "WGC4",
       "name": "Target layer",
       "parent": "WCF3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2909,13 +2915,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-scene-layers tests: eligibility and outline minimums",
+        "wide": "Outline 3 px, offset 11/9 px at 1440x860/1280x800 (unchanged); hover solid",
+        "compact": "844x390: outline 2 px, offset 4 px (dev 1/2)",
+        "iphoneSE": "375x667: 2 px / 4 px (dev 1/4)",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Arm, tap enemy: plays; layer idle with 0 targetable after, at all six viewports. Pointer hover solid on desktop. Keyboard targeting not verified."
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Implemented: src/ui/models/TargetLayerModel.js is the one home for eligibility (living enemies while a targeted card or flask is armed) and the outline geometry (wireframeUi.targetLayer). combat.js applies it from selection changes and from every render, so a play or cancel clears the highlight (dev kept 'targetable' on enemies after a play: selection toggled a class the frame update did not own). Defeated enemies are never highlighted. The dashed outline and 6 px offset are authored in sprite px and held at 2 px / 4 px physical under the depth zoom (dev drew 1 px on phones). A CSS rule also gives a keyboard-focused target the solid active outline, like pointer hover (not browser-verified: the CDP key did not reach the shortcut handler). Required targeting still gates the command (needsTarget arms instead of playing). Full reference parity is NOT verified."
     },
     {
       "id": "WGC5",
@@ -4079,7 +4086,7 @@
       "id": "WGS0",
       "name": "Shared scene layers",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4096,19 +4103,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Scene-layer model tests",
+        "wide": "CDP emulation, ?shot=combat, reduced motion; no page scroll at 1440x860, 1280x800, 390x844, 375x667, 360x780 and 844x390 (rails)",
+        "compact": "844x390 verified",
+        "iphoneSE": "375x667 verified",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Co-op (?shot=coop) verified at 390x844 and 1440x860: ground 0.199-0.200"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Shared HUD composed once above the scene; background layers below it through WGS1. The layer toggles (wireframeUi.scene.skyline/floor) are independent and never move actors. Combat and co-op share the battlefield stage, so both get the fit. Full reference parity is NOT verified."
     },
     {
       "id": "WGS1",
       "name": "Background composition",
       "parent": "WCI2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4125,13 +4133,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "All 20 scenes x 6 field shapes: crop inside the painting, aspect kept, ground on the floor top",
+        "wide": "Painted ground 0.1998 (1440x860), 0.1999 (1280x800)",
+        "compact": "844x390: 0.1997",
+        "iphoneSE": "375x667: 0.1997",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Refits on resize and selection like the formation"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Implemented: src/ui/models/SceneLayerModel.js fits each scene's single painted plate to the battlefield without distortion so its authored ground line (environments.js floorStart) sits at the floor band's top: 80% ground, 20% sky (wireframeUi.scene, moved from the unused formation.floorFraction). The battlefield stage writes the crop as the SVG viewBox and drops the 1.06/1.02 CSS zoom it replaces. On dev the ground line fell at 0.19-0.74 of the field and back-tier feet stood above painted ground in 2-6 of 20 scenes per viewport; now 0.200 everywhere and 0/20. Owner decision: phones crop the plate harder (390x844 zoom 0.90x to 1.12-1.63x)."
     },
     {
       "id": "WGS2",
@@ -4253,7 +4262,7 @@
       "id": "WGS6",
       "name": "Skyline layer",
       "parent": "WGS1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4270,19 +4279,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Toggle covered by scene-layer tests",
+        "wide": "Sky band 20% of field at 1440x860 and 1280x800",
+        "compact": "844x390 verified",
+        "iphoneSE": "375x667 verified",
+        "galaxyS24": "360x780 verified",
+        "interactions": "n/a (decorative)"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). The skyline is the painted plate's region above the ground line; it fills the battlefield behind the floor and actors, noninteractive. scene.skyline=false paints no plate (backdrop colour only). No separate skyline asset exists. Full reference parity is NOT verified."
     },
     {
       "id": "WGS7",
       "name": "Floor layer",
       "parent": "WGS1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4299,13 +4309,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Feet on floor band for 6v6 formations at 6 field shapes",
+        "wide": "Floor top 0.200 of field; highest foot 0.504",
+        "compact": "844x390: floor top 0.200, foot 0.641",
+        "iphoneSE": "375x667: floor top 0.200, foot 0.498",
+        "galaxyS24": "360x780 verified",
+        "interactions": "n/a (decorative)"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). The floor band is the bottom 80% of the battlefield (scene.floorFraction) and the plate's painted ground starts at its top; every formation foot stands inside it. A separate foreground ground cutout (scene.groundCutout) is not possible without a separate ground asset: each scene is one plate. scene.floor=false falls back to a centred cover crop without moving actors. Full reference parity is NOT verified."
     },
     {
       "id": "WGS8",

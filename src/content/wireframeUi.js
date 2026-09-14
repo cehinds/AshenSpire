@@ -100,13 +100,25 @@ export const wireframeUi = freeze({
   },
   formation: {
     depth: [0.9, 0.95, 1], selectedGrowth: [1.1, 1.05, 1.1],
-    displayScale: 1.1, floorFraction: 0.8, insetRem: 1,
+    displayScale: 1.1, insetRem: 1,
     detailReserveRem: 3.5, minimumSpritePx: 92,
     horizontalStepFraction: 0.05, minimumStepPx: 8,
     innerRetreatFraction: 0.02, maxRetreatSpacingFraction: 0.15,
     gapNarrowFraction: 0.03, gapWideFraction: 0.05,
     backLayer: 200, frontLayer: 0, focusPriority: 100,
   },
+  // WGS1 background composition: WGS6 skyline and WGS7 floor. Each scene is
+  // one painted plate; it fills the battlefield and its authored ground line
+  // sits at the floor band's top, so the field is floorFraction ground and the
+  // rest sky (CURRENT-SPECIFICATION: 80% ground, 20% sky). bleedFraction
+  // over-scales the plate so its atlas edges never show. With floor off the
+  // plate is a centred cover crop; with skyline off no plate is painted.
+  // Neither toggle moves the formation's feet.
+  scene: { skyline: true, floor: true, floorFraction: 0.8, bleedFraction: 0.02 },
+  // WGC4 target layer: the dashed outline on each eligible target and the
+  // solid one on the active target, authored in sprite px (2 / 6, as before)
+  // and held at physical minimums after the formation's depth zoom.
+  targetLayer: { outlinePx: 2, outlineMinPx: 2, offsetPx: 6, offsetMinPx: 4 },
   // WCO0 combat overlays (CURRENT-SPECIFICATION: WC4, the 13.2px value font,
   // and the accepted guard geometry). Badges and text are never mirrored.
   overlay: {
