@@ -1009,6 +1009,99 @@ Limits:
   a choice would be a new mechanic, so that is an owner decision.
 - `ui-components` C12, `flaskpresentation` (overlay.js) and
   `flask-data-authority` (flaskCapacity) are red on dev `d2ea5bcd` too.
+## Merchant workspace (W1d / W1v)
+
+Branch `feature/wireframe-shop`, based on dev `d2ea5bcd`. The merchant is
+now a W1d workspace, not a disclosure fold (FRONTEND-WIREFRAMES rule 11: no
+accordion as a menu shell). One pure model,
+`src/ui/models/ShopWorkspaceModel.js`, owns the rail, status, selection,
+availability and layout rules; every number is in `wireframeUi.shop`.
+
+- **Frame (W1d).** Under the run band: a W0 head (title, exit), a category
+  rail, one W1v pane, and a W0 foot with Leave on the left and the selected
+  offer's action on the right. With no applicable action, Leave spans the
+  foot.
+  - Rail: Cards, Armaments, Weapon arts, Relics, Flasks, Services (remove a
+    card and the smith's services) and Sell. Sell is absent, not greyed, when
+    its toggle is off.
+  - Frames at least 60rem wide put the rail beside the pane at W1's 21.6/95
+    share, clamped to 11–28rem. Narrower frames put it above as one strip.
+- **Pane (W1v).** The head carries the category status ("5 for sale", "2 he
+  will take", "1 of 1 open"). Offers and the selected offer's detail sit side
+  by side on wide frames and stack on compact ones, with the detail capped at
+  half the body. Only the offers and the detail scroll; the page never does.
+  - Each tile shows its price, and a reason when it cannot be taken. Reasons
+    come only from existing plans: armament and weapon-art plan reasons, a
+    full flask belt, the purse, and the remove service's existing lock.
+  - The detail shows the name, description, price and availability.
+- **Select, then act.** A tap on a relic, flask or sell tile selects it. The
+  footer action ("Buy · N cinders", "Sell · N cinders") carries the existing
+  `shopBuy` / `shopSell` beat, with the same questions and commits.
+  - Cards keep their own armed second tap; the footer is a second door to the
+    same beat.
+  - Armaments and weapon arts keep their inspection doors; the footer opens
+    the same modal. Services open their existing doors, and the burn grid
+    keeps its three doors.
+  - A shelf's first visit selects its first offer the player can take. After
+    a purchase the category is kept and the selection moves to the offer now
+    in the bought one's place. Offers are keyed by kind, id and occurrence,
+    never by bare index.
+- **Wording.** New copy is in `uiStrings.csv` (`shop.title`, `shop.leave`,
+  `shop.purse`, `shop.bar.services`, `shop.status.*`, `shop.price*`,
+  `shop.avail.*`, `shop.action.*`, `shop.detail.*`). The purse stays in the
+  run band; the head shows it only when the shop is mounted without the band
+  (instrument mounts).
+- **Tools.**
+  - `shopbars` is rewritten for the rail (S1–S6, new plants, plantsites
+    digest re-recorded). It now imports `serve.mjs` through a file URL, so it
+    runs on Windows.
+  - `holdconfirm` presses the Services and Sell rail items.
+  - `flaskbox` selects a flask, then uses the footer Buy.
+  - `weapon-card-preview`, `card-inspection-qa` and `card-removal-flick-qa`
+    use the rail selectors.
+  - `foldsurvivors` no longer watches the shop, which has no fold.
+
+Browser evidence (CDP emulation, `?shot=shop`):
+- 1440×860: rail 310 px of a 1368 px frame; offers and detail 500 px each.
+- 1280×800: rail 276 of 1216 px; offers and detail 444 px each.
+- 390×844 and 375×667: the rail strip sits above the pane; offers are 346 and
+  184 px tall, with the detail stacked below (113 and 106 px).
+- 844×390: side rail, its seven items scrolling inside it; offers and detail
+  127 px tall.
+- 360×780 (Galaxy S24): the rail strip sits above the pane; offers 305 px
+  tall, detail 103 px.
+- At every size: no page scroll and no target under 44 px. Selecting a relic
+  and pressing Buy opened "Buy Golden Sprout for 437 cinders? You have 999
+  cinders." with nothing spent. Confirming took 999 → 562 cinders and 2 → 1
+  relics, and the pane stayed on Relics.
+- `shopbars`: 12/12 at 390×844 and 1200×730, including the exact sell price
+  (+75) through the beat and Sell absent with its toggle off.
+- `holdconfirm`: 1 finding over 137 checks on this branch and on dev
+  `d2ea5bcd` alike, with the same merchant section. The finding is the
+  Shrine smith census line "2 absent: smithExtract, smithInstall". The shop census draws the same three actions with the same
+  forms as dev (`shopBuy=none shopRemove=confirm shopSell=confirm`); 21
+  armed controls instead of dev's 25, because relic, flask and sell tiles
+  now select and the footer carries their beat. The merchant section passes:
+  a brazier card arms the burn without burning, and the question names the
+  card and its price.
+
+Limits:
+- The run band and the room's belt padding stay above the frame, so at
+  1440×860 the frame is about 80% of the height, not W1's 90vh.
+- At 844×390 the offers region is 127 px tall, and tall relic and armament
+  faces scroll. W1d's compact drawing puts the rail above; this branch keeps
+  it beside, because the frame is wide enough and that leaves more height.
+  The owner may prefer the drawn form.
+- Compact frames use the shared kit's horizontal rail strip, not W1's
+  `[Category ▾]` selector. Rule 11 forbids horizontal tabs, so the owner
+  should confirm the strip or ask for a selector in the shared W1 shell.
+- The shared 64 px inspection reserve above card grids leaves a gap over the
+  card shelf.
+- The Playwright tools (`card-inspection-qa`, `card-removal-flick-qa`,
+  `world-atlas-qa`) were updated where needed but not run. `scroll-cue-bleed` still names `.screen`
+  as the shop's scrollport, and on this screen that no longer scrolls; it
+  needs re-aiming at `.shop-offers`, with its plants.
+
 ## Remaining integration
 
 Complete the card and hand interaction matrix, compact containment, combatant

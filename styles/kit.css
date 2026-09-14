@@ -3125,6 +3125,60 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors:has(.poker-equipment-choice),
   #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
 }
+
+/* ═══ W1d / W1v — THE MERCHANT AS A WORKSPACE (screens/shop.js) ═══════════
+   One frame under the run band: W0 head, a category rail beside the pane
+   (above it on compact hosts), the W1v pane of offers and the selected
+   offer's detail, and the W0 foot. The page never scrolls; only the offers
+   and the detail do. ShopWorkspaceModel.js owns every number and shop.js
+   writes them as custom properties and data attributes. */
+.screen.shop-workspace { overflow: hidden; gap: 0; padding-inline: 2.5%; padding-bottom: 1rem; }
+.shop-frame {
+  --modal-inset: 1.4rem;
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+  width: 100%;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden;
+}
+.shop-frame > .modal-head { padding-block: 0.6rem; }
+/* The rail is its own scrollport: on a short host its items scroll inside it
+   and never run under the foot (measured at 844x390, where they did). */
+.shop-frame > .shop-railed { flex: 1 1 auto; min-height: 0; height: auto; grid-template-columns: var(--shop-rail-width, 17.25rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.shop-frame > .shop-foot-host > .modal-foot { padding-block: 0.6rem; }
+:root .shop-workspace[data-shop-rail='side'] .shop-railed > .shop-rail { flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+:root .shop-workspace[data-shop-rail='top'] .shop-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+:root .shop-workspace[data-shop-rail='top'] .shop-railed > .shop-rail {
+  flex-direction: row; overflow-x: auto; overflow-y: hidden; padding: 0.6rem var(--modal-inset);
+  border-right: 0; border-bottom: 1px solid var(--line); scrollbar-width: thin;
+}
+:root .shop-workspace[data-shop-rail='top'] .shop-rail > .as-railitem { flex: 0 0 auto; width: auto; flex-wrap: nowrap; }
+.shop-rail > .as-railitem.with-status > .as-status { color: inherit; opacity: 0.8; }
+.shop-pane { min-height: 0; overflow: hidden; padding-block: 0.8rem; }
+.as-pane > .shop-pane-head { flex: 0 0 auto; margin-bottom: 0.6rem; }
+.as-pane > .shop-body { flex: 1 1 auto; min-height: 0; display: grid; gap: var(--shop-gap, 1rem); }
+.shop-workspace[data-shop-pane='columns'] .shop-body { grid-template-columns: minmax(0, var(--shop-offers-fr, 1fr)) minmax(0, var(--shop-detail-fr, 1fr)); }
+.shop-workspace[data-shop-pane='stacked'] .shop-body { grid-template-rows: minmax(0, 1fr) auto; }
+.shop-workspace[data-shop-pane='stacked'] .shop-detail { max-height: var(--shop-detail-max, 50%); }
+.shop-body > .shop-detail[hidden] { display: none; }
+/* The two scrollports. `scrollbar-color` inherits from `.screen`, so the
+   product thumb reads the same here as on every other page. */
+.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.shop-offers > .shop-shelf { max-width: none; width: 100%; padding: 2px; }
+.shop-offers > .shop-services { display: flex; flex-direction: column; gap: 1rem; }
+.shop-offers > .shop-services .class-row, .shop-offers > .shop-services > #shop-remove { max-width: none; }
+/* A narrow `.class-row` stacks as a column, where the kit's `flex: 1 1 26rem`
+   on `.class-pick` becomes a 260 px HEIGHT: the remove, smith and sell tiles
+   each stood a third of a phone tall around one line of text (measured at
+   390x844). In the offers a tile keeps its content height. */
+:root[data-layout='narrow'] .shop-offers .class-row > .class-pick { flex: 0 0 auto; }
+.shop-offer.is-selected > .card, .shop-offer.is-selected > .shop-inspect-card, .shop-offer.is-selected > div > .card { outline: 2px solid var(--gold); outline-offset: 3px; }
+.shop-offer.class-pick.is-selected { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.shop-offer-avail { display: block; white-space: normal; color: var(--muted); }
+.shop-detail { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--panel); }
+.shop-detail > .shop-detail-name { margin: 0; }
+.shop-detail > .shop-detail-desc { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.4; }
+.shop-detail > .as-status { white-space: normal; text-align: left; align-self: flex-start; }
+.shop-detail > .shop-detail-price { color: var(--gold); }
+.shop-detail > .shop-detail-avail.is-available { color: var(--parchment); }
 /* Shared inspection: 270px artwork + 180px information within the 450px face. */
 .equipment-poker-card .epc-frame,
 .collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }

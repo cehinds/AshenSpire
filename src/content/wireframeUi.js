@@ -58,6 +58,15 @@ export const wireframeUi = freeze({
     // Shown only while the combatant is selected; empty the list to show all.
     selectedOnly: ['name', 'resource', 'buildup', 'stance'],
   },
+  // W1d / W1v merchant workspace. The rail takes W1's 21.6 of the 95 frame
+  // width (clamped to readable rems); offers and detail split the pane evenly
+  // with a gap. Below `wideMinRem` of frame width the rail moves above the
+  // pane and the detail stacks under the offers, taking at most
+  // `detailMaxFraction` of the body so the offers keep the larger share.
+  shop: {
+    railFraction: 21.6 / 95, railMinRem: 11, railMaxRem: 28,
+    offersFraction: 0.5, gapRem: 1, wideMinRem: 60, detailMaxFraction: 0.5,
+  },
   footer: {
     circleMaxFraction: 0.2, pileMaxFraction: 0.1, endMaxFraction: 0.4,
     gapRem: 0.2, heightFraction: 0.95, minimumTargetPx: 44,

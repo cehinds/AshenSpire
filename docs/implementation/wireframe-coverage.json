@@ -127,12 +127,16 @@
       "id": "W1d",
       "name": "Shop",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/shop.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ShopWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -142,7 +146,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-shop. The merchant is a W1d workspace: W0 head (title, exit), a category rail (Cards, Armaments, Weapon arts, Relics, Flasks, Services, and Sell while its toggle is on) beside the pane on wide frames and above it on compact frames, one W1v pane, and a W0 foot with Leave and the selected offer's action. The disclosure fold is gone (rule 11). Layout numbers come from wireframeUi.shop through ShopWorkspaceModel.js. Browser-measured at 1440x860, 1280x800, 390x844, 375x667, 844x390 and 360x780 (Galaxy S24): no page scroll, every target at least 44 px, and a purchase still asks its beat. The run HUD band stays above the frame, so the frame is shorter than W1's 90vh. Full reference parity is NOT verified."
     },
     {
       "id": "W1e",
@@ -522,12 +527,16 @@
       "id": "W1v",
       "name": "Shop offers",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/shop.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ShopWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -537,7 +546,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-shop. The active pane shows the category {Status}, the offer tiles with a price each and a refusal reason when an offer cannot be taken, and the selected offer's detail: side by side on wide frames, stacked with the detail capped at half the body on compact frames. Reasons come only from the existing plans (armament and weapon-art plan reasons, the flask belt, the purse). Selecting a tile does not buy; the footer's action carries the existing beat (shopBuy, shopSell). Cards keep their own armed second tap and the burn grid keeps its three doors. Selection is kept per category across purchases by stable offer references. Full reference parity is NOT verified."
     },
     {
       "id": "W1w",
