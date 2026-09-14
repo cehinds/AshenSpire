@@ -1153,8 +1153,8 @@ function selftestPlants() {
       // here.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
-      replace: '  return `${heading}<div class="set-card-list">${[...h.rows].reverse().map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
+      find: '  return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
+      replace: '  return `<div class="set-card-list">${[...h.rows].reverse().map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
