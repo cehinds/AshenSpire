@@ -38,7 +38,7 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
-import { relicText, renderCard } from '../components/card.js';
+import { relicText, renderCard, scheduleCardFits } from '../components/card.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
@@ -53,6 +53,11 @@ import {
   el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack,
   button, buttonRow, modalHead, modalFooter, pane, statPair,
 } from '../kit/index.js';
+// The fold's own sentence is a row in content/source/uiStrings.csv, which is
+// where #991 put the words this game says. This screen still carries plenty of
+// copy in code — the baseline counts it — but a NEW sentence does not join it.
+import { t } from '../strings.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 /** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
 function sectionHead(kicker, title, trail = []) {
@@ -81,6 +86,12 @@ function showNode(node, on) {
 export function mountCustomize(app, {
   registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null,
 }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const firstClass = registries.classes.all()[0];
   const creationLayout = registries.characterCreation.layout || {};
   const visibleModes = creationModeViews(registries);
@@ -251,6 +262,10 @@ export function mountCustomize(app, {
   const statBox = $('#cz-statedit');
   const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
+  // Which sections have their starting-card fold open, for the life of this
+  // screen. renderEquipment rebuilds the detail pane on every choice, so a
+  // fold with no memory is one a player has to re-open after every tap.
+  const packageOpen = new Map();
   let equipmentSectionViews = [];
   let equipmentNodes = new Map();
   let equipmentFold = null;
@@ -697,18 +712,111 @@ export function mountCustomize(app, {
           const preview = startingEquipmentPreview(registries, previewRun(), hands, section.slot);
           const grid = el('div', { class: 'cc-starting-card-grid', 'aria-label': `${piece.name} starting combat cards` });
           for (const { ref, count } of preview.cards) {
+            // Small, because inside the fold these are a reference rather than
+            // a thing to choose between: the choice is the armament above.
+            // NOT `small: true`: that flag's only effect is a 0.92 transform, which
+            // `.cc-starting-card > .card` cancels — and a transformed card keeps its
+            // untransformed box, so it would save no scroll even if it applied. The
+            // fold sizes these faces in CSS, where a smaller box is a smaller box.
             const face = renderCard(registries, ref);
             const entry = el('div', { class: 'cc-starting-card', dataset: { cardId: ref.cardId, quantity: String(count) } }, [
               el('span', { class: 'cc-card-quantity' }, `${count} ${count === 1 ? 'copy' : 'copies'}`), face,
             ]);
             grid.append(entry);
           }
-          const packageNode = el('section', { class: 'cc-starting-package' }, [
-            el('h4', {}, 'Starting combat cards'),
-            el('p', { class: 'cc-package-context' }, `${preview.total} ${preview.total === 1 ? 'card' : 'cards'} with this loadout. Quantities depend on both hands.`),
+          // THE DECK IS SUMMARISED, NOT DUMPED (Constantine, 2026-09-12:
+          // *"some of the card details probably can be folded ... and the
+          // continue button always in view and not requiring too much
+          // scrolling"*).
+          //
+          // MEASURED, because the first attempt at this was measured in the
+          // wrong state and looked inert. Opening the right-hand section at
+          // 390x844 took the creation scroll from 838px to 3010px — +2172px,
+          // nearly four screens, for six card faces drawn at full size between
+          // the armament you are choosing and the way on. At 1280x800 it is
+          // +525px. The count and the kinds are what a player compares two
+          // weapons on; the faces are what they want once they have chosen to
+          // look.
+          //
+          // So the summary is the face and the grid is the reveal, closed until
+          // asked. `packageOpen` remembers the answer per section for the life
+          // of the screen: renderEquipment repaints this pane on every choice,
+          // and a fold that forgets is one you re-open after every tap.
+          // DISTINCT CARDS, NOT BROAD TYPES. This counted `type` — attack, skill,
+          // power — and the summary exists so a player can compare two armaments
+          // WITHOUT opening the fold, which that number cannot do: measured on a
+          // Reaver, the straight sword and the greatsword both resolve to exactly
+          // {attack, skill}, so both read "2 kinds" and the line said the same
+          // thing about two different weapons. Counting distinct cardIds says 3
+          // for each, and what actually differs — Guard Counter against Sundering
+          // Hew — is the named card behind the fold.
+          const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
+          const summary = preview.cards.length
+            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+              + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
+            : 'Adds no combat cards with the other hand as it stands';
+          const fold = el('details', { class: 'cc-starting-fold' });
+          if (packageOpen.get(section.id)) fold.open = true;
+          // A CARD MEASURED WHILE HIDDEN WAS NEVER MEASURED. renderCard schedules
+          // its one fit for the next frame, and inside a closed `<details>` that
+          // frame reads zeros — so `data-name`, `data-tag-rows` and above all
+          // `data-truncated` are written from nothing, and only an unrelated
+          // resize or a font load ever corrects them.
+          //
+          // MEASURED at 390x844 on opening the fold: all four faces read
+          // tag-rows 1 / truncated false. Forcing a re-fit at their real 90px
+          // width turns three of them to tag-rows 2 and flips ONE to truncated
+          // — a card whose text is clipped, wearing no chevron. That chevron is
+          // the whole affordance #987 and #998 exist for.
+          //
+          // So the fold asks for the fit when it opens. This is the same
+          // zero-rect trap that made an earlier probe of mine report a hidden
+          // button as on-screen, and that the equipment QA was walking into.
+          const refitCards = () => { if (preview.cards.length) scheduleCardFits(grid.querySelectorAll('.card')); };
+          fold.addEventListener('toggle', () => {
+            packageOpen.set(section.id, fold.open);
+            if (fold.open) refitCards();
+          });
+          // THE FOLD IS NOT THE ONLY THING THAT CAN BE HIDING THESE CARDS.
+          // A fold restored open — the player had it open, went back to Class,
+          // changed class, and returned — is built ALREADY OPEN while the
+          // equipment stage itself is still shut, so its toggle never fires
+          // while the cards are measurable, and revealing the outer section
+          // does not toggle the inner fold. Same zeros, a different ancestor.
+          //
+          // Rather than chase each ancestor that could be shut, ask the one
+          // question that actually matters: when do these cards HAVE A BOX?
+          // A ResizeObserver answers exactly that — a hidden element reports
+          // 0x0 and reports a real size the moment it is rendered — whichever
+          // thing was hiding it. It disconnects on the first answer, so it is
+          // one shot per restored-open fold, not a standing subscription on a
+          // pane renderEquipment repaints after every choice.
+          //
+          // AN INTERSECTION OBSERVER WAS TRIED FIRST AND DOES NOT WORK, which
+          // is worth the line: it asks whether the element is ON SCREEN, and
+          // a restored fold is rendered far below the fold of a long section,
+          // so it never intersects and never fires. Measured: the cards stayed
+          // at the hidden-measure values until an unrelated resize. Rendered
+          // and visible are not the same question.
+          if (fold.open && preview.cards.length && typeof ResizeObserver === 'function') {
+            const measurable = new ResizeObserver((entries, self) => {
+              if (!entries.some((entry) => entry.contentRect.height > 0)) return;
+              self.disconnect();
+              refitCards();
+            });
+            measurable.observe(grid);
+          }
+          fold.append(
+            el('summary', { class: 'cc-starting-summary' }, [
+              el('b', { text: summary }),
+              el('small', { class: 'cc-package-context', text: t('creation.startingCards.context') }),
+            ]),
             preview.cards.length ? grid : el('p', {}, 'This choice adds no combat cards with the other hand currently selected.'),
-          ]);
-          detailPane.append(packageNode);
+          );
+          detailPane.append(el('section', { class: 'cc-starting-package' }, [
+            el('h4', {}, 'Starting combat cards'),
+            fold,
+          ]));
         }
       };
       const choiceRows = [];

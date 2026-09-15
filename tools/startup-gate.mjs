@@ -877,25 +877,31 @@ const INK_SCALE = 3;
 // The prompt and the build stamp are still measured as boxes and still land on
 // 0 exactly, so they keep the 1px budget this check has always used.
 //
-// The wordmark is measured as INK, and ink cannot be driven to 0 here. With the
-// principled compensation — half the track, which is exactly the trailing
-// advance letter-spacing adds after the final glyph — it measures:
+// The wordmark is measured as INK, and ink cannot be driven exactly to 0 here.
+// With half the track (the trailing advance letter-spacing adds after the
+// final glyph) and nothing else, it measured:
 //
-//     390 M -1.00   844 M -0.67   1200 M -1.00   2550 M -1.67
-//     390 XL -1.00  844 XL -0.67  1200 XL -1.17  2550 XL -2.00
+//     390 M -1.00   844 M -0.83   1200 M -1.17   2550 M -2.17
+//     390 XL -1.17  844 XL -1.00  1200 XL -1.50  2550 XL -2.67   <- RED
 //
-// Note the type is byte-identical across the Text M row: 48px, same string,
-// same tracking. The residual still varies with viewport width, so it is not a
-// font metric and no single tracking multiplier removes it — doubling the
-// compensation to a full track was measured too and simply moves every shape
-// to the other side of centre, red at three shapes again.
+// That residual WAS a font metric, which this comment once said it was not.
+// Ink is narrower than the advances by the end glyphs' side bearings (Cinzel
+// 700: A 0.008em on the left, E 0.045em on the right), leaving the ink
+// 0.0185em left of centre. The 2550 column read largest because `body { zoom }`
+// is 1.7 there, not because the type differed. styles/kit.css now adds that
+// 0.0185em as `--ink-bias`, and every shape measures:
 //
-// 2.5px is therefore derived from what the correct rendering actually measures,
-// not chosen to make a red shape pass. It keeps its teeth: A11.CENTERING-DETECTOR
-// strips the compensation and reads -6, which is 2.4x this budget, so the defect
-// #910 shipped would still be caught with room to spare. If a future change
-// makes the residual approach this number, that is a real regression to look at
-// rather than a budget to raise.
+//     390 M -0.33   844 M -0.17   1200 M -0.33   2550 M -0.50
+//     390 XL -0.33  844 XL -0.33  1200 XL -0.33  2550 XL -0.67
+//
+// What remains (about a third of a pixel, varying with width) is raster
+// placement and the luminance threshold, not geometry.
+//
+// 2.5px keeps its teeth: A11.CENTERING-DETECTOR strips the compensation and
+// reads -6.33, 2.5x this budget, so the defect #910 shipped would still be
+// caught with room to spare. If a future change makes the residual approach
+// this number — as the uncompensated side bearings did under 1.7x zoom — that
+// is a real regression to look at rather than a budget to raise.
 const INK_BUDGET = 2.5;
 const BOX_BUDGET = 1;
 
