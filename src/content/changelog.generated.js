@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1092",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The game is checked against its own written world",
+    "detail": "Nothing you see changes. The world's history — the three flames, what a cinder is, why a Forsaken can climb at all — is written down in one place, and until now nobody had read it against the game as it is actually built. That reading now exists: what the world says and the game already does, what the two disagree about, and what the world promises that the game has not built yet. Nothing was changed to make either side agree; the disagreements are simply written down where they can be fixed.",
+    "build": "0.7.1.53",
+    "pullRequest": 1092,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1092"
+  },
+  {
     "id": "pr-1094",
     "date": "2026-09-14",
     "group": "2026-09-14",
