@@ -26,6 +26,8 @@ export function combatFormation({ width, height, friends, enemies, rem = 16 }) {
     const distance = inset + cell * (column + .5) + row * stepX - (column ? retreat : 0);
     return {
       id, row, column, formationRow: column ? 'front-row' : 'back-row',
+      // Battlefield cell: row A/B/C upper to lower, column 1-4 ally back, ally front, enemy front, enemy back.
+      cell: 'ABC'[row] + (enemy ? 4 - column : 1 + column),
       layer: column ? config.frontLayer : config.backLayer,
       x: enemy ? width - distance : distance,
       ground: feet[row], fitGround: firstFoot + row * step,

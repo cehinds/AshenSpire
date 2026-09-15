@@ -89,6 +89,7 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.zIndex = String(slot.row);
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
+      frame.dataset.formationCell = slot.cell;
       frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
