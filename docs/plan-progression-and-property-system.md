@@ -3,7 +3,8 @@
 Executes [proposal-progression-and-property-system.md](proposal-progression-and-property-system.md).
 Each phase is one or more pull requests into `dev`, each with a CHANGELOG
 receipt and rebuild. Paths and symbols below are the seams as they exist at
-`0.6.0.160`; a phase that finds a seam moved re-anchors and says so in its PR.
+`0.6.0.160` (phase 10 at `0.7.1.51`); a phase that finds a seam moved
+re-anchors and says so in its PR.
 
 Conventions that apply to every phase:
 
@@ -16,9 +17,11 @@ Conventions that apply to every phase:
   the key list.
 - Every refusal is named and has a test that asserts the name, in the style of
   `tests/engine.test.js` test 15.
-- Migrations: `RUN_SCHEMA_VERSION` in `src/model/state.js:37` and
-  `migrateRunSchema` (`:911`) use era flags; each phase that changes
-  `RUN_SHAPE` (`:508`) bumps the version and adds one flag.
+- Migrations: `RUN_SCHEMA_VERSION` in `src/model/state.js` and
+  `migrateRunSchema` use era flags; each phase that changes `RUN_SHAPE` bumps
+  the version and adds one flag. Version 6 was taken by seats (`67941367`) the
+  day this plan merged, so the phases below start at 7. If another change takes
+  a number first, a phase uses the next free one and says so in its PR.
 
 ## Phase 1 — Property system (2 PRs)
 
@@ -65,13 +68,42 @@ rendered text and each trigger's behavior are byte-identical before and after
 (snapshot recorded in the PR). Old saves with `run.relics` ids load unchanged
 (relic id → carrier is derivation, not migration).
 
+**RE-ANCHORED WHEN IT WAS BUILT, and the phase split in two.** Landed as 2a;
+2b is not scheduled and should not be until its blocker moves.
+
+- **Passives did not move, and cannot yet.** A relic's passives are upgraded per
+  run AND per copy at the smith (`model/itemUpgrades.js` `resolveUpgradedRelic`,
+  `UPGRADE_RELIC_PASSIVE_TAGS`). A rule in `propertyRules.csv` is one global row
+  with nowhere to record "this copy is at tier 2", so moving them would have
+  taken the smith's relic upgrades with it. They stay on the relic and keep
+  reaching every reader through `passiveSum`'s upgrade-aware path. **Phase 2b is
+  therefore: give a mount somewhere to carry a resolved per-instance value, then
+  move passives and split the text.**
+- **`textTemplate` did not move either**, because with passives staying it
+  cannot: a relic's sentence covers both halves, and splitting it would
+  renumber its own `{block.2}` tokens (`computeTokenBindings` counts per
+  template). It stays on the relic and reads its numbers from both homes.
+- **One tag per relic, id shared with the relic.** The `hp10` / `openingPoise`
+  vocabulary this phase pictured assumed reuse the content does not have: 51
+  distinct trigger shapes across the 48 trigger-carrying relics, 3 of them
+  shared. Property tags never join displayed `tags` (`model/registries.js`
+  `stampTags`), so a tag per relic costs nothing a player sees.
+- **Two things the move had to carry.** `relicTriggered` is emitted from the
+  mount scan for a relic-kind source, or the relic stops flashing (`ui/fx.js`);
+  and a combat snapshot's `relic:<owner>:<id>:<i>` gate keys are renamed on
+  restore, or a reloaded fight refunds a spent `once`.
+- **Co-op mounts under `setActive`.** A co-op owner key is the *active* seat
+  (`triggers.js` `ownerKeyFor` reads `C.playerKey`), so seats must be mounted
+  inside the pass that sets it; mounting them in one loop outside filed every
+  seat's relics under one owner. Engine test 24 is what says so.
+
 ## Phase 3 — Cards in zones; collection and deck (3 PRs)
 
 **PR 3a: zones in run state.**
 
 | Change | Where |
 |---|---|
-| `RUN_SHAPE` gains `zones: {core: id|null, worn: {body,head,hands,feet}, hands: {main,off}, passive: [relicIds]}` and `collection: [cardInstance]`; `deck` becomes the edited subset | `src/model/state.js:508`, `RUN_SCHEMA_VERSION` 6, era flag `preZones` |
+| `RUN_SHAPE` gains `zones: {core: id|null, worn: {body,head,hands,feet}, hands: {main,off}, passive: [relicIds]}` and `collection: [cardInstance]`; `deck` becomes the edited subset | `src/model/state.js:508`, `RUN_SCHEMA_VERSION` 7, era flag `preZones` |
 | Migration: `loadout` slots → `zones.hands`/`zones.worn`; `relics` → `zones.passive`; `deck` copied to `collection`; `class` → `zones.core` (a class card id equal to the class id, phase 5 gives it content) | `migrateRunSchema` |
 | `serializeRun`/`deserializeRun` and `validateRunShape` updated | |
 
@@ -104,7 +136,7 @@ slots.
 
 | Change | Where |
 |---|---|
-| `RUN_SHAPE.skills: { [skillId]: {xp, level, pendingDrafts} }`, `RUN_SCHEMA_VERSION` 7, flag `preSkills` | `state.js` |
+| `RUN_SHAPE.skills: { [skillId]: {xp, level, pendingDrafts} }`, `RUN_SCHEMA_VERSION` 8, flag `preSkills` | `state.js` |
 | Skill ids: one per armament group tag, per armour group tag, per focus group tag, `dualWield`, and `class:<id>` | derived from tag registry, validated |
 | `src/model/skills.js`: `xpToNext(registries, trackKind, level)` (one curve shape, keys from proposal §10), `awardSkillXp(run, skillId, amount)` returning level-ups, `skillLevel(run, id)` | new |
 | XP hooks in the engine: `damageDealt`/`blockGained` with a card tagged by group → `perHit`; `combatEnd` win → `perWinEquipped` per equipped group × `killMult` if that group dealt the killing hit; `impactDealt` to owner while heavy armour worn → `armorAbsorbPer`; `attackEvaded` while light → `armorEvadePer`; `arcaneExposureChanged` by owner → `focusBuildupPer` | `src/engine/combat.js` event listeners, no entity-specific code: the hooks read the tag registry |
@@ -141,7 +173,7 @@ same combat queues to the next reward; simulator prints per-track levels.
 | Change | Where |
 |---|---|
 | Node = property tag with `requires: classLevelAtLeast N` and optional `excludes`; three tiers per class in `propertyRules.csv`; a tier-3 node may carry `presentation: {artKey, name}` which the core card renders instead of its own | content |
-| Class XP source: `combatEnd` win, `questCompleted` (new event, fired by `completeJourneyNode` in `src/model/worldAtlas.js:654` when the node is a quest), boss kill | engine |
+| Class XP source: `combatEnd` win, `questCompleted` (the event phase 10a adds; completing a journey node is not completing a quest), boss kill | engine |
 | Draft screen for class level-ups reuses `rollSkillDraftIds` with the node list as the pool; picking writes a tagging row into `run.zones.coreTags` | `reward.js` |
 
 **PR 5c: unlocks and swap.**
@@ -160,7 +192,7 @@ mounted; class swap removes disallowed tags and keeps weapon skills.
 
 | Change | Where |
 |---|---|
-| `RUN_SHAPE.level: {xp, level, unspentPoints}`, `RUN_SCHEMA_VERSION` 8, flag `preXpLevels`; migration sets `level` from `levelUps.length` | `state.js` |
+| `RUN_SHAPE.level: {xp, level, unspentPoints}`, `RUN_SCHEMA_VERSION` 9, flag `preXpLevels`; migration sets `level` from `levelUps.length` | `state.js` |
 | `levelCost` / `levelsAffordable` (`src/model/levelup.js:63,83`) replaced by `xpToNext` on the `level.xp.*` rows; `applyLevelUp` no longer touches `run.cinders` | |
 | XP awards on `combatEnd` win, `enemyDied` by tier, `questCompleted` | engine |
 | Threshold bumps: `derivedStats.js` rules gain `perLevelThreshold: {every: 5, hp, mana, stamina, draw}` | content |
@@ -213,16 +245,60 @@ Acceptance: `derivedStatPresentationProblems` clean; every class preset sums
 to the mode total; the simulator's win-rate band is re-measured and recorded
 in `docs/BALANCE.md`.
 
+## Phase 10 — Quests: completion, board, and dialogue (2 PRs)
+
+Proposal §7.5. Both halves ship: a quest completes through one door, and every
+quest exchange is spoken in the dialogue screen (W4c, WGQ0–WGQ8).
+
+**PR 10a: completion door and dialogue screen.** Needs nothing else in this
+plan; land it before 5b so class XP has a quest source.
+
+| Change | Where |
+|---|---|
+| `commitEventChoice(ctx, {eventId, choiceId})`: run effects, then `recordEventChoice`, then the completion check. The Event screen's inline commit (`executeRunEffects` + `recordEventChoice` inside `mountEvent`, `src/ui/screens/event.js:148`) calls it instead | new `src/engine/quests.js` |
+| Chain quest ids: sidecar `questChains = { [questId]: { steps: [eventId], completes: [{eventId, choiceId}] } }` beside the history gates; Grave of the Nameless ships as `nameless`, completing on the three non-Leave `namelessRest` choices | `src/content/events.js` |
+| `recordQuestCompletion(run, {questId, source})` appends `{kind: 'questCompleted', questId, source}` to `run.history` at most once per quest; `hasQuestCompletion(subject, questId)` | `src/model/quests.js` |
+| Event `questCompleted` in `EVENTS`, emitted only by the door | `src/model/schemas.js:91`, engine |
+| Atlas claim: the quest branch of `worldLocationAction` (`src/main.js:1584`) calls the door with `source: 'atlas'` when `plan.next === 'claimed'` | `src/main.js` |
+| Speakers: `content/source/speakers.csv` (`id,name,portraitKey`) compiled to `src/content/generated/speakers.js`; sidecar `eventSpeakers = { [eventId]: speakerId }`; atlas `quests` rows gain `speakerId` | `tools/content-build.mjs`, content |
+| Validation, refusals by name: every chain step and `completes` ref resolves; every chain event names a speaker; every named speaker exists; a Leave choice may not complete a quest | `src/model/validate.js` |
+| `DialogueModel`: pure. Beats from the event text split on blank lines; player left, speaker right; responses from `availableEventChoices` on the last beat only; Back, Skip speech and Continue states. No command but a response | new `src/ui/models/DialogueModel.js` |
+| Dialogue screen adapter renders WGQ0–WGQ8; `dialogue` block in the frozen wireframe config (portrait share, caption lines). Scan the config for duplicate top-level keys | new `src/ui/screens/dialogue.js`, `src/content/wireframeUi.js` |
+| `mountEvent` routes a chain event to the dialogue screen; one-off events keep the W1u choice body | `src/ui/screens/event.js` |
+| Copy through `t()` | `content/source/uiStrings.csv` |
+| No `RUN_SHAPE` change: completion rows live in the existing `run.history` | |
+
+Acceptance, headless: committing a completing chain choice writes one
+`questCompleted` row and emits one event; a reload or replay of the same
+commit writes none; claiming an atlas quest does the same with
+`source: 'atlas'`; Back, Continue and speech ending issue no command.
+In the UI: each Nameless step opens in dialogue with its speaker on the right;
+Continue walks the beats; responses appear only on the last beat; a missing
+portrait shows the name plate.
+
+**PR 10b: the board as a location service.** After phase 7.
+
+| Change | Where |
+|---|---|
+| The `questBoard` tag renders a board in `enterLocation`: atlas quests offered at the node with their `questAction` state, and a journal of the run's started and completed chains read from `run.history` | location screen (phase 7) |
+| Accept and Collect open the dialogue screen with the quest row's speaker; the response commits through `questAction` and the 10a door | |
+| The atlas screen's own quest list (`src/ui/screens/worldAtlas.js:244`) opens the board where the location has one | |
+
+Acceptance: a town lists its quests; accepting and collecting are spoken; a
+collected quest shows as done and rewards once.
+
 ## Sequencing and parallelism
 
 ```
 1a → 1b → 2 ─┐
              ├→ 3a → 3b → 3c → 4a → 4b → 5a → 5b → 5c → 6 → 9
       8 ─────┘ (after 1b)              7 (after 3a)
+10a (any time, before 5b)              10b (after 7)
 ```
 
 Phases 7 and 8 need only phases 1 and 3a. Phase 9 waits for 6 because the
-thresholds and the rebase both rewrite `derivedStats.js`.
+thresholds and the rebase both rewrite `derivedStats.js`. Phase 10a touches
+none of the other phases' files except `EVENTS` and can land first.
 
 ## Risks and their tests
 
@@ -233,3 +309,5 @@ thresholds and the rebase both rewrite `derivedStats.js`.
 | Deck under minimum after unequip mid-run | loadout leave door test |
 | Skill XP farmable by 0-cost spam | XP requires a resolved hit on a live target; test plays a 0-cost skill 20 times and asserts zero XP |
 | dev moves under a receipt | each PR writes its receipt one ordinal ahead and rebuilds after the final base merge, as in #985 |
+| A quest completes twice (reload, replay, a second claim) | 10a test commits the completing choice, reloads, commits again, and counts one `questCompleted` row and one event |
+| Dialogue grants an effect outside a response | `DialogueModel` test drives Back, Continue, Skip speech and speech ending and asserts no command |

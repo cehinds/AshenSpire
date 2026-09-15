@@ -104,7 +104,7 @@ try {
   // A real merchant on a seeded disposable run. Preview/back must not purchase.
   await send('Emulation.setDeviceMetricsOverride', { width:1280, height:1000, deviceScaleFactor:1, mobile:false });
   await evaluate(`(async()=>{const {createRunState}=await import('/src/model/state.js');const {createRng}=await import('/src/engine/rng.js');const {buildShopStock}=await import('/src/engine/encounters.js');const {contentBundle}=await import('/src/content/index.js');const {createRegistries}=await import('/src/model/registries.js');const {mountShop}=await import('/src/ui/screens/shop.js');const r=createRegistries(contentBundle);const run=createRunState({seed:671,classId:'reaver',registries:r});run.cinders=1000;run.shopStock=buildShopStock(r,createRng(671),run);window.weaponPreviewRun=run;document.body.replaceChildren(Object.assign(document.createElement('main'),{id:'app'}));mountShop(document.querySelector('#app'),{registries:r,run,meta:{settings:{}},onLeave(){},onChanged(){}});})()`);
-  await evaluate(`document.querySelector('[data-face="bar:armaments"]').click()`); await wait(100);
+  await evaluate(`document.querySelector('#shop-cat-armaments').click()`); await wait(100);
   check(await evaluate("document.querySelector('.shop-armament-offer').getBoundingClientRect().height>0"), 'merchant shelf exposes weapon cards');
   await screenshot('merchant-offers');
   const before = await evaluate('JSON.stringify(weaponPreviewRun)');

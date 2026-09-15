@@ -131,6 +131,10 @@ export const EVENTS = Object.freeze([
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
+  // Plan phase 10a: a quest completed, once per quest per run. Emitted only by
+  // the quest door (engine/quests.js completeQuest), for an event chain's
+  // completing choice and an atlas quest's claimed reward alike.
+  'questCompleted',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -162,10 +166,21 @@ export const PREDICATES = Object.freeze([
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
+  // Progression gates (plan phase 1a). They read the skill and class ledger
+  // phase 4 adds to run state, and answer false until it exists.
+  'skillLevelAtLeast',
+  'classLevelAtLeast',
   'all',
   'any',
   'not',
 ]);
+
+// The families that may carry a `property` tag — the carriers of
+// docs/proposal-progression-and-property-system.md §3. A card is never one: its
+// behaviour is its own effect list. validate.js refuses a tagFamilyDomains or
+// tagging row that pairs `property` with any other family, by name. Phase 7
+// adds `location`.
+export const PROPERTY_CARRIER_FAMILIES = Object.freeze(['armament', 'armour', 'relic', 'class']);
 
 // Relic passive keys — data the run systems (rewards, shops, shrines, map)
 // and cost/flask math consult. Closed set; each key is generic capability,
@@ -197,9 +212,20 @@ export const PASSIVE_TYPES = Object.freeze({
   // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
   // Deltas sum across relics; the total is added to the base and floored at 0.
   swapCostDelta: 'num', // a mid-fight armament swap costs N more (negative = less)
+  // Arcane Exposure buildup per hit × (multiplies across sources). Read for the
+  // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
+  // properties alike. The wand's `overcharge` property confers it (plan 1b).
+  exposureBuildupMult: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
+
+// The passives node's fields, DERIVED FROM PASSIVE_TYPES once and shared by
+// every schema that carries passives (a relic, a property rule), so there is
+// one home for what a passive may be and no second hand-typed copy to drift.
+const passiveFields = Object.freeze(Object.fromEntries(
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, { k: t === 'bool' ? 'bool' : 'num', opt: true }])
+));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
 // turn loop (SPEC §3.7, §4.2). Semantics:
@@ -625,15 +651,21 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...RELIC_RARITIES),
     pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
-    triggers: triggersNode,
+    // OPTIONAL SINCE PLAN PHASE 2, AND EMPTY ON EVERY SHIPPED RELIC: a relic's
+    // triggers are a property rule now (content/source/propertyRules.csv), and
+    // it carries them through the same mount path equipment does. The field
+    // stays declared for one release so a relic authored against the old shape
+    // is refused BY NAME here instead of loading with its triggers silently
+    // inert; validate.js says which rule to move them to. Its passives did NOT
+    // move and are not expected to — they are upgraded per copy at the smith
+    // (model/itemUpgrades.js), which a global rule row cannot express.
+    triggers: opt(triggersNode),
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
     passives: opt(
       obj({
-        ...Object.fromEntries(
-          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-        ),
+        ...passiveFields,
         // Semantics and strict field validation live in validate.js beside the
         // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
         // discriminated object shapes in this generic schema walker.
@@ -643,6 +675,22 @@ export const SCHEMAS = Object.freeze({
     icon: opt(str),
     flavor: opt(str),
     script: opt(ref('scripts')),
+  }),
+
+  // One row of content/source/propertyRules.csv joined with its sidecar entry
+  // (src/content/propertyRules.js). Built from the relic's nodes: the same
+  // passives fields (PASSIVE_TYPES, via passiveFields) and the same triggers
+  // node, so a property can confer nothing a relic could not. Relic `modifiers`
+  // are not carried — their semantics live beside RELIC_MODIFIER_TAGS and phase
+  // 2 moves them with the relics. Cross-row rules (one rule per property tag,
+  // requires/excludes resolve, no cycles, carriers only) live in validate.js.
+  propertyRule: obj({
+    tag: str,
+    requires: opt(arr(str)),
+    excludes: opt(arr(str)),
+    textTemplate: str,
+    passives: opt(obj(passiveFields)),
+    triggers: opt(triggersNode),
   }),
 
   status: obj({

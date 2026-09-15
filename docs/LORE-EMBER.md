@@ -118,6 +118,12 @@ Behaviours people have recorded since it came loose:
 - It has kept a promise it was not physically present for: a debt sworn in a
   Salt Reaches counting-house, to a merchant whose name was never in any roll.
 
+And the reading runs both ways. Blight-touched who can still speak sometimes
+give a name and ask to be killed — and it is not always the name their families
+knew them by. Nobody can say whether that is the fire's confusion, a second
+person's name arriving in a dying mouth, or a man who had two names all along
+and only one of them written.
+
 Nobody can say whether it **remembers** those people, **contains** them,
 **imitates** them, **dreams** them, or simply learned the pattern by eating
 enough of them. All five are live.
@@ -149,7 +155,8 @@ formulates this. It reaches the player as pieces that do not fit:
 | **Folklore** | A weald harvest rhyme about a fire that gives back what you tell it and asks for the rest in winter. Sung by families the Bastion's writ never reached. | Someone here met this before the Field Flame existed. | Anything. It is a rhyme; the weald had no hearth of its own. |
 | **Theology** | The Chapel's first liturgy, kept in the Furnace Chapel, addresses the Ember as something **already listening**. The revised liturgy, four hundred years later, addresses it as a gift. | The first Saint thought he was negotiating. | Which of them was right, or whether the first was flattering a fire. |
 | **Dreams** | Blight-touched things dream a coastline with the terraces above the water and no Spire on it. | Memory outlives the reading. | Whose memory. It has eaten enough people to dream any of them. |
-| **Ruins** | Cinderwright seams that run under the caldera rim — beneath the level a fall should have melted. | They were building there before, or after, or the fall did not happen the way it is taught. | Which. Their work is undated, on purpose (§7). |
+| **Ruins** | The first keepers quarried the mountain around seams of black glass that run far below the place where the star landed — beneath the level a fall should have melted. | They were building there before, or after, or the fall did not happen where it is taught. | Which. Their work is undated, on purpose (§7). |
+| **Carvings** | In the collapsing galleries under the Observatory: a serpent curled around what the priests called the sun. Cut by miners who worked above the wyrm for centuries. | Somebody down there thought the two belonged in one picture. | Which of them is the sun in it, or whether the carvers meant the star at all. |
 | **Manuscripts** | Two copies of the same Salt Reaches chronicle in the Observatory's lower library. They differ in one particular: the number of fires. | Someone edited a number. | Which copy was edited, or in which direction. |
 
 Never: a fossil described in taxonomic terms, a mechanism explained in a
@@ -185,7 +192,10 @@ knowing what is true instead.
 ## 7. It may not be the first
 
 Foreign traditions describe things that rhyme with the Sovereign Ember, some of
-them thousands of years before the Founding. They do not share the Goldbough's
+them thousands of years before the Founding. They have a name for the
+Goldbough's fire too: sailors called it **the Remembering Flame** and wore
+charms against it, which they tucked under their shirts before entering a
+Goldbough chapel. Their lords bought marks from the same court. They do not share the Goldbough's
 vocabulary, they do not agree with each other, and none of them matches the
 Ashen Spire's events cleanly.
 
@@ -195,7 +205,9 @@ Ashen Spire's events cleanly.
 | **Salt Reaches chronicle** (two copies) | *the fallen dawn* | The Observatory's lower library; a ship-breaker's grandmother's copy on the coast | Seven dawns came down over three hundred years. The sixth was kept. The seventh was refused. | One copy says seven fires. The other says one fire, seven times. Both are in the same hand. |
 | **Ashland first-king tablets** | *the buried sun* | The Ashland column on the Basalt Stair; a rubbing in the reach | The sun beneath the mountain was there before people, and people are its cinders: *we are what it has already burned.* | There is no rite in it. No names, no ledger, no promise. The Ashlands hid from theirs and kept coal. |
 | **Drowned Coast terraces** | *the nameless light* | Carvings under the sea-line below the Spire's lower city, at low tide | A light that harmed nobody until it was given a name. The first name was given by a child. The terraces emptied in one season. | Nothing on that coast records a fall at all. |
-| **Weald hamlet rhyme** | *the remembering flame* | A wayfarer; a harvest song at a rest node | It gives back what you tell it and asks for the rest in winter. | Unwritten, so undateable — and the weald never had a hearth before the Field Flame. |
+| **Weald hamlet rhyme** | *the asking fire* | A wayfarer; a harvest song at a rest node | It gives back what you tell it and asks for the rest in winter. | Unwritten, so undateable — and the weald never had a hearth before the Field Flame. |
+| **The Astronomer's tablet** | untranslated; the surviving line reads *the fire remembers kings* | The Spire's hearth-room, among his instruments, beside foreign calendars and copies of records from kingdoms that were gone before the Goldbough began | Nothing. Four words survive. | Everything. Nobody knows which kings, which fire, or who kept the tablet before he did. |
+| **A sailor's song** | no word; the fire in it is never named | An old woman in a Forsaken hamlet who sang it to children for years with the worse verses left out | A fire crossed a kingdom after eating its king. | It has no kingdom, no date and no coast. She is trying to remember the rest of it. |
 | **Northern dolmen line** | *the star-heart* | Eleven standing figures in a marches pass, each holding a stone at the chest | The Holds say ancestors. An Astronomer's apprentice says they are diagrams. | There are eleven figures. There were only ever three flames. |
 | **Tidebound Abbey** | four words, one of which is *seal* | The Abbey on the Drowned Coast | The salt-priests teach that the words are an instruction, not a description. | The Abbey is three hundred years old. The words are Cinderwright. |
 | **The Cinderwrights** | **no noun at all** | Their stone, everywhere on the ring | Their script has a verb for what they did to it and no name for what they did it to. | They had eight hundred years of direct contact and never once named it. Nobody knows whether that was vocabulary or precaution. |
@@ -296,10 +308,15 @@ expert witness.
   Cinderwright stone; the Spire's effect on the tides before it held anything;
   two falls on his own charts with no crater to match; the night the Ember left
   its hearth, from the one tower built to look at it.
+- **Collected:** fragments of starstone set beside samples brought up from
+  under the Observatory; foreign calendars; copies of records from kingdoms
+  that were gone before the Goldbough began; and a worn tablet whose surviving
+  line reads *the fire remembers kings*. The court had no interest in any of
+  it. It wanted to know whether the hearth would work.
 - **Assumes:** that a star finishing is what he has been watching. That out of
   the world is far enough. That there is one of them.
-- **Has not published:** chart 43. An apprentice's name in the roll. What he
-  found under the caldera rim. Which of those he is hiding, and whether he is
+- **Has not published:** chart 43. An apprentice's name in the roll. How far
+  below the star's own crater the black glass runs. Which of those he is hiding, and whether he is
   hiding it from the Chapel or from himself, is an authoring choice per quest
   chain and is never settled.
 - **Gains:** if the world accepts that the star is simply finishing, nobody
@@ -311,9 +328,12 @@ be seated from, and it is the deepest source in the game. It is a confession
 about his tower, not a description of the Ember. It says what the fire does. It
 does not say what the fire is, and the man who wrote it did not know.
 
-> *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger, and
-> a fire without a ledger reads whatever remains. It was built for them. God
-> forgive me, I do not know what I built it for.*
+> *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger and
+> understood, too late, that a fire without one reads whatever remains. It will
+> read them. God forgive me. I built it for them.*
+
+It says what the fire does and who it will do it to. It says nothing about what
+the fire is, and the man who wrote it had spent his life trying to find out.
 
 His conclusion — that the Ember must be put out of the world — may be correct.
 It may also be the worst available option, argued by the one man with the most
@@ -370,6 +390,9 @@ Seed fragments, in their sources' voices:
 | Eleven dolmen figures, marches pass | Ancestors, say the Holds. Diagrams, says the apprentice. |
 | Starseer, a chart margin | Chart 41: a fall. Chart 43: a fall. No crater for either. |
 | Wandering Soldier, rare line | "It came back to my mother's door. There was never a hearth there." |
+| Hamlet elder, the morning after | "It's a sailor's song. A fire crossed a kingdom after it ate the king." |
+| Blight-touched, asking to be finished | "Write it down. Not that name. The other one." |
+| Wyrm Aspirant, in the lower galleries | "A serpent round the sun. Miners cut it. Nobody asked which was which." |
 
 ## 13. What must never close
 

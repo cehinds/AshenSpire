@@ -113,3 +113,65 @@ theme:blight,theme,Blight,9FC3E8,◇,"Categorized Blight identity; effects are a
 theme:astral,theme,Astral,9FC3E8,◇,"Categorized Astral identity; effects are authored separately."
 theme:oath,theme,Oath,9FC3E8,◇,"Categorized Oath identity; effects are authored separately."
 theme:stance,theme,Stance,9FC3E8,◇,"Categorized Stance identity; effects are authored separately."
+# ---- property (docs/proposal-progression-and-property-system.md §3) -----------
+# The one domain that CONFERS. Each tag has exactly one rule in propertyRules.csv,
+# is granted only by the carrier holding it, and never appears as a chip.
+siphon,property,Siphon,7FA8C9,◈,"A focus that drinks back: breaking a foe's Arcane Exposure restores Mana."
+overcharge,property,Overcharge,9FC3E8,✧,"A focus that pushes harder: each hit builds more Arcane Exposure."
+
+# ---- relic properties (plan phase 2) -------------------------------------------
+# One tag per relic that carries triggers, id shared with the relic, because the
+# shipped set reuses almost nothing: 51 distinct trigger shapes across 48
+# trigger-carrying relics, only 3 of them shared. A semantic vocabulary
+# (`hp10`, `openingPoise`) was what the plan pictured, and the content does not
+# have it to give — so the tag names the relic whose moment it is, and the day a
+# second relic wants the same behaviour it adds a tagging row, not a rule.
+# These are never chips: the property domain never joins `tags` (registries.js).
+forsakenMedallion,property,"Forsaken Medallion",8C7A5B,🏅,"What Forsaken Medallion does when the fight gives it its moment."
+starstoneShard,property,"Starstone Shard",8C7A5B,💠,"What Starstone Shard does when the fight gives it its moment."
+cutpursesCoin,property,"Cutpurse's Coin",8C7A5B,🪙,"What Cutpurse's Coin does when the fight gives it its moment."
+goldFigurine,property,"Gold Figurine",8C7A5B,🗿,"What Gold Figurine does when the fight gives it its moment."
+goldenSprout,property,"Golden Sprout",9A9A9A,🌰,"What Golden Sprout does when the fight gives it its moment."
+whetstoneFragment,property,"Whetstone Fragment",9A9A9A,🪨,"What Whetstone Fragment does when the fight gives it its moment."
+kindlingCharm,property,"Kindling Charm",9A9A9A,🕯,"What Kindling Charm does when the fight gives it its moment."
+goldleafCharm,property,"Goldleaf Charm",9A9A9A,🍂,"What Goldleaf Charm does when the fight gives it its moment."
+crackedLantern,property,"Cracked Lantern",9A9A9A,🏮,"What Cracked Lantern does when the fight gives it its moment."
+sacrificialKnife,property,"Sacrificial Knife",9A9A9A,🔪,"What Sacrificial Knife does when the fight gives it its moment."
+curedHide,property,"Cured Hide",9A9A9A,🛡,"What Cured Hide does when the fight gives it its moment."
+ivoryComb,property,"Ivory Comb",9A9A9A,🪮,"What Ivory Comb does when the fight gives it its moment."
+fellWardenBrand,property,"Fell Warden Brand",6E9C6E,🔱,"What Fell Warden Brand does when the fight gives it its moment."
+bloodiedTalisman,property,"Bloodied Talisman",6E9C6E,🩸,"What Bloodied Talisman does when the fight gives it its moment."
+twinnedArmor,property,"Twinned Armor",6E9C6E,👥,"What Twinned Armor does when the fight gives it its moment."
+blightTouchedIdol,property,"Blight-Touched Idol",6E9C6E,☣,"What Blight-Touched Idol does when the fight gives it its moment."
+warhorn,property,"Warhorn",6E9C6E,📣,"What Warhorn does when the fight gives it its moment."
+vowOfVengeance,property,"Vow of Vengeance",6E9C6E,⚔,"What Vow of Vengeance does when the fight gives it its moment."
+pearlOfSagacity,property,"Pearl of Sagacity",6E9C6E,🔮,"What Pearl of Sagacity does when the fight gives it its moment."
+blessedDew,property,"Blessed Dew",6E9C6E,💧,"What Blessed Dew does when the fight gives it its moment."
+azureSigil,property,"Azure Sigil",6E9C6E,🔵,"What Azure Sigil does when the fight gives it its moment."
+bloodstainedChalice,property,"Bloodstained Chalice",6E9C6E,🍷,"What Bloodstained Chalice does when the fight gives it its moment."
+goldboughSapling,property,"Goldbough Sapling",B08CC9,🌱,"What Goldbough Sapling does when the fight gives it its moment."
+wyrmHeart,property,"Wyrm Heart",B08CC9,🫀,"What Wyrm Heart does when the fight gives it its moment."
+titansCinder,property,"Titan's Cinder",B08CC9,🌟,"What Titan's Cinder does when the fight gives it its moment."
+radiantAegis,property,"Radiant Aegis",B08CC9,🛡,"What Radiant Aegis does when the fight gives it its moment."
+flayersCenser,property,"Flayer's Censer",B08CC9,🔥,"What Flayer's Censer does when the fight gives it its moment."
+vigilantHalo,property,"Vigilant Halo",B08CC9,🌸,"What Vigilant Halo does when the fight gives it its moment."
+carrionTalon,property,"Carrion Talon",B08CC9,🦅,"What Carrion Talon does when the fight gives it its moment."
+emberIdol,property,"Ember Idol",B08CC9,🌋,"What Ember Idol does when the fight gives it its moment."
+crownOfStitches,property,"Crown of Stitches",C9A227,👑,"What Crown of Stitches does when the fight gives it its moment."
+wardenHorn,property,"Warden Horn",C9A227,📯,"What Warden Horn does when the fight gives it its moment."
+ashOfRemembrance,property,"Ash of Remembrance",C9A227,⚱,"What Ash of Remembrance does when the fight gives it its moment."
+cinderOfTheFallen,property,"Cinder of the Fallen",C9A227,☠,"What Cinder of the Fallen does when the fight gives it its moment."
+crimsonCovenant,property,"Crimson Covenant",C9A227,🩸,"What Crimson Covenant does when the fight gives it its moment."
+travelersWhetstone,property,"Traveler's Whetstone",9A9A9A,🔪,"What Traveler's Whetstone does when the fight gives it its moment."
+moonlitVial,property,"Moonlit Vial",9A9A9A,🧪,"What Moonlit Vial does when the fight gives it its moment."
+wardensLantern,property,"Warden's Lantern",9A9A9A,🏮,"What Warden's Lantern does when the fight gives it its moment."
+hollowedHorn,property,"Hollowed Horn",6E9C6E,📯,"What Hollowed Horn does when the fight gives it its moment."
+gildedTear,property,"Gilded Tear",6E9C6E,💛,"What Gilded Tear does when the fight gives it its moment."
+watchmansBadge,property,"Watchman's Badge",B08CC9,🎖,"What Watchman's Badge does when the fight gives it its moment."
+howlingStandard,property,"Howling Standard",B08CC9,🚩,"What Howling Standard does when the fight gives it its moment."
+emberwickCharm,property,"Emberwick Charm",9A9A9A,🕯,"What Emberwick Charm does when the fight gives it its moment."
+carrionMorsel,property,"Carrion Morsel",9A9A9A,🍖,"What Carrion Morsel does when the fight gives it its moment."
+gravetendersBell,property,"Gravetender's Bell",6E9C6E,🔔,"What Gravetender's Bell does when the fight gives it its moment."
+sentinelsOath,property,"Sentinel's Oath",6E9C6E,🛡,"What Sentinel's Oath does when the fight gives it its moment."
+forsakenWarflag,property,"Forsaken Warflag",B08CC9,🏴,"What Forsaken Warflag does when the fight gives it its moment."
+wrathCoil,property,"Wrath Coil",B08CC9,⚡,"What Wrath Coil does when the fight gives it its moment."

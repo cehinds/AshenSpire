@@ -294,15 +294,22 @@ export function findings(r) {
       || !/--hud-quick-tile-gap:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \.as-slot::before \{[\s\S]*?width: var\(--hud-belt-tile-face-size\); height: var\(--hud-belt-tile-face-size\);/.test(r.kit)
+      // The relic rail is the shared icon tray (components/iconTray.js), the
+      // combatant card's status row its reference: the rail wears the tray's
+      // classes and the tray sizes every icon from its own plan.
+      || !/class="relics hud-relics as-pips icon-tray grow"/.test(r.hud)
+      || !/\.icon-tray \.as-pip \{[\s\S]*?width: var\(--icon-tray-size[\s\S]*?height: var\(--icon-tray-size/.test(r.kit)
       || !/iconButton\(\{/.test(r.hud)
       || !/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(r.quickSettings)
       || !/\.as-iconbtn, \.modal-iconbtn, \.modal-close \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
       || !/\.as-slot \{[^}]*width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
       || !/\.as-meter \{/.test(r.kit)
       || /^\s*\.(?:topbar|hud-top|hud-info-row|hud-resource-row|hud-bottom|hud-control-grid|hud-quick-setting)\b[^{]*\{/m.test(r.css)
-      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(r.map)
+      // The map titles its route strip with the act's own name. Since the
+      // W4b header (#1052) actTitle also takes the seat's name on a seated
+      // climb, so the check pins the call and its first argument and lets the
+      // rest of the argument list vary.
+      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
@@ -317,7 +324,12 @@ export function findings(r) {
       // The ORDER of what remains is still pinned, which is what this line is
       // for, and the second clause pins the removal itself so the child cannot
       // reappear without a finding.
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
+      // Since #1084 (WGH0 layers) each child is present only when its layer is
+      // on and takes `layers`, and vitals + quick access are composed into the
+      // `primary` row first. The rendered order is unchanged — header, the
+      // primary row (vitals, then quick access), then the belt — and that order
+      // is what is pinned here.
+      || !/const primary = \[[\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\b[\s\S]*?\];[\s\S]*children: \[[\s\S]*runHeaderModel\([\s\S]*UI\.primaryHudRow, \{ children: primary \}[\s\S]*inventoryBeltModel\(place\b/.test(r.hudViewModel)
       || /hudQuickSettingsModel\(\{ place/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {

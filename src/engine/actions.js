@@ -35,6 +35,7 @@ import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
+import { propertyMountsOf } from './properties.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -178,7 +179,11 @@ function applyArcaneExposure(ctx, source, target, carrier) {
     ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'locked', school, attempted: perHit });
     return;
   }
-  const amount = Math.floor(perHit * mapped * cfg.buildupMultiplier);
+  // The hit's SOURCE may multiply its buildup: an `exposureBuildupMult` passive
+  // on a relic it owns or a property it has mounted (a wand's `overcharge`).
+  // Exactly 1 when neither carries one, so every existing hit is unchanged.
+  const sourceMult = passiveMult(ctx.registries, (source && source.relicIds) || [], 'exposureBuildupMult', propertyMountsOf(ctx, source));
+  const amount = Math.floor(perHit * mapped * cfg.buildupMultiplier * sourceMult);
   if (amount <= 0) return;
   cfg.value += amount;
   ctx.emit('arcaneExposureChanged', { targetId: target.id, sourceId: source && source.id, school, amount, value: cfg.value, threshold: cfg.threshold });

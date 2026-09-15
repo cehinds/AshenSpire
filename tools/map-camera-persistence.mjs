@@ -115,6 +115,21 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }
       throw new Error(`timed out waiting for ${label}; last=${JSON.stringify(last)}`);
     };
+    // A trusted pointer press at the control's center — the player's tap, not
+    // a scripted .click() — as startup-gate and title-new-slot drive the doors.
+    const press = async (selector) => {
+      const point = await evaluate(`(() => {
+        const e = document.querySelector(${JSON.stringify(selector)});
+        if (!e) return null;
+        e.scrollIntoView({ block: 'center', inline: 'center' });
+        const r = e.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      if (!point) throw new Error(`missing ${selector}`);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      await wait(120);
+    };
     const readState = () => evaluate(`(() => {
       const port = document.querySelector('.map-scroll');
       const svg = port && port.querySelector('.map-canvas');
@@ -258,6 +273,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       port.dispatchEvent(new Event('scroll'));
       const to = target.dataset.node;
       target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.querySelector('#map-enter')?.click(); // W4b: select, then Enter
       return { from, to };
     })()`);
     await wait(180);
@@ -390,9 +406,40 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       await waitFor('the real folded title (flush case)', `!!document.querySelector('.title-menu .slot-new')`);
       await evaluate(`document.querySelector('.title-menu .slot-new').click()`);
       await waitFor('the new-slot modal (flush case)', `!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`);
-      await evaluate(`document.querySelector('[data-title-action="modal-continue"]').click()`);
+      await press('[data-title-action="modal-continue"]');
+      // Continue only opens the slot's decision door ("Start in slot n?"); its
+      // primary, Start (review-new), is the press that commits the new climb.
+      await waitFor('the new-slot decision door (flush case)', `!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`);
+      await press('[data-title-action="review-new"]');
       await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
-      await evaluate(`document.querySelector('#cz-start').click()`);
+      // Creation is gated step by step (781da54a): Begin refuses until a class,
+      // a stat mode, a keepsake and starting armour are chosen. Walk the steps
+      // a player walks — the first class, Standard stats, the first keepsake,
+      // the first armour — opening each fold before tapping inside it.
+      const openFace = async (key) => {
+        const expanded = await evaluate(`document.querySelector('[data-face="${key}"]')?.getAttribute('aria-expanded') === 'true'`);
+        if (!expanded) await press(`[data-face="${key}"]`);
+      };
+      await openFace('class');
+      await press('.cz-class');
+      await openFace('character');
+      await openFace('primary');
+      await press('#cz-statedit .se-mode[data-creation-mode="standard"]');
+      await openFace('keepsake');
+      await press('#cz-keepsakes [data-keepsake-id]');
+      await openFace('equipment');
+      await openFace('armour');
+      await press('#cz-armours .equip-chip .equipment-poker-card');
+      await press('#cz-armours .equip-chip .equipment-choose');
+      await openFace('seed');
+      await waitFor('Begin to accept the finished character (flush case)', `(() => {
+        const begin = document.querySelector('#cz-start');
+        return !!begin && begin.getAttribute('aria-disabled') !== 'true';
+      })()`, 3000).catch(async (error) => {
+        const refusal = await evaluate(`document.querySelector('#cz-start')?.dataset.refusal || null`);
+        throw new Error(`${error.message}; Begin refuses: ${JSON.stringify(refusal)}`);
+      });
+      await press('#cz-start');
       await waitFor('the new run map (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`);
       await wait(300);
       exceptionsSeen.length = 0;
@@ -587,7 +634,7 @@ async function selftest() {
     const fitSeam = '    && fitViewportMatches\n';
     const raceSeam = '      const snapshot = pendingViewCommit;\n';
     const settleSeam = '      if (settled || scroll.clientHeight <= 0) return false;\n';
-    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));";
+    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));";
     // The #243 guard: removing it re-opens the detached-timer crash, and the
     // plant enters as source bytes in the copied tree — the same door a real
     // regression would take (a build of this copy, driven by the real controls).
@@ -600,7 +647,7 @@ async function selftest() {
       .replace(fitSeam, '')
       .replace(raceSeam, '      const snapshot = viewSnapshot();\n')
       .replace(settleSeam, '      if (settled) return false;\n')
-      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id); });")
+      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id, { shownType, revealed }); });")
       .replace(exitSeam, ''));
     const ownership = await runProbe(tempRoot, { screenshots: false });
     const fitCaught = ownership.fitViewport && !ownership.fitViewport.pass;

@@ -57,6 +57,8 @@ import { renderCard } from '../components/card.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
+import { iconTray, trayIcon } from '../components/iconTray.js';
+import { t } from '../strings.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
@@ -92,8 +94,15 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   configureTooltipGlossary(registries);
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
@@ -194,7 +203,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     },
     onClose: () => {
       teardown();
-      const leave = button({ label: 'Leave', weight: 'primary', id: 'coop-leave' });
+      const leave = button({ label: 'Leave', role: 'exit', id: 'coop-leave' });
       app.innerHTML = '';
       app.appendChild(el('div', { class: 'screen coop-scene' }, pageDoor({
         eyebrow: 'Forsaken Together', title: 'The fire went out', size: 'sm', className: 'coop-door',
@@ -485,23 +494,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
+  // The shared icon tray, as on the solo card (components/iconTray.js): the
+  // same Pip, row and tooltip. A tap is a play while a card or flask is armed.
   function statusRow(statuses) {
-    const row = document.createElement('div');
-    row.className = 'statuses';
+    const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
-      const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
-      const el = document.createElement('div');
-      el.className = 'status-icon';
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      const el = trayIcon({
+        glyph: def.icon || '?', count: presentation.valueText, tone: def.tint || 'var(--muted)', // status-pip accent (data: status def)
+        label: semanticAttrs['aria-label'], attrs: { class: 'status-icon' },
+        tip: () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`,
+        yieldTap: () => !!armedFriendlyCard || armedFlask != null,
+      });
       el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
       el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
-      el.setAttribute('aria-label', semanticAttrs['aria-label']);
-      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`, { tapToExplain: () => !armedFriendlyCard && armedFlask == null });
       row.appendChild(el);
     }
     return row;
@@ -804,7 +813,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         line: throwing ? 'Click a hero seat to give it.' : 'Choose a highlighted hero.',
         attrs: { class: 'floating coop-arm', role: 'status' },
       });
-      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
+      card.appendChild(buttonRow({ size: 'short', buttons: [button({ label: 'Cancel', role: 'exit', id: throwing ? 'coop-cancel-flask' : 'coop-cancel-target' })] }));
       ahost.replaceWith(card);
     }
 
@@ -987,7 +996,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // + ornament, Flavour for a note, the shared renderCard row, OptionCards
   // for the ways on), and Leave on the foot's ladder. One shell, five scenes.
   function sceneDoor({ title, eyebrow: eb = 'Forsaken Together', children = [], note = '' }) {
-    const leave = button({ label: 'Leave', id: 'coop-leave' });
+    const leave = button({ label: 'Leave', role: 'exit', id: 'coop-leave' });
     const door = pageDoor({
       eyebrow: eb, title, size: 'md', className: 'coop-door',
       body: decide({ title, children: [note ? flavour(note, { class: 'coop-note' }) : null, ...children] }),

@@ -28,8 +28,10 @@
 // The public entry points below are the ones 23 surfaces already call; their
 // shape is unchanged so nothing had to be re-wired to inherit the machine.
 
-import { placeAnchored, viewportLocalBox } from '../fx.js';
-import { tooltipPlacementIntent } from '../models/TooltipPlacementModel.js';
+import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import {
+  tooltipPlacementIntent, TOOLTIP_RUNGS, tooltipWireframe, tooltipArrow, tooltipArrowSize,
+} from '../models/TooltipPlacementModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
@@ -40,7 +42,9 @@ export function configureTooltipSettings(settings) {
   tooltipSettings = resolveTooltipSettings(settings);
   hideTooltip();
 }
-const RUNGS = ['small', 'medium', 'large', 'expanded'];
+// The rung list has one home (TooltipPlacementModel); wireframeUi.tooltip
+// names the wireframe each rung draws (WT1 compact, WT2 standard, WT3).
+const RUNGS = TOOLTIP_RUNGS;
 
 // ---- the two panels ---------------------------------------------------------
 const panels = [null, null];
@@ -233,7 +237,26 @@ function fitRung(el, pinned) {
   }
   const fits = el.scrollHeight <= el.clientHeight + 1;
   el.dataset.overflow = fits ? 'false' : 'true';
+  el.dataset.wireframe = tooltipWireframe(el.dataset.size);
   return fits;
+}
+
+/**
+ * WT0.ARROW FOLLOWS THE TRIGGER. Once the panel is placed — flipped or shifted
+ * included — the arrow goes on the edge that faces the anchor and points at
+ * its centre. `#tooltip::after` draws it from these properties (kit.css);
+ * `data-arrow="none"` (the panel sits on its anchor) draws nothing.
+ */
+function pointArrow(t, placed, anchor) {
+  const root = getComputedStyle(document.documentElement);
+  const zoom = parseFloat(root.getPropertyValue('--ui-zoom')) || 1;
+  const rootFontPx = parseFloat(root.fontSize) || 16;
+  const arrow = tooltipArrow(placed, anchorLocalBox(VIEWPORT_ORIGIN, anchor), tooltipArrowSize({ zoom, rootFontPx }));
+  t.dataset.arrow = arrow.edge;
+  t.style.setProperty('--tip-arrow-left', `${arrow.left}px`);
+  t.style.setProperty('--tip-arrow-top', `${arrow.top}px`);
+  t.style.setProperty('--tip-arrow-w', `${arrow.width}px`);
+  t.style.setProperty('--tip-arrow-h', `${arrow.height}px`);
 }
 
 /**
@@ -350,7 +373,7 @@ function showWith(html, anchor, clear = null, intent = 'above', appearance = nul
     })
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
-  placeAnchored(t, anchor, { intent: resolvedIntent, clear, align });
+  pointArrow(t, placeAnchored(t, anchor, { intent: resolvedIntent, clear, align }), anchor);
   if (stoodAt) stepRung(t, stoodAt, resolvedIntent);
   state[level].target?.removeAttribute?.('data-tip-open');
   hoverCloseCallback = null;
@@ -406,6 +429,10 @@ export function attachTooltip(el, contentFn, {
       selectedControl = el;
       el.classList.add('tooltip-selected');
     }
+    // A repeated hover or focus on the element already counting down keeps
+    // that countdown (CURRENT-SPECIFICATION, Tooltips); restarting it made a
+    // second event push the tooltip a whole delay further away.
+    if (pending?.el === el && openTimer) return;
     cancelOpen();
     if (state[0].open && state[0].target === el) { clearTimers(); if (stuck) unstick(); return; }
     pending = { el, show };
@@ -629,7 +656,13 @@ function wireTitles() {
     else if (state[0].open || selectedControl) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
     else { cancelOpen(); cancelNested(); }
   }, true);
-  const replace = () => { for (const [i, st] of state.entries()) if (st.open && st.target?.getBoundingClientRect && panels[i]) placeAnchored(panels[i], st.target.getBoundingClientRect(), { intent: panels[i].dataset.tooltipPlacement || 'above' }); };
+  const replace = () => {
+    for (const [i, st] of state.entries()) {
+      if (!st.open || !st.target?.getBoundingClientRect || !panels[i]) continue;
+      const rect = st.target.getBoundingClientRect();
+      pointArrow(panels[i], placeAnchored(panels[i], rect, { intent: panels[i].dataset.tooltipPlacement || 'above' }), rect);
+    }
+  };
   addEventListener('resize', replace);
 }
 wireTitles();

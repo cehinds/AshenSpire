@@ -152,7 +152,7 @@ export const SURFACES = [
       {
         what: 'balance.equipment.views',
         file: 'src/content/balance.js',
-        declares: 'every view the armoury header offers',
+        declares: 'every view the armoury category rail offers',
         members: () => viewIds(),
       },
     ],

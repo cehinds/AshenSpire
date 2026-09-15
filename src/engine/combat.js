@@ -28,6 +28,7 @@ import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolv
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { syncLoadoutProperties, syncRelicProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -146,6 +147,14 @@ export function createCombat({
   combat._emitEvent = emitEvent;
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+
+  // Property carriers (engine/properties.js): the loadout's equipped pieces
+  // mount their property rules before anything is emitted, so a property hears
+  // enemySpawned and combatStart exactly as a relic does.
+  syncLoadoutProperties(combat);
+  // …and the relics the player carries, whose triggers are property rules too
+  // since plan phase 2. Mounted before the first emit for the same reason.
+  syncRelicProperties(combat);
 
   // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
   // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
@@ -425,6 +434,9 @@ function enemyPhase(combat) {
 // 'enemyMoveStarted' marks the acting enemy so the UI can pace playback
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 function executeMovePayload(combat, enemy, move, moveId) {
+  // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
+  // cancels never happens. This is what did — the inspector's history.
+  (enemy.performedMoves ||= []).push(moveId);
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
@@ -597,7 +609,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     classId: p.classId,
     slotId,
     setIndex,
-    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta', {}, propertyMountsOf(combat, p)),
   });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
@@ -634,6 +646,9 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  // The hand now holds a different set: its old piece's properties leave with
+  // it and the new piece's arrive (source ownership, engine/properties.js).
+  syncLoadoutProperties(combat);
   if (activeBefore !== combat.loadout.active[slotId]) {
     combat.equipmentChanged = true;
     const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
@@ -731,7 +746,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     classId: p.classId,
     slotId,
     setIndex,
-    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta', {}, propertyMountsOf(combat, p)),
   });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No equipment changes left this turn');
@@ -747,6 +762,9 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   })) {
     throw new Error('That equipment change is no longer available');
   }
+  // Unmount the outgoing piece's properties and mount the incoming piece's,
+  // now that equipPiece has committed (engine/properties.js).
+  syncLoadoutProperties(combat);
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
   combat.equipmentChanged = true;
   const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
@@ -803,7 +821,7 @@ function effectiveCost(combat, def) {
   // relic reduction and the framework applies it only where the card's
   // classification permits (Powers).
   return F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, {
-    powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
+    powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}, propertyMountsOf(combat, combat.player)),
     weightClass: playerWeightClass(combat).weightClass,
   })).action;
 }
@@ -936,7 +954,7 @@ function doUseFlask(combat, { slot, chargeKind, targetId }) {
   else p.flasks.splice(slot, 1);
   combat.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
   // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
-  const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult');
+  const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult', propertyMountsOf(combat, p));
   for (const eff of def.effects || []) {
     combat.enqueue({ effect: eff, source: p, owner: p, target, meta: amountMult !== 1 ? { amountMult } : {} });
   }

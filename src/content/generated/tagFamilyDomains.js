@@ -209,5 +209,21 @@ export const tagFamilyDomains = [
   {
     "family": "basicCardProfile",
     "domain": "theme"
+  },
+  {
+    "family": "armament",
+    "domain": "property"
+  },
+  {
+    "family": "armour",
+    "domain": "property"
+  },
+  {
+    "family": "relic",
+    "domain": "property"
+  },
+  {
+    "family": "class",
+    "domain": "property"
   }
 ];

@@ -969,8 +969,8 @@ async function selftest() {
     {
       name: 'the shared HUD duplicates Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: "el(\'span\', { class: \'ck\', text: \'Cinders\' })",
-      replace: "el(\'span\', { class: \'as-chip hud-cinders\', text: \'Cinders\' })",
+      find: "el(\'span\', { class: \'ck\', text: model.properties.label })",
+      replace: "el(\'span\', { class: \'as-chip hud-cinders\', text: model.properties.label })",
       expectRed: /FINDING P8\/top-row .*cinders-count=2/,
     },
     {
@@ -987,8 +987,8 @@ async function selftest() {
         replace: "el('span', { class: 'as-chip' }",
       }, {
         file: 'src/ui/components/hudmeta.js',
-        find: "class: 'hud-run-meta as-statstrip trail', 'aria-label': 'Run position'",
-        replace: "class: 'hud-run-meta as-statstrip trail hud-cinders', 'aria-label': 'Run position'",
+        find: "class: 'hud-run-meta as-statstrip trail', 'aria-label': model.properties.label",
+        replace: "class: 'hud-run-meta as-statstrip trail hud-cinders', 'aria-label': model.properties.label",
       }],
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
@@ -1000,8 +1000,8 @@ async function selftest() {
         replace: 'class: `as-chip metadata-${model.variant}`',
       }, {
         file: 'src/ui/components/hudmeta.js',
-        find: "el('span', { class: 'ck', text: 'Cinders' })",
-        replace: "el('span', { class: 'ck hud-floor', text: 'Cinders' })",
+        find: "el('span', { class: 'ck', text: model.properties.label })",
+        replace: "el('span', { class: 'ck hud-floor', text: model.properties.label })",
       }],
       expectRed: /FINDING P8\/top-row .*floor-placement/,
     },
@@ -1020,8 +1020,8 @@ async function selftest() {
         replace: "class: 'as-chip'",
       }, {
         file: 'src/ui/components/hudmeta.js',
-        find: "el('span', { class: 'ck', text: 'Cinders' })",
-        replace: "el('span', { class: 'ck hud-class', text: 'Cinders' })",
+        find: "el('span', { class: 'ck', text: model.properties.label })",
+        replace: "el('span', { class: 'ck hud-class', text: model.properties.label })",
       }],
       expectRed: /FINDING P8\/top-row .*class-placement/,
     },
