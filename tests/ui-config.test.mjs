@@ -250,3 +250,12 @@ test('wireframeUi still equals the pre-migration snapshot, key order included', 
   assert.equal(`${JSON.stringify(wireframeUi, null, 2)}\n`, lf(snapshot), 'same keys in the same order with the same numbers');
   assertDeepFrozen(wireframeUi, 'wireframeUi');
 });
+
+test('the wireframeUi shim authors no number of its own', () => {
+  const source = lf(readFileSync(join(ROOT, 'src', 'content', 'wireframeUi.js'), 'utf8'));
+  assert.match(source, /from '\.\.\/config\/generated\/ui\.js'/, 'the shim reads uiConfig');
+  const code = source.replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
+  const literals = [...code.matchAll(/(?<![\w$.])\d+(?:\.\d+)?/g)].map((m) => m[0]);
+  assert.deepEqual(literals, ['100'], 'only PERCENT = 100 is written in the shim; every other number lives in content/config');
+  assert.match(code, /const PERCENT = 100;/);
+});
