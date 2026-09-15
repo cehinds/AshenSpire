@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1101",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Sceptres now give you mana back when you break an enemy's arcane guard",
+    "detail": "The Bone Sceptre and the Emberlight Sceptre each carry a power called Siphon: when one of your own hits fills an enemy's Arcane Exposure and breaks it, you get 1 Mana back. The power belongs to the sceptre, not to you. Swap it for another weapon mid-fight and the refund stops; take the sceptre back up and it returns, once, never twice. A fight you saved and reload keeps it. The Herald starts with the Bone Sceptre, so a Herald feels this from the first fight. Every other weapon, armour and relic works exactly as before.",
+    "build": "0.7.1.57",
+    "pullRequest": 1101,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1101"
+  },
+  {
     "id": "pr-1098",
     "date": "2026-09-15",
     "group": "2026-09-15",
