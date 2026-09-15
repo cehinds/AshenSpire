@@ -806,6 +806,35 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card.rarity-special { border-color: #6a3a7a; }
 /* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
 .card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); filter: var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
+/* THE CHOSEN CARD WEARS ONE GREEN RING, AND NOTHING STANDS UNDER IT.
+   Victory wrote this signal first (`.reward-selected`): the card you picked is
+   ringed in green, on its own edge. Every other card picker now borrows the
+   SAME ring — creation's kit, the stables' mounts — because a player who
+   learns the signal at the spoils door should not have to learn a second one
+   in the Armoury, and because a word printed under the art ("Selected") reads
+   as a button you can press when it is really a state you are in.
+   GOLD STAYS HOVER, FOCUS AND INSPECTION; GREEN IS THE CHOICE THAT STANDS.
+   `.hand .card.selected` in combat is deliberately NOT this: an armed card is
+   a momentary aim you can still cancel, not a commitment, and it keeps the
+   gold lift combat.css gives it.
+   Two arms because the two card families are drawn differently — a `.card`
+   carries its own border, while an `.equipment-poker-card` is only the aspect
+   box and the frame it draws is `.epc-frame`, whose inset bevel has to
+   survive the ring (restated here, not dropped). */
+:is(.card, .as-card).is-chosen,
+.reward-door .reward-row .card.reward-selected {
+  border-color: var(--green);
+  box-shadow: 0 0 0 2px var(--green), 0 10px 30px color-mix(in srgb, var(--green) 28%, transparent);
+}
+.equipment-poker-card.is-chosen > .epc-frame {
+  border-color: var(--green);
+  box-shadow:
+    0 0 0 2px var(--green),
+    0 0 20px color-mix(in srgb, var(--green) 30%, transparent),
+    0 9px 26px #0006,
+    inset 0 0 0 4px #17120e,
+    inset 0 0 0 5px color-mix(in srgb, var(--green) 45%, #695334);
+}
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
@@ -1362,11 +1391,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
-.reward-door .reward-row .card.reward-selected {
-  border-color: var(--green);
-  box-shadow: 0 0 0 2px var(--green), 0 10px 30px color-mix(in srgb, var(--green) 28%, transparent);
-  transform: translateY(-8px) scale(1.06);
-}
+/* The ring itself is the shared one above; the door adds only the lift. */
+.reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
 .reward-door .reward-confirm:not(:disabled) {
   background: color-mix(in srgb, var(--green) 22%, var(--panel));
   border-color: var(--green);
@@ -3167,8 +3193,19 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card.playing-poker-card .ctag { border-radius:3px; background:#221b14; }
 .card.playing-poker-card .ctext { text-align:left; color:#e5dccb; }
 .card.playing-poker-card .cost { background:#211a12; border-color:#d0ac5d; color:#f0dfaf; box-shadow:0 2px 5px #0008,inset 0 0 0 2px #17120e; }
-.card.playing-poker-card:is(.selected,[data-selected='true'],:focus-visible) {
+/* A CHOSEN CARD IS NOT MERELY A SELECTED ONE, and this gold ring stands down
+   for it (`:not(.is-chosen)`) rather than out-specifying the green one by
+   accident of where it sits in the file. Focus keeps the gold ring on a chosen
+   card too — where you are and what you picked are two different facts. */
+.card.playing-poker-card:is(.selected,[data-selected='true']):not(.is-chosen),
+.card.playing-poker-card:focus-visible {
   border-color:#f2d87e; box-shadow:0 0 0 2px #d0ac5d,0 0 18px #d0ac5d66,inset 0 0 0 3px #17120e,inset 0 0 0 4px #b39760;
+}
+/* The chosen ring on a poker card, restated at the weight the gold one carries
+   so the two cannot trade places: the green edge, the card's own inset bevel. */
+.card.playing-poker-card.is-chosen {
+  border-color:var(--green);
+  box-shadow:0 0 0 2px var(--green),0 0 18px color-mix(in srgb, var(--green) 40%, transparent),inset 0 0 0 3px #17120e,inset 0 0 0 4px color-mix(in srgb, var(--green) 45%, #b39760);
 }
 
 /* One fixed grid track size prevents the last row from stretching its cards. */
@@ -3339,8 +3376,18 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .inspection-effect { font-size:16px; }
   .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
 }
-.equipment-choose { width:100%; margin-top:10px; min-height:44px; }
-.poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
+.equipment-choose { width:100%; margin-top:10px; min-height:var(--tap-floor); }
+/* CHOSEN IS THE RING ON THE CARD, NOT A LABEL UNDER IT. The button that made
+   the choice goes quiet once the choice is made — hidden, never removed, so
+   the row keeps the height it had and the cards beneath it do not walk up the
+   page when you pick one. The state a sighted player reads off the ring is
+   carried for everyone else by the chip's `.equip-chosen-note`. */
+.poker-equipment-choice.on > .equipment-choose { visibility:hidden; pointer-events:none; }
+/* The gold `.poker-equipment-choice.on` outline that used to sit here is
+   GONE ON PURPOSE (#997): it was this picker's own invention, and the chosen
+   state is now the one green ring the whole game shares, drawn on the card's
+   own face by `.is-chosen` above. `.on` stays on the CHIP because the rule
+   just above still needs it to quiet the button. */
 
 /* Creation keeps card nodes in place so focus can lift and settle smoothly.
    ONE PLACEMENT, AND THE ROOM IT NEEDS (Constantine's review, 2026-09-12).
@@ -3385,11 +3432,34 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    Measured whole and clear of the section face at 1280, 1366, 1440, 1920 and
    390, at UI sizes Auto, S, M and XL, under normal motion.
 */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
-.cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); grid-row:1 / span 2; align-content:start; }
+.cc-card-selectors .poker-equipment-choice { position:relative; min-width:0; max-width:152px; width:100%; justify-self:center; padding:4px; }
+/* FOUR CHOICES IN THE GLASS, NOT TWO (2026-09-12). Constantine: "cards are
+   too big. I should easily be able to see 4 cards on this screen." Measured
+   before this rule, the Main Hand choices column showed exactly two cards at
+   every desktop size (1366x768: a 497x505 scrollport holding 228x371 cards;
+   1440x900: 548x600 holding 252x412; 1920x1080: 703x710 holding 326x529) —
+   the column was pinned to two tracks, so a wide pane bought bigger cards
+   rather than more of them. The track count above is therefore unpinned and
+   the card is browsing-sized at 152px; the reading is the detail pane's job
+   and the art is the inspect modal's.
+   THE HEAD AND ROW GAP ABOVE ARE NOT PART OF THAT SAVING. This branch also
+   removed them, on the premise that the information badge sat inside the
+   card's corner and the head was reserving nothing. That premise no longer
+   holds: the badge hangs ABOVE a selected card on every surface, and the head
+   is what keeps the first row's badge off the section face. So the derived
+   head and gap stand exactly as they are, and only the track count and the
+   card cap come across.
+   THE CHOOSE BUTTON OVERLAYS ITS CARD rather than standing under it. Under
+   it, the button's tap floor and 10px margin were charged to EVERY row —
+   a second row's worth of height across four cards — while only the focused
+   card ever shows one. Laid over the card's foot it still never moves the
+   grid (the slot it used to reserve is gone for every card alike), and it
+   covers the flavour line, which the detail pane prints in full. */
+.cc-card-selectors .equipment-choose { position:absolute; left:6px; right:6px; bottom:6px; z-index:4; width:auto; margin-top:0; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
-.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.3; padding:8px; }
+.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.2; padding:6px 4px; font-size:14px; }
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }

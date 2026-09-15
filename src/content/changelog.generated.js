@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-15",
     "summary": "Screen layout sizes now live in simple settings files",
     "detail": "Nothing you see changes. Every size, position, layer and timing that decides how the combat field, the map header, the hand, the footer, the shop, the Armoury, tooltips and dialogue are laid out used to be typed into the game's code. Now each one is written once, in a small file named for the screen or part it belongs to, and a shared value is written only once, so changing one number changes it everywhere it is used. The game is checked to draw exactly what it drew before, number for number. The dialogue scene's layout (portraits, layers and the order things fade in) is written down the same way, ready for its redesign.",
-    "build": "0.7.1.64",
+    "build": "0.7.1.67",
     "pullRequest": 1108,
     "url": "https://github.com/cehinds/AshenSpire/pull/1108"
+  },
+  {
+    "id": "pr-997",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A card you have picked is ringed, not labelled",
+    "detail": "Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read “Selected”, and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.",
+    "build": "0.7.1.65",
+    "pullRequest": 997,
+    "url": "https://github.com/cehinds/AshenSpire/pull/997"
   },
   {
     "id": "pr-1105",
