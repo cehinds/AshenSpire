@@ -77,7 +77,11 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
       bands: { hud: 10, scene: 40, context: 35, footer: 15 },
       floorPercent: 60,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
-      context: { widthVw: 95, captionLines: 3, captionLineHeight: 1.45 },
+      context: {
+        widthVw: 95, captionLines: 3, captionLineHeight: 1.45,
+        titleRem: 0.95, titleLineHeight: 1.2, textRem: 0.9, paddingRem: 0.35, gapRem: 0.25,
+      },
+      responses: { fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2 },
       footer: { heightVh: 6 },
     },
     positioning: {
@@ -106,7 +110,33 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
       ],
     },
     components: { footer: { actions: ['back', 'skipSpeech', 'continue'] } },
+    behavior: {
+      maxVisibleResponses: 4,
+      responseLayouts: [
+        { columns: 1, placement: 'below' },
+        { columns: 2, placement: 'below' },
+        { columns: 2, placement: 'beside', textShare: 0.45 },
+      ],
+    },
   });
+});
+
+// #1106 shipped the dialogue reframe before this tree was on dev, reading its
+// scene objects from an interim src/ui/sceneConfig.js. The fixture is that
+// file's resolved w4Parent()/w4cLayout(), captured from dev at the merge.
+test('the W4 scenes equal what #1106 shipped in its interim sceneConfig, key order included', () => {
+  const shipped = JSON.parse(readFileSync(new URL('./fixtures/w4-scene-config-1106.json', import.meta.url), 'utf8'));
+  const ours = { w4: uiConfig.scenes.w4, w4c: uiConfig.scenes.w4c };
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(ours)), shipped);
+  assert.equal(JSON.stringify(ours), JSON.stringify(shipped), 'same keys in the same order with the same numbers');
+});
+
+test('sceneConfig.js hands out the uiConfig scene objects and authors no number', async () => {
+  const { w4Parent, w4cLayout } = await import('../src/ui/sceneConfig.js');
+  assert.equal(w4Parent(), uiConfig.scenes.w4, 'w4Parent() is uiConfig.scenes.w4 itself');
+  assert.equal(w4cLayout(), uiConfig.scenes.w4c, 'w4cLayout() is uiConfig.scenes.w4c itself');
+  const code = lf(readFileSync(join(ROOT, 'src', 'ui', 'sceneConfig.js'), 'utf8')).replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
+  assert.deepEqual([...code.matchAll(/(?<![\w$.])\d+(?:\.\d+)?/g)].map((m) => m[0]), [], 'every scene number lives in content/config');
 });
 
 test('tokens are exported resolved, and a file-local variable wins over a token', () => {

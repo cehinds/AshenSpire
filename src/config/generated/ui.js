@@ -19,7 +19,7 @@
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
 // source content/config/ui/scenes/w4b-map.json 76d58e8f8b8ca705
-// source content/config/ui/scenes/w4c-dialogue.json 1e8dcbd76646cf22
+// source content/config/ui/scenes/w4c-dialogue.json 4d1f8507597a6662
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
@@ -274,7 +274,20 @@ export const uiConfig = deepFreeze({
         "context": {
           "widthVw": 95,
           "captionLines": 3,
-          "captionLineHeight": 1.45
+          "captionLineHeight": 1.45,
+          "titleRem": 0.95,
+          "titleLineHeight": 1.2,
+          "textRem": 0.9,
+          "paddingRem": 0.35,
+          "gapRem": 0.25
+        },
+        "responses": {
+          "fontRem": 0.85,
+          "lineHeight": 1.2,
+          "paddingBlockRem": 0.2,
+          "paddingInlineRem": 0.5,
+          "gapRem": 0.25,
+          "maxLines": 2
         },
         "footer": {
           "heightVh": 6
@@ -377,6 +390,24 @@ export const uiConfig = deepFreeze({
             "continue"
           ]
         }
+      },
+      "behavior": {
+        "maxVisibleResponses": 4,
+        "responseLayouts": [
+          {
+            "columns": 1,
+            "placement": "below"
+          },
+          {
+            "columns": 2,
+            "placement": "below"
+          },
+          {
+            "columns": 2,
+            "placement": "beside",
+            "textShare": 0.45
+          }
+        ]
       }
     }
   },

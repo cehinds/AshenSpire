@@ -1310,13 +1310,15 @@
    the enemy-turn filter changes would shift the vertically centered cards. */
 :root .combat[data-layout='formation'] .hand { overflow:visible; }
 
-/* Short landscape keeps vitals in one row inside the fixed HUD band. */
+/* Short landscape keeps vitals in one row inside the fixed HUD band, on every
+   W4 screen (combat and the quest dialogue share the HUD band). :is() keeps
+   combat's specificity where it was. */
 @media (max-height:500px) {
- :root .combat[data-layout='formation'] > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
- :root .combat[data-layout='formation'] .topbar .hud-top { width:100%; height:100%; justify-content:center; }
- :root .combat[data-layout='formation'] .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
- :root .combat[data-layout='formation'] .topbar .resline { min-width:0; }
- :root .combat[data-layout='formation'] .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
+ :root :is(.combat[data-layout='formation'], .w4-frame) > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .hud-top { width:100%; height:100%; justify-content:center; }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
  :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
  :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
  :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }

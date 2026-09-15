@@ -1,9 +1,30 @@
 {
+  "vars": {
+    "compactLineHeight": 1.2,
+    "bandGapRem": 0.25
+  },
   "sizing": {
     "bands": { "hud": 10, "scene": 40, "context": 35, "footer": 15 },
     "floorPercent": 60,
     "portraitSlot": { "widthVw": 20, "compactWidthVw": 30 },
-    "context": { "widthVw": 95, "captionLines": 3, "captionLineHeight": 1.45 },
+    "context": {
+      "widthVw": 95,
+      "captionLines": 3,
+      "captionLineHeight": 1.45,
+      "titleRem": 0.95,
+      "titleLineHeight": "$compactLineHeight",
+      "textRem": 0.9,
+      "paddingRem": 0.35,
+      "gapRem": "$bandGapRem"
+    },
+    "responses": {
+      "fontRem": 0.85,
+      "lineHeight": "$compactLineHeight",
+      "paddingBlockRem": 0.2,
+      "paddingInlineRem": 0.5,
+      "gapRem": "$bandGapRem",
+      "maxLines": 2
+    },
     "footer": { "heightVh": 6 }
   },
   "positioning": {
@@ -31,5 +52,13 @@
       { "layers": ["context"], "atMs": 400, "fadeMs": 300, "riseVh": 2 }
     ]
   },
-  "components": { "footer": { "actions": ["back", "skipSpeech", "continue"] } }
+  "components": { "footer": { "actions": ["back", "skipSpeech", "continue"] } },
+  "behavior": {
+    "maxVisibleResponses": 4,
+    "responseLayouts": [
+      { "columns": 1, "placement": "below" },
+      { "columns": 2, "placement": "below" },
+      { "columns": 2, "placement": "beside", "textShare": 0.45 }
+    ]
+  }
 }

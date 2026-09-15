@@ -230,7 +230,7 @@ ON dispose:
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:46](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L46) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:46](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L46) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -542,7 +542,7 @@ Do not mount a second W0 inside the body.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:75](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L75) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:75](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L75) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -856,7 +856,7 @@ Palette controls edit shared theme records, not per-component colors.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/settings.js:539](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/settings.js#L539) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/settings.js:539](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/settings.js#L539) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -1211,8 +1211,8 @@ ON Leave/Close: DispatchApprovedTownExitIntent(); never bypass a required choice
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/rest.js:98](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/rest.js#L98) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/smithServices.js:26](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/smithServices.js#L26) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/rest.js:98](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/rest.js#L98) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/smithServices.js:26](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/smithServices.js#L26) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -1564,8 +1564,8 @@ Allow one active-pane scroll only when readable content cannot fit.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/customize.js:86](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/customize.js#L86) — Current owner checkout (including inspected local edits)
-- [src/ui/components/statAllocationCard.js:66](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/statAllocationCard.js#L66) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/customize.js:86](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/customize.js#L86) — Current owner checkout (including inspected local edits)
+- [src/ui/components/statAllocationCard.js:66](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/statAllocationCard.js#L66) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC3a](wireframe-gallery.html#WC3a)
 
@@ -1924,7 +1924,7 @@ Do not reroll stock or use stale array indexes as transaction identity.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/shop.js:65](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/shop.js#L65) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/shop.js:65](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/shop.js#L65) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
@@ -2249,8 +2249,8 @@ Never copy loadout math or rename persisted grid/rack/hybrid IDs.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/equipment.js:297](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L297) — Current owner checkout (including inspected local edits)
-- [src/ui/models/ArmouryModels.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/ArmouryModels.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:297](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L297) — Current owner checkout (including inspected local edits)
+- [src/ui/models/ArmouryModels.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/ArmouryModels.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
@@ -2571,7 +2571,7 @@ Do not reveal undiscovered information or mutate progression on inspection.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/compendium.js:207](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/compendium.js#L207) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/compendium.js:207](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/compendium.js#L207) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -2891,7 +2891,7 @@ Do not conflate archive/restore/profile actions with run-slot deletion.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/profileArchive.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/profileArchive.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/profileArchive.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/profileArchive.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -3217,7 +3217,7 @@ No draw, discard, exhaust, or turn mutation occurs by opening this viewer.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC1a](wireframe-gallery.html#WC1a)
 
@@ -3524,7 +3524,7 @@ Cancel must leave domain state unchanged.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/smithUpgradeModal.js:58](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/smithUpgradeModal.js#L58) — Current owner checkout (including inspected local edits)
+- [src/ui/components/smithUpgradeModal.js:58](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/smithUpgradeModal.js#L58) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
@@ -3843,7 +3843,7 @@ Back/Close never extracts or changes a fallback card.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/smithServices.js:26](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/smithServices.js#L26) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/smithServices.js:26](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/smithServices.js#L26) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC1a](wireframe-gallery.html#WC1a)
 
@@ -4159,7 +4159,7 @@ Do not change card ownership until the command commits.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/smithServices.js:26](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/smithServices.js#L26) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/smithServices.js:26](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/smithServices.js#L26) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC1a](wireframe-gallery.html#WC1a)
 
@@ -4461,7 +4461,7 @@ Occupied-slot replacement follows W2c at the approved write boundary.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/saveSlotSelector.js:9](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/saveSlotSelector.js#L9) — Current owner checkout (including inspected local edits)
+- [src/ui/components/saveSlotSelector.js:9](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/saveSlotSelector.js#L9) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -4768,7 +4768,7 @@ Empty/unreadable/incompatible slots cannot load.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/saveSlotSelector.js:228](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/saveSlotSelector.js#L228) — Current owner checkout (including inspected local edits)
+- [src/ui/components/saveSlotSelector.js:228](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/saveSlotSelector.js#L228) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -5073,7 +5073,7 @@ RefreshFromDomainReceipt(); never mutate equipment in renderer.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/equipment.js:297](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L297) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:297](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L297) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
@@ -5371,7 +5371,7 @@ Inspection alone is read-only; no invented primary button.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/cardInspection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardInspection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardInspection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardInspection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC2a1](wireframe-gallery.html#WC2a1)
 
@@ -5672,8 +5672,8 @@ Do not reveal hidden intent or mutate combat during inspection.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/combatantInspector.js:148](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantInspector.js#L148) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantInspector.js:148](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantInspector.js#L148) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC4b](wireframe-gallery.html#WC4b), [WCF4](wireframe-gallery.html#WCF4), [WCM1](wireframe-gallery.html#WCM1), [WCI2](wireframe-gallery.html#WCI2)
 
@@ -5963,7 +5963,7 @@ Charges retain semantic resource colors; Use follows primary-state palette.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2c1](wireframe-gallery.html#WC2c1)
 
@@ -6267,7 +6267,7 @@ Do not replay gameplay commands or silently select another destination.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/saveSlotSelector.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/saveSlotSelector.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/saveSlotSelector.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/saveSlotSelector.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -6571,7 +6571,7 @@ No healing, refill, or service mutation from rendering a choice.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/rest.js:98](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/rest.js#L98) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/rest.js:98](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/rest.js#L98) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -6882,7 +6882,7 @@ Reload/duplicate activation must not grant a reward twice or reroll choices.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/reward.js:70](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/reward.js#L70) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/reward.js:70](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/reward.js#L70) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC1a](wireframe-gallery.html#WC1a)
 
@@ -7193,7 +7193,7 @@ Rendering and navigation Back never apply event effects.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/event.js:8](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L8) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:8](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L8) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -7499,7 +7499,7 @@ W1d owns navigation/footer; domain command owns pricing and mutation.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/shop.js:65](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/shop.js#L65) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/shop.js:65](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/shop.js#L65) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3), [WC2a1](wireframe-gallery.html#WC2a1)
 
@@ -7852,8 +7852,8 @@ No timer callbacks or preview activation may open another inspector.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/combatantInspector.js:148](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantInspector.js#L148) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantInspector.js:148](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantInspector.js#L148) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WC4b](wireframe-gallery.html#WC4b), [WCF4](wireframe-gallery.html#WCF4), [WCM1](wireframe-gallery.html#WCM1), [WCI2](wireframe-gallery.html#WCI2)
 
@@ -8139,7 +8139,7 @@ ON replace/dispose: ReleaseResourcesWithoutPretendingUserConfirmedOrCancelled()
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -8404,7 +8404,7 @@ All arming, focus, cancellation and input shielding remain inherited.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -8672,7 +8672,7 @@ ON success: RefreshSlotList(); preserve profile data
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -8946,7 +8946,7 @@ ON failure: ReportActualStorageOutcome(); never claim replacement succeeded
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -9216,7 +9216,7 @@ Do not add an unrequested autosave or silently replace the load target.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -9484,7 +9484,7 @@ Red destructive exception follows consequences, not the word Quit alone.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -9760,7 +9760,7 @@ Highlighting never loads, deletes, or saves a run.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/title.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/title.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/title.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/title.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
@@ -10042,7 +10042,7 @@ Preserve supported menu items, title center, Profile anchor, and build stamp.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/title.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/title.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/title.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/title.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
@@ -10343,7 +10343,7 @@ No title movement; no load or storage writes just to show the preview.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/title.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/title.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/title.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/title.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
@@ -10625,9 +10625,9 @@ Share chrome/effects, not domain rules, between combat/map/dialogue.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
@@ -11288,9 +11288,9 @@ Preserve RNG calls, simulation timing, combat saves, and server authority.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGC1](wireframe-gallery.html#WGC1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6), [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
@@ -11939,9 +11939,9 @@ Never add combat footer controls or a fifth region-selector band.
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGM1](wireframe-gallery.html#WGM1), [WGM2](wireframe-gallery.html#WGM2), [WGM3](wireframe-gallery.html#WGM3), [WGM4](wireframe-gallery.html#WGM4), [WGM5](wireframe-gallery.html#WGM5), [WGM6](wireframe-gallery.html#WGM6), [WGM7](wireframe-gallery.html#WGM7), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
@@ -12394,7 +12394,7 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
 <!-- reference-metadata:end -->
 ### Wireframe W4c: Quest dialogue — player left, NPC right
 
-**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. Layer stack, bottom to top (layerOrder): the skybox z2 runs from the frame top to the floor line, behind the HUD; the floor z3 runs from the floor line (background.floorHeightPercent of the scene window is ground) to the frame bottom, behind the context and footer bands; the player and NPC portraits z4 are each the full figure zoomed so its top fraction (portraits.visibleFraction) spans the slot top to the reveal line, with the speaker drawn above the listener; the opaque context band z5, whose top edge is the reveal line, hides the figures below it, so nothing is cropped or masked; the HUD and footer bands z6 are the top panels. Every layer is switchable on its own (layers). Entrance (entrance): the scene, HUD and footer appear at once, the portraits fade in, then the context band fades in and rises; controls work once the last step ends, and reduced motion shows every layer at once. Context band contents (context): the quest title on one line, the narrative beat, then the responses; no eyebrow, speaker line or prompt hint, because the speaker is named under the speaking portrait. Up to four responses (context.maxVisibleResponses) show without scrolling, in a grid of context.responseColumns (two columns on wide and short landscape screens, one in portrait); the band scrolls only when there are more. Portraits remain left/right even on mobile and may cross the centre line on narrow hosts. Dialogue replaces the hand. Audio may advance linear speech only; Back/Skip never commit choices or repeat effects. Captions/manual navigation work without playable audio.
+**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. Layer stack, bottom to top (layerOrder): the skybox z2 runs from the frame top to the floor line, behind the HUD; the floor z3 runs from the floor line (background.floorHeightPercent of the scene window is ground) to the frame bottom, behind the context and footer bands; the player and NPC portraits z4 are each the full figure zoomed so its top fraction (portraits.visibleFraction) spans the slot top to the reveal line, with the speaker drawn above the listener; the opaque context band z5, whose top edge is the reveal line, hides the figures below it, so nothing is cropped or masked; the HUD and footer bands z6 are the top panels. Every layer is switchable on its own (layers). Entrance (entrance): the scene, HUD and footer appear at once, the portraits fade in, then the context band fades in and rises; controls work once the last step ends, and reduced motion shows every layer at once. Context band contents (context): the quest title on one line, the narrative beat, then the responses; no eyebrow, speaker line or prompt hint, because the speaker is named under the speaking portrait. Up to four responses (context.maxVisibleResponses) show without scrolling, in a grid of context.responseColumns (two columns on wide and short landscape screens, one in portrait); the band scrolls only when there are more. Both portraits are visible at every size (portraits.alwaysVisible): each figure keeps to its lane, half the frame less the insets and portraits.minGapVw, so the two never overlap; a figure wider than its lane shrinks as a whole (portraits.fit shrinkToLane), so wide screens keep the zoom and only narrow ones shrink, and sinks so its top share still stands on the reveal line (portraits.anchor), never hovering; the listener dims no further than portraits.listener. Portraits stay left and right even on mobile. Dialogue replaces the hand. Audio may advance linear speech only; Back/Skip never commit choices or repeat effects. Captions/manual navigation work without playable audio.
 
 **Wide**
 
@@ -12428,8 +12428,8 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
 | `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
-| `W4c.scene.playerPortrait` | 20vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
-| `W4c.scene.npcPortrait` | 20vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored to face the player; the speaker draws above the listener |
+| `W4c.scene.playerPortrait` | 20vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 20vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
 | `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
 | `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
 | `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
@@ -12474,8 +12474,8 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
 | `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
-| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
-| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored to face the player; the speaker draws above the listener |
+| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
 | `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
 | `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
 | `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
@@ -12501,7 +12501,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 │  ╭─╮             ╭─╮      │
 │  │P│ z4       z4 │N│      │
 │ ─┤ ├── floor z3 ┤ ├─      │
-│ may cross the centre      │
+│ both always visible       │
 │ ═ reveal line · z5 ═══    │
 │ Quest title     [Voice Ⅱ] │
 │ One short caption beat.   │
@@ -12526,8 +12526,8 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
 | `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
-| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
-| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored to face the player; the speaker draws above the listener |
+| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
 | `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
 | `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
 | `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
@@ -12554,7 +12554,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 │  ╭─╮             ╭─╮      │
 │  │P│ z4       z4 │N│      │
 │ ─┤ ├── floor z3 ┤ ├─      │
-│ may cross the centre      │
+│ both always visible       │
 │ ═ reveal line · z5 ═══    │
 │ Quest title     [Voice Ⅱ] │
 │ One short caption beat.   │
@@ -12579,8 +12579,8 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
 | `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
-| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
-| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored to face the player; the speaker draws above the listener |
+| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
 | `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
 | `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
 | `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
@@ -12613,7 +12613,11 @@ FOR layer IN SortByZ(scene.layerOrder):           // bottom of the stack first
 // playerPortrait, npcPortrait: FullFigure(art) placed by
 //     CloseUpPlacement(art, Slot(side, scene.portraits.slot), revealLine, scene.portraits.visibleFraction)
 //     the opaque context band occludes each figure below revealLine; never crop or mask
-//     the speaker draws above the listener when scene.portraits.speakerAbove
+//     lane.width = (frame.width - config.referenceTokens.value_2.value × slot.inset - scene.portraits.minGapVw) / config.referenceTokens.value_2.value   // one lane per side; never overlap
+//     IF scene.portraits.fit = shrinkToLane: figure.height = Min(figure.height, lane.width / ArtAspect(art))
+//     figure.center = Clamp(slot.center, lane.start + figure.width / config.referenceTokens.value_2.value, lane.end - figure.width / config.referenceTokens.value_2.value)
+//     IF scene.portraits.anchor = revealLine: figure.top = revealLine - figure.height × visibleFraction   // never hover
+//     the speaker draws above the listener when scene.portraits.speakerAbove; the listener dims to scene.portraits.listener at most
 // context: opaque band from revealLine; RenderInOrder(scene.context.order) = quest title, narrative, responses
 //     no eyebrow, speaker line or prompt hint (scene.context.headings); the speaker is named under the portrait
 //     responses = ResponseGrid(choices, scene.context.responseColumns[mode])
@@ -12662,9 +12666,9 @@ Names use `WCid.region.component`; named detail rows include their semantic sub-
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/map.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/map.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2), [WGS3](wireframe-gallery.html#WGS3), [WGS4](wireframe-gallery.html#WGS4), [WGS5](wireframe-gallery.html#WGS5), [WGQ1](wireframe-gallery.html#WGQ1), [WGQ2](wireframe-gallery.html#WGQ2), [WGQ3](wireframe-gallery.html#WGQ3), [WGQ4](wireframe-gallery.html#WGQ4), [WGQ5](wireframe-gallery.html#WGQ5), [WGQ6](wireframe-gallery.html#WGQ6), [WGQ7](wireframe-gallery.html#WGQ7), [WGQ8](wireframe-gallery.html#WGQ8), [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH4](wireframe-gallery.html#WGH4), [WGH5](wireframe-gallery.html#WGH5), [WGH6](wireframe-gallery.html#WGH6), [WGH7](wireframe-gallery.html#WGH7), [WGH8](wireframe-gallery.html#WGH8)
 
@@ -12857,7 +12861,16 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       },
       "speaker": "npcPortrait",
       "speakerAbove": true,
-      "mirrorNpc": true
+      "mirrorNpc": true,
+      "alwaysVisible": true,
+      "minGapVw": 2,
+      "fit": "shrinkToLane",
+      "anchor": "revealLine",
+      "listener": {
+        "minOpacity": 0.85,
+        "brightness": 0.8,
+        "saturation": 0.7
+      }
     },
     "entrance": [
       {
@@ -13099,7 +13112,16 @@ Renderer binding: `gameplayPreview`. The HTML “Component composition” tab ex
       },
       "speaker": "npcPortrait",
       "speakerAbove": true,
-      "mirrorNpc": true
+      "mirrorNpc": true,
+      "alwaysVisible": true,
+      "minGapVw": 2,
+      "fit": "shrinkToLane",
+      "anchor": "revealLine",
+      "listener": {
+        "minOpacity": 0.85,
+        "brightness": 0.8,
+        "saturation": 0.7
+      }
     },
     "entrance": [
       {
@@ -13496,10 +13518,10 @@ Never branch on entity names or inject executable markup from tags.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -13931,10 +13953,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -14374,10 +14396,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -14788,10 +14810,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -15212,10 +15234,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -15638,10 +15660,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -16065,10 +16087,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -16485,10 +16507,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -16903,10 +16925,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -17339,10 +17361,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -17752,10 +17774,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -18174,10 +18196,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -18598,10 +18620,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -19004,10 +19026,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -19425,10 +19447,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -19854,10 +19876,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -20258,10 +20280,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -20668,10 +20690,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -21083,10 +21105,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -21512,10 +21534,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -21916,10 +21938,10 @@ Reuse the same model in wide/compact/portrait; host layout supplies dimensions.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/collectibleCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/collectibleCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/cardSelection.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/cardSelection.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3), [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -22360,9 +22382,9 @@ Dispose timers/observers and restore focus on close.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -22729,9 +22751,9 @@ Dispose timers/observers and restore focus on close.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -23076,9 +23098,9 @@ Dispose timers/observers and restore focus on close.
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -23431,9 +23453,9 @@ Three configurable sizes: compact, standard and expanded. WT0 is an anchored ove
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantOverhead.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantOverhead.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6), [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5), [WCB1](wireframe-gallery.html#WCB1), [WCF3](wireframe-gallery.html#WCF3), [W1w](wireframe-gallery.html#W1w)
 
@@ -23668,7 +23690,7 @@ CancelOnTriggerRemoval(); never execute domain commands
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -23878,7 +23900,7 @@ CancelOnTriggerRemoval(); never execute domain commands
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -24088,7 +24110,7 @@ CancelOnTriggerRemoval(); never execute domain commands
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -24303,7 +24325,7 @@ WP identifiers describe composable parts, not additional screen families. Every 
 
 Executable documentation with illustrative records; no domain or persistence mutation.
 
-- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -24552,10 +24574,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WGP1](wireframe-gallery.html#WGP1), [WGP2](wireframe-gallery.html#WGP2), [WGP3](wireframe-gallery.html#WGP3), [WGP4](wireframe-gallery.html#WGP4), [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
@@ -24866,10 +24888,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WGP1](wireframe-gallery.html#WGP1), [WGP2](wireframe-gallery.html#WGP2), [WGP3](wireframe-gallery.html#WGP3), [WGP4](wireframe-gallery.html#WGP4), [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
@@ -25180,10 +25202,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WGP1](wireframe-gallery.html#WGP1), [WGP2](wireframe-gallery.html#WGP2), [WGP3](wireframe-gallery.html#WGP3), [WGP4](wireframe-gallery.html#WGP4), [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
@@ -25477,10 +25499,10 @@ On dispose: release timers, observers and events
 
 Reuses the buttons source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB1](wireframe-gallery.html#WCB1), [WCB2](wireframe-gallery.html#WCB2), [WCB3](wireframe-gallery.html#WCB3), [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
 
@@ -26016,9 +26038,9 @@ On dispose: release timers, observers and events
 
 Reuses the inspect source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantInspector.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantInspector.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantInspector.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantInspector.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -26563,10 +26585,10 @@ On dispose: release timers, observers and events
 
 Reuses the buttons source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -27112,10 +27134,10 @@ On dispose: release timers, observers and events
 
 Reuses the buttons source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -27652,10 +27674,10 @@ On dispose: release timers, observers and events
 
 Reuses the buttons source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -28170,10 +28192,10 @@ On dispose: release timers, observers and events
 
 Reuses the buttons source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/kit/index.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/kit/index.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/confirmationModal.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/confirmationModal.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -28684,9 +28706,9 @@ On dispose: release timers, observers and events
 
 Reuses the contract source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/models/ComponentModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/ComponentModel.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/uiComponents.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/uiComponents.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/ComponentModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/ComponentModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/uiComponents.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/uiComponents.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCF1](wireframe-gallery.html#WCF1), [WCF2](wireframe-gallery.html#WCF2), [WCF3](wireframe-gallery.html#WCF3), [WCF4](wireframe-gallery.html#WCF4)
 
@@ -29218,9 +29240,9 @@ On dispose: release timers, observers and events
 
 Reuses the contract source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/models/ComponentModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/ComponentModel.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/uiComponents.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/uiComponents.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/ComponentModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/ComponentModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/uiComponents.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/uiComponents.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -29743,9 +29765,9 @@ On dispose: release timers, observers and events
 
 Reuses the status source boundary. The current working game renders status pips and collapsed proc progress in combat.js; the documentation dev baseline also has statusTray overflow disclosure. The five-row budget, icon-only tiles and inspector overflow route are owner-requested reference changes.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM6](wireframe-gallery.html#WCM6)
 
@@ -30289,9 +30311,9 @@ On dispose: release timers, observers and events
 
 Reuses the selection source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/hand.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hand.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hand.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hand.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB1](wireframe-gallery.html#WCB1), [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCF2](wireframe-gallery.html#WCF2)
 
@@ -30835,9 +30857,9 @@ On dispose: release timers, observers and events
 
 Reuses the inspector source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/combatantInspector.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantInspector.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantInspector.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantInspector.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/CombatantInspectorModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/CombatantInspectorModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -31360,9 +31382,9 @@ On dispose: release timers, observers and events
 
 Reuses the identity source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WCI2](wireframe-gallery.html#WCI2), [WCI3](wireframe-gallery.html#WCI3)
 
@@ -31886,9 +31908,9 @@ On dispose: release timers, observers and events
 
 Reuses the identity source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -32411,9 +32433,9 @@ On dispose: release timers, observers and events
 
 Reuses the identity source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -32920,9 +32942,9 @@ On dispose: release timers, observers and events
 
 Reuses the identity source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -33445,9 +33467,9 @@ On dispose: release timers, observers and events
 
 Reuses the meter source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2), [WCM3](wireframe-gallery.html#WCM3), [WCM4](wireframe-gallery.html#WCM4), [WCM5](wireframe-gallery.html#WCM5), [WCM6](wireframe-gallery.html#WCM6)
 
@@ -33979,9 +34001,9 @@ On dispose: release timers, observers and events
 
 Reuses the meter source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -34488,9 +34510,9 @@ On dispose: release timers, observers and events
 
 Reuses the meter source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1)
 
@@ -35002,9 +35024,9 @@ On dispose: release timers, observers and events
 
 Reuses the meter source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/resources.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/resources.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/kit.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/kit.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM2](wireframe-gallery.html#WCM2)
 
@@ -35516,9 +35538,9 @@ On dispose: release timers, observers and events
 
 Reuses the status source boundary. The current working game renders status pips and collapsed proc progress in combat.js; the documentation dev baseline also has statusTray overflow disclosure. The five-row budget, icon-only tiles and inspector overflow route are owner-requested reference changes.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -36025,9 +36047,9 @@ On dispose: release timers, observers and events
 
 Reuses the status source boundary. The current working game renders status pips and collapsed proc progress in combat.js; the documentation dev baseline also has statusTray overflow disclosure. The five-row budget, icon-only tiles and inspector overflow route are owner-requested reference changes.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -36534,9 +36556,9 @@ On dispose: release timers, observers and events
 
 Reuses the status source boundary. The current working game renders status pips and collapsed proc progress in combat.js; the documentation dev baseline also has statusTray overflow disclosure. The five-row budget, icon-only tiles and inspector overflow route are owner-requested reference changes.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM5](wireframe-gallery.html#WCM5)
 
@@ -37064,9 +37086,9 @@ On dispose: release timers, observers and events
 
 Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCO1](wireframe-gallery.html#WCO1), [WCO2](wireframe-gallery.html#WCO2), [WCO3](wireframe-gallery.html#WCO3), [WCO4](wireframe-gallery.html#WCO4), [WCO5](wireframe-gallery.html#WCO5)
 
@@ -37602,9 +37624,9 @@ On dispose: release timers, observers and events
 
 Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -38115,9 +38137,9 @@ On dispose: release timers, observers and events
 
 Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -38636,9 +38658,9 @@ On dispose: release timers, observers and events
 
 Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
@@ -39162,9 +39184,9 @@ On dispose: release timers, observers and events
 
 Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
@@ -39684,9 +39706,9 @@ On dispose: release timers, observers and events
 
 Reuses the overlay source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/combatantFrame.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/combatantFrame.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
@@ -40206,9 +40228,9 @@ On dispose: release timers, observers and events
 
 Reuses the tooltip source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/TooltipPlacementModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/TooltipPlacementModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/TooltipPlacementModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/TooltipPlacementModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCT1](wireframe-gallery.html#WCT1)
 
@@ -40736,9 +40758,9 @@ On dispose: release timers, observers and events
 
 Reuses the tooltip source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/TooltipPlacementModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/TooltipPlacementModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/tooltip.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/tooltip.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/TooltipPlacementModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/TooltipPlacementModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -41257,9 +41279,9 @@ On dispose: release timers, observers and events
 
 Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4), [WGC1](wireframe-gallery.html#WGC1), [WGC5](wireframe-gallery.html#WGC5), [WGC6](wireframe-gallery.html#WGC6)
 
@@ -41795,9 +41817,9 @@ On dispose: release timers, observers and events
 
 Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGC2](wireframe-gallery.html#WGC2), [WGC3](wireframe-gallery.html#WGC3), [WGC4](wireframe-gallery.html#WGC4)
 
@@ -42333,9 +42355,9 @@ On dispose: release timers, observers and events
 
 Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WC4a](wireframe-gallery.html#WC4a)
 
@@ -42855,9 +42877,9 @@ On dispose: release timers, observers and events
 
 Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WC4a](wireframe-gallery.html#WC4a)
 
@@ -43373,9 +43395,9 @@ On dispose: release timers, observers and events
 
 Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCF3](wireframe-gallery.html#WCF3)
 
@@ -43891,9 +43913,9 @@ On dispose: release timers, observers and events
 
 Reuses the hand source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/hand.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hand.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hand.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hand.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/card.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/card.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WC1](wireframe-gallery.html#WC1)
 
@@ -44405,10 +44427,10 @@ On dispose: release timers, observers and events
 
 Reuses the footer source boundary. Current combat and pile/flask source provides command and inspection behavior. The tightly packed circular footer is the proposed presentation layout.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGC7](wireframe-gallery.html#WGC7), [WGC8](wireframe-gallery.html#WGC8), [WGC9](wireframe-gallery.html#WGC9), [WGC10](wireframe-gallery.html#WGC10), [WGC11](wireframe-gallery.html#WGC11)
 
@@ -44940,10 +44962,10 @@ On dispose: release timers, observers and events
 
 Reuses the footer source boundary. Current combat and pile/flask source provides command and inspection behavior. The tightly packed circular footer is the proposed presentation layout.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -45450,10 +45472,10 @@ On dispose: release timers, observers and events
 
 Reuses the footer source boundary. Current combat and pile/flask source provides command and inspection behavior. The tightly packed circular footer is the proposed presentation layout.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -45965,10 +45987,10 @@ On dispose: release timers, observers and events
 
 Reuses the footer source boundary. Current combat and pile/flask source provides command and inspection behavior. The tightly packed circular footer is the proposed presentation layout.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -46480,10 +46502,10 @@ On dispose: release timers, observers and events
 
 Reuses the footer source boundary. Current combat and pile/flask source provides command and inspection behavior. The tightly packed circular footer is the proposed presentation layout.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -47007,10 +47029,10 @@ On dispose: release timers, observers and events
 
 Reuses the footer source boundary. Current combat and pile/flask source provides command and inspection behavior. The tightly packed circular footer is the proposed presentation layout.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/piles.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/piles.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGH8](wireframe-gallery.html#WGH8), [WCB3](wireframe-gallery.html#WCB3)
 
@@ -47549,8 +47571,8 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4)
 
@@ -47802,11 +47824,11 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:92](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L92) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/VitalsPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/VitalsPanelModel.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/resources.js:196](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/resources.js#L196) — Current owner checkout (including inspected local edits)
-- [src/content/resources.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/content/resources.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:92](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L92) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/VitalsPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/VitalsPanelModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/resources.js:196](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/resources.js#L196) — Current owner checkout (including inspected local edits)
+- [src/content/resources.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/content/resources.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2)
 
@@ -48038,8 +48060,8 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:109](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L109) — Current owner checkout (including inspected local edits)
-- [src/ui/models/QuickAccessPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/QuickAccessPanelModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:109](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L109) — Current owner checkout (including inspected local edits)
+- [src/ui/models/QuickAccessPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/QuickAccessPanelModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB2](wireframe-gallery.html#WCB2), [W1e](wireframe-gallery.html#W1e)
 
@@ -48271,8 +48293,8 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:109](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L109) — Current owner checkout (including inspected local edits)
-- [src/ui/models/QuickAccessPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/QuickAccessPanelModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:109](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L109) — Current owner checkout (including inspected local edits)
+- [src/ui/models/QuickAccessPanelModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/QuickAccessPanelModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB2](wireframe-gallery.html#WCB2), [W1a](wireframe-gallery.html#W1a)
 
@@ -48556,9 +48578,9 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:139](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L139) — Current owner checkout (including inspected local edits)
-- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/runHud.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/runHud.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:142](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L142) — Current owner checkout (including inspected local edits)
+- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/runHud.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/runHud.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGH7](wireframe-gallery.html#WGH7), [WGH1](wireframe-gallery.html#WGH1), [WGH2](wireframe-gallery.html#WGH2), [WGH3](wireframe-gallery.html#WGH3), [WGH6](wireframe-gallery.html#WGH6), [WGH5](wireframe-gallery.html#WGH5)
 
@@ -49033,8 +49055,8 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:130](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L130) — Current owner checkout (including inspected local edits)
-- [src/ui/models/InventoryBeltModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/InventoryBeltModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:130](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L130) — Current owner checkout (including inspected local edits)
+- [src/ui/models/InventoryBeltModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/InventoryBeltModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WC2b](wireframe-gallery.html#WC2b)
 
@@ -49266,8 +49288,8 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:84](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L84) — Current owner checkout (including inspected local edits)
-- [src/ui/models/RunHeaderModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/RunHeaderModel.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:84](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L84) — Current owner checkout (including inspected local edits)
+- [src/ui/models/RunHeaderModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/RunHeaderModel.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1)
 
@@ -49508,8 +49530,8 @@ On dispose: release timers, observers and events
 
 Current source anchors inform this proposed reference. Sample records are illustrative; this page does not execute game commands.
 
-- [src/ui/components/hudmeta.js:109](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L109) — Current owner checkout (including inspected local edits)
-- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:109](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L109) — Current owner checkout (including inspected local edits)
+- [src/ui/components/flask.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/flask.js#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB2](wireframe-gallery.html#WCB2), [W1q](wireframe-gallery.html#W1q)
 
@@ -49766,8 +49788,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4), [WGM5](wireframe-gallery.html#WGM5), [WGM1](wireframe-gallery.html#WGM1), [WGM4](wireframe-gallery.html#WGM4), [WGM6](wireframe-gallery.html#WGM6), [WGM7](wireframe-gallery.html#WGM7)
 
@@ -50315,8 +50337,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGM2](wireframe-gallery.html#WGM2), [WGM3](wireframe-gallery.html#WGM3)
 
@@ -50848,8 +50870,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -51356,8 +51378,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -51881,8 +51903,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCF4](wireframe-gallery.html#WCF4)
 
@@ -52394,8 +52416,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -52902,8 +52924,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
@@ -53415,8 +53437,8 @@ On dispose: release timers, observers and events
 
 Reuses the map source boundary. Reference sample data and interaction styling are proposed; source modules establish ownership and behavior.
 
-- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/map.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/mapboard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/mapboard.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/map.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/map.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -53929,10 +53951,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WGP1](wireframe-gallery.html#WGP1), [WGP2](wireframe-gallery.html#WGP2), [WGP3](wireframe-gallery.html#WGP3), [WGP4](wireframe-gallery.html#WGP4), [WCB4](wireframe-gallery.html#WCB4), [WCB5](wireframe-gallery.html#WCB5)
@@ -54186,10 +54208,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1), [WGP2](wireframe-gallery.html#WGP2)
@@ -54431,10 +54453,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WCM2](wireframe-gallery.html#WCM2)
@@ -54681,10 +54703,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WCF4](wireframe-gallery.html#WCF4)
@@ -54926,10 +54948,10 @@ On dispose: release timers, observers and events
 
 The existing equipment screen, equipment cards, modal shell and meters are source references for presentation reuse. Per-weapon and per-skill practice progression is proposed; these sample ranks, names and awards are illustrative, not shipped mechanics.
 
-- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/equipment.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/equipment.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/equipmentCard.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/equipmentCard.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/modalShell.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/modalShell.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/resbars.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/resbars.js#L1) — Current owner checkout (including inspected local edits)
 - [PROGRESSION-SPECIFICATION.md](PROGRESSION-SPECIFICATION.md) — Proposed reference specification
 
 **Referenced components:** [WCF4](wireframe-gallery.html#WCF4)
@@ -55185,10 +55207,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGQ1](wireframe-gallery.html#WGQ1), [WGQ4](wireframe-gallery.html#WGQ4), [WGQ5](wireframe-gallery.html#WGQ5), [WGQ6](wireframe-gallery.html#WGQ6), [WGQ7](wireframe-gallery.html#WGQ7), [WGQ8](wireframe-gallery.html#WGQ8)
 
@@ -55732,10 +55754,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGQ2](wireframe-gallery.html#WGQ2), [WGQ3](wireframe-gallery.html#WGQ3)
 
@@ -56259,10 +56281,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
@@ -56778,10 +56800,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI2](wireframe-gallery.html#WCI2)
 
@@ -57305,10 +57327,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -57824,10 +57846,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -58334,10 +58356,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB4](wireframe-gallery.html#WCB4)
 
@@ -58849,10 +58871,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -59364,10 +59386,10 @@ On dispose: release timers, observers and events
 
 Reuses the dialogue source boundary. Current event screen renders authored prose and domain-backed choices. Two portraits and audio-paced caption progression are proposed; sample text is illustrative.
 
-- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
-- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/event.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/event.js#L1) — Current owner checkout (including inspected local edits)
+- [src/model/quests.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/model/quests.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/optionDecision.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/optionDecision.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -59899,9 +59921,9 @@ On dispose: release timers, observers and events
 
 Reuses the background source boundary. The current working game uses backdropClass in combat.js; the documentation dev baseline adds environmentArt with a cropped SVG painting. Independent skyline and floor layers are a proposed documentation contract.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS1](wireframe-gallery.html#WGS1), [WGS2](wireframe-gallery.html#WGS2)
 
@@ -60437,9 +60459,9 @@ On dispose: release timers, observers and events
 
 Reuses the background source boundary. The current working game uses backdropClass in combat.js; the documentation dev baseline adds environmentArt with a cropped SVG painting. Independent skyline and floor layers are a proposed documentation contract.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS6](wireframe-gallery.html#WGS6), [WGS7](wireframe-gallery.html#WGS7)
 
@@ -60967,9 +60989,9 @@ On dispose: release timers, observers and events
 
 Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
-- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGH4](wireframe-gallery.html#WGH4)
 
@@ -61481,9 +61503,9 @@ On dispose: release timers, observers and events
 
 Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
-- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCI1](wireframe-gallery.html#WCI1)
 
@@ -61999,9 +62021,9 @@ On dispose: release timers, observers and events
 
 Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
-- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCM1](wireframe-gallery.html#WCM1), [WCM2](wireframe-gallery.html#WCM2)
 
@@ -62517,9 +62539,9 @@ On dispose: release timers, observers and events
 
 Reuses the hud source boundary. Source HUD establishes class/Cinders/Act/Floor, resource meters, Armoury/Menu, and inventory providers. The owner-requested reference supersedes source potion placement: top HUD contains relics only, while WGC11 opens WGH8 combined charge-flask and carried-potion contents exclusively in the footer in both presets. The proposed configurable WGH5 blue experience strip spans the full host width below the HUD, combat-only by default.
 
-- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/hudmeta.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/hudmeta.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/viewModels/RunHudViewModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/viewModels/RunHudViewModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/ui.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/ui.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WCB3](wireframe-gallery.html#WCB3)
 
@@ -63047,9 +63069,9 @@ On dispose: release timers, observers and events
 
 Reuses the background source boundary. The current working game uses backdropClass in combat.js; the documentation dev baseline adds environmentArt with a cropped SVG painting. Independent skyline and floor layers are a proposed documentation contract.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
@@ -63568,9 +63590,9 @@ On dispose: release timers, observers and events
 
 Reuses the background source boundary. The current working game uses backdropClass in combat.js; the documentation dev baseline adds environmentArt with a cropped SVG painting. Independent skyline and floor layers are a proposed documentation contract.
 
-- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/screens/combat.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/screens/combat.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/uiContent.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/uiContent.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** [WGS8](wireframe-gallery.html#WGS8)
 
@@ -64216,6 +64238,10 @@ On dispose: release timers, observers and events
     "value_0_875": {
       "value": 0.875,
       "unit": "count"
+    },
+    "value_2": {
+      "value": 2,
+      "unit": "count"
     }
   }
 }
@@ -64226,9 +64252,9 @@ On dispose: release timers, observers and events
 
 Reuses the stage source boundary. Current stage derives safe formation geometry from host and actor models. Reference section percentages and layer toggles are proposed, not replacements for production geometry validation.
 
-- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
-- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
-- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/e1c9aa5659647e9e7853ca83d7afe3ef56291d3b/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/components/battlefieldStage.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/components/battlefieldStage.js#L1) — Current owner checkout (including inspected local edits)
+- [src/ui/models/BattlefieldStageModel.js:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/src/ui/models/BattlefieldStageModel.js#L1) — Current owner checkout (including inspected local edits)
+- [styles/combat.css:1](https://github.com/cehinds/AshenSpire/blob/75e696cb36c9174727f2a9bfc9576c3711290709/styles/combat.css#L1) — Current owner checkout (including inspected local edits)
 
 **Referenced components:** Leaf component; no nested component.
 
