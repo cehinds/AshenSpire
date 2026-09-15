@@ -51,8 +51,15 @@ export const wireframeUi = freeze({
   // detail share the active pane (31.95/31.95 and 44/44 in the drawings, so
   // one half each). Wide hosts put them side by side; phone hosts stack them.
   armoury: { collectionShare: 0.5, compactCollectionShare: 0.5 },
-  // WCF2 lower stack: rows after activity filtering; icon tiles never wrap.
-  combatantStack: { maxRows: 5, iconRem: 1.575, iconGapRem: 0.1875 },
+  // WCF2 lower stack: rows after activity filtering.
+  combatantStack: { maxRows: 5 },
+  // THE ICON TRAY (components/iconTray.js, models/IconTrayModel.js): the
+  // combatant card's status effects, the relic rail and the Potions minis are
+  // one non-wrapping row. The status row is the reference (owner, 2026-09-14),
+  // so these are its numbers: icon size and gap in reference rem.
+  // `footerPotionIcons` is how many minis the tray over the combat footer's
+  // Potions control is wide enough for before its `+N` tile.
+  iconTray: { iconRem: 1.575, iconGapRem: 0.1875, footerPotionIcons: 4 },
   // WCM0 lower meters. Screen-space minimums; they hold after perspective
   // scaling because the depth scale zooms only the sprite. Secondary and
   // buildup rows are half the HP height; stance matches HP.
@@ -177,18 +184,19 @@ export const wireframeUi = freeze({
   // business, not a layer here.
   // Potions: WGC11 in the combat footer is the one Potions control and WGH8
   // is its contents, charge flasks and carried consumables in one projection
-  // (models/PotionContentsModel.js); either category can be hidden. The top
-  // HUD never draws potions where a footer HUD exists. `roomRail` keeps the
-  // flask tiles in the rail of the screens that have no footer HUD (shop,
-  // rest, event; the map hides its rail): that rail is the only place a
-  // charge flask is drunk, or a carried one dropped, outside combat. false
-  // applies the footer-only rule there too; that is an owner decision.
+  // (models/PotionContentsModel.js); either category can be hidden. Its minis
+  // hang over that footer control as the shared icon tray. NO TOP HUD DRAWS
+  // POTIONS (owner, 2026-09-14: "why do I still see potions in the top band"),
+  // so `roomRail` is false: shop, rest and event show none, and outside combat
+  // nothing drinks a charge flask or drops a carried one until the Potions
+  // control has a room home. true puts the flask icons back in those rooms'
+  // rail; combat never takes them.
   hud: {
     layers: {
       header: true, class: true, cinders: true, position: true,
       vitality: true, armoury: true, menu: true, rail: true, relics: true,
     },
-    potions: { chargeFlasks: true, carried: true, roomRail: true },
+    potions: { chargeFlasks: true, carried: true, roomRail: false },
   },
   // W1i Smith upgrade, W1j Extract card, W1k Install card. The item list is
   // the workspace's left column at W1i's 44 of the 90 usable width (floored

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planCombatantStack, planIconTray } from '../src/ui/models/CombatantStackModel.js';
+import { planCombatantStack } from '../src/ui/models/CombatantStackModel.js';
+import { planIconTray } from '../src/ui/models/IconTrayModel.js';
 import { wireframeUi } from '../src/content/wireframeUi.js';
 
 const { maxRows } = wireframeUi.combatantStack;
@@ -46,7 +47,7 @@ test('no combination exceeds the row budget or drops HP', () => {
 });
 
 test('icon tray never wraps: excess collapses into a final +N tile', () => {
-  const rem = 16, { iconRem, iconGapRem } = wireframeUi.combatantStack;
+  const rem = 16, { iconRem, iconGapRem } = wireframeUi.iconTray;
   const pitch = (iconRem + iconGapRem) * rem;
   const fits = planIconTray({ count: 3, width: pitch * 3, rem });
   assert.deepEqual([fits.shown, fits.hidden], [3, 0]);

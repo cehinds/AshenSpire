@@ -736,6 +736,8 @@
           "text": "I can mend what the ash has taken.",
           "choices": [
             "Ask about the forge",
+            "Ask what the ash took",
+            "Offer your blade for mending",
             "Leave the forge"
           ]
         }
