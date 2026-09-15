@@ -32,6 +32,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-15
 
+- **Quests are spoken, and each one finishes exactly once** ([#1099](https://github.com/cehinds/AshenSpire/pull/1099), `0.7.1.55`). Each step of the Grave of the Nameless now opens as a conversation: you stand on the left, whoever speaks stands on the right, and the story comes one line at a time. Back rereads a line, Skip speech jumps to the end, and Continue reads on. Your answers, the event's own choices, appear on the last line, and one that binds you still asks you to hold. Answering at the second cairn with anything but Leave now finishes the quest, and collecting a road quest's reward on the world map finishes that quest the same way, once per run, even if you reload. Events that belong to no quest look as before.
 - **A check on the game's own builder is watched again** ([#1095](https://github.com/cehinds/AshenSpire/pull/1095), `0.7.1.54`). Nothing you see changes. The tool that packs the whole game into one file has a set of deliberately broken builds it is tested against, to prove it refuses them rather than shipping a half-made game. Three of those tests had quietly stopped working — two described a rule the builder no longer follows, and one had been outgrown by the game itself, which is now far larger than the test assumed. All three are repaired, and the set is now run by the project's checks instead of by whoever remembers it exists.
 
 ## 2026-09-14
