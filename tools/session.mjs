@@ -596,6 +596,14 @@ export function createSession({ registries, seedString, endless = false, restore
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        // WHAT IT HAS ALREADY DONE. The engine records every move that
+        // RESOLVED on `performedMoves` (coopCombat.js, beside combat.js's own
+        // line), and solo's inspector reads it straight off the entity. This
+        // projection never carried it, so a co-op client's "Previous actions"
+        // was `unknown` — not "has not acted yet", but "we cannot see" — for
+        // the whole of every fight. An empty array is a real answer and a
+        // missing field is not; that distinction is the section's whole point.
+        performedMoves: [...(e.performedMoves || [])],
         arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
@@ -1315,10 +1323,22 @@ export function createSession({ registries, seedString, endless = false, restore
             ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })),
         }
       : null;
+    // THE SEAT THE PARTY IS CLIMBING (SPEC §13.2). `start()` DRAWS the order,
+    // so it differs run to run; solo reads it off `run.seatOrder` and prints
+    // "ACT II — THE PALE MARCHES". The producer never sent either field, so
+    // `snap.seatName` at coop.js and `act.seatName` at mapboard.js both read
+    // `undefined` and every co-op fight header and map title said a bare "ACT
+    // II" — the one line that tells a party WHERE they are, missing, for the
+    // whole of co-op. `seatOrder` rides too: it is what a client needs to say
+    // anything about a tier that is not the current one.
+    const seatId = session.seatOrder && session.seatOrder.length ? currentSeat() : null;
     return {
       id: session.id,
       seedString: session.seedString,
       actNumber: session.actNumber,
+      seatOrder: session.seatOrder ? session.seatOrder.slice() : [],
+      seatId,
+      seatName: seatId && registries.seats.has(seatId) ? registries.seats.get(seatId).name : null,
       floor: session.floor,
       endless: session.endless,
       scene: session.scene,
