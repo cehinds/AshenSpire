@@ -568,20 +568,20 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
    advance box, which made the MISSING compensation look green — two errors
    cancelling — and that false green is what invited #910.
 
-   A residual remains at 2550x1305 Text XL: the gate reads +1.605px against a
-   1px tolerance. DO NOT TUNE THIS RULE TO CLEAR IT. At that exact shape and
-   text size the painted ink measures -2.5px WITH this transform and -6.5px
-   without, so the gate and the pixels disagree in SIGN: the gate says the
-   wordmark sits right of centre, the glyphs say it sits left. Moving the
-   wordmark right to satisfy the gate would take the ink to about -4px, away
-   from centre, and the check would go green while the defect got worse.
-
-   The cause is that advance-minus-trailing is still not ink: it carries the
-   first and last glyphs' side bearings, which do not cancel in a display face.
-   The fix belongs in the measurement, not here — startup-gate already captures
-   a screenshot, so it can scan for lit columns instead of doing Range
-   arithmetic. Left red deliberately, and NOT by widening the tolerance. */
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; transform: translateX(calc(var(--track) / 2)); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+   `--ink-bias` IS THE SECOND, SEPARATE HALF OF THE SAME CORRECTION. Half a
+   track centres the glyphs' ADVANCES; ink is narrower than advances by each
+   end glyph's side bearing, and those do not cancel. In Cinzel 700 the
+   leading A's left bearing is 0.008em and the trailing E's right bearing is
+   0.045em (both read from a 1000px raster of each glyph), so the ink sits
+   (0.045 - 0.008) / 2 = 0.0185em LEFT of its advances' centre. That is about
+   1px at 1x, which is why it hid inside the tolerance — but `body { zoom }`
+   is 1.7 at 2550x1305, and at Text XL (57.6px) it grew to 1.8px of the
+   -2.67px startup-gate read there against its 2.5px ink budget. It is an em
+   quantity, so it scales with the type and the zoom and needs no per-shape
+   tuning. Inter (the readable-ui face) reads 0.0136em, within 0.3px at this
+   size, so one token serves both. It is specific to the A…E lockup: a
+   different name needs its own end-glyph bearings measured. */
+.as-titlemenu .tm-name { --track: 0.08em; --ink-bias: 0.0185em; margin: 0; transform: translateX(calc(var(--track) / 2 + var(--ink-bias))); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -3392,7 +3392,22 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
-.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; }
+/* THE SUBSTEP'S WAY ON OUTRANKS THE STAGE'S SKIP.
+   The stage row above (`.cz-stage .modal-btnrow.end`) is pinned to the
+   scrollport floor at `z-index:2`, and this button is right-aligned in the same
+   band. MEASURED at 1366x768 with Main Hand open: scrolled so `Continue to Off
+   Hand` reaches the floor, the two overlap by 46.9px vertically and 203.7px
+   horizontally, and `elementFromPoint` at this button's own centre returned
+   `BUTTON.as-btn cz-next` — the player pressing the section's Continue was
+   reaching `Continue to seed`, SKIPPING the armament they had come to choose.
+   Below 700px the sticky rule further down already answers this with
+   `z-index:3`; above it this button is a static grid item, so it lost the paint
+   order to a later, positioned sibling. A grid item's containing block is its
+   own one-row grid area, so it cannot be made sticky here (the reason the
+   sticky rule is mobile-only) — but it does not need travel, only rank.
+   `position:relative` with no offsets moves nothing and changes no layout; it
+   only lets the z-index apply. */
+.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; position:relative; z-index:3; }
 /* The ready lift scales the button about its centre, and at the grid's right
    edge that is a 2px horizontal overflow (measured: section scrollWidth 1100
    against clientWidth 1098 at 1024 wide). Growing from the right edge keeps
@@ -3402,6 +3417,95 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    long button's box at 1440 wide (measured: scrollWidth 210 in a 208 box).
    Less side padding than the row's clamp gives it, so the words stay whole. */
 .cz-next { padding-inline:clamp(0.5rem, 5%, 1rem); }
+/* THE WAY ON NEVER SCROLLS OUT OF REACH (Constantine, 2026-09-12: *"the
+   continue button always in view and not requiring too much scrolling"*).
+   MEASURED: with the right-hand section open at 390x844 the creation scroll is
+   2129px against a 784px viewport, and the section's Continue sits at the end
+   of it. A player who had chosen scrolled back through everything to leave.
+   STICKY RATHER THAN MOVED TO THE FOOT, and the reason is the hooks: `#cz-start`
+   and `.cz-next[data-next]` are read by startup-gate, character-creation-check
+   and the contact sheet, and the foot is `.cz-actions`. Relocating the buttons
+   changes what every one of those instruments walks. Sticky changes where the
+   same button PAINTS and nothing about where it lives, so the fix costs no
+   instrument a re-teach.
+   The row carries its own ground: a transparent sticky control with the stage's
+   content sliding under it is unreadable at the moment it matters. */
+.cz-stage {
+  /* How far above the scrollport's floor a SECOND sticky row has to rest, so it
+     clears the first. Authored once because CSS cannot ask how tall a sibling
+     is — but DERIVED, not typed, because every part of that height is a setting
+     the player can move:
+        var(--tap-floor)  the button inside the row, which is
+                          `calc(var(--tap-target) / var(--ui-zoom, 1))` — it
+                          grows with Minimum tap size and with Auto's zoom
+        12px              the row's own `padding-block: 10px 2px`, below
+        10px              the scrollport's `padding-bottom`, which is why the
+                          stage row's painted bottom sits above the floor
+                          rather than on it
+     THIS WAS A CONSTANT AND THE CONSTANT WAS WRONG. 64px measured clean at the
+     default 44px target, and collided again as soon as the target moved: at
+     `--tap-target: 60px` the rows overlapped by 8px at zoom 1 and by 27.8px at
+     zoom 0.62. A number that only holds at one setting is a number that has
+     not been derived. */
+  --cz-continue-row: calc(var(--tap-floor) + 22px);
+}
+.cz-stage .modal-btnrow.end,
+.cz-stage .cc-primary-continue-row {
+  position:sticky; bottom:0; z-index:2;
+  background:linear-gradient(to top, var(--panel) 62%, transparent);
+  padding-block:10px 2px; margin-block-start:8px;
+}
+/* TWO WAYS ON CAN BE STICKY AT ONCE, AND THEY MUST NOT SHARE THE BAND.
+   The character stage holds both: the nested `Continue` that closes Primary
+   Stats and opens the Keepsake, and the stage's own `Continue to equipment`.
+   MEASURED at 390x844 with Primary Stats open, both rested at exactly
+   top 693 / bottom 748 — the same 55px band, the same z-index — so the stage
+   row, later in the DOM, painted over the nested one. What a player saw at the
+   bottom of the glass was the DISABLED `Continue to equipment`, with the
+   actionable control hidden underneath it.
+   Both are needed: with the nested row made static it falls to 828, which is
+   71px below a band that ends at 757, so it cannot simply stop being sticky.
+   So they STACK — the nested row rests one row higher, and paints above, which
+   also keeps it legible while the two pass each other on a scroll.
+   The selector carries `.modal-btnrow` because the nested row wears `end` too,
+   and would otherwise lose the specificity contest with the rule above. */
+.cz-stage .modal-btnrow.cc-primary-continue-row {
+  bottom:var(--cz-continue-row); z-index:3;
+}
+/* A fold's summary is a control: it takes the tap floor and the kit's ring.
+   THE FLOOR IS THE TOKEN, NOT THE NUMBER. `--tap-floor` is
+   `calc(var(--tap-target) / var(--ui-zoom, 1))` precisely because `body` carries
+   `zoom: var(--ui-zoom)`: a literal 44px below body renders at 44 x zoom, so at
+   Auto's 0.62 floor this control would have been a ~27px physical target while
+   every button beside it stayed 44. The division cancels the zoom; the number
+   does not. The comment said "takes the tap floor" while the code took a
+   constant that happens to equal it at zoom 1. */
+.cc-starting-fold > .cc-starting-summary {
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px;
+  min-height:var(--tap-floor); padding:10px 4px; cursor:pointer; list-style:none;
+}
+.cc-starting-fold > .cc-starting-summary::-webkit-details-marker { display:none; }
+.cc-starting-fold > .cc-starting-summary::after {
+  content:'\203A'; margin-inline-start:auto; color:var(--muted);
+  transition:transform 150ms ease-out;
+}
+.cc-starting-fold[open] > .cc-starting-summary::after { transform:rotate(90deg); }
+.cc-starting-fold > .cc-starting-summary b { color:var(--gold); }
+.cc-starting-fold > .cc-starting-summary .cc-package-context { margin:0; }
+.reduced-motion .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+@media (prefers-reduced-motion: reduce) {
+  .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+}
+/* INSIDE THE FOLD THE CARDS ARE A REFERENCE, AND ARE DRAWN AS ONE. The
+   renderer's `small` flag was the wrong tool and is not used here: its only
+   effect is `transform: scale(0.92)`, which `.cc-starting-card > .card` above
+   correctly cancels — a transformed card still occupies its untransformed box,
+   so it saves no scroll at all. A smaller BOX does. Three to a row instead of
+   two turns six faces from three rows into two. */
+.cc-starting-fold .cc-starting-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; }
+.cc-starting-fold .cc-starting-card { padding-top:34px; }
+.cc-starting-fold .cc-starting-card > .card { max-width:104px; }
+.cc-starting-fold .cc-starting-card .card-info-button { top:-36px; }
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
@@ -3455,6 +3559,21 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 @media(max-width:700px) {
   .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-row:auto; }
   .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
+  /* THE SECTION'S OWN WAY ON, MEASURED: with the Main Hand section open at
+     390x844 the `Continue to Off Hand` button sat 1815px down a 784px
+     scrollport — 1058px below the fold, at the end of the armament picker it
+     exists to close. The stage-level sticky rule above never reached it: that
+     rule matches `.modal-btnrow.end` and `.cc-primary-continue-row`, and this
+     is a bare `.cc-equipment-continue` inside `.cc-equip-group`.
+     THE GROUP BECOMES A COLUMN FLEX CONTAINER HERE, and that is load-bearing
+     rather than cosmetic: a grid item's containing block is its own one-row
+     grid area, so `position:sticky` inside it has nowhere to travel and does
+     nothing. A flex item's containing block is the container's content box —
+     the full height of the open section — which is the travel sticky needs.
+     At this width the group already rendered as one stacked column, so the
+     switch changes the layout in no other way. */
+  .cc-equip-group[data-equipment-section] { display:flex; flex-direction:column; padding-bottom:4px; }
+  .cc-equipment-continue { position:sticky; bottom:4px; z-index:3; }
   .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px) scale(1.03); }
   .cc-starting-card-grid { gap:9px 6px; }
   .cc-starting-card > .card { max-width:150px; }

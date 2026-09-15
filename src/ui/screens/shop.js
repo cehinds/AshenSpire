@@ -31,6 +31,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService } from './smithServices.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
+import { clearSelection } from '../components/cardSelection.js';
 import {
   shopCategories, shopCategoryStatus, offerRefs, resolveShopSelection,
   offerAvailability, shopFooterActions, shopWorkspaceLayout,
@@ -62,6 +63,12 @@ const RAIL_LABEL = {
 };
 
 export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {}, hud = null }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const stock = run.shopStock;
   // BUYING AND BURNING ARE NOT THE SAME ACTION and the table says why: a
   // purchase spends cinders, which the run refills (`shopBuy`: tempo, faucet —
