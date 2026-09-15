@@ -4,13 +4,73 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1003",
-    "date": "2026-09-14",
-    "group": "2026-09-14",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
     "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
     "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
-    "build": "0.7.1.53",
+    "build": "0.7.1.59",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-1101",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Sceptres now give you mana back when you break an enemy's arcane guard",
+    "detail": "The Bone Sceptre and the Emberlight Sceptre each carry a power called Siphon: when one of your own hits fills an enemy's Arcane Exposure and breaks it, you get 1 Mana back. The power belongs to the sceptre, not to you. Swap it for another weapon mid-fight and the refund stops; take the sceptre back up and it returns, once, never twice. A fight you saved and reload keeps it. The Herald starts with the Bone Sceptre, so a Herald feels this from the first fight. Every other weapon, armour and relic works exactly as before.",
+    "build": "0.7.1.57",
+    "pullRequest": 1101,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1101"
+  },
+  {
+    "id": "pr-1098",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Gear, relics and your class can now be given lasting powers of their own",
+    "detail": "Nothing you see changes yet. The game now keeps one list of powers that a weapon, a piece of armour, a relic or a class can grant while you hold it, and each power has exactly one written rule. Cards can never hold these powers; a card only ever does what its own text says. The list starts empty. The first power arrives with the next change: a sceptre that gives you mana back when you break an enemy's arcane guard.",
+    "build": "0.7.1.56",
+    "pullRequest": 1098,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1098"
+  },
+  {
+    "id": "pr-1099",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Quests are spoken, and each one finishes exactly once",
+    "detail": "Each step of the Grave of the Nameless now opens as a conversation: you stand on the left, whoever speaks stands on the right, and the story comes one line at a time. Back rereads a line, Skip speech jumps to the end, and Continue reads on. Your answers, the event's own choices, appear on the last line, and one that binds you still asks you to hold. Answering at the second cairn with anything but Leave now finishes the quest, and collecting a road quest's reward on the world map finishes that quest the same way, once per run, even if you reload. Events that belong to no quest look as before.",
+    "build": "0.7.1.55",
+    "pullRequest": 1099,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1099"
+  },
+  {
+    "id": "pr-1095",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A check on the game's own builder is watched again",
+    "detail": "Nothing you see changes. The tool that packs the whole game into one file has a set of deliberately broken builds it is tested against, to prove it refuses them rather than shipping a half-made game. Three of those tests had quietly stopped working — two described a rule the builder no longer follows, and one had been outgrown by the game itself, which is now far larger than the test assumed. All three are repaired, and the set is now run by the project's checks instead of by whoever remembers it exists.",
+    "build": "0.7.1.54",
+    "pullRequest": 1095,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1095"
+  },
+  {
+    "id": "pr-1092",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The game is checked against its own written world",
+    "detail": "Nothing you see changes. The world's history — the three flames, what a cinder is, why a Forsaken can climb at all — is written down in one place, and until now nobody had read it against the game as it is actually built. That reading now exists: what the world says and the game already does, what the two disagree about, and what the world promises that the game has not built yet. Nothing was changed to make either side agree; the disagreements are simply written down where they can be fixed.",
+    "build": "0.7.1.53",
+    "pullRequest": 1092,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1092"
+  },
+  {
+    "id": "pr-1094",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The plan for how your character grows now includes quests you talk through",
+    "detail": "Nothing you see changes yet. The written plan now gives quests two things. Each quest finishes exactly once, whether it's a chain of events like the Grave of the Nameless or a road quest taken on the world map, and that one finish is what future experience and rewards count. And every quest exchange is spoken: each step of a chain, and taking or turning in a quest at a town's quest board, opens a conversation with the person who gives it. You stand on the left, they stand on the right, and your answers are the quest's own choices. Text comes first; voice, when it arrives, can never answer for you.",
+    "build": "0.7.1.52",
+    "pullRequest": 1094,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1094"
   },
   {
     "id": "pr-1091",

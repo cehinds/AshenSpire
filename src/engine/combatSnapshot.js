@@ -6,6 +6,7 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
+import { syncLoadoutProperties } from './properties.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
 /** Return the JSON-safe state of one fully committed combat turn. */
@@ -100,6 +101,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   combat._emitEvent = emitEvent;
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+  // Property mounts are never saved (definitions are not persisted): they are
+  // re-derived from the restored loadout, exactly as createCombat derives them.
+  syncLoadoutProperties(combat);
   return combat;
 }
 

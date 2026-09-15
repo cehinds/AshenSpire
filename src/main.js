@@ -17,7 +17,8 @@ import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
 import { runMods, stampDeck, addToStorage, carriedIds, resolveSwapCostRule } from './model/loadout.js';
 import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
-import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode, questAction } from './model/worldAtlas.js';
+import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
+import { atlasQuestAction } from './engine/quests.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
 import { mountSmithUpgradeModal } from './ui/components/smithUpgradeModal.js';
 import { smithSelectionModel } from './ui/models/SmithSelectionModel.js';
@@ -1581,10 +1582,11 @@ function worldLocationAction(action) {
   delete j.inspectNodeId;
   if (action.kind === 'quest') {
     if (!(ATLAS.nodeQuests[action.pointId] || []).some(q => q.questId === action.questId)) throw Error('Quest not offered here');
-    const plan = questAction(j, action.questId);
+    // Accepting or collecting goes through the quest door: a collect moves the
+    // quest to `claimed`, pays its cinders and completes it with
+    // `source: 'atlas'` (engine/quests.js), once per run.
+    const { plan } = atlasQuestAction({ run, registries, rng }, action.questId);
     if (!plan.allowed) return;
-    j.questStates[action.questId] = plan.next;
-    run.cinders += plan.reward;
     persist();
     return;
   }

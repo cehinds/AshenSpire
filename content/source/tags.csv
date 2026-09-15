@@ -113,3 +113,8 @@ theme:blight,theme,Blight,9FC3E8,◇,"Categorized Blight identity; effects are a
 theme:astral,theme,Astral,9FC3E8,◇,"Categorized Astral identity; effects are authored separately."
 theme:oath,theme,Oath,9FC3E8,◇,"Categorized Oath identity; effects are authored separately."
 theme:stance,theme,Stance,9FC3E8,◇,"Categorized Stance identity; effects are authored separately."
+# ---- property (docs/proposal-progression-and-property-system.md §3) -----------
+# The one domain that CONFERS. Each tag has exactly one rule in propertyRules.csv,
+# is granted only by the carrier holding it, and never appears as a chip.
+siphon,property,Siphon,7FA8C9,◈,"A focus that drinks back: breaking a foe's Arcane Exposure restores Mana."
+overcharge,property,Overcharge,9FC3E8,✧,"A focus that pushes harder: each hit builds more Arcane Exposure."

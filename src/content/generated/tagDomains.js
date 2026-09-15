@@ -61,5 +61,10 @@ export const tagDomains = [
     "id": "theme",
     "label": "Theme",
     "blurb": "Build synergies; tags alone grant no effects."
+  },
+  {
+    "id": "property",
+    "label": "Property",
+    "blurb": "What a carrier CONFERS while it is held. Each property tag has exactly one rule in propertyRules.csv; the carrier that holds it grants it, and it leaves when the carrier does. Cards never carry these."
   }
 ];

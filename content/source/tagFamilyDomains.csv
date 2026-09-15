@@ -71,3 +71,11 @@ basicCardProfile,delivery
 basicCardProfile,damageType
 basicCardProfile,technique
 basicCardProfile,theme
+# Property carriers (docs/proposal-progression-and-property-system.md §3). The
+# closed set of families that may pair with `property` is PROPERTY_CARRIER_FAMILIES
+# in src/model/schemas.js; a `card,property` row is refused by name, because a
+# card's behaviour is its own effect list.
+armament,property
+armour,property
+relic,property
+class,property

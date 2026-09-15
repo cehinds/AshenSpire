@@ -1,0 +1,31 @@
+# content/source/propertyRules.csv — what each property tag DOES (Ashen Spire)
+#
+# One row per tag in the `property` domain (tags.csv), and exactly one: a
+# property tag with no row, or with two, is refused by name (src/model/validate.js).
+# The behaviour — `passives` and `triggers`, the same shapes a relic uses — lives
+# in the JSON sidecar propertyRuleEffects.json, keyed by this row's tag, because
+# a trigger list is a tree and a CSV cell is not.
+#
+# Ids are plain. A stronger version is a second row (`siphon2`), never `siphon(2)`.
+#
+# tag           a tags.csv row whose domain is `property`.
+# requires      property tags that must be on the SAME carrier for this rule to
+#               mount, pipe-separated; empty for none. No cycles.
+# excludes      property tags whose presence on the same carrier stops this rule
+#               mounting, pipe-separated; empty for none.
+# textTemplate  the rule's player-facing sentence. Its {tokens} bind to the
+#               sidecar's opcode values the way a relic's do (SPEC §3.13).
+#
+# Numbers belong to src/content/balance.js. A sidecar value written as
+# { "balance": "path.to.row" } is read from there when the table loads
+# (src/content/propertyRules.js); an unknown path is refused by name.
+#
+# columns: tag, requires, excludes, textTemplate
+tag,requires,excludes,textTemplate
+# ---- focus properties (proposal §7.2) ------------------------------------------
+# The sceptres carry siphon (tagging.csv). Its second branch is gated on the focus
+# skill of plan phase 4 and is inert until that ledger exists.
+siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {restoreMana.2} once your focus skill is mastered."
+# No shipped armament is a wand yet, so no row carries overcharge; the rule is
+# here so the first wand is a tagging row, not a code change.
+overcharge,,,Your hits build Arcane Exposure faster.

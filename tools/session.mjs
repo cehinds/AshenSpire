@@ -30,7 +30,8 @@ import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/
 import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
-import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
+import { commitEventChoice, completeQuest } from '../src/engine/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
@@ -911,23 +912,23 @@ export function createSession({ registries, seedString, endless = false, restore
       if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
         return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
       }
-      // THE TRANSACTION HAPPENS BEFORE THE FACT IS RECORDED — the same DSL
-      // and the same order as the solo event screen and runsim.mjs
-      // (executeRunEffects, then recordEventChoice). Recording "gave the
-      // cinders" with the purse untouched and no relic granted put a fact in
-      // the party's history that never occurred (Codex, #536). The member's
-      // own rng stream prices it, as their rewards are rolled.
-      executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
+      // The history record reads the run's own act/floor/node; a member's run
+      // rides the session's cursor, so it is stamped from it first.
+      m.run.actNumber = session.actNumber;
+      m.run.floor = session.floor;
+      m.run.mapNodeId = session.cursorId ?? null;
+      // THE TRANSACTION HAPPENS BEFORE THE FACT IS RECORDED. The quest door
+      // (src/engine/quests.js commitEventChoice) the solo Event and dialogue
+      // screens use runs the effects, then records the choice, then completes
+      // any quest chain the choice finishes — so a quest finished in co-op is
+      // finished. Recording "gave the cinders" with the purse untouched put a
+      // fact in the party's history that never occurred (Codex, #536). The
+      // member's own rng stream prices it, as their rewards are rolled.
+      commitEventChoice({ run: m.run, registries, rng: m.rng }, { eventId: def.id, choiceId: choice.id });
       // A CHOICE CAN KILL. An offering at 1 HP leaves the run at 0; the seat
       // falls the way it falls in combat (m.alive), so it is broadcast fallen
       // and enters no later node at 0 HP (Codex, #536).
       if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; }
-      // recordEventChoice reads the run's own act/floor/node for the record;
-      // a member's run rides the session's cursor, so it is stamped from it.
-      m.run.actNumber = session.actNumber;
-      m.run.floor = session.floor;
-      m.run.mapNodeId = session.cursorId ?? null;
-      recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
       session.scene.picks[memberId] = choice.id;
       // The choice's authored result, for this seat to read before the room
       // moves on (shown by coop.js when a fight follows).
@@ -1198,6 +1199,14 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.floor = item.floor;
         m.run.mapNodeId = item.mapNodeId ?? null;
         recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+        // A caught-up choice that finishes a quest chain completes it through
+        // the same completion door as the live room (src/engine/quests.js), at
+        // most once. The commit itself stays here rather than going through
+        // commitEventChoice: it is judged against the entry's frozen `open`
+        // list and priced at the event's own rng position, not today's.
+        for (const questId of questsCompletedBy(registries.questChains, { eventId: def.id, choiceId: choice.id })) {
+          completeQuest({ run: m.run }, { questId, source: 'event' });
+        }
         // Then the seat snaps back to the party's position.
         m.run.actNumber = session.actNumber;
         m.run.floor = session.floor;

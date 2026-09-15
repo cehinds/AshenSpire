@@ -278,6 +278,21 @@ event.status.limited,,{available} of {total} available,A price closes some respo
 event.status.resolved,,Resolved,Your response is taken; continue when ready.,
 event.continue,,Continue,Move on from this event.,Continue
 event.continue.combat,,Steel yourself,The event leads into a fight.,Steel yourself
+# ---- the quest dialogue (W4c, WGQ0–WGQ8) ------------------------------------
+dialogue.eyebrow,,Quest,A step of a quest you are following.,Quest
+dialogue.region,,Conversation with {speaker},,
+dialogue.player,,You,Your character.,You
+dialogue.status.speaking,,Line {beat} of {total},The speaker is still talking; the responses come at the end.,
+dialogue.status.respond,,Choose a response,Answer with one of the responses.,
+dialogue.status.resolved,,Resolved,Your response is taken; continue when ready.,
+dialogue.back,common.back,,Read the line before this one again; nothing changes.,
+dialogue.skip,,Skip speech,Jump to the last line and the responses.,Skip speech
+dialogue.continue,common.continue,,Read the next line.,
+dialogue.continue.done,common.continue,,Leave this conversation.,
+dialogue.continue.combat,,Steel yourself,The conversation leads into a fight.,Steel yourself
+dialogue.cannotAfford,,Cannot afford,You cannot pay for this response yet.,Cannot afford
+dialogue.respond.question,,Choose {label}?,,
+dialogue.respond.confirm,,Choose,Give this response.,Choose
 # ---- the Armoury (W1e / W1n) ----------------------------------------------
 armoury.title,,Armoury,"Your character, equipment, inventory and deck.",Armoury
 armoury.close,,Close Armoury,,

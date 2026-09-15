@@ -1634,6 +1634,104 @@ export const uiStrings = [
     "tip": "Steel yourself"
   },
   {
+    "id": "dialogue.eyebrow",
+    "extends": "",
+    "short": "Quest",
+    "full": "A step of a quest you are following.",
+    "tip": "Quest"
+  },
+  {
+    "id": "dialogue.region",
+    "extends": "",
+    "short": "Conversation with {speaker}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.player",
+    "extends": "",
+    "short": "You",
+    "full": "Your character.",
+    "tip": "You"
+  },
+  {
+    "id": "dialogue.status.speaking",
+    "extends": "",
+    "short": "Line {beat} of {total}",
+    "full": "The speaker is still talking; the responses come at the end.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.status.respond",
+    "extends": "",
+    "short": "Choose a response",
+    "full": "Answer with one of the responses.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.status.resolved",
+    "extends": "",
+    "short": "Resolved",
+    "full": "Your response is taken; continue when ready.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.back",
+    "extends": "common.back",
+    "short": "",
+    "full": "Read the line before this one again; nothing changes.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.skip",
+    "extends": "",
+    "short": "Skip speech",
+    "full": "Jump to the last line and the responses.",
+    "tip": "Skip speech"
+  },
+  {
+    "id": "dialogue.continue",
+    "extends": "common.continue",
+    "short": "",
+    "full": "Read the next line.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.done",
+    "extends": "common.continue",
+    "short": "",
+    "full": "Leave this conversation.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.combat",
+    "extends": "",
+    "short": "Steel yourself",
+    "full": "The conversation leads into a fight.",
+    "tip": "Steel yourself"
+  },
+  {
+    "id": "dialogue.cannotAfford",
+    "extends": "",
+    "short": "Cannot afford",
+    "full": "You cannot pay for this response yet.",
+    "tip": "Cannot afford"
+  },
+  {
+    "id": "dialogue.respond.question",
+    "extends": "",
+    "short": "Choose {label}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.respond.confirm",
+    "extends": "",
+    "short": "Choose",
+    "full": "Give this response.",
+    "tip": "Choose"
+  },
+  {
     "id": "armoury.title",
     "extends": "",
     "short": "Armoury",
