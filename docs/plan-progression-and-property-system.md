@@ -68,6 +68,35 @@ rendered text and each trigger's behavior are byte-identical before and after
 (snapshot recorded in the PR). Old saves with `run.relics` ids load unchanged
 (relic id → carrier is derivation, not migration).
 
+**RE-ANCHORED WHEN IT WAS BUILT, and the phase split in two.** Landed as 2a;
+2b is not scheduled and should not be until its blocker moves.
+
+- **Passives did not move, and cannot yet.** A relic's passives are upgraded per
+  run AND per copy at the smith (`model/itemUpgrades.js` `resolveUpgradedRelic`,
+  `UPGRADE_RELIC_PASSIVE_TAGS`). A rule in `propertyRules.csv` is one global row
+  with nowhere to record "this copy is at tier 2", so moving them would have
+  taken the smith's relic upgrades with it. They stay on the relic and keep
+  reaching every reader through `passiveSum`'s upgrade-aware path. **Phase 2b is
+  therefore: give a mount somewhere to carry a resolved per-instance value, then
+  move passives and split the text.**
+- **`textTemplate` did not move either**, because with passives staying it
+  cannot: a relic's sentence covers both halves, and splitting it would
+  renumber its own `{block.2}` tokens (`computeTokenBindings` counts per
+  template). It stays on the relic and reads its numbers from both homes.
+- **One tag per relic, id shared with the relic.** The `hp10` / `openingPoise`
+  vocabulary this phase pictured assumed reuse the content does not have: 51
+  distinct trigger shapes across the 48 trigger-carrying relics, 3 of them
+  shared. Property tags never join displayed `tags` (`model/registries.js`
+  `stampTags`), so a tag per relic costs nothing a player sees.
+- **Two things the move had to carry.** `relicTriggered` is emitted from the
+  mount scan for a relic-kind source, or the relic stops flashing (`ui/fx.js`);
+  and a combat snapshot's `relic:<owner>:<id>:<i>` gate keys are renamed on
+  restore, or a reloaded fight refunds a spent `once`.
+- **Co-op mounts under `setActive`.** A co-op owner key is the *active* seat
+  (`triggers.js` `ownerKeyFor` reads `C.playerKey`), so seats must be mounted
+  inside the pass that sets it; mounting them in one loop outside filed every
+  seat's relics under one owner. Engine test 24 is what says so.
+
 ## Phase 3 — Cards in zones; collection and deck (3 PRs)
 
 **PR 3a: zones in run state.**

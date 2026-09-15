@@ -28,7 +28,7 @@ import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolv
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncLoadoutProperties, propertyMountsOf } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -152,6 +152,9 @@ export function createCombat({
   // mount their property rules before anything is emitted, so a property hears
   // enemySpawned and combatStart exactly as a relic does.
   syncLoadoutProperties(combat);
+  // …and the relics the player carries, whose triggers are property rules too
+  // since plan phase 2. Mounted before the first emit for the same reason.
+  syncRelicProperties(combat);
 
   // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
   // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
