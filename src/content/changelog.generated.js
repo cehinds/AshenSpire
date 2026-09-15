@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1095",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A check on the game's own builder is watched again",
+    "detail": "Nothing you see changes. The tool that packs the whole game into one file has a set of deliberately broken builds it is tested against, to prove it refuses them rather than shipping a half-made game. Three of those tests had quietly stopped working — two described a rule the builder no longer follows, and one had been outgrown by the game itself, which is now far larger than the test assumed. All three are repaired, and the set is now run by the project's checks instead of by whoever remembers it exists.",
+    "build": "0.7.1.54",
+    "pullRequest": 1095,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1095"
+  },
+  {
     "id": "pr-1092",
     "date": "2026-09-14",
     "group": "2026-09-14",
