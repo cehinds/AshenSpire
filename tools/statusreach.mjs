@@ -244,6 +244,13 @@ export function statusReach(bundle, opts = {}) {
   const SOURCE_SETS = [
     ['cards', bundle.cards],
     ['relics', bundle.relics],
+    // A CARRIER'S RULES ARE A SOURCE SET OF THEIR OWN (plan phase 2). Relic
+    // triggers moved out of bundle.relics and into this table, and `madness`
+    // went instantly unreachable here — which is the tool doing its job: the
+    // status was still applied, by a row this walk could not see. Equipment and
+    // class properties land in the same table, so every future carrier arrives
+    // covered rather than needing another line.
+    ['propertyRules', bundle.propertyRules],
     ['enemies', bundle.enemies],
     ['events', bundle.events],
     ['flasks', bundle.flasks],
@@ -258,7 +265,9 @@ export function statusReach(bundle, opts = {}) {
       continue;
     }
     for (const row of rows) {
-      const where = `${name}:${(row && row.id) || '(row)'}`;
+      // A property rule is keyed by its tag, not an `id` — name the route by
+      // whatever the row calls itself, so the answer stays actionable.
+      const where = `${name}:${(row && (row.id || row.tag)) || '(row)'}`;
       for (const id of appliersIn(row)) note(id, `R1 ${where}`);
     }
   }
