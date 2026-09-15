@@ -651,7 +651,15 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...RELIC_RARITIES),
     pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
-    triggers: triggersNode,
+    // OPTIONAL SINCE PLAN PHASE 2, AND EMPTY ON EVERY SHIPPED RELIC: a relic's
+    // triggers are a property rule now (content/source/propertyRules.csv), and
+    // it carries them through the same mount path equipment does. The field
+    // stays declared for one release so a relic authored against the old shape
+    // is refused BY NAME here instead of loading with its triggers silently
+    // inert; validate.js says which rule to move them to. Its passives did NOT
+    // move and are not expected to — they are upgraded per copy at the smith
+    // (model/itemUpgrades.js), which a global rule row cannot express.
+    triggers: opt(triggersNode),
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.

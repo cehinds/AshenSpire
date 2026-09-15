@@ -7,11 +7,11 @@
 import { contentBundle } from '../src/content/index.js';
 import { MAP_SHAPE_LIMITS } from '../src/content/mapconfig.js';
 import { buildActMap } from '../src/engine/actmap.js';
-import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRegistries, resolveCard, relicPropertyRules } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
 import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
-import { evalPredicate } from '../src/engine/triggers.js';
+import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
 import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances } from '../src/model/loadout.js';
 import { extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, mountRows } from '../src/model/cardExtraction.js';
@@ -7995,6 +7995,54 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a well-formed skill gate validates');
     eq(evalPredicate({}, { p: 'skillLevelAtLeast', skill: 'focus', level: 1 }), false, 'skillLevelAtLeast is false until the skill ledger exists');
     eq(evalPredicate({}, { p: 'classLevelAtLeast', level: 1 }), false, 'classLevelAtLeast is false until the class ledger exists');
+  });
+
+  // ---- 81. Relics are property carriers (plan phase 2) -----------------------
+  // Their triggers moved into propertyRules and they mount beside the loadout's
+  // pieces. What must survive the move is behaviour, the `once` gate, and the
+  // event the relic's flash is drawn from; the sentence is the snapshot's
+  // (tests/relic-properties.test.mjs).
+  test('81. a relic fires through the mount path, once, and still announces itself', () => {
+    const c = makeCombat({ deck: ['strike', 'strike'], relicIds: ['forsakenMedallion'] });
+
+    // The relic is mounted as a carrier, keyed under its own kind, and its rule
+    // came from the table rather than from the relic definition.
+    const mounts = c.propertyMounts && c.propertyMounts[triggerOwnerKey(c, c.player)];
+    assert(!!mounts && !!mounts['relic:forsakenMedallion'], 'the held relic mounted as a property carrier');
+    eq(mounts['relic:forsakenMedallion'].kind, 'relic', 'the mount records the carrier kind');
+    eq(REG.relics.get('forsakenMedallion').triggers, undefined, 'the relic definition no longer carries triggers');
+
+    // Forsaken Medallion: the FIRST attack of the combat also deals 4 Poise.
+    const enemy = () => c.enemies.find((e) => e.alive);
+    const before = enemy().poiseMeter.value;
+    playFromHand(c, 'strike', enemy().id);
+    const afterFirst = enemy().poiseMeter.value;
+    assert(afterFirst - before >= 4, `the relic's opening Poise landed (${before} → ${afterFirst})`);
+    eq(logOf(c, 'relicTriggered').filter((e) => e.relicId === 'forsakenMedallion').length, 1,
+      'the mount scan emits relicTriggered, which is what ui/fx.js draws the relic flash from');
+
+    // …and `once` still means once: the second attack adds only its own Poise.
+    const second = enemy().poiseMeter.value;
+    playFromHand(c, 'strike', enemy().id);
+    assert(enemy().poiseMeter.value - second < 4, 'the once gate held on the second attack');
+    eq(logOf(c, 'relicTriggered').filter((e) => e.relicId === 'forsakenMedallion').length, 1,
+      'and the relic announced itself exactly once');
+  });
+
+  // ---- 81a. A relic authored against the old shape is refused BY NAME --------
+  // The field is still declared (schemas.js) precisely so this can be said. A
+  // relic whose triggers were left on the definition would otherwise load with
+  // them silently inert, which is the failure the deprecation window exists for.
+  test('81a. a relic that still authors its own triggers is refused, and told where they go', () => {
+    const bundle = {
+      ...contentBundle,
+      relics: contentBundle.relics.map((r) => (r.id === 'forsakenMedallion'
+        ? { ...r, triggers: [{ on: 'combatStart', do: [{ op: 'block', amount: 2 }] }] }
+        : r)),
+    };
+    const words = validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    assert(/relics\.forsakenMedallion\.triggers/.test(words), `the refusal names the relic and the field — said ${JSON.stringify(words.slice(0, 200))}`);
+    assert(/propertyRuleEffects\.json/.test(words), 'and names the file the triggers belong in');
   });
 
   const passed = results.filter((r) => r.ok).length;
