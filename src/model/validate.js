@@ -183,7 +183,7 @@ function relicModifierTokenBindings(def) {
   return out;
 }
 
-export function relicTokens(def) {
+export function relicTokens(def, rules = []) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
   // relics built from DECLARED vocabulary rendering a raw token, with a green
@@ -195,8 +195,16 @@ export function relicTokens(def) {
   // What this function is FOR is the other half: a card carries a flat
   // `effects` array and a relic carries ops spread across `triggers[].do`. So
   // this flattens, and the grammar stays where it already lived.
+  //
+  // `rules` is the relic's property rules (model/registries.js
+  // relicPropertyRules), passed by every caller that has registries in hand.
+  // Since plan phase 2 that is where a relic's triggers live, so a caller that
+  // does not pass them gets the relic's passive tokens and leaves `{poiseDamage}`
+  // standing — the same honest degrade an unresolvable token has always had,
+  // rather than a number invented to fill the hole.
   const ops = [];
   for (const t of def.triggers || []) for (const op of t.do || []) ops.push(op);
+  for (const rule of rules || []) for (const t of rule.triggers || []) for (const op of t.do || []) ops.push(op);
   for (const op of def.effects || []) ops.push(op);
   for (const op of def.do || []) ops.push(op);
   const tokens = {};
@@ -1364,8 +1372,16 @@ function collectContentProblems(bundle, errors = []) {
     validateCardTemplates(card, path, err);
   }
 
+  const relicTagsByRelic = relicPropertyTagIndex(b);
+  const propertyRulesByTag = new Map(
+    (Array.isArray(b.propertyRules) ? b.propertyRules : [])
+      .filter((rule) => rule && typeof rule.tag === 'string')
+      .map((rule) => [rule.tag, rule]));
   for (const relic of b.relics || []) {
-    validateRelicTemplate(relic, `relics.${relic.id}`, err);
+    validateRelicTemplate(relic, `relics.${relic.id}`, err, propertyRulesByTag, relicTagsByRelic);
+    if (Array.isArray(relic.triggers) && relic.triggers.length) {
+      err(`relics.${relic.id}.triggers`, `authors triggers on the relic, which no longer reads them — a relic's triggers are its property rule now: register a '${relic.id}' tag in content/source/tags.csv with domain 'property', move these to content/source/propertyRuleEffects.json under that tag, and add 'relic,,${relic.id},${relic.id}' to content/source/tagging.csv`);
+    }
     const poiseAdd = relic && relic.passives && relic.passives.poiseThresholdAdd;
     if (poiseAdd != null && (!Number.isFinite(poiseAdd) || !Number.isInteger(poiseAdd) || poiseAdd < 0)) {
       err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
@@ -2056,13 +2072,52 @@ function validateCardTemplates(card, path, err) {
   }
 }
 
-function validateRelicTemplate(relic, path, err) {
-  if (typeof relic.textTemplate !== 'string' || !Array.isArray(relic.triggers)) return;
+function validateRelicTemplate(relic, path, err, rulesByTag = null, taggingByObject = null) {
+  if (typeof relic.textTemplate !== 'string') return;
+  // A relic's sentence covers the whole relic, and since plan phase 2 the whole
+  // relic is two homes: the passives it still owns, and the triggers that moved
+  // into its property rules. Both are read here, so "every number a player sees
+  // is derived from the entry that produces it" survives the move intact.
   const effects = [];
-  for (const trig of relic.triggers) {
+  for (const trig of relic.triggers || []) {
+    if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
+  }
+  for (const trig of relicRuleTriggers(relic, rulesByTag, taggingByObject)) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
   checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
+}
+
+/**
+ * The triggers a relic's property rules carry, flattened in tagging order.
+ *
+ * READS THE TAGGING ROWS, NOT `propertyTags`: that field is stamped onto a
+ * definition when the registries are built (model/registries.js), and the
+ * validator runs on the RAW content bundle, where it does not exist yet. Taking
+ * it from the bundle's own join is also the more honest read — this is the same
+ * table the mount path resolves against.
+ */
+function relicRuleTriggers(relic, rulesByTag, taggingByObject) {
+  if (!rulesByTag || !taggingByObject) return [];
+  const out = [];
+  for (const tag of taggingByObject.get(relic.id) || []) {
+    const rule = rulesByTag.get(tag);
+    for (const trig of (rule && rule.triggers) || []) out.push(trig);
+  }
+  return out;
+}
+
+/** relic id → the property tags tagging.csv hands it, in file order. */
+function relicPropertyTagIndex(b) {
+  const propertyTags = new Set(tagIdsInDomain(b, 'property'));
+  const index = new Map();
+  for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
+    if (!row || row.family !== 'relic' || !propertyTags.has(row.tagId)) continue;
+    const list = index.get(row.objectId) || [];
+    list.push(row.tagId);
+    index.set(row.objectId, list);
+  }
+  return index;
 }
 
 // ---------------------------------------------------------------------------
@@ -2085,6 +2140,12 @@ function balanceRefsIn(value, path, out = []) {
  * property paired with, or written on, a family that is not a carrier — a card
  * above all, because a card's behaviour is its own effect list.
  */
+/** The tagging rows that hand a property tag to a carrier. */
+function carriersOf(b, tag) {
+  return (Array.isArray(b.tagging) ? b.tagging : [])
+    .filter((row) => row && row.tagId === tag && PROPERTY_CARRIER_FAMILIES.includes(row.family));
+}
+
 function propertyRuleProblems(b, vctx) {
   const { err } = vctx;
   const rules = b.propertyRules === undefined ? [] : b.propertyRules;
@@ -2120,9 +2181,21 @@ function propertyRuleProblems(b, vctx) {
     for (const { path: at, ref } of balanceRefsIn(rule, path)) {
       err(at, `names balance row '${ref}', which is not a number in src/content/balance.js — add the row or fix the path`);
     }
+    // A RULE EITHER STATES ITSELF OR ITS CARRIER STATES IT, and either way every
+    // number reaches a reader. A rule with its own sentence is checked against
+    // it. A rule with an EMPTY sentence is deferred to the carriers holding the
+    // tag — today that is a relic, whose own textTemplate has covered the whole
+    // relic since before its triggers moved (plan phase 2), and which is checked
+    // against both halves in validateRelicTemplate. A rule with an empty
+    // sentence that NOBODY carries would state its numbers nowhere at all, so
+    // that is the one shape refused here.
     if (typeof rule.textTemplate === 'string' && Array.isArray(rule.triggers)) {
       const effects = rule.triggers.flatMap((trig) => (trig && Array.isArray(trig.do) ? trig.do : []));
-      checkTemplate(rule.textTemplate, effects, `${path}.textTemplate`, err);
+      if (rule.textTemplate.trim()) {
+        checkTemplate(rule.textTemplate, effects, `${path}.textTemplate`, err);
+      } else if (effects.length && !carriersOf(b, rule.tag).length) {
+        err(`${path}.textTemplate`, `is empty and no carrier holds '${rule.tag}', so the numbers in its triggers are stated nowhere — give the rule its own sentence, or add the tagging row for the carrier whose text already covers it`);
+      }
     }
   });
   for (const tag of propertyTags) {

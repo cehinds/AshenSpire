@@ -713,5 +713,389 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "✧",
     "blurb": "A focus that pushes harder: each hit builds more Arcane Exposure."
+  },
+  {
+    "id": "forsakenMedallion",
+    "domain": "property",
+    "label": "Forsaken Medallion",
+    "color": "8C7A5B",
+    "glyph": "🏅",
+    "blurb": "What Forsaken Medallion does when the fight gives it its moment."
+  },
+  {
+    "id": "starstoneShard",
+    "domain": "property",
+    "label": "Starstone Shard",
+    "color": "8C7A5B",
+    "glyph": "💠",
+    "blurb": "What Starstone Shard does when the fight gives it its moment."
+  },
+  {
+    "id": "cutpursesCoin",
+    "domain": "property",
+    "label": "Cutpurse's Coin",
+    "color": "8C7A5B",
+    "glyph": "🪙",
+    "blurb": "What Cutpurse's Coin does when the fight gives it its moment."
+  },
+  {
+    "id": "goldFigurine",
+    "domain": "property",
+    "label": "Gold Figurine",
+    "color": "8C7A5B",
+    "glyph": "🗿",
+    "blurb": "What Gold Figurine does when the fight gives it its moment."
+  },
+  {
+    "id": "goldenSprout",
+    "domain": "property",
+    "label": "Golden Sprout",
+    "color": "9A9A9A",
+    "glyph": "🌰",
+    "blurb": "What Golden Sprout does when the fight gives it its moment."
+  },
+  {
+    "id": "whetstoneFragment",
+    "domain": "property",
+    "label": "Whetstone Fragment",
+    "color": "9A9A9A",
+    "glyph": "🪨",
+    "blurb": "What Whetstone Fragment does when the fight gives it its moment."
+  },
+  {
+    "id": "kindlingCharm",
+    "domain": "property",
+    "label": "Kindling Charm",
+    "color": "9A9A9A",
+    "glyph": "🕯",
+    "blurb": "What Kindling Charm does when the fight gives it its moment."
+  },
+  {
+    "id": "goldleafCharm",
+    "domain": "property",
+    "label": "Goldleaf Charm",
+    "color": "9A9A9A",
+    "glyph": "🍂",
+    "blurb": "What Goldleaf Charm does when the fight gives it its moment."
+  },
+  {
+    "id": "crackedLantern",
+    "domain": "property",
+    "label": "Cracked Lantern",
+    "color": "9A9A9A",
+    "glyph": "🏮",
+    "blurb": "What Cracked Lantern does when the fight gives it its moment."
+  },
+  {
+    "id": "sacrificialKnife",
+    "domain": "property",
+    "label": "Sacrificial Knife",
+    "color": "9A9A9A",
+    "glyph": "🔪",
+    "blurb": "What Sacrificial Knife does when the fight gives it its moment."
+  },
+  {
+    "id": "curedHide",
+    "domain": "property",
+    "label": "Cured Hide",
+    "color": "9A9A9A",
+    "glyph": "🛡",
+    "blurb": "What Cured Hide does when the fight gives it its moment."
+  },
+  {
+    "id": "ivoryComb",
+    "domain": "property",
+    "label": "Ivory Comb",
+    "color": "9A9A9A",
+    "glyph": "🪮",
+    "blurb": "What Ivory Comb does when the fight gives it its moment."
+  },
+  {
+    "id": "fellWardenBrand",
+    "domain": "property",
+    "label": "Fell Warden Brand",
+    "color": "6E9C6E",
+    "glyph": "🔱",
+    "blurb": "What Fell Warden Brand does when the fight gives it its moment."
+  },
+  {
+    "id": "bloodiedTalisman",
+    "domain": "property",
+    "label": "Bloodied Talisman",
+    "color": "6E9C6E",
+    "glyph": "🩸",
+    "blurb": "What Bloodied Talisman does when the fight gives it its moment."
+  },
+  {
+    "id": "twinnedArmor",
+    "domain": "property",
+    "label": "Twinned Armor",
+    "color": "6E9C6E",
+    "glyph": "👥",
+    "blurb": "What Twinned Armor does when the fight gives it its moment."
+  },
+  {
+    "id": "blightTouchedIdol",
+    "domain": "property",
+    "label": "Blight-Touched Idol",
+    "color": "6E9C6E",
+    "glyph": "☣",
+    "blurb": "What Blight-Touched Idol does when the fight gives it its moment."
+  },
+  {
+    "id": "warhorn",
+    "domain": "property",
+    "label": "Warhorn",
+    "color": "6E9C6E",
+    "glyph": "📣",
+    "blurb": "What Warhorn does when the fight gives it its moment."
+  },
+  {
+    "id": "vowOfVengeance",
+    "domain": "property",
+    "label": "Vow of Vengeance",
+    "color": "6E9C6E",
+    "glyph": "⚔",
+    "blurb": "What Vow of Vengeance does when the fight gives it its moment."
+  },
+  {
+    "id": "pearlOfSagacity",
+    "domain": "property",
+    "label": "Pearl of Sagacity",
+    "color": "6E9C6E",
+    "glyph": "🔮",
+    "blurb": "What Pearl of Sagacity does when the fight gives it its moment."
+  },
+  {
+    "id": "blessedDew",
+    "domain": "property",
+    "label": "Blessed Dew",
+    "color": "6E9C6E",
+    "glyph": "💧",
+    "blurb": "What Blessed Dew does when the fight gives it its moment."
+  },
+  {
+    "id": "azureSigil",
+    "domain": "property",
+    "label": "Azure Sigil",
+    "color": "6E9C6E",
+    "glyph": "🔵",
+    "blurb": "What Azure Sigil does when the fight gives it its moment."
+  },
+  {
+    "id": "bloodstainedChalice",
+    "domain": "property",
+    "label": "Bloodstained Chalice",
+    "color": "6E9C6E",
+    "glyph": "🍷",
+    "blurb": "What Bloodstained Chalice does when the fight gives it its moment."
+  },
+  {
+    "id": "goldboughSapling",
+    "domain": "property",
+    "label": "Goldbough Sapling",
+    "color": "B08CC9",
+    "glyph": "🌱",
+    "blurb": "What Goldbough Sapling does when the fight gives it its moment."
+  },
+  {
+    "id": "wyrmHeart",
+    "domain": "property",
+    "label": "Wyrm Heart",
+    "color": "B08CC9",
+    "glyph": "🫀",
+    "blurb": "What Wyrm Heart does when the fight gives it its moment."
+  },
+  {
+    "id": "titansCinder",
+    "domain": "property",
+    "label": "Titan's Cinder",
+    "color": "B08CC9",
+    "glyph": "🌟",
+    "blurb": "What Titan's Cinder does when the fight gives it its moment."
+  },
+  {
+    "id": "radiantAegis",
+    "domain": "property",
+    "label": "Radiant Aegis",
+    "color": "B08CC9",
+    "glyph": "🛡",
+    "blurb": "What Radiant Aegis does when the fight gives it its moment."
+  },
+  {
+    "id": "flayersCenser",
+    "domain": "property",
+    "label": "Flayer's Censer",
+    "color": "B08CC9",
+    "glyph": "🔥",
+    "blurb": "What Flayer's Censer does when the fight gives it its moment."
+  },
+  {
+    "id": "vigilantHalo",
+    "domain": "property",
+    "label": "Vigilant Halo",
+    "color": "B08CC9",
+    "glyph": "🌸",
+    "blurb": "What Vigilant Halo does when the fight gives it its moment."
+  },
+  {
+    "id": "carrionTalon",
+    "domain": "property",
+    "label": "Carrion Talon",
+    "color": "B08CC9",
+    "glyph": "🦅",
+    "blurb": "What Carrion Talon does when the fight gives it its moment."
+  },
+  {
+    "id": "emberIdol",
+    "domain": "property",
+    "label": "Ember Idol",
+    "color": "B08CC9",
+    "glyph": "🌋",
+    "blurb": "What Ember Idol does when the fight gives it its moment."
+  },
+  {
+    "id": "crownOfStitches",
+    "domain": "property",
+    "label": "Crown of Stitches",
+    "color": "C9A227",
+    "glyph": "👑",
+    "blurb": "What Crown of Stitches does when the fight gives it its moment."
+  },
+  {
+    "id": "wardenHorn",
+    "domain": "property",
+    "label": "Warden Horn",
+    "color": "C9A227",
+    "glyph": "📯",
+    "blurb": "What Warden Horn does when the fight gives it its moment."
+  },
+  {
+    "id": "ashOfRemembrance",
+    "domain": "property",
+    "label": "Ash of Remembrance",
+    "color": "C9A227",
+    "glyph": "⚱",
+    "blurb": "What Ash of Remembrance does when the fight gives it its moment."
+  },
+  {
+    "id": "cinderOfTheFallen",
+    "domain": "property",
+    "label": "Cinder of the Fallen",
+    "color": "C9A227",
+    "glyph": "☠",
+    "blurb": "What Cinder of the Fallen does when the fight gives it its moment."
+  },
+  {
+    "id": "crimsonCovenant",
+    "domain": "property",
+    "label": "Crimson Covenant",
+    "color": "C9A227",
+    "glyph": "🩸",
+    "blurb": "What Crimson Covenant does when the fight gives it its moment."
+  },
+  {
+    "id": "travelersWhetstone",
+    "domain": "property",
+    "label": "Traveler's Whetstone",
+    "color": "9A9A9A",
+    "glyph": "🔪",
+    "blurb": "What Traveler's Whetstone does when the fight gives it its moment."
+  },
+  {
+    "id": "moonlitVial",
+    "domain": "property",
+    "label": "Moonlit Vial",
+    "color": "9A9A9A",
+    "glyph": "🧪",
+    "blurb": "What Moonlit Vial does when the fight gives it its moment."
+  },
+  {
+    "id": "wardensLantern",
+    "domain": "property",
+    "label": "Warden's Lantern",
+    "color": "9A9A9A",
+    "glyph": "🏮",
+    "blurb": "What Warden's Lantern does when the fight gives it its moment."
+  },
+  {
+    "id": "hollowedHorn",
+    "domain": "property",
+    "label": "Hollowed Horn",
+    "color": "6E9C6E",
+    "glyph": "📯",
+    "blurb": "What Hollowed Horn does when the fight gives it its moment."
+  },
+  {
+    "id": "gildedTear",
+    "domain": "property",
+    "label": "Gilded Tear",
+    "color": "6E9C6E",
+    "glyph": "💛",
+    "blurb": "What Gilded Tear does when the fight gives it its moment."
+  },
+  {
+    "id": "watchmansBadge",
+    "domain": "property",
+    "label": "Watchman's Badge",
+    "color": "B08CC9",
+    "glyph": "🎖",
+    "blurb": "What Watchman's Badge does when the fight gives it its moment."
+  },
+  {
+    "id": "howlingStandard",
+    "domain": "property",
+    "label": "Howling Standard",
+    "color": "B08CC9",
+    "glyph": "🚩",
+    "blurb": "What Howling Standard does when the fight gives it its moment."
+  },
+  {
+    "id": "emberwickCharm",
+    "domain": "property",
+    "label": "Emberwick Charm",
+    "color": "9A9A9A",
+    "glyph": "🕯",
+    "blurb": "What Emberwick Charm does when the fight gives it its moment."
+  },
+  {
+    "id": "carrionMorsel",
+    "domain": "property",
+    "label": "Carrion Morsel",
+    "color": "9A9A9A",
+    "glyph": "🍖",
+    "blurb": "What Carrion Morsel does when the fight gives it its moment."
+  },
+  {
+    "id": "gravetendersBell",
+    "domain": "property",
+    "label": "Gravetender's Bell",
+    "color": "6E9C6E",
+    "glyph": "🔔",
+    "blurb": "What Gravetender's Bell does when the fight gives it its moment."
+  },
+  {
+    "id": "sentinelsOath",
+    "domain": "property",
+    "label": "Sentinel's Oath",
+    "color": "6E9C6E",
+    "glyph": "🛡",
+    "blurb": "What Sentinel's Oath does when the fight gives it its moment."
+  },
+  {
+    "id": "forsakenWarflag",
+    "domain": "property",
+    "label": "Forsaken Warflag",
+    "color": "B08CC9",
+    "glyph": "🏴",
+    "blurb": "What Forsaken Warflag does when the fight gives it its moment."
+  },
+  {
+    "id": "wrathCoil",
+    "domain": "property",
+    "label": "Wrath Coil",
+    "color": "B08CC9",
+    "glyph": "⚡",
+    "blurb": "What Wrath Coil does when the fight gives it its moment."
   }
 ];

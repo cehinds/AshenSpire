@@ -5,6 +5,7 @@ import { createPrototypeCombat, prototypeInput, prototypeBundle } from '../src/c
 import { createCombat, dispatch, previewCard } from '../src/engine/combat.js';
 import { createCoopCombat, playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createRegistries } from '../src/model/registries.js';
+import { triggerOwnerKey } from '../src/engine/triggers.js';
 import { validateContent } from '../src/model/validate.js';
 import { resolveDamageComponents, allocateInteger, weaponImpact, resolveStackApplications, stackMagnitude } from '../src/model/combatRules.js';
 import { previewFoundationAction, foundationTriggerAllowed, foundationDamage } from '../src/engine/combatRules.js';
@@ -291,18 +292,71 @@ test('themes are inert and previews handle absent targets and recovery values', 
   const id = inHand(c, 'prototypeRecover');
   assert.equal(previewCard(c, id).tokens.restoreStamina, 2);
 });
+/**
+ * A synthetic relic that confers triggers, in the shape the game uses since
+ * plan phase 2: the relic row holds its identity, a property rule holds its
+ * triggers, and a tagging row hands it the tag. Authoring `triggers` on the
+ * relic row itself no longer reaches the engine — nothing reads it, and
+ * validate.js refuses it by name — so a fixture that did would assert against
+ * a relic that quietly does nothing.
+ *
+ * `tags` is a LIST: a carrier may hold any number of property tags, and the
+ * rules mount in the order given.
+ */
+function withRelicProperties(bundle, relicId, tags) {
+  return {
+    ...bundle,
+    relics: [...bundle.relics, { id: relicId, name: relicId, rarity: 'common', textTemplate: 'Test' }],
+    tags: [...bundle.tags, ...tags.map(({ tag }) => ({ id: tag, domain: 'property', label: tag, color: '7FA8C9', glyph: '\u25c8', blurb: 'Test fixture property.' }))],
+    propertyRules: [...bundle.propertyRules, ...tags.map(({ tag, triggers }) => ({ tag, requires: [], excludes: [], textTemplate: '', triggers }))],
+    tagging: [...bundle.tagging, ...tags.map(({ tag }) => ({ family: 'relic', scope: '', objectId: relicId, tagId: tag }))],
+  };
+}
+
 test('secondary attack triggers terminate without inheriting weapon Bleed or impact', () => {
-  const input = prototypeInput('bleed', 'boss', 1), bundle = prototypeBundle();
-  bundle.relics = [...bundle.relics, ...['A', 'B'].map((id) => ({ id: `prototypeLoop${id}`, name: id, rarity: 'common', textTemplate: 'Test', triggers: [{ on: 'damageDealt', allowSecondary: true, if: { p: 'eventSourceIsOwner' }, do: [{ op: 'damage', target: 'enemy', amount: 1 }] }] }))];
+  const input = prototypeInput('bleed', 'boss', 1);
+  const loop = (id) => ({ tag: `prototypeLoop${id}`, triggers: [{ on: 'damageDealt', allowSecondary: true, if: { p: 'eventSourceIsOwner' }, do: [{ op: 'damage', target: 'enemy', amount: 1 }] }] });
+  let bundle = withRelicProperties(prototypeBundle(), 'prototypeLoopA', [loop('A')]);
+  bundle = withRelicProperties(bundle, 'prototypeLoopB', [loop('B')]);
   input.registries = createRegistries(bundle); input.player.relicIds = ['prototypeLoopA', 'prototypeLoopB'];
   const c = createCombat(input), result = play(c, 'prototypeFast');
   assert.equal(result.events.filter((e) => e.type === 'damageDealt').length, 10);
   assert.equal(result.events.filter((e) => e.type === 'impactDealt').length, 2);
   assert.equal(c.enemies[0].statuses.bleed.meter.value, 2);
 });
+test('a relic carries as many property tags as it is given, and every one confers', () => {
+  // TAGS DETERMINE THE EFFECT, AND A CARRIER IS NOT LIMITED TO ONE. The shipped
+  // relics happen to hold a single tag each — their behaviour is unique, so
+  // there is nothing yet to share — but nothing in the path is keyed to one:
+  // `tagging` is a row per (object, tag), `propertyTags` is a list, carrierRules
+  // resolves every one of them, the mount holds the resolved array, and the scan
+  // walks the array. This is that claim, driven end to end, so the day a relic
+  // wants three tags it is content, not a change.
+  const input = prototypeInput('heavy', 'boss', 1);
+  const bundle = withRelicProperties(prototypeBundle(), 'prototypeTwoTags', [
+    { tag: 'prototypeBlockOnHit', triggers: [{ on: 'damageDealt', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'block', target: 'self', amount: 2 }] }] },
+    { tag: 'prototypePoiseOnHit', triggers: [{ on: 'damageDealt', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'poiseDamage', amount: 3 }] }] },
+  ]);
+  input.registries = createRegistries(bundle);
+  input.player.relicIds = ['prototypeTwoTags'];
+  assert.deepEqual(input.registries.relics.get('prototypeTwoTags').propertyTags,
+    ['prototypeBlockOnHit', 'prototypePoiseOnHit'], 'both tagging rows reach the relic');
+
+  const c = createCombat(input);
+  const mount = c.propertyMounts[triggerOwnerKey(c, c.player)]['relic:prototypeTwoTags'];
+  assert.equal(mount.rules.length, 2, 'one mount, both rules');
+
+  const poiseBefore = c.enemies[0].poiseMeter.value;
+  play(c, 'prototypeHeavy');
+  assert.ok(c.player.block >= 2, `the first tag conferred its block (got ${c.player.block})`);
+  assert.ok(c.enemies[0].poiseMeter.value - poiseBefore >= 3,
+    `and the second tag conferred its Poise on the same event (${poiseBefore} → ${c.enemies[0].poiseMeter.value})`);
+});
 test('co-op hooks keep event ownership distinct between seats', () => {
-  const input = prototypeInput('heavy', 'boss', 1), bundle = prototypeBundle();
-  bundle.relics = [...bundle.relics, { id: 'prototypeOwnedHit', name: 'Owned Hit', rarity: 'common', textTemplate: 'Test', triggers: [{ on: 'damageDealt', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'block', target: 'self', amount: 2 }] }] }];
+  const input = prototypeInput('heavy', 'boss', 1);
+  const bundle = withRelicProperties(prototypeBundle(), 'prototypeOwnedHit', [
+    { tag: 'prototypeOwnedHit', triggers: [{ on: 'damageDealt', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'block', target: 'self', amount: 2 }] }] },
+  ]);
   input.registries = createRegistries(bundle);
   const c = createCoopCombat({ ...input, players: [{ ...input.player, id: 'p1', relicIds: ['prototypeOwnedHit'] }, { ...input.player, id: 'p2', relicIds: ['prototypeOwnedHit'] }], combatProfiles: { p1: input.combatProfiles.player, p2: input.combatProfiles.player, e1: input.combatProfiles.e1 } });
   playCard(c, 'p1', inHand({ piles: c.players.get('p1').piles }, 'prototypeHeavy'), 'e1');

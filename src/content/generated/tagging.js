@@ -6457,5 +6457,293 @@ export const tagging = [
     "scope": "",
     "objectId": "spikedReprisal",
     "tagId": "delivery:melee"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "forsakenMedallion",
+    "tagId": "forsakenMedallion"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "starstoneShard",
+    "tagId": "starstoneShard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "cutpursesCoin",
+    "tagId": "cutpursesCoin"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldFigurine",
+    "tagId": "goldFigurine"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldenSprout",
+    "tagId": "goldenSprout"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "whetstoneFragment",
+    "tagId": "whetstoneFragment"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "kindlingCharm",
+    "tagId": "kindlingCharm"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldleafCharm",
+    "tagId": "goldleafCharm"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crackedLantern",
+    "tagId": "crackedLantern"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "sacrificialKnife",
+    "tagId": "sacrificialKnife"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "curedHide",
+    "tagId": "curedHide"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ivoryComb",
+    "tagId": "ivoryComb"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "fellWardenBrand",
+    "tagId": "fellWardenBrand"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "bloodiedTalisman",
+    "tagId": "bloodiedTalisman"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "twinnedArmor",
+    "tagId": "twinnedArmor"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "blightTouchedIdol",
+    "tagId": "blightTouchedIdol"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "warhorn",
+    "tagId": "warhorn"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "vowOfVengeance",
+    "tagId": "vowOfVengeance"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "pearlOfSagacity",
+    "tagId": "pearlOfSagacity"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "blessedDew",
+    "tagId": "blessedDew"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "azureSigil",
+    "tagId": "azureSigil"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "bloodstainedChalice",
+    "tagId": "bloodstainedChalice"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldboughSapling",
+    "tagId": "goldboughSapling"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wyrmHeart",
+    "tagId": "wyrmHeart"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "titansCinder",
+    "tagId": "titansCinder"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "radiantAegis",
+    "tagId": "radiantAegis"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "flayersCenser",
+    "tagId": "flayersCenser"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "vigilantHalo",
+    "tagId": "vigilantHalo"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "carrionTalon",
+    "tagId": "carrionTalon"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "emberIdol",
+    "tagId": "emberIdol"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crownOfStitches",
+    "tagId": "crownOfStitches"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wardenHorn",
+    "tagId": "wardenHorn"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ashOfRemembrance",
+    "tagId": "ashOfRemembrance"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "cinderOfTheFallen",
+    "tagId": "cinderOfTheFallen"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crimsonCovenant",
+    "tagId": "crimsonCovenant"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "travelersWhetstone",
+    "tagId": "travelersWhetstone"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "moonlitVial",
+    "tagId": "moonlitVial"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wardensLantern",
+    "tagId": "wardensLantern"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "hollowedHorn",
+    "tagId": "hollowedHorn"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "gildedTear",
+    "tagId": "gildedTear"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "watchmansBadge",
+    "tagId": "watchmansBadge"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "howlingStandard",
+    "tagId": "howlingStandard"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "emberwickCharm",
+    "tagId": "emberwickCharm"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "carrionMorsel",
+    "tagId": "carrionMorsel"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "gravetendersBell",
+    "tagId": "gravetendersBell"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "sentinelsOath",
+    "tagId": "sentinelsOath"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "forsakenWarflag",
+    "tagId": "forsakenWarflag"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wrathCoil",
+    "tagId": "wrathCoil"
   }
 ];

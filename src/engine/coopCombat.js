@@ -29,6 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { syncRelicProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
@@ -113,8 +114,17 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   for (const p of players) addPlayerState(C, p, { initial: true });
 
   // combatStart per player so each player's relics/statuses hook up.
+  //
+  // THE MOUNT IS INSIDE THIS LOOP, AND THAT IS THE WHOLE OF IT. A co-op owner
+  // key is the ACTIVE seat (triggers.js ownerKeyFor reads C.playerKey, which
+  // setActive moves), so mounting all seats in one pass outside it filed every
+  // seat's relics under whichever seat happened to be active — one owner, two
+  // seats, and the second seat's relic silently conferring nothing. Mounted
+  // under setActive, each seat's carriers land under the key its own scan will
+  // look them up by, which is the per-seat scoping test 24 exists for.
   for (const P of livingPlayers(C)) {
     setActive(C, P);
+    syncRelicProperties(C, P.entity);
     C.emit('combatStart', {});
   }
   for (const enemy of C.enemies) {
@@ -184,7 +194,17 @@ function addPlayerState(C, p, { initial = false } = {}) {
   C.players.set(p.id, P);
   if (!C.order.includes(p.id)) C.order.push(p.id);
   if (!initial) {
-    // Mid-combat join: give them a fresh turn's hand if it's the player phase.
+    // Mid-combat join. Mount the relics they arrive holding under their own
+    // seat key, for the reason the initial loop states — but PUT THE ACTIVE
+    // SEAT BACK. A join can land in the enemy phase, where this function did
+    // not touch the active seat before, and leaving someone else's entity and
+    // piles installed on the shared context is how the next enemy action hits
+    // the wrong hand.
+    const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
+    setActive(C, P);
+    syncRelicProperties(C, P.entity);
+    setActive(C, wasActive || null);
+    // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {
       setActive(C, P);
       P.entity.energy = P.entity.energyMax;
