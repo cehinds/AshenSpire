@@ -77,6 +77,14 @@ for (const r of results) {
 // in engine.test.js. Two files, no git conflict, and a suite that would have
 // printed "35." twice — the collision a merge cannot see.
 let zoomExtra = 0;
+{
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const files = ['wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'combat-formation.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'property-mount.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
+  if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
+  console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);
+}
 let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
                     // two-homes defect these two lines exist to catch.
 {
@@ -988,6 +996,54 @@ try {
 } catch (error) {
   zoomExtra++;
   console.error('FAIL  Card removal and touch flick regressions:', error);
+}
+try {
+  await import('./card-two-beats.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Every card owes two beats:', error);
+}
+try {
+  await import('./selection-clears-on-mount.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL A spent beat belongs to the screen that spent it:', error);
+}
+try {
+  await import('./combat-disarms-when-selection-clears.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL An armed card that stopped looking armed is still armed:', error);
+}
+try {
+  await import('./creation-continue-stacking.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error("FAIL The substep's way on outranks the stage's skip:", error);
+}
+try {
+  await import('./hand-forwards-surface.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The hand forwards its surface to the inspect door:', error);
+}
+try {
+  await import('./card-actions.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card action service:', error);
+}
+try {
+  await import('./playing-card-model.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The playing card model:', error);
+}
+try {
+  await import('./card-selection-store.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card selection store:', error);
 }
 try {
   await import('./starting-equipment-preview.test.mjs');

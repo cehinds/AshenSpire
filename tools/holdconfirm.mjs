@@ -478,20 +478,59 @@ async function main() {
     return true;
   }
 
-  // A SMITH CANDIDATE TAKES THREE TOUCH TAPS TODAY (cardInspection.js: the
-  // first tap selects, the second is swallowed as an information tap, the
-  // third reaches the card's own choose) — measured 2026-09-11, a finding
-  // for the owner and not this tool's to hide. The tool presses as many
-  // times as a thumb has to, stops the moment the Smith's button says an
-  // item is selected, and says how many it took.
-  const selectSmithCandidate = async (p) => {
-    let taps = 0;
-    for (; taps < 3; taps++) {
-      await press(p, 30); await wait(300);
-      if (await ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`)) { taps++; break; }
+  // A SMITH CANDIDATE TAKES EXACTLY TWO TOUCH TAPS, and this helper is where
+  // that number is held to (Constantine, 2026-09-12: *"it should be two taps.
+  // the first selects and the information icon (i) should appear after the set
+  // delay ... the second tap should select the card"*).
+  //
+  // THE COUNT HAS BEEN WRONG IN BOTH DIRECTIONS, so the helper pins it from
+  // both sides rather than reporting whatever it finds:
+  //   THREE (before #980) — cardInspection swallowed the selecting tap AND the
+  //     one after it, reserving the second for an information button nobody
+  //     had asked for. Measured here on 2026-09-11.
+  //   ONE (#980 through 2026-09-12) — the card was handed the first tap
+  //     outright (`actionOwnsTouch`), which bought the count by spending the
+  //     selecting beat: a thumb committed to a candidate it had not been shown.
+  //
+  // So this returns the count AND checks the shape of each beat: after tap one
+  // the card must be lit and the Smith must still hold nothing; after tap two
+  // the Smith must hold it. A tool that only counted would pass on the
+  // one-tap regression, which is the one that cost a player a choice.
+  const smithHolds = () => ev(`(document.querySelector('.smith-confirm') || { dataset: {} }).dataset.smithActionState !== 'unselected'`);
+  // W1i (2026-09-14): on a compact host the Smith's item list is folded into
+  // one selector above the pane. A thumb opens it before it can reach a
+  // candidate; opening it spends no beat on the candidate itself.
+  const openSmithList = async () => {
+    const p = await pointOf('.smith-upgrade-modal .as-catnav-toggle');
+    if (p) { await press(p, 30); await wait(250); }
+  };
+  const cardIsLit = () => ev(`!!document.querySelector('.smith-candidate-card.inspection-selected')`);
+  const selectSmithCandidate = async (p, { assert = null } = {}) => {
+    await press(p, 30); await wait(300);
+    const litAfterOne = await cardIsLit();
+    const heldAfterOne = await smithHolds();
+    if (assert) {
+      assert('the first tap on a Smith candidate lights it and chooses nothing',
+        litAfterOne && !heldAfterOne,
+        `lit=${litAfterOne} smith-holds-it=${heldAfterOne}`);
     }
-    if (taps > 1) console.log(`    (the Smith candidate took ${taps} touch taps to select — cardInspection swallows the first two)`);
-    return taps;
+    if (heldAfterOne) {
+      console.log('    (REGRESSION: one tap chose the Smith candidate — the selecting beat was spent)');
+      return 1;
+    }
+    await press(p, 30); await wait(300);
+    const heldAfterTwo = await smithHolds();
+    if (assert) {
+      assert('the second tap on a lit Smith candidate is the one that chooses it',
+        heldAfterTwo, `smith-holds-it=${heldAfterTwo}`);
+    }
+    if (!heldAfterTwo) {
+      // The old three-tap shape, if it ever comes back: say so by name rather
+      // than pressing a third time and reporting success.
+      console.log('    (REGRESSION: two taps did not choose the Smith candidate — a tap is being swallowed)');
+      return 3;
+    }
+    return 2;
   };
 
   async function openShot(state, extra = {}) {
@@ -1067,6 +1106,11 @@ async function main() {
       // open", the exact inversion the useFlask note above records. Bar faces
       // first, then the rows they reveal; a selector that matches nothing
       // still presses nothing, so non-shop surfaces are untouched.
+      // THE BARS BECAME A CATEGORY RAIL (W1d / W1v, 2026-09-13): the openers
+      // are the rail's SERVICES and SELL items. Every shelf stays mounted
+      // (hidden) while another is shown, so the burn grid opened under
+      // SERVICES is still in the document after SELL is pressed, and SELL's
+      // selected offer arms the footer action with `shopSell`.
       // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title
       // menu is five verbs and the slot rows with their delete control open
       // behind LOAD. Observed red without this press at dev = e5d9c981
@@ -1080,7 +1124,7 @@ async function main() {
       // third reaches the card's own choose) — measured 2026-09-11, and a
       // finding for the owner, not this census's to hide: the census presses
       // the card as many times as a thumb has to, and the count is on record.
-      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '[data-face="bar:sell"]', '[data-title-action="load"]']) {
+      for (const opener of ['#shop-cat-services', '#smith-opt', '.smith-candidate-region .as-catnav-toggle', '.smith-candidate-card', '.smith-candidate-card', '.smith-candidate-card', '#remove-opt', '.combat-potions', '.combat-potion-menu .potion-fold:first-of-type > summary', '#shop-cat-sell', '[data-title-action="load"]']) {
         // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
         // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
         // press at an off-viewport point lands on nothing while reporting
@@ -1443,6 +1487,7 @@ async function main() {
       // must explain the block through the same review modal, publish the ARIA
       // state, and never acquire a direct hold-commit path.
       await press(await pointOf('#smith-opt'), 30); await wait(300);
+      await openSmithList();
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const cardP = await pointOf('.smith-candidate-card');
       if (!cardP) ok(`the Smith modal offers an armament candidate`, false, 'no .smith-candidate-card — nothing to review');
@@ -1502,8 +1547,9 @@ async function main() {
       // commit directly, and the shared modal owns the preview and target laws.
       await openShot('rest', { shotSmithingStones: 1 });
       await press(await pointOf('#smith-opt'), 30); await wait(300);
+      await openSmithList();
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
-      await selectSmithCandidate(await pointOf('.smith-candidate-card'));
+      await selectSmithCandidate(await pointOf('.smith-candidate-card'), { assert: ok });
       const ready = await ev(`(() => { const b = document.querySelector('.smith-confirm'); return b ? {
         nativeDisabled: b.disabled, aria: b.getAttribute('aria-disabled'), state: b.dataset.smithActionState,
         hold: b.dataset.optionHold, holdMs: Number(b.dataset.holdMs || 0), hint: !!b.querySelector('.hold-hint')
@@ -1632,6 +1678,7 @@ async function main() {
       const sp = await step('#smith-opt', 'the Smith opener');
       if (!sp) continue;
       await press(sp, 30); await wait(250);
+      await openSmithList();
       await ev(`document.querySelector('.smith-candidate-card')?.scrollIntoView({ block: 'center' })`); await wait(120);
       const cp = await step('.smith-candidate-card', 'the first Smith candidate');
       if (!cp) continue;
@@ -1683,11 +1730,12 @@ async function main() {
   {
     console.log(`\n  THE MERCHANT — burning a card out of the deck for good`);
     await openShot('shop');
-    // The REMOVE bar first (E2 / #247): the brazier sits behind a fold now,
-    // and a folded control has no point to press.
-    await ev(`(() => { const b = document.querySelector('[data-face="bar:remove"]'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
+    // The SERVICES rail item first (W1d, 2026-09-13; the REMOVE bar before
+    // it, E2 / #247): the brazier sits on a shelf the rail shows, and a
+    // hidden control has no point to press.
+    await ev(`(() => { const b = document.querySelector('#shop-cat-services'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
     await wait(120);
-    const bar = await pointOf('[data-face="bar:remove"]');
+    const bar = await pointOf('#shop-cat-services');
     if (bar) { await press(bar, 30); await wait(250); }
     await ev(`(() => { const b = document.querySelector('#remove-opt'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
     await wait(120);

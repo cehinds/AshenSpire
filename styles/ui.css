@@ -817,19 +817,12 @@ button.ev-choice {
 button.armoury-position-card { display: grid; grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr); padding: 0; text-align: left; }
 
 /* ---- the smith's card services (mount-service-modal) -------------------
-   Same frame as the upgrade modal; only the preview differs: a list of the
-   item's mounts, then (seating) the deck cards that mount takes. */
-/* The instruction used to sit in a hand-built head; the shell's head has no slot
-   for a sentence, so it is the body grid's first, full-width row. The rows are
-   NAMED because the body grid stretches auto rows to fill the pane: left implicit,
-   the instruction row took half the height and the chooser sat at the bottom. */
-.mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 1fr); }
-.mount-service-modal .mount-modal-instruction { grid-column: 1 / -1; margin: 0; padding: 8px 20px 0; color: var(--muted); line-height: 1.35; }
-@media (max-width: 720px) {
-  .mount-service-modal .smith-modal-body { grid-template-rows: auto auto minmax(0, 1fr); }}
+   W1j / W1k: the same W1 frame as the upgrade (kit.css SMITH); only the pane
+   differs: the item's mount selector, then (seating) the deck cards that
+   mount takes. The instruction is the pane's idle text, not a body row. */
 .mount-row-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
 .mount-row {
-  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; min-height: var(--tap-floor);
   padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,0.14)); border-radius: 8px;
   background: rgba(0,0,0,0.25); cursor: pointer;
 }
@@ -841,7 +834,6 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .mount-row.is-extra > em { color: var(--gold); }
 .mount-card-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 6px 0 10px; }
 .mount-card-list .card { cursor: pointer; }
-.mount-card-list .card.selected { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 /* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
    `letter-spacing` adds its space after the LAST glyph as well as between the
@@ -895,42 +887,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   outline-offset: -3px;
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
-/* The rail folds on a short height as well as a narrow width (the media
-   query below): a landscape phone is 844 wide and 390 tall, and a two-column
-   rail inside a door that is 86% of that leaves the panel a few rows. The
-   height answer is the decider's own `data-short`, written by main.js. */
-:root[data-short='true'] .modal .set-railed { display: flex; flex-direction: column; min-height: 0; }
-:root[data-short='true'] .modal .set-railed > .set-tabs {
-  display: flex; flex-direction: row; flex: 0 0 auto;
-  gap: .5rem; padding: .7rem;
-  overflow-x: auto; overflow-y: hidden;
-  border-right: 0; border-bottom: 1px solid var(--line);
-  scrollbar-width: thin;
-}
-:root[data-short='true'] .modal .set-railed > .set-tabs > .set-tab {
-  flex: 0 0 auto; width: auto; min-width: max-content;
-  min-height: var(--tap-floor); padding-inline: 1.2rem;
-}
-:root[data-short='true'] .modal .set-railed > .set-panel { flex: 1 1 auto; min-height: 0; width: 100%; }
-@media (max-width: 600px) {
-  .modal .set-railed {
-    display: flex; flex-direction: column; min-height: 0;
-  }
-  .modal .set-railed > .set-tabs {
-    display: flex; flex-direction: row; flex: 0 0 auto;
-    gap: .5rem; padding: .7rem;
-    overflow-x: auto; overflow-y: hidden;
-    border-right: 0; border-bottom: 1px solid var(--line);
-    scrollbar-width: thin;
-  }
-  .modal .set-railed > .set-tabs > .set-tab {
-    flex: 0 0 auto; width: auto; min-width: max-content;
-    min-height: var(--tap-floor); padding-inline: 1.2rem;
-  }
-  .modal .set-railed > .set-panel {
-    flex: 1 1 auto; min-height: 0; width: 100%;
-  }
-}
+/* W1a CATEGORY NAVIGATION is the kit's (kit/categoryNav.js, kit.css "W1
+   CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector
+   above it (`.set-cat-select`) that opens the same `.set-tabs` as a list.
+   data-settings-nav / data-nav-open mirror its state for the instruments. */
 @media (max-width: 600px) {
   .modal .set-panel .r-trail:has(> .choice-group) {
     flex-basis: 100%; width: 100%; max-width: 100%;
@@ -955,6 +915,34 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
     flex: 1 0 auto; min-width: 7rem;
   }
 }
+/* W1a ROW CONTROLS AT THE TAP FLOOR (--tap-floor, 44 physical px). The drawn
+   chip keeps the kit's height (the floor less its segment's 2px of border);
+   the finger gets the floor. Its own ::after spans the floor's height, the
+   chip clips with a margin (so a long label still ellipsizes and the pseudo
+   is not cut to the chip), and the segment stops clipping its chips — its
+   end chips round their own corners instead. Chips sit edge to edge, so a
+   chip narrower than the floor (S, L, XL: 25–31 px on wide hosts) has no
+   free space beside it to borrow: it takes the floor as its width. Toggles
+   are the kit's (.as-toggle::after, kit.css). */
+.set-panel .as-seg { overflow: visible; }
+.set-panel .as-seg > button {
+  position: relative; min-width: var(--tap-floor);
+  overflow: clip; overflow-clip-margin: 0.5rem;
+}
+.set-panel .as-seg > button::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%;
+  height: max(100%, var(--tap-floor)); transform: translateY(-50%);
+}
+.set-panel .as-seg > button:first-child { border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+.set-panel .as-seg > button:last-child { border-top-right-radius: inherit; border-bottom-right-radius: inherit; }
+/* A strip of five or more chips wraps (Map zoom, Accent, UI size). Wrapped
+   rows used to touch, so each chip's floor overlapped the row below it and
+   the pair split the seam (measured 41 px). The rows now stand 2px apart —
+   the 2px each chip is short of the floor — so every chip's floor is its own. */
+.set-panel .choice-group:has(> button:nth-child(5)) { row-gap: 2px; }
+/* A row's own buttons (Command log's Open, the flick distance Reset) take at
+   least the floor's width: "Open" measured 43.6 px wide at 844x390. */
+.set-panel .r-trail button:not(.as-toggle):not(.choice) { min-width: var(--tap-floor); }
 /* The flick setting keeps its numeric value, slider and practice surface together. */
 .num-wrap:has(.set-num-slider) { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; max-width:100%; width:100%; flex-basis:100%; order:1; }
 .set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:var(--tap-floor); }

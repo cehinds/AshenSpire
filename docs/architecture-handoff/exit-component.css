@@ -1,0 +1,10 @@
+/* WCB5: a single dimension owns both axes, including all inherited shells. */
+button[data-component="WCB5"],.inspector button#close{
+  box-sizing:border-box!important;
+  width:var(--exit-size)!important;height:var(--exit-size)!important;
+  min-width:var(--exit-size)!important;max-width:var(--exit-size)!important;
+  min-height:var(--exit-size)!important;max-height:var(--exit-size)!important;
+  flex:0 0 var(--exit-size)!important;aspect-ratio:1;
+  padding:0!important;display:grid!important;place-items:center;
+  line-height:1;margin-block:0;
+}

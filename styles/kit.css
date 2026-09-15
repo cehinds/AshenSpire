@@ -230,8 +230,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 .as-toggle.on, .as-toggle[aria-checked="true"] { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.14); }
 .as-toggle.on .knob, .as-toggle[aria-checked="true"] .knob { left: calc(100% - 2.3rem); background: var(--gold); }
 .as-toggle:disabled { opacity: 0.55; cursor: default; }
-/* The drawn pill is 2.8rem tall; the finger gets the tap floor around it. */
-.as-toggle::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--tap-floor)); transform: translateY(-50%); }
+/* The drawn pill is 2.8rem × 5.2rem; the finger gets the tap floor around it
+   on both axes. `overflow: visible` because `button { overflow: hidden }`
+   (CONTAINMENT, above) clipped this pseudo to the pill: measured 17–33 px of
+   hit area, the pill's own height, before 2026-09-14. */
+.as-toggle { overflow: visible; }
+.as-toggle::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, var(--tap-floor)); height: max(100%, var(--tap-floor)); transform: translate(-50%, -50%); }
 
 /* StatePill — binary state, scannable down a column. */
 .as-pill {
@@ -564,20 +568,20 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
    advance box, which made the MISSING compensation look green — two errors
    cancelling — and that false green is what invited #910.
 
-   A residual remains at 2550x1305 Text XL: the gate reads +1.605px against a
-   1px tolerance. DO NOT TUNE THIS RULE TO CLEAR IT. At that exact shape and
-   text size the painted ink measures -2.5px WITH this transform and -6.5px
-   without, so the gate and the pixels disagree in SIGN: the gate says the
-   wordmark sits right of centre, the glyphs say it sits left. Moving the
-   wordmark right to satisfy the gate would take the ink to about -4px, away
-   from centre, and the check would go green while the defect got worse.
-
-   The cause is that advance-minus-trailing is still not ink: it carries the
-   first and last glyphs' side bearings, which do not cancel in a display face.
-   The fix belongs in the measurement, not here — startup-gate already captures
-   a screenshot, so it can scan for lit columns instead of doing Range
-   arithmetic. Left red deliberately, and NOT by widening the tolerance. */
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; transform: translateX(calc(var(--track) / 2)); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+   `--ink-bias` IS THE SECOND, SEPARATE HALF OF THE SAME CORRECTION. Half a
+   track centres the glyphs' ADVANCES; ink is narrower than advances by each
+   end glyph's side bearing, and those do not cancel. In Cinzel 700 the
+   leading A's left bearing is 0.008em and the trailing E's right bearing is
+   0.045em (both read from a 1000px raster of each glyph), so the ink sits
+   (0.045 - 0.008) / 2 = 0.0185em LEFT of its advances' centre. That is about
+   1px at 1x, which is why it hid inside the tolerance — but `body { zoom }`
+   is 1.7 at 2550x1305, and at Text XL (57.6px) it grew to 1.8px of the
+   -2.67px startup-gate read there against its 2.5px ink budget. It is an em
+   quantity, so it scales with the type and the zoom and needs no per-shape
+   tuning. Inter (the readable-ui face) reads 0.0136em, within 0.3px at this
+   size, so one token serves both. It is specific to the A…E lockup: a
+   different name needs its own end-glyph bearings measured. */
+.as-titlemenu .tm-name { --track: 0.08em; --ink-bias: 0.0185em; margin: 0; transform: translateX(calc(var(--track) / 2 + var(--ink-bias))); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
@@ -672,6 +676,20 @@ input[type="range"] { min-height: var(--tap-floor); }
   pointer-events: none;
 }
 #tooltip-2 { z-index: 1001; }
+/* WT0.ARROW — on the edge facing the trigger, pointing at its centre after
+   any flip or shift (tooltip.js pointArrow, TooltipPlacementModel). It lies
+   outside the panel, so it is `fixed`: the panel's overflow clip does not
+   reach a fixed descendant, and both share the zoomed body's local px. */
+#tooltip::after, #tooltip-2::after {
+  content: none; position: fixed; pointer-events: none;
+  left: var(--tip-arrow-left, 0px); top: var(--tip-arrow-top, 0px);
+  width: var(--tip-arrow-w, 0px); height: var(--tip-arrow-h, 0px);
+  background: var(--gold);
+}
+#tooltip[data-arrow="bottom"]::after, #tooltip-2[data-arrow="bottom"]::after { content: ''; clip-path: polygon(0 0, 100% 0, 50% 100%); }
+#tooltip[data-arrow="top"]::after, #tooltip-2[data-arrow="top"]::after { content: ''; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+#tooltip[data-arrow="left"]::after, #tooltip-2[data-arrow="left"]::after { content: ''; clip-path: polygon(100% 0, 100% 100%, 0 50%); }
+#tooltip[data-arrow="right"]::after, #tooltip-2[data-arrow="right"]::after { content: ''; clip-path: polygon(0 0, 100% 50%, 0 100%); }
 /* THE RUNGS DIFFER BY HEIGHT: small a value and a line; medium prose and a
    short list; large an effect and a glossary; expanded is large extended
    down. A tooltip never scrolls and never clips: it steps up, and past
@@ -787,7 +805,7 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card.rarity-rare { border-color: var(--gold); }
 .card.rarity-special { border-color: #6a3a7a; }
 /* SELECTION CHANGES COLOUR, NEVER FOOTPRINT — the same signal as an OptionCard. */
-.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.2); }
+.card.selected, .card[data-selected="true"], .as-card[data-selected="true"] { border-color: var(--gold); filter: var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
 .card.unaffordable { filter: grayscale(0.7) brightness(0.7); }
 .card[data-small="true"] { transform: scale(0.92); }
 /* CostMedallion — top-left, outside the frame, the only element allowed to break the edge. */
@@ -806,6 +824,27 @@ input[type="range"] { min-height: var(--tap-floor); }
 }
 .card .mana-cost { top: -0.7rem; background: #111b35; border: 2px solid #4f82d8; color: #cfe1ff; }
 .card .stamina-cost { top: 1.9rem; background: #142016; border: 2px solid #5f925d; color: var(--parchment); }
+/* Approved WC0/WC1 cost rail: below the name, inside the art. Costs have
+   contrast outlines, never boxes; the remaining exposed fan edge shows all
+   three resource types. Legacy classes remain available to screen callers. */
+.card .card-cost-rail {
+  position: absolute;
+  top: calc(var(--card-pad) + 1.2rem + var(--card-name-h) + var(--card-gap) + 0.25rem);
+  left: calc(var(--card-pad) + 0.25rem);
+  display: flex; flex-direction: column; gap: 0.2rem;
+  z-index: 3; pointer-events: none;
+}
+.card .card-cost-rail > div {
+  position: static; display: flex; justify-content: flex-start; gap: 0.2rem;
+  width: auto; min-width: 0; height: auto; padding: 0;
+  border: 0; border-radius: 0; background: none;
+  font: 600 max(12px, 1.1rem)/1.2 var(--font-body);
+  paint-order: stroke fill; -webkit-text-stroke: 2px var(--bg);
+  text-shadow: 0 1px 2px var(--bg);
+}
+.card .card-cost-rail > .cost { color: var(--gold); }
+.card .card-cost-rail > .stamina-cost { color: var(--green); }
+.card .card-cost-rail > .mana-cost { color: var(--frost); }
 /* THE NAME IS ONE LINE IN A FIXED BOX. A long name steps its type down. */
 .card .cname, .as-card .cd-name {
   --track: 0.02em;
@@ -859,11 +898,57 @@ input[type="range"] { min-height: var(--tap-floor); }
 .card[data-tag-rows="0"] .ctext { -webkit-line-clamp: 4; }
 .card[data-tag-rows="1"] .ctext { -webkit-line-clamp: 3; }
 .card[data-tag-rows="2"] .ctext { -webkit-line-clamp: 2; }
+
+/* WC0: one intrinsic face in every host. The four tracks own the full
+   height; metadata never becomes a gameplay action. */
+.card[data-wireframe="WC1"] {
+  aspect-ratio: 5 / 8;
+  height: auto;
+  padding: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 4fr) minmax(0, 4fr) minmax(0, 1fr);
+  gap: 0;
+  overflow: visible;
+}
+.card[data-wireframe="WC1"] > .cname,
+.card[data-wireframe="WC1"] > .art,
+.card[data-wireframe="WC1"] > .cd-body {
+  height: auto; min-height: 0; min-width: 0; margin: 0;
+  box-sizing: border-box;
+}
+.card[data-wireframe="WC1"] > .cname { padding-inline: 0.3rem; }
+.card[data-wireframe="WC1"] > .art {
+  position: relative; border-radius: 0; border-inline: 0;
+  overflow: hidden;
+}
+.card[data-wireframe="WC1"] .ctags {
+  position: absolute; inset: auto 0.25rem 0.25rem;
+}
+.card[data-wireframe="WC1"] > .cd-body { padding: 0.4rem; }
+.card[data-wireframe="WC1"] .ctext { -webkit-line-clamp: 5; }
+.card[data-wireframe="WC1"] > .card-cost-rail { top: calc(10% + 0.25rem); left: 0.35rem; }
+.card[data-wireframe="WC1"] > .card-metadata {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 0; overflow: hidden; padding-inline: 0.4rem;
+  border-top: 1px solid var(--line-soft); color: var(--muted);
+  font-size: 0.9rem; text-transform: capitalize;
+}
+/* WCI3: the owned count holds the end of the band even when rarity is absent. */
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-slot="end"] { margin-inline-start: auto; }
+.card[data-wireframe="WC1"] > .card-metadata > [data-meta-kind="owned"] { text-transform: none; white-space: nowrap; }
+/* WCI2: contained artwork keeps its intrinsic ratio; the anchor only says
+   where the spare room goes (around it, or above a figure on its baseline). */
+[data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
+[data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
+[data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
+/* Truncated is never a dead end: the chevron says there is more. */
+
 /* Truncated is never a dead end: the chevron says there is more. On a face
    with inspection bound (cardInspection.js) the chevron IS the control — a
    tap-floor box drawn in the same corner, the glyph where it always sat —
    and the drawn-only mark yields to it; a face without inspection keeps the
    mark alone. */
+
 .card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
 .card.card-inspection-target[data-truncated="true"]::after { content: none; }
 .card-inspection-target > .card-more-button { display: none; }
@@ -906,7 +991,16 @@ input[type="range"] { min-height: var(--tap-floor); }
   margin-top: 6px; font-size: 0.85em; line-height: 1.3;
 }
 /* The full read, in a door: the same sections the edge tray renders. */
-.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; }
+.combatant-door .combatant-inspector-body { padding: var(--modal-inset); display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow: hidden; }
+/* W1w: sprite/name/HP preview left, details right; only the details scroll. */
+.combatant-door .combatant-inspector-layout {
+  display: grid; grid-template-columns: minmax(0, calc(var(--inspector-preview-fraction, .38) * 100%)) minmax(0, 1fr);
+  gap: 1rem; flex: 1 1 auto; min-height: 0; align-items: start;
+}
+.combatant-door .combatant-inspector-details { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; max-height: 100%; overflow-y: auto; overflow-x: hidden; }
+.combatant-door .combatant-inspector-preview { display: grid; gap: .5rem; min-width: 0; align-content: start; }
+.combatant-door .combatant-inspector-art { display: grid; place-items: end center; aspect-ratio: 3 / 4; overflow: hidden; }
+.combatant-door .combatant-inspector-art > * { max-width: 100%; max-height: 100%; }
 
 /* ═══ QUICK SETTINGS — the utility rail, under the band on the right ══════ */
 /* Fullscreen and music are the two controls that belong to the PAGE, not to
@@ -1015,13 +1109,14 @@ input[type="range"] { min-height: var(--tap-floor); }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
 
-/* ═══ EVENT — body C on the page ═══════════════════════════════════════════ */
-/* The event is a decision: the door's head names it, the body is ArtWell +
-   prose + OptionCards, the foot carries the way on. It stands on the page
-   rather than over one, so it wears the door's box without the veil. */
-.event-door { width: 57rem; max-width: 100%; }
-.event-door .as-decide > .as-artwell { margin: 0 auto 1.2rem; }
-.event-door .as-decide > .as-prose { margin-bottom: 1.5rem; }
+/* ═══ EVENT — W1u, a choice body on the page ════════════════════════════════ */
+/* The head names the event and its {Status}; the narrative (ArtWell + prose)
+   stands beside the responses, stacked on narrow hosts; the foot holds
+   Continue, allowed once a response is taken. It stands on the page rather
+   than over one, so it wears the door's box without the veil. The frame is
+   the CHOICE BODY block below. */
+.event-narrative > .as-artwell { margin: 0 auto 1.2rem; }
+.event-narrative > .as-prose { margin: 0; }
 .event-door .as-options { text-align: left; }
 .event-door .as-option.ev-choice { min-height: var(--tap-floor); }
 .event-door .as-option.ev-choice[disabled] { opacity: 0.55; cursor: default; }
@@ -1036,6 +1131,32 @@ input[type="range"] { min-height: var(--tap-floor); }
    390x844 on 2026-09-11 with the "fix" in the file. `.ev-choices` lifts this
    to (0,5,0), which is the smallest step that actually wins. */
 .event-door .ev-choices .as-option .on .as-label-text { white-space: normal; overflow: visible; text-overflow: clip; }
+
+/* ═══ CHOICE BODY — the W1 frame for W1s Rest and W1u Event ═══════════════ */
+/* Shares arrive as custom properties from ChoiceBodyModel (wireframeUi
+   .choiceBody), divided by --ui-zoom so each is a share of the visible
+   viewport. The frame takes what the run HUD leaves, capped at its nominal
+   height; only the body scrolls. Fallbacks are first-paint values only. */
+.screen.choice-screen { justify-content: flex-start; gap: 0; padding-inline: var(--choice-outer-x, 2.4rem); padding-bottom: var(--choice-outer-y, 2.4rem); }
+.modal.choice-door { flex: 1 1 auto; min-height: 0; width: var(--choice-frame-width, 100%); max-width: 100%; max-height: var(--choice-frame-height, 100%); }
+.choice-door > .modal-head { flex-wrap: wrap; row-gap: 0.4rem; box-sizing: border-box; min-height: var(--choice-head-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-head .modal-head-id h2 { white-space: normal; }
+.choice-door > .modal-head > .modal-head-actions { flex: 0 1 auto; min-width: 0; align-self: center; }
+.choice-door > .modal-body { padding: var(--choice-inset-top, var(--modal-inset)) var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot { box-sizing: border-box; min-height: var(--choice-foot-min, auto); padding-inline: var(--choice-inset-x, var(--modal-inset)); }
+.choice-door > .modal-foot > .modal-foot-actions { flex: 1 1 auto; margin-left: 0; }
+/* The two body slots: side by side on wide hosts, stacked on narrow ones. */
+.choice-body-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--choice-column-gap, 1.5rem); row-gap: var(--choice-row-gap, 1rem); align-items: start; }
+:root[data-layout='narrow'] .choice-body-columns { grid-template-columns: minmax(0, 1fr); }
+.choice-body-columns > * { min-width: 0; }
+.choice-body .class-row.shrine-option-list { width: 100%; max-width: none; margin-inline: 0; }
+/* W1s availability column: what arrival restored, then each choice's state. */
+.choice-status { display: grid; gap: 0.6rem; align-content: start; }
+.screen .choice-status .rest-refill { margin: 0; max-width: none; text-align: left; }
+.choice-status-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.choice-status-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.choice-status-row[data-state='available'] .choice-status-state { color: var(--gold); }
+.choice-status-row:is([data-state='unavailable'], [data-state='used']) .choice-status-state { color: var(--muted); }
 
 /* ═══ ARMOURY — an xl door on the shell ════════════════════════════════════ */
 /* The head is the kit's (tab strip = the views, IconButton close in the same
@@ -1230,6 +1351,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-backdrop { min-height: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
 .reward-door .reward-menu { max-width: none; width: 100%; }
+/* W1t: reward choices beside their claim status; stacked on narrow hosts. */
+.reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
+:root[data-layout='narrow'] .reward-door .reward-claim-layout { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+.reward-door .reward-claim-status { display: grid; gap: .6rem; min-width: 0; }
+.reward-door .reward-claim-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.reward-door .reward-claim-row { display: flex; justify-content: space-between; gap: 1rem; min-width: 0; }
+.reward-door .reward-claim-row[data-state='taken'] .reward-claim-state { color: var(--gold); }
+.reward-door .reward-claim-row:is([data-state='blocked'], [data-state='skipped']) .reward-claim-state { color: var(--muted); }
+.reward-door .reward-claim-required { display: grid; gap: .2rem; margin: 0; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 .reward-door .reward-row .card.reward-selected {
@@ -1615,35 +1745,39 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .disc-faces > .disc-face.disc-pick, .disc-faces > .disc-face.disc-armament, .disc-faces > .disc-face.disc-relic, .disc-faces > .disc-face.disc-item, .disc-faces > .disc-face.disc-power, .disc-faces > .disc-face.disc-stat, .disc-faces > .disc-face.disc-attribute, .disc-faces > .disc-face.disc-section { flex: 1 1 100%; }
 .disc-reveal > .dc-name { font-size: 1.5rem; }
 .disc-reveal .disc-receipt { display: block; margin-top: 0.4rem; }
-/* ═══ SMITH — body E inside the shell ══════════════════════════════════════ */
-/* The chooser (left) is OptionCards in a grid, each an ArtWell with the
-   item's count as a StatePill and its kind and tags as Tags; the inspector
-   (right) is a DetailCard of StatRows and deltas. `.smith-*` are the hooks
+/* ═══ SMITH — W1i upgrade, W1j extract, W1k install ════════════════════════ */
+/* Three W1 workspaces with no categories (components/w1Workspace.js frames
+   them). The item list is the left column — the kit rail, one row per item;
+   on compact hosts one selector above the pane — and the pane is the selected
+   item: a DetailCard whose facts scroll and whose Stone cost stays pinned at
+   its foot, then the consequence line. `.smith-*` are the hooks
    tools/armament-smithing-ui.mjs reads. */
-.smith-modal-body { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(22rem, 1fr); }
-.smith-candidate-region, .smith-preview-region { min-width: 0; min-height: 0; }
-.smith-candidate-region { display: flex; flex-direction: column; border-right: 1px solid var(--line); }
-.smith-region-head { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline; gap: 1.2rem; padding: var(--modal-inset); border-bottom: 1px solid var(--line); }
-.smith-region-head > .as-labelstack { flex: 1 1 auto; min-width: 0; }
-.smith-region-head > .as-status { flex: 0 0 auto; max-width: 45%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.smith-card-list { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--modal-inset); align-content: start; --opt-min: 15rem; }
-.smith-candidate-card { flex-direction: column; align-items: stretch; text-align: center; padding: 1.2rem 1rem 1rem; gap: 0.75rem; }
-.smith-candidate-card > .as-artwell { width: 100%; height: auto; aspect-ratio: 1; max-height: 12rem; align-self: center; overflow: hidden; }
-.smith-candidate-card > .as-artwell > img { max-width: 100%; max-height: 100%; }
-.smith-candidate-card > .ob { align-items: center; }
-.smith-candidate-card .on { white-space: normal; text-align: center; justify-content: center; font-size: 1.45rem; }
-.smith-candidate-card .smith-item-type-row, .smith-candidate-card .smith-weapon-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.3rem; }
-.smith-candidate-card .smith-item-type-row > .as-tag { color: var(--gold); }
-.smith-candidate-card > .smith-weapon-count { position: absolute; top: 0.6rem; left: 0.6rem; z-index: 1; }
+.smith-candidate-region > .as-rail { gap: 0.5rem; }
+.as-railitem.smith-candidate-card {
+  position: relative; display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.45rem 3.6rem 0.45rem 0.6rem; white-space: normal;
+}
+.smith-candidate-card > .as-artwell.sm { flex: 0 0 auto; width: 3.4rem; height: 3.4rem; font-size: 1.6rem; overflow: hidden; }
+.smith-candidate-card > .as-artwell > img, .smith-selected-head > .as-artwell > img { width: 100%; height: 100%; object-fit: contain; }
+.smith-row-text { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
+.smith-row-text > .smith-weapon-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--parchment); font-weight: 600; }
+.smith-row-text > .as-status { text-align: left; }
+.smith-candidate-card > .smith-weapon-count { flex: 0 0 auto; }
+.smith-candidate-card.card-inspection-target > .card-info-button { top: 50%; right: 8px; left: auto; transform: translateY(-50%); }
+.smith-item-type-row, .smith-weapon-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.smith-item-type-row > .as-tag { color: var(--gold); }
+.smith-preview-region.as-pane { gap: 0.6rem; min-height: 0; overflow: hidden; background: var(--panel); }
+.smith-pane-status { flex: 0 0 auto; text-align: left; }
+.smith-preview-host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.smith-consequence { flex: 0 0 auto; margin: 0; }
+.mount-service-outcome { display: flex; gap: 1.2rem; align-items: flex-start; margin: 0.4rem 0 0.8rem; }
 /* Item choices share the standard card box. Full outfit poses use the tall
    art space without cropping; names and type information keep a fixed footer. */
-.smith-card-list.as-options.grid,
 .as-options:has(> .equipment-armor-card) {
   display: grid;
   grid-template-columns: repeat(auto-fill, var(--card-w));
   justify-content: center;
 }
-.smith-card-list.as-options.grid > .smith-candidate-card,
 .as-options > .equipment-armor-card.as-card {
   width: var(--card-w);
   min-width: var(--card-w);
@@ -1654,7 +1788,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   align-items: stretch;
   overflow: hidden;
 }
-.smith-candidate-card.as-card > .as-artwell,
 .equipment-armor-card.as-card > .as-artwell {
   position: relative;
   flex: 1 1 0;
@@ -1664,12 +1797,10 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   max-height: none;
   aspect-ratio: auto;
 }
-.smith-candidate-card.as-card > .as-artwell > img,
 .equipment-armor-card.as-card > .as-artwell > img {
   position: absolute; inset: 0;
   width: 100%; height: 100%; object-fit: contain; object-position: center bottom;
 }
-.smith-candidate-card.as-card > .ob,
 .equipment-armor-card.as-card > .ob {
   flex: 0 0 6rem;
   min-height: 0;
@@ -1678,7 +1809,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
   align-items: center;
   text-align: center;
 }
-.smith-candidate-card.as-card .on,
 .equipment-armor-card.as-card .on {
   font-size: 1.3rem; line-height: 1.25; min-height: 1.65rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1687,13 +1817,22 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .equipment-armor-card.as-card > .ob { flex-basis: 7.2rem; }
 .equipment-armor-card.as-card .on { display: block; max-width: 100%; }
 .equipment-armor-card.as-card .ec-tags { justify-content: center; }
-.smith-preview-region { display: flex; flex-direction: column; overflow: auto; padding: var(--modal-inset); background: var(--panel); }
-.smith-preview-card { width: 100%; gap: 0; }
-/* The summary: the selected item's name and tier, then the stone cost as a
-   StatPair under it — one column, the rows flush so the stats row follows. */
+/* The pane's card scrolls its facts; its padding-bottom is the cost strip's,
+   so the pinned strip sits flush on the card's foot. */
+.smith-preview-card { flex: 1 1 auto; min-height: 0; width: 100%; gap: 0; overflow: auto; overscroll-behavior: contain; padding-bottom: 0; }
+/* The summary: the selected item — its art beside its name, tier, kind and
+   tags — one column, the rows flush so the stats row follows. */
 .smith-summary-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; padding-bottom: 0.6rem; }
 .smith-summary-cell { min-width: 0; }
-.smith-selected-head { display: flex; flex-direction: column; gap: 0.2rem; }
+.smith-selected-head { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 1rem; row-gap: 0.2rem; align-items: start; }
+.smith-selected-head > .as-artwell { grid-row: 1 / span 5; width: 6rem; height: 6rem; overflow: hidden; }
+.smith-selected-head > :not(.as-artwell) { grid-column: 2; min-width: 0; }
+/* W1i/W1j/W1k "Cost / available stones": the last slot, pinned under the facts. */
+.smith-cost-strip {
+  position: sticky; bottom: 0; z-index: 1; display: flex; flex-direction: column; gap: 0.5rem;
+  margin-top: 0.9rem; padding: 0.8rem 0 1.28rem; border-top: 1px solid var(--line); background: var(--panel);
+}
+.smith-cost-strip > .as-blocker.pinned { margin: 0; }
 .smith-selected-head > .sr-name { font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
 .smith-preview-economy { display: flex; align-items: baseline; }
 .smith-economy-values { display: inline-flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.45rem; font: 600 1.47rem/1.2 var(--font-body); color: var(--parchment); }
@@ -1731,14 +1870,6 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .smith-preview-empty { margin: auto; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; color: var(--muted); }
 .smith-confirm[data-smith-action-state="blocked"] { cursor: help; }
 .smith-modal-footer .as-blocker.in-foot { margin-right: auto; }
-@container (max-width: 72rem) {
-  /* Stacked: the chooser takes a fixed share of the body so its list has a
-     definite height to scroll in; the inspector takes the rest. */
-  .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 42%) minmax(0, 1fr); }
-  .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); min-height: 0; }
-  .smith-card-list { --opt-min: 12rem; }
-  .smith-candidate-card > .as-artwell { max-height: 8rem; }
-}
 /* ═══ SHRINE FOLDS — the flask stepper and the level preview ═══════════════ */
 .shrine-fold-content > .as-subtitle { margin: 0; }
 .flask-increment { display: flex; flex-direction: column; gap: 0; }
@@ -2384,39 +2515,104 @@ body.pad-mode .as-keycap.float { display: none; }
    StatStrip whose two ends are Eyebrows with a rail between them. It is a
    receipt — no pointer, nothing to tap — and it leaves the HUD's right gutter
    free so the utility rail never lands on it. */
-/* THE STRIP CLEARS THE BAND'S GRIP, which hangs half its own height below the
-   HUD's bottom edge (§ BAND: `translate(-50%, 50%)` of a 2.2rem pill = 11 px of
-   overhang). The map is the one screen with READ TEXT directly under the band,
-   and measured at 1200x730 ?shot=map the grip's box ran 183->188 straight over
-   the top of "ACT I — THE FALLOW MARCHES" (title top 183, grip bottom 188).
-   12 px of top padding is that overhang plus a hairline, and it is padding
-   rather than margin so the strip's own ground still meets the band's. */
-.mapscreen > .act-route-strip {
-  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
-  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
-  border-bottom: 1px solid var(--line); background: var(--bg-raise);
-  pointer-events: none; user-select: none; cursor: default;
+/* ═══ MAP HEADER — W4b's 10 vh band (owner: "10 vh for w4b") ══════════════
+   The map draws the SAME run HUD in a host context, `data-hud-layout=
+   "map-compact"`, with its route strip laid out inside it. Combat and the
+   rooms never set the attribute, so nothing below reaches them.
+   HEIGHT comes from ui/models/MapHeaderLayout.js through components/
+   mapHeader.js as unitless physical px: 10% of the visible height, never less
+   than one tap row plus its insets. Divided by the page zoom here, so it lands
+   on glass as computed.
+   COMPOSITION is a grid on `.hud-top`; the resource row dissolves into it so
+   the meters and the Armoury / Menu pair are cells of the same grid.
+     narrow  facts   | actions        wide  route | facts  | actions
+             meters  | actions              route | meters | actions
+             route   | actions
+   Text keeps a physical floor (10 px labels) rather than scaling with the band;
+   what yields first is detail — the act chip's seat name ellipsizes (the route
+   line carries the act's name), then the narrow route line drops. */
+.shared-hud[data-hud-layout="map-compact"] {
+  --mh-inset: calc(var(--map-header-inset-px, 4) * 1px / var(--ui-zoom, 1));
+  --mh-gap: calc(var(--map-header-gap-px, 2) * 1px / var(--ui-zoom, 1));
+  box-sizing: border-box; justify-content: center; gap: 0;
+  height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1)); min-height: 0;
+  padding: var(--mh-inset) 2.5%;
 }
-.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
-.mapscreen > .act-route-strip .map-orientation-progress {
-  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-  align-items: center; gap: 8px; margin: 0; width: 100%;
+.shared-hud[data-hud-layout="map-compact"] > .hud-top {
+  display: grid; height: 100%; min-height: 0; min-width: 0;
+  align-content: center; align-items: center;
+  column-gap: calc(12px / var(--ui-zoom, 1)); row-gap: var(--mh-gap);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info actions" "meters actions" "route actions";
 }
-.mapscreen > .act-route-strip .map-orientation-progress .as-eyebrow { font-size: 0.9rem; letter-spacing: 0.12em; }
-.mapscreen > .act-route-strip [data-role="boss"] { color: var(--ember); }
-.mapscreen > .act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
-.mapscreen > .act-route-strip .map-orientation-rail::after {
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] > .hud-top {
+  grid-template-columns: fit-content(32%) minmax(0, 1fr) auto;
+  grid-template-areas: "route info actions" "route meters actions";
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] > .hud-top {
+  grid-template-areas: "info actions" "meters actions";
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-route="hidden"] .act-route-strip { display: none; }
+.shared-hud[data-hud-layout="map-compact"] .hud-resource-row { display: contents; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row { grid-area: info; min-width: 0; gap: calc(8px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
+.shared-hud[data-hud-layout="map-compact"] .hud-control-grid { grid-area: actions; align-self: center; }
+/* One fact line, still three tracks so Cinders stays centred. Each outer track
+   holds its own facts: a chip may shrink, and the class name and the act's
+   seat name ellipsize inside their track instead of running into Cinders
+   (the route strip carries the act's full name). Keys and numbers never do. */
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row > .as-statstrip { min-width: 0; margin: 0; flex-wrap: nowrap; }
+/* The trail FILLS its track and packs right, rather than the kit's
+   `justify-self: end` (§ BAND thirds), which sizes it to its max-content and
+   lets it run left over Cinders on a phone instead of yielding. */
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .hud-run-meta { justify-self: stretch; justify-content: flex-end; gap: 0 calc(8px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip { display: flex; flex: 0 0 auto; min-width: 0; white-space: nowrap; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) { flex: 0 1 auto; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip > .ck { flex: 0 0 auto; }
+.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) > .cv {
+  display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* One meter line: HP, MP and SP side by side instead of stacked. */
+.shared-hud[data-hud-layout="map-compact"] .resbars {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  column-gap: calc(10px / var(--ui-zoom, 1)); row-gap: 0;
+}
+.shared-hud[data-hud-layout="map-compact"] .resbars > .resline { min-width: 0; gap: calc(6px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-layout="map-compact"] .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
+/* THE ROUTE STRIP is a receipt — no pointer, nothing to tap: the act's name as
+   a Title·S beside (narrow) or over (wide) a StatStrip whose two ends are
+   Eyebrows with a rail between them. */
+.act-route-strip {
+  box-sizing: border-box; pointer-events: none; user-select: none; cursor: default;
+}
+.shared-hud[data-hud-layout="map-compact"] .act-route-strip {
+  grid-area: route; min-width: 0; width: auto; margin: 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, auto) minmax(4rem, 1fr); align-items: center;
+  column-gap: calc(8px / var(--ui-zoom, 1)); row-gap: calc(3px / var(--ui-zoom, 1));
+  border: 0; background: none;
+}
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="wide"] .act-route-strip {
+  grid-template-columns: minmax(0, 1fr); align-self: center;
+  padding-inline-end: calc(12px / var(--ui-zoom, 1)); border-right: 1px solid var(--line);
+}
+.act-route-strip > .as-title-s {
+  margin: 0; min-width: 0; font-size: max(1.1rem, calc(11px / var(--ui-zoom, 1))); line-height: 1.2;
+  letter-spacing: 0.12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(1.5rem, 1fr) auto;
+  align-items: center; gap: calc(6px / var(--ui-zoom, 1)); margin: 0; width: 100%; min-width: 0;
+}
+.act-route-strip .map-orientation-progress .as-eyebrow { font-size: max(0.9rem, calc(10px / var(--ui-zoom, 1))); line-height: 1.2; letter-spacing: 0.1em; }
+/* Narrow: the title already stands at the rail's start, so ENTRANCE yields. */
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip [data-role="start"] { display: none; }
+.shared-hud[data-hud-layout="map-compact"][data-map-header-layout="narrow"] .act-route-strip .map-orientation-progress { grid-template-columns: minmax(1.5rem, 1fr) auto; }
+.act-route-strip [data-role="boss"] { color: var(--ember); }
+.act-route-strip .map-orientation-rail { position: relative; height: 1px; background: var(--map-structure); }
+.act-route-strip .map-orientation-rail::after {
   content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
   border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
   transform: translateY(-50%) rotate(45deg);
-}
-@media (max-width: 700px) {
-  /* Percentage, never a viewport unit: the body is zoomed, so 80% of the Map
-     surface stays 80% on glass. The right margin is the HUD's utility gutter. */
-  .mapscreen > .act-route-strip {
-    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
-    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
-  }
 }
 /* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
    BESIDE the board and never over it (styles/map.css says why). The bar has no
@@ -2458,6 +2654,18 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 .flask-inspect-body { padding: var(--modal-inset); }
 .pile-body .as-cardgrid { justify-content: center; }
 .pile-empty { padding: 2rem; }
+/* W1h: rail | pane. The pane holds the pile beside the selected card's
+   reading; compact hosts put the kit's [Pile ▾] selector above the pane and
+   the reading under the pile. Only the two columns scroll. */
+.spent-pile-modal .pile-body { display: flex; min-height: 0; }
+.spent-pile-modal .pile-body > .as-railed { flex: 1 1 auto; min-height: 0; width: 100%; }
+.spent-pile-modal .pile-pane { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; min-height: 0; padding-inline-start: 2.5vw; }
+.spent-pile-modal :is(.pile-collection, .pile-detail) { min-height: 0; overflow: auto; }
+.spent-pile-modal .pile-detail { padding: var(--modal-inset); border-left: 1px solid var(--line); font-size: calc(15px / var(--ui-zoom, 1)); line-height: 1.5; color: var(--ink-dim); }
+.spent-pile-modal .pile-detail .tt-title { font-size: calc(18px / var(--ui-zoom, 1)); font-weight: 600; color: var(--parchment); margin-bottom: .4em; }
+.spent-pile-modal .pile-detail .ti-meta { display: flex; gap: .6em; align-items: center; margin-bottom: .6em; }
+:root[data-layout='narrow'] .spent-pile-modal .pile-pane { grid-template-columns: minmax(0, 1fr); padding-inline-start: 0; }
+:root[data-layout='narrow'] .spent-pile-modal .pile-detail { border-left: 0; border-top: 1px solid var(--line); }
 
 /* THE BOSS SPLASH is Eyebrow + Title·L + Ornament on a near-black veil. The
    veil and the beats are FX (the animation lives in styles/combat.css); what is
@@ -2764,7 +2972,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .armoury .armoury-character :is(.armoury-fold, details) > summary { min-height: calc(48px / var(--ui-zoom, 1)); height: auto; }
 .armoury .armoury-character summary :is(.as-status, .fold-summary) { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .armoury .armoury-character summary { overflow: hidden; }
-.armoury .armoury-head .modal-tab { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); }
 .armoury .armoury-position-summary .on { font-size: max(1.5rem, calc(15px / var(--ui-zoom, 1))); }
 .armoury .armoury-position-summary :is(.od, .om) { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
 .armoury[data-responsive='phone'] .armoury-content, .armoury[data-responsive='phone'] .armoury-body { display: flex; flex-direction: column; gap: 1.2rem; }
@@ -2821,12 +3028,62 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    clip every hit spark to a border, and would look harmless in review because
    nothing else in this file mentions the layers. Hence this paragraph. */
 .armoury-card-gallery .art { min-height: calc(55px / var(--ui-zoom, 1)); overflow: hidden; contain: layout paint; }
-/* ONE ROW OF TABS ON A PHONE. The 2x2 grid put the close control in a cell
-   beside the tabs and the second row of views under the first (measured
-   390x844, 2026-09-11). Four views at 13 px fit one row beside the close;
-   the strip scrolls sideways before it ever wraps. */
-.armoury[data-responsive='phone'] .armoury-head [role='tablist'] { display: flex; flex-wrap: nowrap; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.armoury[data-responsive='phone'] .armoury-head .modal-tab { flex: 1 0 auto; min-width: 0; padding-inline: .3rem; white-space: nowrap; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); }
+/* W1e / W1n — THE ARMOURY ON THE W1 SHELL. One title and the close in the
+   head; the views are the kit's W1 category navigation (a rail beside the
+   pane on wide hosts, one [Category ▾] selector above it on compact ones);
+   the footer holds Back and the selected item's action. Only the pane, or
+   the pane's two columns, scrolls. */
+.armoury > .modal-body.armoury-shell-body { display: flex; flex-direction: column; overflow: hidden; padding: 0; gap: 0; }
+.armoury .armoury-shell-body > .as-railed.armoury-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+.armoury .armoury-railed > .armoury-pane { display: flex; flex-direction: column; gap: 1.4rem; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* The active view fills the pane. The inventory page's `align-items: start`
+   (written for its old two-column grid) shrank Equipment to its content. */
+.armoury .armoury-railed .armoury-content > .armoury-body { align-self: stretch; }
+/* The active pane's split: the item collection beside (wide) or above (phone)
+   the selected item's detail. Tracks come from wireframeUi.armoury through
+   --armoury-collection-track / --armoury-detail-track (equipment.js draw). */
+.armoury[data-view='hybrid'] .armoury-railed > .armoury-pane { overflow: hidden; }
+.armoury[data-view='hybrid'] .armoury-content,
+.armoury[data-view='hybrid'] .armoury-inventory { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.armoury .armoury-inventory > .ep-list.armoury-split {
+  flex: 1 1 auto; min-height: 0; display: grid; column-gap: 1.2rem;
+  grid-template-columns: minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.armoury .ep-list.armoury-split > .armoury-selection-context { grid-column: 1 / -1; grid-row: 1; }
+.armoury .ep-list.armoury-split > .armoury-item-collection { grid-column: 1; grid-row: 2; }
+.armoury .ep-list.armoury-split > .armoury-item-detail { grid-column: 2; grid-row: 2; border-left: 1px solid var(--line); padding-left: 1.2rem; }
+.armoury .ep-list.armoury-split > :is(.armoury-item-collection, .armoury-item-detail) { min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.armoury .ep-list.armoury-split.is-empty > .armoury-item-collection { grid-column: 1 / -1; }
+.armoury[data-split='rows'] .armoury-inventory > .ep-list.armoury-split {
+  grid-template-columns: minmax(0, 1fr); row-gap: 0.8rem;
+  grid-template-rows: auto minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+}
+.armoury[data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-column: 1; grid-row: 3; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+.armoury .armoury-item-detail > .disc-reveal { margin: 0; }
+/* The shared equipment inspection is laid out for a 450px face (220px art
+   beside its details) and stacks only under the phone media rule below. The
+   Armoury's detail columns can be narrower than that on any viewport, so they
+   stack it the same way, measured on the column itself (a container query). */
+.armoury :is(.armoury-item-detail, .armoury-position-grid-detail) { container: armoury-detail / inline-size; }
+/* Scoped under .armoury so these outrank the base inspection rules that come
+   later in this file (same specificity would lose on source order). */
+@container armoury-detail (max-width: 480px) {
+  .armoury .card-inspection-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 16px; }
+  .armoury .card-inspection-art { width: 100%; max-width: 100%; margin-inline: auto; }
+  .armoury .card-inspection-art > :is(.equipment-poker-card, .card) { width: 160px; height: auto; aspect-ratio: 5 / 7; margin-inline: auto; }
+  .armoury .card-inspection-art > .inspection-tags { justify-content: center; }
+}
+.armoury .armoury-selection-facts { display: flex; flex-direction: column; gap: 0.4rem; margin-block: 0.6rem; }
+.armoury .armoury-selection-facts > .as-status { white-space: normal; overflow: visible; }
+/* W1e Equipment in its grid presentation: the slot tiles beside their detail. */
+.armoury .armoury-position-grid-groups {
+  display: grid; gap: 1.2rem; align-items: start;
+  grid-template-columns: minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
+}
+.armoury .armoury-position-grid-groups > .armoury-position-grid-detail { position: sticky; top: 0; }
+.armoury[data-split='rows'] .armoury-position-grid-groups { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-split='rows'] .armoury-position-grid-groups > .armoury-position-grid-detail { position: static; }
 /* Approved 350 × 490 poker canvas. Every measurement scales together. */
 .equipment-poker-card { display:block; position:relative; width:100%; max-width:392px; aspect-ratio:5/7; color:#eee3ca; text-align:left; margin-inline:auto; }
 .equipment-poker-card .epc-frame { box-sizing:border-box; display:grid; grid-template-rows:25px minmax(0,1fr) 25px 39px 19px 82px 36px 13px; position:absolute; inset:0 auto auto 0; width:var(--epc-frame-w,350px); height:var(--epc-frame-h,490px); padding:var(--epc-pad,18px); gap:var(--epc-gap,5px); border:1px solid var(--accent); border-radius:13px; transform-origin:top left; transform:scale(var(--card-scale,1)); box-shadow:0 9px 26px #0006,inset 0 0 0 4px #17120e,inset 0 0 0 5px #695334; background:linear-gradient(125deg,#302319,#19150f 45%,#251d15); font:13px/1.35 Arial,sans-serif; }
@@ -2847,7 +3104,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-bonus + .epc-bonus { margin-top:3px; }
 .epc-flavor { font:italic 12px/1.3 Georgia,serif; color:#baa98c; padding-top:6px; border-top:1px solid #5e4c32; }
 .epc-footer { display:flex; justify-content:space-between; gap:8px; font:10px/1.1 Arial,sans-serif; color:#ac9c7f; text-transform:uppercase; letter-spacing:.04em; }
-.epc-footer > :last-child { color:var(--accent); }
+/* WC2: metadata only — rarity at the start, the owned count at the end. */
+.epc-footer > [data-meta-kind="rarity"] { color:var(--accent); }
+.epc-footer > [data-meta-slot="end"] { margin-inline-start:auto; }
+.epc-footer > [data-meta-kind="owned"] { text-transform:none; }
+/* WC2a body row one: slot, then requirements, in the one type band. */
+.epc-type { display:flex; justify-content:center; align-items:center; gap:.5em; }
+.epc-type > .epc-requirement { text-transform:none; letter-spacing:.02em; font-weight:400; color:#d1ba82; }
+.epc-type > .epc-requirement::before { content:'·'; margin-inline-end:.5em; color:var(--accent); }
+.epc-type > span { min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.epc-type > span:first-child { flex:0 1 auto; }
+.epc-type > .epc-requirement { flex:0 1 auto; }
 .equipment-poker-card [tabindex]:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .equipment-poker-inspection { min-width:0; width:100%; }
 .equipment-poker-explanations { margin-top:12px; font:14px/1.5 Arial,sans-serif; color:#eee3ca; text-align:left; overflow-wrap:anywhere; }
@@ -2926,6 +3193,57 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .armoury .disc-faces:has(.poker-inventory-face), .cc-card-selectors:has(.poker-equipment-choice),
   #shop-armaments, #shop-relics, #shop-flasks { grid-template-columns:minmax(0,280px); }
 }
+
+/* ═══ W1d / W1v — THE MERCHANT AS A WORKSPACE (screens/shop.js) ═══════════
+   One frame under the run band: W0 head, a category rail beside the pane
+   (above it on compact hosts), the W1v pane of offers and the selected
+   offer's detail, and the W0 foot. The page never scrolls; only the offers
+   and the detail do. ShopWorkspaceModel.js owns every number and shop.js
+   writes them as custom properties and data attributes. */
+.screen.shop-workspace { overflow: hidden; gap: 0; padding-inline: 2.5%; padding-bottom: 1rem; }
+.shop-frame {
+  --modal-inset: 1.4rem;
+  display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+  width: 100%;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-4); overflow: hidden;
+}
+.shop-frame > .modal-head { padding-block: 0.6rem; }
+/* The rail is its own scrollport: on a short host its items scroll inside it
+   and never run under the foot (measured at 844x390, where they did). */
+.shop-frame > .shop-railed { flex: 1 1 auto; min-height: 0; height: auto; grid-template-columns: var(--shop-rail-width, 17.25rem) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+.shop-frame > .shop-foot-host > .modal-foot { padding-block: 0.6rem; }
+:root .shop-workspace[data-shop-rail='side'] .shop-railed > .shop-rail { flex-direction: column; overflow-x: hidden; overflow-y: auto; }
+/* Compact: the kit's [Category ▾] selector above the pane (kit.css W1
+   CATEGORY NAVIGATION); data-shop-rail mirrors its decision. */
+:root .shop-workspace[data-shop-rail='top'] .shop-railed { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.shop-rail > .as-railitem.with-status > .as-status { color: inherit; opacity: 0.8; }
+.shop-pane { min-height: 0; overflow: hidden; padding-block: 0.8rem; }
+.as-pane > .shop-pane-head { flex: 0 0 auto; margin-bottom: 0.6rem; }
+.as-pane > .shop-body { flex: 1 1 auto; min-height: 0; display: grid; gap: var(--shop-gap, 1rem); }
+.shop-workspace[data-shop-pane='columns'] .shop-body { grid-template-columns: minmax(0, var(--shop-offers-fr, 1fr)) minmax(0, var(--shop-detail-fr, 1fr)); }
+.shop-workspace[data-shop-pane='stacked'] .shop-body { grid-template-rows: minmax(0, 1fr) auto; }
+.shop-workspace[data-shop-pane='stacked'] .shop-detail { max-height: var(--shop-detail-max, 50%); }
+.shop-body > .shop-detail[hidden] { display: none; }
+/* The two scrollports. `scrollbar-color` inherits from `.screen`, so the
+   product thumb reads the same here as on every other page. */
+.shop-offers, .shop-detail { min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.shop-offers > .shop-shelf { max-width: none; width: 100%; padding: 2px; }
+.shop-offers > .shop-services { display: flex; flex-direction: column; gap: 1rem; }
+.shop-offers > .shop-services .class-row, .shop-offers > .shop-services > #shop-remove { max-width: none; }
+/* A narrow `.class-row` stacks as a column, where the kit's `flex: 1 1 26rem`
+   on `.class-pick` becomes a 260 px HEIGHT: the remove, smith and sell tiles
+   each stood a third of a phone tall around one line of text (measured at
+   390x844). In the offers a tile keeps its content height. */
+:root[data-layout='narrow'] .shop-offers .class-row > .class-pick { flex: 0 0 auto; }
+.shop-offer.is-selected > .card, .shop-offer.is-selected > .shop-inspect-card, .shop-offer.is-selected > div > .card { outline: 2px solid var(--gold); outline-offset: 3px; }
+.shop-offer.class-pick.is-selected { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18); }
+.shop-offer-avail { display: block; white-space: normal; color: var(--muted); }
+.shop-detail { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border: 1px solid var(--line); border-radius: var(--r-2); background: var(--panel); }
+.shop-detail > .shop-detail-name { margin: 0; }
+.shop-detail > .shop-detail-desc { margin: 0; color: var(--ink-dim); font-size: 1.3rem; line-height: 1.4; }
+.shop-detail > .as-status { white-space: normal; text-align: left; align-self: flex-start; }
+.shop-detail > .shop-detail-price { color: var(--gold); }
+.shop-detail > .shop-detail-avail.is-available { color: var(--parchment); }
 /* Shared inspection: 270px artwork + 180px information within the 450px face. */
 .equipment-poker-card .epc-frame,
 .collectible-poker-card .epc-frame { padding:var(--epc-pad,19px); gap:var(--epc-gap,3px); }
@@ -2966,14 +3284,17 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .card-inspection-modal .modal-body { overflow:auto; overscroll-behavior:contain; }
 .equipment-poker-explanations { margin-top:0; }
 /* One drawn face for both information controls; the size is a variable so the
-   card's control reads the tap floor while the combatant's keeps the 36px the
-   overhead layout was fitted around (docs/qa/combatant-overhead). */
+   WCB1: every host's control is the one shared circle (--inspect-size, a
+   44 physical px target, with a 16 px label) unless the host declares its own
+   --card-info-size, which nothing does today — the hook stays for a host that
+   must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
-.combatant-leading > .combatant-info { box-sizing:border-box; width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold 20px/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
-.combatant-leading > .combatant-info { --card-info-size: 36px; }
-.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
+.combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
+.card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
 .card-inspection-target:is(.inspection-selected, .selected, [aria-selected='true']) > .card-info-button { visibility:visible; pointer-events:auto; }
-.inspection-selected { outline:3px solid #e0bd68; outline-offset:3px; border-radius:12px; }
+/* WCF3: the selected card and its inspect control share one glow. The hand
+   moves that control into an overlay, so the portal wears the same filter. */
+.inspection-selected, .hand-info-portal { filter:var(--selection-glow, drop-shadow(0 0 calc(.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold))); }
 .card-info-button:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .card-info-button::before { content:''; position:absolute; inset:100% -8px -12px; }
 .card-inspection-modal .card-inspection-layout { padding:24px; gap:28px; grid-template-columns:minmax(0,190px) minmax(0,1fr); }
@@ -3017,8 +3338,50 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
-/* Creation keeps card nodes in place so focus can lift and settle smoothly. */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
+/* Creation keeps card nodes in place so focus can lift and settle smoothly.
+   ONE PLACEMENT, AND THE ROOM IT NEEDS (Constantine's review, 2026-09-12).
+   The information badge hangs above a selected card on every surface, this one
+   included; a corner exception here read as a second rule for the same
+   control. What made the exception necessary was room, not placement — with
+   nothing reserved the badge straddled the STARTING ARMOUR header's border
+   (measured 1280x800, 2026-09-11) — so these selectors reserve it: the 64 px
+   row gap every other card scrollport keeps, and a head that is DERIVED from
+   the badge it has to clear, floored at the 80 px this rule used to type.
+   THE HEAD IS THE BADGE'S OWN RISE, READ FROM THE BADGE'S OWN TOKENS.
+   Nothing declares --card-info-size any more, so the control here is the shared
+   circle, and main.js writes its size and hang onto the document root from
+   wireframeUi.inspect (--inspect-size, --inspect-gap). --cc-choice-rise reads
+   those same two properties through the same var chain the button's own `top`
+   uses, so a config change moves the head with the badge instead of past it: at
+   sizeRem 4 / gapPx 20 the badge grows to 67.2 px and the old head, which had
+   the 2.75 and the 10 typed into it, clipped 17.3 px (measured 2026-09-14).
+   The third term is the focus lift — translateY(-6px) plus the 5 % of the
+   card's height that scale(1.05) about center bottom grows upward, 20.2 px of
+   layout at UI size S — which is what the 26 covers, with slack.
+   A head derived from --tap-floor was tried and refused, and the max() floor is
+   why: that token divides by a zoom that runs ABOVE 1 on a desktop (1.48 at
+   1920), and a head that shrinks with it clipped 8 px off the first row there
+   while the badge had not moved. This expression only ever GROWS the head, and
+   it resolves to exactly 80 px at every zoom of 1 or more, so the Auto sizes
+   keep the geometry measured above.
+   THE ROW GAP RIDES THE SAME TOKEN, and keeps the 64 every other card
+   scrollport keeps wherever the head is at its floor. A second row's badge
+   overlaps the row above by design — it is drawn over that card at z-index 8,
+   measured 2.9 px into it at 1280 with the default tokens — so the gap is not
+   full clearance and is not what keeps a badge whole. Deriving it only stops a
+   bigger badge from deepening that overlap: the gap grows by exactly what the
+   head grows, never less than 64.
+   The floor alone was not enough: at UI size S (--ui-zoom 0.85) with NORMAL
+   motion the badge's top sat 0.8 px past the scrollport's padding box at every
+   desk width measured — 1280, 1366, 1440 and 1920 (2026-09-14; ui-sweep's
+   fixture asks for reduced motion, which drops the lift, so R5 could not see
+   it, and the row now runs a second pass that can). Derived, the head is
+   89.53 px there and the same cells clear by 7.3 px; 390 at Auto (zoom 0.9)
+   takes 86 px and clears by 18.1.
+   Measured whole and clear of the section face at 1280, 1366, 1440, 1920 and
+   390, at UI sizes Auto, S, M and XL, under normal motion.
+*/
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
 .cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
@@ -3026,16 +3389,25 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
-/* IN THE CARD'S CORNER, not floating above it. Elsewhere the info button
-   hangs a tap floor above a selected card and the row reserves 64 px for it;
-   the creation selectors reserve nothing, so the button straddled the STARTING
-   ARMOUR header's border (measured 1280x800, 2026-09-11). Here it sits inside
-   the card's top-right corner at 32 px — the corner holds no reading. */
-.cc-card-selectors .card-inspection-target > .card-info-button { --card-info-size: 32px; top: 6px; left: auto; right: 6px; transform: none; font-size: 16px; }
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
-.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; }
+/* THE SUBSTEP'S WAY ON OUTRANKS THE STAGE'S SKIP.
+   The stage row above (`.cz-stage .modal-btnrow.end`) is pinned to the
+   scrollport floor at `z-index:2`, and this button is right-aligned in the same
+   band. MEASURED at 1366x768 with Main Hand open: scrolled so `Continue to Off
+   Hand` reaches the floor, the two overlap by 46.9px vertically and 203.7px
+   horizontally, and `elementFromPoint` at this button's own centre returned
+   `BUTTON.as-btn cz-next` — the player pressing the section's Continue was
+   reaching `Continue to seed`, SKIPPING the armament they had come to choose.
+   Below 700px the sticky rule further down already answers this with
+   `z-index:3`; above it this button is a static grid item, so it lost the paint
+   order to a later, positioned sibling. A grid item's containing block is its
+   own one-row grid area, so it cannot be made sticky here (the reason the
+   sticky rule is mobile-only) — but it does not need travel, only rank.
+   `position:relative` with no offsets moves nothing and changes no layout; it
+   only lets the z-index apply. */
+.cc-equipment-continue { grid-column:2; grid-row:2; justify-self:end; align-self:end; min-height:44px; max-width:100%; white-space:normal; position:relative; z-index:3; }
 /* The ready lift scales the button about its centre, and at the grid's right
    edge that is a 2px horizontal overflow (measured: section scrollWidth 1100
    against clientWidth 1098 at 1024 wide). Growing from the right edge keeps
@@ -3053,6 +3425,95 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    on is one button alone on its row, so the row is sized to the longest of
    those labels instead of the shared `long` step. */
 .as-btnrow:has(> .cz-next), .modal-btnrow:has(> .cz-next) { --step: 26rem; }
+/* THE WAY ON NEVER SCROLLS OUT OF REACH (Constantine, 2026-09-12: *"the
+   continue button always in view and not requiring too much scrolling"*).
+   MEASURED: with the right-hand section open at 390x844 the creation scroll is
+   2129px against a 784px viewport, and the section's Continue sits at the end
+   of it. A player who had chosen scrolled back through everything to leave.
+   STICKY RATHER THAN MOVED TO THE FOOT, and the reason is the hooks: `#cz-start`
+   and `.cz-next[data-next]` are read by startup-gate, character-creation-check
+   and the contact sheet, and the foot is `.cz-actions`. Relocating the buttons
+   changes what every one of those instruments walks. Sticky changes where the
+   same button PAINTS and nothing about where it lives, so the fix costs no
+   instrument a re-teach.
+   The row carries its own ground: a transparent sticky control with the stage's
+   content sliding under it is unreadable at the moment it matters. */
+.cz-stage {
+  /* How far above the scrollport's floor a SECOND sticky row has to rest, so it
+     clears the first. Authored once because CSS cannot ask how tall a sibling
+     is — but DERIVED, not typed, because every part of that height is a setting
+     the player can move:
+        var(--tap-floor)  the button inside the row, which is
+                          `calc(var(--tap-target) / var(--ui-zoom, 1))` — it
+                          grows with Minimum tap size and with Auto's zoom
+        12px              the row's own `padding-block: 10px 2px`, below
+        10px              the scrollport's `padding-bottom`, which is why the
+                          stage row's painted bottom sits above the floor
+                          rather than on it
+     THIS WAS A CONSTANT AND THE CONSTANT WAS WRONG. 64px measured clean at the
+     default 44px target, and collided again as soon as the target moved: at
+     `--tap-target: 60px` the rows overlapped by 8px at zoom 1 and by 27.8px at
+     zoom 0.62. A number that only holds at one setting is a number that has
+     not been derived. */
+  --cz-continue-row: calc(var(--tap-floor) + 22px);
+}
+.cz-stage .modal-btnrow.end,
+.cz-stage .cc-primary-continue-row {
+  position:sticky; bottom:0; z-index:2;
+  background:linear-gradient(to top, var(--panel) 62%, transparent);
+  padding-block:10px 2px; margin-block-start:8px;
+}
+/* TWO WAYS ON CAN BE STICKY AT ONCE, AND THEY MUST NOT SHARE THE BAND.
+   The character stage holds both: the nested `Continue` that closes Primary
+   Stats and opens the Keepsake, and the stage's own `Continue to equipment`.
+   MEASURED at 390x844 with Primary Stats open, both rested at exactly
+   top 693 / bottom 748 — the same 55px band, the same z-index — so the stage
+   row, later in the DOM, painted over the nested one. What a player saw at the
+   bottom of the glass was the DISABLED `Continue to equipment`, with the
+   actionable control hidden underneath it.
+   Both are needed: with the nested row made static it falls to 828, which is
+   71px below a band that ends at 757, so it cannot simply stop being sticky.
+   So they STACK — the nested row rests one row higher, and paints above, which
+   also keeps it legible while the two pass each other on a scroll.
+   The selector carries `.modal-btnrow` because the nested row wears `end` too,
+   and would otherwise lose the specificity contest with the rule above. */
+.cz-stage .modal-btnrow.cc-primary-continue-row {
+  bottom:var(--cz-continue-row); z-index:3;
+}
+/* A fold's summary is a control: it takes the tap floor and the kit's ring.
+   THE FLOOR IS THE TOKEN, NOT THE NUMBER. `--tap-floor` is
+   `calc(var(--tap-target) / var(--ui-zoom, 1))` precisely because `body` carries
+   `zoom: var(--ui-zoom)`: a literal 44px below body renders at 44 x zoom, so at
+   Auto's 0.62 floor this control would have been a ~27px physical target while
+   every button beside it stayed 44. The division cancels the zoom; the number
+   does not. The comment said "takes the tap floor" while the code took a
+   constant that happens to equal it at zoom 1. */
+.cc-starting-fold > .cc-starting-summary {
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px;
+  min-height:var(--tap-floor); padding:10px 4px; cursor:pointer; list-style:none;
+}
+.cc-starting-fold > .cc-starting-summary::-webkit-details-marker { display:none; }
+.cc-starting-fold > .cc-starting-summary::after {
+  content:'\203A'; margin-inline-start:auto; color:var(--muted);
+  transition:transform 150ms ease-out;
+}
+.cc-starting-fold[open] > .cc-starting-summary::after { transform:rotate(90deg); }
+.cc-starting-fold > .cc-starting-summary b { color:var(--gold); }
+.cc-starting-fold > .cc-starting-summary .cc-package-context { margin:0; }
+.reduced-motion .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+@media (prefers-reduced-motion: reduce) {
+  .cc-starting-fold > .cc-starting-summary::after { transition:none; }
+}
+/* INSIDE THE FOLD THE CARDS ARE A REFERENCE, AND ARE DRAWN AS ONE. The
+   renderer's `small` flag was the wrong tool and is not used here: its only
+   effect is `transform: scale(0.92)`, which `.cc-starting-card > .card` above
+   correctly cancels — a transformed card still occupies its untransformed box,
+   so it saves no scroll at all. A smaller BOX does. Three to a row instead of
+   two turns six faces from three rows into two. */
+.cc-starting-fold .cc-starting-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px 7px; }
+.cc-starting-fold .cc-starting-card { padding-top:34px; }
+.cc-starting-fold .cc-starting-card > .card { max-width:104px; }
+.cc-starting-fold .cc-starting-card .card-info-button { top:-36px; }
 .cc-starting-package { margin-top:20px; border-top:1px solid var(--line); padding-top:16px; }
 .cc-starting-package h4 { margin:0 0 8px; color:var(--gold); font-size:18px; }
 .cc-starting-card-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px 9px; }
@@ -3124,18 +3585,32 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    pane each own their overflow, so the Continue never leaves the glass. The
    subtraction is the door's head and foot, the section face and the panel's
    breathing room, divided by the zoom for the reason .modal's ceiling is.
-   The choices scrollport keeps the 64px head the other card scrollports keep
-   (above), so the above-card inspect control is not clipped on the first
-   row. Phones keep the stacked, page-scrolling layout below. */
+   The choices scrollport's head (above) is what keeps the above-card inspect
+   control off the section face on the first row. Phones keep the stacked,
+   page-scrolling layout below. */
 @media(min-width:701px) {
   .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
   .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
-  .cc-equip-group[data-equipment-section] > .cc-card-selectors:has(.poker-equipment-choice) { padding-top:64px; }
   .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
 }
 @media(max-width:700px) {
   .cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { grid-row:auto; }
   .cc-equipment-continue { grid-column:1; grid-row:auto; width:100%; }
+  /* THE SECTION'S OWN WAY ON, MEASURED: with the Main Hand section open at
+     390x844 the `Continue to Off Hand` button sat 1815px down a 784px
+     scrollport — 1058px below the fold, at the end of the armament picker it
+     exists to close. The stage-level sticky rule above never reached it: that
+     rule matches `.modal-btnrow.end` and `.cc-primary-continue-row`, and this
+     is a bare `.cc-equipment-continue` inside `.cc-equip-group`.
+     THE GROUP BECOMES A COLUMN FLEX CONTAINER HERE, and that is load-bearing
+     rather than cosmetic: a grid item's containing block is its own one-row
+     grid area, so `position:sticky` inside it has nowhere to travel and does
+     nothing. A flex item's containing block is the container's content box —
+     the full height of the open section — which is the travel sticky needs.
+     At this width the group already rendered as one stacked column, so the
+     switch changes the layout in no other way. */
+  .cc-equip-group[data-equipment-section] { display:flex; flex-direction:column; padding-bottom:4px; }
+  .cc-equipment-continue { position:sticky; bottom:4px; z-index:3; }
   .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px) scale(1.03); }
   .cc-starting-card-grid { gap:9px 6px; }
   .cc-starting-card > .card { max-width:150px; }
@@ -3174,6 +3649,23 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .epc-effects:has(.epc-bonus + .epc-bonus)::after { content:'…'; position:absolute; right:0; bottom:0; }
 .epc-frame > .epc-tags { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .epc-tag { display:inline-block; margin-right:3px; }
+/* WC2a1–WC2c3 possession sub-variants. PossessionVariantModel decides which
+   rows a region carries and how many the face shows (wireframeUi.possession);
+   rows past that budget carry `hidden` and stay listed in the inspection. */
+.equipment-poker-card .epc-frame [hidden] { display:none !important; }
+.equipment-poker-card .epc-facts[data-layout='lines'] { display:flex; flex-direction:column; justify-content:center; gap:1px; padding:2px 0; }
+.epc-facts[data-layout='lines'] > .epc-line { display:block; min-width:0; font:13px/1.2 Arial,sans-serif; color:#e5dccb; text-align:left; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* WC2c2: the registered resource tint marks the row; the text keeps its contrast. */
+.epc-facts[data-layout='lines'] > .epc-line[style*='--line-tint'] { border-inline-start:3px solid var(--line-tint); padding-inline-start:5px; }
+.equipment-poker-card[data-possession] .epc-bonus + .epc-bonus:not([hidden]) { display:-webkit-box; margin-top:0; }
+.equipment-poker-card[data-possession] .epc-effects[data-entries='many'] .epc-bonus { -webkit-line-clamp:1; }
+.equipment-poker-card[data-possession] .epc-effects:not([data-more]) .epc-bonus { padding-right:0; }
+.equipment-poker-card[data-possession] .epc-effects:has(.epc-bonus + .epc-bonus):not([data-more])::after { content:none; }
+/* WC2a1/WC2a2 detail one (Damage / Defense values): value over label inside the
+   solved 40 px row. The 22 px value's normal line box, its margin and the row
+   padding measured 44 px, spilling into the tag row. */
+.equipment-poker-card[data-possession] .epc-facts:not([data-layout='lines']) { padding-block:0; align-items:center; }
+.equipment-poker-card[data-possession] .epc-fact strong { line-height:1; margin-bottom:0; }
 /* Detail surfaces disclose the complete label, even when compact faces truncate. */
 .modal-head-id h2, .as-head-id h2, .as-tip .tt-title {
   font-size: clamp(calc(16px / var(--ui-zoom, 1)), 2rem, calc(22px / var(--ui-zoom, 1))); white-space: normal; overflow: visible;
@@ -3181,13 +3673,28 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 }
 .as-ornament::before, .as-ornament::after { flex: 1 1 0; min-width: 0; }
 .title-screen .as-titlemenu { margin-inline: auto; text-align: center; }
+/* W3b: with a save, the menu and that save's preview share the body; the
+   wordmark above stays centred. W3a (no save) keeps the lone centred menu. */
+.title-screen .as-titlemenu:has(> .title-home) { max-width: 60rem; }
+/* The wordmark sizes from its container (12cqi); widening the block for the
+   preview must not grow it. min(12cqi, 4.8rem) is exactly its size in the
+   40rem no-save block, whatever the host width. */
+.title-screen .as-titlemenu:has(> .title-home) .tm-name { font-size: min(12cqi, 4.8rem); }
+.title-screen .title-home { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: center; margin: 1.8rem 0; }
+.title-screen .title-home > .title-menu { margin: 0; }
+:root[data-layout='narrow'] .title-screen .title-home { grid-template-columns: minmax(0, 1fr); gap: 2vh; }
+.title-screen .title-save-preview { display: grid; gap: .35rem; min-width: 0; padding: 1rem 1.2rem; text-align: left; border: 1px solid var(--line-soft); border-radius: var(--r-3); background: color-mix(in srgb, var(--panel) 82%, transparent); }
+.title-screen .title-save-preview > p { margin: 0; }
+.title-screen .title-save-name { font: 600 1.6rem/1.2 var(--font-display); color: var(--parchment); }
+.title-screen .title-save-facts, .title-screen .title-save-identity { color: var(--muted); overflow-wrap: anywhere; }
+.title-screen .title-menu .tm-entry.slot-continue.is-highlighted:not(:disabled) { color: var(--gold); font-weight: 700; }
 .title-screen .as-ornament { width: 100%; justify-content: center; margin-inline: auto; }
 .set-range { touch-action: pan-x; min-height: var(--tap-floor); }
 .cz-stage .equipment-poker-explanations { font-size: max(1.4rem, calc(14px / var(--ui-zoom, 1))); line-height: 1.5; }
 .cz-stage .equipment-poker-explanations :is(dt, dd) { white-space: normal; overflow-wrap: anywhere; }
 
 /* Equipment disclosure preserves the shared above-card placement. */
-.equipment-poker-card > .card-info-button { width:var(--card-info-size,var(--tap-floor)); height:var(--card-info-size,var(--tap-floor)); min-width:var(--card-info-size,var(--tap-floor)); min-height:var(--card-info-size,var(--tap-floor)); max-width:var(--card-info-size,var(--tap-floor)); max-height:var(--card-info-size,var(--tap-floor)); top:calc(-1 * (var(--card-info-size,var(--tap-floor)) + 10px)); }
+.equipment-poker-card > .card-info-button { width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); }
 @media (pointer:coarse) {
   .equipment-poker-card > .card-info-button { opacity:0; pointer-events:none; transition:opacity var(--card-info-fade,120ms) ease; }
   .equipment-poker-card.inspection-info-visible > .card-info-button, .equipment-poker-card:has(:focus-visible) > .card-info-button, .equipment-poker-card:focus-visible > .card-info-button { opacity:1; pointer-events:auto; }
@@ -3201,9 +3708,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 
 .armoury .disc-face:has(.poker-inventory-face) { overflow:visible; }
 
-.smith-card-list.as-options { padding-top:64px; }
-.smith-card-list.as-options.grid > .smith-candidate-card { overflow:visible; }
-
 /* Selected content keeps Information after a host redraw, including radio choices. */
 .card-inspection-target:is(.reward-selected, [aria-checked='true']) > .card-info-button {
   visibility: visible; pointer-events: auto;
@@ -3215,17 +3719,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
   padding-top: 64px; row-gap: 64px;
 }
-.smith-card-list:has(.card-inspection-target) { padding-top: 64px; row-gap: 64px; }
-.smith-card-list > .card-inspection-target { position: relative; overflow: visible; }
 .mount-row.card-inspection-target { position: relative; padding-right: 54px; }
 .mount-row.card-inspection-target > .card-info-button {
   top: 50%; right: 8px; left: auto; transform: translateY(-50%);
 }
 /* Focusing a selected card must retain its inspection gutter in scrollports. */
 .card-inspection-target { scroll-margin-top: 64px; }
-@media (max-width: 720px) {
-  .mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 42%) minmax(0, 1fr); }
-}
 
 /* Inspection shows the complete face; compact pickers retain their text budget. */
 .card-inspection-art > .card { min-height:308px; }
@@ -3243,13 +3742,26 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    two-class rule, so without the exclusion every ready danger door painted
    its red button green (measured on the title's Overwrite and Delete doors,
    2026-09-11: background rgb(37, 92, 57) on both). */
+/* The positive (ready) role, one home; the End Turn exception below reuses it. */
+:root { --control-positive-fill:#255c39; --control-positive-border:#6fb580; --control-positive-text:#f0fff3; }
 button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']),
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
-  background-color:#255c39; border-color:#6fb580; color:#f0fff3;
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
 button.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover,
 .as-btn.primary:not(.danger):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']):hover {
-  background-color:#255c39;
+  background-color:var(--control-positive-fill);
+}
+/* COLOR-INTERACTION-CONTRACT §3 (models/ControlAppearance.js): exits stay
+   brown/gold until highlighted by pointer, keyboard or pad, then turn red. */
+.as-btn[data-control-role='exit']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:color-mix(in srgb, var(--danger) 14%, var(--panel)); border-color:var(--danger); color:var(--parchment);
+}
+.modal-close[data-control-role='exit']:is(:hover, :focus-visible, .gp-focus) > .modal-close-face { border-color:var(--danger); color:var(--danger); }
+/* Registered exception combatEndTurn: a legal early end is neutral at rest and
+   green while highlighted; spent actions already mark it ready above. */
+.as-btn[data-control-exception='combatEndTurn']:not(:disabled):not([aria-disabled='true']):is(:hover, :focus-visible, .gp-focus) {
+  background-color:var(--control-positive-fill); border-color:var(--control-positive-border); color:var(--control-positive-text);
 }
 button.primary:disabled, button.primary[aria-disabled='true'],
 .as-btn.primary:disabled, .as-btn.primary[aria-disabled='true'] {
@@ -3323,6 +3835,10 @@ button.primary:not(:disabled):not([aria-disabled='true']):not([data-confirm-read
 .modal-foot-actions > .primary:not([hidden]):not(:disabled):not([aria-disabled='true']):not([data-confirm-ready='false']) {
   max-width:none; min-width:0;
 }
+/* A lone exit (pile, flask, combatant door) lost `.primary` with its role;
+   it still spans the foot it is the only way out of. */
+.modal-foot-actions:has(> [data-control-role='exit']:only-child) { width:100%; margin-left:0; }
+.modal-foot-actions > [data-control-role='exit']:only-child { max-width:none; min-width:0; }
 /* THE CREATION FOOT KEEPS BACK LEFT AND BEGIN RIGHT once Begin is ready. The
    stacked ready-primary foot above is for a door whose primary is the one
    thing left to do; here Back is a real way out, and Constantine (2026-09-11):
@@ -3453,3 +3969,383 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 @media (max-width: 360px) and (orientation: portrait) {
   .title-screen { padding-top: 8.2rem; padding-bottom: 1.2rem; }
 }
+/* Approved wireframe composition. Domain controls retain their handlers. */
+/* Band sizes come from CombatLayout.js; the fallbacks cover the first paint
+   and the co-op screen, which does not mount the layout adapter. */
+:root .combat[data-layout='formation'] {
+  --wireframe-hand-height: var(--wireframe-band-hand, max(calc(208px / var(--ui-zoom, 1)), 30%));
+  --wireframe-footer-height: var(--wireframe-band-footer, max(calc(56px / var(--ui-zoom, 1)), 5%));
+  grid-template-rows: var(--wireframe-band-hud, 10%) minmax(0, 1fr) calc(var(--wireframe-hand-height) + var(--wireframe-footer-height));
+}
+:root .combat[data-layout='formation'] > .hand-area {
+  grid-template-rows: minmax(0, 1fr) var(--wireframe-band-footer, max(calc(56px / var(--ui-zoom, 1)), 14.2857%));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
+  position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card {
+  position: absolute; left: var(--hand-card-x); top: var(--hand-card-y);
+  flex: none; margin: 0; padding: 0; zoom: 1;
+  width: var(--hand-card-width); min-width: var(--hand-card-width); max-width: var(--hand-card-width);
+  height: var(--hand-card-height); min-height: var(--hand-card-height); max-height: var(--hand-card-height);
+  aspect-ratio: 5 / 8; transform-origin: center center;
+  transform: rotate(var(--hand-card-angle)) !important;
+  z-index: auto !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) {
+  transform: translateY(calc(-1 * var(--hand-selection-lift))) !important;
+  z-index: 50 !important;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .art {
+  width: 100%; height: auto; margin: 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .cname {
+  font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); min-height: 0;
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card .ctext {
+  font-size: max(calc(12px / var(--ui-zoom, 1)), .8rem); line-height: 1.25;
+}
+:root .combat[data-layout='formation'] .hand .card > .card-cost-rail {
+  top: calc(10% + .25rem); left: .35rem; right: auto; bottom: auto;
+  display: flex; flex-direction: column; gap: .2rem; width: auto;
+}
+:root .combat[data-layout='formation'] .hand .card > .card-cost-rail > :is(.cost,.mana-cost,.stamina-cost) {
+  position: static; border: 0; background: none; width: auto; height: auto; min-width: 0;
+  padding: 0; font-size: max(calc(12px / var(--ui-zoom, 1)), .9rem); line-height: 1.2;
+}
+:root .combat[data-layout='formation'] .combat-action-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: .25rem; max-width: calc(640px / var(--ui-zoom, 1)); justify-self: center; padding: .15rem;
+  --combat-control-size: calc(48px / var(--ui-zoom, 1)) !important;
+}
+:root .combat[data-layout='formation'] .combat-action-row > * {
+  min-width: 0; width: 100%; max-width: none; margin: 0; align-self: center;
+}
+:root .combat[data-layout='formation'] .combat-action-row :is(.energy-orb,.combat-potions,.end-turn) {
+  height: var(--combat-control-size); min-height: var(--combat-control-size); max-height: var(--combat-control-size);
+}
+:root .combat[data-layout='formation'] .combat-action-row .energy-orb,
+:root .combat[data-layout='formation'] .combat-action-row .combat-potions {
+  width: var(--combat-control-size); min-width: var(--combat-control-size); aspect-ratio: 1;
+}
+:root .combat[data-layout='formation'] .combat-action-row .pile {
+  height: calc(44px / var(--ui-zoom, 1)); min-height: calc(44px / var(--ui-zoom, 1));
+}
+/* WGC6: one centered, tightly packed five-track group sized by
+   packCombatFooter(). Applies once the layout adapter has measured the row. */
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']{
+  --combat-control-size: var(--footer-circle) !important;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) var(--footer-end-width) var(--footer-pile-width) var(--footer-circle);
+  justify-content: center; align-items: center; gap: var(--footer-gap);
+  width: 100%; max-width: none; height: 100%; padding: 0; box-sizing: border-box;
+}
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> * {
+  grid-column: span 1; grid-row: 1;
+}
+:root .combat[data-layout='formation']:not(.coop) .combat-action-row[data-footer-geometry='supported']> .pile {
+  width: var(--footer-pile-width); height: var(--footer-pile-height); min-height: var(--footer-pile-height);
+}
+/* W4a short landscape: allocateCombatBands() chose rails. The footer row is
+   gone; the same WGC6 grid overlays the hand band and wraps the hand:
+   (Actions)[Draw] | hand | [End Turn] over [Discard](Potions). */
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) > .hand-area {
+  grid-template-columns: var(--wireframe-rail-width) minmax(0, 1fr) var(--wireframe-rail-width);
+  grid-template-rows: minmax(0, 1fr); grid-template-areas: 'lead hand trail';
+  column-gap: var(--wireframe-rail-gap);
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] {
+  grid-area: 1 / 1 / 2 / 4; z-index: 2; pointer-events: none;
+  grid-template-columns: var(--footer-circle) var(--footer-pile-width) minmax(0, 1fr) var(--footer-pile-width) var(--footer-circle);
+  grid-template-rows: minmax(0, 1fr) var(--footer-circle) var(--footer-circle);
+  row-gap: var(--footer-gap); align-content: stretch;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > * {
+  grid-row: 3; pointer-events: auto;
+}
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .energy-orb { grid-column: 1; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.draw { grid-column: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .end-turn { grid-column: 4 / 6; grid-row: 2; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .pile.spent { grid-column: 4; }
+:root .combat[data-layout='formation'][data-combat-arrangement='rails']:not(.coop) .combat-action-row[data-footer-geometry='supported'] > .combat-potions { grid-column: 5; }
+/* Notched hosts held sideways: the device's safe-area insets (combat.css's
+   --safe-*-local, zero on every other host) keep the rails and the hand they
+   wrap, the formation, and the HUD's two ends off the notch. The layout
+   adapter plans the rails for the width left between the insets. */
+:root .combat[data-layout='formation']:not(.coop) > .hand-area {
+  padding-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
+}
+:root .combat[data-layout='formation']:not(.coop) > .field {
+  margin-inline: var(--safe-left-local, 0px) var(--safe-right-local, 0px);
+}
+:root .combat[data-layout='formation']:not(.coop) > .topbar {
+  padding-inline: max(1.6rem, var(--safe-left-local, 0px)) max(1.6rem, var(--safe-right-local, 0px));
+}
+/* The relic and potion belt hangs from the band's padding edge, so the
+   band's padding does not move it; it takes the insets itself. */
+:root .combat[data-layout='formation']:not(.coop) .shared-hud .hud-bottom {
+  left: max(1.6rem, var(--safe-left-local, 0px)); right: max(1.6rem, var(--safe-right-local, 0px));
+}
+@media (max-height: 500px) {
+  :root .combat[data-layout='formation']:not(.coop) > .topbar {
+    padding-inline: max(calc(8px / var(--ui-zoom, 1)), var(--safe-left-local, 0px)) max(calc(8px / var(--ui-zoom, 1)), var(--safe-right-local, 0px));
+  }
+}
+:root .combat[data-layout='formation'] .combatant .meters .bar .label {
+  font-size: calc(12px / var(--ui-zoom, 1));
+}
+:root .combat[data-layout='formation'] .combatant .meters .bar.hp {
+  height: max(.85rem, calc(14px / var(--ui-zoom, 1)));
+}
+/* WCM0: row heights from combatantMeterGeometry (the combat layout adapter).
+   HP carries the compact current/maximum at the value-text size; a secondary
+   or buildup row is too short for readable numbers, so its exact values live
+   in its tooltip and the inspector. Stance is a strip the size of HP. */
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters { gap: var(--combatant-meter-gap, calc(3px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .bar { height: var(--combatant-secondary-h, calc(10px / var(--ui-zoom, 1))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .bar { height: var(--combatant-hp-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters .as-meter[data-res='hp'] .m-value { font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1; }
+:root .combat[data-layout='formation']:not(.coop) .combatant .meters [data-meter-row='resource'] .m-plate { display: none; }
+:root .combat[data-layout='formation']:not(.coop) .combatant .stance-chip[data-meter-row='stance'] {
+  display: flex; align-items: center; justify-content: center; gap: .25rem; box-sizing: border-box;
+  width: 100%; height: var(--combatant-stance-h, max(.85rem, calc(14px / var(--ui-zoom, 1)))); min-height: 0;
+  padding: 0 .3rem; border-radius: 3px; font-size: var(--combatant-value-text, calc(12px / var(--ui-zoom, 1))); line-height: 1;
+}
+/* Rows the configured list keeps for the selected combatant only. */
+:root .combat[data-layout='formation']:not(.coop) .combatant:not(.context-selected) [data-selected-only='true'] { display: none; }
+.card-inspection-modal .card-inspection-layout {
+  display: grid; grid-template-columns: minmax(0, 34fr) minmax(0, 66fr);
+  min-height: 0; height: 100%; gap: 2%; padding: 1rem;
+}
+.card-inspection-modal .card-inspection-art { min-width: 0; max-width: 14rem; width: 100%; }
+.card-inspection-modal .card-inspection-art > .card[data-wireframe='WC1'] {
+  width: 100%; height: auto; min-height: 0; aspect-ratio: 5 / 8;
+}
+.card-inspection-modal .modal-body { overflow: hidden; min-height: 0; }
+.card-inspection-modal .card-inspection-details { min-height: 0; overflow-y: auto; overflow-x: hidden; }
+:root .combat[data-layout='formation'] .combatant .combatant-info { visibility: hidden; pointer-events: none; }
+:root .combat[data-layout='formation'] .combatant[data-inspect-ready='true'] .combatant-info { visibility: visible; pointer-events: auto; }
+/* Solo combat reads the configured selected-only list (WCM0, data-selected-only);
+   co-op keeps its name-only rule. */
+:root .combat.coop[data-layout='formation'] .combatant:not(.context-selected) .nm { display: none; }
+/* WCO2: the guard badge sits outside the sprite on its role's side, at its
+   role's height (overlay.defenseAnchorByRole via the combat layout adapter);
+   the fallbacks are the same accepted geometry. Never mirrored. */
+:root .combat[data-layout='formation'] .combatant .sprite > .block-badge {
+  right: var(--defense-right-player, auto); left: var(--defense-left-player, calc(100% + .5rem));
+  top: var(--defense-top-player, 12%); bottom: auto; transform: translateY(-50%);
+}
+:root .combat[data-layout='formation'] .combatant.enemy .sprite > .block-badge {
+  left: var(--defense-left-enemy, auto); right: var(--defense-right-enemy, calc(100% + .5rem)); top: var(--defense-top-enemy, 88%);
+}
+/* The badge sits inside the zoomed sprite host (battlefieldStage). It undoes
+   that zoom and anchors to the visible art's box, published by the stage:
+   --s is 1 for the right edge and 0 for the left; --f the height fraction. */
+:root .combat[data-layout='formation']:not(.coop) .combatant .sprite > .block-badge {
+  --s: var(--defense-right-player, 1); --f: var(--defense-fraction-player, .12);
+  /* Out of the host's flex row: a relative badge was offset from its place
+     after the art, which is why it floated far from the sprite. */
+  position: absolute;
+  zoom: calc(1 / var(--sprite-zoom, 1));
+  left: calc(var(--art-left, 0px) + (var(--art-right, 100%) - var(--art-left, 0px)) * var(--s) + var(--defense-gap, .5rem) * (2 * var(--s) - 1));
+  right: auto; bottom: auto;
+  top: calc(var(--art-top, 0px) + var(--art-height, 100%) * var(--f));
+  transform: translate(calc((var(--s) - 1) * 100%), -50%);
+  display: flex; align-items: center; justify-content: center; box-sizing: border-box;
+  min-width: var(--defense-min, 3.5rem); min-height: var(--defense-min, 3.5rem);
+  font-size: max(1.2rem, var(--overlay-value-font, calc(13.2px / var(--ui-zoom, 1)))); line-height: 1;
+}
+:root .combat[data-layout='formation']:not(.coop) .combatant.enemy .sprite > .block-badge {
+  --s: var(--defense-right-enemy, 0); --f: var(--defense-fraction-enemy, .88);
+}
+/* WCO1: the intent keeps its minimum height and value font. */
+:root .combat[data-layout='formation']:not(.coop) .combatant-leading .intent {
+  min-height: max(calc(48px / var(--ui-zoom, 1)), var(--intent-min, 2.8rem));
+}
+:root .combat[data-layout='formation'] .combatant .sprite::before {
+  content: ''; position: absolute; left: 50%; bottom: 0;
+  width: 70%; height: 8%; border-radius: 50%; transform: translate(-50%,50%);
+  background: #0008; pointer-events: none; z-index: -1;
+}
+.modal-foot-actions[data-action-count] {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr);
+  width: 100%; min-width: 0; gap: var(--button-gap);
+}
+.modal-foot-actions[data-action-count] > button { width: 100%; min-width: 0; max-width: none; }
+.modal-foot-actions[data-action-count='0'] { display: none; }
+/* WCB0 BUTTON SIZES. Every value comes from wireframeUi.buttons through
+   ButtonSizeModel.buttonSizeTokens(), written onto :root by the kit; this
+   block only combines them. A reference rem is at least 16 physical px (the
+   hand and footer plans' unit), so heights neither shrink with the zoom nor
+   with the 10px root. Widths belong to the group that owns the action region:
+   the footer above divides it into equal shares after the shared gap (a sole
+   action fills it); a choice row gives every sibling one preset of the row,
+   capped by the equal share, and wraps labels rather than sizing to them. */
+:root {
+  --button-reference-rem: max(calc(16px / var(--ui-zoom, 1)), 1rem);
+  --button-gap: calc(var(--button-gap-rem, 0) * var(--button-reference-rem));
+  --button-minimum: calc(var(--button-minimum-rem, 0) * var(--button-reference-rem));
+}
+button[data-button-size$='-standard'] { --button-height-multiplier: var(--button-height-standard); }
+button[data-button-size$='-tall'] { --button-height-multiplier: var(--button-height-tall); }
+button[data-button-size$='-double'] { --button-height-multiplier: var(--button-height-double); }
+button[data-button-size] {
+  min-height: max(var(--tap-floor), calc(var(--button-standard-rem, 0) * var(--button-height-multiplier, 1) * var(--button-reference-rem)));
+}
+.as-choicerow {
+  display: flex; flex-wrap: nowrap; justify-content: center; align-items: stretch;
+  gap: var(--button-gap); width: 100%; min-width: 0; box-sizing: border-box;
+}
+.as-choicerow > button[data-button-size^='third-'] { --button-preset: var(--button-third); }
+.as-choicerow > button[data-button-size^='half-'] { --button-preset: var(--button-half); }
+.as-choicerow > button[data-button-size^='full-'] { --button-preset: var(--button-full); }
+.as-choicerow > button {
+  flex: 0 0 auto; box-sizing: border-box; min-width: 0; max-width: 100%;
+  width: min(var(--button-preset), calc((100% - (var(--button-count) - 1) * var(--button-gap)) / var(--button-count)));
+  white-space: normal; overflow-wrap: anywhere; text-overflow: clip; line-height: 1.2;
+}
+.as-choicerow[data-button-count='1'] > button { min-width: min(var(--button-minimum), 100%); }
+.as-pagedoor .as-decide > .as-choicerow { margin-top: 1.5rem; }
+.modal-close { aspect-ratio: 1; flex: none; padding: 0; }
+.hand-overlay { position: relative; }
+.hand-overlay > .hand-info-portal {
+  position: absolute; z-index: 500; transform: translateX(-50%);
+  --inspect-box: var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)));
+  width: var(--inspect-box); height: var(--inspect-box);
+  min-width: var(--inspect-box); min-height: var(--inspect-box);
+  border: 1px solid var(--gold); border-radius: 50%; padding: 0;
+  display: grid; place-items: center; background: var(--bg); color: var(--gold);
+  visibility: visible; pointer-events: auto; font-size: var(--inspect-label, calc(16px / var(--ui-zoom, 1)));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card,
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > * { pointer-events: none; }
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .hand-hit-lane {
+  pointer-events: auto; position: absolute; left: 0; top: 0;
+  width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
+  transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
+  transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
+  transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
+}
+
+/* ═══ W1 WORKSPACE — W1f Compendium, W1g Profile ═══════════════════════════ */
+/* The frame is the wireframe's share of the visible viewport; the shares are
+   wireframeUi.workspace, written as custom properties by
+   components/w1Workspace.js. Head and foot size to their controls, the body
+   takes the rest, and only the pane's two slots scroll: never the page. */
+:root .modal.w1-workspace[data-size] {
+  width: min(calc(100vw / var(--ui-zoom, 1) * var(--w1-frame-w)), 100%);
+  height: min(calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-frame-h)), 100%);
+  max-width: 100%;
+}
+.screen.compendium { padding: 0; overflow: hidden; }
+.w1-workspace > .modal-body { display: flex; min-height: 0; padding: 0; overflow: hidden; }
+.w1-workspace > .modal-body > .as-railed {
+  flex: 1 1 auto; width: 100%; height: auto; min-height: 0;
+  grid-template-columns: clamp(var(--w1-rail-min), calc(100vw / var(--ui-zoom, 1) * var(--w1-rail)), var(--w1-rail-max)) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+.w1-workspace .as-railitem { min-height: var(--tap-floor); }
+.w1-workspace .as-railed > .as-pane { min-height: 0; overflow: hidden; }
+.w1-workspace .as-pane > .w1-split { flex: 1 1 auto; min-height: 0; }
+.w1-split {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
+  column-gap: calc(100vw / var(--ui-zoom, 1) * var(--w1-col-gap));
+}
+.w1-split > * { min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-soft) transparent; }
+/* W1f: the entry list scrolls its grid; the detail is the selected entry. */
+.w1-split > .cp-list { display: flex; flex-direction: column; overflow: hidden; }
+.cp-list > .cp-grid { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 2px; }
+.cp-detail { display: flex; flex-direction: column; gap: 0.9rem; }
+.cp-detail > .as-artwell { align-self: center; flex: 0 0 auto; }
+.cp-detail:not([data-state='held']) > .as-artwell img { filter: brightness(0) invert(1); opacity: 0.72; }
+.cp-detail:not([data-state='held']) > .as-detailcard { border-style: dashed; }
+.cp-detail-card > .cp-mod { margin-top: 0.5rem; }
+/* W1g: identity beside the records. */
+.prof-identity, .prof-records { display: flex; flex-direction: column; gap: 0.9rem; }
+.prof-identity > .as-title-m { margin: 0; }
+.prof-records > .as-status:empty { display: none; }
+/* Compact: the category navigation is the kit's [Category ▾] selector (see
+   W1 CATEGORY NAVIGATION below); the pane's two slots stack. */
+:root[data-layout='narrow'] .w1-split {
+  grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 0; row-gap: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1) * var(--w1-row-gap));
+}
+
+/* ═══ W1 CATEGORY NAVIGATION — kit/categoryNav.js ═══════════════════════════ */
+/* ONE component for every categorized W1 surface (Settings, Shop, Armoury,
+   Compendium, Profile, the pile viewer). models/CategoryNavModel.js decides
+   rail or selector from the host's own box and the budget in
+   wireframeUi.categoryNav, and the kit writes the answer as data-cat-nav on
+   the .as-railed host; this sheet measures nothing.
+   rail      the NavRail beside the pane (the .as-railed defaults above).
+   selector  rule 11's compact form: one [Category ▾] control above the pane
+             that opens the SAME rail as a list under it (data-cat-open).
+             Never a horizontal strip, never an accordion. */
+.as-catnav-toggle { display: none; }
+.as-railed[data-cat-nav] { position: relative; }
+:root .as-railed.as-railed[data-cat-nav='selector'] { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+:root .as-railed[data-cat-nav='selector'] > .as-catnav-toggle {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  grid-column: 1; grid-row: 1; width: auto; min-width: 0; min-height: var(--tap-floor);
+  margin: 0.6rem var(--modal-inset);
+  color: var(--gold); border-color: var(--gold); background: rgba(var(--accent-rgb), 0.08);
+}
+.as-catnav-face { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.as-catnav-caret { flex: 0 0 auto; transition: transform 0.15s ease; }
+.as-railed[data-cat-open='true'] > .as-catnav-toggle > .as-catnav-caret { transform: rotate(180deg); }
+:root .as-railed[data-cat-nav='selector'] > :not(.as-rail):not(.as-catnav-toggle) { grid-column: 1; grid-row: 2; }
+:root .as-railed[data-cat-nav='selector'] > .as-rail { display: none; }
+/* The open list drops over the pane's area, as tall as that area and no
+   taller, and scrolls inside itself; the page never scrolls. */
+:root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > .as-rail {
+  display: flex; flex-direction: column; flex-wrap: nowrap; position: absolute; z-index: 5;
+  grid-column: 1; grid-row: 2; top: 0; bottom: auto; left: var(--modal-inset); right: var(--modal-inset);
+  max-height: 100%; overflow-x: hidden; overflow-y: auto; padding: 0.6rem; gap: 0.45rem;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: var(--r-2); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+:root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > .as-rail > * { flex: 0 0 auto; width: 100%; min-height: var(--tap-floor); }
+/* While the list is open it is the only thing to choose: the pane under it
+   leaves the cursor's reach (input.js skips hidden controls) until it closes. */
+:root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > :not(.as-rail):not(.as-catnav-toggle) { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .as-catnav-caret { transition: none; } }
+
+/* ═══ DIALOGUE — W4c, the quest dialogue screen (WGQ0–WGQ8) ════════════════ */
+/* The player stands left and the speaker right in the scene (WGQ1–WGQ3), each
+   --dialogue-portrait-share of its width; the listener dims. The caption
+   region (WGQ4) keeps --dialogue-caption-min of height, so moving between
+   beats never moves the controls; responses stack under the caption on the
+   last beat only. Back, Skip speech and Continue share the foot (WGQ5–WGQ8,
+   WCB0 equal shares). Lengths arrive from DialogueModel (wireframeUi
+   .dialogue) in reference rems, max(16px / zoom, 1rem); the fallbacks here are
+   first-paint values only. */
+.screen.dialogue-screen { justify-content: flex-start; gap: 0; padding-inline: 2.4rem; padding-bottom: 2.4rem; }
+.modal.dialogue-door { flex: 1 1 auto; min-height: 0; width: min(100%, 110rem); max-width: 100%; }
+.dialogue-door > .modal-head { flex-wrap: wrap; row-gap: 0.4rem; }
+.dialogue-door > .modal-head .modal-head-id h2 { white-space: normal; }
+.dialogue-door > .modal-head > .modal-head-actions { flex: 0 1 auto; min-width: 0; align-self: center; }
+.dialogue-door > .modal-foot > .modal-foot-actions { flex: 1 1 auto; margin-left: 0; }
+.dialogue-body { display: flex; flex-direction: column; gap: var(--dialogue-ref-rem, 1.6rem); padding: var(--dialogue-ref-rem, 1.6rem) calc(1.5 * var(--dialogue-ref-rem, 1.6rem)); }
+.dialogue-scene { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--dialogue-ref-rem, 1.6rem); min-height: var(--dialogue-scene-min, 16rem); }
+.dialogue-portrait { margin: 0; flex: 0 0 var(--dialogue-portrait-share, 30%); max-width: var(--dialogue-portrait-share, 30%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: opacity 160ms ease, filter 160ms ease; }
+.dialogue-portrait[data-speaking='false'] { opacity: 0.72; filter: saturate(0.6); }
+.dialogue-portrait-art { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: var(--dialogue-scene-min, 16rem); overflow: hidden; }
+/* The shared sprite functions stamp combat's fixed tier sizes inline; a
+   portrait stands at the scene's height instead (WGQ2/WGQ3: portrait width,
+   scene height), its art keeping its own proportions inside. */
+.dialogue-portrait-art > * { height: 100% !important; width: auto !important; max-width: 100%; aspect-ratio: 3 / 4; }
+/* The name plate: a speaker with no portrait still stands in its place. */
+.dialogue-plate { display: grid; place-items: center; box-sizing: border-box; width: 100%; min-height: calc(3 * var(--dialogue-ref-rem, 1.6rem)); padding: 0.8rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); background: var(--panel); color: var(--gold); font: 600 max(1.6rem, calc(16px / var(--ui-zoom, 1)))/1.25 var(--font-display); text-align: center; }
+.dialogue-portrait-name { font-size: max(1.3rem, calc(16px / var(--ui-zoom, 1))); color: var(--ink-dim); text-align: center; }
+.dialogue-region { display: flex; flex-direction: column; gap: 0.6rem; }
+.dialogue-caption-speaker { margin: 0; }
+.dialogue-caption-text { margin: 0; font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: var(--dialogue-caption-line, 1.45); min-height: var(--dialogue-caption-min, 7rem); }
+.dialogue-region[data-side='player'] .dialogue-caption-text { font-style: italic; }
+.dialogue-responses { display: flex; flex-direction: column; gap: 0.6rem; }
+.dialogue-response-row { width: 100%; }
+.dialogue-response { white-space: normal; text-align: left; min-height: var(--tap-floor); }
+.dialogue-response-note { display: block; font-size: 0.85em; color: var(--muted); }
+:root[data-layout='narrow'] .dialogue-scene { min-height: calc(0.6 * var(--dialogue-scene-min, 16rem)); }
+:root[data-layout='narrow'] .dialogue-portrait-art { height: calc(0.6 * var(--dialogue-scene-min, 16rem)); }
+@media (prefers-reduced-motion: reduce) { .dialogue-portrait { transition: none; } }

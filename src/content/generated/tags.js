@@ -697,5 +697,21 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "◇",
     "blurb": "Categorized Stance identity; effects are authored separately."
+  },
+  {
+    "id": "siphon",
+    "domain": "property",
+    "label": "Siphon",
+    "color": "7FA8C9",
+    "glyph": "◈",
+    "blurb": "A focus that drinks back: breaking a foe's Arcane Exposure restores Mana."
+  },
+  {
+    "id": "overcharge",
+    "domain": "property",
+    "label": "Overcharge",
+    "color": "9FC3E8",
+    "glyph": "✧",
+    "blurb": "A focus that pushes harder: each hit builds more Arcane Exposure."
   }
 ];

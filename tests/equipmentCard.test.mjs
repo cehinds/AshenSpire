@@ -41,3 +41,12 @@ test("default card layout preserves artwork and keeps all regions within the fra
   assert.ok(Object.values(tokens.heights).every(height => height > 0));
   assert.ok(Object.values(tokens.heights).reduce((sum, height) => sum + height, 0) <= tokens.budget);
 });
+
+test('a card with no tag badges gives the tag row to the effect row, never to the artwork', () => {
+  const full = equipmentCardTokens();
+  const bare = equipmentCardTokens(undefined, { collapse: ['tags'] });
+  assert.equal(bare.heights.tags, 0);
+  assert.equal(bare.heights.art, full.heights.art);
+  assert.ok(bare.heights.effects > full.heights.effects);
+  assert.ok(Object.values(bare.heights).reduce((sum, height) => sum + height, 0) <= bare.budget + 1e-9);
+});

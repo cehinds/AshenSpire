@@ -1,0 +1,390 @@
+{
+  "W4a": {
+    "parent": "W4",
+    "bands": {
+      "hud": 10,
+      "scene": 55,
+      "context": 30,
+      "footer": 5
+    },
+    "layers": {
+      "skyline": true,
+      "floor": true,
+      "hud": true,
+      "actors": true,
+      "targets": true,
+      "context": true,
+      "footer": true
+    },
+    "playerCount": 6,
+    "enemyCount": 6,
+    "components": [
+      "WGS1",
+      "WGS2",
+      "WGS3",
+      "WGS4",
+      "WGS5",
+      "WGC1",
+      "WGC2",
+      "WGC3",
+      "WGC4",
+      "WGC5",
+      "WGC6",
+      "WGC7",
+      "WGC8",
+      "WGC9",
+      "WGC10",
+      "WGC11",
+      "WGS6",
+      "WGS7",
+      "WGH1",
+      "WGH2",
+      "WGH3",
+      "WGH4",
+      "WGH5",
+      "WGH6",
+      "WGH7",
+      "WGH8"
+    ],
+    "background": {
+      "floorHeightPercent": 80,
+      "skylineColor": "#635139",
+      "floorColor": "#382c20"
+    },
+    "hud": {
+      "context": "combat",
+      "enabled": true,
+      "layoutPreset": "proposed",
+      "layers": {
+        "header": true,
+        "class": true,
+        "cinders": true,
+        "position": true,
+        "vitality": true,
+        "health": true,
+        "mana": true,
+        "stamina": false,
+        "armoury": true,
+        "menu": true,
+        "rail": false,
+        "relics": true,
+        "potions": true,
+        "experience": true,
+        "chargeFlasks": false
+      },
+      "experience": {
+        "contexts": [
+          "combat"
+        ],
+        "color": "#398bd1",
+        "heightRem": 0.35,
+        "animationMs": 650,
+        "awardPreview": 15
+      },
+      "layout": {
+        "gapRem": 0.15,
+        "insetRem": 0.15,
+        "meterHeightRem": 0.8,
+        "actionHeightRem": 2.75,
+        "radiusRem": 0.25
+      },
+      "colors": {
+        "background": "#211a12",
+        "gold": "#d5af68",
+        "text": "#eee2ca",
+        "health": "#668c46",
+        "mana": "#478dbc",
+        "stamina": "#bf9949"
+      },
+      "sample": {
+        "className": "Warden",
+        "cinders": 120,
+        "act": 1,
+        "floor": 4,
+        "health": {
+          "value": 32,
+          "maximum": 40
+        },
+        "mana": {
+          "value": 6,
+          "maximum": 10
+        },
+        "stamina": {
+          "value": 8,
+          "maximum": 12
+        },
+        "experience": {
+          "value": 40,
+          "maximum": 100
+        },
+        "relics": [
+          "Ash seal",
+          "Ember charm"
+        ],
+        "potions": [
+          "Smoke vial ×1"
+        ],
+        "chargeFlasks": [
+          "HP ×2",
+          "MP ×1"
+        ]
+      }
+    },
+    "minimumHudHeightRem": 5.5
+  },
+  "W4b": {
+    "parent": "W4",
+    "bands": {
+      "hud": 10,
+      "scene": 60,
+      "context": 20,
+      "footer": 10
+    },
+    "mapWidth": 95,
+    "layers": {
+      "skyline": true,
+      "floor": true,
+      "hud": true,
+      "paths": true,
+      "nodes": true,
+      "context": true,
+      "footer": true
+    },
+    "components": [
+      "WGS1",
+      "WGS2",
+      "WGS3",
+      "WGS4",
+      "WGS5",
+      "WGM1",
+      "WGM2",
+      "WGM3",
+      "WGM4",
+      "WGM5",
+      "WGM6",
+      "WGM7",
+      "WGS6",
+      "WGS7",
+      "WGH1",
+      "WGH2",
+      "WGH3",
+      "WGH4",
+      "WGH5",
+      "WGH6",
+      "WGH7",
+      "WGH8"
+    ],
+    "background": {
+      "floorHeightPercent": 35,
+      "skylineColor": "#635139",
+      "floorColor": "#382c20"
+    },
+    "hud": {
+      "context": "map",
+      "enabled": true,
+      "layoutPreset": "proposed",
+      "layers": {
+        "header": true,
+        "class": true,
+        "cinders": true,
+        "position": true,
+        "vitality": true,
+        "health": true,
+        "mana": true,
+        "stamina": false,
+        "armoury": true,
+        "menu": true,
+        "rail": false,
+        "relics": true,
+        "potions": true,
+        "experience": true,
+        "chargeFlasks": false
+      },
+      "experience": {
+        "contexts": [
+          "combat"
+        ],
+        "color": "#398bd1",
+        "heightRem": 0.35,
+        "animationMs": 650,
+        "awardPreview": 15
+      },
+      "layout": {
+        "gapRem": 0.15,
+        "insetRem": 0.15,
+        "meterHeightRem": 0.8,
+        "actionHeightRem": 2.75,
+        "radiusRem": 0.25
+      },
+      "colors": {
+        "background": "#211a12",
+        "gold": "#d5af68",
+        "text": "#eee2ca",
+        "health": "#668c46",
+        "mana": "#478dbc",
+        "stamina": "#bf9949"
+      },
+      "sample": {
+        "className": "Warden",
+        "cinders": 120,
+        "act": 1,
+        "floor": 4,
+        "health": {
+          "value": 32,
+          "maximum": 40
+        },
+        "mana": {
+          "value": 6,
+          "maximum": 10
+        },
+        "stamina": {
+          "value": 8,
+          "maximum": 12
+        },
+        "experience": {
+          "value": 40,
+          "maximum": 100
+        },
+        "relics": [
+          "Ash seal",
+          "Ember charm"
+        ],
+        "potions": [
+          "Smoke vial ×1"
+        ],
+        "chargeFlasks": [
+          "HP ×2",
+          "MP ×1"
+        ]
+      }
+    },
+    "minimumHudHeightRem": 5.5
+  },
+  "W4c": {
+    "parent": "W4",
+    "bands": {
+      "hud": 10,
+      "scene": 40,
+      "context": 35,
+      "footer": 15
+    },
+    "layers": {
+      "skyline": true,
+      "floor": true,
+      "hud": true,
+      "portraits": true,
+      "context": true,
+      "footer": true
+    },
+    "components": [
+      "WGS1",
+      "WGS2",
+      "WGS3",
+      "WGS4",
+      "WGS5",
+      "WGQ1",
+      "WGQ2",
+      "WGQ3",
+      "WGQ4",
+      "WGQ5",
+      "WGQ6",
+      "WGQ7",
+      "WGQ8",
+      "WGS6",
+      "WGS7",
+      "WGH1",
+      "WGH2",
+      "WGH3",
+      "WGH4",
+      "WGH5",
+      "WGH6",
+      "WGH7",
+      "WGH8"
+    ],
+    "background": {
+      "floorHeightPercent": 35,
+      "skylineColor": "#635139",
+      "floorColor": "#382c20"
+    },
+    "hud": {
+      "context": "town",
+      "enabled": true,
+      "layoutPreset": "proposed",
+      "layers": {
+        "header": true,
+        "class": true,
+        "cinders": true,
+        "position": true,
+        "vitality": true,
+        "health": true,
+        "mana": true,
+        "stamina": false,
+        "armoury": true,
+        "menu": true,
+        "rail": false,
+        "relics": true,
+        "potions": true,
+        "experience": true,
+        "chargeFlasks": false
+      },
+      "experience": {
+        "contexts": [
+          "combat"
+        ],
+        "color": "#398bd1",
+        "heightRem": 0.35,
+        "animationMs": 650,
+        "awardPreview": 15
+      },
+      "layout": {
+        "gapRem": 0.15,
+        "insetRem": 0.15,
+        "meterHeightRem": 0.8,
+        "actionHeightRem": 2.75,
+        "radiusRem": 0.25
+      },
+      "colors": {
+        "background": "#211a12",
+        "gold": "#d5af68",
+        "text": "#eee2ca",
+        "health": "#668c46",
+        "mana": "#478dbc",
+        "stamina": "#bf9949"
+      },
+      "sample": {
+        "className": "Warden",
+        "cinders": 120,
+        "act": 1,
+        "floor": 4,
+        "health": {
+          "value": 32,
+          "maximum": 40
+        },
+        "mana": {
+          "value": 6,
+          "maximum": 10
+        },
+        "stamina": {
+          "value": 8,
+          "maximum": 12
+        },
+        "experience": {
+          "value": 40,
+          "maximum": 100
+        },
+        "relics": [
+          "Ash seal",
+          "Ember charm"
+        ],
+        "potions": [
+          "Smoke vial ×1"
+        ],
+        "chargeFlasks": [
+          "HP ×2",
+          "MP ×1"
+        ]
+      }
+    },
+    "minimumHudHeightRem": 5.5
+  }
+}
