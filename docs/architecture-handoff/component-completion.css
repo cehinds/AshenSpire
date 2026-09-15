@@ -1,0 +1,120 @@
+/* All reference components inherit the brown/gold motif. Tokens are set by configuration. */
+.cc-reference{--cc-brown:#241b12;--cc-gold:#d1ab61;--cc-text:#efe4ce;--cc-muted:#b9a587;--cc-green:#618844;--cc-red:#b9513d;--cc-blue:#4b98bb;box-sizing:border-box;width:100%;max-width:100%;color:var(--cc-text);font:inherit;container-type:inline-size;padding:var(--cc-inset);}
+.cc-reference *{box-sizing:border-box}.cc-reference .cc-component{min-width:0;max-width:100%}.cc-reference .cc-button,.cc-reference select{font:inherit;color:var(--cc-gold);background:var(--cc-brown);border:.0625rem solid var(--cc-gold);border-radius:.3rem;min-height:var(--cc-target);padding:.3em .65em;cursor:pointer;line-height:1.15}.cc-reference .cc-button.primary{background:var(--cc-green);color:var(--cc-text)}.cc-reference .cc-button:hover,.cc-reference .cc-button:focus-visible{outline:.125rem solid var(--cc-gold);outline-offset:.125rem}.cc-reference .cc-button.back:hover,.cc-reference .cc-button.back:focus-visible{background:var(--cc-red);color:var(--cc-text)}.cc-reference .cc-button:disabled{opacity:.45;cursor:default}.cc-reference .cc-button.info{border-radius:50%;width:var(--cc-target);padding:0;justify-self:center}.cc-reference .cc-button.icon{min-height:var(--cc-icon);height:var(--cc-icon);width:var(--cc-icon);padding:0;display:grid;place-content:center}.cc-reference .cc-action-row{display:flex;gap:var(--cc-gap);align-items:center;justify-content:space-between}.cc-reference .cc-action-row>button{flex:1;min-width:0}.cc-reference .cc-action-row>strong{flex:1}.cc-reference .cc-action-row>strong+button{flex:0 0 var(--cc-target)}.cc-reference .cc-references{display:flex;gap:.6em;flex-wrap:wrap;margin-top:var(--cc-section-gap);font-size:.8em}.cc-ref{color:var(--cc-gold)}.cc-reference .cc-stack{display:flex;flex-direction:column;gap:var(--cc-gap);width:100%}.cc-reference .cc-meter{position:relative;min-height:var(--cc-hp);height:var(--cc-hp);background:#352a20;overflow:hidden;width:100%;isolation:isolate}.cc-reference .cc-meter.cc-secondary{min-height:calc(var(--cc-hp)*var(--cc-secondary));height:calc(var(--cc-hp)*var(--cc-secondary))}.cc-reference .cc-meter-fill{position:absolute;inset:0 auto 0 0;background:var(--cc-green);z-index:-1}.cc-reference .cc-secondary .cc-meter-fill{background:var(--cc-blue)}.cc-reference [data-component="WCM3"] .cc-meter-fill{background:#ca8151}.cc-reference .cc-meter-text{display:flex;align-items:center;justify-content:center;height:100%;font-size:.75em;white-space:nowrap}.cc-reference .cc-secondary .cc-meter-text{font-size:.6em}.cc-reference .cc-stance{display:grid;place-content:center;width:100%;min-height:var(--cc-hp);border:.0625rem solid var(--cc-gold);border-radius:.2rem;font-size:.8em}.cc-reference .cc-icons{display:flex;flex-wrap:nowrap;gap:var(--cc-gap);align-items:center}.cc-reference .cc-facts{display:grid;grid-template-columns:minmax(5em,.7fr) minmax(0,1.6fr);column-gap:1em;row-gap:.5em;margin:0}.cc-reference dt{color:var(--cc-gold)}.cc-reference dd{margin:0}.cc-reference h4{margin:0 0 .65em}.cc-reference .cc-detail-sections{display:grid;gap:var(--cc-section-gap)}.cc-reference .cc-art{position:relative;color:#bfa576;display:grid;place-items:center;min-height:10rem;height:16rem;isolation:isolate}.cc-reference .cc-art svg{width:auto;height:100%;max-width:100%;object-fit:contain;z-index:1}.cc-reference .cc-art.enemy svg{transform:scaleX(-1)}.cc-reference .cc-name{display:block;text-align:center;font-family:Georgia,serif}.cc-reference .cc-metadata{display:flex;justify-content:space-between;border-top:.0625rem solid #786241;padding:.5em}.cc-reference .cc-selection{display:grid;gap:var(--cc-gap);width:min(100%,16rem);margin:auto;cursor:pointer}.cc-reference .cc-selection.selected{filter:drop-shadow(0 0 .35rem var(--cc-gold))}.cc-reference .cc-selection .cc-art{height:12rem}.cc-reference .cc-identity{width:min(100%,18rem);margin:auto}.cc-reference .cc-overlay-demo{position:relative;max-width:18rem;margin:0 auto;padding-inline:var(--cc-target);text-align:center}.cc-reference .cc-overlay-demo>.defense{position:absolute;top:var(--cc-defense-y);right:calc(0rem - var(--cc-defense-gap));transform:translateY(-50%)}.cc-reference .defense{font-size:1.6em;min-width:var(--cc-large);min-height:var(--cc-large)}.cc-reference .intent{font-size:1.15em}.cc-reference .cc-aura{position:absolute;inset:0;background:radial-gradient(ellipse,#82ab5140,#82ab5118 65%,transparent 75%);z-index:0;pointer-events:none}.cc-reference .cc-buff{position:absolute;inset:0;border-radius:50%;border:.0625rem solid #a4c76e80;background:linear-gradient(transparent,#a4c76e25,transparent);z-index:2;pointer-events:none}.cc-reference .cc-family{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:var(--cc-section-gap)}.cc-reference .cc-family-child{border:.0625rem solid #695236;padding:var(--cc-inset);min-width:0}.cc-reference .cc-family-child>.cc-ref{display:block;margin-bottom:.6em}.cc-reference .cc-modal{display:grid;gap:var(--cc-section-gap);padding:var(--cc-inset);border:.0625rem solid var(--cc-gold);border-radius:.5rem}.cc-reference .cc-feedback{display:block;width:100%;padding:.5em 0;font-size:.8em;color:var(--cc-gold)}.cc-reference .cc-tooltip-inline{border:.0625rem solid var(--cc-gold);padding:.75rem;background:var(--cc-brown)}.cc-reference .cc-tooltip-demo{display:grid;justify-items:center;gap:var(--cc-gap)}.cc-tooltip{position:fixed;z-index:2147483000;background:#241b12;color:#efe4ce;border:.0625rem solid #d1ab61;padding:.7rem;max-width:min(18rem,95vw);pointer-events:none;font-size:.85rem}.cc-tooltip strong{display:block;color:#d1ab61}.cc-reference .cc-run-header{display:flex;justify-content:space-between;gap:var(--cc-gap);font-size:.85em}.cc-reference .cc-background{position:relative;min-height:16rem;width:100%;overflow:hidden}.cc-reference .cc-sky{min-height:16rem;background:linear-gradient(#454742,#71624b 65%,#4b3b2a);position:relative;overflow:hidden}.cc-reference .cc-sky::after{content:'';position:absolute;inset:30% 0 0;background:#2c302a;clip-path:polygon(0 80%,15% 32%,24% 57%,45% 6%,66% 74%,84% 22%,100% 75%,100% 100%,0 100%)}.cc-reference .cc-floor{min-height:6rem;background:linear-gradient(#776348,#443426);border-top:.0625rem solid #9e8457}.cc-reference .cc-background>.cc-sky{position:absolute;inset:0}.cc-reference .cc-background>.cc-floor{position:absolute;inset:auto 0 0;height:var(--cc-floor);min-height:0}.cc-reference .cc-battlefield{position:relative;min-height:20rem;padding:var(--cc-inset);isolation:isolate;overflow:hidden}.cc-reference .cc-battlefield>.cc-background{position:absolute;inset:0;z-index:-1;height:100%}.cc-reference .cc-formation{display:grid;grid-template-columns:1fr 2fr;align-items:end;gap:var(--cc-section-gap);position:relative}.cc-reference .cc-actor-slots{display:flex;align-items:end;gap:var(--cc-gap);min-width:0}.cc-reference .cc-actor-slots>*{flex:1;min-width:0}.cc-reference .cc-native-actor .cardhost{width:100%!important;min-width:0!important;max-width:100%!important}.cc-reference .cc-native-actor .cardhost>.cardbox{width:100%!important;min-width:0!important}.cc-reference .cc-native-actor .inspect-action,.cc-reference .cc-native-actor .eligible-target{display:none}.cc-reference .cc-hand{display:flex;gap:var(--cc-gap);overflow-x:auto;padding:var(--cc-inset);align-items:start;justify-content:safe center}.cc-reference .cc-hand>.cc-native{width:var(--cc-card-width);flex:0 0 var(--cc-card-width)}.cc-reference .cc-hand .cardhost{width:100%!important;min-width:0;max-width:100%}.cc-reference .cc-hand .cardbox{width:100%;aspect-ratio:var(--cc-card-ratio)}.cc-reference .cc-item{aspect-ratio:var(--cc-card-ratio);border:.0625rem solid var(--cc-gold);display:grid;grid-template-rows:10% 40% 40% 10%}.cc-reference .cc-item .cc-art{height:100%;min-height:0}.cc-reference .cc-footer{display:flex;justify-content:center;align-items:center;gap:var(--cc-gap);width:100%;padding:.75em 0}.cc-reference .cc-footer .cc-button{font-size:clamp(.65rem,2cqw,.9rem);padding:.2em;flex:0 1 auto;min-width:0}.cc-reference .cc-footer .large{width:var(--cc-large);min-height:var(--cc-large);transform:translateY(-.15em)}.cc-reference .cc-footer .small{width:var(--cc-small);min-height:var(--cc-small)}.cc-reference .round{border-radius:50%}.cc-reference .cc-eligible{outline:.125rem solid var(--cc-gold);cursor:pointer}.cc-reference .cc-target-selected{filter:drop-shadow(0 0 .35rem var(--cc-gold))}.cc-reference .cc-map{position:relative;min-height:22rem;background:#30281f;overflow:hidden}.cc-reference .cc-map>svg{position:absolute;inset:0;width:100%;height:100%}.cc-reference .cc-map line{stroke:#b29462;stroke-width:.5;vector-effect:non-scaling-stroke}.cc-reference .cc-node{position:absolute;transform:translate(-50%,-50%);font-size:.75em}.cc-reference .cc-node.blocked{opacity:.5}.cc-reference .cc-node.selected{background:var(--cc-green);color:var(--cc-text)}.cc-reference .cc-node-details{padding:var(--cc-inset)}.cc-reference .cc-region{padding:.4em 0}.cc-reference .cc-map-composition{display:grid;gap:var(--cc-gap)}.cc-reference .cc-dialogue-scene{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:var(--cc-section-gap);isolation:isolate;padding:var(--cc-inset)}.cc-reference .cc-dialogue-scene>.cc-background{position:absolute;inset:0;z-index:-1;height:100%}.cc-reference .cc-dialogue-scene .cc-speaking{filter:drop-shadow(0 0 .3rem var(--cc-gold))}.cc-reference .cc-captions{padding:var(--cc-inset);min-height:8rem}.cc-reference .cc-captions p{margin:.6em 0}.cc-reference .cc-choices{display:flex;gap:var(--cc-gap);flex-wrap:wrap}.cc-reference .cc-dialogue{display:grid;gap:var(--cc-gap)}.cc-reference .cc-speech{display:grid;gap:var(--cc-section-gap)}.cc-reference .cc-speech .cc-action-row{flex-wrap:wrap}.cc-reference .cc-combat{display:grid;gap:var(--cc-gap)}
+@container (max-width:28rem){.cc-reference .cc-formation{gap:.2rem}.cc-reference .cc-facts{grid-template-columns:minmax(4.5em,.65fr) minmax(0,1.2fr)}.cc-reference .cc-art{height:12rem}.cc-reference .cc-footer{gap:var(--cc-gap)}.cc-reference .cc-family{grid-template-columns:1fr}.cc-reference .cc-action-row{font-size:.85em}}
+@media (prefers-reduced-motion:reduce){.cc-reference *{animation:none!important;transition:none!important}}
+/* Screen composition hosts allocate the band; child components do not impose standalone demo heights. */
+.scene-demo .cc-battlefield,.scene-demo .cc-background,.scene-demo .cc-map,.scene-demo .cc-dialogue-scene{height:100%;min-height:0;}
+.scene-demo .cc-battlefield>.cc-background,.scene-demo .cc-dialogue-scene>.cc-background{min-height:0;}
+.scene-demo .cc-formation{height:100%;min-height:0;}
+.scene-demo .cc-dialogue-scene .cc-art{height:100%;min-height:0;}
+.scene-demo .cc-captions{min-height:0;height:100%;overflow:auto;}
+.scene-demo .cc-hand{min-height:0;height:100%;}
+
+/* Shared action presets; footer and icon geometry keep their own contracts. */
+.cc-reference[data-component=WCB2]>.cc-button,.cc-reference[data-component=WCB3]>.cc-button,.cc-reference[data-component=WCB4]>.cc-button{width:var(--button-choice);box-sizing:border-box;white-space:normal;overflow-wrap:anywhere}
+.cc-action-row>.cc-button{flex:1 1 0;min-width:0}
+.cc-action-row>.cc-button:only-child{width:100%;flex-basis:100%}
+
+/* WGC6 owns every control's track; disclosure wrappers cannot add layout. */
+.cc-reference .cc-footer{display:grid;grid-template-columns:var(--cc-large) var(--cc-small) var(--cc-large) var(--cc-small) var(--cc-large);width:max-content;max-width:100%;align-items:center;gap:var(--cc-gap)}
+.cc-reference .cc-footer>.cc-button{width:100%;height:var(--cc-small);min-height:0;margin:0;box-sizing:border-box}
+.cc-reference .cc-footer>.cc-button.large{height:var(--cc-large);transform:translateY(-.15em)}
+.cc-reference .cc-potions-control{border:0;padding:0;margin:0;width:var(--cc-large);height:var(--cc-large);min-height:0;position:relative;transform:translateY(-.15em)}
+.cc-reference .cc-potions-control>.hud-potions{border:0;padding:0;margin:0;width:100%;height:100%;min-height:0;background:transparent}
+.cc-reference .cc-potions-control>.hud-potions>summary{box-sizing:border-box;width:100%;height:100%;min-height:0;min-width:0;margin:0;padding:.2em;display:grid;place-items:center;border:.0625rem solid var(--cc-gold);border-radius:50%;font:inherit;font-size:clamp(.65rem,2cqw,.9rem);line-height:1.15;list-style:none}
+.cc-reference .cc-potions-control>.hud-potions>summary::before,.cc-reference .cc-potions-control>.hud-potions>summary::after{content:none}
+.cc-reference .cc-potions-control .hud-potions-items{margin:0}
+.cc-reference .cc-footer>.cc-button.large,.cc-reference .cc-footer>.cc-potions-control{transform:translateY(calc(var(--cc-large) * -.04))}
+
+/* Skyline is the underlay; transparent ground cutout is the foreground. */
+.cc-reference .cc-background>.cc-sky{z-index:0}
+.cc-reference .cc-background>.cc-floor{z-index:1;border-top:0}
+.cc-reference .cc-battlefield>.cc-formation{position:absolute;inset:0 0 auto;height:var(--cc-actor-baseline);padding-top:0;align-items:end;z-index:2}
+.cc-reference .cc-battlefield>.cc-formation>.cc-actor-slots{align-items:end}
+
+/* Battlefield placement is measured after its preview becomes visible. */
+.cc-reference .cc-battlefield>.cc-formation{inset:0;height:100%;width:100%;min-width:0;display:block;padding:0}
+.cc-reference .cc-battlefield .cc-actor-slots{display:contents}
+.cc-reference .cc-battlefield .cc-native-actor{position:absolute;width:var(--cc-actor-width);max-width:none;transform-origin:top center;margin:0;padding:0;border:0;background:transparent}
+.cc-reference .cc-battlefield .cc-native-actor .cardhost{width:var(--cc-actor-width)!important;max-width:none!important;margin:0!important}
+.scene-stage:has(.cc-battlefield),.cc-reference .cc-battlefield{overflow:hidden!important}
+.cc-reference .cc-battlefield .cc-native-actor.cc-eligible{outline:none}
+
+.cc-ground-grid{position:absolute;top:30%;left:0;right:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--grid-center);padding-inline:var(--grid-padding);transform:translateY(-50%);pointer-events:none;box-sizing:border-box}
+.cc-ground-side{display:grid;grid-template-columns:repeat(var(--grid-count),minmax(0,1fr));gap:var(--grid-gap);min-width:0}
+.cc-ground-slot{min-width:0;height:1rem;display:grid;place-items:center;font-size:.5rem;color:transparent}
+.cc-ground-grid.guides .cc-ground-slot{border-bottom:.0625rem dashed #cbb17c;color:#cbb17c}
+.cc-reference[data-component=WGS8]>.cc-ground-grid{position:relative;top:auto;transform:none;min-height:5rem;align-items:center}
+
+/* Row-major 3×3 formations: shallow row advance gives deliberate overlap. */
+.cc-ground-side{grid-template-rows:repeat(var(--grid-rows),var(--grid-row-step));row-gap:0}
+.cc-ground-grid{top:var(--grid-depth);transform:translateY(-50%)}
+
+/* Counter the small perspective reduction for essential combat information. */
+.cc-battlefield .combatant-meter span{font-size:calc(.7rem / var(--row-depth,1))}
+.cc-battlefield .combatant-intent{font-size:calc(.95rem / var(--row-depth,1))!important}
+.cc-battlefield .defense-badge{font-size:calc(1.2rem / var(--row-depth,1))!important}
+/* Hand owns its measured bounds: overlap up to the configured fan limit before scrolling horizontally. */
+.cc-reference .cc-hand{position:relative;display:block;width:100%;height:calc(var(--cc-card-width)*8/5 + var(--cc-target) + var(--cc-inset)*2);padding:0;overflow-x:hidden;overflow-y:hidden;min-width:0;max-width:100%;overscroll-behavior-inline:contain}
+.scene-demo .cc-hand{height:100%;min-height:0}
+.cc-reference .cc-hand.cc-hand-scroll{overflow-x:auto;overflow-y:hidden}
+.cc-reference .cc-hand-track{position:relative;min-height:0;max-width:none;overflow:visible}
+.cc-reference .cc-hand-track>.cc-native{position:absolute;min-width:0;max-width:none;flex:none;padding:0;margin:0;z-index:calc(var(--cc-hand-order) + 1);transition:none}
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){z-index:var(--cc-hand-active-order,100);transform:translateY(calc(0px - var(--cc-hand-lift)))}
+.cc-reference .cc-hand-track .cardhost{width:100%!important;height:100%!important;margin:0!important;min-width:0!important;max-width:none!important;aspect-ratio:var(--cc-card-ratio);container-type:inline-size}
+.cc-reference .cc-hand-track .cardbox{width:100%!important;height:100%!important;min-height:0!important;max-height:100%;aspect-ratio:var(--cc-card-ratio);overflow:hidden!important;grid-template-rows:10% 40% 40% 10%}
+.cc-reference .cc-hand-track .cardband,.cc-reference .cc-hand-track .cardbody,.cc-reference .cc-hand-track .cardart,.cc-reference .cc-hand-track .cardfooter{min-height:0!important;max-height:100%;overflow:hidden!important;overscroll-behavior:none}
+.cc-reference .cc-hand-track .cardbody{font-size:clamp(.5rem,8cqw,.75rem);padding:.35em}.cc-reference .cc-hand-track .cardbody p{margin:.15em 0;line-height:1.15}.cc-reference .cc-hand-track .cardheader,.cc-reference .cc-hand-track .cardfooter{font-size:clamp(.45rem,7cqw,.7rem);padding:.15em .3em;line-height:1.1}
+.cc-reference .cc-hand-track .cardguide{display:none}
+/* One grid owns all five footer controls; percentage caps are resolved by footerLayout. */
+.cc-reference .cc-footer{display:grid;width:100%;max-width:100%;height:var(--cc-large);min-height:0;padding:0;margin:0;justify-content:center;align-items:center;align-content:center;overflow:visible}
+.scene-demo .cc-footer{height:100%}
+.cc-reference .cc-footer>.cc-button,.cc-reference .cc-footer>.cc-potions-control{box-sizing:border-box;width:100%!important;max-width:100%;min-width:0!important;margin:0!important;padding:.15em!important;transform:none!important;align-self:center;font-size:clamp(.5rem,1.6cqw,.8rem);line-height:1.1;overflow-wrap:anywhere}
+.cc-reference .cc-footer>.cc-button.large,.cc-reference .cc-footer>.cc-potions-control{height:var(--cc-footer-major)!important;min-height:0!important;max-height:var(--cc-footer-major)}
+.cc-reference .cc-footer>.cc-button.small{height:var(--cc-footer-pile)!important;min-height:0!important;max-height:var(--cc-footer-pile)}
+.cc-reference .cc-footer>.cc-button.round,.cc-reference .cc-footer>.cc-potions-control{aspect-ratio:1;border-radius:50%;padding:0!important}
+.cc-reference .cc-footer>.cc-potions-control>.hud-potions,.cc-reference .cc-footer>.cc-potions-control>.hud-potions>summary{width:100%!important;height:100%!important;min-height:0!important;max-height:100%;aspect-ratio:1;margin:0!important;box-sizing:border-box}
+.cc-reference .cc-footer>.cc-potions-control>.hud-potions>summary{border-radius:50%;padding:.15em!important;font-size:inherit!important;line-height:1.1}
+/* A focused card lifts once; actual selection outranks a different hovered card. */
+.cc-reference .cc-hand-track .cardhost.selected,.cc-reference .cc-hand-track .cardhost.selected .cardbox{transform:none!important}
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){z-index:var(--cc-hand-selected-order,101)}
+.cc-reference .cc-hand-track .cardbody{font-size:var(--cc-hand-font-min,.7rem);line-height:1.2}
+.cc-reference .cc-hand-track .cardbody>p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;line-height:1.2}
+.cc-reference .cc-hand-track .cardbody>p~p{display:none}
+.cc-reference .cc-hand-track .cardheader,.cc-reference .cc-hand-track .cardfooter{font-size:var(--cc-hand-font-min,.7rem);line-height:1.1}
+.cc-reference .cc-hand-track .cardheader>span,.cc-reference .cc-hand-track .cardfooter>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Cached sprite geometry has a fixed foot pivot. Focus reveals detail rows below it. */
+.cc-reference .cc-battlefield .combatant-host.selected,.cc-reference .cc-battlefield .combatant-host.selected .cardbox{transform:none!important}
+.cc-reference .cc-battlefield .combatant-host.selected .combatant-nameplate{bottom:calc(0px - var(--cc-name-line));line-height:var(--cc-name-line)}
+.cc-reference .cc-battlefield .combatant-host.selected .combatant-resources{margin-top:var(--cc-name-line)}
+
+/* Hand actions belong to the combat interaction surface, not a second panel below each card. */
+.cc-hand .cardhost > .status{display:none!important}
+/* The neutral hand is a shallow curved fan; focus straightens one card. */
+.cc-reference .cc-hand-track>.cc-native{transform-origin:center center;transform:translateY(var(--cc-hand-arch,0px)) rotate(var(--cc-hand-angle,0deg))}
+
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-selected-order)}
+
+.cc-reference .cc-hand-track .info{top:calc(0px - var(--cc-hand-info-rise,1.75rem));bottom:auto}
+.cc-reference .cc-hand:not(.cc-hand-scroll){overflow-x:hidden}
+
+.cc-reference .cc-hand-track{user-select:none;-webkit-user-select:none;touch-action:pan-x}
+/* Stable selection lanes remain above every raised card; only the info portal escapes clipping. */
+.cc-reference .cc-hand-hit-layer{position:absolute;inset:0 auto auto 0;z-index:var(--cc-hand-selected-order,101);pointer-events:none;user-select:none;touch-action:pan-x}
+.cc-reference .cc-hand-hit-strip{position:absolute;display:block;margin:0!important;padding:0!important;border:0!important;border-radius:0;background:transparent!important;opacity:1;pointer-events:auto;touch-action:pan-x;min-width:0!important;min-height:0!important;box-shadow:none!important;cursor:pointer}
+.cc-reference .cc-hand-hit-strip:focus-visible{outline:.125rem solid var(--cc-gold);outline-offset:-.125rem}
+.cc-reference .cc-hand-track .info{visibility:hidden!important;pointer-events:none!important}
+.cc-reference .cc-hand-track>.cc-native:hover,.cc-reference .cc-hand-track>.cc-native:focus-within{transform:translateY(var(--cc-hand-arch,0px)) rotate(var(--cc-hand-angle,0deg));z-index:calc(var(--cc-hand-order) + 1)}
+.cc-reference .cc-hand-track>.cc-native:has(.cardhost.selected){transform:translateY(calc(0px - var(--cc-hand-lift))) rotate(0deg);z-index:var(--cc-hand-selected-order)}
+.cc-hand-info-portal{position:fixed;z-index:2147482000;display:grid;place-items:center;transform:translateX(-50%);box-sizing:border-box;min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;border:.0625rem solid var(--gold,#d1ab61);border-radius:50%;background:var(--panel,#241b12);color:var(--text,#efe4ce);font:italic 1.2rem Georgia,serif;line-height:1;cursor:pointer;filter:drop-shadow(0 0 .25rem var(--gold,#d1ab61));pointer-events:auto}
+.cc-hand-info-portal[hidden]{display:none!important}
+.cc-hand-info-portal:focus-visible{outline:.125rem solid var(--gold,#d1ab61);outline-offset:.125rem}
+
+/* Stable selection lanes also support pointer and keyboard reordering. */
+.cc-reference .cc-hand-hit-strip{touch-action:none}
+.cc-reference .cc-hand-track>.cc-native.is-reordering{transform:translate(var(--cc-hand-drag-x,0px),calc(0px - var(--cc-hand-lift))) rotate(0deg)!important;z-index:var(--cc-hand-selected-order);transition:none}
+.cc-reference .cc-hand-announcement{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+.cc-hand-info-portal{isolation:isolate;background:transparent;border:0;filter:none;font-size:.875rem}
+.cc-hand-info-portal::before{content:'';position:absolute;z-index:-1;inset:50% auto auto 50%;transform:translate(-50%,-50%);width:var(--cc-info-visual-size,28px);height:var(--cc-info-visual-size,28px);border:.0625rem solid var(--gold,#d1ab61);border-radius:50%;background:var(--panel,#241b12);filter:drop-shadow(0 0 .25rem var(--gold,#d1ab61))}

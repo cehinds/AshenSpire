@@ -50,7 +50,7 @@
 // literal again — not the day the number merely looks small.
 
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdtempSync, cpSync, rmSync } from 'node:fs';
-import { resolve, join, relative } from 'node:path';
+import { resolve, join, relative, sep, win32 } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { readdirSortedSync } from './dirorder.mjs';
@@ -87,7 +87,23 @@ export function isCopy(s) {
   return true;
 }
 
-/** Every .js file under src/ui, repo-relative, in a stable order. */
+/**
+ * A file's key in the census and the baseline: repo-relative with '/'
+ * separators on every platform. The baseline is one file shared by Windows and
+ * POSIX checkouts, and a key built with the platform separator reads every file
+ * as SHRANK under one spelling and GREW under the other — 124 false rows on
+ * Windows. `paths` is node:path; the self-test passes path.win32.
+ */
+export function repoKey(root, full, paths = { relative, sep }) {
+  return paths.relative(root, full).split(paths.sep).join('/');
+}
+
+/** A key the baseline may hold: relative, '/'-separated, no drive or leading slash. */
+export function isRepoKey(key) {
+  return !key.includes('\\') && !key.startsWith('/') && !/^[A-Za-z]:/.test(key);
+}
+
+/** Every .js file under src/ui, as a repoKey, in a stable order. */
 function uiFiles(root = ROOT) {
   const base = join(root, 'src/ui');
   const found = [];
@@ -95,7 +111,7 @@ function uiFiles(root = ROOT) {
     for (const entry of readdirSortedSync(dir)) {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith('.js')) found.push(relative(root, full));
+      else if (entry.endsWith('.js')) found.push(repoKey(root, full));
     }
   })(base);
   return found;
@@ -130,6 +146,13 @@ function loadBaseline() {
 }
 
 function writeBaseline(now) {
+  // A platform-spelled key written here would turn the baseline red on every
+  // other platform, so the writer holds the same rule the check does.
+  const bad = Object.keys(now.files).filter((key) => !isRepoKey(key));
+  if (bad.length) {
+    console.error(`uistrings: refusing to write the baseline — ${bad.length} key(s) are not '/'-separated repo paths (${bad.slice(0, 3).join(', ')}).`);
+    process.exit(1);
+  }
   const prev = loadBaseline();
   const doc = {
     _: 'DERIVED from the tree by tools/uistrings.mjs --write-baseline. The copy still held in code, per file. It may only go DOWN, and every step down is recorded here in the same commit that takes it.',
@@ -150,6 +173,9 @@ export function diff(baseline, now) {
   for (const file of [...paths].sort()) {
     const was = baseline.files[file] || 0;
     const is = now.files[file] || 0;
+    // Named, not counted: a platform-spelled key is a file under a second
+    // spelling, and a GREW/SHRANK pair would misstate what changed.
+    if (!isRepoKey(file)) { out.push({ file, was, is, verdict: 'NOT A REPO KEY' }); continue; }
     if (was === is) continue;
     out.push({ file, was, is, verdict: is > was ? 'GREW' : 'SHRANK — record it' });
   }
@@ -195,6 +221,23 @@ function selftest() {
   ok(!isCopy('small') && !isCopy('.card') && !isCopy('rewardCollect') && !isCopy('https://x.y') && isCopy('Take the card'),
     'the prose test admits a sentence and refuses a token, a selector, a camelCase key and a URL');
 
+  // Keys are one spelling on every platform. A Windows walk once keyed
+  // src\ui\x.js against a baseline of src/ui/x.js and read 124 files as
+  // changed; the paths are planted with path.win32 so a POSIX runner exercises
+  // the Windows spelling too.
+  const winKey = repoKey('C:\\repo', 'C:\\repo\\src\\ui\\components\\flask.js', win32);
+  ok(winKey === 'src/ui/components/flask.js', `a Windows path is keyed with '/' separators (${winKey})`);
+  ok(diff({ files: { 'src/ui/components/flask.js': 2 } }, { files: { [winKey]: 2 } }).length === 0,
+    'a Windows census matches a forward-slash baseline with no difference');
+  const badRows = diff({ files: { 'src/ui/components/flask.js': 2 } }, { files: { 'src\\ui\\components\\flask.js': 2 } });
+  const badRow = badRows.find((row) => row.verdict === 'NOT A REPO KEY');
+  ok(badRow?.file === 'src\\ui\\components\\flask.js',
+    `a backslash key is CAUGHT by name, not read as a count (${badRow?.file || 'nothing caught'})`);
+  const walked = Object.keys(before.files);
+  const stray = walked.filter((key) => !isRepoKey(key));
+  ok(walked.length > 0 && stray.length === 0,
+    `every key the real walk produces is a '/'-separated repo path (${stray[0] || `${walked.length} keys`})`);
+
   rmSync(dir, { recursive: true, force: true });
   console.log(`\nuistrings --selftest: ${failed ? `RED — ${passed} passed, ${failed} failed` : `OK — ${passed} checks passed`}`);
   return failed ? 1 : 0;
@@ -220,6 +263,7 @@ if (argv.includes('--selftest')) {
     console.log(`\nuistrings: RED — ${rows.length} file(s) differ from the baseline.`);
     console.log('  A file that GREW put a sentence in code that belongs in content/source/uiStrings.csv.');
     console.log('  A file that SHRANK did the right thing and owes `node tools/uistrings.mjs --write-baseline` in the same commit.');
+    if (rows.some((row) => row.verdict === 'NOT A REPO KEY')) console.log("  A NOT A REPO KEY row is a path in a platform's own spelling; keys are repo-relative with '/' separators.");
     process.exit(1);
   }
   report(now, baseline);

@@ -192,7 +192,7 @@ export function mountCustomRun(app, { registries, defaultSeedString, onBack, onS
 
   const head = modalHead({ eyebrow: 'Custom climb', title: 'Shape your own ascent', closeLabel: 'Back' });
   head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
-  const back = button({ label: 'Back', id: 'cr-back' });
+  const back = button({ label: 'Back', role: 'exit', id: 'cr-back' });
   const start = button({ label: 'Begin the climb', id: 'cr-start', weight: 'primary' });
   const foot = modalFooter({ note: 'Results are kept out of win-rate stats.', secondary: [back], primary: start, size: 'medium' });
   const body = el('div', { class: 'modal-body' }, [

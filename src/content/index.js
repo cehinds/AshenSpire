@@ -24,10 +24,13 @@ import { wealdEncounters } from './encounters/weald.js';
 import { marchesEncounters } from './encounters/marches.js';
 import { reachEncounters } from './encounters/reach.js';
 import { SEATS } from './seats.js';
-import { events, eventHistoryRequirements } from './events.js';
+import { events, eventHistoryRequirements, eventChoiceIds, questChains, eventSpeakers } from './events.js';
+import { speakers } from './generated/speakers.js';
+import { worldAtlas } from './generated/worldAtlas.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
+import { PROPERTY_RULES } from './propertyRules.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
@@ -76,6 +79,14 @@ export const contentBundle = {
   seats: SEATS,
   events,
   eventHistoryRequirements,
+  // Plan phase 10a: quest chains complete through one door, and every chain
+  // step is spoken by a speaker row (content/source/speakers.csv). Atlas quest
+  // rows ride along so validation can resolve their speakers too.
+  eventChoiceIds,
+  questChains,
+  eventSpeakers,
+  speakers,
+  atlasQuests: worldAtlas.quests,
   flasks,
   classes,
   mapConfigs,
@@ -116,6 +127,8 @@ export const contentBundle = {
   tagFamilies: TAG_FAMILIES,
   tagFamilyDomains: TAG_FAMILY_DOMAINS,
   tagging: TAGGING,
+  // What each `property` tag confers — one rule per tag (content/propertyRules.js).
+  propertyRules: PROPERTY_RULES,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting

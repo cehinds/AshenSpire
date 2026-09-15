@@ -1,0 +1,6 @@
+/* Costs float over the exposed art edge below the header, without boxes. */
+.cardbox.has-card-costs{position:relative}
+.cardbox>.card-costs{position:absolute;inset-block-start:calc(var(--card-cost-header) + var(--card-cost-inset));inset-inline-start:var(--card-cost-inset);width:var(--card-cost-width);display:flex;flex-direction:column;gap:var(--card-cost-gap);z-index:3;pointer-events:none;font:var(--card-cost-font)/1.1 system-ui;text-align:left}
+.card-costs>.card-cost{display:flex;align-items:center;justify-content:flex-start;gap:.3em;background:none;border:0;padding:0;min-width:0;white-space:nowrap;box-sizing:border-box}
+.card-costs svg{width:var(--card-cost-icon);height:var(--card-cost-icon);flex:none;fill:currentColor;stroke:var(--card-cost-outline);stroke-width:2;stroke-linejoin:round;paint-order:stroke fill}
+.card-costs strong{font:inherit;font-weight:bold;text-shadow:-.06em -.06em 0 var(--card-cost-outline),.06em -.06em 0 var(--card-cost-outline),-.06em .06em 0 var(--card-cost-outline),.06em .06em 0 var(--card-cost-outline)}

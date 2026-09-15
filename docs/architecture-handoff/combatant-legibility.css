@@ -1,0 +1,158 @@
+/* Load after gallery styles. Scope to the compensated assembly only.
+   Sprite/artwork/name anchoring and all sprite transforms remain untouched. */
+.combatant-legible .combatant-meter,
+.combatant-legible .combatant-hp,
+.combatant-legible .combatant-status .buildup,
+.combatant-legible .combatant-status .stance {
+  font-size: max(.65rem, var(--combatant-legible-font)) !important;
+  line-height: 1.1 !important;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.combatant-legible .combatant-meter span {
+  font-size: inherit;
+  line-height: inherit;
+}
+.combatant-legible .combatant-resources {
+  grid-auto-rows: auto;
+  min-height: min-content;
+  overflow: visible;
+}
+.combatant-legible .combatant-hp,
+.combatant-legible .combatant-meter:first-child {
+  height: max(var(--hp-row-height, 1.4rem), var(--combatant-legible-hp), calc(var(--combatant-legible-font) * 1.1)) !important;
+  min-height: var(--combatant-legible-hp) !important;
+}
+.combatant-legible .combatant-meter:not(:first-child),
+.combatant-legible .combatant-status .buildup {
+  height: max(calc(var(--hp-row-height, 1.4rem) * .5), var(--combatant-legible-secondary), calc(var(--combatant-legible-font) * 1.1)) !important;
+  min-height: var(--combatant-legible-secondary) !important;
+}
+.combatant-legible .combatant-status .stance {
+  height: max(var(--hp-row-height, 1.4rem), var(--combatant-legible-stance), calc(var(--combatant-legible-font) * 1.1)) !important;
+  min-height: var(--combatant-legible-stance) !important;
+}
+.combatant-legible .combatant-status {
+  overflow: visible;
+  min-height: min-content;
+}
+.combatant-legible .combatant-status .status-icons {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  min-height: max(1.575rem, var(--combatant-legible-icon));
+}
+.combatant-legible .combatant-status .status-icon {
+  width: max(1.575rem, var(--combatant-legible-icon));
+  height: max(1.575rem, var(--combatant-legible-icon));
+  min-width: max(1.575rem, var(--combatant-legible-icon));
+  min-height: max(1.575rem, var(--combatant-legible-icon));
+  font-size: max(.65rem, var(--combatant-legible-font)) !important;
+  line-height: 1 !important;
+  flex-shrink: 0;
+}
+.combatant-legible .combatant-status .status-icon > span {
+  font-size: max(.85rem, var(--combatant-legible-font));
+}
+
+/* Keep the sprite/ground anchor fixed while expanding its information lane. */
+.combatant-legible .combatant-resources,
+.combatant-legible .combatant-status {
+  width: max(100%, var(--combatant-legible-bar-width));
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+.combatant-legible .combatant-meter,
+.combatant-legible .combatant-status .buildup,
+.combatant-legible .combatant-status .stance {
+  width: 100%;
+  max-width: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.combatant-legible .combatant-meter > span {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+/* Physical screen minima after the owning actor transform. */
+.combatant-legible .combatant-meter,
+.combatant-legible .combatant-hp,
+.combatant-legible .combatant-intent,
+.combatant-legible .defense-badge {
+  font-size: max(var(--combatant-legible-value-font), var(--combatant-legible-font)) !important;
+  line-height: 1.1 !important;
+}
+.combatant-legible .combatant-meter:first-child {
+  height: max(var(--hp-row-height, 1.4rem), var(--combatant-legible-hp), calc(var(--combatant-legible-value-font) * 1.1)) !important;
+}
+.combatant-legible .combatant-meter > span {
+  text-overflow: clip;
+  overflow: visible;
+}
+.combatant-legible .combatant-intent,
+.combatant-legible .defense-badge {
+  width: max-content;
+  min-height: max(2.8rem, calc(var(--combatant-legible-value-font) * 1.6)) !important;
+  overflow: visible;
+  white-space: nowrap;
+}
+.combatant-legible .info {
+  width: var(--combatant-legible-info-size) !important;
+  height: var(--combatant-legible-info-size) !important;
+  min-width: var(--combatant-legible-info-size) !important;
+  min-height: var(--combatant-legible-info-size) !important;
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  font-size: var(--combatant-legible-info-font) !important;
+  line-height: 1 !important;
+  display: grid;
+  place-items: center;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  margin-inline: 0 !important;
+  touch-action: manipulation;
+}
+/* Intrinsic label width must not resize the original actor/sprite envelope. */
+.combatant-legible,
+.combatant-legible .cardbox {
+  min-width: 0 !important;
+}
+.combatant-legible .cardbox {
+  width: 100% !important;
+  max-width: 100% !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.combatant-legible .combatant-resources,
+.combatant-legible .combatant-status {
+  min-width: 0 !important;
+  grid-template-columns: minmax(0, 1fr);
+}
+.combatant-legible .combatant-meter,
+.combatant-legible .combatant-status .buildup,
+.combatant-legible .combatant-status .stance {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  grid-template-columns: minmax(0, 1fr);
+}
+.combatant-legible .combatant-status .stance,
+.combatant-legible .combatant-status .buildup {
+  display: block;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* The visible inspect disk is smaller while the transparent hit area stays 44px. */
+.combatant-legible .info{background:transparent!important;border-color:transparent!important;isolation:isolate;font-size:calc(var(--combatant-legible-info-font) * var(--combatant-info-visual-scale,.8))!important}
+.combatant-legible .info::before{content:"";position:absolute;inset:calc((1 - var(--combatant-info-visual-scale,.8)) * 50%);border:1px solid var(--gold);border-radius:50%;background:var(--panel);z-index:-1;pointer-events:none}

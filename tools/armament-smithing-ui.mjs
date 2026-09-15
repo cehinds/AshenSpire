@@ -209,6 +209,14 @@ async function main() {
         await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 }, sessionId);
         await wait(160);
       };
+      // W1i (2026-09-14): the Smith is a W1 workspace. A wide host shows the
+      // item list as a rail beside the pane; a compact host folds it into one
+      // selector above the pane, so a candidate is reached by opening it first.
+      const compact = () => evaluate(`!!document.querySelector('.smith-upgrade-modal .as-catnav-toggle')?.getClientRects().length`);
+      const pick = async (itemRef) => {
+        if (await compact()) await click('.smith-upgrade-modal .as-catnav-toggle');
+        await click(`.smith-candidate-card[data-item-ref="${itemRef}"]`);
+      };
       const openSelected = async (stones, itemRef = 'armament/straightSword', itemName = 'Straight Sword') => {
         errors.set(sessionId, []);
         await cdp.send('Page.navigate', {
@@ -219,11 +227,11 @@ async function main() {
         await click('#smith-opt');
         await until(`!!document.querySelector('.smith-upgrade-modal')`, 'Smith modal');
         await until(`document.querySelector('.smith-upgrade-modal h2')?.textContent.trim()==='Upgrade an Item'`, 'generic Smith modal title');
-        await click(`.smith-candidate-card[data-item-ref="${itemRef}"]`);
+        await pick(itemRef);
         await until(`document.querySelector('.smith-preview-card')?.textContent.includes(${JSON.stringify(itemName)})`, `selected ${itemName} preview`);
         await until(`[...document.querySelectorAll('.smith-weapon-art img')].every((img)=>img.complete&&img.naturalWidth>0)`, 'item card art');
         await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 4, y: 4 }, sessionId);
-        await evaluate('document.activeElement?.blur(); document.querySelector(".smith-preview-region").scrollTop=0');
+        await evaluate('document.activeElement?.blur(); document.querySelector(".smith-preview-card").scrollTop=0');
         await wait(180);
       };
       const reading = () => evaluate(`(() => {
@@ -232,11 +240,11 @@ async function main() {
         const modal=document.querySelector('.smith-upgrade-modal');
         const preview=document.querySelector('.smith-preview-card');
         const confirm=document.querySelector('.smith-confirm');
-        const targets=[...document.querySelectorAll('.smith-candidate-card,.smith-back,.smith-confirm')].filter(visible).map((node)=>{
+        const targets=[...document.querySelectorAll('.smith-candidate-card,.smith-upgrade-modal .as-catnav-toggle,.smith-back,.smith-confirm')].filter(visible).map((node)=>{
           const r=rect(node), x=(r.left+r.right)/2, y=(r.top+r.bottom)/2, hit=document.elementFromPoint(x,y);
           return {name:node.dataset.itemRef||node.className,...r,centreHit:!!(hit&&(hit===node||node.contains(hit)))};
         });
-        const horizontal=[modal,document.querySelector('.smith-modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.smith-candidate-region'),document.querySelector('.smith-preview-region'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
+        const horizontal=[modal,document.querySelector('.smith-upgrade-modal .modal-head'),document.querySelector('.smith-modal-body'),document.querySelector('.smith-candidate-region'),document.querySelector('.smith-preview-region'),document.querySelector('.smith-modal-footer')].filter(Boolean).map((node)=>({name:node.className,scrollWidth:node.scrollWidth,clientWidth:node.clientWidth}));
         return {
           text:(preview?.textContent||'').replace(/\\s+/g,' ').trim(),
           count:(document.querySelector('[data-smith-count]')?.textContent||'').replace(/\\s+/g,' ').trim(),
@@ -250,13 +258,20 @@ async function main() {
               name:node.querySelector('.smith-weapon-name')?.textContent.trim()||'',
               count:node.querySelector('.smith-weapon-count')?.textContent.trim()||'',
               countLabel:node.querySelector('.smith-weapon-count')?.getAttribute('aria-label')||'',
-              types:[...node.querySelectorAll('.smith-item-type-row [data-item-type]')].map((type)=>({tag:type.dataset.itemType,label:type.textContent.trim()})),
-              tags:[...node.querySelectorAll('.smith-weapon-tags em')].map((tag)=>tag.textContent.trim()),
               imageLoaded:!!(image?.complete&&image.naturalWidth>0),
               artShare:artRect?artRect.height/cardRect.height:0,
               borrowedCombatType:!!node.querySelector('.ctype,.ctext'),
             };
           }),
+          // The item's kind and tags moved from each candidate to the selected
+          // item's head (W1i: the rows are the list, the pane is the item).
+          selectedHead:document.querySelector('.smith-selected-head')?{
+            types:[...document.querySelectorAll('.smith-selected-head .smith-item-type-row [data-item-type]')].map((type)=>({tag:type.dataset.itemType,label:type.textContent.trim()})),
+            tags:[...document.querySelectorAll('.smith-selected-head .smith-weapon-tags em')].map((tag)=>tag.textContent.trim()),
+            imageLoaded:[...document.querySelectorAll('.smith-selected-head .smith-weapon-art img')].every((img)=>img.complete&&img.naturalWidth>0),
+          }:null,
+          compact:!!document.querySelector('.smith-upgrade-modal .as-catnav-toggle')?.getClientRects().length,
+          viewport:{width:innerWidth,height:innerHeight},
           confirm:{text:confirm?.textContent?.trim()||'',disabled:!!confirm?.disabled,aria:confirm?.getAttribute('aria-disabled'),state:confirm?.dataset.smithActionState||'',hold:confirm?.dataset.optionHold||''},
           summaryHeights:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>rect(node).height),
           summaryTops:[...document.querySelectorAll('.smith-summary-cell')].map((node)=>rect(node).top),
@@ -286,7 +301,7 @@ async function main() {
             valuesScrollWidth:document.querySelector('.smith-economy-values').scrollWidth,
             valuesClientWidth:document.querySelector('.smith-economy-values').clientWidth,
           }:null,
-          selectedType:document.querySelector('.smith-candidate-card.selected .smith-item-type-row')?.textContent.trim()||'',
+          selectedType:document.querySelector('.smith-selected-head .smith-item-type-row')?.textContent.trim()||'',
           selectedNameStyle:document.querySelector('.smith-selected-head > b')?{
             color:getComputedStyle(document.querySelector('.smith-selected-head > b')).color,
             fontSize:getComputedStyle(document.querySelector('.smith-selected-head > b')).fontSize,
@@ -366,13 +381,14 @@ async function main() {
           && !zero.candidates.some((row)=>row.ref === 'relic/forsakenMedallion'),
         `SMITH-UI-${upper}-ZERO-PICKER`, `generic picker exposes the two default armaments and equipped armor by namespaced ref without inferring an unauthored owned relic (${JSON.stringify({ title: zero.title, count: zero.count, candidates: zero.candidates })})`);
       check(zero.weaponCards.length === 3
-          && zero.weaponCards[0]?.types.length === 1 && zero.weaponCards[0].types[0]?.tag === 'item:blade' && zero.weaponCards[0].types[0]?.label === 'Blade'
-          && zero.weaponCards[1]?.types.length === 1 && zero.weaponCards[1].types[0]?.tag === 'item:shield' && zero.weaponCards[1].types[0]?.label === 'Shield'
           && zero.weaponCards[2]?.itemRef === 'armor/reaver/default'
+          // A compact host keeps the rows in the closed selector list, where
+          // they have no box; COMPACT-LIST measures their art share open.
           && zero.weaponCards.every((card) => card.count === '1' && card.countLabel === '1 in inventory'
-            && card.tags.length >= (card.itemRef.startsWith('armament/') ? 2 : 1) && card.imageLoaded
-            && card.artShare >= 0.45 && !card.borrowedCombatType),
-        `SMITH-UI-${upper}-EQUIPMENT-CARD-ANATOMY`, `namespaced armament/armor candidate cards use owned equipment art/count/semantic type/tags with a dominant image box (${JSON.stringify(zero.weaponCards)})`);
+            && card.imageLoaded && (zero.compact || card.artShare >= 0.45) && !card.borrowedCombatType)
+          && zero.selectedHead?.types.length === 1 && zero.selectedHead.types[0]?.tag === 'item:blade' && zero.selectedHead.types[0]?.label === 'Blade'
+          && zero.selectedHead.tags.length >= 2 && zero.selectedHead.imageLoaded,
+        `SMITH-UI-${upper}-EQUIPMENT-CARD-ANATOMY`, `namespaced armament/armor candidate rows carry owned equipment art and count; the selected item's head carries its semantic type and tags beside its art (${JSON.stringify({ rows: zero.weaponCards, head: zero.selectedHead })})`);
       check(zero.intrinsic?.title === 'Equipment Stats' && zero.intrinsic.text.includes('AR 5') && zero.intrinsic.text.includes('DEF 2')
           && zero.intrinsic.text.includes('WEIGHT 5') && zero.intrinsic.text.includes('Weapon Art Mana 0')
           && zero.intrinsic.text.includes('Unique Skill Stamina 0') && zero.intrinsic.overflow <= 0
@@ -411,7 +427,7 @@ async function main() {
           && zero.summaryTops.length === 2 && zero.summaryTops[1] >= zero.summaryTops[0]
           && Math.abs(zero.summaryGrid.requirementWidth - zero.summaryGrid.gridWidth) <= 1
           && Math.abs(zero.summaryGrid.selectedToStatsGap) <= 1,
-        `SMITH-UI-${upper}-SUMMARY-ORDER`, `Selected Item then Cost in one column; Equipment Stats begins immediately below and Requirements spans the full row (${JSON.stringify({ ...zero.summaryGrid, tops: zero.summaryTops })})`);
+        `SMITH-UI-${upper}-SUMMARY-ORDER`, `W1i order: the Selected Item, Equipment Stats immediately below it, Requirements across the full row, and the Cost last (${JSON.stringify({ ...zero.summaryGrid, tops: zero.summaryTops })})`);
       check(zero.requirementRow?.border !== '0px' && zero.requirementRow?.borderLeft === '0px'
           && zero.requirementRow?.borderRight === '0px' && zero.requirementRow?.radius === '0px'
           && zero.requirementRow?.nestedBorder === '0px'
@@ -427,14 +443,32 @@ async function main() {
       check(!zero.confirm.disabled && zero.confirm.aria === 'true' && zero.confirm.state === 'blocked'
           && zero.confirm.hold === 'blocked' && zero.confirm.text === 'Upgrade (1)',
         `SMITH-UI-${upper}-ZERO-CONFIRM`, 'zero-purse Upgrade (1) remains clickable, is ARIA-blocked, and cannot arm a hold commit');
-      check(zero.documentOverflowX <= 0 && Math.abs(zero.modal?.left || 0) <= 0.5 && Math.abs(zero.modal?.top || 0) <= 0.5
-          && Math.abs((zero.modal?.width || 0) - shape.width) <= 1 && Math.abs((zero.modal?.height || 0) - shape.height) <= 1
+      // W1i's frame is the W1 share of the viewport, centred (95 x 90, never
+      // past it); it no longer fills the viewport edge to edge.
+      const framed = (reading) => reading.modal && reading.modal.left >= -0.5 && reading.modal.top >= -0.5
+        && reading.modal.right <= reading.viewport.width + 0.5 && reading.modal.bottom <= reading.viewport.height + 0.5
+        && Math.abs(reading.modal.left - (reading.viewport.width - reading.modal.right)) <= 1
+        && Math.abs(reading.modal.top - (reading.viewport.height - reading.modal.bottom)) <= 1;
+      check(zero.documentOverflowX <= 0 && framed(zero)
           && zero.horizontal.every((row) => row.scrollWidth <= row.clientWidth + 1),
-        `SMITH-UI-${upper}-ZERO-FIT`, 'Shrine action pane fills the viewport and regions have no horizontal overflow');
-      check(zero.targets.length === 5
+        `SMITH-UI-${upper}-ZERO-FIT`, `the W1 frame stands centred inside the viewport and regions have no horizontal overflow (${JSON.stringify({ modal: zero.modal, viewport: zero.viewport })})`);
+      // Wide: two armaments, equipped armor, Back and Upgrade. Compact: the
+      // item selector, Back and Upgrade (the rows are in the closed list).
+      check(zero.targets.length === (zero.compact ? 3 : 5)
           && zero.targets.every((target) => target.width >= 44 && target.height >= 44 && target.centreHit),
-        `SMITH-UI-${upper}-ZERO-TARGETS`, 'two armaments, equipped armor, Back, and Confirm each meet 44px and centre hit-testing');
-      await click('.smith-candidate-card[data-item-ref="armor/reaver/default"]');
+        `SMITH-UI-${upper}-ZERO-TARGETS`, `${zero.compact ? 'the item selector' : 'two armaments, equipped armor'}, Back, and Confirm each meet 44px and centre hit-testing (${JSON.stringify(zero.targets.map((target) => ({ name: target.name, width: target.width, height: target.height, centreHit: target.centreHit })))})`);
+      if (zero.compact) {
+        await click('.smith-upgrade-modal .as-catnav-toggle');
+        const list = await evaluate(`(() => {
+          const rows=[...document.querySelectorAll('.smith-upgrade-modal .as-rail > .smith-candidate-card')].filter((node)=>node.getClientRects().length);
+          return rows.map((node)=>{const r=node.getBoundingClientRect(),x=(r.left+r.right)/2,y=(r.top+r.bottom)/2,hit=document.elementFromPoint(x,y),art=node.querySelector('.smith-weapon-art');return {ref:node.dataset.itemRef,width:r.width,height:r.height,artShare:art&&r.height?art.getBoundingClientRect().height/r.height:0,centreHit:!!(hit&&(hit===node||node.contains(hit)))};});
+        })()`);
+        await click('.smith-upgrade-modal .as-catnav-toggle');
+        check(list.length === 3 && list.every((row) => row.width >= 44 && row.height >= 44 && row.centreHit && row.artShare >= 0.45)
+            && await evaluate(`document.querySelector('.smith-upgrade-modal .as-railed')?.dataset.catOpen === 'false' && !!document.querySelector('.smith-upgrade-modal')`),
+          `SMITH-UI-${upper}-COMPACT-LIST`, `the compact selector opens every candidate as a 44px centre-hit-testable row and closes back to the door (${JSON.stringify(list)})`);
+      }
+      await pick('armor/reaver/default');
       const armor = await reading();
       check(armor.text.includes('Wayfarer Plate') && armor.selectedType === 'Armor' && !armor.intrinsic
           && armor.affected.length === 1 && armor.affected[0].role.startsWith('armor')
@@ -442,10 +476,10 @@ async function main() {
           && armor.affected[0].values.some((value)=>value.label === 'Poise threshold' && value.after === '9')
           && /\b8\b/.test(armor.affected[0].text),
         `SMITH-UI-${upper}-TYPED-ARMOR`, `equipped armor selects by namespaced ref and renders its typed authored row without armament-only intrinsic stats (${JSON.stringify({ selectedType: armor.selectedType, intrinsic: armor.intrinsic, affected: armor.affected })})`);
-      await click('.smith-candidate-card[data-item-ref="armament/straightSword"]');
+      await pick('armament/straightSword');
       await capture('zero');
       if (shape.mobile) {
-        await evaluate('document.querySelector(".smith-preview-region").scrollTop=document.querySelector(".smith-preview-region").scrollHeight');
+        await evaluate('document.querySelector(".smith-preview-card").scrollTop=document.querySelector(".smith-preview-card").scrollHeight');
         await wait(100);
         await capture('zero-deltas');
       }
@@ -476,16 +510,15 @@ async function main() {
       check(!one.confirm.disabled && one.confirm.aria === 'false'
           && one.confirm.text.includes('Upgrade (1)') && one.confirm.state === 'actionable' && one.confirm.hold === 'commit',
         `SMITH-UI-${upper}-ONE-CONFIRM`, 'affordable Upgrade (1) is actionable and advertises the hold shortcut');
-      check(one.documentOverflowX <= 0 && Math.abs(one.modal?.left || 0) <= 0.5 && Math.abs(one.modal?.top || 0) <= 0.5
-          && Math.abs((one.modal?.width || 0) - shape.width) <= 1 && Math.abs((one.modal?.height || 0) - shape.height) <= 1
+      check(one.documentOverflowX <= 0 && framed(one)
           && one.horizontal.every((row) => row.scrollWidth <= row.clientWidth + 1),
-        `SMITH-UI-${upper}-ONE-FIT`, 'affordable review fills the Shrine action pane with no horizontal overflow');
-      check(one.targets.length === 5
+        `SMITH-UI-${upper}-ONE-FIT`, 'affordable review stands in the centred W1 frame with no horizontal overflow');
+      check(one.targets.length === (one.compact ? 3 : 5)
           && one.targets.every((target) => target.width >= 44 && target.height >= 44 && target.centreHit),
-        `SMITH-UI-${upper}-ONE-TARGETS`, 'affordable modal preserves five 44px centre-hit-testable controls');
+        `SMITH-UI-${upper}-ONE-TARGETS`, `affordable modal preserves ${one.compact ? 'three' : 'five'} 44px centre-hit-testable controls`);
       await capture('one');
       if (shape.mobile) {
-        await evaluate('document.querySelector(".smith-preview-region").scrollTop=document.querySelector(".smith-preview-region").scrollHeight');
+        await evaluate('document.querySelector(".smith-preview-card").scrollTop=document.querySelector(".smith-preview-card").scrollHeight');
         await wait(100);
         await capture('one-deltas');
       }
@@ -599,7 +632,7 @@ async function main() {
           'SMITH-UI-COOP-SHOT-DOOR', `co-op Shrine shot exposes the real one-Stone host plan (${JSON.stringify(coopDoor)})`);
         await click('#coop-smith');
         await until(`!!document.querySelector('.smith-upgrade-modal')`, 'co-op Smith modal');
-        await click('.smith-candidate-card[data-item-ref="armament/straightSword"]');
+        await pick('armament/straightSword');
         const coopModal = await evaluate(`(() => ({
           count:(document.querySelector('[data-smith-count]')?.textContent||'').replace(/\\s+/g,' ').trim(),
           text:(document.querySelector('.smith-preview-card')?.textContent||'').replace(/\\s+/g,' ').trim(),

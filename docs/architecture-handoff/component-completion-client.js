@@ -1,0 +1,271 @@
+/* Executable documentation components. Semantic demo events never call game commands. */
+function attachGroundShadow(sprite) {
+ const config=COMPONENT_COMPLETION_DEFAULTS.groundShadow;
+ const shadow=document.createElement('div');shadow.className='combatant-ground-shadow';shadow.dataset.component='WCO5';shadow.setAttribute('aria-hidden','true');
+ shadow.style.cssText=`position:absolute;left:${config.anchorXFraction*100}%;width:${config.widthPercent}%;height:${config.heightPercent}%;border-radius:50%;background:${config.color};opacity:${config.enabled?config.opacity:0};transform:translate(-50%,-50%);pointer-events:none;z-index:0`;
+ sprite.prepend(shadow);
+ const place=()=>{if(!sprite.isConnected)return;const rect=sprite.getBoundingClientRect();if(!rect.height)return;const shapes=[...sprite.querySelectorAll('svg path,svg circle')];if(!shapes.length)return;const sole=Math.max(...shapes.map(s=>s.getBoundingClientRect().bottom));shadow.style.top=((sole-rect.top)/rect.height*100)+'%';};
+ const observer=new ResizeObserver(place);observer.observe(sprite);if(typeof statusObservers!=='undefined')statusObservers.push(observer);requestAnimationFrame(place);return shadow;
+}
+function createComponentReferenceRenderers(configuration) {
+  const E = (tag, cls, text) => { const node=document.createElement(tag); if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node; };
+  const cfg = () => configuration || globalThis.COMPONENT_COMPLETION_DEFAULTS || globalThis.REFERENCE_COMPONENTS;
+  const ref = (id, label=id) => { const a=E('a','cc-ref',label);a.href='#'+id;return a; };
+  const wrap = (id, cls='') => {const n=E('section','cc-component '+cls);n.dataset.component=id;return n;};
+  function signal(root, text) { let output=root.querySelector('.cc-feedback');if(!output){output=E('output','cc-feedback');output.setAttribute('aria-live','polite');root.append(output);} output.textContent=text; }
+  function button(id,label,role='primary',action) { const b=E('button','cc-button '+role,label);b.type='button';b.dataset.component=id;b.onclick=event=>{event.stopPropagation();if(action)action(event);else signal(b.closest('.cc-component')||b.parentElement,label+' selected in reference preview.');};return b; }
+  function tip(node,title,detail) {
+    node.dataset.tag=title;node.dataset.tagDescription=detail;node.classList.add('tag-tip-trigger');
+    if(typeof scheduleTagTip==='function'){
+      node.setAttribute('aria-label',title+(detail?' · '+detail:''));
+      node.addEventListener('pointerenter',()=>scheduleTagTip(node));
+      node.addEventListener('focus',()=>scheduleTagTip(node));
+      node.addEventListener('pointerleave',()=>{if(typeof hideTagTip==='function')hideTagTip();});
+      node.addEventListener('blur',()=>{if(typeof hideTagTip==='function')hideTagTip();});
+      return;
+    }
+    node.setAttribute('aria-label',title+(detail?' · '+detail:''));let timer,body;
+    const close=()=>{clearTimeout(timer);body?.remove();body=null;};
+    const show=()=>{close();timer=setTimeout(()=>{if(!node.isConnected)return;body=E('aside','cc-tooltip');body.setAttribute('role','tooltip');body.append(E('strong','',title),E('div','',detail));document.body.append(body);const r=node.getBoundingClientRect();const b=body.getBoundingClientRect();body.style.left=Math.max(0,Math.min(innerWidth-b.width,r.left+r.width/2-b.width/2))+'px';body.style.top=Math.max(0,r.top-b.height)+'px';},cfg().selection.tooltipDelayMs);};
+    node.addEventListener('pointerenter',show);node.addEventListener('focus',show);node.addEventListener('pointerleave',close);node.addEventListener('blur',close);node.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+  }
+  function meter(id,model=cfg().samples.health) {const n=wrap(id,'cc-meter'+(id==='WCM1'?'':' cc-secondary'));const fill=E('span','cc-meter-fill');fill.style.width=(model.maximum>0?Math.max(0,Math.min(1,model.current/model.maximum))*100:0)+'%';const text=E('span','cc-meter-text',`${model.label} · ${model.current} / ${model.maximum}`);n.setAttribute('role','meter');n.setAttribute('aria-label',model.label);n.setAttribute('aria-valuemin','0');n.setAttribute('aria-valuemax',model.maximum);n.setAttribute('aria-valuenow',model.current);n.append(fill,text);return n;}
+  function icon(model=cfg().samples.statuses[0]) {const b=button('WCM5',model.icon,'icon',()=>signal(b.closest('.cc-component')||b.parentElement,model.name+' · '+model.detail));tip(b,model.name,model.detail);return b;}
+  function icons(overflow=false) {const n=wrap('WCM6','cc-icons');const models=cfg().samples.statuses;const count=overflow?Math.max(0,models.length-1):models.length;models.slice(0,count).forEach(model=>n.append(icon(model)));if(overflow&&count<models.length){const b=button('WCM6','+'+(models.length-count),'icon',()=>{const entry=typeof DATA!=='undefined'?DATA.find(x=>x.id==='WC4b'):null;if(entry&&typeof inspect==='function'){inspect(entry,entry.views[0]);return;}const list=E('dl','cc-facts');for(const m of models)list.append(E('dt','',m.name),E('dd','',m.detail));signal(n,'Complete known status list');n.append(list);});tip(b,'Additional effects','Open complete status details in the inspector');n.append(b);}return n;}
+  function stance(){const n=wrap('WCM4','cc-stance');n.textContent=cfg().samples.stance.label;return n;}
+  function sprite(role='player') {const n=wrap('WCI2','cc-art '+role);const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 100 160');svg.setAttribute('role','img');svg.setAttribute('aria-label',role+' illustrative sprite');svg.innerHTML='<g fill="currentColor"><circle cx="50" cy="24" r="15"/><path d="M34 43H65L80 92L69 98L61 72L59 113L68 153H52L46 117L39 153H24L35 111L36 70L25 98L14 92Z"/></g>';n.append(svg);return n;}
+  function nameplate(){return E('strong','cc-name','Ashen Sentinel');}
+  function activeStack() {const n=wrap('WCF2','cc-stack');n.append(meter('WCM1'),meter('WCM2',cfg().samples.resource),meter('WCM3',cfg().samples.buildup),stance(),icons());return n;}
+  function actionRow(){const n=wrap('WCB0','cc-action-row');n.append(button('WCB4','Back','back'),button('WCB3','Confirm'));return n;}
+  function facts() {const n=wrap('WCF4','cc-detail-sections');const summary=E('dl','cc-facts');for(const [a,b] of [['HP','32 / 40'],['Intent','Attack · 12'],['Defense','8']])summary.append(E('dt','',a),E('dd','',b));n.append(summary);for(const [title,items] of [['Current state',[['Mana','6 / 10'],['Stance','Aggressive'],['Regeneration','2 stacks · 3 turns'],['Burn buildup','65 / 100']]],['Previous actions',[['Last turn','Attack · 12'],['Earlier','Defend · 8']]],['Known abilities',[['Cleave','Attacks a known target'],['Known traits','Fire weakness · observed']]],['Lore',[['Record','A sentinel guarding the old forge. Illustrative sample lore.']]]]){const s=E('section');s.append(E('h4','',title));const dl=E('dl','cc-facts');items.forEach(([a,b])=>dl.append(E('dt','',a),E('dd','',b)));s.append(dl);n.append(s);}return n;}
+  function overlay(id){const n=wrap(id,'cc-overlay-demo');const art=sprite();if(id==='WCO3'||id==='WCO4'){const effect=E('div',id==='WCO3'?'cc-aura':'cc-buff');art.append(effect);}if(id==='WCO0')art.append(E('div','cc-aura'),E('div','cc-buff'));n.append(art);if(id==='WCO1'||id==='WCO0')n.prepend(button('WCO1','⚔ Attack · 12','intent'));if(id==='WCO2'||id==='WCO0'){const b=button('WCO2','◇ 8','defense');tip(b,'Defense','8 active block');n.append(b);}return n;}
+  function cardNative(id,mode,role){
+    const entry=typeof DATA!=='undefined'?DATA.find(x=>x.id===id):null;
+    if(entry&&typeof card==='function'){const n=wrap(id,'cc-native '+(role?'cc-native-actor':''));n.append(card(entry,entry.views.find(v=>v.mode===mode)||entry.views[0],false,role?{facing:role}:{}));return n;}
+    // Reusable local primitive fallback remains a full diagram, never just a title.
+    const n=wrap(id,role?'cc-actor':'cc-item');if(role)n.append(sprite(role),nameplate(),meter('WCM1'));else n.append(E('header','','Strike · 1'),sprite(),E('div','cc-item-body','Deal the known attack preview.'),E('footer','','Common · Owned 1'));return n;
+  }
+  function sky(){const n=wrap('WGS6','cc-sky');n.setAttribute('role','img');n.setAttribute('aria-label','Skyline layer: distant mountain silhouettes beneath the ash-colored sky');return n;}
+  function groundGrid(){const n=wrap('WGS8','cc-ground-grid'),c=cfg().groundGrid;n.style.cssText=`--grid-padding:${c.paddingRem}rem;--grid-gap:${c.slotGapRem}rem;--grid-center:${c.centerGapPercent}%;--grid-back-offset:${c.backRowOffsetPercent}%;--grid-count:${c.columns};--grid-rows:${c.rows};--grid-depth:${c.depthPercent}%;--grid-row-step:${c.rowStepRem}rem`;n.classList.toggle('guides',c.showGuides);for(const side of ['ally','enemy']){const region=E('div','cc-ground-side');for(let i=0;i<c.slotsPerSide;i++){const slot=E('span','cc-ground-slot');slot.dataset.side=side;slot.dataset.index=i;const row=Math.floor(i/c.columns);slot.dataset.row=row;slot.dataset.column=i%c.columns;slot.style.gridRow=String(row+1);slot.style.gridColumn=String(i%c.columns+1);slot.style.transform='translateX(calc(var(--grid-back-shift) * '+((row-(c.rows-1)/2)*(side==='ally'?1:-1))+'))';slot.textContent=(side==='ally'?'A':'E')+(i+1);region.append(slot);}n.append(region);}return n;}
+  function floor(){const n=wrap('WGS7','cc-floor');n.style.clipPath=cfg().scene.groundCutout;n.append(groundGrid());n.setAttribute('role','img');n.setAttribute('aria-label','Floor layer: ground plane beneath the combatant baseline');return n;}
+  function background(){const n=wrap('WGS1','cc-background');if(cfg().scene.skyline)n.append(sky());if(cfg().scene.floor)n.append(floor());return n;}
+  function hud(){if(typeof renderSharedHUD==='function')return renderSharedHUD();const n=wrap('WGS2','cc-stack');n.append(E('div','cc-run-header','Warden · Cinders 120 · Act 1 / Floor 3'),meter('WCM1'),button('WGS5','Menu'));return n;}
+  function actors(id,mode){const n=wrap(id,'cc-actor-slots');const player=id==='WGC2';const count=player?cfg().scene.playerCount:cfg().scene.enemyCount;for(let i=0;i<count;i++){const actor=cardNative('WC4a',mode,player?'player':'enemy');actor.dataset.entityId=(player?'player:':'enemy:')+i;n.append(actor);}return n;}
+  function battlefield(mode,targets=false){
+    const n=wrap('WGC1','cc-battlefield');n.append(background());
+    const band=E('div','cc-formation');band.append(actors('WGC2',mode),actors('WGC3',mode));
+    if(targets)band.querySelectorAll('[data-component="WC4a"]').forEach((actor,i)=>{if(i===0)return;actor.classList.add('cc-eligible');actor.tabIndex=0;actor.setAttribute('role','button');actor.setAttribute('aria-label','Select eligible enemy');actor.onclick=()=>{band.querySelectorAll('.cc-target-selected').forEach(x=>x.classList.remove('cc-target-selected'));actor.classList.add('cc-target-selected');signal(n,'Enemy target selected. Domain commit is outside the reference.');};});
+    n.append(band);let pending=false;const baseGeometry=new WeakMap();
+    const layoutActors=()=>{
+      if(!n.isConnected)return;const stage=n.getBoundingClientRect();if(!stage.width||!stage.height)return;
+      const c=cfg().groundGrid,grid=n.querySelector('.cc-ground-grid'),ground=n.querySelector('.cc-floor');
+      const all=[...band.querySelectorAll('.cc-native-actor')];if(!grid||!ground){all.forEach(a=>a.hidden=true);return;}
+      const gapConfig=c.centerGap, gapProgress=gapConfig?Math.max(0,Math.min(1,(stage.width-gapConfig.narrowWidthPx)/(gapConfig.wideWidthPx-gapConfig.narrowWidthPx))):0;
+      const centerGapPercent=gapConfig?gapConfig.narrowPercent+(gapConfig.widePercent-gapConfig.narrowPercent)*gapProgress:c.centerGapPercent;
+      grid.style.setProperty('--grid-center',centerGapPercent+'%');
+      const rem=parseFloat(getComputedStyle(n).fontSize),inset=Math.min(c.paddingRem*rem,stage.width/4,stage.height/4);
+      // Keep the existing floor contact center; clamp row spacing only when the host cannot contain it.
+      const floorBox=ground.getBoundingClientRect(),centerY=floorBox.top-stage.top+floorBox.height*c.depthPercent/100;
+      const rowRoom=Math.max(0,Math.min(centerY-inset,stage.height-inset-centerY));
+      grid.style.setProperty('--grid-row-step',Math.min(c.rowStepRem*rem,rowRoom*2/Math.max(1,c.rows))+'px');
+      n.style.setProperty('--grid-back-shift',stage.width*c.backRowOffsetPercent/100+'px');
+      const slots=[...grid.querySelectorAll('.cc-ground-slot')];
+      for(const slot of slots){const direction=slot.dataset.side==='ally'?1:-1;slot.dataset.trackShift=(Number(slot.dataset.row)-(c.rows-1)/2)*direction;slot.style.transform='translateX(calc(var(--grid-back-shift) * '+slot.dataset.trackShift+'))';}
+      // Allocate row baselines between readable overhead and the expanded-detail reserve.
+      // Spacing adapts before any sprite fit; upper rows must not consume the sprite's entire height.
+      const detailReserve=(cfg().scene.selectionDetailReserveRem??5)*rem,legibility=cfg().combatantLegibility;
+      const baselineInset=Math.min(cfg().scene.baselineInsetPx??4,stage.height/4);
+      const controlsReserve=(n.querySelector('.combatant-intent:not([hidden])')?(legibility.intentRowMinPx??20):0)+cfg().spacing.gapRem*rem*2;
+      const minimumSprite=cfg().scene.minimumSpriteHeightPx??84;
+      const lastFoot=Math.max(baselineInset,stage.height-baselineInset-detailReserve),firstFoot=Math.min(lastFoot,baselineInset+controlsReserve+minimumSprite);
+      const rowStep=Math.max(0,(lastFoot-firstFoot)/Math.max(1,c.rows-1));
+      for(const slot of slots){const r=slot.getBoundingClientRect(),originalY=r.top+r.height/2-stage.top,targetY=firstFoot+(Number(slot.dataset.row)+(c.depthLoweringFractions?.[Number(slot.dataset.row)]??0))*rowStep;slot.dataset.verticalShift=String(targetY-originalY);slot.style.transform+=' translateY('+slot.dataset.verticalShift+'px)';}
+      // Reset every actor before reading geometry; no post-paint correction and no accumulated transforms.
+      all.forEach(a=>{a.hidden=false;a.classList.remove('combatant-legible');a.style.transform='none';a.style.left='0';a.style.top='0';});
+      const focus=cfg().combatantFocus||{rowIds:['back','middle','front'],rowBase:[.9,.95,1],selectedGrowth:[1.1,1.05,1.1],rowZPriority:[10,20,30],focusZ:100,fit:{maximumScale:1,minimumScale:.01,inset:0,gap:0}};
+      const models=all.map(actor=>{
+        const art=actor.querySelector('.combatant-sprite'),host=actor.querySelector('.combatant-host');if(!art||!host)return null;
+        const side=actor.closest('[data-component="WGC2"]')?'ally':'enemy',index=[...actor.parentElement.children].indexOf(actor);
+        const slot=slots.find(s=>s.dataset.side===side&&Number(s.dataset.index)===index);if(!slot){actor.hidden=true;return null;}
+        const selected=host.classList.contains('selected');let base=baseGeometry.get(actor);
+        if(!base){
+          // Measure once in unselected presentation. Selected details never enter the shared fit.
+          host.classList.remove('selected');host.classList.add('compact-unselected');
+          const box=actor.getBoundingClientRect(),spriteBox=art.getBoundingClientRect();
+          const shapes=[...art.querySelectorAll('svg path,svg circle,svg rect,svg ellipse,svg polygon')];
+          const sole=shapes.length?Math.max(...shapes.map(shape=>shape.getBoundingClientRect().bottom)):spriteBox.bottom;
+          const parts=[box,...actor.querySelectorAll('.cardbox,.defense-badge,.combatant-intent,.info,.combatant-status,.combatant-resources')].map(p=>p.getBoundingClientRect?p.getBoundingClientRect():p).filter(r=>r.width&&r.height),anchorX=box.left+box.width/2;
+          base={width:box.width,foot:sole-box.top,spriteTop:spriteBox.top-box.top,spriteCenter:spriteBox.left-box.left+spriteBox.width/2,spriteAbove:sole-spriteBox.top,intentPresent:Boolean(host.querySelector('.combatant-intent:not([hidden])')),left:Math.max(...parts.map(r=>anchorX-r.left)),right:Math.max(...parts.map(r=>r.right-anchorX)),above:Math.max(...parts.map(r=>sole-r.top)),below:Math.max(0,...parts.map(r=>r.bottom-sole))};
+          // Pin only the sprite envelope. Revealed details grow below it without moving the feet.
+          const cardbox=host.querySelector('.cardbox');cardbox.style.height='auto';cardbox.style.aspectRatio='auto';cardbox.style.gridTemplateRows=spriteBox.height+'px auto auto';
+          art.style.height=spriteBox.height+'px';const svg=art.querySelector('svg');if(svg){svg.style.maxHeight='100%';svg.style.marginBottom='0';}
+          const name=host.querySelector('.combatant-nameplate');if(name){const st=getComputedStyle(name);actor.style.setProperty('--cc-name-line',(parseFloat(st.lineHeight)||parseFloat(st.fontSize))+'px');}
+          const shadow=art.querySelector('.combatant-ground-shadow');if(shadow){shadow.style.top=(sole-spriteBox.top)+'px';shadow.style.transform='translate(-50%,-50%)';}
+          baseGeometry.set(actor,base);host.classList.toggle('selected',selected);host.classList.toggle('compact-unselected',!selected);
+        }
+        return {...base,actor,slot,side,index,selected,row:Math.floor(index/c.columns)};
+      }).filter(Boolean);
+      const gap=stage.width*centerGapPercent/100;
+      const allocations=[];const bothSides=['ally','enemy'];
+      for(const side of bothSides)for(let row=0;row<c.rows;row++){const rowActors=models.filter(m=>m.side===side&&m.row===row);if(rowActors.length)allocations.push({availableWidth:(stage.width-gap)/2-inset,availableHeight:stage.height*cfg().scene.actorHeightFraction,actors:rowActors.map(m=>({row,baseWidth:m.width,baseHeight:m.above+m.below}))});}
+      let sharedScale=(typeof sharedCombatantBaseScale==='function'?sharedCombatantBaseScale(allocations,focus):focus.fit.maximumScale)*c.actorScale;
+      const peak=Math.max(...focus.rowBase.map((base,row)=>base*focus.selectedGrowth[row]));
+      // Reserve configured focus growth before selection; selection itself never refits any actor.
+      for(const m of models){const r=m.slot.getBoundingClientRect(),y=firstFoot+m.row*rowStep;sharedScale=Math.min(sharedScale,r.width/(m.width*peak));const legibility=cfg().combatantLegibility,controlReserve=(m.intentPresent?Math.max(legibility.intentRowMinPx??20,legibility.valueFontMinPx??12):0)+cfg().spacing.gapRem*rem*2;if(m.spriteAbove>0)sharedScale=Math.min(sharedScale,Math.max(0,y-baselineInset-controlReserve)/(m.spriteAbove*peak));if(m.below>0)sharedScale=Math.min(sharedScale,Math.max(0,stage.height-baselineInset-y)/(m.below*peak));}
+      for(const side of bothSides){
+        const group=models.filter(m=>m.side===side);if(!group.length)continue;
+        const sideSlots=slots.filter(s=>s.dataset.side===side).map(slot=>{const r=slot.getBoundingClientRect();return {slot,x:r.left+r.width/2-stage.left,y:r.top+r.height/2-stage.top,width:r.width};});
+        const minX=side==='ally'?inset:stage.width/2+gap/2,maxX=side==='ally'?stage.width/2-gap/2:stage.width-inset;
+        const left=Math.max(...group.map(m=>m.left)),right=Math.max(...group.map(m=>m.right));
+        const scale=sharedScale*(c.displayScale??1);
+        const originalMin=Math.min(...sideSlots.map(s=>s.x)),originalMax=Math.max(...sideSlots.map(s=>s.x));
+        const frameHalf=Math.max(...group.map(m=>m.width))*scale*peak/2,bodyGap=cfg().spacing.gapRem*rem;
+        const allowedMin=minX+frameHalf+bodyGap,allowedMax=maxX-frameHalf-bodyGap;
+        // Use the full faction allocation for each row. Fitting all staggered
+        // rows as one affine track compressed the two columns on narrow phones.
+        const available=Math.max(0,allowedMax-allowedMin),rowCenter=(c.rows-1)/2;
+        const requestedStagger=stage.width*c.backRowOffsetPercent/100;
+        const minimumPitch=frameHalf*2+bodyGap;
+        const staggerRoom=Math.max(0,(available-minimumPitch*Math.max(0,c.columns-1))/Math.max(1,2*rowCenter));
+        // Keep the diagonal visible even when full information-frame widths consume the lane.
+        const stagger=Math.min(requestedStagger,Math.max(c.minimumRowOffsetPx??8,staggerRoom),available/Math.max(1,c.columns+c.rows));
+        const staggerExtent=stagger*rowCenter,firstColumn=allowedMin+staggerExtent,lastColumn=allowedMax-staggerExtent;
+        for(const s of sideSlots){
+          const column=Number(s.slot.dataset.column),row=Number(s.slot.dataset.row);
+          const columnFraction=c.columns>1?column/(c.columns-1):.5;
+          const rowShift=(row-rowCenter)*stagger*(side==='ally'?1:-1);
+          const frontRow=column!==(side==='ally'?0:c.columns-1);
+          const retreat=frontRow?Math.min(stage.width*(c.frontRowRetreatPercent??0)/100,Math.max(0,lastColumn-firstColumn)*.15):0;
+          s.targetX=firstColumn+(lastColumn-firstColumn)*columnFraction+rowShift+retreat*(side==='ally'?-1:1);
+          const offset=s.targetX-s.x;s.slot.style.transform='translateX(calc(var(--grid-back-shift) * '+s.slot.dataset.trackShift+' + '+offset+'px)) translateY('+s.slot.dataset.verticalShift+'px)';
+        }
+        for(const m of group){const s=sideSlots.find(s=>s.slot===m.slot),presentation=typeof rowPresentationScale==='function'?rowPresentationScale(m.row,m.selected,focus):{factor:focus.rowBase[m.row]*(m.selected?focus.selectedGrowth[m.row]:1),zPriority:m.selected?focus.focusZ:focus.rowZPriority[m.row]},actorScale=scale*presentation.factor;
+          if(actorScale>0&&typeof applyCombatantLegibility==='function')applyCombatantLegibility(m.actor,actorScale,cfg().combatantLegibility);
+          const host=m.actor.querySelector('.combatant-host'),intent=host.querySelector('.combatant-intent'),info=host.querySelector('.info'),overlayGap=cfg().spacing.gapRem*rem/Math.max(actorScale,Number.EPSILON);
+          let above=m.spriteTop-overlayGap;
+          if(intent&&!intent.hidden){intent.style.bottom='auto';intent.style.left=m.spriteCenter+'px';intent.style.transform='translateX(-50%)';above-=intent.offsetHeight;intent.style.top=above+'px';above-=overlayGap;}
+          if(info){info.style.bottom='auto';info.style.left=m.spriteCenter+'px';info.style.transform='translateX(-50%)';info.style.top=Math.max(above-info.offsetHeight,m.foot+(inset-s.y)/actorScale)+'px';}
+          m.actor.style.setProperty('--row-depth',1);const outerColumn=m.side==='ally'?0:c.columns-1,backRow=Number(m.slot.dataset.column)===outerColumn;
+          m.actor.dataset.formationRow=backRow?'back-row':'front-row';m.actor.classList.toggle('formation-back-row',backRow);m.actor.classList.toggle('formation-front-row',!backRow);
+          m.actor.style.zIndex=String(presentation.zPriority+(backRow?c.formationLayers.backRow:c.formationLayers.frontRow));m.actor.style.transformOrigin='50% '+m.foot+'px';m.actor.style.left=s.targetX+'px';m.actor.style.top=(s.y-m.foot)+'px';m.actor.style.transform='translateX(-50%) scale('+actorScale+')';m.actor.dataset.sharedBaseScale=String(scale);m.actor.dataset.presentationScale=String(actorScale);
+          // Expanded information may move upward; the sprite/shadow pivot stays fixed.
+          const detailParts=[...m.actor.querySelectorAll('.combatant-resources,.combatant-status,.combatant-nameplate')];
+          detailParts.forEach(part=>{part.style.position=part.classList.contains('combatant-nameplate')?part.style.position:'relative';part.style.translate='';});
+          if(m.selected){const detailBottom=Math.max(...detailParts.map(part=>part.getBoundingClientRect().bottom));const overflow=Math.max(0,detailBottom-(stage.bottom-(cfg().scene.detailEdgeInsetPx??4)));if(overflow)detailParts.forEach(part=>part.style.translate='0 '+(-overflow/actorScale)+'px');}
+
+        }
+      }
+    };
+    const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;layoutActors();});};
+    const observer=new ResizeObserver(schedule);observer.observe(n);const selectionObserver=new MutationObserver(schedule);band.querySelectorAll('.combatant-host').forEach(host=>selectionObserver.observe(host,{attributes:true,attributeFilter:['class']}));if(typeof statusObservers!=='undefined')statusObservers.push(observer,selectionObserver);schedule();return n;
+  }
+  function hand(mode){
+    const n=wrap('WGC5','cc-hand'),track=E('div','cc-hand-track'),hitLayer=E('div','cc-hand-hit-layer'),portal=E('button','cc-hand-info-portal','i');portal.type='button';portal.hidden=true;portal.setAttribute('aria-haspopup','dialog');document.body.append(portal);
+    for(const id of cfg().hand.fixtureIds)track.append(cardNative(id,mode));n.append(track,hitLayer);
+    const keepExclusiveSelection=event=>{const selected=event.target.closest('.cardhost.selected');if(!selected||!track.contains(selected))return;for(const other of track.querySelectorAll('.cardhost.selected')){if(other===selected)continue;other.classList.remove('selected');other.querySelector('.cardbox')?.setAttribute('aria-pressed','false');const info=other.querySelector('.info');if(info){info.classList.remove('visible');info.tabIndex=-1;}}};
+    let portalFrame=false,disposed=false;
+    const placeInfo=()=>{portalFrame=false;if(!n.isConnected){portal.hidden=true;return;}const selected=track.querySelector('.cardhost.selected'),source=selected?.querySelector('.info'),box=selected?.querySelector('.cardbox');if(!source?.classList.contains('visible')||!box){portal.hidden=true;return;}const r=box.getBoundingClientRect(),clip=n.getBoundingClientRect();if(r.right<=clip.left||r.left>=clip.right){portal.hidden=true;return;}const rem=parseFloat(getComputedStyle(document.documentElement).fontSize),size=cfg().hand.infoHitSizePx??cfg().target.minRem*rem,gap=cfg().hand.infoGapPx??4;portal.style.setProperty('--cc-info-visual-size',(cfg().hand.infoVisualSizePx??28)+'px');portal.hidden=false;portal.setAttribute('aria-label',source.getAttribute('aria-label')||'Inspect selected card');portal.style.width=size+'px';portal.style.height=size+'px';portal.style.left=Math.max(size/2,Math.min(innerWidth-size/2,r.left+r.width/2))+'px';portal.style.top=Math.max(0,r.top-gap-size)+'px';portal.onclick=event=>{event.stopPropagation();source.click();};};
+    const scheduleInfo=()=>{if(disposed||portalFrame)return;portalFrame=true;requestAnimationFrame(placeInfo);};
+    const infoObserver=new MutationObserver(scheduleInfo);infoObserver.observe(track,{attributes:true,subtree:true,attributeFilter:['class']});
+    window.addEventListener('scroll',scheduleInfo,true);window.addEventListener('resize',scheduleInfo);
+    const announcement=E('span','cc-hand-announcement');announcement.setAttribute('aria-live','polite');n.append(announcement);
+    let layout={start:0,step:1},drag=null;
+    const reorder=(entry,hit,target)=>{const entries=[...track.children],from=entries.indexOf(entry);target=Math.max(0,Math.min(entries.length-1,target));if(from===target)return;entries.splice(from,1);entries.splice(target,0,entry);const hits=new Map([...hitLayer.children].map(h=>[h.dataset.instanceId,h]));for(const card of entries){track.append(card);hitLayer.append(hits.get(card.dataset.instanceId));}announcement.textContent='Card moved to position '+(target+1)+' of '+entries.length;fit();hit.focus({preventScroll:true});};
+    for(const [index,entry] of [...track.children].entries()){
+      const box=entry.querySelector('.cardbox'),hit=E('button','cc-hand-hit-strip'),instance='hand-card-'+index;entry.dataset.instanceId=instance;hit.dataset.instanceId=instance;hit.type='button';hit.dataset.cardIndex=index;if(box)box.tabIndex=-1;
+      hit.setAttribute('aria-label',(box?.getAttribute('aria-label')||'Select card')+'; '+instance);hit.setAttribute('aria-keyshortcuts','Alt+ArrowLeft Alt+ArrowRight');let suppressClick=false;
+      hit.onclick=event=>{event.stopPropagation();if(suppressClick){suppressClick=false;return;}box?.click();scheduleInfo();};
+      hit.onkeydown=event=>{if(event.altKey&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopPropagation();reorder(entry,hit,[...track.children].indexOf(entry)+(event.key==='ArrowRight'?1:-1));}};
+      hit.onpointerdown=event=>{if(event.button!==0)return;suppressClick=false;drag={entry,hit,id:event.pointerId,x:event.clientX,scroll:n.scrollLeft,index:[...track.children].indexOf(entry),active:false,target:0};hit.setPointerCapture(event.pointerId);};
+      hit.onpointermove=event=>{if(!drag||drag.hit!==hit||drag.id!==event.pointerId)return;const delta=event.clientX-drag.x;if(!drag.active&&Math.abs(delta)<(cfg().hand.reorderThresholdPx??8))return;drag.active=true;suppressClick=true;entry.classList.add('is-reordering');const r=n.getBoundingClientRect(),edge=cfg().hand.edgeScrollPx??24,scrollStep=cfg().hand.edgeScrollStepPx??12;if(event.clientX<r.left+edge)n.scrollLeft-=scrollStep;else if(event.clientX>r.right-edge)n.scrollLeft+=scrollStep;const offset=delta+n.scrollLeft-drag.scroll;entry.style.setProperty('--cc-hand-drag-x',offset+'px');drag.target=Math.max(0,Math.min(track.children.length-1,Math.round(drag.index+offset/layout.step)));hit.dataset.dropIndex=drag.target;scheduleInfo();};
+      const finish=event=>{if(!drag||drag.hit!==hit)return;const previous=drag;drag=null;entry.classList.remove('is-reordering');entry.style.removeProperty('--cc-hand-drag-x');delete hit.dataset.dropIndex;if(previous.active&&event.type!=='pointercancel')reorder(entry,hit,previous.target);if(hit.hasPointerCapture(event.pointerId))hit.releasePointerCapture(event.pointerId);scheduleInfo();};
+      hit.onpointerup=finish;hit.onpointercancel=finish;hitLayer.append(hit);
+    }
+    n.addEventListener('dragstart',event=>event.preventDefault());
+    n.addEventListener('click',keepExclusiveSelection);n.addEventListener('keydown',keepExclusiveSelection);
+    let pending=false;
+    const fit=()=>{if(!n.isConnected)return;const width=n.clientWidth,height=n.clientHeight;if(!width||!height)return;
+      const c=cfg(),hand={minCapacity:5,maxCapacity:15,narrowWidthRem:22,wideWidthRem:75,minCardWidthRem:5,maxCardWidthRem:9,minExposedTargetPx:44,selectedLiftRem:1,minFontRem:.7,verticalInsetRem:.25,fanMaxDegrees:6,fanArchPx:8,bodyUpPx:10,...c.hand},rem=parseFloat(getComputedStyle(document.documentElement).fontSize),inset=(hand.horizontalInsetRem??0.625)*rem;
+      const ratio=hand.cardAspectRatio.split('/').map(Number),aspect=ratio[0]/ratio[1],fanRadians=hand.fanMaxDegrees*Math.PI/180,rotationHeightFactor=(1+Math.cos(fanRadians)+aspect*Math.sin(Math.abs(fanRadians)))/2;
+      const lift=hand.selectedLiftRem*rem,headroom=(hand.inspectRiseRem??1.75)*rem+lift,verticalInset=hand.verticalInsetRem*rem;
+      const usableWidth=Math.max(0,width-inset*2),usableHeight=Math.max(0,Math.min(height-headroom-verticalInset*2,(height-headroom-verticalInset)/rotationHeightFactor));
+      const range=Math.max(Number.EPSILON,(hand.wideWidthRem-hand.narrowWidthRem)*rem),progress=Math.max(0,Math.min(1,(width-hand.narrowWidthRem*rem)/range));
+      const desiredWidth=hand.maxCardWidthRem*rem; // Uniform height-driven size, never stretch the card ratio.
+      const minimumWidth=hand.minCardWidthRem*rem,maximumWidth=hand.maxCardWidthRem*rem;
+      const constrained=usableHeight*aspect<minimumWidth||usableWidth<minimumWidth;
+      const cardWidth=Math.max(minimumWidth,Math.min(maximumWidth,desiredWidth,usableHeight*aspect,usableWidth)),cardHeight=cardWidth/aspect;
+      const angle=hand.fanMaxDegrees*Math.PI/180,rotationExtraX=Math.max(0,(cardWidth*Math.cos(angle)+cardHeight*Math.sin(angle)-cardWidth)/2),rotationExtraY=Math.max(0,(cardHeight*Math.cos(angle)+cardWidth*Math.sin(angle)-cardHeight)/2);
+      const count=track.children.length,gap=hand.gapRem*rem,touchStep=hand.minExposedTargetPx+rotationExtraX*2,fanWidth=Math.max(0,usableWidth-rotationExtraX*2);
+      const requestedCapacity=Math.round(hand.minCapacity+(hand.maxCapacity-hand.minCapacity)*progress);
+      const physicalCapacity=cardWidth>0?Math.max(1,Math.floor(Math.max(0,usableWidth-cardWidth)/touchStep)+1):0;
+      const capacity=Math.min(requestedCapacity,physicalCapacity),visibleCount=Math.min(count,capacity);
+      const naturalStep=cardWidth+gap,fitStep=visibleCount>1?Math.max(touchStep,(fanWidth-cardWidth)/(visibleCount-1)):naturalStep;
+      const step=Math.min(naturalStep,fitStep),extent=count?cardWidth+Math.max(0,count-1)*step:0;
+      const scrolling=count>capacity&&extent+rotationExtraX*2>usableWidth;
+      n.dataset.capacity=String(capacity);n.dataset.cardWidth=String(cardWidth);n.dataset.exposedTarget=String(Math.min(cardWidth,Math.max(0,step-rotationExtraX*2)));n.dataset.heightConstrained=String(constrained);n.setAttribute('aria-label',constrained?'Hand: allocated space is below the configured readable minimum':'Hand cards');
+      n.classList.toggle('cc-hand-scroll',scrolling);n.style.setProperty('--cc-hand-active-order',count+1);n.style.setProperty('--cc-hand-selected-order',count+2);n.style.setProperty('--cc-hand-lift',lift+'px');n.style.setProperty('--cc-hand-info-rise',(hand.inspectRiseRem??1.75)+'rem');n.style.setProperty('--cc-hand-font-min',hand.minFontRem+'rem');
+      track.style.width=Math.max(width,extent+(inset+rotationExtraX)*2)+'px';track.style.height=height+'px';hitLayer.style.width=track.style.width;hitLayer.style.height=height+'px';
+      const start=scrolling?inset+rotationExtraX:Math.max(inset+rotationExtraX,(width-extent)/2);layout={start,step};
+      const bodyTop=Math.max(headroom+verticalInset,Math.min(height-verticalInset-cardHeight-rotationExtraY,(height-cardHeight)/2-hand.bodyUpPx));
+      [...track.children].forEach((entry,index)=>{const t=count>1?index/(count-1)*2-1:0;entry.style.left=(start+index*step)+'px';entry.style.top=bodyTop+'px';entry.style.width=cardWidth+'px';entry.style.height=cardHeight+'px';entry.style.setProperty('--cc-hand-order',index);entry.style.setProperty('--cc-hand-angle',t*hand.fanMaxDegrees+'deg');entry.style.setProperty('--cc-hand-arch',(-hand.fanArchPx*(1-t*t))+'px');const hit=hitLayer.children[index];hit.dataset.cardIndex=index;hit.style.left=(start+index*step)+'px';hit.style.top=Math.max(0,bodyTop-lift)+'px';hit.style.width=(index===count-1?cardWidth:Math.min(cardWidth,step))+'px';hit.style.height=Math.min(height-Math.max(0,bodyTop-lift),cardHeight+lift)+'px';});scheduleInfo();
+    };
+    const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;fit();});};
+    const observer=new ResizeObserver(schedule);observer.observe(n);const cleanup={disconnect(){disposed=true;observer.disconnect();infoObserver.disconnect();window.removeEventListener('scroll',scheduleInfo,true);window.removeEventListener('resize',scheduleInfo);portal.remove();}};if(typeof statusObservers!=='undefined')statusObservers.push(cleanup);schedule();return n;
+  }
+  function footerControl(id){if(id==="WGC11" && typeof hudPotionMarkup==="function"){const n=wrap(id,"cc-potions-control");n.innerHTML=hudStyleSheet()+hudPotionMarkup(hudDefaultConfig(),true);n.addEventListener("click",e=>{const b=e.target.closest("[data-hud-item]");if(b)signal(n,"Selected "+b.dataset.hudItem+". Target and confirmation belong to the host.");});return n;}const sample=cfg().samples.footer;const labels={WGC7:`${sample.actions} Actions`,WGC8:`Draw ${sample.draw}`,WGC9:'End turn',WGC10:`Discard ${sample.discard} / ${sample.exhaust}`,WGC11:`${sample.potions} Potions`};const large=['WGC7','WGC9','WGC11'].includes(id);const b=button(id,labels[id],(large?'large ':'small ')+(id==='WGC7'||id==='WGC11'?'round':''));if(id==='WGC9'&&sample.actions===0)b.classList.add('primary');return b;}
+  function footer(){
+    const n=wrap('WGC6','cc-footer');for(const id of ['WGC7','WGC8','WGC9','WGC10','WGC11'])n.append(footerControl(id));
+    let pending=false;const fit=()=>{if(!n.isConnected)return;const c=cfg().footerLayout,width=n.clientWidth,height=n.clientHeight;if(!width||!height)return;
+      const rem=parseFloat(getComputedStyle(document.documentElement).fontSize),count=n.children.length;
+      const gap=Math.min(c.gapRem*rem,width/Math.max(1,count)),available=Math.max(0,width-gap*Math.max(0,count-1)),heightLimit=height*c.heightFraction;
+      const circle=Math.min(available*c.circleMaxFraction,heightLimit),pile=Math.min(available*c.pileMaxFraction,heightLimit),end=Math.min(available*c.endMaxFraction,Math.max(0,available-circle*2-pile*2));
+      n.style.gridTemplateColumns=[circle,pile,end,pile,circle].map(v=>v+'px').join(' ');n.style.gap=gap+'px';
+      n.style.setProperty('--cc-footer-major',circle+'px');n.style.setProperty('--cc-footer-pile',Math.min(heightLimit,Math.max(cfg().target.minRem*rem,Math.min(pile,circle)))+'px');
+    };const schedule=()=>{if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;fit();});};
+    const observer=new ResizeObserver(schedule);observer.observe(n);if(typeof statusObservers!=='undefined')statusObservers.push(observer);schedule();return n;
+  }
+  function mapGraph(pathsOnly=false,onSelect){const n=wrap(pathsOnly?'WGM2':'WGM1','cc-map');const ns='http://www.w3.org/2000/svg';const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',cfg().map.viewBox);svg.setAttribute('preserveAspectRatio','none');svg.setAttribute('aria-hidden','true');for(const [a,b] of cfg().samples.mapEdges){const from=cfg().samples.mapNodes.find(x=>x.id===a),to=cfg().samples.mapNodes.find(x=>x.id===b);if(!from||!to)continue;const line=document.createElementNS(ns,'line');for(const [k,v] of Object.entries({x1:from.x,y1:from.y,x2:to.x,y2:to.y}))line.setAttribute(k,v);svg.append(line);}n.append(svg);for(const model of cfg().samples.mapNodes){const b=button('WGM3',pathsOnly?'●':model.icon+' '+model.label,model.state,()=>{n.querySelectorAll('.cc-node').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');n.dataset.selectedNode=model.id;if(onSelect)onSelect(model);else signal(n,model.state==='blocked'?'Unknown route: not reachable.':model.label+' selected. Use Enter to travel.');});b.classList.add('cc-node');if(model.id===cfg().map.selectedNode)b.classList.add('selected');b.style.left=model.x+'%';b.style.top=model.y+'%';if(pathsOnly)b.disabled=true;tip(b,model.label,model.state);n.append(b);}return n;}
+  function nodeDetails(model){if(!model||typeof model!=='object')model=cfg().samples.mapNodes.find(n=>n.id===cfg().map.selectedNode);const n=wrap('WGM4','cc-node-details');if(!model){n.append(E('p','','Select a node to inspect its known details.'));return n;}n.append(E('h4','',model.label+' · '+model.state));const dl=E('dl','cc-facts');const known=model.state!=='blocked';const rows=model.details||[['Services',known&&model.id==='town'?'Smith · Merchant · Rest':'Not known'],['Risk',known?(model.id==='town'?'Known safe':'Known encounter'):'Unknown'],['Entry',model.state==='reachable'?'Select Enter '+model.label.toLowerCase()+' to travel':'This node cannot be entered now']];for(const [a,b] of rows)dl.append(E('dt','',a),E('dd','',b));n.append(dl);return n;}
+  function region(){const n=wrap('WGM5','cc-region');const label=E('label','','Region '),select=E('select');for(const text of ['Ashen March','The Cinder Road'])select.append(E('option','',text));select.onchange=()=>signal(n,select.value+' map view selected. Run location unchanged.');label.append(select);n.append(label);return n;}
+  function dialogueScene(){const n=wrap('WGQ1','cc-dialogue-scene');n.append(background());const p=sprite('player'),npc=sprite('enemy');p.dataset.component='WGQ2';npc.dataset.component='WGQ3';npc.classList.add('cc-speaking');n.append(p,npc);return n;}
+  function captions(index,onChoice){const n=wrap('WGQ4','cc-captions');const model=cfg().samples.beats[index];if(!model){n.append(E('p','','No authored beat available.'));return n;}n.append(E('strong','',model.speaker),E('p','',model.text));if(model.choices){const choices=E('div','cc-choices');for(const choice of model.choices)choices.append(button('WCB3',choice,'choice',event=>{choices.querySelectorAll('button').forEach(x=>x.classList.remove('selected'));event.currentTarget.classList.add('selected');if(onChoice)onChoice(choice,model);else signal(n,'Response selected: '+choice+'. Continue commits in the game host.');}));n.append(choices);}return n;}
+  function speech(){const n=wrap('WGQ5','cc-speech');n.append(E('p','','Audio event controller · no recording supplied'));const state=E('output','','Idle');state.setAttribute('aria-live','polite');const row=E('div','cc-action-row');row.append(button('WGQ5','Play event','',()=>state.textContent='Playing · waiting for the current clip'),button('WGQ5','Audio ended event','',()=>state.textContent=cfg().dialogue.autoAdvance?'Ended · next linear beat allowed':'Ended · awaiting Continue'),button('WGQ7','Skip speech','',()=>state.textContent='Skipped · caption revealed; no quest skipped'));n.append(row,state);return n;}
+  function dialogue(){const n=wrap('WGQ0','cc-dialogue');let index=0;const body=E('div');const draw=()=>{body.replaceChildren(captions(index));};draw();const row=E('footer','cc-action-row');row.append(button('WGQ6','Back','back',()=>{if(index>0){index--;draw();}}),button('WGQ7','Skip speech','',()=>signal(n,'Speech skipped. Caption remains available.')),button('WGQ8','Continue','primary',()=>{if(index<cfg().samples.beats.length-1){index++;draw();}else signal(n,'End of sample beats. No game action committed.');}));n.append(dialogueScene(),body,row);return n;}
+  const factories={
+    WCO5:()=>{const n=wrap('WCO5','cc-overlay-demo'),art=sprite();n.append(art);attachGroundShadow(art);return n;},
+    WCF0:(m)=>family('WCF0',['WCF1','WCF2','WCF3','WCF4'],m),WCF1:()=>{const n=wrap('WCF1','cc-contract');const dl=E('dl','cc-facts');for(const [a,b]of[['Model','Stable entity identity + known snapshot'],['View','Active providers + shared tokens'],['Input','One semantic action intent'],['Lifecycle','Dispose observers and pending timers']])dl.append(E('dt','',a),E('dd','',b));n.append(dl);return n;},WCF2:activeStack,WCF3:(m)=>{const n=wrap('WCF3','cc-selection');n.append(button('WCB1','i','info'),sprite(),nameplate(),activeStack());n.tabIndex=0;n.setAttribute('role','button');n.setAttribute('aria-label','Toggle whole assembly selection glow');n.onclick=()=>n.classList.toggle('selected');n.classList.add('selected');return n;},WCF4:facts,
+    WCB0:()=>{const n=wrap('WCB0','cc-modal');const head=E('header','cc-action-row');head.append(E('strong','','Shared modal'),button('WCB5','×','back'));n.append(head,button('WCB1','i','info'),actionRow());return n;},WCB1:()=>button('WCB1','i','info'),WCB2:()=>button('WCB2','Use'),WCB3:()=>button('WCB3','Confirm'),WCB4:()=>button('WCB4','Back','back'),WCB5:()=>button('WCB5','×','back'),
+    WCI0:()=>{const n=wrap('WCI0','cc-identity');n.append(nameplate(),sprite(),factories.WCI3());return n;},WCI1:nameplate,WCI2:()=>sprite(),WCI3:()=>{const n=wrap('WCI3','cc-metadata');n.append(E('span','','Common'),E('span','','Owned: 1'));return n;},
+    WCM0:activeStack,WCM1:()=>meter('WCM1'),WCM2:()=>meter('WCM2',cfg().samples.resource),WCM3:()=>meter('WCM3',cfg().samples.buildup),WCM4:stance,WCM5:()=>icon(),WCM6:()=>icons(true),
+    WCO0:()=>overlay('WCO0'),WCO1:()=>button('WCO1','⚔ Attack · 12','intent'),WCO2:()=>button('WCO2','◇ 8','defense'),WCO3:()=>overlay('WCO3'),WCO4:()=>overlay('WCO4'),
+    WCT0:()=>factories.WCT1(),WCT1:()=>{const n=wrap('WCT1','cc-tooltip-demo');const tooltip=E('aside','cc-tooltip-inline');tooltip.append(E('strong','','Poison'),E('p','','Damage over time · 3 stacks · 2 turns'));n.append(tooltip,icon(cfg().samples.statuses[1]));return n;},
+    WGS0:()=>{const n=wrap('WGS0');n.append(hud(),background());return n;},WGS1:background,WGS2:hud,WGS3:()=>{const n=wrap('WGS3','cc-run-header');n.append(E('span','','Warden'),E('span','','Cinders 120'),E('span','','Act 1 · Floor 3'));return n;},WGS4:()=>{const n=wrap('WGS4','cc-stack');n.append(meter('WCM1'),meter('WCM2',cfg().samples.resource));return n;},WGS5:()=>button('WGS5','Menu'),WGS6:sky,WGS7:floor,WGS8:groundGrid,
+    WGC0:m=>{const n=wrap('WGC0','cc-combat');n.append(hud(),battlefield(m),hand(m),footer());return n;},WGC1:m=>battlefield(m),WGC2:m=>actors('WGC2',m),WGC3:m=>actors('WGC3',m),WGC4:m=>battlefield(m,true),WGC5:hand,WGC6:footer,WGC7:()=>footerControl('WGC7'),WGC8:()=>footerControl('WGC8'),WGC9:()=>footerControl('WGC9'),WGC10:()=>footerControl('WGC10'),WGC11:()=>footerControl('WGC11'),
+    WGM0:()=>{const n=wrap('WGM0','cc-map-composition');const controls=E('footer','cc-action-row');controls.append(factories.WGM6(),factories.WGM7());n.append(hud(),region(),mapGraph(),nodeDetails(),controls);return n;},WGM1:()=>mapGraph(),WGM2:()=>mapGraph(true),WGM3:()=>{const n=wrap('WGM3','cc-action-row');for(const model of cfg().samples.mapNodes)n.append(button('WGM3',model.icon+' '+model.label,model.state));return n;},WGM4:nodeDetails,WGM5:region,WGM6:()=>button('WGM6','Recenter','back'),WGM7:()=>button('WGM7','Enter town'),
+    WGQ0:dialogue,WGQ1:dialogueScene,WGQ2:()=>sprite('player'),WGQ3:()=>sprite('enemy'),WGQ4:()=>captions(cfg().samples.beats.length-1),WGQ5:speech,WGQ6:()=>button('WGQ6','Back','back'),WGQ7:()=>button('WGQ7','Skip speech'),WGQ8:()=>button('WGQ8','Continue')
+  };
+  function family(id,children,mode){const n=wrap(id,'cc-family');for(const child of children){const s=E('section','cc-family-child');s.append(ref(child),factories[child](mode));n.append(s);}return n;}
+  function applyTokens(n){n.classList.add('cc-reference');
+    for(const [preset,share] of Object.entries(cfg().buttonWidths.presets))n.style.setProperty('--button-'+preset,share+'%');
+    n.style.setProperty('--button-choice',cfg().buttonWidths.presets[cfg().buttonWidths.choice]+'%');
+    const c=cfg();n.style.setProperty('--cc-actor-baseline',c.scene.actorBaselinePercent+'%');n.style.setProperty('--cc-actor-width',c.scene.actorWidthRem+'rem');for(const [key,value] of Object.entries({'--cc-gap':c.spacing.gapRem+'rem','--cc-inset':c.spacing.insetRem+'rem','--cc-section-gap':c.spacing.sectionGapRem+'rem','--cc-target':c.target.minRem+'rem','--cc-icon':c.target.iconRem+'rem','--cc-large':c.target.largeRem+'rem','--cc-small':c.target.smallRem+'rem','--cc-hp':c.meter.healthHeightRem+'rem','--cc-secondary':c.meter.secondaryHeightRatio,'--cc-floor':c.scene.floorHeightPercent+'%','--cc-card-width':c.hand.cardWidthRem+'rem','--cc-card-ratio':c.hand.cardAspectRatio,'--cc-defense-gap':c.overlay.defenseGapRem+'rem','--cc-defense-y':c.overlay.defenseAnchorRatio*100+'%'}))n.style.setProperty(key,value);
+    return n;
+  }
+  function renderCompletedComponent(d,mode='wide'){
+    const factory=factories[d.id];if(!factory)return null;
+    if(!cfg())throw new Error('Component completion defaults must be loaded before rendering.');
+    const n=wrap(d.id,'cc-reference');n.dataset.mode=mode;
+    applyTokens(n);
+    n.append(factory(mode));
+    const references=globalThis.COMPONENT_COMPLETIONS?.[d.id]?.children||d.children||[];
+    if(references.length){const nav=E('nav','cc-references');nav.setAttribute('aria-label','Referenced child components');references.forEach(id=>nav.append(ref(id)));n.append(nav);}
+    return n;
+  };
+  const ids=Object.freeze(Object.keys(factories));
+  return Object.freeze({ids,factories,renderCompletedComponent,applyTokens,button,meter,icon,icons,stance,sprite,nameplate,activeStack,actionRow,facts,overlay,cardNative,sky,floor,background,hud,actors,battlefield,hand,footerControl,footer,mapGraph,nodeDetails,region,dialogueScene,captions,speech,dialogue,family,tip,signal,ref,wrap,E,cfg});
+}
+const defaultComponentReferenceRenderers=createComponentReferenceRenderers();
+globalThis.createComponentReferenceRenderers=createComponentReferenceRenderers;
+globalThis.renderCompletedComponent=defaultComponentReferenceRenderers.renderCompletedComponent;
+globalThis.ComponentReferenceRenderers=defaultComponentReferenceRenderers;
+globalThis.COMPLETED_COMPONENT_IDS=defaultComponentReferenceRenderers.ids;

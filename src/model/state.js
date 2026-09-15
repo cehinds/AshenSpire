@@ -1036,6 +1036,7 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     statuses: {},
     poiseMeter: { value: 0, max: poiseMax },
     movesHistory: [],
+    performedMoves: [], // moves that resolved (movesHistory is rolls)
     intent: null,
     pendingMove: null, // delayed-move commitment: { moveId, resolveOnTurn }
     skipNextTurn: false, // set by a poise-meter fill; consumed by the enemy turn

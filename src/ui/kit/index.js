@@ -17,6 +17,8 @@
 // `.title-slot-pick`) through `className` for its listeners and the tools
 // that read the page; kit.css draws nothing for those names.
 
+import { resolveControlRole, assertControlException } from '../models/ControlAppearance.js';
+import { resolveButtonSize, planButtonGroup, buttonSizeTokens } from '../models/ButtonSizeModel.js';
 import {
   buttonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, modalHead as shellModalHead,
   modalFooter as shellModalFooter, modalCloseButton as shellModalCloseButton, modalCloseButtonHtml as shellModalCloseButtonHtml,
@@ -113,16 +115,52 @@ export function iconButton({ glyph, label, id = '', className = '', attrs = {} }
     'aria-label': label, title: attrs.title ?? label, text: glyph,
   });
 }
-/** button({ label, weight: 'secondary'|'primary'|'danger', ... }) — three weights, no fourth. */
-export function button({ label, weight = 'secondary', id = '', className = '', disabled = false, attrs = {} } = {}) {
+/** button({ label, weight: 'secondary'|'primary'|'danger', role?, exception?, size?, ... }) — three weights, no fourth;
+ *  `role` names the appearance role when the weight alone does not (an exit).
+ *  `size` is a WCB0 size ID ('half-tall'): it sets the height here; the width
+ *  is resolved by the group that owns the action region (choiceRow, a footer). */
+export function button({ label, weight = 'secondary', role = null, exception = null, size = null, id = '', className = '', disabled = false, attrs = {} } = {}) {
   const node = el('button', {
     ...attrs, type: attrs.type || 'button', id: id || null,
     class: cls('as-btn', weight === 'primary' ? 'primary' : '', weight === 'danger' ? 'danger' : '', className),
     text: label,
   });
+  // One appearance role per control (models/ControlAppearance.js).
+  node.dataset.controlRole = resolveControlRole({ role, weight, className });
+  if (assertControlException(exception)) node.dataset.controlException = exception;
+  if (size != null) node.dataset.buttonSize = resolveButtonSize(size).id;
   if (disabled) node.disabled = true;
   return node;
 }
+/**
+ * choiceRow({ buttons, size }) — sibling options (WCB0/WCB2). Every sibling
+ * wears one size (default: the configured choice preset, half), capped by its
+ * equal share after gaps, so edges align whatever the labels say; a narrow
+ * host keeps the shared width and wraps labels. Not for footers (modalFooter)
+ * or icon, stepper, inspect, map-node or packed-combat controls.
+ */
+export function choiceRow({ buttons = [], size = null, attrs = {}, className = '' } = {}) {
+  const members = buttons.filter(Boolean);
+  const plan = planButtonGroup({ kind: 'choice', count: members.length, size });
+  for (const member of members) member.dataset.buttonSize = plan.size;
+  return el('div', {
+    ...attrs, class: cls('as-choicerow', attrs.class, className), role: attrs.role || 'group',
+    dataset: { ...(attrs.dataset || {}), buttonGroup: plan.kind, buttonCount: plan.count },
+    style: { '--button-count': plan.count },
+  }, members);
+}
+/**
+ * The WCB0 tokens kit.css reads, written once onto :root from
+ * wireframeUi.buttons (ButtonSizeModel.buttonSizeTokens). Applied when the kit
+ * loads, so every entry that builds kit controls carries them; a host without
+ * a document (node tests) is skipped.
+ */
+export function applyButtonSizeTokens(root = typeof document === 'undefined' ? null : document.documentElement) {
+  if (typeof root?.style?.setProperty !== 'function') return false;
+  for (const [name, value] of Object.entries(buttonSizeTokens())) root.style.setProperty(name, value);
+  return true;
+}
+applyButtonSizeTokens();
 export function tab({ label, selected = false, member = '', id = '', className = '', attrs = {} } = {}) {
   return el('button', {
     ...attrs, type: 'button', id: id || null, role: 'tab',
@@ -132,9 +170,13 @@ export function tab({ label, selected = false, member = '', id = '', className =
     text: label,
   });
 }
-export function railItem({ label, current = false, member = '', id = '', className = '', attrs = {} } = {}) {
-  return el('button', {
-    ...attrs, type: 'button', id: id || null, role: attrs.role || 'tab',
+export function railItem({ label, current = false, member = '', id = '', tag = 'button', className = '', attrs = {} } = {}) {
+  // A row that hosts its own control (the inspection door's `i`) cannot be a
+  // <button>, because buttons do not nest: `tag` draws the same item as a
+  // focusable element of another kind.
+  const native = tag === 'button';
+  return el(tag, {
+    ...attrs, type: native ? 'button' : null, tabindex: native ? null : (attrs.tabindex ?? '0'), id: id || null, role: attrs.role || 'tab',
     class: cls('as-railitem', current ? 'on' : '', className),
     'aria-current': current ? 'true' : null,
     'aria-selected': current ? 'true' : 'false',
@@ -395,7 +437,19 @@ export function pane({ eyebrow: eb = '', title = '', subtitle: sub = '', childre
     children,
   ]);
 }
-export const railed = (railNode, paneNode, attrs = {}) => el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [railNode, paneNode]);
+/**
+ * railed(rail | nav, pane, attrs) — body A, the NavRail beside a Pane. Pass a
+ * kit categoryNav instead of a bare rail and the host gets the compact
+ * `[Category ▾]` selector too (W1, rule 11): rail on wide hosts, selector
+ * above the pane on compact ones, decided by CategoryNavModel.
+ */
+export const railed = (railNode, paneNode, attrs = {}) => {
+  const nav = railNode && railNode.isCategoryNav ? railNode : null;
+  const host = el('div', { ...attrs, class: cls('as-railed', attrs.class) }, [nav ? nav.rail : railNode, paneNode]);
+  return nav ? nav.attach(host) : host;
+};
+import { categoryNav, landControl } from './categoryNav.js';
+export { categoryNav, landControl };
 /** popover({ caption, groups: [[row, …], …], attrs }) — Eyebrow cap + hairline-grouped rows. */
 export function popover({ caption = '', groups = [], attrs = {}, className = '' } = {}) {
   return el('div', { ...attrs, class: cls('as-pop', className) }, [
@@ -489,7 +543,7 @@ import { registerTooltipExpander } from '../components/tooltip.js';
 // still be in its dead zone. By the microtask every module has run.
 queueMicrotask(() => registerTooltipExpander((markup, { title = '', eyebrow = 'Detail' } = {}) => {
   const body = el('div', { class: 'as-detailbody' }, el('div', { class: 'lines', html: markup }));
-  const done = button({ label: 'Close', weight: 'primary' });
+  const done = button({ label: 'Close', role: 'exit' });
   const door = openModal({ size: 'md', eyebrow, title: title || 'Detail', body, primary: done, footSize: 'short' });
   done.addEventListener('click', door.close);
   return door;

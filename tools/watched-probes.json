@@ -755,14 +755,14 @@
      "the strip": ".set-tabs"
     },
     "measure": {
-     "tabHeightDevicePx": "+(document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio).toFixed(1)",
-     "tabHeightCssPx": "+document.querySelector('.set-tab').getBoundingClientRect().height.toFixed(1)",
+     "tabHeightDevicePx": "+(([...document.querySelectorAll('.set-cat-select, .set-tab')].find(e=>e.getBoundingClientRect().height>0)||document.querySelector('.set-tab')).getBoundingClientRect().height*devicePixelRatio).toFixed(1)",
+     "tabHeightCssPx": "+([...document.querySelectorAll('.set-cat-select, .set-tab')].find(e=>e.getBoundingClientRect().height>0)||document.querySelector('.set-tab')).getBoundingClientRect().height.toFixed(1)",
      "stripRows": "new Set([...document.querySelectorAll('.set-tab')].map(e=>Math.round(e.getBoundingClientRect().top))).size",
      "stripOverflowX": "document.querySelector('.set-tabs').scrollWidth-document.querySelector('.set-tabs').clientWidth"
     },
     "wrong": [
      {
-      "js": "document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio + 0.5 < 44",
+      "js": "([...document.querySelectorAll('.set-cat-select, .set-tab')].find(e=>e.getBoundingClientRect().height>0)||document.querySelector('.set-tab')).getBoundingClientRect().height*devicePixelRatio + 0.5 < 44",
       "why": "a tab is now under the 44 device-px tap floor — smaller went past the floor"
      }
     ]

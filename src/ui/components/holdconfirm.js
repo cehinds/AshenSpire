@@ -116,6 +116,7 @@ import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { openConfirmationModal } from './confirmationModal.js';
+import { reviewEyebrow, reviewTone } from '../models/ConfirmationReviewModel.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
 export const HOLD_POINTER_SLOP = 12;
@@ -1021,7 +1022,7 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel, hintHost = null, hintBefore = null } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
@@ -1040,20 +1041,33 @@ export function beatArmer(meta, registries) {
     // skips the modal. The old beat classification remains published for
     // stakes/audit context; it no longer chooses between incompatible UI
     // forms. Every action routed through this door receives one interaction.
+    // W2 SLOTS (question, target, exact consequence): a caller that authors
+    // `target` and `message` fills the review's body with facts. A caller that
+    // authors neither keeps the older generic line below — W2a's service
+    // reviews all author both (ui/models/ConfirmationReviewModel.js).
+    const authored = (value) => (typeof value === 'function' ? value() : value);
     const review = () => {
       const current = beatFor(actionId, ctxOf());
-      const authoredQuestion = typeof question === 'function' ? question() : question;
-      const authoredDetail = typeof detailHtml === 'function' ? detailHtml() : detailHtml;
+      const authoredQuestion = authored(question);
+      const authoredDetail = authored(detailHtml);
+      const authoredMessage = authored(message);
+      const policy = authored(policyAction);
       openConfirmationModal({
         title: authoredQuestion || `Confirm ${current.of}`,
-        message: authoredQuestion
+        target: authored(target) || '',
+        message: authoredMessage || (authoredQuestion
           ? 'Review this change before confirming, or go back without applying it.'
-          : `This action means ${current.of}. Review any visible cost or consequence before confirming.`,
-        consequence: current.undo === 'none' ? 'CANNOT BE UNDONE' : 'STATE CHANGE',
+          : `This action means ${current.of}. Review any visible cost or consequence before confirming.`),
+        // The eyebrow is a concrete tag (CANNOT BE UNDONE) or nothing; W2
+        // forbids a category word like the old "STATE CHANGE".
+        consequence: reviewEyebrow(current),
         // THE TONE IS THE ROW'S (secondbeat.js), never a call site's word: an
         // action that writes the profile and gives nothing back is a danger
         // door — red Delete, alertdialog — as the slot's Overwrite already is.
-        tone: current.stakes === 'profile' && current.undo === 'none' ? 'danger' : 'neutral',
+        // A caller may also name the ConfirmationRegistry action its commit
+        // performs (`policyAction`); a DESTRUCTIVE policy there is a danger
+        // door too (W2: alert semantics where the policy requires them).
+        tone: reviewTone(current, policy ? registries.framework.confirmationTone(policy) : 'normal'),
         detailsHtml: authoredDetail || '',
         confirmLabel: confirmLabel || 'Confirm change',
         cancelLabel: 'Back',

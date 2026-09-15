@@ -565,7 +565,7 @@ beats and sell-back copy, not cards):
 | Merchant, sell bar, third visit | "Three warm. Don't ask me which three." |
 | Keeper of the Nameless, recruit | "No mark. No name. Nothing for it to read. I kept walking." |
 | Keeper of the Nameless, Spire hearth-room | "If it needs a name, give it mine. It never got one." |
-| Astronomer's page (the deepest source; still a witness) | *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger, and a fire without a ledger reads whatever remains. It was built for them. God forgive me, I do not know what I built it for.* |
+| Astronomer's page (the deepest source; still a witness) | *Fed, it burns. Written, it feeds. I built a hearth that needs no ledger and understood, too late, that a fire without one reads whatever remains. It will read them. God forgive me. I built it for them.* |
 | Opening, the player's hamlet (narrator) | Last night the fire read a name nobody wrote. It did not finish. It will. |
 | Starseer, Star Path | The fourth spur was on his charts before it was on the coast. |
 | Herald, Communion | We watched the heresy from the Tidebound Chapel. We never saw it lit. |

@@ -11,6 +11,13 @@ function hash(text, initial = 2166136261) {
   for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
   return h;
 }
+// Columns that present a row without changing any route, encounter, service
+// or claim. They stay out of the revision, because the revision seeds every
+// journey's route and a saved journey refuses a build whose revision moved:
+// naming who hands a quest over (plan phase 10a, the dialogue screen's
+// speaker) must neither reroute a seed nor strand a journey in progress.
+const PRESENTATION_COLUMNS = Object.freeze({ quests: Object.freeze(['speakerId']) });
+
 export function atlasRevision(data) {
   const text = JSON.stringify(
     Object.keys(data)
@@ -21,6 +28,7 @@ export function atlasRevision(data) {
           .map((row) =>
             JSON.stringify(
               Object.keys(row)
+                .filter((k) => !(PRESENTATION_COLUMNS[table] || []).includes(k))
                 .sort()
                 .map((k) => [k, row[k]]),
             ),

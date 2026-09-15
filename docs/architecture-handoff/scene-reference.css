@@ -1,0 +1,19 @@
+.scene-composition{width:100%;height:max(42rem,90vh);gap:0;padding:0!important;container-type:inline-size}.scene-composition>div,.scene-composition>footer{min-height:0;min-width:0}.scene-hud{overflow:auto;position:relative;z-index:4}.scene-stage{overflow:auto;position:relative}.scene-context{overflow:auto;position:relative}.scene-controls{display:flex;align-items:center;justify-content:center;gap:var(--cc-gap);overflow:auto;padding-inline:.3rem}.scene-controls>button{flex:1;min-width:0}.scene-stage .cc-formation{grid-template-columns:minmax(10rem,1fr) minmax(20rem,3fr);min-width:40rem;align-items:end;padding-top:4rem}.scene-stage .cc-battlefield{overflow:auto!important}.scene-stage .cc-native-actor .cardhost{max-width:12rem!important;margin:0 auto!important}.scene-stage .cc-native-actor .cardhost .cardbox{font-size:.75rem}.scene-context .cc-hand{align-items:center;padding-top:3rem}.scene-context .cc-hand>.cc-native{width:clamp(9rem,15cqw,12rem);flex-basis:clamp(9rem,15cqw,12rem)}.scene-context .cc-native .cardhost{margin:0 auto!important}.scene-controls .cc-footer{margin:0;padding:0}.scene-stage .cc-map{width:95%;margin-inline:auto}.scene-stage .cc-region{position:absolute;top:.2rem;left:.5rem;z-index:2}.scene-composition .cc-reference{max-width:100%}.device-reference .scene-composition{height:var(--device-height);width:var(--device-width)}.hud-scene-options{margin-block:.5rem}.hud-scene-options .layer-controls{margin:.3rem}.scene-composition .cc-native>a{font-size:.65rem}.scene-composition .cc-formation>.cc-actor-slots{align-items:end;height:100%}
+
+.scene-hud{overflow:visible}.scene-hud .hud-reference{font-size:.68rem;line-height:1.1}.scene-controls .cc-feedback{position:absolute;bottom:0;background:#211a12}.scene-controls{position:relative}
+
+/* Combat geometry comes from WGS8, never an oversized scrollable formation. */
+.scene-composition .scene-stage:has(.cc-battlefield),.scene-composition .scene-stage .cc-battlefield{overflow:hidden!important}
+.scene-composition .scene-stage .cc-formation{min-width:0;width:100%;padding:0;grid-template-columns:none}
+.cc-battlefield>.cc-feedback{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+
+/* Scene bands own clipping and allocation; only hand overflow may scroll inline. */
+.scene-composition .scene-context{overflow:hidden;min-height:0}
+.scene-composition .scene-controls{overflow:visible;min-height:0;padding:0}
+.scene-composition .scene-context .cc-hand{padding:0;min-height:0;height:100%}
+.scene-composition .scene-context .cc-hand>.cc-native{flex-basis:auto;width:auto}
+.scene-composition .scene-context .cc-hand .cardhost{margin:0!important}
+
+/* Announce reference feedback without covering the footer controls. */
+.scene-controls .cc-feedback{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:0!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap;pointer-events:none}

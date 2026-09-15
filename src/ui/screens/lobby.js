@@ -76,7 +76,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
   function renderBrowse(note) {
     const nameInput = textInput({ id: 'lb-name', maxlength: '18', value: state.name });
     const hostBtn = button({ label: 'Light a fire (host)', weight: 'primary', id: 'lb-host' });
-    const backBtn = button({ label: 'Back', id: 'lb-back' });
+    const backBtn = button({ label: 'Back', role: 'exit', id: 'lb-back' });
     const hostsBox = options([flavour('Scanning…', { id: 'lb-scanning' })], { id: 'lb-hosts' });
     mountScreen(pane({
       eyebrow: 'Forsaken Together',
@@ -228,7 +228,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
     const seedInput = iAmHost ? textInput({ id: 'lb-seed', value: state.seedString }) : null;
     const startBtn = iAmHost ? button({ label: allReady ? 'Begin the climb' : 'Begin the climb (waiting for ready)', weight: 'primary', id: 'lb-start', disabled: !(state.players.length && allReady) }) : null;
     const readyBtn = iAmHost ? null : button({ label: state.ready ? '✓ Ready — waiting for the host' : 'Ready up', weight: 'primary', id: 'lb-ready' });
-    const leaveBtn = button({ label: 'Leave', id: 'lb-leave' });
+    const leaveBtn = button({ label: 'Leave', role: 'exit', id: 'lb-leave' });
 
     mountScreen(pane({
       eyebrow: 'Forsaken Together',
