@@ -40,3 +40,21 @@ export function sceneLayers({ width, height, scene, config = wireframeUi.scene }
     aligned,
   });
 }
+
+// W4c: the plate fitted to a scene WINDOW inside a taller frame (the band
+// between the HUD and the context), then continued behind the frame's other
+// bands. sceneLayers fits the window exactly as it fits combat's battlefield;
+// the frame's viewBox keeps that scale and horizontal crop and only extends
+// the crop up and down, so the floor line stays where the window put it.
+// Sizes are the frame's local px; `frame.floorLine` is from the frame's top.
+export function sceneWindowLayers({ width, height, windowTop = 0, windowHeight = height, scene, config = wireframeUi.scene }) {
+  const layers = sceneLayers({ width, height: windowHeight, scene, config });
+  const box = layers.skyline.viewBox;
+  const fitted = !!box && !!scene?.box && width > 0 && windowHeight > 0 && height > 0;
+  const scale = layers.skyline.scale;
+  const viewBox = fitted ? [box[0], box[1] - windowTop / scale, box[2], height / scale] : box;
+  return freeze({
+    ...layers,
+    frame: { viewBox, floorLine: windowTop + layers.floor.top, windowTop, windowHeight, height },
+  });
+}

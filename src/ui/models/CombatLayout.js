@@ -1,7 +1,42 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 
+// The W4 bands, top to bottom.
+const SCENE_BANDS = Object.freeze(['hud', 'scene', 'context', 'footer']);
+
 // W4a bands and the WGC6 packed footer. Inputs and outputs are local
 // (pre-zoom) CSS px; physical minimums are divided through the UI zoom once.
+
+// THE W4 PARENT'S BANDS, shared by every W4 screen (W4a combat, W4c dialogue):
+// HUD, scene, context and footer, top to bottom. `layout` is a W4 child's
+// resolved scene config (uiConfig.scenes.<id>: sizing.bands { hud, scene,
+// context, footer } as percentages summing to 100) and `parent` the W4 row
+// (uiConfig.scenes.w4), whose sizing.minimums.footerPx is physical px,
+// divided through the zoom here. A screen may
+// add its own floors: `contextPx` (physical px, combat's hand) and `scenePx`
+// (already local px, combat's readable battlefield). The context and footer
+// keep their minimums and the scene absorbs any shortfall; it is never funded
+// by shrinking them, and a scene below its floor is reported as unsupported
+// rather than hidden. `width` and `rem` are accepted so every W4 caller passes
+// one host shape; the stacked plan itself reads neither.
+export function allocateSceneBands({ width, height, zoom = 1, rem = 16 } = {}, layout, parent = {}, {
+  contextPx = 0, scenePx = 0, label = 'scene',
+} = {}) {
+  const bands = layout?.sizing?.bands || {};
+  const shares = SCENE_BANDS.map((band) => bands[band] / 100);
+  if (!shares.every(Number.isFinite) || Math.abs(shares.reduce((sum, value) => sum + value, 0) - 1) > 1e-9) {
+    throw new Error(`${label} bands must be four shares summing to 100`);
+  }
+  const [hudShare, , contextShare, footerShare] = shares;
+  const hud = height * hudShare;
+  const context = Math.max(height * contextShare, contextPx / zoom);
+  const footer = Math.max(height * footerShare, (parent?.sizing?.minimums?.footerPx ?? 0) / zoom);
+  const remaining = height - hud - context - footer;
+  return Object.freeze({
+    hud, scene: Math.max(0, remaining), context, footer,
+    minimumScene: scenePx, supported: remaining >= scenePx,
+    shares: Object.freeze(shares),
+  });
+}
 
 // Nominal 10/55/30/5 shares. The hand and footer keep their physical minimums
 // and the battlefield absorbs the difference; it is never funded by shrinking
@@ -14,20 +49,22 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 // with its lift, arc and insets. Card faces, text and targets keep their
 // minimums. A host that still cannot fit is reported, not squeezed.
 export function allocateCombatBands({ width, height, zoom = 1, rem = 16 }, config = wireframeUi) {
-  const shares = config.combat.bands.map((value) => value / 100);
-  if (shares.length !== 4 || Math.abs(shares.reduce((sum, value) => sum + value, 0) - 1) > 1e-9) {
-    throw new Error('combat bands must be four shares summing to 100');
-  }
-  const [hudShare, , handShare, footerShare] = shares;
-  const hud = height * hudShare;
-  const hand = Math.max(height * handShare, config.hand.minimumHeightPx / zoom);
-  const footer = Math.max(height * footerShare, config.combat.footerMinimumPx / zoom);
-  const remaining = height - hud - hand - footer;
+  // The stacked plan is the shared W4 plan: the battlefield is the scene band
+  // and the hand is the context band.
   const minimumBattlefield = config.formation.minimumSpritePx / zoom + config.formation.detailReserveRem * rem;
+  // Combat's bands and footer floor arrive as wireframeUi.combat; they are
+  // handed to the shared plan in the W4 scene-config shape.
+  const [hudBand, sceneBand, contextBand, footerBand] = config.combat.bands;
+  const plan = allocateSceneBands({ width, height, zoom, rem },
+    { sizing: { bands: { hud: hudBand, scene: sceneBand, context: contextBand, footer: footerBand } } },
+    { sizing: { minimums: { footerPx: config.combat.footerMinimumPx } } },
+    { contextPx: config.hand.minimumHeightPx, scenePx: minimumBattlefield, label: 'combat' });
+  const [, , handShare, footerShare] = plan.shares;
+  const { hud, context: hand, footer } = plan;
   const stacked = Object.freeze({
-    hud, battlefield: Math.max(0, remaining), hand, footer, minimumBattlefield,
+    hud, battlefield: plan.scene, hand, footer, minimumBattlefield,
     arrangement: 'stacked', rails: null,
-    supported: remaining >= minimumBattlefield,
+    supported: plan.supported,
   });
   if (stacked.supported || !(width > 0) || !config.combat.shortHostRails) return stacked;
   const rails = packCombatRails({ width, zoom, rem }, config);

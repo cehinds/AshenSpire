@@ -29,7 +29,7 @@ import { ATLAS, generateJourney, completeJourneyNode } from '../src/model/worldA
 import {
   createDialogueState, dialogueBeats, dialogueModel, dialogueStep, dialogueFrameVars, DIALOGUE_ACTIONS,
 } from '../src/ui/models/DialogueModel.js';
-import { wireframeUi } from '../src/content/wireframeUi.js';
+import { W4_PARENT, W4C_LAYOUT } from './fixtures/w4-scene-layouts.mjs';
 
 const registries = createRegistries(contentBundle);
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -355,14 +355,28 @@ test('the shipped Nameless steps project through the model with their real choic
   assert.ok(run.history.length >= 2);
 });
 
-test('the dialogue block is frozen config and resolves to reference-rem custom properties', () => {
-  assert.ok(Object.isFrozen(wireframeUi.dialogue));
-  const vars = dialogueFrameVars();
+test('the dialogue frame resolves a W4c scene config to W4 frame custom properties', () => {
+  const layout = W4C_LAYOUT;
+  const vars = dialogueFrameVars(layout, W4_PARENT);
   const ref = 'max(16px / var(--ui-zoom, 1), 1rem)';
+  const vw = 'var(--w4-vw, calc(1vw / var(--ui-zoom, 1)))';
+  const vh = 'var(--w4-vh, calc(1dvh / var(--ui-zoom, 1)))';
   assert.equal(vars['--dialogue-ref-rem'], ref);
-  assert.equal(vars['--dialogue-portrait-share'], '30%');
-  assert.equal(vars['--dialogue-scene-min'], `calc(10 * ${ref})`);
+  assert.equal(vars['--dialogue-inset-x'], `calc(2.5 * ${vw})`);
+  assert.equal(vars['--dialogue-portrait-w'], `calc(20 * ${vw})`);
+  assert.equal(vars['--dialogue-portrait-w-compact'], `calc(30 * ${vw})`);
+  assert.equal(vars['--dialogue-slot-top'], `calc(2 * ${vh})`);
+  assert.equal(vars['--dialogue-context-w'], `calc(95 * ${vw})`);
+  assert.equal(vars['--dialogue-context-inset-y'], `calc(2 * ${vh})`);
+  assert.equal(vars['--dialogue-foot-gap'], `calc(1.5 * ${vw})`);
+  assert.equal(vars['--dialogue-action-h'], `max(calc(6 * ${vh}), calc(44px / var(--ui-zoom, 1)))`);
   assert.equal(vars['--dialogue-caption-min'], `calc(4.35 * ${ref})`);
-  assert.throws(() => dialogueFrameVars({ ...wireframeUi.dialogue, portraitShare: 0.6 }), /half the scene/);
-  assert.throws(() => dialogueFrameVars({ ...wireframeUi.dialogue, captionLines: 0 }), /captionLines/);
+  assert.deepEqual(
+    ['skybox', 'floor', 'player-portrait', 'npc-portrait', 'context', 'hud', 'footer'].map((name) => vars[`--dialogue-z-${name}`]),
+    ['2', '3', '4', '4', '5', '6', '6'],
+  );
+  assert.equal(vars['--dialogue-speaker-lift'], '1');
+  const sizing = layout.sizing;
+  assert.throws(() => dialogueFrameVars({ ...layout, sizing: { ...sizing, context: { ...sizing.context, captionLines: 0 } } }, W4_PARENT), /captionLines/);
+  assert.throws(() => dialogueFrameVars({ ...layout, sizing: { ...sizing, bands: { ...sizing.bands, footer: 20 } } }, W4_PARENT), /bands must sum to 100 \(got 105\)/);
 });
