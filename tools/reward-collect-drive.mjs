@@ -300,6 +300,14 @@ async function bootTreasure({ settings = null, storage = null } = {}) {
   await waitFor(`!!document.querySelector('[data-node="${door.treasure}"]')`, 'the treasure node on the map');
   const clicked = await ev(clickSel(`[data-node="${door.treasure}"]`));
   if (!clicked) throw new Error('treasure node vanished before the click');
+  // SELECT, THEN ENTER (#1024). A pick on a lit node no longer travels — it
+  // selects, and a second pick travels once the selection has stood
+  // `wireframeUi.map.repeatPickDelayMs` (400ms), so a fast double tap cannot
+  // enter in one gesture. This drive picked once and then waited for a reward
+  // menu that was never going to arrive: "timed out waiting for the reward
+  // menu", which is a tool that had not been told, not a game that broke.
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  await ev(clickSel(`[data-node="${door.treasure}"]`));
   await waitFor(`!!document.querySelector('.reward-menu')`, 'the reward menu');
 }
 const title = () => ev(`(()=>{const h=document.querySelector('.reward-door h2, .screen h2');return h?h.textContent.trim():''})()`);
@@ -434,6 +442,9 @@ check('S8 an elite map door exists for the production route', !!eliteDoor, JSON.
 if (eliteDoor) {
   await nav(`${base}?shot=map&shotSeed=${SEED}&shotAt=${eliteDoor.parent}`);
   await waitFor(`!!document.querySelector('[data-node="${eliteDoor.elite}"]')`, 'the elite map node');
+  await ev(clickSel(`[data-node="${eliteDoor.elite}"]`));
+  // Select, then enter — the same second pick the treasure door needs above.
+  await new Promise((resolve) => setTimeout(resolve, 400));
   await ev(clickSel(`[data-node="${eliteDoor.elite}"]`));
   await finishPosedCombat('ELITE VANQUISHED');
 }
