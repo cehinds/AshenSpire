@@ -1,17 +1,22 @@
 // src/ui/screens/event.js — Unknown-node events (SPEC §5.6, §7.1)
 //
-// Choices run through executeRunEffects (the same DSL as everything else).
-// A startCombat effect sets run.combatEntered; the orchestrator (main.js)
+// Choices commit through the quest door (engine/quests.js commitEventChoice):
+// run effects, then the history row, then the quest completion check. A
+// startCombat effect sets run.combatEntered; the orchestrator (main.js)
 // launches it after the result text.
+//
+// A quest chain's step is spoken instead (proposal §7.5): mountEvent hands it
+// to the dialogue screen, and only one-off events keep this W1u choice body.
 
-import { executeRunEffects } from '../../engine/actions.js';
+import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
+import { mountDialogue } from './dialogue.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
 // The fail-closed level rule goes through the framework's adopted door
 // (owner ruling; the derivation itself still lives in model/consequence.js).
 import { isBindingChoice } from '../../framework/confirmationRule.js';
-import { availableEventChoices, recordEventChoice } from '../../model/quests.js';
+import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
@@ -19,7 +24,11 @@ import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
 
-export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud = null }) {
+export function mountEvent(app, options) {
+  const { registries, run, meta, rng, eventId, onDone, hud = null } = options;
+  // Every quest exchange is spoken: a chain step opens in the dialogue screen
+  // with its speaker, and its responses commit through the same door below.
+  if (questChainForEvent(registries.questChains, eventId)) return mountDialogue(app, options);
   const def = registries.events.get(eventId);
   // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
   // says, or which choices deserve one — it names the action and hands over the
@@ -28,12 +37,6 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, h
   // line, which is how "same with ending turn" was lost.
   const arm = beatArmer(meta, registries);
   const disarmers = [];
-
-  function meets(requires) {
-    if (!requires) return true;
-    if (typeof requires.cinders === 'number' && run.cinders < requires.cinders) return false;
-    return true;
-  }
 
   // `min(420px, 100%)`, NOT `420px` — Sten, 2026-08-14, on Marina's axisfit
   // ruling (event rows 15-18px, DEFECT, dated 2026-08-16). The bare 420 was a
@@ -138,16 +141,18 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone, h
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
-    const affordable = meets(choice.requires);
+    const affordable = choiceAffordable(choice, run);
     responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 
     if (!affordable) {
       btn.disabled = true;
       btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
     } else {
+      // THE EVENT DOOR (engine/quests.js): effects, then the history row, then
+      // the quest completion check — one writer for all three, shared with the
+      // dialogue screen.
       const commit = () => {
-        executeRunEffects({ run, registries, rng }, choice.effects);
-        recordEventChoice(run, { eventId: def.id, choiceId: choice.id });
+        commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
       };
       // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
