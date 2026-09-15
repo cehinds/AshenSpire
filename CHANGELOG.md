@@ -30,6 +30,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-15
+
+- **A check on the game's own builder is watched again** ([#1095](https://github.com/cehinds/AshenSpire/pull/1095), `0.7.1.52`). Nothing you see changes. The tool that packs the whole game into one file has a set of deliberately broken builds it is tested against, to prove it refuses them rather than shipping a half-made game. Three of those tests had quietly stopped working — two described a rule the builder no longer follows, and one had been outgrown by the game itself, which is now far larger than the test assumed. All three are repaired, and the set is now run by the project's checks instead of by whoever remembers it exists.
+
 ## 2026-09-14
 
 - **This record catches up with the second batch of rebuilt screens** ([#1091](https://github.com/cehinds/AshenSpire/pull/1091), `0.7.1.51`). Nothing you see changes. Nine changes merged since the last catch-up had no line here, because they were merged in a way the project's receipts check cannot see. Each now has its line with the build it shipped in, so the changelog under Settings, About lists them too.
