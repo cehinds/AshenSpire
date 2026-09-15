@@ -30,7 +30,7 @@ export const W4C_LAYOUT = freeze({
   },
   positioning: {
     portraitSlot: { insetVw: 2.5, topOffsetVh: 2 },
-    portraits: { visibleFraction: { numerator: 1, denominator: 3 }, mirrorNpc: true },
+    portraits: { visibleFraction: 1 / 3, mirrorNpc: true },
     context: { insetVw: 2.5, insetVh: 1 },
     footer: { sideInsetVw: 2.5, gapVw: 1.5 },
   },

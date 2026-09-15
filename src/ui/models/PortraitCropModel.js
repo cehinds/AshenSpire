@@ -43,10 +43,10 @@ export function closeUpPlacement(art, slot, revealLine, layout) {
   const width = positive(slot.width, 'slot.width');
   const span = finite(revealLine, 'revealLine') - slotTop;
   if (!(span > 0)) throw new Error(`closeUpPlacement: the reveal line (${revealLine}) must lie below the slot top (${slotTop})`);
-  const { numerator, denominator } = layout?.positioning?.portraits?.visibleFraction || {};
-  const fraction = numerator / denominator;
+  // uiConfig resolves the fraction at build time, so it arrives as a number.
+  const fraction = layout?.positioning?.portraits?.visibleFraction;
   if (!Number.isFinite(fraction) || !(fraction > 0) || fraction > 1) {
-    throw new Error(`closeUpPlacement: visibleFraction must satisfy 0 < numerator/denominator ≤ 1 (got ${numerator}/${denominator})`);
+    throw new Error(`closeUpPlacement: visibleFraction must satisfy 0 < f ≤ 1 (got ${fraction})`);
   }
   const scale = span / (height * fraction);
   return Object.freeze({

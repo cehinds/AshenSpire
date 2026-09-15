@@ -145,8 +145,8 @@ test('the entrance plays motion.entrance, and the controls open when the last st
 
 test('the frame vars refuse a config that cannot draw, by name', () => {
   assert.throws(() => dialogueFrameVars(edited(W4C_LAYOUT, (l) => { l.sizing.bands.footer = 20; }), W4_PARENT), /bands must sum to 100 \(got 105\)/);
-  assert.throws(() => dialogueFrameVars(edited(W4C_LAYOUT, (l) => { l.positioning.portraits.visibleFraction = { numerator: 4, denominator: 3 }; }), W4_PARENT),
-    /visibleFraction must satisfy 0 < numerator\/denominator ≤ 1 \(got 4\/3\)/);
+  assert.throws(() => dialogueFrameVars(edited(W4C_LAYOUT, (l) => { l.positioning.portraits.visibleFraction = 1.25; }), W4_PARENT),
+    /visibleFraction must satisfy 0 < f ≤ 1 \(got 1\.25\)/);
   assert.throws(() => dialogueFrameVars(edited(W4C_LAYOUT, (l) => { l.sizing.context.captionLines = 1.5; }), W4_PARENT), /captionLines/);
   assert.throws(() => dialogueFooterPlan(edited(W4C_LAYOUT, (l) => { l.positioning.footer.gapVw = 60; })), /no room/);
 });
@@ -207,11 +207,11 @@ test('closeUpPlacement reads the fraction from the layout and refuses impossible
   const art = { top: 0, height: 90, centerX: 45 };
   const slot = { left: 0, top: 10, width: 60 };
   assert.ok(near(closeUpPlacement(art, slot, 40, W4C_LAYOUT).scale, 1), '30 px of reveal over a 90 px figure\'s third');
-  const whole = edited(W4C_LAYOUT, (l) => { l.positioning.portraits.visibleFraction = { numerator: 1, denominator: 1 }; });
+  const whole = edited(W4C_LAYOUT, (l) => { l.positioning.portraits.visibleFraction = 1; });
   assert.ok(near(closeUpPlacement(art, slot, 40, whole).scale, 1 / 3), 'a fraction of 1 fits the whole figure');
   assert.throws(() => closeUpPlacement(art, slot, 10, W4C_LAYOUT), /below the slot top/);
   assert.throws(() => closeUpPlacement({ ...art, height: 0 }, slot, 40, W4C_LAYOUT), /art.height/);
-  const broken = edited(W4C_LAYOUT, (l) => { l.positioning.portraits.visibleFraction = { numerator: 3, denominator: 2 }; });
+  const broken = edited(W4C_LAYOUT, (l) => { l.positioning.portraits.visibleFraction = 1.5; });
   assert.throws(() => closeUpPlacement(art, slot, 40, broken), /visibleFraction must satisfy/);
   assert.throws(() => closeUpPlacement(art, slot, 40), /visibleFraction must satisfy/, 'no layout, no fraction');
   assert.throws(() => closeUpPlacement(null, slot, 40, W4C_LAYOUT), /needs the art box/);

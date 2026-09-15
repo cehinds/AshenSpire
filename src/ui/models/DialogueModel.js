@@ -312,9 +312,9 @@ export function dialogueFrameVars(layout, parent) {
   const { sizing, positioning } = layout;
   const sum = Object.values(sizing.bands).reduce((total, value) => total + value, 0);
   if (Math.abs(sum - 100) > 1e-9) throw new Error(`dialogue sizing.bands: bands must sum to 100 (got ${sum})`);
-  const { numerator, denominator } = positioning.portraits.visibleFraction;
-  if (!(numerator / denominator > 0) || numerator / denominator > 1) {
-    throw new Error(`dialogue visibleFraction must satisfy 0 < numerator/denominator ≤ 1 (got ${numerator}/${denominator})`);
+  const fraction = positioning.portraits.visibleFraction;
+  if (!(fraction > 0) || fraction > 1) {
+    throw new Error(`dialogue visibleFraction must satisfy 0 < f ≤ 1 (got ${fraction})`);
   }
   const lines = sizing.context.captionLines;
   if (!Number.isInteger(lines) || lines < 1) throw new Error(`dialogue sizing.context.captionLines must be a whole number ≥ 1, got ${lines}`);
