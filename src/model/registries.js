@@ -45,16 +45,18 @@ export function deepFreeze(value) {
   return value;
 }
 
-function makeRegistry(typeName, defs) {
+// `key` is the field a def is indexed by — `id` everywhere except the property
+// rules table, whose rows are keyed by the tag they give behaviour to.
+function makeRegistry(typeName, defs, key = 'id') {
   const byId = new Map();
   for (const def of defs || []) {
-    if (!def || typeof def.id !== 'string') {
-      throw new Error(`Every ${typeName} def must have a string id (got ${JSON.stringify(def && def.id)})`);
+    if (!def || typeof def[key] !== 'string') {
+      throw new Error(`Every ${typeName} def must have a string ${key} (got ${JSON.stringify(def && def[key])})`);
     }
-    if (byId.has(def.id)) {
-      throw new Error(`Duplicate ${typeName} id '${def.id}'`);
+    if (byId.has(def[key])) {
+      throw new Error(`Duplicate ${typeName} ${key} '${def[key]}'`);
     }
-    byId.set(def.id, deepFreeze(def));
+    byId.set(def[key], deepFreeze(def));
   }
   return Object.freeze({
     type: typeName,
@@ -140,6 +142,14 @@ const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
 
 function stampTags(bundle) {
   const { families, index, keyOf } = tagIndex(bundle);
+  // PROPERTY TAGS NEVER JOIN `tags`. They are the one domain that confers
+  // behaviour (content/source/tagDomains.csv), and their one reader is the
+  // mount path (engine/properties.js). Stamped onto `propertyTags` instead —
+  // and only when an object holds any — so every existing reader of `tags`
+  // (chips, the card/weapon fit check, the class leaning the starting deck
+  // reads) sees exactly what it saw before the domain existed.
+  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
+    .filter((t) => t && t.domain === 'property').map((t) => t.id));
   const stamped = new Map();
   for (const spec of families.values()) {
     // A non-string source is refused BY NAME in model/tags.js. Skipping it here
@@ -152,16 +162,20 @@ function stampTags(bundle) {
     stamped.set(spec.source, node.map((def) => {
       if (!def) return def;
       const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
-      const entityTags = [...(index.get(keyOf(spec.family, scope, def.id)) || [])];
+      const authored = index.get(keyOf(spec.family, scope, def.id)) || [];
+      const entityTags = authored.filter((tag) => !propertyIds.has(tag));
+      const propertyTags = authored.filter((tag) => propertyIds.has(tag));
+      const conferred = propertyTags.length ? { propertyTags } : {};
       // Equipment splits its stamped tags four ways, exactly as content's
       // normPiece used to before the tags moved into tagging.csv: the complete
       // authored vocabulary, the item-type half the Armoury and the smith name
       // the piece by, and the gameplay/presentation half that stays `tags`. An
       // item card never infers its type from `kind` or a UI call site.
-      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags };
+      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags, ...conferred };
       const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
       return {
         ...def,
+        ...conferred,
         entityTags,
         itemTypeTags,
         itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
@@ -186,6 +200,10 @@ export function createRegistries(contentBundle) {
   for (const type of REGISTRY_TYPES) {
     registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
   }
+  // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
+  // Read only by the mount path; a getter throws on an unknown tag like every
+  // other registry, and validate.js has already refused a tag with no rule.
+  registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   // Quest steps (E12): which events an Unknown node may roll only once the
@@ -364,19 +382,39 @@ function knownPassive(key) {
   console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
 }
 
-/** Product of a multiplicative passive across owned relics (default 1). */
-export function passiveMult(registries, relicIds, key) {
+// MOUNTED PROPERTY RULES CONFER PASSIVES EXACTLY AS AN OWNED RELIC DOES
+// (engine/properties.js). `mounts` is ONE owner's mount map —
+// { [sourceKey]: { rules } }, what propertyMountsOf(ctx, entity) returns — and
+// is plain data, so this model layer never reaches into the engine. Absent, it
+// reads as nothing mounted: every run-level caller (rewards, shrines, the map)
+// is unchanged, because properties are mounted only inside a fight. Sources are
+// walked sorted, the same order the trigger scan uses.
+function mountedPassiveValues(mounts, key) {
+  const values = [];
+  if (!mounts) return values;
+  for (const sourceKey of Object.keys(mounts).sort()) {
+    for (const rule of mounts[sourceKey].rules || []) {
+      const p = rule.passives;
+      if (p && p[key] !== undefined) values.push(p[key]);
+    }
+  }
+  return values;
+}
+
+/** Product of a multiplicative passive across owned relics and mounted properties (default 1). */
+export function passiveMult(registries, relicIds, key, mounts = null) {
   knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && typeof p[key] === 'number') m *= p[key];
   }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') m *= v;
   return m;
 }
 
-/** Sum of an additive passive across owned relics (default 0). */
-export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
+/** Sum of an additive passive across owned relics and mounted properties (default 0). */
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}, mounts = null) {
   knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
@@ -384,17 +422,18 @@ export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
     const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
     if (p && typeof p[key] === 'number') s += p[key];
   }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') s += v;
   return s;
 }
 
-/** True if any owned relic sets the boolean passive. */
-export function passiveFlag(registries, relicIds, key) {
+/** True if any owned relic or mounted property sets the boolean passive. */
+export function passiveFlag(registries, relicIds, key, mounts = null) {
   knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;
   }
-  return false;
+  return mountedPassiveValues(mounts, key).some((v) => v === true);
 }
 
 // ---------------------------------------------------------------------------

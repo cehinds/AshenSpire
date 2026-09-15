@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-15",
     "summary": "The i that explains a card sits above it on every screen",
     "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading at every interface size, and the same control no longer appears in two places depending on where you are.",
-    "build": "0.7.1.56",
+    "build": "0.7.1.58",
     "pullRequest": 994,
     "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
+    "id": "pr-1101",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Sceptres now give you mana back when you break an enemy's arcane guard",
+    "detail": "The Bone Sceptre and the Emberlight Sceptre each carry a power called Siphon: when one of your own hits fills an enemy's Arcane Exposure and breaks it, you get 1 Mana back. The power belongs to the sceptre, not to you. Swap it for another weapon mid-fight and the refund stops; take the sceptre back up and it returns, once, never twice. A fight you saved and reload keeps it. The Herald starts with the Bone Sceptre, so a Herald feels this from the first fight. Every other weapon, armour and relic works exactly as before.",
+    "build": "0.7.1.57",
+    "pullRequest": 1101,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1101"
+  },
+  {
+    "id": "pr-1098",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Gear, relics and your class can now be given lasting powers of their own",
+    "detail": "Nothing you see changes yet. The game now keeps one list of powers that a weapon, a piece of armour, a relic or a class can grant while you hold it, and each power has exactly one written rule. Cards can never hold these powers; a card only ever does what its own text says. The list starts empty. The first power arrives with the next change: a sceptre that gives you mana back when you break an enemy's arcane guard.",
+    "build": "0.7.1.56",
+    "pullRequest": 1098,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1098"
   },
   {
     "id": "pr-1099",

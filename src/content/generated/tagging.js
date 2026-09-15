@@ -1241,6 +1241,18 @@ export const tagging = [
   {
     "family": "armament",
     "scope": "",
+    "objectId": "boneSceptre",
+    "tagId": "siphon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "emberlightSceptre",
+    "tagId": "siphon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
     "objectId": "goldboughBranch",
     "tagId": "item:magic-focus"
   },

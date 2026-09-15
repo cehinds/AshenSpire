@@ -34,6 +34,7 @@ import {
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
+  PROPERTY_CARRIER_FAMILIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
@@ -102,6 +103,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tagFamilies', // what can be tagged: its collection, and how its id is keyed
   'tagFamilyDomains', // family x domain — which words each family may carry
   'tagging', // family, scope, objectId, tagId — the only home a tag is written
+  'propertyRules', // what each `property` tag confers (content/propertyRules.js)
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
@@ -799,6 +801,7 @@ function collectContentProblems(bundle, errors = []) {
       walkSchema(def, typeToSchema[type], path, vctx);
     });
   }
+  propertyRuleProblems(b, vctx);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
     const base = `enemies.${enemy && enemy.id || '?'}`;
     const cfg = enemy && enemy.arcaneExposure;
@@ -1900,6 +1903,8 @@ const PREDICATE_FIELDS = {
   eventSourceIsOwner: [],
   eventTargetIsOwner: [],
   eventStatusIs: ['status'],
+  skillLevelAtLeast: ['skill', 'level'],
+  classLevelAtLeast: ['level'],
   all: ['preds'],
   any: ['preds'],
   not: ['pred'],
@@ -1943,6 +1948,17 @@ export function validatePredicate(pred, path, vctx) {
       break;
     case 'random':
       if (typeof pred.pct !== 'number') err(`${path}.pct`, 'pct must be a number');
+      break;
+    // The skill ids themselves are derived from the tag registry in phase 4;
+    // until then the id is checked for shape only.
+    case 'skillLevelAtLeast':
+      if (typeof pred.skill !== 'string' || !pred.skill) {
+        err(`${path}.skill`, `skillLevelAtLeast names a skill track id, got ${describe(pred.skill)}`);
+      }
+      if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
+      break;
+    case 'classLevelAtLeast':
+      if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;
     case 'all':
     case 'any':
@@ -2047,6 +2063,111 @@ function validateRelicTemplate(relic, path, err) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
   checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
+}
+
+// ---------------------------------------------------------------------------
+// Property rules (docs/proposal-progression-and-property-system.md §3)
+// ---------------------------------------------------------------------------
+
+function balanceRefsIn(value, path, out = []) {
+  if (Array.isArray(value)) value.forEach((v, i) => balanceRefsIn(v, `${path}[${i}]`, out));
+  else if (isPlainObject(value)) {
+    if (Object.keys(value).length === 1 && typeof value.balance === 'string') out.push({ path, ref: value.balance });
+    else for (const [k, v] of Object.entries(value)) balanceRefsIn(v, `${path}.${k}`, out);
+  }
+  return out;
+}
+
+/**
+ * Every refusal here names its row: a property tag with no rule, or two; a rule
+ * for a tag outside the property domain; requires/excludes that name no
+ * property tag; a requires cycle; a sidecar number naming no balance row; and a
+ * property paired with, or written on, a family that is not a carrier — a card
+ * above all, because a card's behaviour is its own effect list.
+ */
+function propertyRuleProblems(b, vctx) {
+  const { err } = vctx;
+  const rules = b.propertyRules === undefined ? [] : b.propertyRules;
+  if (!Array.isArray(rules)) {
+    err('propertyRules', `must be an array of property rule rows (got ${describe(rules)})`);
+    return;
+  }
+  const propertyTags = new Set(tagIdsInDomain(b, 'property'));
+  const byTag = new Map();
+  rules.forEach((rule, i) => {
+    const tag = rule && typeof rule.tag === 'string' ? rule.tag : `#${i}`;
+    const path = `propertyRules.${tag}`;
+    walkSchema(rule, SCHEMAS.propertyRule, path, vctx);
+    if (!isPlainObject(rule) || typeof rule.tag !== 'string') return;
+    if (byTag.has(rule.tag)) {
+      err(path, `duplicate rule for property tag '${rule.tag}' — a property tag has exactly one rule; a stronger version is a second tag ('${rule.tag}2'), not a second row`);
+      return;
+    }
+    byTag.set(rule.tag, rule);
+    if (!propertyTags.has(rule.tag)) {
+      err(path, `'${rule.tag}' is not a property tag — register it in content/source/tags.csv with domain 'property', or delete this rule`);
+    }
+    for (const field of ['requires', 'excludes']) {
+      for (const ref of Array.isArray(rule[field]) ? rule[field] : []) {
+        if (!propertyTags.has(ref)) err(`${path}.${field}`, `${field} '${ref}', which is not a property tag — every entry names a tags.csv row in the property domain`);
+      }
+    }
+    const excludes = Array.isArray(rule.excludes) ? rule.excludes : [];
+    if (excludes.includes(rule.tag)) err(`${path}.excludes`, `'${rule.tag}' excludes itself, so it could never mount`);
+    for (const ref of Array.isArray(rule.requires) ? rule.requires : []) {
+      if (excludes.includes(ref)) err(`${path}.requires`, `'${ref}' is both required and excluded, so the rule could never mount`);
+    }
+    for (const { path: at, ref } of balanceRefsIn(rule, path)) {
+      err(at, `names balance row '${ref}', which is not a number in src/content/balance.js — add the row or fix the path`);
+    }
+    if (typeof rule.textTemplate === 'string' && Array.isArray(rule.triggers)) {
+      const effects = rule.triggers.flatMap((trig) => (trig && Array.isArray(trig.do) ? trig.do : []));
+      checkTemplate(rule.textTemplate, effects, `${path}.textTemplate`, err);
+    }
+  });
+  for (const tag of propertyTags) {
+    if (!byTag.has(tag)) err(`tags.${tag}`, `property tag '${tag}' has no rule — add exactly one row for it to content/source/propertyRules.csv`);
+  }
+
+  // No requires cycles: a rule that (transitively) requires itself is a
+  // carrier nobody can author.
+  const state = new Map();
+  const reported = new Set();
+  const visit = (tag, stack) => {
+    state.set(tag, 1);
+    stack.push(tag);
+    for (const next of byTag.get(tag).requires || []) {
+      if (!byTag.has(next)) continue;
+      if (state.get(next) === 1) {
+        const cycle = [...stack.slice(stack.indexOf(next)), next];
+        const key = [...new Set(cycle)].sort().join('|');
+        if (!reported.has(key)) {
+          reported.add(key);
+          err(`propertyRules.${next}.requires`, `requires cycle ${cycle.join(' → ')} — no carrier could ever satisfy it`);
+        }
+      } else if (!state.has(next)) visit(next, stack);
+    }
+    stack.pop();
+    state.set(tag, 2);
+  };
+  for (const tag of byTag.keys()) if (!state.has(tag)) visit(tag, []);
+
+  // Carriers only. The generic family×domain check already refuses a
+  // property tag on a family with no pairing; these name the rule itself, and
+  // refuse the pairing row that would otherwise turn the generic check off.
+  const carrierList = PROPERTY_CARRIER_FAMILIES.join(', ');
+  for (const row of Array.isArray(b.tagFamilyDomains) ? b.tagFamilyDomains : []) {
+    if (!row || row.domain !== 'property' || PROPERTY_CARRIER_FAMILIES.includes(row.family)) continue;
+    err(`tagFamilyDomains.${row.family}.property`, row.family === 'card'
+      ? `cards never carry properties — a card's behaviour is its own effect list; put the property on the equipment, relic or class that grants it (carriers: ${carrierList})`
+      : `'${row.family}' is not a property carrier — only ${carrierList} may carry property tags`);
+  }
+  for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
+    if (!row || !propertyTags.has(row.tagId) || PROPERTY_CARRIER_FAMILIES.includes(row.family)) continue;
+    err(`tagging.${row.family}.${row.objectId}`, row.family === 'card'
+      ? `cards never carry properties — '${row.objectId}' is given the property tag '${row.tagId}'; a card's behaviour is its own effect list, so put the property on the equipment, relic or class that grants it`
+      : `'${row.family}' is not a property carrier, so '${row.objectId}' cannot hold '${row.tagId}' — only ${carrierList} may carry property tags`);
+  }
 }
 
 // ---------------------------------------------------------------------------
