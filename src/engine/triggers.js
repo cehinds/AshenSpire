@@ -75,15 +75,10 @@ function scanTriggers(ctx, event) {
   // Relics and stances react for their actual owner, including inactive co-op seats.
   for (const player of owners) {
   const pKey = ownerKeyFor(ctx, player);
-  for (const relicId of player.relicIds) {
-    const def = ctx.registries.relics.get(relicId);
-    (def.triggers || []).forEach((trig, i) => {
-      if (trig.on !== event.type) return;
-      schedule(`relic:${pKey}:${relicId}:${i}`, trig, player, () => {
-        if (event.type !== 'relicTriggered') emitEvent(ctx, 'relicTriggered', { relicId });
-      });
-    });
-  }
+  // Relics react through the mount path below, not here: plan phase 2 moved
+  // their triggers into propertyRules and their carriers are mounted beside the
+  // loadout's. What they kept is `relicTriggered`, emitted from the mount scan
+  // for a relic-kind source so the relic still flashes (ui/fx.js).
 
   // Stance hooks (player).
   if (player.stanceId) {
@@ -103,11 +98,18 @@ function scanTriggers(ctx, event) {
   if (mounts) {
     for (const sourceKey of Object.keys(mounts).sort()) {
       let index = 0;
+      // A relic-kind source still announces itself: `relicTriggered` is what
+      // ui/fx.js animates, and a relic that stopped flashing when its triggers
+      // moved would be a player-visible regression of a pure refactor.
+      const relicId = mounts[sourceKey].kind === 'relic' ? mounts[sourceKey].id : null;
+      const announce = relicId && event.type !== 'relicTriggered'
+        ? () => emitEvent(ctx, 'relicTriggered', { relicId })
+        : undefined;
       for (const rule of mounts[sourceKey].rules) {
         for (const trig of rule.triggers || []) {
           const i = index++;
           if (trig.on !== event.type) continue;
-          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player);
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce);
         }
       }
     }

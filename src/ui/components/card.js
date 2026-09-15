@@ -7,7 +7,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // (live math, SPEC §3.13); outside combat, the card's own literal values via
 // computeTokenBindings. No math happens here.
 
-import { resolveCard } from '../../model/registries.js';
+import { resolveCard, relicPropertyRules } from '../../model/registries.js';
 import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
 import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
@@ -57,7 +57,11 @@ export function staticTokens(def) { return staticCardTokens(def); }
  */
 export function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
-  const tokens = relicTokens(def);
+  // The relic's own passives and its property rules' triggers are two homes for
+  // one sentence's numbers since plan phase 2, so both are handed to the token
+  // reader. Without registries only the passive half resolves, which is why
+  // every run-facing call site passes them.
+  const tokens = relicTokens(def, registries ? relicPropertyRules(registries, def) : []);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
