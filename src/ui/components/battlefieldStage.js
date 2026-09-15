@@ -1,7 +1,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { combatFormation } from '../models/CombatFormationModel.js';
-import { fitStatusTray } from './statusTray.js';
+import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
@@ -123,7 +123,7 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.setProperty('--target-outline-width', `${outline.width}px`);
       sprite.style.setProperty('--target-outline-offset', `${outline.offset}px`);
     }
-    for (const frame of frames) fitStatusTray(frame.querySelector('.statuses'), nameWidth);
+    for (const frame of frames) fitIconTray(frame.querySelector('.statuses'), nameWidth);
     const rect = combat.getBoundingClientRect();
     combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
     combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);

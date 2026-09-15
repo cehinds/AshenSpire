@@ -13,6 +13,6 @@
     }
   },
   "components": {
-    "potions": { "chargeFlasks": true, "carried": true, "roomRail": true }
+    "potions": { "chargeFlasks": true, "carried": true, "roomRail": false }
   }
 }

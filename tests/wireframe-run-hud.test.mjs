@@ -19,24 +19,29 @@ const sample = (place, layers) => runHudViewModel({
 });
 const kids = (model) => model.children.map((child) => child.component);
 
-test('WGH0 defaults draw every layer; only combat, which has a footer HUD, loses the potion tray', () => {
+test('WGH0 defaults draw every layer, and no top HUD draws potions (owner, 2026-09-14)', () => {
   assert.deepEqual(FOOTER_HUD_PLACES, ['combat']);
   const combat = runHudLayers('combat');
   for (const key of ['header', 'class', 'cinders', 'position', 'primary', 'vitality', 'controls', 'armoury', 'menu', 'rail', 'relics']) {
     assert.equal(combat[key], true, key);
   }
-  assert.equal(combat.potions, false);
-  for (const place of ['map', 'shop', 'rest', 'event']) assert.equal(runHudLayers(place).potions, true, place);
+  for (const place of ['map', 'shop', 'rest', 'event', 'combat']) {
+    const layers = runHudLayers(place);
+    assert.equal(layers.potions, false, place);
+    assert.equal(layers.relics, true, place);
+  }
+  assert.equal(wireframeUi.hud.potions.roomRail, false);
   assert.ok(Object.isFrozen(combat));
   assert.ok(Object.isFrozen(wireframeUi.hud.layers) && Object.isFrozen(wireframeUi.hud.potions));
 });
 
-test('the footer-only rule reaches the rooms through one config value', () => {
-  for (const place of ['map', 'shop', 'rest', 'event', 'combat']) {
-    assert.equal(runHudLayers(place, hudConfig({}, { roomRail: false })).potions, false, place);
+test('the room rail is one config value, and combat never takes it', () => {
+  for (const place of ['map', 'shop', 'rest', 'event']) {
+    assert.equal(runHudLayers(place, hudConfig({}, { roomRail: true })).potions, true, place);
   }
-  assert.equal(runHudLayers('shop', hudConfig({}, { chargeFlasks: false, carried: false })).potions, false);
-  assert.equal(runHudLayers('shop', hudConfig({}, { chargeFlasks: false })).potions, true);
+  assert.equal(runHudLayers('combat', hudConfig({}, { roomRail: true })).potions, false);
+  assert.equal(runHudLayers('shop', hudConfig({}, { roomRail: true, chargeFlasks: false, carried: false })).potions, false);
+  assert.equal(runHudLayers('shop', hudConfig({}, { roomRail: true, chargeFlasks: false })).potions, true);
 });
 
 test('group switches turn their whole row off', () => {
@@ -48,12 +53,14 @@ test('group switches turn their whole row off', () => {
   assert.deepEqual([noControls.controls, noControls.primary], [false, true]);
 });
 
-test('WGS2 one view model: combat has no potion tray, a room has one, and neither has flask siblings of Armoury/Menu', () => {
+test('WGS2 one view model: no top HUD has a potion tray unless the room rail is on, and none has flask siblings of Armoury/Menu', () => {
   const combat = sample('combat');
   const shop = sample('shop');
   assert.deepEqual(kids(combat), [UI.runHeaderStrip, UI.primaryHudRow, UI.inventoryBelt]);
   assert.deepEqual(kids(childModel(combat, UI.inventoryBelt)), [UI.relicTray]);
-  assert.deepEqual(kids(childModel(shop, UI.inventoryBelt)), [UI.relicTray, UI.potionTray]);
+  assert.deepEqual(kids(childModel(shop, UI.inventoryBelt)), [UI.relicTray]);
+  const railShop = sample('shop', runHudLayers('shop', hudConfig({}, { roomRail: true })));
+  assert.deepEqual(kids(childModel(railShop, UI.inventoryBelt)), [UI.relicTray, UI.potionTray]);
   for (const model of [combat, shop]) {
     const quick = descendantModel(model, UI.quickAccessPanel);
     assert.deepEqual(kids(quick).filter((id) => id !== UI.panel), [UI.armouryControl, UI.quickMenuControl]);

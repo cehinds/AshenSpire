@@ -7,7 +7,8 @@
 // source content/config/ui/components/categoryNav.json 631202269af56449
 // source content/config/ui/components/choiceBody.json a94c731dc8075f80
 // source content/config/ui/components/dialogueFrame.json e924351f29b485fa
-// source content/config/ui/components/hud.json fe17fa0bfdd3cb6c
+// source content/config/ui/components/hud.json cebaf369b7f8b106
+// source content/config/ui/components/iconTray.json 2c948a5bc1283040
 // source content/config/ui/components/identity.json f065660b43e4235f
 // source content/config/ui/components/inspect.json a8cb480506a75107
 // source content/config/ui/components/inspector.json 36887e1418cdf62c
@@ -16,7 +17,7 @@
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json e0cd44e04fa02f5b
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
-// source content/config/ui/scenes/w4a-combat.json a31e324ad5a9d37a
+// source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
 // source content/config/ui/scenes/w4b-map.json 76d58e8f8b8ca705
 // source content/config/ui/scenes/w4c-dialogue.json 1e8dcbd76646cf22
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
@@ -105,9 +106,6 @@ export const uiConfig = deepFreeze({
           "intentMinRem": 2.8,
           "valueFontMinPx": 13.2
         },
-        "combatantStack": {
-          "iconRem": 1.575
-        },
         "combatantMeters": {
           "hpMinRem": 0.85,
           "hpMinPx": 14,
@@ -157,9 +155,6 @@ export const uiConfig = deepFreeze({
             }
           },
           "defenseGapRem": 0.5
-        },
-        "combatantStack": {
-          "iconGapRem": 0.1875
         },
         "combatantMeters": {
           "gapPx": 3
@@ -479,8 +474,17 @@ export const uiConfig = deepFreeze({
         "potions": {
           "chargeFlasks": true,
           "carried": true,
-          "roomRail": true
+          "roomRail": false
         }
+      }
+    },
+    "iconTray": {
+      "sizing": {
+        "iconRem": 1.575,
+        "footerPotionIcons": 4
+      },
+      "positioning": {
+        "iconGapRem": 0.1875
       }
     },
     "identity": {

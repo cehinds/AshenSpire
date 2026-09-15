@@ -72,9 +72,12 @@
     "compactCollectionShare": 0.5
   },
   "combatantStack": {
-    "maxRows": 5,
+    "maxRows": 5
+  },
+  "iconTray": {
     "iconRem": 1.575,
-    "iconGapRem": 0.1875
+    "iconGapRem": 0.1875,
+    "footerPotionIcons": 4
   },
   "combatantMeters": {
     "hpMinRem": 0.85,
@@ -248,7 +251,7 @@
     "potions": {
       "chargeFlasks": true,
       "carried": true,
-      "roomRail": true
+      "roomRail": false
     }
   },
   "smith": {

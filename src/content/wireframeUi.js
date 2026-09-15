@@ -79,8 +79,11 @@ export const wireframeUi = freeze({
   },
   combatantStack: {
     maxRows: w4a.components.combatantStack.maxRows,
-    iconRem: size.combatantStack.iconRem,
-    iconGapRem: place.combatantStack.iconGapRem,
+  },
+  iconTray: {
+    iconRem: uiConfig.components.iconTray.sizing.iconRem,
+    iconGapRem: uiConfig.components.iconTray.positioning.iconGapRem,
+    footerPotionIcons: uiConfig.components.iconTray.sizing.footerPotionIcons,
   },
   combatantMeters: {
     hpMinRem: size.combatantMeters.hpMinRem,

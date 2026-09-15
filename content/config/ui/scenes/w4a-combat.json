@@ -24,7 +24,6 @@
     },
     "targetLayer": { "outlinePx": 2, "outlineMinPx": 2 },
     "overlay": { "defenseMinRem": 3.5, "intentMinRem": 2.8, "valueFontMinPx": 13.2 },
-    "combatantStack": { "iconRem": 1.575 },
     "combatantMeters": {
       "hpMinRem": "$meterRowRem",
       "hpMinPx": 14,
@@ -61,7 +60,6 @@
       },
       "defenseGapRem": 0.5
     },
-    "combatantStack": { "iconGapRem": 0.1875 },
     "combatantMeters": { "gapPx": 3 },
     "footer": { "gapRem": 0.2 }
   },

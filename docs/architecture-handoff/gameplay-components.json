@@ -4,9 +4,9 @@
     "Background composition",
     "WCI2",
     "scene background",
-    "full scene",
-    "full scene",
-    "compose independently configured skyline and floor; neither captures input"
+    "100% of its host",
+    "host height",
+    "compose independently switchable skyline/skybox and floor layers at the bottom of the stack; in dialogue the plate spans the whole frame behind every band; neither captures input"
   ],
   [
     "WGS2",
@@ -210,37 +210,37 @@
     "WGQ1",
     "Dialogue scene",
     "WGS1",
-    "below HUD",
+    "frame, behind every band",
     "100%",
-    "config.scene",
-    "authored scene art; never duplicate HUD facts"
+    "frame height; scene window = config.bands.scene",
+    "layer stack from config.layerOrder: skybox, floor, portraits, then the opaque context band (reveal line) and HUD/footer; never duplicate HUD facts"
   ],
   [
     "WGQ2",
     "Player portrait",
     "WCI2",
-    "scene left",
-    "portrait width",
-    "scene height",
-    "preserve art ratio"
+    "scene left slot",
+    "config.portraits.slot width",
+    "three times the visible band",
+    "full figure zoomed so config.portraits.visibleFraction shows from slot top to the reveal line; the context band occludes the rest, never a crop"
   ],
   [
     "WGQ3",
     "NPC portrait",
     "WCI2",
-    "scene right",
-    "portrait width",
-    "scene height",
-    "preserve art ratio, speaking emphasis"
+    "scene right slot",
+    "config.portraits.slot width",
+    "three times the visible band",
+    "full figure zoomed like WGQ2, mirrored to face the player; the speaker draws above the listener (config.portraits.speakerAbove)"
   ],
   [
     "WGQ4",
     "Caption/choice region",
     "WCF4",
-    "below scene",
+    "reveal line",
     "100%",
     "config.context",
-    "short authored beats, knowledge-filtered choices"
+    "opaque occluding layer whose top edge is the reveal line; quest title, narrative and responses only (no eyebrow, speaker line or prompt hint); up to config.context.maxVisibleResponses responses fit without scrolling in config.context.responseColumns; enters after the portraits (config.entrance)"
   ],
   [
     "WGQ5",
@@ -282,19 +282,19 @@
     "WGS6",
     "Skyline layer",
     "WGS1",
-    "scene top / behind floor",
+    "frame top / behind floor",
     "100% scene",
     "100% scene",
-    "distant sky and scenery; configurable asset/color; no input"
+    "distant sky and scenery from the frame top down to the floor line, running behind the HUD; configurable asset/color; no input"
   ],
   [
     "WGS7",
     "Floor layer",
     "WGS1",
-    "scene bottom / ahead of skyline",
-    "100% scene",
-    "config.background.floorHeightPercent",
-    "ground plane under actors; preserve stage baseline"
+    "floor line / ahead of skyline",
+    "100% of host",
+    "floor line to host bottom (config.background.floorHeightPercent of the scene window)",
+    "ground plane; continues behind the context and footer bands in dialogue; preserve stage baseline"
   ],
   [
     "WGH1",

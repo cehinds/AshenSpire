@@ -109,13 +109,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceContract = ({ map, input, css, combatCss, kit, tool }) => {
   const bad = [];
   const surfaceBlock = /const SURFACES = \[[\s\S]*?\n\];/.exec(tool)?.[0] || '';
-  if (!map.includes("className: 'mh-flask flask-slot'")) {
+  if (!map.includes("class: 'mh-flask flask-slot'")) {
     bad.push('F1 map utility flask is not a unified-cursor flask-slot');
   }
   if (!input.includes("el.matches('.flask-slot')")) {
     bad.push('F2 input focus no longer exempts flask-slot controls from topbar chrome');
   }
-  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(tile, {')) {
+  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(node, {')) {
     bad.push('F3 map utility flask lost its inspect/drop action menu');
   }
   const kitSlotBox = /\.as-slot \{[^}]*width: var\(--iconbtn-size\)[^}]*min-height: var\(--iconbtn-size\)/.test(kit);
@@ -142,7 +142,7 @@ if (process.argv.includes('--source-selftest')) {
     {
       name: 'map utility flask loses its topbar focus exception',
       expected: 'F1 ',
-      mutate: (s) => ({ ...s, map: s.map.replace("className: 'mh-flask flask-slot'", "className: 'mh-flask'") }),
+      mutate: (s) => ({ ...s, map: s.map.replace("class: 'mh-flask flask-slot'", "class: 'mh-flask'") }),
     },
     {
       name: 'map utility flask loses inspect/drop',
@@ -270,8 +270,8 @@ if (process.argv.includes('--selftest')) {
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
           file: 'src/ui/components/runHud.js',
-          find: "className: 'mh-flask flask-slot'",
-          replace: "className: 'mh-flask-planted-away flask-slot'",
+          find: "class: 'mh-flask flask-slot'",
+          replace: "class: 'mh-flask-planted-away flask-slot'",
         }],
         expectRed: /BAD\s+B3 .*declared utility surfaces were reached/,
       },

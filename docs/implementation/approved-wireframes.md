@@ -1747,6 +1747,34 @@ that capability. The specification's "stamina off by default in scene
 HUDs" is not applied: resource rows are `content/resources.js`'s, and
 hudparity P1 requires HP, MP and SP on both screens. Playwright-based
 tools were not run; no gamepad was attached.
+
+### One icon tray for status effects, relics and the Potions minis
+
+Owner, 2026-09-14: potions still showed in the rooms' top band, the relics
+were gone from the map's HUD, relic tiles sat far apart and did not look like
+the combatant card's status icons. The owner asked for relics, potion mini
+icons and status effects to share one parent, with the combatant card's
+status row as its reference — its look, its non-wrapping row and padding, and
+its tooltip.
+
+- `components/iconTray.js` is that parent (`statusTray.js` is folded into it).
+  A tray is the kit Pips row; an icon is the kit Pip with its count pill.
+  `models/IconTrayModel.js` plans size, gap and the `+N` tile from
+  `wireframeUi.iconTray` (the old `combatantStack.iconRem/iconGapRem`). Hover
+  and focus explain after the shared delay; a tap explains at once; an icon
+  with an action does it on the second tap or Enter. `yieldTap` hands a tap
+  on while a card or flask is armed.
+- Status effects (solo and co-op), the WGH6 relic rail and the Potions minis
+  all build their icons with it. Relics are ~25 px round Pips 3 px apart
+  (they were 44 px Slots); a second tap opens the collectible card.
+- Potions leave every top HUD: `wireframeUi.hud.potions.roomRail` is false.
+  The owner chose "footer Potions only": the minis hang over the combat
+  footer's Potions control (`wireframeUi.iconTray.footerPotionIcons` wide), a
+  second tap opens that entry in the Potions list. Out of combat nothing
+  drinks a charge flask or drops a carried one until the Potions control has
+  a room home; with `roomRail` back on, the room rail draws tray icons too.
+- The map shows the relic rail again (`styles/map.css` hid `.hud-bottom`).
+  Only the icons take a press, so the board under the empty row stays live.
 ## One W1 category selector for every workspace (W1a, W1d, W1e, W1f, W1g, W1h)
 
 Branch `claude/w1-compact-category-selector`, based on dev `8797fc9a`
