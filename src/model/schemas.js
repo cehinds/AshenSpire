@@ -212,6 +212,10 @@ export const PASSIVE_TYPES = Object.freeze({
   // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
   // Deltas sum across relics; the total is added to the base and floored at 0.
   swapCostDelta: 'num', // a mid-fight armament swap costs N more (negative = less)
+  // Arcane Exposure buildup per hit × (multiplies across sources). Read for the
+  // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
+  // properties alike. The wand's `overcharge` property confers it (plan 1b).
+  exposureBuildupMult: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
