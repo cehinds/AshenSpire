@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1112",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The dialogue design now keeps both speakers fully in view",
+    "detail": "Nothing a player sees changes yet. The design notes for quest conversations now say that you and whoever you are talking to are both fully visible on every screen size. Each figure keeps to its own half of the screen and the two never overlap; on a narrow screen a figure too wide for its half shrinks as a whole and still stands on the edge of the text band rather than floating above it. The one listening is dimmed, but never so far that you cannot make them out. The game itself follows in a later change.",
+    "build": "0.7.1.67",
+    "pullRequest": 1112,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1112"
+  },
+  {
     "id": "pr-1106",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -23,6 +33,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/997"
   },
   {
+    "id": "pr-1109",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Status effects, relics and potions share one row of icons",
+    "detail": "Status effects on a fighter, the relics you carry and the small potion icons now all look and behave the same way: small round icons with a count, set close together, that explain themselves when you hover, focus or tap them, and act on a second tap. Relics are smaller and sit closer together, and a second tap opens the relic's card. Potions no longer show in the top bar; in a fight they sit over the Potions button at the bottom, and a second tap opens that potion in the list. The map shows your relics again.",
+    "build": "0.7.1.63",
+    "pullRequest": 1109,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1109"
+  },
+  {
+    "id": "pr-1110",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The combat, map and dialogue screen designs are described layer by layer",
+    "detail": "Nothing a player sees changes. The design notes for the three main gameplay screens now describe each one as a stack of layers, from the sky at the back to the buttons at the front, with how far each overlaps the next. The quest dialogue's notes set out its new layout: the scene behind everything, close-up figures above the text band, and up to four answers without scrolling. Every size in them comes from one settings file rather than being typed in by hand.",
+    "build": "0.7.1.62",
+    "pullRequest": 1110,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1110"
+  },
+  {
     "id": "pr-1105",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -31,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.62",
     "pullRequest": 1105,
     "url": "https://github.com/cehinds/AshenSpire/pull/1105"
+  },
+  {
+    "id": "pr-1104",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The world's lore quotes the owner's synopsis word for word",
+    "detail": "Nothing a player sees changes. Where the lore documents paraphrased the owner's synopsis of the world, they now use its own wording, including the final form of the Astronomer's page and the black glass beneath the caldera, and the mysteries it leaves open are recorded alongside the others the lore already keeps unanswered.",
+    "build": "0.7.1.59",
+    "pullRequest": 1104,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1104"
   },
   {
     "id": "pr-994",
@@ -51,6 +91,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.59",
     "pullRequest": 1003,
     "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-1057",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The combat test tool checks today's combat screen again",
+    "detail": "Nothing a player sees changes. A developer tool that walks through a fight in a browser stopped partway because it still expected older behaviour, such as tooltips on cards in your hand and a separate Block meter. It now checks the combat screen as it is today, and all 171 of its checks pass on desktop and phone.",
+    "build": "0.7.1.57",
+    "pullRequest": 1057,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1057"
+  },
+  {
+    "id": "pr-1022",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A check on the game's on-screen text works on Windows",
+    "detail": "Nothing a player sees changes. A developer check that counts the text shown on each screen reported 124 false differences on Windows because it spelled file paths the Windows way. It now spells them the same way on every computer, and refuses to record a Windows-style path in its reference list.",
+    "build": "0.7.1.57",
+    "pullRequest": 1022,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1022"
+  },
+  {
+    "id": "pr-1039",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The map-camera test starts a new game the way a player does",
+    "detail": "Nothing a player sees changes. A developer test that checks the map remembers where you left it now starts a new game the way you would: confirming the slot, then choosing a class, stats and a keepsake before beginning, because the older shortcut no longer gets past character creation.",
+    "build": "0.7.1.57",
+    "pullRequest": 1039,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1039"
   },
   {
     "id": "pr-1101",
