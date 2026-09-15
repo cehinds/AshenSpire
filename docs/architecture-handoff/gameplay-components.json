@@ -222,7 +222,7 @@
     "scene left slot",
     "config.portraits.slot width",
     "three times the visible band",
-    "full figure zoomed so config.portraits.visibleFraction shows from slot top to the reveal line; the context band occludes the rest, never a crop"
+    "full figure zoomed so config.portraits.visibleFraction shows from slot top to the reveal line; the context band occludes the rest, never a crop; it keeps to its half-frame lane, and when wider than the lane it shrinks as a whole and sinks to the reveal line (config.portraits.fit, anchor), so it is always visible"
   ],
   [
     "WGQ3",
@@ -231,7 +231,7 @@
     "scene right slot",
     "config.portraits.slot width",
     "three times the visible band",
-    "full figure zoomed like WGQ2, mirrored to face the player; the speaker draws above the listener (config.portraits.speakerAbove)"
+    "full figure zoomed like WGQ2, mirrored to face the player; never overlaps WGQ2 (lanes split by config.portraits.minGapVw); the speaker draws above the listener, and the listener dims no further than config.portraits.listener"
   ],
   [
     "WGQ4",
