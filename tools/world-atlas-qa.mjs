@@ -51,6 +51,13 @@ try {
   await page.locator('.slot-continue').waitFor();
   await page.locator('.slot-continue').click();
   await page.locator('.world-atlas-screen').waitFor();
+  // Settle the shared screen-entry transition before measuring, exactly as
+  // atlas() does on a first load. It offsets the screen for under 250ms after
+  // mounting, and bandsFit's footer term reads that offset as overflow:
+  // measured at 1440x1080 on this branch's own head, the footer's bottom is
+  // 1090 at 0ms, 1082 at 150ms and 1080 — the viewport edge — from 350ms on,
+  // while the screen (900/900) and document (1080/1080) fit at every settle.
+  await page.waitForTimeout(350);
   check(JSON.stringify(await page.evaluate(() => window.__worldJourney())) === JSON.stringify(initial), 'Save, quit and Continue preserve the manifest');
   if (gameEntry.includes('.html')) check(await page.locator('.atlas-terrain image').evaluateAll(es => es.every(e => e.getAttribute('href').startsWith('data:'))), 'Standalone world artwork is embedded');
   await bandsFit("1440x1080");
