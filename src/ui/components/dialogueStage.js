@@ -9,7 +9,7 @@
 // zoom (PortraitCropModel.closeUpPlacement). CSS owns placement; the models,
 // fed the scene config (`layout`, uiConfig.scenes.w4c) and its W4 parent,
 // own every number.
-import { dialogueBands, dialogueCompactHost, dialogueSceneConfig } from '../models/DialogueModel.js';
+import { dialogueBands, dialogueCompactHost, dialogueSceneConfig, dialogueResponsePlan } from '../models/DialogueModel.js';
 import { closeUpPlacement } from '../models/PortraitCropModel.js';
 import { visibleArtBox } from './combatSpriteGeometry.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
@@ -44,6 +44,41 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     }
   }
 
+  function applyResponseLayout(region, candidate) {
+    region.dataset.responsePlacement = candidate.placement;
+    region.style.setProperty('--dialogue-response-columns', String(candidate.columns));
+    if (candidate.textShare == null) region.style.removeProperty('--dialogue-beside-text');
+    else region.style.setProperty('--dialogue-beside-text', String(candidate.textShare));
+  }
+
+  // The context band shows behavior.maxVisibleResponses responses without
+  // scrolling (DialogueModel.dialogueResponsePlan). With any further responses
+  // set aside, the first of the layout's response grids whose band content
+  // fits is used; only responses past the maximum then scroll the band.
+  function fitResponses() {
+    const region = root.querySelector('.dialogue-region');
+    const box = region?.querySelector(':scope > .dialogue-responses');
+    if (!region || !box) return;
+    const buttons = [...box.children];
+    const plan = dialogueResponsePlan(layout, buttons.length);
+    region.dataset.responseScroll = String(plan.scrolls);
+    if (!buttons.length || region.closest('[hidden]') || !(region.clientHeight > 0)) {
+      applyResponseLayout(region, plan.candidates[0]);
+      return;
+    }
+    buttons.forEach((button, index) => { if (index >= plan.visible) button.style.display = 'none'; });
+    let chosen = plan.candidates[plan.candidates.length - 1];
+    let fits = false;
+    for (const candidate of plan.candidates) {
+      applyResponseLayout(region, candidate);
+      if (region.scrollHeight <= region.clientHeight) { chosen = candidate; fits = true; break; }
+    }
+    applyResponseLayout(region, chosen);
+    buttons.forEach((button) => button.style.removeProperty('display'));
+    region.dataset.responseLayout = `${chosen.columns}:${chosen.placement}`;
+    region.dataset.responseFits = String(fits);
+  }
+
   function apply() {
     frame = 0;
     if (!root.isConnected) { release(); return; }
@@ -75,6 +110,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     root.style.setProperty('--dialogue-floor-line', `${floorLine}px`);
     root.dataset.floorLine = String(floorLine);
     placeFigures(rect, zoom, revealLine);
+    fitResponses();
   }
 
   // ResizeObserver delivers during layout; defer writes to the next frame.
@@ -92,7 +128,9 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     observer.observe(root);
   }
   window.addEventListener('resize', schedule);
+  // Text heights settle once the fonts land; the response grid refits then.
+  document.fonts?.ready?.then(() => { if (root.isConnected) schedule(); });
   releaseActive = release;
   apply();
-  return Object.freeze({ apply, release });
+  return Object.freeze({ apply, release, fitResponses });
 }

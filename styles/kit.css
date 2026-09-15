@@ -4466,22 +4466,52 @@ button[data-button-size] {
   display: flex; justify-content: center; padding: var(--dialogue-context-inset-y, 2%) var(--dialogue-context-inset-x, 2.5%);
   background: #15120e; border-top: 1px solid var(--line);
 }
+/* The context band's panel: the quest title on one line, the narrative beat,
+   then (last beat only) the responses as one grid. behavior.maxVisibleResponses
+   of them show without scrolling: dialogueStage uses the first of the scene
+   config's responseLayouts that holds them (a column or two below the text,
+   or a grid beside it on short hosts); only responses past that scroll this
+   panel. Every size is the scene config's, in reference rems; the fallbacks
+   here are first-paint values only. */
 .dialogue-region {
   flex: 0 1 var(--dialogue-context-w, 95%); max-width: 100%; min-width: 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box;
-  display: flex; flex-direction: column; gap: 0.6rem;
-  padding: calc(0.75 * var(--dialogue-ref-rem, 1.6rem)) var(--dialogue-ref-rem, 1.6rem);
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: 'title' 'text' 'responses';
+  align-content: start; gap: var(--dialogue-context-gap, 0.4rem);
+  padding: var(--dialogue-context-pad, 0.6rem);
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-1);
 }
-.dialogue-context-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.8rem; }
-.dialogue-context-head > .dialogue-eyebrow { margin: 0; }
-.dialogue-title { margin: 0; flex: 1 1 auto; min-width: 0; font: 600 max(1.5rem, calc(15px / var(--ui-zoom, 1)))/1.25 var(--font-display); color: var(--gold); }
-.dialogue-status { color: var(--muted); font-size: max(1.2rem, calc(13px / var(--ui-zoom, 1))); }
-.dialogue-caption-speaker { margin: 0; }
-.dialogue-caption-text { margin: 0; font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: var(--dialogue-caption-line, 1.45); min-height: var(--dialogue-caption-min, 7rem); }
+.dialogue-region[data-response-placement='beside'] {
+  grid-template-columns: minmax(0, calc(var(--dialogue-beside-text, 0.5) * 100%)) minmax(0, 1fr);
+  grid-template-areas: 'title responses' 'text responses';
+  grid-template-rows: auto 1fr;
+}
+.dialogue-title {
+  grid-area: title; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font: 600 var(--dialogue-title-size, 1.5rem) / var(--dialogue-title-line, 1.2) var(--font-display); color: var(--gold);
+}
+.dialogue-caption-text { grid-area: text; margin: 0; font-size: var(--dialogue-text-size, 1.4rem); line-height: var(--dialogue-caption-line, 1.35); }
+/* Room for the caption's lines while speaking, so beats never move the
+   controls; on the answering beat that room belongs to the responses. */
+.dialogue-region:not([data-phase='respond']) .dialogue-caption-text { min-height: var(--dialogue-caption-min, 4rem); }
 .dialogue-region[data-side='player'] .dialogue-caption-text { font-style: italic; }
-.dialogue-responses { display: flex; flex-direction: column; gap: 0.6rem; }
-.dialogue-response-row { width: 100%; }
-.dialogue-response { white-space: normal; text-align: left; min-height: var(--tap-floor); }
+.dialogue-responses {
+  grid-area: responses; min-width: 0; display: grid; align-content: start;
+  grid-template-columns: repeat(var(--dialogue-response-columns, 1), minmax(0, 1fr));
+  gap: var(--dialogue-response-gap, 0.4rem);
+}
+.dialogue-responses:empty { display: none; }
+.dialogue-region[data-response-placement='beside'] > .dialogue-responses { align-self: center; }
+.dialogue-responses > .dialogue-response {
+  width: 100%; height: auto; min-height: var(--dialogue-response-min-h, 44px); margin: 0; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: var(--dialogue-response-pad-block, 0.3rem) var(--dialogue-response-pad-inline, 0.6rem);
+  font-size: var(--dialogue-response-size, 1.3rem); line-height: var(--dialogue-response-line, 1.2);
+  white-space: normal; text-align: left;
+}
+.dialogue-response-label {
+  display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; max-width: 100%;
+  -webkit-line-clamp: var(--dialogue-response-lines, 2); line-clamp: var(--dialogue-response-lines, 2);
+}
 .dialogue-response-note { display: block; font-size: 0.85em; color: var(--muted); }
 /* L6: the footer band (WGQ5), the three-action variant: equal thirds after the
    shared gaps (WCB0 footer shares), 6vh tall, never under the touch target. */

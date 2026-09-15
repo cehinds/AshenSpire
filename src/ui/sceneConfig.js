@@ -29,13 +29,17 @@ const scenes = freeze({
       bands: { hud: 10, scene: 40, context: 35, footer: 15 },
       floorPercent: 60,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
-      context: { widthVw: 95, captionLines: 3, captionLineHeight: 1.45 },
+      context: {
+        widthVw: 95, captionLines: 3, captionLineHeight: 1.35,
+        titleRem: 0.95, titleLineHeight: 1.2, textRem: 0.9, paddingRem: 0.35, gapRem: 0.25,
+      },
+      responses: { fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2 },
       footer: { heightVh: 6 },
     },
     positioning: {
       portraitSlot: { insetVw: 2.5, topOffsetVh: 2 },
       portraits: { visibleFraction: { numerator: 1, denominator: 3 }, mirrorNpc: true },
-      context: { insetVw: 2.5, insetVh: 2 },
+      context: { insetVw: 2.5, insetVh: 1 },
       footer: { sideInsetVw: 2.5, gapVw: 1.5 },
     },
     layering: {
@@ -58,6 +62,17 @@ const scenes = freeze({
       ],
     },
     components: { footer: { actions: ['back', 'skipSpeech', 'continue'] } },
+    // Up to maxVisibleResponses responses show without scrolling: the first of
+    // responseLayouts that holds them is used (a column under the text, two
+    // columns under it, or a 2 x 2 grid beside it on short hosts).
+    behavior: {
+      maxVisibleResponses: 4,
+      responseLayouts: [
+        { columns: 1, placement: 'below' },
+        { columns: 2, placement: 'below' },
+        { columns: 2, placement: 'beside', textShare: 0.45 },
+      ],
+    },
   },
 });
 

@@ -264,6 +264,44 @@ export function dialogueFooterPlan(layout) {
   return Object.freeze({ actions: Object.freeze([...actions]), count, insetVw: sideInsetVw, gapVw, actionWidthVw });
 }
 
+/** Where a response grid may sit in the context band. */
+export const RESPONSE_PLACEMENTS = Object.freeze(['below', 'beside']);
+
+/**
+ * dialogueResponsePlan(layout, count) → { count, maxVisible, visible, scrolls, candidates }.
+ * behavior.maxVisibleResponses of the offered responses must show without
+ * scrolling; only more than that may scroll the band. behavior.responseLayouts
+ * lists the grids to try, in order (columns, and whether the grid sits below
+ * the text or beside it, taking what textShare leaves); the stage adapter uses
+ * the first one that measures as holding the visible responses.
+ */
+export function dialogueResponsePlan(layout, count) {
+  const { maxVisibleResponses: maxVisible, responseLayouts } = layout.behavior || {};
+  if (!Number.isInteger(maxVisible) || maxVisible < 1) {
+    throw new Error(`dialogue behavior.maxVisibleResponses must be a whole number ≥ 1, got ${maxVisible}`);
+  }
+  if (!Array.isArray(responseLayouts) || !responseLayouts.length) throw new Error('dialogue behavior.responseLayouts must list at least one layout');
+  const offered = Math.max(0, Math.trunc(Number(count) || 0));
+  const visible = Math.min(offered, maxVisible);
+  const candidates = responseLayouts.map((candidate, index) => {
+    if (!Number.isInteger(candidate.columns) || candidate.columns < 1) {
+      throw new Error(`dialogue behavior.responseLayouts[${index}].columns must be a whole number ≥ 1, got ${candidate.columns}`);
+    }
+    if (!RESPONSE_PLACEMENTS.includes(candidate.placement)) {
+      throw new Error(`dialogue behavior.responseLayouts[${index}].placement must be one of ${RESPONSE_PLACEMENTS.join(', ')}, got ${candidate.placement}`);
+    }
+    if (candidate.placement === 'beside' && !(candidate.textShare > 0 && candidate.textShare < 1)) {
+      throw new Error(`dialogue behavior.responseLayouts[${index}].textShare must lie between 0 and 1, got ${candidate.textShare}`);
+    }
+    return Object.freeze({
+      columns: candidate.columns, placement: candidate.placement,
+      textShare: candidate.placement === 'beside' ? candidate.textShare : null,
+      rows: Math.ceil(visible / candidate.columns),
+    });
+  });
+  return Object.freeze({ count: offered, maxVisible, visible, scrolls: offered > maxVisible, candidates: Object.freeze(candidates) });
+}
+
 /**
  * dialogueFrameVars(layout, parent) → CSS custom properties the adapter writes.
  * Widths are shares of the W4 frame's width and heights of its height (the
@@ -282,10 +320,17 @@ export function dialogueFrameVars(layout, parent) {
   if (!Number.isInteger(lines) || lines < 1) throw new Error(`dialogue sizing.context.captionLines must be a whole number ≥ 1, got ${lines}`);
   const lineHeight = sizing.context.captionLineHeight;
   if (!(lineHeight > 0)) throw new Error(`dialogue sizing.context.captionLineHeight must be > 0, got ${lineHeight}`);
+  const responses = sizing.responses;
+  if (!Number.isInteger(responses.maxLines) || responses.maxLines < 1) {
+    throw new Error(`dialogue sizing.responses.maxLines must be a whole number ≥ 1, got ${responses.maxLines}`);
+  }
+  dialogueResponsePlan(layout, 0);
   const footer = dialogueFooterPlan(layout);
   const stack = dialogueStack(layout);
   const vw = (value) => `calc(${round(value)} * ${FRAME_VW})`;
   const vh = (value) => `calc(${round(value)} * ${FRAME_VH})`;
+  const rem = (value) => `calc(${round(value)} * ${REFERENCE_REM})`;
+  const text = sizing.context.textRem;
   return Object.freeze({
     '--dialogue-ref-rem': REFERENCE_REM,
     '--dialogue-inset-x': vw(positioning.portraitSlot.insetVw),
@@ -298,8 +343,20 @@ export function dialogueFrameVars(layout, parent) {
     '--dialogue-foot-inset-x': vw(footer.insetVw),
     '--dialogue-foot-gap': vw(footer.gapVw),
     '--dialogue-action-h': `max(${vh(sizing.footer.heightVh)}, calc(${round(parent.sizing.minimums.targetPx)}px / var(--ui-zoom, 1)))`,
-    '--dialogue-caption-line': `calc(${round(lineHeight)} * ${REFERENCE_REM})`,
-    '--dialogue-caption-min': `calc(${round(lines * lineHeight)} * ${REFERENCE_REM})`,
+    '--dialogue-title-size': rem(sizing.context.titleRem),
+    '--dialogue-title-line': String(sizing.context.titleLineHeight),
+    '--dialogue-text-size': rem(text),
+    '--dialogue-caption-line': rem(text * lineHeight),
+    '--dialogue-caption-min': rem(lines * text * lineHeight),
+    '--dialogue-context-pad': rem(sizing.context.paddingRem),
+    '--dialogue-context-gap': rem(sizing.context.gapRem),
+    '--dialogue-response-size': rem(responses.fontRem),
+    '--dialogue-response-line': String(responses.lineHeight),
+    '--dialogue-response-pad-block': rem(responses.paddingBlockRem),
+    '--dialogue-response-pad-inline': rem(responses.paddingInlineRem),
+    '--dialogue-response-gap': rem(responses.gapRem),
+    '--dialogue-response-lines': String(responses.maxLines),
+    '--dialogue-response-min-h': `calc(${round(parent.sizing.minimums.targetPx)}px / var(--ui-zoom, 1))`,
     ...Object.fromEntries(stack.order.map((id) => [`--dialogue-z-${kebab(id)}`, String(stack.z[id])])),
     '--dialogue-z-portraits': String(stack.portraitsZ),
     '--dialogue-speaker-lift': String(stack.speakerLift),

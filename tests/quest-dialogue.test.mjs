@@ -367,10 +367,13 @@ test('the dialogue frame resolves a W4c scene config to W4 frame custom properti
   assert.equal(vars['--dialogue-portrait-w-compact'], `calc(30 * ${vw})`);
   assert.equal(vars['--dialogue-slot-top'], `calc(2 * ${vh})`);
   assert.equal(vars['--dialogue-context-w'], `calc(95 * ${vw})`);
-  assert.equal(vars['--dialogue-context-inset-y'], `calc(2 * ${vh})`);
+  assert.equal(vars['--dialogue-context-inset-y'], `calc(1 * ${vh})`);
   assert.equal(vars['--dialogue-foot-gap'], `calc(1.5 * ${vw})`);
   assert.equal(vars['--dialogue-action-h'], `max(calc(6 * ${vh}), calc(44px / var(--ui-zoom, 1)))`);
-  assert.equal(vars['--dialogue-caption-min'], `calc(4.35 * ${ref})`);
+  assert.equal(vars['--dialogue-caption-min'], `calc(3.645 * ${ref})`);
+  assert.equal(vars['--dialogue-response-min-h'], 'calc(44px / var(--ui-zoom, 1))', 'responses keep the touch target');
+  assert.equal(vars['--dialogue-response-lines'], '2');
+  assert.equal(vars['--dialogue-title-size'], `calc(0.95 * ${ref})`);
   assert.deepEqual(
     ['skybox', 'floor', 'player-portrait', 'npc-portrait', 'context', 'hud', 'footer'].map((name) => vars[`--dialogue-z-${name}`]),
     ['2', '3', '4', '4', '5', '6', '6'],

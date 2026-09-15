@@ -10,7 +10,7 @@ import { allocateCombatBands, allocateSceneBands } from '../src/ui/models/Combat
 import { closeUpPlacement } from '../src/ui/models/PortraitCropModel.js';
 import {
   dialogueBands, dialogueCompactHost, dialogueFooterPlan, dialogueLayers, dialogueStack, dialogueEntrance,
-  dialogueSceneConfig, dialogueFrameVars,
+  dialogueSceneConfig, dialogueFrameVars, dialogueResponsePlan,
 } from '../src/ui/models/DialogueModel.js';
 import { sceneLayers, sceneWindowLayers } from '../src/ui/models/SceneLayerModel.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
@@ -215,6 +215,22 @@ test('closeUpPlacement reads the fraction from the layout and refuses impossible
   assert.throws(() => closeUpPlacement(art, slot, 40, broken), /visibleFraction must satisfy/);
   assert.throws(() => closeUpPlacement(art, slot, 40), /visibleFraction must satisfy/, 'no layout, no fraction');
   assert.throws(() => closeUpPlacement(null, slot, 40, W4C_LAYOUT), /needs the art box/);
+});
+
+test('up to maxVisibleResponses responses are planned to show; only more scroll', () => {
+  const four = dialogueResponsePlan(W4C_LAYOUT, 4);
+  assert.deepEqual([four.maxVisible, four.visible, four.scrolls], [4, 4, false]);
+  assert.deepEqual(four.candidates.map((c) => [c.columns, c.placement, c.rows]), [[1, 'below', 4], [2, 'below', 2], [2, 'beside', 2]]);
+  assert.equal(four.candidates[2].textShare, 0.45);
+  const five = dialogueResponsePlan(W4C_LAYOUT, 5);
+  assert.deepEqual([five.visible, five.scrolls], [4, true], 'the fifth response is what scrolls');
+  assert.deepEqual(five.candidates.map((c) => c.rows), [4, 2, 2], 'layouts are planned for the visible four');
+  assert.deepEqual([dialogueResponsePlan(W4C_LAYOUT, 0).visible, dialogueResponsePlan(W4C_LAYOUT, 0).scrolls], [0, false]);
+  assert.throws(() => dialogueResponsePlan(edited(W4C_LAYOUT, (l) => { l.behavior.maxVisibleResponses = 0; }), 4), /maxVisibleResponses/);
+  assert.throws(() => dialogueResponsePlan(edited(W4C_LAYOUT, (l) => { l.behavior.responseLayouts = []; }), 4), /at least one layout/);
+  assert.throws(() => dialogueResponsePlan(edited(W4C_LAYOUT, (l) => { l.behavior.responseLayouts[0].placement = 'above'; }), 4), /placement must be one of below, beside/);
+  assert.throws(() => dialogueResponsePlan(edited(W4C_LAYOUT, (l) => { l.behavior.responseLayouts[2].textShare = 1.2; }), 4), /textShare/);
+  assert.throws(() => dialogueFrameVars(edited(W4C_LAYOUT, (l) => { l.sizing.responses.maxLines = 0; }), W4_PARENT), /maxLines/);
 });
 
 // ---------------------------------------------------------------------------

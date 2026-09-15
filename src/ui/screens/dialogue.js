@@ -35,7 +35,7 @@ import {
 } from '../models/DialogueModel.js';
 import { w4Parent, w4cLayout } from '../sceneConfig.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
-import { el, modalFooter, button, choiceRow, prose } from '../kit/index.js';
+import { el, modalFooter, button, prose } from '../kit/index.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { combatBackdropHtml } from '../components/environmentArt.js';
 import { wireDialogueStage } from '../components/dialogueStage.js';
@@ -142,18 +142,19 @@ export function mountDialogue(app, options) {
   });
   const portraits = el('div', { class: 'dialogue-portraits', dataset: { layer: 'portraits' } }, [playerSlot, speakerSlot]);
 
-  // L5 context (WGQ4): the quest's title, the speaker, the caption beat and,
-  // on the last beat only, the responses. It scrolls inside; the page never.
-  const status = el('span', { class: 'as-status dialogue-status', dataset: { dialogueStatus: '' } });
-  const head = el('div', { class: 'dialogue-context-head' }, [
-    el('p', { class: 'as-eyebrow dialogue-eyebrow', text: t('dialogue.eyebrow') }),
-    el('h2', { class: 'dialogue-title', text: def.name }),
-    status,
-  ]);
-  const captionName = el('p', { class: 'as-eyebrow dialogue-caption-speaker' });
+  // L5 context (WGQ4): the quest's title on one line, the narrative beat and,
+  // on the last beat only, the responses. Owner, 2026-09-15: no sub-headings
+  // on the band (the speaker is named under the portrait), so the "Quest"
+  // eyebrow, the speaker line and the progress hint are read to screen
+  // readers only. Up to behavior.maxVisibleResponses responses show without
+  // scrolling; the band scrolls inside only past that, and the page never.
+  const eyebrow = el('p', { class: 'sr-only dialogue-eyebrow', text: t('dialogue.eyebrow') });
+  const titleLine = el('h2', { class: 'dialogue-title', title: def.name, text: def.name });
+  const status = el('span', { class: 'sr-only dialogue-status', role: 'status', dataset: { dialogueStatus: '' } });
+  const captionName = el('p', { class: 'sr-only dialogue-caption-speaker' });
   const captionText = prose('', { class: 'dialogue-caption-text', 'aria-live': 'polite' });
-  const responseBox = el('div', { class: 'dialogue-responses' });
-  const region = el('div', { class: 'dialogue-region' }, [head, captionName, captionText, responseBox]);
+  const responseBox = el('div', { class: 'dialogue-responses', role: 'group' });
+  const region = el('div', { class: 'dialogue-region' }, [eyebrow, titleLine, captionName, captionText, responseBox, status]);
   const context = el('section', { class: 'dialogue-context', dataset: { wireframe: 'WGQ4', layer: 'context' }, hidden: !layers.context }, [region]);
 
   // L6 footer (WGQ5): the three-action variant, WCB0 equal shares.
@@ -208,7 +209,11 @@ export function mountDialogue(app, options) {
 
   function responseButton(response) {
     // Until the context has appeared a response is shown but not yet operable.
-    const btn = button({ label: response.label, className: 'dialogue-response', disabled: !response.affordable || !entered });
+    // WCB0 full width of its grid cell; the label wraps inside the button to
+    // sizing.responses.maxLines and the whole of it stays in the tooltip.
+    const btn = button({ label: '', className: 'dialogue-response', size: 'full-standard', disabled: !response.affordable || !entered });
+    btn.title = response.label;
+    btn.appendChild(el('span', { class: 'dialogue-response-label', text: response.label }));
     btn.dataset.choice = response.choiceId;
     if (response.binding) btn.dataset.binding = '1';
     if (!response.affordable) {
@@ -236,14 +241,14 @@ export function mountDialogue(app, options) {
     playerSlot.dataset.speaking = String(v.player.speaking);
     speakerSlot.dataset.speaking = String(v.speaker.speaking);
     region.dataset.side = v.caption.side;
+    region.dataset.phase = v.phase;
     captionName.textContent = v.caption.speakerName || '';
     captionName.hidden = !v.caption.speakerName;
     captionText.textContent = v.caption.text;
-    // Each response is its own WCB0 choice group at the full preset, so the
-    // responses stack at one width whatever their labels say.
-    responseBox.replaceChildren(...v.responses.map((response) => choiceRow({
-      buttons: [responseButton(response)], size: 'full-standard', className: 'dialogue-response-row',
-    })));
+    // The responses form one grid; the stage picks its columns and placement
+    // so that up to behavior.maxVisibleResponses fit without scrolling.
+    responseBox.replaceChildren(...v.responses.map(responseButton));
+    stage.fitResponses();
     // The footer is drawn at t=0 but opens only when the context has appeared.
     back.disabled = !entered || !v.controls.back.enabled;
     skip.disabled = !entered || !v.controls.skipSpeech.enabled;
