@@ -60,6 +60,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { dirname, resolve, join, basename, extname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { configSourceErrors } from './config-build.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -246,11 +247,17 @@ function sweepStraySources(contentRoot) {
   // exists — an authored file that compiles to nothing still fails by name.
   const frameworkDir = join(contentRoot, 'framework');
   const frameworkGeneratedDir = join(contentRoot, '..', 'src', 'framework', 'data');
+  // content/config/ is the THIRD authored tree, owned by tools/config-build.mjs
+  // (its --check drift gate runs in tests/run-node.mjs). Its JSON is judged
+  // below by configSourceErrors: stray, by name, unless the generated module
+  // src/config/generated/ui.js was compiled from exactly that file's bytes.
+  const configDir = join(contentRoot, 'config');
   (function walk(dir) {
     if (!existsSync(dir)) return;
     for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
       const abs = join(dir, ent.name);
       if (ent.isDirectory()) walk(abs);
+      else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
       else if (/\.json$/i.test(ent.name) && dir === frameworkDir) {
         const mirror = join(frameworkGeneratedDir, ent.name.replace(/\.json$/i, '.js'));
         if (!existsSync(mirror)) {
@@ -261,6 +268,7 @@ function sweepStraySources(contentRoot) {
       }
     }
   })(contentRoot);
+  errors.push(...configSourceErrors(contentRoot));
   return errors;
 }
 

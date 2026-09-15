@@ -1,0 +1,10 @@
+{
+  "sizing": {
+    "frameWidth": 0.95,
+    "frameHeight": 0.9,
+    "railWidth": 0.216,
+    "railMinRem": "$w1RailMinRem",
+    "railMaxRem": 24
+  },
+  "positioning": { "columnGap": 0.02, "rowGap": 0.02 }
+}

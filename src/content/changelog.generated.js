@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-15",
     "summary": "Every place a fighter can stand now has a name",
     "detail": "Nothing you see changes. The twelve spots on the battlefield are named by a row letter and a column number: rows A, B and C run from the top of the ground to the bottom, and columns 1 to 4 count across the field from your back line, through both front lines, to the enemy's back line. Your rear spot on the bottom row is C1; the enemy's rear spot on the top row is A4. Where everyone stands, how large they are and what you can target are exactly as before. The design notes for the battlefield use the same names, so a spot means one thing wherever it is written.",
-    "build": "0.7.1.69",
+    "build": "0.7.1.70",
     "pullRequest": 1107,
     "url": "https://github.com/cehinds/AshenSpire/pull/1107"
+  },
+  {
+    "id": "pr-1108",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Screen layout sizes now live in simple settings files",
+    "detail": "Nothing you see changes. Every size, position, layer and timing that decides how the combat field, the map header, the hand, the footer, the shop, the Armoury, tooltips and dialogue are laid out used to be typed into the game's code. Now each one is written once, in a small file named for the screen or part it belongs to, and a shared value is written only once, so changing one number changes it everywhere it is used. The game is checked to draw exactly what it drew before, number for number. The face-to-face conversation scene reads its layout (bands, portraits, layers, type sizes, how many answers show and how they are laid out) from the same files.",
+    "build": "0.7.1.68",
+    "pullRequest": 1108,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1108"
   },
   {
     "id": "pr-1106",
