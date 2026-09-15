@@ -94,8 +94,15 @@ import {
 } from '../kit/index.js';
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   configureTooltipGlossary(registries);
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
