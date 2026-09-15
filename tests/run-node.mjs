@@ -1057,4 +1057,10 @@ try {
   zoomExtra++;
   console.error('FAIL Armament combat kits:', error);
 }
+try {
+  await import('./dev-sweep-fixes.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The dev sweep fixes (seat tiers, co-op snapshot, post-fight save):', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

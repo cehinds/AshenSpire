@@ -153,11 +153,17 @@ export function renderCard(registries, ref, opts = {}) {
 
   // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
   // The existing framework/preview remains the authority for all values.
+  // A ZERO ACTION COST IS A REAL, READABLE COST — it is the whole point of a
+  // free card, and the fan's left edge is where a player counts what a turn can
+  // afford. Dropping the row at 0 rendered rogueShiv (cost: 0) and its kin with
+  // no ◆ at all, which reads as "no action cost printed" — i.e. unknown — not
+  // as "free". Only the SECONDARY pools elide at zero: a card that spends no
+  // stamina and no mana should not print two empty rails.
   const costRows = [
-    ['action', 'cost', '◆', cost],
-    ['stamina', 'stamina-cost', 'ϟ', staminaCost],
-    ['mana', 'mana-cost', '♦', manaCost],
-  ].filter(([, , , value]) => value != null && value !== 0);
+    ['action', 'cost', '◆', cost, true],
+    ['stamina', 'stamina-cost', 'ϟ', staminaCost, false],
+    ['mana', 'mana-cost', '♦', manaCost, false],
+  ].filter(([, , , value, keepZero]) => value != null && (keepZero || value !== 0));
   el.dataset.wireframe = 'WC1';
   el.innerHTML =
     `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>

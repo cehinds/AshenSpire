@@ -115,6 +115,13 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
   if (!run || typeof run !== 'object') throw new Error('Cannot save combat without a run');
   if (typeof nodeId !== 'string' || !nodeId) throw new Error('Combat save requires nodeId');
   if (typeof encounterId !== 'string' || !encounterId) throw new Error('Combat save requires encounterId');
+  // A FINISHED FIGHT IS NOT A RESUME POINT. Restoring a snapshot whose result
+  // is already set mounts a battlefield with nothing left to kill: no dispatch
+  // reaches the branch that ends the combat, so the run never reaches its
+  // spoils and the save cannot be played out of. The screen that used to allow
+  // this (combat's menu stayed live through the victory hand-off and beat) no
+  // longer does; this is the invariant itself, so no future caller can either.
+  if (combat && combat.result) throw new Error(`Cannot save a combat that has already ended ('${combat.result}')`);
   const snapshot = serializeCombatSnapshot(combat);
   run.loadout = structuredClone(combat.loadout);
   run.flasks = structuredClone(combat.player.flasks);

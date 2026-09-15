@@ -1891,5 +1891,40 @@ export const uiStrings = [
     "short": "{count} carried potions",
     "full": "{count} carried potions",
     "tip": ""
+  },
+  {
+    "id": "common.close",
+    "extends": "",
+    "short": "Close",
+    "full": "Close this door and return to what was under it.",
+    "tip": "Close"
+  },
+  {
+    "id": "piles.eyebrow",
+    "extends": "",
+    "short": "Pile",
+    "full": "Which pile this door is reading.",
+    "tip": "Pile"
+  },
+  {
+    "id": "piles.empty",
+    "extends": "",
+    "short": "Empty.",
+    "full": "Nothing is in this pile.",
+    "tip": "Empty"
+  },
+  {
+    "id": "piles.spent.title",
+    "extends": "",
+    "short": "Card piles",
+    "full": "The cards this fight has spent — discarded and exhausted.",
+    "tip": "Card piles"
+  },
+  {
+    "id": "piles.spent.nav",
+    "extends": "",
+    "short": "Piles",
+    "full": "Choose which spent pile to read.",
+    "tip": "Piles"
   }
 ];

@@ -44,7 +44,7 @@ import {
   reaverAttackTiming,
 } from '../reaverAttack.js';
 import { MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
-import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
+import { openQuickNav, closeQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
@@ -315,6 +315,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   let heldTurnHand = null;
   let enemyPlayback = false;
   let busy = false; // animating / resolving
+  // The fight has resolved and this screen is handing off (see the
+  // `combat.result` branch in the settle callback). Its menu is closed from
+  // that moment: the run is mid-handoff and nothing the menu offers is sound.
+  let fightOver = false;
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
   let handPageCursor = null; // survives focus moving onto Previous/Next itself
@@ -2051,6 +2055,27 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         busy = false;
         render();
         if (combat.result) {
+          // THE FIGHT IS OVER, AND SO IS THIS SCREEN'S MENU.
+          //
+          // The keydown handler already comes off here. The ☰ button did NOT,
+          // so for the 350 ms handoff below — plus the victory beat main.js
+          // awaits after it (balance.ui.victoryBeat.ms, 600 ms, and the beat's
+          // overlay is `pointer-events: none`) — Save, Save & Quit, Load and
+          // Quit were all one tap away on a fight that had ALREADY ENDED.
+          //
+          // Save called commitCombatSnapshot on a combat whose `result` was
+          // 'victory': a checkpoint that resumes INTO a won fight, where no
+          // dispatch will ever reach the branch that calls onEnd — the run is
+          // stuck at a battlefield with nothing left to kill. Quit tore the run
+          // down while main.js's continuation was still suspended on the beat,
+          // so the spoils were then granted against a null run.
+          //
+          // There is nothing here a player can usefully ask the menu for: the
+          // only thing that happens next is the spoils door. Close it, disable
+          // it, and refuse the actions even if something re-opens it.
+          fightOver = true;
+          closeQuickNav();
+          if (menuBtn) { menuBtn.disabled = true; menuBtn.setAttribute('aria-disabled', 'true'); }
           removeEventListener('keydown', keyHandler);
           handStrip.teardown();
           setTimeout(() => onEnd(combat.result, combat), 350);
@@ -2249,6 +2274,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const menuBtn = $('#combat-menu');
   if (onMenu && menuBtn) {
     menuBtn.addEventListener('click', (e) => {
+      // A won or lost fight has no menu: see the `combat.result` branch above.
+      if (fightOver) return;
       if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
