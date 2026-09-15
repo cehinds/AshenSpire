@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1108",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Screen layout sizes now live in simple settings files",
+    "detail": "Nothing you see changes. Every size, position, layer and timing that decides how the combat field, the map header, the hand, the footer, the shop, the Armoury, tooltips and dialogue are laid out used to be typed into the game's code. Now each one is written once, in a small file named for the screen or part it belongs to, and a shared value is written only once, so changing one number changes it everywhere it is used. The game is checked to draw exactly what it drew before, number for number. The dialogue scene's layout (portraits, layers and the order things fade in) is written down the same way, ready for its redesign.",
+    "build": "0.7.1.61",
+    "pullRequest": 1108,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1108"
+  },
+  {
     "id": "pr-994",
     "date": "2026-09-15",
     "group": "2026-09-15",
