@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1113",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Seven changes that landed without a receipt now have one",
+    "detail": "Nothing a player sees changes, apart from this list growing by seven entries. Seven changes merged without an entry here, so the in-game changelog did not list them either. All seven are now written up below, each citing the build it actually landed in: the shared icon tray for status effects, relics and potions, the dialogue design notes that keep both speakers in view, the layered screen designs, the lore wording, and three fixes to developer checks.",
+    "build": "0.7.1.68",
+    "pullRequest": 1113,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1113"
+  },
+  {
     "id": "pr-1112",
     "date": "2026-09-15",
     "group": "2026-09-15",
