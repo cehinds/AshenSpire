@@ -9,7 +9,10 @@
 // and asserts:
 //   · four responses: the band's scrollHeight <= clientHeight, every response
 //     inside the band and at least the 44 px touch target tall;
-//   · five responses: the band scrolls.
+//   · five responses: none is lost. The band scrolls to reach them, or all
+//     five fit inside it. The owner's rule is that the band may scroll only
+//     from five responses on, not that it must; whether five fit depends on
+//     the host and the scene config.
 // A mount that renders anything other than the expected responses throws
 // (exit 2): a band with nothing in it proves nothing, so it cannot pass.
 //
@@ -152,10 +155,11 @@ try {
       const problems = [];
       if (count <= 4 && scrolls) problems.push(`scrolls (${facts.scrollHeight} > ${facts.clientHeight})`);
       if (count <= 4 && outside.length) problems.push(`${outside.length} response(s) outside the band`);
-      if (count > 4 && !scrolls) problems.push(`does not scroll with ${count} responses (${facts.scrollHeight} <= ${facts.clientHeight})`);
+      const lost = facts.buttons.filter((b) => b.top < facts.band.top - 0.5 || b.bottom > facts.band.bottom + 0.5);
+      if (count > 4 && !scrolls && lost.length) problems.push(`${lost.length} response(s) outside a band that does not scroll`);
       if (short.length) problems.push(`${short.length} response(s) under the ${TOUCH_TARGET_PX}px target`);
       const verdict = problems.length ? 'FAIL' : 'PASS';
-      console.log(`  ${verdict}  ${tag} · ${count} responses · layout ${facts.layout} · band ${facts.clientHeight}/${facts.scrollHeight}px · buttons ${facts.buttons.map((b) => Math.round(b.height)).join('/')}px${problems.length ? ` — ${problems.join('; ')}` : ''}`);
+      console.log(`  ${verdict}  ${tag} · ${count} responses · layout ${facts.layout} · ${scrolls ? 'scrolls' : 'no scroll'} · band ${facts.clientHeight}/${facts.scrollHeight}px · buttons ${facts.buttons.map((b) => Math.round(b.height)).join('/')}px${problems.length ? ` — ${problems.join('; ')}` : ''}`);
       if (problems.length) failures.push(`${tag} ${count}: ${problems.join('; ')}`);
       if (OUT) {
         const shot = await send('Page.captureScreenshot', { format: 'png' });
@@ -167,7 +171,7 @@ try {
     console.log(`dialogue-context-fit: FAIL — ${failures.length} case(s)`);
     exitCode = 1;
   } else {
-    console.log(`dialogue-context-fit: OK — ${HOSTS.length * 2} cases (4 responses never scroll, 5 always do)`);
+    console.log(`dialogue-context-fit: OK — ${HOSTS.length * 2} cases (4 responses never scroll; with 5, none is lost)`);
   }
 } catch (error) {
   console.error(`dialogue-context-fit: ${error.stack || error}`);
