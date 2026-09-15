@@ -13,6 +13,16 @@ export const balance = {
     // therefore add zero even if a malformed card tries to author buildup.
     schoolBuildupMultipliers: { magic: 1, arcane: 1 }, // PROVISIONAL
   },
+  // Focus properties (docs/proposal-progression-and-property-system.md §7.2,
+  // §10): what an Arcane Break, or a hit, is worth to the caster whose focus
+  // holds the property. content/source/propertyRuleEffects.json reads these
+  // through `{ "balance": "exposure.…" }`; no number is typed in that file.
+  exposure: {
+    siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
+    siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
+    siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
+    overchargeBuildupMult: 1.5, // PROVISIONAL — buildup per hit × (wand `overcharge`)
+  },
   energy: 3,
   draw: 5,
   handMax: 10,

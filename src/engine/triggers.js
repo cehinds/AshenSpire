@@ -55,6 +55,11 @@ function ownerKeyFor(ctx, entity) {
   return entity ? entity.id : 'none';
 }
 
+/** The owner key an entity's trigger gates and property mounts live under. */
+export function triggerOwnerKey(ctx, entity) {
+  return ownerKeyFor(ctx, entity);
+}
+
 function scanTriggers(ctx, event) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
@@ -87,6 +92,25 @@ function scanTriggers(ctx, event) {
       if (trig.on !== event.type) return;
       schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player);
     });
+  }
+
+  // Mounted properties (engine/properties.js) react for their carrier's owner,
+  // exactly as a relic does. Source keys are walked SORTED, so a restored
+  // snapshot — which re-derives its mounts rather than saving them — fires
+  // them in the same order the live fight did. The index runs across the
+  // mount's rules in order, so each trigger keeps one stable gate key.
+  const mounts = ctx.propertyMounts && ctx.propertyMounts[pKey];
+  if (mounts) {
+    for (const sourceKey of Object.keys(mounts).sort()) {
+      let index = 0;
+      for (const rule of mounts[sourceKey].rules) {
+        for (const trig of rule.triggers || []) {
+          const i = index++;
+          if (trig.on !== event.type) continue;
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player);
+        }
+      }
+    }
   }
   }
 

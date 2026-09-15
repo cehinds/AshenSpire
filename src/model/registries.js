@@ -382,19 +382,39 @@ function knownPassive(key) {
   console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
 }
 
-/** Product of a multiplicative passive across owned relics (default 1). */
-export function passiveMult(registries, relicIds, key) {
+// MOUNTED PROPERTY RULES CONFER PASSIVES EXACTLY AS AN OWNED RELIC DOES
+// (engine/properties.js). `mounts` is ONE owner's mount map —
+// { [sourceKey]: { rules } }, what propertyMountsOf(ctx, entity) returns — and
+// is plain data, so this model layer never reaches into the engine. Absent, it
+// reads as nothing mounted: every run-level caller (rewards, shrines, the map)
+// is unchanged, because properties are mounted only inside a fight. Sources are
+// walked sorted, the same order the trigger scan uses.
+function mountedPassiveValues(mounts, key) {
+  const values = [];
+  if (!mounts) return values;
+  for (const sourceKey of Object.keys(mounts).sort()) {
+    for (const rule of mounts[sourceKey].rules || []) {
+      const p = rule.passives;
+      if (p && p[key] !== undefined) values.push(p[key]);
+    }
+  }
+  return values;
+}
+
+/** Product of a multiplicative passive across owned relics and mounted properties (default 1). */
+export function passiveMult(registries, relicIds, key, mounts = null) {
   knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && typeof p[key] === 'number') m *= p[key];
   }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') m *= v;
   return m;
 }
 
-/** Sum of an additive passive across owned relics (default 0). */
-export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
+/** Sum of an additive passive across owned relics and mounted properties (default 0). */
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}, mounts = null) {
   knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
@@ -402,17 +422,18 @@ export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
     const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
     if (p && typeof p[key] === 'number') s += p[key];
   }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') s += v;
   return s;
 }
 
-/** True if any owned relic sets the boolean passive. */
-export function passiveFlag(registries, relicIds, key) {
+/** True if any owned relic or mounted property sets the boolean passive. */
+export function passiveFlag(registries, relicIds, key, mounts = null) {
   knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;
   }
-  return false;
+  return mountedPassiveValues(mounts, key).some((v) => v === true);
 }
 
 // ---------------------------------------------------------------------------

@@ -22,3 +22,10 @@
 #
 # columns: tag, requires, excludes, textTemplate
 tag,requires,excludes,textTemplate
+# ---- focus properties (proposal §7.2) ------------------------------------------
+# The sceptres carry siphon (tagging.csv). Its second branch is gated on the focus
+# skill of plan phase 4 and is inert until that ledger exists.
+siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {restoreMana.2} once your focus skill is mastered."
+# No shipped armament is a wand yet, so no row carries overcharge; the rule is
+# here so the first wand is a tagging row, not a code change.
+overcharge,,,Your hits build Arcane Exposure faster.

@@ -7919,7 +7919,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const withRules = (tags, rules, extra = {}) => ({
       ...contentBundle,
       tags: [...contentBundle.tags, ...tags.map(propTag)],
-      propertyRules: rules,
+      // Fixture rules join the shipped table rather than replace it: every
+      // shipped property tag keeps its one rule, so each case differs from
+      // shipped content by exactly the rows it adds.
+      propertyRules: [...contentBundle.propertyRules, ...rules],
       ...extra,
     });
     const said = (bundle) => validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
