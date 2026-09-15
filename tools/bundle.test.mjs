@@ -40,11 +40,15 @@ function sandbox() {
   for (const f of ['index.html', 'buildordinal.json']) {
     if (existsSync(resolve(ROOT, f))) cpSync(resolve(ROOT, f), resolve(dir, f));
   }
-  // Source-changing plants must pass through the production ordinal door, and
-  // production correctly refuses to invent an ordinal without Git. Give each
-  // disposable real-tree sandbox one deterministic commit so a plant can move
-  // the digest and let bumpOrdinal derive its next value. This is test history,
-  // not a production fallback: remove Git here and the refusal remains red.
+  // One deterministic commit per disposable sandbox, so a fixture is a real
+  // checkout rather than a loose directory. THIS WAS ONCE LOAD-BEARING FOR THE
+  // ORDINAL AND IS NOT ANY MORE: the value was `max(recorded + 1, rev-list
+  // --count)`, so a tree without Git could not be counted and the build refused.
+  // The per-candidate rule of 2026-09-01 dropped the count deliberately —
+  // buildversion.mjs, bumpOrdinal: *"IT NO LONGER CONSULTS `rev-list --count`,
+  // AND THAT IS A SIMPLIFICATION THE NEW RULE EARNS"* — so nothing in the build
+  // path reads Git today and a Git-less tree builds, correctly. The door that
+  // still refuses to invent a number is the ordinal's own home; 1a plants that.
   execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
   execFileSync('git', ['config', 'core.autocrlf', 'false'], { cwd: dir });
   execFileSync('git', ['config', 'user.email', 'bundle-selftest@family.local'], { cwd: dir });
@@ -202,15 +206,27 @@ if (process.argv.includes('--eol-selftest')) {
   rmSync(dir, { recursive: true, force: true });
 }
 
-// ---- 1a. The test history is not a production fallback --------------------
+// ---- 1a. The build refuses rather than invents an ordinal -----------------
+// THIS CASE USED TO PLANT THE WRONG DOOR, and it went red rather than wrong:
+// it removed `.git` and required the refusal, because the ordinal was
+// `max(recorded + 1, rev-list --count)`. The per-candidate rule retired the
+// count (see sandbox() above), so the Git-less plant now builds and the
+// assertion was asserting a rule production had deliberately dropped — a test
+// pinning a retired behaviour, which is the second copy this house is named
+// for. THE VALUE IT PROTECTED IS NOT RETIRED: a build must refuse rather than
+// invent a number when the ordinal's one home is gone. `readOrdinal` is the
+// door that still says so, and bundle.mjs turns its throw into a refusal page
+// rather than a bundle, so that is what this plants instead.
 {
   const dir = sandbox();
-  rmSync(resolve(dir, '.git'), { recursive: true, force: true });
+  rmSync(resolve(dir, 'buildordinal.json'), { force: true });
   appendFileSync(resolve(dir, 'src/content/balance.js'), '\n// move the canonical digest\n');
   const r = build(dir);
-  check('ordinal derivation: a changed source tree without Git is refused', r.status === 1, `exit ${r.status}`);
-  check('ordinal derivation: the refusal names Git and never invents a number',
-    /git could not count commits|Refusing to invent one/.test(r.out), r.out.slice(-400));
+  check('ordinal derivation: a changed source tree with no ordinal home is refused',
+    r.status === 1, `exit ${r.status}`);
+  check('ordinal derivation: the refusal names the ordinal home and never invents a number',
+    /could not derive the build version/.test(r.out) && /buildordinal\.json/.test(r.out),
+    r.out.slice(-400));
   rmSync(dir, { recursive: true, force: true });
 }
 
@@ -840,10 +856,18 @@ const wholeGame = (html) => {
   const open = good.indexOf('<script>') + '<script>'.length;
   check('6v: the good build is a whole program', wholeGame(good).ok);
 
-  // (a) Bjorn's cut: 600 KB, no closing tag at all.
-  const cut = good.slice(0, 600 * 1024);
-  check('6v: a 600 KB truncation still contains id="app" (this is why the old check passed)',
-    cut.includes('id="app"'));
+  // (a) Bjorn's cut: the head of the file, no closing tag at all. THE LENGTH IS
+  //     DERIVED, and it was a flat 600 KB until the bundle outgrew it: `id="app"`
+  //     sits just before the script opens, around 2 MB in once the assets are
+  //     inlined, so the fixed cut stopped carrying it and the case stopped
+  //     demonstrating the thing it documents. Cutting a kilobyte past the script
+  //     tag keeps both properties true at any bundle size — `id="app"` is in,
+  //     `</script>` is not — which is what makes this a known-bad for 6y rather
+  //     than a number that has to be re-guessed every time the game grows.
+  const cut = good.slice(0, open + 1024);
+  check('6v: a head-of-file truncation still contains id="app" (this is why the old check passed)',
+    cut.includes('id="app"') && !cut.includes('</script>'),
+    `id="app" at ${good.indexOf('id="app"')}, script opens at ${open}, cut ${cut.length}`);
   const a = wholeGame(cut);
   check('6v: KNOWN-BAD — and it is rejected as not a whole program', !a.ok, a.why);
 

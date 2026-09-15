@@ -4,13 +4,53 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-994",
-    "date": "2026-09-14",
-    "group": "2026-09-14",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
     "summary": "The i that explains a card sits above it on every screen",
     "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading at every interface size, and the same control no longer appears in two places depending on where you are.",
-    "build": "0.7.1.52",
+    "build": "0.7.1.56",
     "pullRequest": 994,
     "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
+    "id": "pr-1099",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Quests are spoken, and each one finishes exactly once",
+    "detail": "Each step of the Grave of the Nameless now opens as a conversation: you stand on the left, whoever speaks stands on the right, and the story comes one line at a time. Back rereads a line, Skip speech jumps to the end, and Continue reads on. Your answers, the event's own choices, appear on the last line, and one that binds you still asks you to hold. Answering at the second cairn with anything but Leave now finishes the quest, and collecting a road quest's reward on the world map finishes that quest the same way, once per run, even if you reload. Events that belong to no quest look as before.",
+    "build": "0.7.1.55",
+    "pullRequest": 1099,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1099"
+  },
+  {
+    "id": "pr-1095",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A check on the game's own builder is watched again",
+    "detail": "Nothing you see changes. The tool that packs the whole game into one file has a set of deliberately broken builds it is tested against, to prove it refuses them rather than shipping a half-made game. Three of those tests had quietly stopped working — two described a rule the builder no longer follows, and one had been outgrown by the game itself, which is now far larger than the test assumed. All three are repaired, and the set is now run by the project's checks instead of by whoever remembers it exists.",
+    "build": "0.7.1.54",
+    "pullRequest": 1095,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1095"
+  },
+  {
+    "id": "pr-1092",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The game is checked against its own written world",
+    "detail": "Nothing you see changes. The world's history — the three flames, what a cinder is, why a Forsaken can climb at all — is written down in one place, and until now nobody had read it against the game as it is actually built. That reading now exists: what the world says and the game already does, what the two disagree about, and what the world promises that the game has not built yet. Nothing was changed to make either side agree; the disagreements are simply written down where they can be fixed.",
+    "build": "0.7.1.53",
+    "pullRequest": 1092,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1092"
+  },
+  {
+    "id": "pr-1094",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The plan for how your character grows now includes quests you talk through",
+    "detail": "Nothing you see changes yet. The written plan now gives quests two things. Each quest finishes exactly once, whether it's a chain of events like the Grave of the Nameless or a road quest taken on the world map, and that one finish is what future experience and rewards count. And every quest exchange is spoken: each step of a chain, and taking or turning in a quest at a town's quest board, opens a conversation with the person who gives it. You stand on the left, they stand on the right, and your answers are the quest's own choices. Text comes first; voice, when it arrives, can never answer for you.",
+    "build": "0.7.1.52",
+    "pullRequest": 1094,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1094"
   },
   {
     "id": "pr-1091",

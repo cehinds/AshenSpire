@@ -187,7 +187,7 @@ export const events = [
     art: '⚰',
     text:
       'A cairn of broken swords marks a grave no one tends. Cinder-light seeps between the blades ' +
-      'like frost. The mound is quiet — the particular quiet of something that could stop being quiet.',
+      'like frost.\n\nThe mound is quiet — the particular quiet of something that could stop being quiet.',
     choices: [
       {
         label: 'Dig for cinders (gain 90 cinders; the keeper may wake)',
@@ -494,7 +494,7 @@ export const events = [
     name: 'The Keeper of the Nameless',
     art: '🕯',
     text:
-      'A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low. ' +
+      'A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low.\n\n' +
       'It knows the cairn of broken swords. It knows what you did there. It has been walking since.',
     choices: [
       {
@@ -522,7 +522,7 @@ export const events = [
     art: '🪦',
     text:
       'The road ends at a second cairn, newer than the first — every sword standing, every name struck ' +
-      'into the stone. The keeper is not here. Whatever it was walking toward, it arrived.',
+      'into the stone.\n\nThe keeper is not here. Whatever it was walking toward, it arrived.',
     choices: [
       {
         label: 'Keep the vigil (upgrade 2 random cards)',
@@ -617,6 +617,34 @@ export const eventHistoryRequirements = Object.freeze({
       { eventId: 'namelessKeeper', choiceId: 'acceptThanks' },
     ],
   },
+});
+
+// QUEST CHAINS (plan phase 10a; proposal §7.5). A chain names its steps and
+// the choices that complete it; committing a completing choice completes the
+// quest through the one door (engine/quests.js), at most once per run. Every
+// step is spoken in the dialogue screen. A Leave never completes a quest
+// (validate.js refuses it by name). Grave of the Nameless is the first chain:
+// any answer at the second cairn but Leave finishes the walk.
+export const questChains = Object.freeze({
+  nameless: Object.freeze({
+    steps: Object.freeze(['graveOfTheNameless', 'namelessKeeper', 'namelessRest']),
+    completes: Object.freeze([
+      Object.freeze({ eventId: 'namelessRest', choiceId: 'keepVigil' }),
+      Object.freeze({ eventId: 'namelessRest', choiceId: 'restAmongStones' }),
+      Object.freeze({ eventId: 'namelessRest', choiceId: 'lootBarrow' }),
+    ]),
+  }),
+});
+
+// Who speaks each chain step (content/source/speakers.csv rows). Every chain
+// event names one; validation refuses a step without a speaker and a speaker
+// no row defines. PROVISIONAL (owner decision, 2026-09-14): the grave and the
+// second cairn are spoken by the Nameless themselves, the fork in the road by
+// their Keeper (docs/LORE-CAST.md).
+export const eventSpeakers = Object.freeze({
+  graveOfTheNameless: 'theNameless',
+  namelessKeeper: 'keeperOfTheNameless',
+  namelessRest: 'theNameless',
 });
 
 /** Enrich validated event choices with their durable history contract. */

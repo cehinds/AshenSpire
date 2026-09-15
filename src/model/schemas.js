@@ -131,6 +131,10 @@ export const EVENTS = Object.freeze([
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
+  // Plan phase 10a: a quest completed, once per quest per run. Emitted only by
+  // the quest door (engine/quests.js completeQuest), for an event chain's
+  // completing choice and an atlas quest's claimed reward alike.
+  'questCompleted',
   'flaskUsed',
   'relicTriggered',
 ]);
