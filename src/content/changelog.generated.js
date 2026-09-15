@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1099",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Quests are spoken, and each one finishes exactly once",
+    "detail": "Each step of the Grave of the Nameless now opens as a conversation: you stand on the left, whoever speaks stands on the right, and the story comes one line at a time. Back rereads a line, Skip speech jumps to the end, and Continue reads on. Your answers, the event's own choices, appear on the last line, and one that binds you still asks you to hold. Answering at the second cairn with anything but Leave now finishes the quest, and collecting a road quest's reward on the world map finishes that quest the same way, once per run, even if you reload. Events that belong to no quest look as before.",
+    "build": "0.7.1.55",
+    "pullRequest": 1099,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1099"
+  },
+  {
     "id": "pr-1095",
     "date": "2026-09-15",
     "group": "2026-09-15",
