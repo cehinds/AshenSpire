@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1098",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Gear, relics and your class can now be given lasting powers of their own",
+    "detail": "Nothing you see changes yet. The game now keeps one list of powers that a weapon, a piece of armour, a relic or a class can grant while you hold it, and each power has exactly one written rule. Cards can never hold these powers; a card only ever does what its own text says. The list starts empty. The first power arrives with the next change: a sceptre that gives you mana back when you break an enemy's arcane guard.",
+    "build": "0.7.1.56",
+    "pullRequest": 1098,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1098"
+  },
+  {
     "id": "pr-1099",
     "date": "2026-09-15",
     "group": "2026-09-15",
