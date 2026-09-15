@@ -466,6 +466,17 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 the combat orchestrator after `resultText` shows. Nothing to register — every
 shipped event is reachable via Unknown nodes.
 
+A **quest chain** is a sidecar beside the events in the same file: list its
+steps and completing choices in `questChains`, and name each step's speaker in
+`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+(`id,name,portraitKey`; the key names existing art, and a blank key shows the
+name plate). A chain's steps open in the dialogue screen, one beat per
+blank-line paragraph of the event's `text`. Both event screens commit a choice
+through `commitEventChoice` (`src/engine/quests.js`); do not call
+`executeRunEffects` and `recordEventChoice` separately, or completion is
+skipped. `node --test tests/quest-dialogue.test.mjs` covers the door, the
+validation refusals and the dialogue model.
+
 > Each walkthrough above is **validation-checked**: add the snippet and run the
 > suite — test 15 (content validation) rejects unknown fields, bad enums,
 > dangling ids, out-of-set opcodes/formulas/predicates, and unbound template

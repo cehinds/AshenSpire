@@ -195,4 +195,11 @@ export const wireframeUi = freeze({
   // and capped so a name stays readable); the selected item's pane takes the
   // rest. Compact hosts fold the list into one selector above the pane.
   smith: { candidatesWidth: 0.44, candidatesMinRem: 14, candidatesMaxRem: 60 },
+  // W4c dialogue (WGQ0–WGQ8). The player's portrait stands left and the
+  // speaker's right, each portraitShare of the scene's width; the scene is at
+  // least sceneMinRem tall. The caption region keeps room for captionLines
+  // lines of prose at captionLineHeight, so moving between beats never jumps
+  // the controls. Reference rems (at least 16 physical px each). Provisional
+  // numbers: an owner decision.
+  dialogue: { portraitShare: 0.3, sceneMinRem: 10, captionLines: 3, captionLineHeight: 1.45 },
 });

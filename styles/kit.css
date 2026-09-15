@@ -4118,3 +4118,42 @@ button[data-button-size] {
    leaves the cursor's reach (input.js skips hidden controls) until it closes. */
 :root .as-railed[data-cat-nav='selector'][data-cat-open='true'] > :not(.as-rail):not(.as-catnav-toggle) { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) { .as-catnav-caret { transition: none; } }
+
+/* ═══ DIALOGUE — W4c, the quest dialogue screen (WGQ0–WGQ8) ════════════════ */
+/* The player stands left and the speaker right in the scene (WGQ1–WGQ3), each
+   --dialogue-portrait-share of its width; the listener dims. The caption
+   region (WGQ4) keeps --dialogue-caption-min of height, so moving between
+   beats never moves the controls; responses stack under the caption on the
+   last beat only. Back, Skip speech and Continue share the foot (WGQ5–WGQ8,
+   WCB0 equal shares). Lengths arrive from DialogueModel (wireframeUi
+   .dialogue) in reference rems, max(16px / zoom, 1rem); the fallbacks here are
+   first-paint values only. */
+.screen.dialogue-screen { justify-content: flex-start; gap: 0; padding-inline: 2.4rem; padding-bottom: 2.4rem; }
+.modal.dialogue-door { flex: 1 1 auto; min-height: 0; width: min(100%, 110rem); max-width: 100%; }
+.dialogue-door > .modal-head { flex-wrap: wrap; row-gap: 0.4rem; }
+.dialogue-door > .modal-head .modal-head-id h2 { white-space: normal; }
+.dialogue-door > .modal-head > .modal-head-actions { flex: 0 1 auto; min-width: 0; align-self: center; }
+.dialogue-door > .modal-foot > .modal-foot-actions { flex: 1 1 auto; margin-left: 0; }
+.dialogue-body { display: flex; flex-direction: column; gap: var(--dialogue-ref-rem, 1.6rem); padding: var(--dialogue-ref-rem, 1.6rem) calc(1.5 * var(--dialogue-ref-rem, 1.6rem)); }
+.dialogue-scene { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--dialogue-ref-rem, 1.6rem); min-height: var(--dialogue-scene-min, 16rem); }
+.dialogue-portrait { margin: 0; flex: 0 0 var(--dialogue-portrait-share, 30%); max-width: var(--dialogue-portrait-share, 30%); min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: opacity 160ms ease, filter 160ms ease; }
+.dialogue-portrait[data-speaking='false'] { opacity: 0.72; filter: saturate(0.6); }
+.dialogue-portrait-art { display: flex; align-items: flex-end; justify-content: center; width: 100%; height: var(--dialogue-scene-min, 16rem); overflow: hidden; }
+/* The shared sprite functions stamp combat's fixed tier sizes inline; a
+   portrait stands at the scene's height instead (WGQ2/WGQ3: portrait width,
+   scene height), its art keeping its own proportions inside. */
+.dialogue-portrait-art > * { height: 100% !important; width: auto !important; max-width: 100%; aspect-ratio: 3 / 4; }
+/* The name plate: a speaker with no portrait still stands in its place. */
+.dialogue-plate { display: grid; place-items: center; box-sizing: border-box; width: 100%; min-height: calc(3 * var(--dialogue-ref-rem, 1.6rem)); padding: 0.8rem; border: 1px solid var(--line-soft); border-radius: var(--r-1); background: var(--panel); color: var(--gold); font: 600 max(1.6rem, calc(16px / var(--ui-zoom, 1)))/1.25 var(--font-display); text-align: center; }
+.dialogue-portrait-name { font-size: max(1.3rem, calc(16px / var(--ui-zoom, 1))); color: var(--ink-dim); text-align: center; }
+.dialogue-region { display: flex; flex-direction: column; gap: 0.6rem; }
+.dialogue-caption-speaker { margin: 0; }
+.dialogue-caption-text { margin: 0; font-size: max(1.4rem, calc(16px / var(--ui-zoom, 1))); line-height: var(--dialogue-caption-line, 1.45); min-height: var(--dialogue-caption-min, 7rem); }
+.dialogue-region[data-side='player'] .dialogue-caption-text { font-style: italic; }
+.dialogue-responses { display: flex; flex-direction: column; gap: 0.6rem; }
+.dialogue-response-row { width: 100%; }
+.dialogue-response { white-space: normal; text-align: left; min-height: var(--tap-floor); }
+.dialogue-response-note { display: block; font-size: 0.85em; color: var(--muted); }
+:root[data-layout='narrow'] .dialogue-scene { min-height: calc(0.6 * var(--dialogue-scene-min, 16rem)); }
+:root[data-layout='narrow'] .dialogue-portrait-art { height: calc(0.6 * var(--dialogue-scene-min, 16rem)); }
+@media (prefers-reduced-motion: reduce) { .dialogue-portrait { transition: none; } }

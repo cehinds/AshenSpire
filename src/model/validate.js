@@ -42,7 +42,7 @@ import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
-import { eventChoiceRequirementProblems } from './quests.js';
+import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -106,6 +106,12 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'derivedStatRules',
   'characterCreation',
   'eventHistoryRequirements', // quest steps (E12): event-level history gates
+  // Plan phase 10a: quest chains, who speaks each step, and the rows they name.
+  'eventChoiceIds', // the durable choice ids a completion ref names
+  'questChains', // { [questId]: { steps, completes } }
+  'eventSpeakers', // { [eventId]: speakerId }
+  'speakers', // content/source/speakers.csv
+  'atlasQuests', // worldAtlas.json quests rows, for their speakerId
 ]);
 
 /**
@@ -300,6 +306,81 @@ function collectContentProblems(bundle, errors = []) {
             if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
             if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
           }
+        }
+      }
+    }
+  }
+
+  // Quest chains and speakers (plan phase 10a). Each refusal is named, and
+  // tests/quest-dialogue.test.mjs asserts every name:
+  //   'is not a shipped event'           a chain step that no event answers
+  //   'does not resolve to a shipped choice'  a completes ref with no such choice
+  //   'is not a step of this chain'      a completes ref outside the chain
+  //   'a Leave choice may not complete a quest'
+  //   'names no speaker'                 a chain step without eventSpeakers
+  //   'unknown speaker'                  an event or atlas quest naming no row
+  //   'unknown portrait key'             a speaker whose art does not ship
+  {
+    const eventList = Array.isArray(b.events) ? b.events : [];
+    const eventById = new Map(eventList.filter(Boolean).map((e) => [e.id, e]));
+    const choiceIdsOf = (eventId) => (b.eventChoiceIds && Array.isArray(b.eventChoiceIds[eventId]) ? b.eventChoiceIds[eventId] : []);
+    const enemyIds = new Set((Array.isArray(b.enemies) ? b.enemies : []).map((e) => e && e.id));
+    const speakerIds = new Set();
+    (Array.isArray(b.speakers) ? b.speakers : []).forEach((row, index) => {
+      if (!row || typeof row.id !== 'string' || !/^[A-Za-z][A-Za-z0-9_-]{0,79}$/.test(row.id)) {
+        err(`speakers[${index}].id`, 'a speaker needs a stable id');
+        return;
+      }
+      if (speakerIds.has(row.id)) err(`speakers.${row.id}`, 'duplicate speaker id');
+      speakerIds.add(row.id);
+      if (typeof row.name !== 'string' || !row.name.trim()) err(`speakers.${row.id}.name`, 'a speaker needs a name for its caption and name plate');
+      if (row.portraitKey !== '' && row.portraitKey !== undefined && row.portraitKey !== null && !enemyIds.has(row.portraitKey)) {
+        err(`speakers.${row.id}.portraitKey`, `unknown portrait key '${row.portraitKey}': no shipped art answers to it (leave it blank for the name plate)`);
+      }
+    });
+    const eventSpeakers = b.eventSpeakers || {};
+    for (const [eventId, speakerId] of Object.entries(eventSpeakers)) {
+      if (!eventById.has(eventId)) err(`eventSpeakers.${eventId}`, 'unknown event');
+      if (!speakerIds.has(speakerId)) err(`eventSpeakers.${eventId}`, `unknown speaker '${speakerId}'`);
+    }
+    (Array.isArray(b.atlasQuests) ? b.atlasQuests : []).forEach((quest, index) => {
+      if (!quest) return;
+      if (!speakerIds.has(quest.speakerId)) err(`atlasQuests.${quest.questId || index}.speakerId`, `unknown speaker '${quest.speakerId}'`);
+    });
+    const chains = b.questChains;
+    if (chains !== undefined) {
+      if (!chains || typeof chains !== 'object' || Array.isArray(chains)) {
+        err('questChains', 'must be an object keyed by quest id');
+      } else {
+        for (const [questId, chain] of Object.entries(chains)) {
+          const at = `questChains.${questId}`;
+          if (!validQuestId(questId)) err(at, 'a quest needs a stable id');
+          for (const key of Object.keys(chain || {})) {
+            if (key !== 'steps' && key !== 'completes') err(`${at}.${key}`, `unknown quest chain field '${key}'`);
+          }
+          const steps = Array.isArray(chain && chain.steps) ? chain.steps : [];
+          if (!steps.length) err(`${at}.steps`, 'a quest chain needs at least one step');
+          steps.forEach((eventId, index) => {
+            if (!eventById.has(eventId)) err(`${at}.steps[${index}]`, `quest chain step '${eventId}' is not a shipped event`);
+            else if (!eventSpeakers[eventId]) err(`${at}.steps[${index}]`, `chain event '${eventId}' names no speaker (eventSpeakers)`);
+          });
+          const completes = Array.isArray(chain && chain.completes) ? chain.completes : [];
+          if (!completes.length) err(`${at}.completes`, 'a quest chain needs at least one completing choice');
+          completes.forEach((ref, index) => {
+            const where = `${at}.completes[${index}]`;
+            const ids = choiceIdsOf(ref && ref.eventId);
+            const choiceIndex = ref ? ids.indexOf(ref.choiceId) : -1;
+            const event = ref && eventById.get(ref.eventId);
+            if (!event || choiceIndex < 0) {
+              err(where, `quest completion ref '${ref && ref.eventId}/${ref && ref.choiceId}' does not resolve to a shipped choice`);
+              return;
+            }
+            if (!steps.includes(ref.eventId)) err(where, `quest completion ref '${ref.eventId}/${ref.choiceId}' is not a step of this chain`);
+            const choice = Array.isArray(event.choices) ? event.choices[choiceIndex] : null;
+            if (ref.choiceId === 'leave' || (choice && String(choice.label).trim().toLowerCase() === 'leave')) {
+              err(where, `a Leave choice may not complete a quest ('${ref.eventId}/${ref.choiceId}')`);
+            }
+          });
         }
       }
     }

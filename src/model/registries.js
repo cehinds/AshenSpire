@@ -191,6 +191,11 @@ export function createRegistries(contentBundle) {
   // Quest steps (E12): which events an Unknown node may roll only once the
   // run's history earns them. Keyed by event id; absent means ungated.
   registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
+  // Plan phase 10a: which choices complete which quest (the door reads it),
+  // who speaks each chain step, and the speaker rows themselves.
+  registries.questChains = deepFreeze({ ...(bundle.questChains || {}) });
+  registries.eventSpeakers = deepFreeze({ ...(bundle.eventSpeakers || {}) });
+  registries.speakers = makeRegistry('speaker', bundle.speakers || []);
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
   // Keepsakes are tagged like everything else; they just live one level down.
   const creation = { ...(bundle.characterCreation || {}) };
