@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1106",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Quest conversations take place in the world, face to face",
+    "detail": "A conversation used to open in a panel of its own, with small full-length figures above the text. Now it happens where you stand. You see the same sky and ground you fight on, with the HUD along the top as it is in a fight. You on the left and whoever is speaking on the right both appear close up, from the waist up, and the one talking is lit while the other is dimmed. The words sit in a band underneath, with just the quest's name above them, and when it is your turn to answer, up to four answers show at once without scrolling, side by side on a short screen. Back, Skip speech and Continue are three equal buttons along the bottom. As the scene opens, the two of you fade in first and then the words; the buttons only start working once the words have fully appeared. The Grave of the Nameless steps look like this, and your answers count exactly as before.",
+    "build": "0.7.1.67",
+    "pullRequest": 1106,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1106"
+  },
+  {
     "id": "pr-997",
     "date": "2026-09-15",
     "group": "2026-09-15",
