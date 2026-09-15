@@ -23,7 +23,7 @@ import { actionHint } from '../input.js';
 import { MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from './quicknav.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
+import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
 import { hudShellHtml } from './hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from './hudQuickSettings.js';
@@ -37,7 +37,7 @@ import { activeMods, endlessActInfo } from '../../content/customMods.js';
 import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { mountRelicRail } from './relicRail.js';
-import { el as kitEl, slot } from '../kit/index.js';
+import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
 
 export const RUN_HUD_ARMOURY_ID = 'open-armoury';
 export const RUN_HUD_MENU_ID = 'open-menu';
@@ -138,15 +138,16 @@ export function wireRunHud(app, {
   // WGH6: the relics, through the one tile renderer combat uses too.
   mountRelicRail(hud.querySelector('.hud-relics'), registries, run.relics);
 
-  // POTION TILES — only where the band has a potion tray: a screen with no
-  // footer HUD, while `wireframeUi.hud.potions.roomRail` keeps them (see
-  // models/RunHudLayerModel.js). They are the entries of the ONE Potions
-  // projection (WGH8, models/PotionContentsModel.js) that combat's footer
-  // Potions control lists: the charge flasks and the carried consumables,
-  // each carried kind once with its count.
-  const flaskArt = (def) => kitEl('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
-  const flaskWrap = hud.querySelector('.hud-potions');
-  const contents = flaskWrap
+  // POTION ICONS — only where the band has a potion tray, which no place has
+  // by default: `wireframeUi.hud.potions.roomRail` is off since 2026-09-14
+  // (owner: no potions in the top band; see models/RunHudLayerModel.js). With
+  // it on, a room without a footer HUD draws the entries of the ONE Potions
+  // projection (WGH8, models/PotionContentsModel.js) as icons of the shared
+  // icon tray, like the footer's Potions minis: a tap explains the flask, a
+  // second tap (or Enter) opens its use/drop menu.
+  const potionHost = hud.querySelector('.hud-potions');
+  const potionIcons = [];
+  const contents = potionHost
     ? potionContents({ chargeKinds: CHARGE_FLASK_KINDS, flaskCharges: run.flaskCharges, carried: run.flasks })
     : { entries: [] };
   for (const entry of contents.entries.filter((row) => row.category === 'charge')) {
@@ -154,31 +155,33 @@ export function wireRunHud(app, {
     const def = chargeFlaskDefinition(registries, kind);
     if (!def) continue;
     const current = entry.count;
-    // The same kit Slot combat draws: art, count as a round StatePill.
-    const tile = slot({ art: flaskArt(def), count: current, label: def.name, disabled: current <= 0, className: 'relic flask-slot flask-charge', attrs: { dataset: { flaskKind: kind } } });
-    markUiComponent(tile, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-    tile.querySelector('.sl-count').classList.add('flask-charge-count');
-    attachTooltip(tile, () => flaskTooltipHtml(def, { charges: current }));
-    tile.addEventListener('click', () => {
-      const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
-      const plan = flaskActionPlan({
-        context: 'run',
-        canUse,
-        useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
-        canDrop: false,
-        dropReason: 'Charge flasks stay with the run',
-      });
-      mountFlaskActionMenu(tile, {
-        def, plan, charges: current, onCancel: () => {},
-        onAction: (actionId) => {
-          if (actionId !== 'use' || !canUse) return;
-          useRunChargeFlask({ run, registries, rng: null, kind });
-          onSave?.();
-          remount?.();
-        },
-      });
+    const icon = trayIcon({
+      art: flaskPresentation(def, { showName: false }), count: current, tone: def.tint || '', label: def.name, disabled: current <= 0,
+      attrs: { class: 'flask-slot flask-charge', dataset: { flaskKind: kind } },
+      tip: () => flaskTooltipHtml(def, { charges: current }),
+      activate: (node) => {
+        const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
+        const plan = flaskActionPlan({
+          context: 'run',
+          canUse,
+          useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
+          canDrop: false,
+          dropReason: 'Charge flasks stay with the run',
+        });
+        mountFlaskActionMenu(node, {
+          def, plan, charges: current, onCancel: () => {},
+          onAction: (actionId) => {
+            if (actionId !== 'use' || !canUse) return;
+            useRunChargeFlask({ run, registries, rng: null, kind });
+            onSave?.();
+            remount?.();
+          },
+        });
+      },
     });
-    flaskWrap.appendChild(tile);
+    markUiComponent(icon, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
+    icon.querySelector('.stk')?.classList.add('flask-charge-count');
+    potionIcons.push(icon);
   }
 
   for (const entry of contents.entries.filter((row) => row.category === 'carried')) {
@@ -187,36 +190,46 @@ export function wireRunHud(app, {
     // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
     // unified-cursor exception in input.js. Keep utility flasks reachable by
     // keyboard/gamepad Confirm as well as pointer click.
-    const tile = slot({ art: flaskArt(def), count: held, label: def.name, className: 'mh-flask flask-slot', attrs: { dataset: { flaskId: entry.flaskId } } });
-    markUiComponent(tile, UI.potionControl);
-    attachTooltip(tile, () => flaskTooltipHtml(def));
-    tile.addEventListener('click', () => {
-      const plan = flaskActionPlan({
-        context: 'run',
-        canUse: false,
-        useReason: 'Flasks can only be used in combat',
-        canDrop: true,
-      });
-      mountFlaskActionMenu(tile, {
-        def,
-        plan,
-        onCancel: () => {},
-        onAction: (actionId) => {
-          if (actionId !== 'drop') return;
-          // Drop ONE of this kind: the first slot holding it, as the tile for
-          // that slot did when each carried flask had its own.
-          const at = run.flasks.findIndex((f) => f.flaskId === entry.flaskId);
-          if (at >= 0) run.flasks.splice(at, 1);
-          held = run.flasks.filter((f) => f.flaskId === entry.flaskId).length;
-          if (held > 0) tile.querySelector('.sl-count').textContent = String(held);
-          else tile.remove();
-          hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
-        },
-      });
+    const icon = trayIcon({
+      art: flaskPresentation(def, { showName: false }), count: held, tone: def.tint || '', label: def.name,
+      attrs: { class: 'mh-flask flask-slot', dataset: { flaskId: entry.flaskId } },
+      tip: () => flaskTooltipHtml(def),
+      activate: (node) => {
+        const plan = flaskActionPlan({
+          context: 'run',
+          canUse: false,
+          useReason: 'Flasks can only be used in combat',
+          canDrop: true,
+        });
+        mountFlaskActionMenu(node, {
+          def,
+          plan,
+          onCancel: () => {},
+          onAction: (actionId) => {
+            if (actionId !== 'drop') return;
+            // Drop ONE of this kind: the first slot holding it, as the tile for
+            // that slot did when each carried flask had its own.
+            const at = run.flasks.findIndex((f) => f.flaskId === entry.flaskId);
+            if (at >= 0) run.flasks.splice(at, 1);
+            held = run.flasks.filter((f) => f.flaskId === entry.flaskId).length;
+            if (held > 0) node.querySelector('.stk').textContent = String(held);
+            else {
+              potionIcons.splice(potionIcons.indexOf(node), 1);
+              setIconTrayItems(potionHost, potionIcons);
+            }
+            hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
+          },
+        });
+      },
     });
-    flaskWrap.appendChild(tile);
+    markUiComponent(icon, UI.potionControl);
+    potionIcons.push(icon);
   }
-  hud.dataset.hasUtilityPotions = flaskWrap && run.flasks.length ? 'true' : 'false';
+  if (potionHost) {
+    setIconTrayItems(potionHost, potionIcons);
+    observeIconTray(potionHost);
+  }
+  hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
   if (armouryBtn && onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
