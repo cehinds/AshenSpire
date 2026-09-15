@@ -80,7 +80,7 @@ let zoomExtra = 0;
 {
   const { spawnSync } = await import('node:child_process');
   const { fileURLToPath } = await import('node:url');
-  const files = ['wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'combat-formation.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'wireframe-dialogue-frame.test.mjs', 'property-mount.test.mjs'];
+  const files = ['wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'combat-formation.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'wireframe-dialogue-frame.test.mjs', 'property-mount.test.mjs', 'ui-config.test.mjs'];
   const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
   if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
   console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);
@@ -882,6 +882,20 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     zoomPassed++;
   } catch (error) {
     console.log(`FAIL  combat foundations: ${error.stdout || error.message}`);
+    zoomExtra++;
+  }
+}
+// The third authored tree: content/config/**.json compiles to
+// src/config/generated/ui.js. A hand edit to the generated module, or a JSON
+// edit nobody compiled, is red here (tests/ui-config.test.mjs holds the rules).
+{
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['tools/config-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated UI config is current with content/config (config-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
 }
