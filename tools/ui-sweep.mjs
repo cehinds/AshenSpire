@@ -74,10 +74,12 @@ if (args.includes('--selftest')) {
       expectRed: /FAIL R4 map/,
     },
     {
+      // The status row is the shared icon tray since 2026-09-14: the row that
+      // passes the press through is the kit's `.as-pips.icon-tray` rule.
       name: 'the reserved status tray answers hits again',
-      file: 'styles/combat.css',
-      find: 'width:100%; margin:0; pointer-events:none;\n}\n:root .combat[data-layout=\'formation\'] .combatant .statuses > * { pointer-events:auto; }',
-      replace: 'width:100%; margin:0; pointer-events:auto;\n}',
+      file: 'styles/kit.css',
+      find: '  pointer-events: none;\n}\n.icon-tray > * { pointer-events: auto; }',
+      replace: '  pointer-events: auto;\n}\n.icon-tray > * { pointer-events: auto; }',
       expectRed: /FAIL R3 combat .*status tray/,
     },
   ];

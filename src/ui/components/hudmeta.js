@@ -6,9 +6,9 @@
 //   1. class left, Cinders centred, Act/Floor right;
 //   2. the meters (components/resbars.js, the kit Meter) and, on the right,
 //      full-height Armoury and Menu controls;
-//   below the band: relic Slots left and, only on a screen with no footer HUD,
-//      the potion tiles right. Combat's potions are the footer's Potions
-//      control (WGC11 listing WGH8), never this rail.
+//   below the band: the relic rail, the shared icon tray (iconTray.js). No top
+//      HUD draws potions: they are the combat footer's Potions control (WGC11
+//      listing WGH8) and its minis (wireframeUi.hud.potions.roomRail is off).
 // The character name, portrait, sigil, screen-context line, build/seed/source,
 // fullscreen and music remain off this compact band.
 // Each function below says why its own is gone.
@@ -130,9 +130,12 @@ export function primaryHudRowHtml(model) {
 export function inventoryBeltHtml(model) {
   const relics = optionalChildModel(model, UI.relicTray);
   const potions = optionalChildModel(model, UI.potionTray);
+  // Both are the shared icon tray (components/iconTray.js): one row of round
+  // icons that never wraps, the combatant card's status row its reference.
+  // relicRail.js and runHud.js fill them.
   return `<div class="hud-bottom as-band-row fold" ${uiComponentAttrs(model.component, model.variant)}>${relics ? `
-    <div class="relics hud-relics as-cluster wrap grow" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>` : ''}${potions ? `
-    <div class="hud-potions as-cluster end${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>` : ''}
+    <div class="relics hud-relics as-pips icon-tray grow" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>` : ''}${potions ? `
+    <div class="hud-potions as-pips icon-tray${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>` : ''}
   </div>`;
 }
 

@@ -1884,5 +1884,33 @@ export const uiStrings = [
     "short": "{count} carried potions",
     "full": "{count} carried potions",
     "tip": ""
+  },
+  {
+    "id": "iconTray.status",
+    "extends": "",
+    "short": "Status effects",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.potions",
+    "extends": "",
+    "short": "Potions",
+    "full": "Potions you carry. A second tap opens that potion.",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.more",
+    "extends": "",
+    "short": "+{count}",
+    "full": "{count} more",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.moreOpen",
+    "extends": "",
+    "short": "+{count}",
+    "full": "{count} more, view all",
+    "tip": ""
   }
 ];

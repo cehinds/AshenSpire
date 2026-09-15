@@ -316,3 +316,8 @@ potions.count.charge,,{count} charge,{count} charge remaining,
 potions.count.charges,,{count} charges,{count} charges remaining,
 potions.count.carried,,{count} carried potion,{count} carried potion,
 potions.count.carriedMany,,{count} carried potions,{count} carried potions,
+# ---- the shared icon tray: status effects, the relic rail, the Potions minis
+iconTray.status,,Status effects,,
+iconTray.potions,,Potions,Potions you carry. A second tap opens that potion.,
+iconTray.more,,+{count},{count} more,
+iconTray.moreOpen,,+{count},"{count} more, view all",
