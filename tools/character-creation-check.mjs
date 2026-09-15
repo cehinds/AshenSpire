@@ -131,9 +131,13 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   // is an inspection, not a choice, and the pressed state lives on the Choose
   // button, not on the chip. Every pick below walks that road and reads that
   // button.
+  // A CHIP THAT IS ALREADY CHOSEN HAS NO SECOND TAP: it wears the green ring
+  // and its button is hidden, so the pick is already made and asking for it
+  // again would aim a click at a control nobody can see.
   const choosePiece = async (chip, index = 0) => {
     await click(`${chip} .equipment-poker-card`, index);
-    await click(`${chip} .equipment-choose`, index);
+    const chosen = await evaluate(`document.querySelectorAll(${JSON.stringify(chip)})[${index}]?.classList.contains('on') === true`);
+    if (!chosen) await click(`${chip} .equipment-choose`, index);
   };
   const pressed = (chip, index = 0) => evaluate(`document.querySelectorAll(${JSON.stringify(chip)})[${index}]?.querySelector('.equipment-choose')?.getAttribute('aria-pressed') ?? null`);
   // OPEN MEANS OPEN, NOT TOGGLE. A face is a `<summary>` whose click toggles,

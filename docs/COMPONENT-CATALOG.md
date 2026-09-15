@@ -128,9 +128,9 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `tray-header` | `trayHeaderModel` child | `trayComponents.renderTray` | Folding Tray | Arrow, name, quantity, and optional sort action. |
 | `tray-resize-handle` | `trayResizeHandleModel` child | `trayComponents.renderTray` | Resizable expanded Folding Tray | Optional 44px pointer/touch/keyboard resize surface; emitted only when that tray enables resizing. |
 | `tray-content` | `trayContentModel` child | `trayComponents.renderTray` | Folding Tray | Pluggable item-model content host. |
-| `relic-tray` | `itemTrayModel` | Belt view | Map + Combat | Relics under SP. |
-| `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
-| `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
+| `relic-tray` | `itemTrayModel` | Icon tray (`iconTray.js`) | Every run HUD, map included | Relics under SP: the shared icon tray, one non-wrapping row with a `+N` tile. |
+| `relic-slot` | `componentModel` semantic ID | Tray icon (`relicRail.js`) | Every run HUD | One relic: the round Pip the status icons wear; tap explains, a second tap opens its card. |
+| `potion-tray` | `itemTrayModel` | Icon tray (`iconTray.js`) | Rooms, only with `hud.potions.roomRail` (off) | No top HUD draws potions; the combat footer's Potions minis are the same tray. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
 | `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
@@ -144,7 +144,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `poise-status-bar` | `resourceMeter` variant | `resbars.js` | Combat cards | Individual combatant Poise bar. |
 | `proc-status-bar` | semantic component | `combat.js` | Enemy cards | Individual Bleed/Frost/Insanity buildup bar. |
 | `arcane-exposure-bar` | semantic component | `arcaneExposure.js` | Enemy cards | Individual Arcane Exposure meter. |
-| `status-effect-tray` | semantic component | `combat.js` | Combat cards | Active status icons and stacks. |
+| `status-effect-tray` | semantic component | Icon tray (`iconTray.js`) via `combat.js`, `coop.js` | Combat cards | Active status icons and stacks. THE REFERENCE the shared icon tray was lifted from: relics and the Potions minis inherit its Pip, non-wrapping row, `+N` tile and tooltip. |
 | `tooltip` | semantic component | `tooltip.js` + `tooltipGlossary.js` | All interactive surfaces | Every hover, handover and nested term waits the explanation delay (1 s default); a tap or click selects a detail and a second one explains it; keyboard focus explains after 500 ms; dismiss 500 ms after leaving owner and panel. Cards explain only through their Information button. Active-bundle keywords and touch/keyboard definitions share the renderer. |
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |

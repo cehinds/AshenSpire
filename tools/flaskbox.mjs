@@ -109,13 +109,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const sourceContract = ({ map, input, css, combatCss, kit, tool }) => {
   const bad = [];
   const surfaceBlock = /const SURFACES = \[[\s\S]*?\n\];/.exec(tool)?.[0] || '';
-  if (!map.includes("className: 'mh-flask flask-slot'")) {
+  if (!map.includes("class: 'mh-flask flask-slot'")) {
     bad.push('F1 map utility flask is not a unified-cursor flask-slot');
   }
   if (!input.includes("el.matches('.flask-slot')")) {
     bad.push('F2 input focus no longer exempts flask-slot controls from topbar chrome');
   }
-  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(tile, {')) {
+  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(node, {')) {
     bad.push('F3 map utility flask lost its inspect/drop action menu');
   }
   const kitSlotBox = /\.as-slot \{[^}]*width: var\(--iconbtn-size\)[^}]*min-height: var\(--iconbtn-size\)/.test(kit);
@@ -142,7 +142,7 @@ if (process.argv.includes('--source-selftest')) {
     {
       name: 'map utility flask loses its topbar focus exception',
       expected: 'F1 ',
-      mutate: (s) => ({ ...s, map: s.map.replace("className: 'mh-flask flask-slot'", "className: 'mh-flask'") }),
+      mutate: (s) => ({ ...s, map: s.map.replace("class: 'mh-flask flask-slot'", "class: 'mh-flask'") }),
     },
     {
       name: 'map utility flask loses inspect/drop',
@@ -270,8 +270,8 @@ if (process.argv.includes('--selftest')) {
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
           file: 'src/ui/components/runHud.js',
-          find: "className: 'mh-flask flask-slot'",
-          replace: "className: 'mh-flask-planted-away flask-slot'",
+          find: "class: 'mh-flask flask-slot'",
+          replace: "class: 'mh-flask-planted-away flask-slot'",
         }],
         expectRed: /BAD\s+B3 .*declared utility surfaces were reached/,
       },
@@ -394,24 +394,31 @@ async function main() {
         // the tap a player's road gained: open the bar, then buy. The old
         // selector would find nothing and B0 would call the stock missing,
         // which is this tool's own smaller-confident-number failure.
+        // RE-AIMED AGAIN 2026-09-13 (W1d / W1v): the bars became a category
+        // rail and a purchase is select-then-act — the FLASKS rail item, a
+        // flask tile to select it, then the footer's Buy, whose beat is the
+        // same shopBuy review modal.
         await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
-        await until(`!!document.querySelector('[data-face="bar:flasks"]')`, 'shop');
+        await until(`!!document.querySelector('#shop-cat-flasks')`, 'shop');
         await wait(500);
-        // A PURCHASE IS A DECISION (shop.js arm(el, 'shopBuy')): the tap on a
-        // row opens the review modal and the second beat is its BUY IT —
-        // pressed, as a player presses it, never bypassed.
+        // A PURCHASE IS A DECISION (shop.js arm(primary, 'shopBuy')): the
+        // footer's Buy opens the review modal and the second beat is its
+        // BUY IT — pressed, as a player presses it, never bypassed.
         const bought = await ev(`(async () => { let n = 0;
           const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           for (let pass = 0; pass < 6; pass++) {
-            const face = document.querySelector('[data-face="bar:flasks"]');
-            if (face && face.getAttribute('aria-expanded') !== 'true') face.click();
+            const cat = document.querySelector('#shop-cat-flasks');
+            if (cat && cat.getAttribute('aria-selected') !== 'true') cat.click();
             // The shelf's rows are the flasks (a rendered collectible card each
-            // since 2026-09, no .flask-identity inside); an affordable one is
-            // armed as a shopBuy decision. NO BACKTICKS HERE: this is a template.
-            // The rendered collectible card replaced the old identity block.
+            // since 2026-09, no .flask-identity inside); an affordable one
+            // selects, and the footer arms its shopBuy decision. NO BACKTICKS
+            // HERE: this is a template.
             const row = [...document.querySelectorAll('#shop-flasks .class-pick')]
-              .find((el) => el.dataset.beatAction === 'shopBuy' && !el.classList.contains('locked'));
-            if (!row) break; row.click(); await sleep(250);
+              .find((el) => !el.classList.contains('locked'));
+            if (!row) break; row.click(); await sleep(150);
+            const primary = document.querySelector('#shop-primary');
+            if (!primary || primary.disabled || primary.dataset.beatAction !== 'shopBuy') break;
+            primary.click(); await sleep(250);
             const buy = document.querySelector('.confirmation-modal .confirmation-confirm');
             if (!buy) break; buy.click(); await sleep(400); n++; }
           return n; })()`);

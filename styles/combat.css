@@ -43,6 +43,11 @@
 .environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
 .environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform:scale(1.06); transform-origin:center; }
 @media (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
+/* WGS1: once the battlefield stage has fitted the plate (SceneLayerModel), its
+   viewBox already carries the bleed and the floor alignment; a CSS zoom about
+   the centre would move the painted ground off the floor band. */
+.environment-backdrop[data-scene-fit] > svg { transform: none; }
+.environment-backdrop[data-skyline='off'] > svg { display: none; }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
@@ -204,8 +209,11 @@
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
-.enemy.hover-target .sprite { outline-style: solid; }
+/* WGC4: eligible targets are dashed, the active one (pointer or keyboard) is
+   solid. Width and offset come from TargetLayerModel via the battlefield stage,
+   held at a physical minimum under the sprite's depth zoom. */
+.enemy.targetable .sprite { outline: var(--target-outline-width, 2px) dashed var(--gold); outline-offset: var(--target-outline-offset, 6px); border-radius: var(--r-3); }
+.enemy.hover-target .sprite, .enemy.targetable:is(.gp-focus, :focus-visible) .sprite { outline-style: solid; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
@@ -296,10 +304,8 @@
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
 }
-.hand .card.selected {
-  border-color: var(--gold);
-  outline: 2px solid var(--parchment); outline-offset: 2px;
-}
+/* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
+.hand .card.selected { border-color: var(--gold); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
@@ -639,8 +645,10 @@
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
-.combatant.context-selected .combatant-card {
-  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+/* WCF3: one glow over the whole selected assembly — intent, the delayed
+   inspect control, art, name and lower stack — never one per child. */
+.combatant.context-selected > .combatant-stack {
+  filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
@@ -1167,6 +1175,27 @@
   width: 100%; padding: calc(8px / var(--ui-zoom,1)); margin: 0; align-items: center;
 }
 :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)) !important; }
+/* THE POTIONS MINIS stand over the footer's Potions control, outside the row's
+   grid. The row is wider than its grid on a wide screen, so combat.js
+   (placePotionTray) writes where the control is. The tray is the shared icon
+   tray (styles/kit.css § ICON TRAY): --icon-tray-slots of its own icons wide
+   (wireframeUi.iconTray.footerPotionIcons), its right edge on the control's,
+   and what does not fit is its +N tile, which opens the Potions list. */
+:root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray {
+  position: absolute; inset: auto var(--potion-tray-right, 0px) calc(100% + 0.3rem) auto; margin: 0; z-index: 1;
+  width: calc(var(--icon-tray-slots, 4) * (var(--icon-tray-size, calc(25px / var(--ui-zoom,1))) + var(--icon-tray-gap, calc(3px / var(--ui-zoom,1)))) - var(--icon-tray-gap, calc(3px / var(--ui-zoom,1))));
+  max-width: 100%; height: auto; max-height: none; justify-content: flex-end; align-self: auto;
+}
+/* Narrow: the fan reaches down to the row beside the control, so there is no
+   room above it. The minis ride inside the control's top edge, as wide as the
+   control (its +N opens the list), and the control's label moves down. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray {
+  top: calc(var(--potion-control-top, 0px) + 2px); bottom: auto;
+  width: var(--potion-control-width, var(--combat-control-size)); justify-content: center;
+}
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-action-row > .combat-potions {
+  justify-content: flex-end; padding-bottom: calc(6px / var(--ui-zoom, 1));
+}
 /* THE DESKTOP ACTION ROW (owner, 2026-09-11): Draw and Discard were stretched
    to a third of a 1920 window each, and Actions / End Turn / Potions stood
    52-64 px tall in a row that owns 15% of the viewport. The row keeps the
@@ -1314,18 +1343,12 @@
    what `elementFromPoint` returned at the centre of the second Blight Hound's
    name at 390x650 (tools/screenreach.mjs, red on dev since #788). Only the pips
    inside it are controls; the tray and its gaps pass the press through. */
+/* The row, its icons and its +N tile are the shared icon tray (styles/kit.css
+   § ICON TRAY); the card only reserves the tray's height and gives it the
+   card's width. */
 :root .combat[data-layout='formation'] .combatant .statuses {
- display:flex; flex-wrap:nowrap; align-items:center; gap:calc(3px / var(--ui-zoom,1));
- height:calc(24px / var(--ui-zoom,1)); min-height:calc(24px / var(--ui-zoom,1)); width:100%; margin:0; pointer-events:none;
+ height:var(--icon-tray-size, calc(25px / var(--ui-zoom,1))); min-height:var(--icon-tray-size, calc(25px / var(--ui-zoom,1))); width:100%; margin:0;
 }
-:root .combat[data-layout='formation'] .combatant .statuses > * { pointer-events:auto; }
-:root .combat[data-layout='formation'] .statuses .status-icon {
- flex:none; width:calc(21px / var(--ui-zoom,1)); height:calc(21px / var(--ui-zoom,1)); min-width:0; min-height:0;
- font-size:calc(13px / var(--ui-zoom,1)); box-sizing:border-box;
-}
-.status-overflow { position:relative; font-size:calc(11px / var(--ui-zoom,1)); }
-.status-overflow summary { cursor:pointer; list-style:none; padding:2px; color:var(--gold); }
-.status-overflow-list { position:absolute; top:100%; right:0; display:flex; flex-wrap:wrap; gap:8px; padding:10px; width:calc(170px / var(--ui-zoom,1)); background:#17130f; border:1px solid var(--gold); z-index:100; }
 .player .status-overflow-list { left:0; right:auto; }
 /* Lite keeps the target color and selection affordance without cloning art. */
 :root[data-performance='lite'] .aim-silho.aim-outline {
@@ -1388,4 +1411,9 @@
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }
+/* WCO1 headroom: on every host the relic row's box spans the band's width
+   under the HUD row, over the enemies' intent and Inspect controls. Only the
+   relics themselves answer a press. */
+:root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
+:root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
 

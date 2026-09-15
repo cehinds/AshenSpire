@@ -242,6 +242,11 @@ armament,,boneSceptre,blight
 armament,,emberlightSceptre,item:magic-focus
 armament,,emberlightSceptre,ritual
 armament,,emberlightSceptre,oath
+# Property carriers (domain `property`; plan phase 1b). The two sceptres drink
+# back: breaking a foe's Arcane Exposure restores Mana (propertyRules.csv siphon).
+# Property tags never join a piece's chips — they stamp onto `propertyTags`.
+armament,,boneSceptre,siphon
+armament,,emberlightSceptre,siphon
 armament,,goldboughBranch,item:magic-focus
 armament,,goldboughBranch,ritual
 armament,,goldboughBranch,oath
@@ -1119,3 +1124,57 @@ card,,spikedReprisal,guard
 card,,spikedReprisal,fx:shield
 card,,spikedReprisal,source:weapon
 card,,spikedReprisal,delivery:melee
+
+# ---- relic properties (plan phase 2) -------------------------------------------
+# Each trigger-carrying relic grants its own property tag. The seven relics that
+# are passives-only (cinderPouch, feralEye, crackedTear, sealstoneKey,
+# emberFragment, ancestralHorn, saltedRelic) carry no tag: a mount would hold
+# nothing they have.
+relic,,forsakenMedallion,forsakenMedallion
+relic,,starstoneShard,starstoneShard
+relic,,cutpursesCoin,cutpursesCoin
+relic,,goldFigurine,goldFigurine
+relic,,goldenSprout,goldenSprout
+relic,,whetstoneFragment,whetstoneFragment
+relic,,kindlingCharm,kindlingCharm
+relic,,goldleafCharm,goldleafCharm
+relic,,crackedLantern,crackedLantern
+relic,,sacrificialKnife,sacrificialKnife
+relic,,curedHide,curedHide
+relic,,ivoryComb,ivoryComb
+relic,,fellWardenBrand,fellWardenBrand
+relic,,bloodiedTalisman,bloodiedTalisman
+relic,,twinnedArmor,twinnedArmor
+relic,,blightTouchedIdol,blightTouchedIdol
+relic,,warhorn,warhorn
+relic,,vowOfVengeance,vowOfVengeance
+relic,,pearlOfSagacity,pearlOfSagacity
+relic,,blessedDew,blessedDew
+relic,,azureSigil,azureSigil
+relic,,bloodstainedChalice,bloodstainedChalice
+relic,,goldboughSapling,goldboughSapling
+relic,,wyrmHeart,wyrmHeart
+relic,,titansCinder,titansCinder
+relic,,radiantAegis,radiantAegis
+relic,,flayersCenser,flayersCenser
+relic,,vigilantHalo,vigilantHalo
+relic,,carrionTalon,carrionTalon
+relic,,emberIdol,emberIdol
+relic,,crownOfStitches,crownOfStitches
+relic,,wardenHorn,wardenHorn
+relic,,ashOfRemembrance,ashOfRemembrance
+relic,,cinderOfTheFallen,cinderOfTheFallen
+relic,,crimsonCovenant,crimsonCovenant
+relic,,travelersWhetstone,travelersWhetstone
+relic,,moonlitVial,moonlitVial
+relic,,wardensLantern,wardensLantern
+relic,,hollowedHorn,hollowedHorn
+relic,,gildedTear,gildedTear
+relic,,watchmansBadge,watchmansBadge
+relic,,howlingStandard,howlingStandard
+relic,,emberwickCharm,emberwickCharm
+relic,,carrionMorsel,carrionMorsel
+relic,,gravetendersBell,gravetendersBell
+relic,,sentinelsOath,sentinelsOath
+relic,,forsakenWarflag,forsakenWarflag
+relic,,wrathCoil,wrathCoil

@@ -215,7 +215,13 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       const id = entry.inst.instanceId;
       // Solo action callbacks resolve current combat state by instance ID. A
       // preview/affordability change invalidates both the face and its inputs.
-      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, n]);
+      // The signature carries the ACTION STATE too. A card whose play becomes
+      // refused mid-turn — the energy spent, the target gone — keeps its face
+      // otherwise, and with it a door that still says the act is available.
+      // `commands` is deliberately absent: those are closures that resolve the
+      // live combat by instance id when pressed, so a kept one is never stale,
+      // and JSON.stringify would drop them anyway.
+      const signature = JSON.stringify([entry.inst, entry.preview, entry.affordable, entry.reason, entry.name, i, n, entry.surface, entry.availability]);
       let record = renderedCards.get(id);
       if (record && record.signature !== signature) { record.release?.(); record.el.remove(); renderedCards.delete(id); record = null; }
       if (record) {
@@ -223,8 +229,19 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
         if (handEl.children[i] !== record.el) handEl.insertBefore(record.el, handEl.children[i] || null);
         return;
       }
+      // THE SURFACE HAS TO REACH THE DOOR, AND FOR ONE RELEASE IT DID NOT.
+      // #1000 replaced the inspect door's inherited verb with a triple the
+      // surface supplies: `surface` names the place, `availability` says
+      // whether the act is offered and why not, `commands` carries the commit.
+      // combat.js builds all three per hand card — and this call, the ONLY
+      // path from there to renderCard, went on forwarding the field #1000
+      // retired. So every card in a combat hand reached the inspect door as
+      // surface `none`, and the door that exists to offer `Play card` offered
+      // nothing at all. Caught in review on the promotion, not by a test,
+      // which is why tests/hand-forwards-surface.test.mjs now exists.
       const el = renderCard(registries, entry.inst,
-        { preview: entry.preview, affordable: entry.affordable, inspectionAction: entry.inspectionAction, actionOwnsTouch: true });
+        { preview: entry.preview, affordable: entry.affordable, actionOwnsTouch: true,
+          surface: entry.surface, availability: entry.availability, commands: entry.commands });
       const spread = Math.min(6, n) * 1.2;
       // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
       // CENTRE. Same arc, same step, same look — translated so the LOWEST card
@@ -286,7 +303,11 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
       // E8, and it is the one line of his ask that lives outside tooltip.js:
       // the zoom used to HIDE the tooltip here. Now the completed hold KEEPS
       // it — same moment, opposite verb — and tooltip.js owns what ends it.
-      if (inspectHold && !entry.inspectionAction) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
+      // A card that carries its own commit owns its hold: the generic reading
+      // hold is for cards with no act behind them. This read `entry.inspectionAction`,
+      // which nothing sets any more, so the hold had quietly been arming on
+      // every hand card as well.
+      if (inspectHold && !entry.commands) armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       const releaseInput = wireCard?.(el, entry, i);
       renderedCards.set(id, { el, signature, release: typeof releaseInput === 'function' ? releaseInput : null });
       handEl.insertBefore(el, handEl.children[i] || null);

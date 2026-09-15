@@ -592,6 +592,7 @@ async function main() {
     await clickSel('.slot-continue', 'CONTINUE the flask-seeded run');
     await until(`!!document.querySelector('.map-node.monster.reachable')`, 'the resumed map with a reachable fight');
     await clickSel('.map-node.monster.reachable', 'a monster node');
+    await clickSel('#map-enter', 'ENTER the selected node');
     let mounted = true;
     try {
       await until(`!!document.querySelector('.tut-veil')`, 'the tutorial mounting itself', 10000);

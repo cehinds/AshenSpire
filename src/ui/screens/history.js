@@ -53,7 +53,7 @@ export function mountHistory(app, { meta, onBack }) {
     });
   });
 
-  const back = button({ label: 'Back', id: 'hx-back' });
+  const back = button({ label: 'Back', role: 'exit', id: 'hx-back' });
   const customNote = customCount ? ` · ${customCount} custom (not counted)` : '';
   const children = results.length
     ? [

@@ -34,6 +34,7 @@
 // for loss. `tone: 'danger'` is available and is meant to be rare.
 
 import { esc } from './tooltip.js';
+import { planButtonGroup } from '../models/ButtonSizeModel.js';
 
 /** The one glyph. U+2715; the save-slot modal used U+00D7 and now does not. */
 export const MODAL_CLOSE_GLYPH = '✕';
@@ -47,6 +48,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
   button.type = 'button';
   if (id) button.id = id;
   button.className = `subtle modal-close${className ? ` ${className}` : ''}`;
+  button.dataset.controlRole = 'exit';
   button.title = `${label} (Esc)`;
   button.setAttribute('aria-label', label);
   const face = document.createElement('span');
@@ -65,7 +67,7 @@ export function modalCloseButton({ label = 'Close', onClick = null, className = 
  * markup would be a fifth chrome by the end of the week.
  */
 export function modalCloseButtonHtml({ label = 'Close', className = '', id = '' } = {}) {
-  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}"`
+  return `<button type="button"${id ? ` id="${esc(id)}"` : ''} class="subtle modal-close${className ? ` ${esc(className)}` : ''}" data-control-role="exit"`
     + ` title="${esc(label)} (Esc)" aria-label="${esc(label)}"><span class="modal-close-face" aria-hidden="true">${MODAL_CLOSE_GLYPH}</span></button>`;
 }
 
@@ -105,13 +107,23 @@ export function modalFooter({ note = '', secondary = [], primary = null, classNa
   const visibleSecondary = secondary.filter(button => button && !button.hidden);
   const visiblePrimary = primary && !primary.hidden ? primary : null;
   actions.dataset.actionCount = String(visibleSecondary.length + (visiblePrimary ? 1 : 0));
+  // WCB0: footer siblings take equal shares of the foot after gaps, and a sole
+  // action fills it (ButtonSizeModel). Each button is `full` of its share at
+  // the standard height; the label never picks the width.
+  const plan = planButtonGroup({ kind: 'footer', count: Number(actions.dataset.actionCount) });
+  actions.dataset.buttonGroup = plan.kind;
+  actions.dataset.buttonLayout = plan.layout;
+  for (const button of [...visibleSecondary, visiblePrimary]) if (button?.dataset) button.dataset.buttonSize = plan.size;
   for (const button of visibleSecondary) actions.appendChild(button);
   if (visiblePrimary) {
     // `className` and not `classList` — this component is mounted by tests that
     // drive it in a minimal DOM (tests/confirmation-modal.test.mjs), and a
     // shared piece of chrome must not need more of the platform than the
     // surfaces that share it.
-    if (!` ${primary.className} `.includes(' primary ')) {
+    // An exit keeps its role in the primary slot: a sole Back/Close spans the
+    // foot but is never painted as the green way forward (ControlAppearance).
+    const role = primary.dataset?.controlRole ?? primary.getAttribute?.('data-control-role');
+    if (role !== 'exit' && !` ${primary.className} `.includes(' primary ')) {
       primary.className = `${primary.className} primary`.trim();
     }
     actions.appendChild(primary);
@@ -498,7 +510,9 @@ export function openModal({
   release = bindModalDismiss({ veil, panel, close, opener });
 
   // Focus the way FORWARD when there is one, else the way out. Never the veil.
+  // A footer exit (the wide Close) outranks the head's small ✕.
   const first = panel.querySelector('.modal-foot-actions .primary')
+    || panel.querySelector('.modal-foot-actions [data-control-role="exit"]')
     || panel.querySelector('[data-focusable="true"]')
     || panel.querySelector('.modal-close');
   first?.focus?.({ preventScroll: true });

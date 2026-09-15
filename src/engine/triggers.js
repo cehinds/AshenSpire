@@ -55,6 +55,11 @@ function ownerKeyFor(ctx, entity) {
   return entity ? entity.id : 'none';
 }
 
+/** The owner key an entity's trigger gates and property mounts live under. */
+export function triggerOwnerKey(ctx, entity) {
+  return ownerKeyFor(ctx, entity);
+}
+
 function scanTriggers(ctx, event) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
@@ -70,15 +75,10 @@ function scanTriggers(ctx, event) {
   // Relics and stances react for their actual owner, including inactive co-op seats.
   for (const player of owners) {
   const pKey = ownerKeyFor(ctx, player);
-  for (const relicId of player.relicIds) {
-    const def = ctx.registries.relics.get(relicId);
-    (def.triggers || []).forEach((trig, i) => {
-      if (trig.on !== event.type) return;
-      schedule(`relic:${pKey}:${relicId}:${i}`, trig, player, () => {
-        if (event.type !== 'relicTriggered') emitEvent(ctx, 'relicTriggered', { relicId });
-      });
-    });
-  }
+  // Relics react through the mount path below, not here: plan phase 2 moved
+  // their triggers into propertyRules and their carriers are mounted beside the
+  // loadout's. What they kept is `relicTriggered`, emitted from the mount scan
+  // for a relic-kind source so the relic still flashes (ui/fx.js).
 
   // Stance hooks (player).
   if (player.stanceId) {
@@ -87,6 +87,32 @@ function scanTriggers(ctx, event) {
       if (trig.on !== event.type) return;
       schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player);
     });
+  }
+
+  // Mounted properties (engine/properties.js) react for their carrier's owner,
+  // exactly as a relic does. Source keys are walked SORTED, so a restored
+  // snapshot — which re-derives its mounts rather than saving them — fires
+  // them in the same order the live fight did. The index runs across the
+  // mount's rules in order, so each trigger keeps one stable gate key.
+  const mounts = ctx.propertyMounts && ctx.propertyMounts[pKey];
+  if (mounts) {
+    for (const sourceKey of Object.keys(mounts).sort()) {
+      let index = 0;
+      // A relic-kind source still announces itself: `relicTriggered` is what
+      // ui/fx.js animates, and a relic that stopped flashing when its triggers
+      // moved would be a player-visible regression of a pure refactor.
+      const relicId = mounts[sourceKey].kind === 'relic' ? mounts[sourceKey].id : null;
+      const announce = relicId && event.type !== 'relicTriggered'
+        ? () => emitEvent(ctx, 'relicTriggered', { relicId })
+        : undefined;
+      for (const rule of mounts[sourceKey].rules) {
+        for (const trig of rule.triggers || []) {
+          const i = index++;
+          if (trig.on !== event.type) continue;
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce);
+        }
+      }
+    }
   }
   }
 
@@ -288,6 +314,13 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     }
     case 'random':
       return ctx.rng.float('misc') * 100 < pred.pct;
+    // Progression gates (plan phase 1a). They read the skill and class ledger
+    // that phase 4 adds to run state. Until that ledger exists no level has
+    // been reached, so both answer false rather than guessing its shape — a
+    // property branch gated on them is inert, never half-live.
+    case 'skillLevelAtLeast':
+    case 'classLevelAtLeast':
+      return false;
     case 'all':
       return pred.preds.every((sub) => evalPredicate(ctx, sub, pctx));
     case 'any':

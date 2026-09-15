@@ -2,14 +2,14 @@
 //
 // THE RUN'S END IS A DECISION DOOR ON THE PAGE (kit §05 body C): Title·L and
 // the ornament say what happened, a DetailCard says who and where, a StatStrip
-// carries the numbers, a KitLine the final deck, and the ButtonRow the two
-// ways on. `.stats-table` stays on the strip as the landmark
+// carries the numbers, a KitLine the final deck, and a WCB0 choice row the
+// two ways on. `.stats-table` stays on the strip as the landmark
 // tools/release-shots.mjs reads for `?shot=death`; it draws nothing.
 
 import { resolveCard } from '../../model/registries.js';
 import { sfx } from '../sfx.js';
 import {
-  el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, buttonRow, statusText,
+  el, pageDoor, decide, detailCard, statStrip, chip, kitLine, kitItem, eyebrow, titleS, button, choiceRow, statusText,
 } from '../kit/index.js';
 
 export function mountGameOver(app, { registries, game, victory, onTitle, onHistory, earned = [] }) {
@@ -47,7 +47,8 @@ export function mountGameOver(app, { registries, game, victory, onTitle, onHisto
       ]) : null,
       el('div', { class: 'set-section-head' }, [eyebrow('Final deck'), titleS(`${game.deck.length} card${game.deck.length === 1 ? '' : 's'}`, { tag: 'h3' })]),
       deck,
-      buttonRow({ size: 'medium', buttons: [toHistory, toTitle] }),
+      // WCB0 choice: both ways on share the half preset of the door's width.
+      choiceRow({ buttons: [toHistory, toTitle] }),
     ],
   });
   if (!victory) body.querySelector('.as-title-l').dataset.tone = 'loss';

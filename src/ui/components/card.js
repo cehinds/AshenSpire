@@ -7,7 +7,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 // (live math, SPEC §3.13); outside combat, the card's own literal values via
 // computeTokenBindings. No math happens here.
 
-import { resolveCard } from '../../model/registries.js';
+import { resolveCard, relicPropertyRules } from '../../model/registries.js';
 import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
 import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
@@ -16,6 +16,18 @@ import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
+import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
+import { t } from '../strings.js';
+
+// WCI3: rarity at the start of the band, the owned count at the end, each only
+// when the surface can state it. No domain action ever belongs in this band.
+function metadataBand(rarity, owned) {
+  const band = metadataFooter({ rarity, owned });
+  const slot = (name, entry) => (entry
+    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? t('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
+    : '');
+  return `<div class="card-metadata" data-identity-part="metadata">${slot('start', band.start)}${slot('end', band.end)}</div>`;
+}
 
 /**
  * Static token values straight off the def (for reward/pile/deck views).
@@ -45,7 +57,11 @@ export function staticTokens(def) { return staticCardTokens(def); }
  */
 export function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
-  const tokens = relicTokens(def);
+  // The relic's own passives and its property rules' triggers are two homes for
+  // one sentence's numbers since plan phase 2, so both are handed to the token
+  // reader. Without registries only the passive half resolves, which is why
+  // every run-facing call site passes them.
+  const tokens = relicTokens(def, registries ? relicPropertyRules(registries, def) : []);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
@@ -152,8 +168,8 @@ export function renderCard(registries, ref, opts = {}) {
       `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
     ).join('')}</div>` +
 
-    `<div class="cname">${esc(model.name)}</div>` +
-    `<div class="art"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+    `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
+    `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
     // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
@@ -163,7 +179,7 @@ export function renderCard(registries, ref, opts = {}) {
       : '') + '</div>' +
     `<div class="cd-body"><div class="ctype">${esc(model.type.label)}</div>` +
     `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>` +
-    `<div class="card-metadata"><span>${esc(def.rarity || '')}</span></div>`;
+    metadataBand(def.rarity, opts.owned);
 
   // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
   // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
@@ -350,6 +366,13 @@ function glossaryEntry(registries, kind, id) {
     : (kind === 'status' ? registries.frameworkTerms.statusDisplay(id) : registries.frameworkTerms.stanceDisplay(id));
   if (!display || !display.tooltip) return null;
   return { name: display.name, tooltip: statusTooltipText(display) };
+}
+
+/** W1h: the read-only reading a pile viewer shows beside its collection —
+ *  the same body the card's own inspect door and tooltip use. */
+export function cardDetailHtml(registries, ref) {
+  const def = resolveCard(registries, ref);
+  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
 }
 
 function cardTooltip(registries, def, tokens, liveCosts = null) {

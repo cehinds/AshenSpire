@@ -2,8 +2,16 @@
 // slots and interaction callbacks; this component owns only stable structure,
 // role semantics, and component identity.
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { artworkAnchor } from '../models/IdentityModel.js';
 
 const ownedClasses = new WeakMap();
+
+// WCI1/WCI2: the nameplate sits in the card directly above the meters (HP
+// first); the sprite host is the combatant's artwork, standing on its baseline.
+function markName(name, role) {
+  markUiComponent(name, UI.combatantNameplate, role);
+  name.dataset.identityPart = 'name';
+}
 
 // Reuse the frame, its focus/input listeners, and the animation's sprite host.
 // Only screen-owned slots are replaced. Effects below .sprite survive a beat.
@@ -19,7 +27,7 @@ export function updateCombatantFrame(frame, { classNames = [], leading = [], blo
   if (blockBadge) spriteHost.appendChild(blockBadge);
   for (const child of [...card.children]) if (child !== spriteHost) child.remove();
   if (name) {
-    markUiComponent(name, UI.combatantNameplate, frame.classList.contains('player') ? 'player' : 'enemy');
+    markName(name, frame.classList.contains('player') ? 'player' : 'enemy');
     card.appendChild(name);
   }
   if (meters) card.appendChild(meters);
@@ -43,7 +51,14 @@ export function adoptCombatantFrame(frame) {
   const role = frame.classList.contains('player') ? 'player' : 'enemy';
   markUiComponent(frame, UI.combatantFrame, role);
   const name = card.querySelector('.nm');
-  if (name) markUiComponent(name, UI.combatantNameplate, role);
+  if (name) markName(name, role);
+  const sprite = card.querySelector(':scope > .sprite');
+  if (sprite) markArtwork(sprite);
+}
+
+function markArtwork(spriteHost) {
+  spriteHost.dataset.identityPart = 'artwork';
+  spriteHost.dataset.artworkAnchor = artworkAnchor('combatant');
 }
 
 export function combatantFrame({
@@ -84,12 +99,13 @@ export function combatantFrame({
   const spriteHost = document.createElement('div');
   spriteHost.className = 'sprite';
   markUiComponent(spriteHost, UI.combatantSprite, role);
+  markArtwork(spriteHost);
   spriteHost.appendChild(sprite);
   if (blockBadge) spriteHost.appendChild(blockBadge);
   card.appendChild(spriteHost);
 
   if (name) {
-    markUiComponent(name, UI.combatantNameplate, role);
+    markName(name, role);
     card.appendChild(name);
   }
   if (meters) card.appendChild(meters);

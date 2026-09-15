@@ -493,6 +493,7 @@ current dispatch's `events`.
 | `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |
+| `questCompleted` | `{ questId, source: 'event'\|'atlas' }` — emitted only by the quest door (`engine/quests.js completeQuest`), at most once per quest per run; `commitEventChoice` and `atlasQuestAction` return it in their `events` and call `ctx.emit` when the caller supplies one |
 
 (Run-level `executeRunEffects` additionally emits a non-bus `cindersChanged
 { amount, total }`.)

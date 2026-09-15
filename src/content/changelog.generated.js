@@ -3,6 +3,506 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-997",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A card you have picked is ringed, not labelled",
+    "detail": "Picking a card told you so in three different ways depending on where you were: at the victory screen the card you chose was ringed in green, in character creation a full-width button under the card read “Selected”, and at the stables the picked card was outlined in gold. The victory ring is now the one signal everywhere — the card you have chosen wears a green edge, and the button that made the choice steps out of the way instead of turning into a word you cannot press. Gold still means where you are and what you are looking at. An armed card in combat is unchanged: aiming is not the same as choosing, and it keeps its gold lift.",
+    "build": "0.7.1.65",
+    "pullRequest": 997,
+    "url": "https://github.com/cehinds/AshenSpire/pull/997"
+  },
+  {
+    "id": "pr-1105",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Your relics keep their powers, held in the same place as every other worn power",
+    "detail": "Nothing you see changes. Every relic that does something when a fight gives it its moment — 48 of the 55 — now holds that power in the game's one list of powers a worn thing can grant, the list added two changes ago, instead of carrying it privately. Each still reads exactly as it did, fires exactly when it did, and fires once where it fired once; a fight you saved before this change and reload still remembers which relics have already gone off. The seven relics that simply change a number while you own them are untouched, because the Smith upgrades those on your copy and a shared list has only one copy.",
+    "build": "0.7.1.62",
+    "pullRequest": 1105,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1105"
+  },
+  {
+    "id": "pr-994",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The i that explains a card sits above it on every screen",
+    "detail": "Pick a card anywhere in the game and the small gold i that opens its full text appears just above the card. That is where it has always been — except on the equipment you choose when making a character, where it sat inside the card's top-right corner instead, because that screen left no room above the cards and the badge would otherwise have crossed the STARTING ARMOUR heading. The room is there now, so that screen shows the i in the same place as every other one, whole and clear of the heading at every interface size, and the same control no longer appears in two places depending on where you are.",
+    "build": "0.7.1.58",
+    "pullRequest": 994,
+    "url": "https://github.com/cehinds/AshenSpire/pull/994"
+  },
+  {
+    "id": "pr-1003",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Choosing a weapon at character creation no longer buries the Continue button, and inspecting a card in combat offers Play again",
+    "detail": "On a phone, opening a hand to pick an armament put the button that moves you on nearly four screens down, under every combat card that armament gives you drawn at full size. The cards now sit behind a single line that says what they are (\"Adds 6 cards · 3 kinds\") — tap it to see them, three to a row and drawn small, so six faces take two rows instead of three. The Continue button at the end of each equipment step now stays pinned to the bottom of the view: before this it sat more than a screen and a half below the picker it closes, so choosing a weapon meant scrolling back past everything you had just read to leave. The Continue at the end of each creation step is pinned the same way. On a desktop or tablet screen that pinned button used to cover the equipment step's own Continue as you scrolled past it, so pressing Continue to Off Hand skipped straight to the seed instead of opening the next armament; the step's own button now sits in front. Separately, a recent change gave every screen its own words for what a card can do there — the spoils screen offers Choose this card, the merchant Buy it — and in doing so took combat's away: opening a card from your hand to read it showed the card and no button, on the one screen where that button had always worked. It is back. Playing a card from the hand itself was never affected; this is the window you open with the small i. And reading a card's information no longer follows you: the game kept a note of which card you had last read for as long as the page was open, so meeting that same card again on another screen could make your first tap act on it instead of selecting it. Each screen now starts with nothing selected. That clearing had one edge of its own, fixed here too: opening the Armoury in the middle of a fight with a card already aimed cleared the card's highlight but not the aim, so the enemies still answered to a tap and the next one you touched was struck by a card that no longer looked chosen. Opening the Armoury now puts the aim down — however you aimed, by tapping the card's information, by dragging it, or by its number key.",
+    "build": "0.7.1.59",
+    "pullRequest": 1003,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1003"
+  },
+  {
+    "id": "pr-1101",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Sceptres now give you mana back when you break an enemy's arcane guard",
+    "detail": "The Bone Sceptre and the Emberlight Sceptre each carry a power called Siphon: when one of your own hits fills an enemy's Arcane Exposure and breaks it, you get 1 Mana back. The power belongs to the sceptre, not to you. Swap it for another weapon mid-fight and the refund stops; take the sceptre back up and it returns, once, never twice. A fight you saved and reload keeps it. The Herald starts with the Bone Sceptre, so a Herald feels this from the first fight. Every other weapon, armour and relic works exactly as before.",
+    "build": "0.7.1.57",
+    "pullRequest": 1101,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1101"
+  },
+  {
+    "id": "pr-1098",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Gear, relics and your class can now be given lasting powers of their own",
+    "detail": "Nothing you see changes yet. The game now keeps one list of powers that a weapon, a piece of armour, a relic or a class can grant while you hold it, and each power has exactly one written rule. Cards can never hold these powers; a card only ever does what its own text says. The list starts empty. The first power arrives with the next change: a sceptre that gives you mana back when you break an enemy's arcane guard.",
+    "build": "0.7.1.56",
+    "pullRequest": 1098,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1098"
+  },
+  {
+    "id": "pr-1099",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Quests are spoken, and each one finishes exactly once",
+    "detail": "Each step of the Grave of the Nameless now opens as a conversation: you stand on the left, whoever speaks stands on the right, and the story comes one line at a time. Back rereads a line, Skip speech jumps to the end, and Continue reads on. Your answers, the event's own choices, appear on the last line, and one that binds you still asks you to hold. Answering at the second cairn with anything but Leave now finishes the quest, and collecting a road quest's reward on the world map finishes that quest the same way, once per run, even if you reload. Events that belong to no quest look as before.",
+    "build": "0.7.1.55",
+    "pullRequest": 1099,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1099"
+  },
+  {
+    "id": "pr-1095",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A check on the game's own builder is watched again",
+    "detail": "Nothing you see changes. The tool that packs the whole game into one file has a set of deliberately broken builds it is tested against, to prove it refuses them rather than shipping a half-made game. Three of those tests had quietly stopped working — two described a rule the builder no longer follows, and one had been outgrown by the game itself, which is now far larger than the test assumed. All three are repaired, and the set is now run by the project's checks instead of by whoever remembers it exists.",
+    "build": "0.7.1.54",
+    "pullRequest": 1095,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1095"
+  },
+  {
+    "id": "pr-1092",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The game is checked against its own written world",
+    "detail": "Nothing you see changes. The world's history — the three flames, what a cinder is, why a Forsaken can climb at all — is written down in one place, and until now nobody had read it against the game as it is actually built. That reading now exists: what the world says and the game already does, what the two disagree about, and what the world promises that the game has not built yet. Nothing was changed to make either side agree; the disagreements are simply written down where they can be fixed.",
+    "build": "0.7.1.53",
+    "pullRequest": 1092,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1092"
+  },
+  {
+    "id": "pr-1094",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The plan for how your character grows now includes quests you talk through",
+    "detail": "Nothing you see changes yet. The written plan now gives quests two things. Each quest finishes exactly once, whether it's a chain of events like the Grave of the Nameless or a road quest taken on the world map, and that one finish is what future experience and rewards count. And every quest exchange is spoken: each step of a chain, and taking or turning in a quest at a town's quest board, opens a conversation with the person who gives it. You stand on the left, they stand on the right, and your answers are the quest's own choices. Text comes first; voice, when it arrives, can never answer for you.",
+    "build": "0.7.1.52",
+    "pullRequest": 1094,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1094"
+  },
+  {
+    "id": "pr-1091",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "This record catches up with the second batch of rebuilt screens",
+    "detail": "Nothing you see changes. Nine changes merged since the last catch-up had no line here, because they were merged in a way the project's receipts check cannot see. Each now has its line with the build it shipped in, so the changelog under Settings, About lists them too.",
+    "build": "0.7.1.51",
+    "pullRequest": 1091,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1091"
+  },
+  {
+    "id": "pr-1089",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The project's own checks measure today's screens again",
+    "detail": "Nothing you see changes. Four of the project's checks had fallen behind the rebuilt screens: one looked for scrolling where the merchant no longer scrolls, one expected the combat buttons at the screen edges, one read an old version of the map's route strip, and one could not get past the title screen to reach Settings. Each now walks the game as it is.",
+    "build": "0.7.1.50",
+    "pullRequest": 1089,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1089"
+  },
+  {
+    "id": "pr-1090",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Equipment, relic and potion cards say what kind of thing they are",
+    "detail": "A weapon's card now shows its hand or requirements, its attack, defense and weight, and the card it grants; armour shows its poise; a relic says whether it works on its own or when something happens, and how often; a potion says what it heals, restores or grants. Only facts the game already knows are shown. Relic and potion cards no longer cut off their last line of text, and a relic's first line now reads \"Active while owned\" instead of calling every relic passive.",
+    "build": "0.7.1.50",
+    "pullRequest": 1090,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1090"
+  },
+  {
+    "id": "pr-1088",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The Smith's three services open as one workspace",
+    "detail": "Upgrading, extracting a card and installing a card now share one window: your items on a list at the left, or one selector on a phone, and the item you pick described beside it, step by step, with the Smithing Stone cost at the bottom. Back and the action share the bottom row. Every cost and confirmation is unchanged.",
+    "build": "0.7.1.49",
+    "pullRequest": 1088,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1088"
+  },
+  {
+    "id": "pr-1087",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Every list of categories behaves the same way on a phone",
+    "detail": "The merchant, the Armoury, the discard pile, the compendium, your profile and Settings now all fold their categories into one button on a narrow screen, which opens the full list, instead of a row of buttons you had to scroll sideways. In Settings, Escape closes that open list rather than Settings itself, and every toggle and choice is a comfortable size to tap.",
+    "build": "0.7.1.48",
+    "pullRequest": 1087,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1087"
+  },
+  {
+    "id": "pr-1084",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The top band shows your relics the same way everywhere, and one Potions list",
+    "detail": "Relics in combat and in the merchant, Shrine and event screens now look and open the same way. Your flasks and carried potions form one list with counts, so several of the same potion show as one entry, and \"1 charges\" now reads \"1 charge\". Using a potion asks exactly as before.",
+    "build": "0.7.1.47",
+    "pullRequest": 1084,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1084"
+  },
+  {
+    "id": "pr-1086",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Enemy intentions stay clear of the top band, and controls stay clear of a phone's notch",
+    "detail": "On a phone held sideways the top of each enemy's intention, and the information button above it, sat under the top band; on a wide screen the information button did too once an enemy was selected. Both now sit fully below it. On phones with a notch, the buttons beside your hand keep clear of the screen's edges.",
+    "build": "0.7.1.46",
+    "pullRequest": 1086,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1086"
+  },
+  {
+    "id": "pr-1079",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Every battlefield stands on its painted ground",
+    "detail": "Each place's painting is now fitted so its ground meets the fighters' feet, so no one floats above the floor in any scene. When a card needs a target, the enemies you can pick show one clear outline that stays readable on a phone and disappears once you have played the card.",
+    "build": "0.7.1.45",
+    "pullRequest": 1079,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1079"
+  },
+  {
+    "id": "pr-1078",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Explanations point at what they explain",
+    "detail": "An explanation now has a small arrow toward the thing you are hovering, opens below it when there is no room above, and waits its full second even if you brush over the same thing twice.",
+    "build": "0.7.1.44",
+    "pullRequest": 1078,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1078"
+  },
+  {
+    "id": "pr-1085",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Confirmations name what they will do",
+    "detail": "Buying, selling, burning a card, resting and quitting now ask a plain question, name the thing involved, and state exactly what it costs or loses, with Back on the left. Quitting names the run you are leaving, and burning a card is treated as the permanent choice it is.",
+    "build": "0.7.1.43",
+    "pullRequest": 1085,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1085"
+  },
+  {
+    "id": "pr-1072",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "This record catches up with two days of rebuilt screens",
+    "detail": "Nothing you see changes. Twenty-eight changes from the last two days landed without a line here, nine of them flagged by the project's own receipts check and nineteen merged in a way that check cannot see. Each now has its line, with the build it shipped in read from the project's history, so the changelog under Settings, About lists them too.",
+    "build": "0.7.1.42",
+    "pullRequest": 1072,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1072"
+  },
+  {
+    "id": "pr-1071",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "One of the project's checks points at the new settings page",
+    "detail": "Nothing you see changes. A check that deliberately breaks the settings page, to prove another check notices, was still aiming at a line the new settings layout no longer has, so it broke nothing and proved nothing. It aims at the current line again.",
+    "build": "0.7.1.41",
+    "pullRequest": 1071,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1071"
+  },
+  {
+    "id": "pr-1070",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The Armoury keeps its views on a side list, with the selected item beside the list",
+    "detail": "The Armoury's views (Character, Equipment, Inventory, Cards) now sit on a list down the left of the window, or in a row above it on a phone, instead of tabs across the top. In Inventory, your items sit in one column and the one you pick is described in the other, including how it compares with what you have equipped and whether you can equip it. The button to equip or change it now sits at the bottom of the window and asks for the same hold it always did.",
+    "build": "0.7.1.41",
+    "pullRequest": 1070,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1070"
+  },
+  {
+    "id": "pr-1069",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The merchant's shelves become a list you can see all at once",
+    "detail": "The merchant's folding bars are gone. Cards, Armaments, Weapon arts, Relics, Flasks, Services and Sell are now a list down the left of the window, or along the top on a phone. Each offer shows its price and, when you cannot take it, why not. Picking a relic, a flask or something to sell shows it beside the shelf, and the button at the bottom buys or sells it after the same confirmation as before. The shop remembers which shelf you were on after a purchase.",
+    "build": "0.7.1.40",
+    "pullRequest": 1069,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1069"
+  },
+  {
+    "id": "pr-1068",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The Shrine and events lay out their choices beside what they mean",
+    "detail": "At a Shrine, the options now sit beside a column saying which are available, and the top of the window counts them. At an event, the story sits beside the responses, and the top of the window says whether you still have to choose, whether a price blocks a response, or whether it is resolved. Continue now waits at the bottom of the window until you have answered.",
+    "build": "0.7.1.39",
+    "pullRequest": 1068,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1068"
+  },
+  {
+    "id": "pr-1066",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The compendium and your profile use the same side list as everything else",
+    "detail": "In the compendium, the kinds of armament sit on a list down the left, and the piece you tap is described beside the collection; pieces you have not found still hide their names. Your profile lists set-aside profiles and set-aside runs the same way. On a phone, both lists fold into one button that opens them.",
+    "build": "0.7.1.38",
+    "pullRequest": 1066,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1066"
+  },
+  {
+    "id": "pr-1062",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Settings has one heading and a side list of categories",
+    "detail": "Settings no longer repeats its own name and category above every page. On a wide screen the categories sit on a list down the left; on a phone, one button above the settings names the current category and opens the list. The first category is now called Display. Seven settings whose name already says what they do no longer carry a line of explanation.",
+    "build": "0.7.1.37",
+    "pullRequest": 1062,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1062"
+  },
+  {
+    "id": "pr-1059",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The map no longer draws a second gold box beside the node you picked",
+    "detail": "Tapping a map node showed its selection glow and, next to it, a gold square left by the explanation system. The square is gone; the glow and the keyboard cursor remain.",
+    "build": "0.7.1.36",
+    "pullRequest": 1059,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1059"
+  },
+  {
+    "id": "pr-1040",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "An enemy's or your own window shows every pool you have",
+    "detail": "Opening a fighter's information shows health, mana and poise meters under the picture again, only for the pools that fighter has. For a while it showed health alone, with empty space below.",
+    "build": "0.7.1.35",
+    "pullRequest": 1040,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1040"
+  },
+  {
+    "id": "pr-1061",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "A potion's window says whether you can drink it, and lets you",
+    "detail": "Opening a flask's information now shows its effect, its remaining charges, and, when it cannot be used here, the reason. Its one button is Use, which works exactly like Use in the flask's own menu. The extra Close button at the bottom is gone; the corner close remains.",
+    "build": "0.7.1.34",
+    "pullRequest": 1061,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1061"
+  },
+  {
+    "id": "pr-1058",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The discard pile has a side list, and reading a card no longer adds a Back button",
+    "detail": "The Discard and Exhaust piles now sit on a list at the left of their window, and the card you tap is described beside the pile, so you can read a card without opening another window. A card you are only reading, with nothing to do, now opens with no buttons at the bottom; the corner close is the way out.",
+    "build": "0.7.1.33",
+    "pullRequest": 1058,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1058"
+  },
+  {
+    "id": "pr-1052",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The map's top band takes a tenth of the screen",
+    "detail": "On the act map, your class, purse, health and route now share one slim band at the top instead of taking almost a fifth of the screen, so the map itself gets the room. On a short landscape phone the band keeps the height of one tappable row.",
+    "build": "0.7.1.32",
+    "pullRequest": 1052,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1052"
+  },
+  {
+    "id": "pr-1043",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Combat fits a phone held sideways",
+    "detail": "On a landscape phone, End Turn, Actions, Potions and the draw and discard piles now stand to either side of your hand instead of in a row beneath it, which leaves room for the fighters and a readable hand. Every screen size that already fitted looks exactly as before.",
+    "build": "0.7.1.31",
+    "pullRequest": 1043,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1043"
+  },
+  {
+    "id": "pr-1031",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "A fighter's guard sits beside it at the size you can read",
+    "detail": "The block badge now sits just outside the fighter's picture, on your right-hand side for you and the left for enemies, at a size you can read on a phone. It had shrunk with the sprite and floated away from it. Enemy intentions keep a readable minimum size too.",
+    "build": "0.7.1.30",
+    "pullRequest": 1031,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1031"
+  },
+  {
+    "id": "pr-1029",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Fighters show their health bar, and the rest when you pick them",
+    "detail": "Under each fighter, health always shows. Its name, mana, build-up meters and stance appear when you select that fighter, so a crowded field stays readable. Stance is now a strip the width of the health bar.",
+    "build": "0.7.1.29",
+    "pullRequest": 1029,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1029"
+  },
+  {
+    "id": "pr-1044",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Buttons at the bottom of a window share the width evenly",
+    "detail": "Buttons along the bottom of a window now split its width equally, and a single button fills it. The two buttons at the end of a run share one width and wrap a long label instead of squeezing it.",
+    "build": "0.7.1.28",
+    "pullRequest": 1044,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1044"
+  },
+  {
+    "id": "pr-1054",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Every card and fighter has the same information button",
+    "detail": "The small i that appears above whatever you have selected is now one size everywhere, a comfortable tap target with a clear letter, and it always hangs the same distance above its card or fighter.",
+    "build": "0.7.1.27",
+    "pullRequest": 1054,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1054"
+  },
+  {
+    "id": "pr-1051",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "A selected card or fighter glows all over",
+    "detail": "Picking a card or a fighter now wraps the whole thing, its information button included, in one soft gold glow. Before, a card could wear an outline, a shadow and a border at once, and a fighter's glow missed its intention and its information button.",
+    "build": "0.7.1.26",
+    "pullRequest": 1051,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1051"
+  },
+  {
+    "id": "pr-1049",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Equipment cards show their rarity and how many you own",
+    "detail": "The bottom line of an armament, armour, relic or potion card now shows its rarity on the left and, in the Armoury and at the Smith, how many you own on the right. What it requires moved up beside its type.",
+    "build": "0.7.1.25",
+    "pullRequest": 1049,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1049"
+  },
+  {
+    "id": "pr-1036",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Cards on offer say how many copies you already have",
+    "detail": "A card offered as a reward, at the merchant or in a custom draft now shows how many copies are already in your deck at the bottom right, beside its rarity.",
+    "build": "0.7.1.24",
+    "pullRequest": 1036,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1036"
+  },
+  {
+    "id": "pr-1035",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "Two tuning values are confirmed",
+    "detail": "Nothing you see changes. The width kept for the Discard and Exhaust piles on narrow screens, and the short wait before a second tap on a map node enters it, were marked as trial values; the owner kept both.",
+    "build": "0.7.1.23",
+    "pullRequest": 1035,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1035"
+  },
+  {
+    "id": "pr-1024",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The act map asks you to pick a place, then enter it",
+    "detail": "Tapping a lit node on the act map now selects it and describes it in a band below the map, with its floor, kind and what it holds, instead of travelling at once. Enter, at the bottom right, or a second tap on the same node takes you there. A quick double tap no longer travels by accident.",
+    "build": "0.7.1.22",
+    "pullRequest": 1024,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1024"
+  },
+  {
+    "id": "pr-1017",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "A fighter's information opens as a two-column window",
+    "detail": "Opening a fighter's information shows its picture, name and health on the left and its details on the right, in a set order: summary, current state, what it did before, known abilities, traits, and lore. Something unknown now says Unknown, and something absent says None.",
+    "build": "0.7.1.21",
+    "pullRequest": 1017,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1017"
+  },
+  {
+    "id": "pr-1021",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The main menu shows the save you would continue",
+    "detail": "When there is a run to continue, the title screen highlights Continue and shows that save beside the menu: its class, act, floor, health, slot and seed.",
+    "build": "0.7.1.20",
+    "pullRequest": 1021,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1021"
+  },
+  {
+    "id": "pr-1019",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The spoils screen counts what you have claimed",
+    "detail": "The rewards window now says how many rewards you have claimed and lists each one as taken, skipped, full or still available, with a reminder while a card choice is waiting.",
+    "build": "0.7.1.18",
+    "pullRequest": 1019,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1019"
+  },
+  {
+    "id": "pr-1015",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The small meters under a fighter sort themselves",
+    "detail": "Under each fighter, health comes first, then other pools, then build-up, then stance, then status icons, never more than five rows. Build-up that does not fit becomes a small ring among the icons, and a +N tile opens the full list.",
+    "build": "0.7.1.17",
+    "pullRequest": 1015,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1015"
+  },
+  {
+    "id": "pr-1013",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "Back and Close look alike, and turn red when you are about to press them",
+    "detail": "Every way out of a window now wears the same brown and gold and turns red under your finger, cursor or controller, so it is never mistaken for the button that goes forward. End Turn stays plain until you have spent your actions.",
+    "build": "0.7.1.16",
+    "pullRequest": 1013,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1013"
+  },
+  {
+    "id": "pr-1010",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The combat screen shares its height by one rule",
+    "detail": "The top band, the battlefield, your hand and the controls now split the screen by fixed shares, and the hand and controls keep a readable minimum on small screens. The row at the bottom packs its buttons into the centre at one height.",
+    "build": "0.7.1.15",
+    "pullRequest": 1010,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1010"
+  },
+  {
+    "id": "pr-1009",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "Cards and the battlefield take their first rebuilt shape",
+    "detail": "Every card now has the same proportions and layout, with its costs down its left edge, and your hand selects one card at a time without spending an action. Fighters stand in fixed rows on the battlefield, closer ones in front, and a selected fighter grows a little without moving the others.",
+    "build": "0.7.1.13",
+    "pullRequest": 1009,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1009"
+  },
+  {
+    "id": "pr-1005",
+    "date": "2026-09-13",
+    "group": "2026-09-13",
+    "summary": "The plans for the rebuilt screens are in the repository",
+    "detail": "Nothing you see changes. The approved drawings and measurements for every screen and component the game is being rebuilt around are now documents in the project, with an interactive gallery of them.",
+    "build": "0.7.1.11",
+    "pullRequest": 1005,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1005"
+  },
+  {
     "id": "pr-1002",
     "date": "2026-09-12",
     "group": "2026-09-12",

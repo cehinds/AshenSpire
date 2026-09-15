@@ -384,7 +384,9 @@ const PROBE = `(() => {
   // squeezed into unusable ribbons. Assert the component boundary, not a magic
   // width that happens to fit today's copy.
   if (document.querySelector('#flask-reallocate')) {
-    const bare = [...document.querySelectorAll('.screen > .class-row > .class-pick')]
+    // Descendant, not child: since W1s the option list stands in the choice
+    // body's first slot, not directly under the screen.
+    const bare = [...document.querySelectorAll('.screen .class-row > .class-pick')]
       .filter((card) => !card.matches('details.shrine-fold')
         && !card.querySelector(':scope > .cp-body'));
     if (bare.length) visual.push('Shrine choice cards missing their shared .cp-body composition: ' + bare.length);

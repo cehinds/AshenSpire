@@ -18,26 +18,26 @@
 // Armoury and Menu controls, their tooltips and the quick-nav list. map.js
 // calls both; a room calls both; nothing here decides navigation — every row
 // calls a handler the caller already owns.
-import { openCollectibleInspection } from './collectibleCard.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { relicText } from './card.js';
 import { actionHint } from '../input.js';
 import { MENU } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from './quicknav.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
-import { flaskIdentityHtml, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
+import { flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
 import { hudShellHtml } from './hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from './hudQuickSettings.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from './resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { potionContents } from '../models/PotionContentsModel.js';
 import { useRunChargeFlask } from '../../engine/actions.js';
 import { seatAtTier } from '../../model/seats.js';
 import { activeMods, endlessActInfo } from '../../content/customMods.js';
 import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { el as kitEl, slot } from '../kit/index.js';
+import { mountRelicRail } from './relicRail.js';
+import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
 
 export const RUN_HUD_ARMOURY_ID = 'open-armoury';
 export const RUN_HUD_MENU_ID = 'open-menu';
@@ -56,17 +56,21 @@ export function seatNameOf(registries, run) {
   return registries.seats.has(id) ? registries.seats.get(id).name : null;
 }
 
-export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header' }) {
+export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header', layout = '', orientationHtml = '' }) {
   const map = run.mapGraph;
   const className = registries.classes.get(run.class).name;
-  const seatName = seatNameOf(registries, run);
   return hudShellHtml(runHudViewModel({
     place,
     headerClass,
+    // W4b: the map opts into its 10 vh header ('map-compact', sized by
+    // components/mapHeader.js); every other room passes nothing.
+    layout,
+    orientationHtml,
     cinders: run.cinders,
-    // `Act <tier> · <seat name>` (SPEC §13.2) — the chip prints its value as
-    // text, so the seat rides in the value rather than a new field.
-    act: seatName ? `${run.actNumber} · ${seatName}` : run.actNumber,
+    // `Act <tier> · <seat name>` (SPEC §13.2): the act number and the seat
+    // are two semantic fields; the header prints them together.
+    act: run.actNumber,
+    seat: seatNameOf(registries, run),
     actTotal: run.actNumber > 3 ? null : 3,
     floor: run.floor,
     floorTotal: map ? map.floors : null,
@@ -94,6 +98,9 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
  *   quickControls    the fullscreen/music controls the quick-nav reads
  *   onSettingsChange the quick-settings binding (kept for the callers' shape)
  *   remount()        re-draws the host screen after a flask is drunk here
+ *
+ * A part whose WGH0 layer is off (models/RunHudLayerModel.js) is not in the
+ * band, so its wiring is skipped rather than assumed.
  */
 export function wireRunHud(app, {
   registries, run, meta,
@@ -128,90 +135,111 @@ export function wireRunHud(app, {
     resHost.appendChild(resourceBars(plan, { surface: 'main' }));
   }
 
-  const strip = hud.querySelector('.hud-relics');
-  for (const rid of run.relics) {
-    const def = registries.relics.get(rid);
-    const tile = slot({ art: def.icon || '◆', small: true, tag: 'button', label: def.name, className: 'relic' });
-    markUiComponent(tile, UI.relicSlot);
-    tile.addEventListener('click', () => openCollectibleInspection(registries, def, 'Relic', tile));
-    attachTooltip(tile, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
-    strip.appendChild(tile);
-  }
+  // WGH6: the relics, through the one tile renderer combat uses too.
+  mountRelicRail(hud.querySelector('.hud-relics'), registries, run.relics);
 
-  const flaskArt = (def) => kitEl('span', { class: 'sl-art', 'aria-hidden': 'true', html: flaskIdentityHtml(def, { showName: false }) });
-  const flaskWrap = hud.querySelector('.hud-potions');
-  for (const kind of CHARGE_FLASK_KINDS) {
+  // POTION ICONS — only where the band has a potion tray, which no place has
+  // by default: `wireframeUi.hud.potions.roomRail` is off since 2026-09-14
+  // (owner: no potions in the top band; see models/RunHudLayerModel.js). With
+  // it on, a room without a footer HUD draws the entries of the ONE Potions
+  // projection (WGH8, models/PotionContentsModel.js) as icons of the shared
+  // icon tray, like the footer's Potions minis: a tap explains the flask, a
+  // second tap (or Enter) opens its use/drop menu.
+  const potionHost = hud.querySelector('.hud-potions');
+  const potionIcons = [];
+  const contents = potionHost
+    ? potionContents({ chargeKinds: CHARGE_FLASK_KINDS, flaskCharges: run.flaskCharges, carried: run.flasks })
+    : { entries: [] };
+  for (const entry of contents.entries.filter((row) => row.category === 'charge')) {
+    const kind = entry.kind;
     const def = chargeFlaskDefinition(registries, kind);
     if (!def) continue;
-    const current = run.flaskCharges ? run.flaskCharges[`${kind}Current`] : 0;
-    // The same kit Slot combat draws: art, count as a round StatePill.
-    const tile = slot({ art: flaskArt(def), count: current, label: def.name, disabled: current <= 0, className: 'relic flask-slot flask-charge', attrs: { dataset: { flaskKind: kind } } });
-    markUiComponent(tile, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-    tile.querySelector('.sl-count').classList.add('flask-charge-count');
-    attachTooltip(tile, () => flaskTooltipHtml(def, { charges: current }));
-    tile.addEventListener('click', () => {
-      const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
-      const plan = flaskActionPlan({
-        context: 'run',
-        canUse,
-        useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
-        canDrop: false,
-        dropReason: 'Charge flasks stay with the run',
-      });
-      mountFlaskActionMenu(tile, {
-        def, plan, charges: current, onCancel: () => {},
-        onAction: (actionId) => {
-          if (actionId !== 'use' || !canUse) return;
-          useRunChargeFlask({ run, registries, rng: null, kind });
-          onSave?.();
-          remount?.();
-        },
-      });
+    const current = entry.count;
+    const icon = trayIcon({
+      art: flaskPresentation(def, { showName: false }), count: current, tone: def.tint || '', label: def.name, disabled: current <= 0,
+      attrs: { class: 'flask-slot flask-charge', dataset: { flaskKind: kind } },
+      tip: () => flaskTooltipHtml(def, { charges: current }),
+      activate: (node) => {
+        const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;
+        const plan = flaskActionPlan({
+          context: 'run',
+          canUse,
+          useReason: current <= 0 ? 'No charges remain' : 'Enable “Use flasks outside combat” in Settings',
+          canDrop: false,
+          dropReason: 'Charge flasks stay with the run',
+        });
+        mountFlaskActionMenu(node, {
+          def, plan, charges: current, onCancel: () => {},
+          onAction: (actionId) => {
+            if (actionId !== 'use' || !canUse) return;
+            useRunChargeFlask({ run, registries, rng: null, kind });
+            onSave?.();
+            remount?.();
+          },
+        });
+      },
     });
-    flaskWrap.appendChild(tile);
+    markUiComponent(icon, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
+    icon.querySelector('.stk')?.classList.add('flask-charge-count');
+    potionIcons.push(icon);
   }
 
-  for (const f of run.flasks) {
-    const def = registries.flasks.get(f.flaskId);
+  for (const entry of contents.entries.filter((row) => row.category === 'carried')) {
+    const def = registries.flasks.get(entry.flaskId);
+    let held = entry.count;
     // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
     // unified-cursor exception in input.js. Keep utility flasks reachable by
     // keyboard/gamepad Confirm as well as pointer click.
-    const tile = slot({ art: flaskArt(def), label: def.name, className: 'mh-flask flask-slot' });
-    markUiComponent(tile, UI.potionControl);
-    attachTooltip(tile, () => flaskTooltipHtml(def));
-    tile.addEventListener('click', () => {
-      const plan = flaskActionPlan({
-        context: 'run',
-        canUse: false,
-        useReason: 'Flasks can only be used in combat',
-        canDrop: true,
-      });
-      mountFlaskActionMenu(tile, {
-        def,
-        plan,
-        onCancel: () => {},
-        onAction: (actionId) => {
-          if (actionId !== 'drop') return;
-          const at = run.flasks.indexOf(f);
-          if (at >= 0) run.flasks.splice(at, 1);
-          tile.remove();
-          hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
-        },
-      });
+    const icon = trayIcon({
+      art: flaskPresentation(def, { showName: false }), count: held, tone: def.tint || '', label: def.name,
+      attrs: { class: 'mh-flask flask-slot', dataset: { flaskId: entry.flaskId } },
+      tip: () => flaskTooltipHtml(def),
+      activate: (node) => {
+        const plan = flaskActionPlan({
+          context: 'run',
+          canUse: false,
+          useReason: 'Flasks can only be used in combat',
+          canDrop: true,
+        });
+        mountFlaskActionMenu(node, {
+          def,
+          plan,
+          onCancel: () => {},
+          onAction: (actionId) => {
+            if (actionId !== 'drop') return;
+            // Drop ONE of this kind: the first slot holding it, as the tile for
+            // that slot did when each carried flask had its own.
+            const at = run.flasks.findIndex((f) => f.flaskId === entry.flaskId);
+            if (at >= 0) run.flasks.splice(at, 1);
+            held = run.flasks.filter((f) => f.flaskId === entry.flaskId).length;
+            if (held > 0) node.querySelector('.stk').textContent = String(held);
+            else {
+              potionIcons.splice(potionIcons.indexOf(node), 1);
+              setIconTrayItems(potionHost, potionIcons);
+            }
+            hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
+          },
+        });
+      },
     });
-    flaskWrap.appendChild(tile);
+    markUiComponent(icon, UI.potionControl);
+    potionIcons.push(icon);
   }
-  hud.dataset.hasUtilityPotions = run.flasks.length ? 'true' : 'false';
+  if (potionHost) {
+    setIconTrayItems(potionHost, potionIcons);
+    observeIconTray(potionHost);
+  }
+  hud.dataset.hasUtilityPotions = potionHost && run.flasks.length ? 'true' : 'false';
 
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
-  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
-  else armouryBtn.remove();
+  if (armouryBtn && onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  else armouryBtn?.remove();
 
   // ☰ — today it opens the overlay at Settings; under the quick-nav experiment
   // it opens the list of everywhere this screen can go. Every row below calls
   // a handler that already exists, so nothing here decides navigation state.
   const menuBtn = hud.querySelector(`#${RUN_HUD_MENU_ID}`);
-  if (onMenu) {
+  if (menuBtn && onMenu) {
     menuBtn.addEventListener('click', (e) => {
       if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
@@ -235,11 +263,13 @@ export function wireRunHud(app, {
   // the same MENU table the rows read. `title=` alone is invisible to touch and
   // to a pad.
   const armouryRow = (MENU.map || []).find((r) => r.act === 'armoury');
-  if (onArmoury && armouryRow) attachTooltip(armouryBtn, () => `<div class="tt-title">${esc(armouryRow.label)}</div>${esc(armouryRow.tip)}`);
-  attachTooltip(menuBtn, () =>
-    `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-      ? 'Armoury, settings, controls and saving.'
-      : 'Everywhere you can go from here.')}`);
+  if (armouryBtn && onArmoury && armouryRow) attachTooltip(armouryBtn, () => `<div class="tt-title">${esc(armouryRow.label)}</div>${esc(armouryRow.tip)}`);
+  if (menuBtn) {
+    attachTooltip(menuBtn, () =>
+      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+        ? 'Armoury, settings, controls and saving.'
+        : 'Everywhere you can go from here.')}`);
+  }
 
-  return { hud, armouryBtn: onArmoury ? armouryBtn : null, menuBtn };
+  return { hud, armouryBtn: armouryBtn && onArmoury ? armouryBtn : null, menuBtn };
 }

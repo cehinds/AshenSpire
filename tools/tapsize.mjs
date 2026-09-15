@@ -174,7 +174,10 @@ function stylesheetHoldsNoConstant(sizes) {
 }
 
 const SELECTORS = {
-  setTab: '.set-tabs .set-tab',
+  // W1a: compact hosts select a section with `.set-cat-select` and keep the
+  // tabs closed; `grp` measures only what is drawn, so each shape counts the
+  // control it actually shows.
+  setTab: '.set-tabs .set-tab, .set-cat-select',
   ovTab: '.overlay-tabs .ov-tab',
   choice: '.choice-group .choice',
   regionFold: '.region-fold',

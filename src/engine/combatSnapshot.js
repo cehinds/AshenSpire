@@ -6,7 +6,31 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
+import { syncLoadoutProperties, syncRelicProperties } from './properties.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
+
+/**
+ * A fight saved before plan phase 2 keyed its relic gates `relic:<owner>:<id>:<i>`;
+ * the mount scan that replaced it keys them `property:<owner>:relic:<id>:<i>`.
+ * The rename is carried here rather than left to sort itself out, because what
+ * those keys hold is `once` and `limitPerTurn` — a Forsaken Medallion that had
+ * already spent its one opening strike would spend it again on the turn the
+ * player reloaded, which is the save reading as a small refund.
+ *
+ * ONE-WAY AND LOSSLESS: each old key names exactly one new key, the new form is
+ * never rewritten, and a snapshot with neither form is untouched. It stays until
+ * no save in the wild predates the move; it costs one pass over a map that holds
+ * a few dozen entries.
+ */
+const RELIC_GATE_KEY = /^relic:(.+):([^:]+):(\d+)$/;
+function carryRelicGateKeys(entries) {
+  if (!Array.isArray(entries)) return entries;
+  return entries.map((entry) => {
+    if (!Array.isArray(entry) || typeof entry[0] !== 'string') return entry;
+    const m = RELIC_GATE_KEY.exec(entry[0]);
+    return m ? [`property:${m[1]}:relic:${m[2]}:${m[3]}`, entry[1]] : entry;
+  });
+}
 
 /** Return the JSON-safe state of one fully committed combat turn. */
 export function serializeCombatSnapshot(combat) {
@@ -92,7 +116,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     queue: [],
     eventLog: saved.eventLog,
     _buffer: null,
-    triggerState: new Map(saved.triggerState),
+    triggerState: new Map(carryRelicGateKeys(saved.triggerState)),
     _idCounter: saved.idCounter,
     _emitDepth: saved.emitDepth,
   };
@@ -100,6 +124,11 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   combat._emitEvent = emitEvent;
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+  // Property mounts are never saved (definitions are not persisted): they are
+  // re-derived from the restored loadout and relics, exactly as createCombat
+  // derives them.
+  syncLoadoutProperties(combat);
+  syncRelicProperties(combat);
   return combat;
 }
 

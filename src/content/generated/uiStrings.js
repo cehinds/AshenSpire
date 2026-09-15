@@ -283,6 +283,370 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "card.meta.owned",
+    "extends": "",
+    "short": "Owned: {count}",
+    "full": "Copies of this card already in your deck.",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.package",
+    "extends": "",
+    "short": "Granted card package",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.modifiers",
+    "extends": "",
+    "short": "Granted modifiers",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.relic",
+    "extends": "",
+    "short": "Relic effect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.effects.use",
+    "extends": "",
+    "short": "Use effect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.package.art",
+    "extends": "",
+    "short": "Weapon art: {name}",
+    "full": "The weapon art card this armament grants while equipped.",
+    "tip": ""
+  },
+  {
+    "id": "possession.package.none",
+    "extends": "",
+    "short": "No granted cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.modifiers.none",
+    "extends": "",
+    "short": "No granted modifiers",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.hand.either",
+    "extends": "",
+    "short": "Either hand",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.mode.passive",
+    "extends": "",
+    "short": "Passive",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.mode.triggered",
+    "extends": "",
+    "short": "Triggered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.purpose.healing",
+    "extends": "",
+    "short": "Healing",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.purpose.resource",
+    "extends": "",
+    "short": "Resource",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.purpose.utility",
+    "extends": "",
+    "short": "Utility",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.passive",
+    "extends": "",
+    "short": "Passive: {list}",
+    "full": "Authored passive modifiers. They apply while the relic is owned.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.affects",
+    "extends": "",
+    "short": "Affects: {list}",
+    "full": "The resources and statistics this relic's passive modifiers change.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.trigger",
+    "extends": "",
+    "short": "Trigger: {list}",
+    "full": "The events that fire this relic. Any further condition is stated in its effect text.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.limit",
+    "extends": "",
+    "short": "Limit: {list}",
+    "full": "How often each triggered effect can fire. No cooldown is authored.",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.maxResource",
+    "extends": "",
+    "short": "Max {resource} {amount}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.resourceTier",
+    "extends": "",
+    "short": "Max {resource} {amount} per {points} {attribute}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.schoolDamage",
+    "extends": "",
+    "short": "{school} damage {amount}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.relic.schoolStat",
+    "extends": "",
+    "short": "{school} damage",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.school.magic",
+    "extends": "",
+    "short": "Magic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.runeGainMult",
+    "extends": "",
+    "short": "Cinder gain",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.eliteExtraCardReward",
+    "extends": "",
+    "short": "Elite card choices",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.poiseThresholdAdd",
+    "extends": "",
+    "short": "Poise threshold",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.flaskPowerMult",
+    "extends": "",
+    "short": "Flask strength",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.revealUnknown",
+    "extends": "",
+    "short": "Unknown locations",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.shrineHealMult",
+    "extends": "",
+    "short": "Shrine healing",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.shrineNoRest",
+    "extends": "",
+    "short": "Shrine rest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.stat.powerCostReduction",
+    "extends": "",
+    "short": "Power card cost",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.damageDealt",
+    "extends": "",
+    "short": "Damage dealt",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.combatStart",
+    "extends": "",
+    "short": "Combat start",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.healed",
+    "extends": "",
+    "short": "Healed",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.playerTurnStart",
+    "extends": "",
+    "short": "Turn start",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.hpLost",
+    "extends": "",
+    "short": "HP lost",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.cardPlayed",
+    "extends": "",
+    "short": "Card played",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.enemyStaggered",
+    "extends": "",
+    "short": "Enemy staggered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.meterFilled",
+    "extends": "",
+    "short": "Meter filled",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.enemyDied",
+    "extends": "",
+    "short": "Enemy defeated",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.limit.once",
+    "extends": "",
+    "short": "Once per combat",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.limit.perTurn",
+    "extends": "",
+    "short": "{count} per turn",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.limit.none",
+    "extends": "",
+    "short": "No limit",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.heal.percent",
+    "extends": "",
+    "short": "Heals {pct}% of max HP",
+    "full": "The authored base amount before relic and flask modifiers. Healing never exceeds max HP.",
+    "tip": ""
+  },
+  {
+    "id": "possession.heal.flat",
+    "extends": "",
+    "short": "Heals {amount} HP",
+    "full": "The authored base amount before relic and flask modifiers. Healing never exceeds max HP.",
+    "tip": ""
+  },
+  {
+    "id": "possession.resource.restore",
+    "extends": "",
+    "short": "Restores {amount} {resource}",
+    "full": "The authored base amount before relic and flask modifiers.",
+    "tip": ""
+  },
+  {
+    "id": "possession.utility.status",
+    "extends": "",
+    "short": "{status} {stacks}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.utility.block",
+    "extends": "",
+    "short": "Block {amount}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.utility.line",
+    "extends": "",
+    "short": "{effect} · {target}",
+    "full": "The effect this potion applies and who receives it.",
+    "tip": ""
+  },
+  {
+    "id": "possession.target.self",
+    "extends": "",
+    "short": "Self",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.target.enemy",
+    "extends": "",
+    "short": "Enemy",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.charges",
+    "extends": "",
+    "short": "Charges: {count}",
+    "full": "Charges remaining on this carried potion.",
+    "tip": ""
+  },
+  {
     "id": "reward.flask.blocked",
     "extends": "",
     "short": "A {name} — but your flask slots are full. It stays in the mud.",
@@ -371,6 +735,111 @@ export const uiStrings = [
     "extends": "",
     "short": "CONTINUE",
     "full": "Leave the spoils door with rows still unclaimed.",
+    "tip": ""
+  },
+  {
+    "id": "reward.status.claimed",
+    "extends": "",
+    "short": "{claimed} of {total} claimed",
+    "full": "How many of this fight's rewards you have collected.",
+    "tip": ""
+  },
+  {
+    "id": "reward.claim.heading",
+    "extends": "",
+    "short": "Claim status",
+    "full": "What each reward is waiting on.",
+    "tip": ""
+  },
+  {
+    "id": "reward.state.available",
+    "extends": "",
+    "short": "Available",
+    "full": "Still here to collect.",
+    "tip": "Available"
+  },
+  {
+    "id": "reward.claim.required",
+    "extends": "",
+    "short": "Required choice",
+    "full": "A decision is still waiting before this reward can be taken.",
+    "tip": ""
+  },
+  {
+    "id": "reward.claim.blocked",
+    "extends": "",
+    "short": "Full",
+    "full": "There is no room for this one.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.eyebrow",
+    "extends": "",
+    "short": "Your climb",
+    "full": "The saved run Continue resumes.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.identity",
+    "extends": "",
+    "short": "Slot {slot} · Seed {seed}",
+    "full": "Which save Continue loads.",
+    "tip": ""
+  },
+  {
+    "id": "title.save.aria",
+    "extends": "",
+    "short": "Saved climb in slot {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.enter",
+    "extends": "",
+    "short": "Enter",
+    "full": "Travel to the selected node.",
+    "tip": "Enter"
+  },
+  {
+    "id": "map.enterNamed",
+    "extends": "",
+    "short": "Enter {name}",
+    "full": "Travel to the selected node.",
+    "tip": ""
+  },
+  {
+    "id": "map.recenter",
+    "extends": "",
+    "short": "Recenter",
+    "full": "Frame the map on where you stand.",
+    "tip": "Recenter"
+  },
+  {
+    "id": "map.context.aria",
+    "extends": "",
+    "short": "Selected node",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.empty",
+    "extends": "",
+    "short": "Choose a lit node to see what waits there.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.floor",
+    "extends": "",
+    "short": "Floor {floor}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "map.context.revealed",
+    "extends": "",
+    "short": "Revealed by the Sealstone Key.",
+    "full": "",
     "tip": ""
   },
   {
@@ -542,6 +1011,342 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.startingCards.context",
+    "extends": "",
+    "short": "Quantities depend on both hands.",
+    "full": "How many copies of each card you start with depends on what you are holding in the other hand.",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.card",
+    "extends": "",
+    "short": "Buy this card?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.card.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The card joins your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.relic",
+    "extends": "",
+    "short": "Buy this relic?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.relic.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The relic is yours for the rest of the run.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.flask",
+    "extends": "",
+    "short": "Buy this flask?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.flask.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The flask takes a free flask slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn",
+    "extends": "",
+    "short": "Burn this card?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The card leaves your deck for good.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn.none",
+    "extends": "",
+    "short": "Burn a card out of the deck?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.burn.none.message",
+    "extends": "",
+    "short": "Choose the card to burn first. Burning costs {cost} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.relic",
+    "extends": "",
+    "short": "Sell this relic?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.flask",
+    "extends": "",
+    "short": "Sell this flask?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.message",
+    "extends": "",
+    "short": "The merchant pays {price} cinders. It is gone for good; he does not sell it back.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.title",
+    "extends": "",
+    "short": "Merchant",
+    "full": "The wandering merchant's stall.",
+    "tip": "Merchant"
+  },
+  {
+    "id": "shop.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "Leave the merchant and return to the road.",
+    "tip": "Leave"
+  },
+  {
+    "id": "shop.purse",
+    "extends": "",
+    "short": "{cinders} cinders",
+    "full": "You carry {cinders} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.rail.aria",
+    "extends": "",
+    "short": "Merchant shelves",
+    "full": "Choose which of the merchant's shelves to browse.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.services",
+    "extends": "",
+    "short": "SERVICES",
+    "full": "Work the merchant or his smith does on what you already own.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.forSale",
+    "extends": "",
+    "short": "{n} for sale",
+    "full": "{n} offers on this shelf.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.soldOut",
+    "extends": "",
+    "short": "sold out",
+    "full": "Nothing is left on this shelf.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.willTake",
+    "extends": "",
+    "short": "{n} he will take",
+    "full": "The merchant will buy {n} of your goods.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.nothingWanted",
+    "extends": "",
+    "short": "nothing he wants",
+    "full": "The merchant wants none of what you carry.",
+    "tip": ""
+  },
+  {
+    "id": "shop.status.servicesOpen",
+    "extends": "",
+    "short": "{n} of {total} open",
+    "full": "{n} of {total} services are open to you now.",
+    "tip": ""
+  },
+  {
+    "id": "smith.selector.none",
+    "extends": "",
+    "short": "Choose an item",
+    "full": "Choose the item the smith will work on.",
+    "tip": "Choose an item"
+  },
+  {
+    "id": "smith.items.upgrade",
+    "extends": "",
+    "short": "Items available to upgrade",
+    "full": "The items the smith can upgrade.",
+    "tip": ""
+  },
+  {
+    "id": "smith.items.mount",
+    "extends": "",
+    "short": "Items with a mount to work on",
+    "full": "The items with a mount the smith can work on.",
+    "tip": ""
+  },
+  {
+    "id": "smith.pane.status",
+    "extends": "",
+    "short": "{purse} · {n} eligible",
+    "full": "You hold {purse}; {n} items are eligible.",
+    "tip": ""
+  },
+  {
+    "id": "smith.row.tier",
+    "extends": "",
+    "short": "Tier {from} → {to}",
+    "full": "Upgrading takes this item from tier {from} to tier {to}.",
+    "tip": ""
+  },
+  {
+    "id": "smith.row.mountOne",
+    "extends": "",
+    "short": "{where} · 1 mount",
+    "full": "This item is {where} and has one mount.",
+    "tip": ""
+  },
+  {
+    "id": "smith.row.mountMany",
+    "extends": "",
+    "short": "{where} · {n} mounts",
+    "full": "This item is {where} and has {n} mounts.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.fallback",
+    "extends": "",
+    "short": "The mount then shows {card}.",
+    "full": "After extraction the mount shows its fallback card {card}.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.fallbackNone",
+    "extends": "",
+    "short": "The mount then shows nothing.",
+    "full": "After extraction the mount is empty.",
+    "tip": ""
+  },
+  {
+    "id": "smith.heading.deck",
+    "extends": "",
+    "short": "From your deck",
+    "full": "Deck cards this mount takes.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.extract",
+    "extends": "",
+    "short": "{card} leaves {item} and joins your deck.",
+    "full": "Extraction lifts {card} out of {item} and adds it to your deck.",
+    "tip": ""
+  },
+  {
+    "id": "smith.preview.install",
+    "extends": "",
+    "short": "{card} leaves your deck and is seated in {item}.",
+    "full": "Seating moves {card} out of your deck and into {item}.",
+    "tip": ""
+  },
+  {
+    "id": "shop.price",
+    "extends": "",
+    "short": "{cost} cinders",
+    "full": "Costs {cost} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.price.back",
+    "extends": "",
+    "short": "{price} cinders back",
+    "full": "The merchant pays {price} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.ready",
+    "extends": "",
+    "short": "Available",
+    "full": "You can take this now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.cinders",
+    "extends": "",
+    "short": "Not enough cinders",
+    "full": "You cannot afford this yet.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.full",
+    "extends": "",
+    "short": "Flask slots full",
+    "full": "Every flask slot is taken.",
+    "tip": ""
+  },
+  {
+    "id": "shop.avail.locked",
+    "extends": "",
+    "short": "Unavailable",
+    "full": "This service is not open to you now.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.buy",
+    "extends": "",
+    "short": "Buy · {cost} cinders",
+    "full": "Buy the selected offer for {cost} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.sell",
+    "extends": "",
+    "short": "Sell · {price} cinders",
+    "full": "Sell the selected item for {price} cinders.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.open",
+    "extends": "",
+    "short": "Open",
+    "full": "Open the selected service.",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.remove",
+    "extends": "",
+    "short": "Choose a card",
+    "full": "Show the deck cards the merchant can burn.",
+    "tip": ""
+  },
+  {
+    "id": "shop.detail.none",
+    "extends": "",
+    "short": "Nothing selected",
+    "full": "Select an offer to read it here.",
+    "tip": ""
+  },
+  {
+    "id": "shop.detail.aria",
+    "extends": "",
+    "short": "Selected offer",
+    "full": "The offer you selected and what it costs.",
+    "tip": ""
+  },
+  {
     "id": "customRun.seat.group",
     "extends": "",
     "short": "First seat",
@@ -553,6 +1358,629 @@ export const uiStrings = [
     "extends": "",
     "short": "Seeded",
     "full": "The seed decides which seat the climb opens in.",
+    "tip": ""
+  },
+  {
+    "id": "settings.title",
+    "extends": "",
+    "short": "Settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.close",
+    "extends": "",
+    "short": "Close Settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.done",
+    "extends": "",
+    "short": "Done",
+    "full": "Close Settings; every change is already saved.",
+    "tip": ""
+  },
+  {
+    "id": "settings.nav.sections",
+    "extends": "",
+    "short": "Settings sections",
+    "full": "The settings categories; one is shown at a time.",
+    "tip": ""
+  },
+  {
+    "id": "settings.nav.selector",
+    "extends": "",
+    "short": "Settings section: {section}",
+    "full": "Show the list of settings sections.",
+    "tip": "Choose a section"
+  },
+  {
+    "id": "nav.categorySelector",
+    "extends": "",
+    "short": "{categories}: {current}",
+    "full": "Show the list of {categories}.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.summary",
+    "extends": "",
+    "short": "Summary",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.state",
+    "extends": "",
+    "short": "Current state",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.history",
+    "extends": "",
+    "short": "Previous actions",
+    "full": "Moves this fighter has performed; the newest first.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.abilities",
+    "extends": "",
+    "short": "Known abilities",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.traits",
+    "extends": "",
+    "short": "Known traits",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.section.lore",
+    "extends": "",
+    "short": "Lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.hp",
+    "extends": "",
+    "short": "HP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.intent",
+    "extends": "",
+    "short": "Intent",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.defense",
+    "extends": "",
+    "short": "Defense",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.summary.block",
+    "extends": "",
+    "short": "{amount} Block",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "inspector.empty.none",
+    "extends": "",
+    "short": "None.",
+    "full": "Known to be empty.",
+    "tip": ""
+  },
+  {
+    "id": "inspector.empty.unknown",
+    "extends": "",
+    "short": "Unknown.",
+    "full": "Not revealed yet.",
+    "tip": ""
+  },
+  {
+    "id": "compendium.title",
+    "extends": "",
+    "short": "Compendium",
+    "full": "Every armament the Spire keeps.",
+    "tip": ""
+  },
+  {
+    "id": "compendium.eyebrow",
+    "extends": "",
+    "short": "Armaments · {held} of {total} held",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.close",
+    "extends": "",
+    "short": "Close compendium",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.kinds",
+    "extends": "",
+    "short": "Armament kinds",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "compendium.unknown",
+    "extends": "",
+    "short": "Unknown {kind}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.categories",
+    "extends": "",
+    "short": "Set-aside kinds",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.category.meta",
+    "extends": "",
+    "short": "Profiles",
+    "full": "Profiles set aside in this device’s drawer.",
+    "tip": ""
+  },
+  {
+    "id": "profile.category.run",
+    "extends": "",
+    "short": "Runs",
+    "full": "Runs set aside in this device’s drawer.",
+    "tip": ""
+  },
+  {
+    "id": "profile.empty.meta",
+    "extends": "",
+    "short": "No profiles have been set aside.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "profile.empty.run",
+    "extends": "",
+    "short": "No runs have been set aside.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.eyebrow",
+    "extends": "",
+    "short": "Rest",
+    "full": "Recover and use this Shrine's services before moving on.",
+    "tip": ""
+  },
+  {
+    "id": "rest.title",
+    "extends": "",
+    "short": "Shrine of Ember",
+    "full": "The Shrine you are resting at.",
+    "tip": ""
+  },
+  {
+    "id": "rest.status.available",
+    "extends": "",
+    "short": "{available} of {total} available",
+    "full": "How many of this Shrine's choices you can take now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.question",
+    "extends": "",
+    "short": "Rest at this Shrine?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.target",
+    "extends": "",
+    "short": "{shrine} · {hp}/{maxHp} HP · {mana}/{maxMana} Mana",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.leave",
+    "extends": "",
+    "short": "Heal {heal} HP and restore Mana, then leave this Shrine.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.stay",
+    "extends": "",
+    "short": "Heal {heal} HP and restore Mana. You stay at this Shrine and leave when you choose.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.confirm",
+    "extends": "",
+    "short": "REST",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "confirm.eyebrow.permanent",
+    "extends": "",
+    "short": "CANNOT BE UNDONE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "quit.review.target",
+    "extends": "",
+    "short": "{className} · Slot {slot} · {facts}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.consequences.heading",
+    "extends": "",
+    "short": "Availability",
+    "full": "Whether each choice here can be taken now; its own line says why not.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.available",
+    "extends": "",
+    "short": "Available",
+    "full": "You can take this now.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.unavailable",
+    "extends": "",
+    "short": "Unavailable",
+    "full": "This cannot be taken now; the choice's own line says why.",
+    "tip": ""
+  },
+  {
+    "id": "rest.state.used",
+    "extends": "",
+    "short": "Rested",
+    "full": "You have already rested at this Shrine.",
+    "tip": ""
+  },
+  {
+    "id": "rest.continue",
+    "extends": "",
+    "short": "Continue",
+    "full": "Leave the Shrine and return to the map.",
+    "tip": "Continue"
+  },
+  {
+    "id": "event.status.choose",
+    "extends": "",
+    "short": "Choose a response",
+    "full": "Every response here is open to you.",
+    "tip": ""
+  },
+  {
+    "id": "event.status.limited",
+    "extends": "",
+    "short": "{available} of {total} available",
+    "full": "A price closes some responses for now.",
+    "tip": ""
+  },
+  {
+    "id": "event.status.resolved",
+    "extends": "",
+    "short": "Resolved",
+    "full": "Your response is taken; continue when ready.",
+    "tip": ""
+  },
+  {
+    "id": "event.continue",
+    "extends": "",
+    "short": "Continue",
+    "full": "Move on from this event.",
+    "tip": "Continue"
+  },
+  {
+    "id": "event.continue.combat",
+    "extends": "",
+    "short": "Steel yourself",
+    "full": "The event leads into a fight.",
+    "tip": "Steel yourself"
+  },
+  {
+    "id": "dialogue.eyebrow",
+    "extends": "",
+    "short": "Quest",
+    "full": "A step of a quest you are following.",
+    "tip": "Quest"
+  },
+  {
+    "id": "dialogue.region",
+    "extends": "",
+    "short": "Conversation with {speaker}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.player",
+    "extends": "",
+    "short": "You",
+    "full": "Your character.",
+    "tip": "You"
+  },
+  {
+    "id": "dialogue.status.speaking",
+    "extends": "",
+    "short": "Line {beat} of {total}",
+    "full": "The speaker is still talking; the responses come at the end.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.status.respond",
+    "extends": "",
+    "short": "Choose a response",
+    "full": "Answer with one of the responses.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.status.resolved",
+    "extends": "",
+    "short": "Resolved",
+    "full": "Your response is taken; continue when ready.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.back",
+    "extends": "common.back",
+    "short": "",
+    "full": "Read the line before this one again; nothing changes.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.skip",
+    "extends": "",
+    "short": "Skip speech",
+    "full": "Jump to the last line and the responses.",
+    "tip": "Skip speech"
+  },
+  {
+    "id": "dialogue.continue",
+    "extends": "common.continue",
+    "short": "",
+    "full": "Read the next line.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.done",
+    "extends": "common.continue",
+    "short": "",
+    "full": "Leave this conversation.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.combat",
+    "extends": "",
+    "short": "Steel yourself",
+    "full": "The conversation leads into a fight.",
+    "tip": "Steel yourself"
+  },
+  {
+    "id": "dialogue.cannotAfford",
+    "extends": "",
+    "short": "Cannot afford",
+    "full": "You cannot pay for this response yet.",
+    "tip": "Cannot afford"
+  },
+  {
+    "id": "dialogue.respond.question",
+    "extends": "",
+    "short": "Choose {label}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.respond.confirm",
+    "extends": "",
+    "short": "Choose",
+    "full": "Give this response.",
+    "tip": "Choose"
+  },
+  {
+    "id": "armoury.title",
+    "extends": "",
+    "short": "Armoury",
+    "full": "Your character, equipment, inventory and deck.",
+    "tip": "Armoury"
+  },
+  {
+    "id": "armoury.close",
+    "extends": "",
+    "short": "Close Armoury",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.categories",
+    "extends": "",
+    "short": "Armoury categories",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.detail.prompt",
+    "extends": "",
+    "short": "Select an item to see its details and available actions.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.title",
+    "extends": "",
+    "short": "Compared with equipped",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.replaces",
+    "extends": "",
+    "short": "Replaces {name} in {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.fills",
+    "extends": "",
+    "short": "Fills the empty {slot} position",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.removes",
+    "extends": "",
+    "short": "Removes {name} from {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.role",
+    "extends": "",
+    "short": "{label} {before} → {after}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.compare.unchanged",
+    "extends": "",
+    "short": "Combat values unchanged",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.ready",
+    "extends": "",
+    "short": "Available: {action}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.blocked",
+    "extends": "",
+    "short": "Unavailable: {reason}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.short",
+    "extends": "",
+    "short": "Requirement not met: {requirements}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.eligibility.requirement",
+    "extends": "",
+    "short": "{attribute} {required} (have {actual})",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "hud.class",
+    "extends": "",
+    "short": "Class",
+    "full": "The class this run is played as.",
+    "tip": ""
+  },
+  {
+    "id": "hud.cinders",
+    "extends": "",
+    "short": "Cinders",
+    "full": "{amount} cinders",
+    "tip": ""
+  },
+  {
+    "id": "hud.act",
+    "extends": "",
+    "short": "ACT",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "hud.floor",
+    "extends": "",
+    "short": "FLOOR",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "hud.position",
+    "extends": "",
+    "short": "Run position",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.charge",
+    "extends": "",
+    "short": "{count} charge",
+    "full": "{count} charge remaining",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.charges",
+    "extends": "",
+    "short": "{count} charges",
+    "full": "{count} charges remaining",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.carried",
+    "extends": "",
+    "short": "{count} carried potion",
+    "full": "{count} carried potion",
+    "tip": ""
+  },
+  {
+    "id": "potions.count.carriedMany",
+    "extends": "",
+    "short": "{count} carried potions",
+    "full": "{count} carried potions",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.status",
+    "extends": "",
+    "short": "Status effects",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.potions",
+    "extends": "",
+    "short": "Potions",
+    "full": "Potions you carry. A second tap opens that potion.",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.more",
+    "extends": "",
+    "short": "+{count}",
+    "full": "{count} more",
+    "tip": ""
+  },
+  {
+    "id": "iconTray.moreOpen",
+    "extends": "",
+    "short": "+{count}",
+    "full": "{count} more, view all",
     "tip": ""
   }
 ];
