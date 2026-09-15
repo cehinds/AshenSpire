@@ -3286,7 +3286,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* One drawn face for both information controls; the size is a variable so the
    WCB1: every host's control is the one shared circle (--inspect-size, a
    44 physical px target, with a 16 px label) unless the host declares its own
-   --card-info-size (only the creation corner still does). */
+   --card-info-size, which nothing does today — the hook stays for a host that
+   must pin the circle to a size the zoom does not choose. */
 .card-inspection-target > .card-info-button,
 .combatant-leading > .combatant-info { --inspect-box:var(--card-info-size, var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem)))); box-sizing:border-box; width:var(--inspect-box); height:var(--inspect-box); min-width:var(--inspect-box); min-height:var(--inspect-box); max-width:var(--inspect-box); max-height:var(--inspect-box); padding:0; margin:0; display:grid; place-items:center; border:1px solid #d0ac5d; border-radius:50%; background:#211a12; color:#ffe3a0; font:bold var(--inspect-label, calc(16px / var(--ui-zoom, 1)))/1 Georgia,serif; cursor:pointer; touch-action:manipulation; }
 .card-inspection-target > .card-info-button { position:absolute; z-index:8; top:calc(-1 * (var(--inspect-box) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))))); right:auto; bottom:auto; left:50%; transform:translateX(-50%); visibility:hidden; pointer-events:none; }
@@ -3337,8 +3338,50 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .equipment-choose { width:100%; margin-top:10px; min-height:44px; }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
-/* Creation keeps card nodes in place so focus can lift and settle smoothly. */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { padding:20px 6px 14px; gap:32px 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
+/* Creation keeps card nodes in place so focus can lift and settle smoothly.
+   ONE PLACEMENT, AND THE ROOM IT NEEDS (Constantine's review, 2026-09-12).
+   The information badge hangs above a selected card on every surface, this one
+   included; a corner exception here read as a second rule for the same
+   control. What made the exception necessary was room, not placement — with
+   nothing reserved the badge straddled the STARTING ARMOUR header's border
+   (measured 1280x800, 2026-09-11) — so these selectors reserve it: the 64 px
+   row gap every other card scrollport keeps, and a head that is DERIVED from
+   the badge it has to clear, floored at the 80 px this rule used to type.
+   THE HEAD IS THE BADGE'S OWN RISE, READ FROM THE BADGE'S OWN TOKENS.
+   Nothing declares --card-info-size any more, so the control here is the shared
+   circle, and main.js writes its size and hang onto the document root from
+   wireframeUi.inspect (--inspect-size, --inspect-gap). --cc-choice-rise reads
+   those same two properties through the same var chain the button's own `top`
+   uses, so a config change moves the head with the badge instead of past it: at
+   sizeRem 4 / gapPx 20 the badge grows to 67.2 px and the old head, which had
+   the 2.75 and the 10 typed into it, clipped 17.3 px (measured 2026-09-14).
+   The third term is the focus lift — translateY(-6px) plus the 5 % of the
+   card's height that scale(1.05) about center bottom grows upward, 20.2 px of
+   layout at UI size S — which is what the 26 covers, with slack.
+   A head derived from --tap-floor was tried and refused, and the max() floor is
+   why: that token divides by a zoom that runs ABOVE 1 on a desktop (1.48 at
+   1920), and a head that shrinks with it clipped 8 px off the first row there
+   while the badge had not moved. This expression only ever GROWS the head, and
+   it resolves to exactly 80 px at every zoom of 1 or more, so the Auto sizes
+   keep the geometry measured above.
+   THE ROW GAP RIDES THE SAME TOKEN, and keeps the 64 every other card
+   scrollport keeps wherever the head is at its floor. A second row's badge
+   overlaps the row above by design — it is drawn over that card at z-index 8,
+   measured 2.9 px into it at 1280 with the default tokens — so the gap is not
+   full clearance and is not what keeps a badge whole. Deriving it only stops a
+   bigger badge from deepening that overlap: the gap grows by exactly what the
+   head grows, never less than 64.
+   The floor alone was not enough: at UI size S (--ui-zoom 0.85) with NORMAL
+   motion the badge's top sat 0.8 px past the scrollport's padding box at every
+   desk width measured — 1280, 1366, 1440 and 1920 (2026-09-14; ui-sweep's
+   fixture asks for reduced motion, which drops the lift, so R5 could not see
+   it, and the row now runs a second pass that can). Derived, the head is
+   89.53 px there and the same cells clear by 7.3 px; 390 at Auto (zoom 0.9)
+   takes 86 px and clears by 18.1.
+   Measured whole and clear of the section face at 1280, 1366, 1440, 1920 and
+   390, at UI sizes Auto, S, M and XL, under normal motion.
+*/
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
 .cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
@@ -3346,12 +3389,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
-/* IN THE CARD'S CORNER, not floating above it. Elsewhere the info button
-   hangs a tap floor above a selected card and the row reserves 64 px for it;
-   the creation selectors reserve nothing, so the button straddled the STARTING
-   ARMOUR header's border (measured 1280x800, 2026-09-11). Here it sits inside
-   the card's top-right corner at 32 px — the corner holds no reading. */
-.cc-card-selectors .card-inspection-target > .card-info-button { --card-info-size: 32px; top: 6px; left: auto; right: 6px; transform: none; font-size: 16px; }
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }
@@ -3511,13 +3548,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    pane each own their overflow, so the Continue never leaves the glass. The
    subtraction is the door's head and foot, the section face and the panel's
    breathing room, divided by the zoom for the reason .modal's ceiling is.
-   The choices scrollport keeps the 64px head the other card scrollports keep
-   (above), so the above-card inspect control is not clipped on the first
-   row. Phones keep the stacked, page-scrolling layout below. */
+   The choices scrollport's head (above) is what keeps the above-card inspect
+   control off the section face on the first row. Phones keep the stacked,
+   page-scrolling layout below. */
 @media(min-width:701px) {
   .cc-equip-group[data-equipment-section] { max-height:calc(100dvh / var(--ui-zoom, 1) - 25rem); grid-template-rows:minmax(0,1fr) auto; }
   .cc-equip-group[data-equipment-section] > .cc-card-selectors { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
-  .cc-equip-group[data-equipment-section] > .cc-card-selectors:has(.poker-equipment-choice) { padding-top:64px; }
   .cc-equip-group[data-equipment-section] > .cc-equipment-details { overflow-y:auto; min-height:0; max-height:100%; scrollbar-gutter:stable; }
 }
 @media(max-width:700px) {
