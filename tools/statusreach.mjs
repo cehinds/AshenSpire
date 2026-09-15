@@ -577,6 +577,14 @@ async function selftest(real) {
     for (const p of [...b.equipment.armaments, ...b.equipment.armour]) {
       p.mods = (p.mods || []).filter((m) => !String(m).includes(`.${id}=`));
     }
+    // AND the property rules — the THIRD time this plant has been found sitting
+    // downstream of a route it did not know about, and the third time the tool
+    // was right. Plan phase 2 moved every relic's triggers into propertyRules;
+    // stripping the relic rows stopped meaning anything the day it landed,
+    // because the ops had left those rows. The lesson the two notes above teach
+    // has a name now: this plant must strip every SOURCE_SET, and any set added
+    // there without a line here re-opens the same hole quietly.
+    kill(b.propertyRules);
   };
   strip('bleed');
   r = statusReach(b, codeOk());
