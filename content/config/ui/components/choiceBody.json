@@ -1,0 +1,17 @@
+{
+  "vars": {
+    "bandMinVh": 10
+  },
+  "sizing": {
+    "frameWidthVw": 95,
+    "frameHeightVh": 90,
+    "headerMinVh": "$bandMinVh",
+    "footerMinVh": "$bandMinVh"
+  },
+  "positioning": {
+    "sideInsetVw": "$gutterVw",
+    "topInsetVh": "$insetVh",
+    "columnGapVw": 2,
+    "rowGapVh": 2
+  }
+}

@@ -69,6 +69,16 @@ function version() {
 
 const args = process.argv.slice(2);
 
+// 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
+// Runs before the content build, whose stray-source sweep refuses a config file
+// the generated module was not compiled from.
+console.log('launch: compiling presentation config…');
+const uiConfig = spawnSync(process.execPath, [resolve(ROOT, 'tools/config-build.mjs')], { stdio: 'inherit' });
+if (uiConfig.status !== 0) {
+  console.error('launch: config build failed — fix content/config and retry.');
+  process.exit(uiConfig.status || 1);
+}
+
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.

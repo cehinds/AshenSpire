@@ -1,0 +1,18 @@
+{
+  "layering": {
+    "layers": {
+      "header": true,
+      "class": true,
+      "cinders": true,
+      "position": true,
+      "vitality": true,
+      "armoury": true,
+      "menu": true,
+      "rail": true,
+      "relics": true
+    }
+  },
+  "components": {
+    "potions": { "chargeFlasks": true, "carried": true, "roomRail": true }
+  }
+}

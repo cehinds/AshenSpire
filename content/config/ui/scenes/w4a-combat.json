@@ -1,0 +1,90 @@
+{
+  "vars": {
+    "meterRowRem": 0.85
+  },
+  "sizing": {
+    "bands": { "hud": 10, "scene": 55, "context": 30, "footer": 5 },
+    "floorPercent": 80,
+    "hand": {
+      "minimumHeightPx": 208,
+      "minWidthRem": 5,
+      "maxWidthRem": 9,
+      "minCapacity": 5,
+      "maxCapacity": 15,
+      "narrowWidthRem": 22,
+      "wideWidthRem": 75,
+      "exposedTargetPx": "$targetPx"
+    },
+    "formation": {
+      "depth": [0.9, 0.95, 1],
+      "selectedGrowth": [1.1, 1.05, 1.1],
+      "displayScale": 1.1,
+      "detailReserveRem": 3.5,
+      "minimumSpritePx": 92
+    },
+    "targetLayer": { "outlinePx": 2, "outlineMinPx": 2 },
+    "overlay": { "defenseMinRem": 3.5, "intentMinRem": 2.8, "valueFontMinPx": 13.2 },
+    "combatantStack": { "iconRem": 1.575 },
+    "combatantMeters": {
+      "hpMinRem": "$meterRowRem",
+      "hpMinPx": 14,
+      "secondaryFraction": 0.5,
+      "secondaryMinRem": 0.45,
+      "stanceMinRem": "$meterRowRem",
+      "valueTextPx": 12
+    },
+    "footer": {
+      "circleMaxFraction": 0.2,
+      "pileMaxFraction": 0.1,
+      "endMaxFraction": 0.4,
+      "heightFraction": 0.95,
+      "minimumTargetPx": "$targetPx",
+      "pileMinimumRem": 4
+    }
+  },
+  "positioning": {
+    "hand": { "selectedLiftRem": 1, "verticalInsetRem": 0.25, "fanAngleDegrees": 2.5, "arcRem": 0.6 },
+    "formation": {
+      "insetRem": 1,
+      "horizontalStepFraction": 0.05,
+      "minimumStepPx": 8,
+      "innerRetreatFraction": 0.02,
+      "maxRetreatSpacingFraction": 0.15,
+      "gapNarrowFraction": 0.03,
+      "gapWideFraction": 0.05
+    },
+    "targetLayer": { "offsetPx": 6, "offsetMinPx": 4 },
+    "overlay": {
+      "defenseAnchorByRole": {
+        "player": { "side": "right", "heightFraction": 0.12 },
+        "enemy": { "side": "left", "heightFraction": 0.88 }
+      },
+      "defenseGapRem": 0.5
+    },
+    "combatantStack": { "iconGapRem": 0.1875 },
+    "combatantMeters": { "gapPx": 3 },
+    "footer": { "gapRem": 0.2 }
+  },
+  "layering": {
+    "layers": [
+      { "id": "skyline", "z": 1, "enabled": true },
+      { "id": "floor", "z": 2, "enabled": true },
+      { "id": "actors", "z": 3, "enabled": true },
+      { "id": "targets", "z": 4, "enabled": true },
+      { "id": "context", "z": 5, "enabled": true },
+      { "id": "hud", "z": 6, "enabled": true },
+      { "id": "footer", "z": 6, "enabled": true },
+      { "id": "effects", "z": 7, "enabled": true }
+    ],
+    "formation": { "backLayer": 200, "frontLayer": 0, "focusPriority": 100 }
+  },
+  "components": {
+    "overlay": { "intentVisibleByRole": { "player": false, "enemy": true } },
+    "combatantStack": { "maxRows": 5 },
+    "combatantMeters": { "selectedOnly": ["name", "resource", "buildup", "stance"] }
+  },
+  "behavior": {
+    "shortHostRails": true,
+    "hand": { "dragThresholdPx": 12 }
+  }
+}
