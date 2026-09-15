@@ -1,7 +1,8 @@
 # Proposal: progression, equipment-as-cards, and the property system
 
-Status: owner-accepted design, 2026-09-11, awaiting implementation. Nothing in
-it is shipped. Parent authority: [SPEC.md](../SPEC.md) and
+Status: owner-accepted design, 2026-09-11, awaiting implementation; §7.5
+(quests and dialogue) added by owner amendment 2026-09-14. Nothing in it is
+shipped. Parent authority: [SPEC.md](../SPEC.md) and
 [COMBAT-EQUIPMENT-RULES.md](COMBAT-EQUIPMENT-RULES.md). Where this document
 conflicts with either, it is the amendment the owner has accepted; the older
 text stays normative for shipped runs until the migration in §7 lands.
@@ -242,6 +243,52 @@ modifier on the `rested` payment if a cost is wanted later. Relic passives
 `shrineHealMult` and `shrineNoRest` become `restHealMult` and `restDenied`
 with an optional tag filter. Co-op mounts for every living member on arrival.
 
+### 7.5 Quests: completion, board, and dialogue
+
+Owner amendment, 2026-09-14: a quest has **both** a completion the rest of
+this design can reward and a spoken exchange with the person who gives it.
+Neither is a presentation of the other.
+
+**Completion.** Two kinds of quest exist today and both complete through one
+door:
+
+| Kind | Where it lives | Completes when |
+|---|---|---|
+| Event chain | `content/events.js` history gates (Grave of the Nameless → Keeper → Rest) | a choice the chain lists in `completes` is committed |
+| Atlas quest | `worldAtlas.json` `quests` rows, `questAction` | its reward is claimed (`questStates[questId]` → `claimed`) |
+
+The door records a `questCompleted` history row `{ questId, source }` at most
+once per quest per run and emits a `questCompleted` event. Everything that
+rewards a quest (`xp.quest`, class XP, a quest-pool relic) listens to that one
+event; nothing reads a screen or a node type to decide a quest is done.
+Completing a journey *node* is not completing a quest.
+
+**Board.** `questBoard` is a location service (§7.4). It lists the atlas
+quests offered at that location with their `questAction` state (accept, in
+progress, collect, collected) and a journal of the event chains this run has
+started and finished. Until locations carry services, the atlas screen's
+existing quest list is the board.
+
+**Dialogue.** Every quest exchange is spoken: each step of an event chain,
+and accepting or collecting a quest at the board. The dialogue screen is the
+W4c layout (WGQ0–WGQ8): the player stands left, the speaker right, captions
+run in the prose region, and the responses are the event's own choices.
+
+- A **speaker** is a data row (`id`, name, portrait art key). Chain events and
+  atlas quest rows name their speaker; a missing portrait falls back to the
+  name plate, never to a blank.
+- Event text divides into **beats**; Continue and Back move between beats and
+  change nothing. Responses appear on the last beat.
+- A response **commits through the event door** that exists today (run
+  effects, then the history row). Dialogue adds no second effect path, and
+  reviewing earlier beats never grants an effect again.
+- Only committed choices persist. Loading mid-exchange reopens the exchange at
+  its first beat.
+- Text is the product. Voice, when it comes, plays over the same beats: speech
+  ending may advance prose but never picks a response or runs an effect.
+  Muted, missing or blocked audio keeps captions and manual Continue.
+- One-off events that belong to no chain keep the Event screen.
+
 ## 8. Engine touches (closed-set additions, each with schema and test)
 
 1. `property` tag domain and `propertyRules` table with validation.
@@ -254,6 +301,11 @@ with an optional tag filter. Co-op mounts for every living member on arrival.
 7. One save migration: class id → core card with starter tag set; relic list →
    carriers; armament tiers → skill milestones; shrine heal/refill constants →
    location tags.
+8. Event `questCompleted` and a `questCompleted` history row kind, written by
+   one idempotent door shared by event chains and atlas quests.
+9. One event-choice command (`commitEventChoice`) that both the Event screen
+   and the dialogue screen call, so run effects and the history row are written
+   in one place.
 
 ## 9. Cut
 
@@ -326,6 +378,9 @@ the named tool.
 | 7. Recovery tags | §7.4 | Shrine and town restore exactly their tag sets; every rest restores mana by `rest.mana.mode`; `restDenied` filters by tag |
 | 8. Mana and Exposure | §7.1–7.3 | No mana card with a zero action or stamina line; four focus properties; player stagger payload from balance rows |
 | 9. Attribute rebase | Base 5, 10 points, formula rewrite | All §3.5 derived values re-derived; creation ships one mode |
+| 10. Quests and dialogue | §7.5 | Every chain step and every board accept or collect is spoken in the dialogue screen; each quest completes once through one door; the board lists atlas quests and the run's chains |
 
 Phases 7 and 8 can run beside 4. Phase 9 is last because it touches every
-derived formula.
+derived formula. Phase 10's first half needs nothing else in this plan and
+should land before phase 5, so class XP has a quest source; its board half
+waits for phase 7.
