@@ -5470,7 +5470,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ1.root | 100% | frame height; scene window = config.bands.scene | owning component slot | frame, behind every band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -5483,7 +5483,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ1.root | 100% | frame height; scene window = config.bands.scene | owning component slot | frame, behind every band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -5499,7 +5499,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ1.root | 100% | frame height; scene window = config.bands.scene | owning component slot | frame, behind every band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -5516,7 +5516,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ1.root | 100% | config.scene | owning component slot | below HUD | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ1.root | 100% | frame height; scene window = config.bands.scene | owning component slot | frame, behind every band | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -5549,7 +5549,7 @@ portrait           portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ2.root | config.portraits.slot width | three times the visible band | owning component slot | scene left slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -5560,7 +5560,7 @@ portrait           portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ2.root | config.portraits.slot width | three times the visible band | owning component slot | scene left slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -5574,7 +5574,7 @@ portrait           portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ2.root | config.portraits.slot width | three times the visible band | owning component slot | scene left slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -5589,7 +5589,7 @@ portrait           portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ2.root | portrait width | scene height | owning component slot | scene left | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ2.root | config.portraits.slot width | three times the visible band | owning component slot | scene left slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -5622,7 +5622,7 @@ portrait         portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ3.root | config.portraits.slot width | three times the visible band | owning component slot | scene right slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -5633,7 +5633,7 @@ portrait         portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ3.root | config.portraits.slot width | three times the visible band | owning component slot | scene right slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -5647,7 +5647,7 @@ portrait         portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ3.root | config.portraits.slot width | three times the visible band | owning component slot | scene right slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -5662,7 +5662,7 @@ portrait         portrait
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ3.root | portrait width | scene height | owning component slot | scene right | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ3.root | config.portraits.slot width | three times the visible band | owning component slot | scene right slot | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -5689,26 +5689,28 @@ On dispose: release timers, observers and events
 **Wide**
 
 ```text
-The Keeper
+Quest title
 The forge is still warm.
-[Ask about the forge] [Leave]
+[Ask about the forge] [Ask what the ash took]
+[Offer your blade]    [Leave the forge]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ4.root | 100% | config.context | owning component slot | reveal line | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
 ```text
-The Keeper
+Quest title
 The forge is still warm.
-[Ask about the forge] [Leave]
+[Ask about the forge] [Ask what the ash took]
+[Offer your blade]    [Leave the forge]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ4.root | 100% | config.context | owning component slot | reveal line | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -5716,14 +5718,15 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-The Keeper
+Quest title
 The forge is still warm.
-[Ask about the forge] [Leave]
+[Ask about the forge] [Ask what the ash took]
+[Offer your blade]    [Leave the forge]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ4.root | 100% | config.context | owning component slot | reveal line | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -5732,14 +5735,15 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-The Keeper
+Quest title
 The forge is still warm.
-[Ask about the forge] [Leave]
+[Ask about the forge] [Ask what the ash took]
+[Offer your blade]    [Leave the forge]
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGQ4.root | 100% | config.context | owning component slot | below scene | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGQ4.root | 100% | config.context | owning component slot | reveal line | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -5748,7 +5752,7 @@ INPUT: immutable component model, owner state, context, layout tokens
 INPUT: snapshot, knowledge, ownerState, context, config
 // Load shared tokens; numeric defaults live in componentCompletionDefaults.
 model = ProjectRegisteredModel(snapshot, knowledge, context)
-// Project one short authored beat and only known eligible choices. Choice activation records selection; explicit Continue commits through domain. Keep text size readable and choices inline when they fit.
+// Project one short authored beat and only known eligible choices: quest title, narrative, responses; no eyebrow, speaker line or prompt hint (the speaker is named under the portrait). Up to four responses fit without scrolling (config.W4c.context.maxVisibleResponses) in a grid whose columns come from config.W4c.context.responseColumns. Choice activation records selection; explicit Continue commits through domain.
 FilterInactiveProviders(model)
 children = ResolveDeclaredChildReferences(model.children)
 RenderRegisteredComponent(model, children, config)
@@ -6145,7 +6149,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS1.root | 100% of its host | host height | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -6160,7 +6164,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS1.root | 100% of its host | host height | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -6178,7 +6182,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS1.root | 100% of its host | host height | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -6197,7 +6201,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS1.root | full scene | full scene | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS1.root | 100% of its host | host height | owning component slot | scene background | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -6525,7 +6529,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS6.root | 100% scene | 100% scene | owning component slot | frame top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -6539,7 +6543,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS6.root | 100% scene | 100% scene | owning component slot | frame top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -6556,7 +6560,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS6.root | 100% scene | 100% scene | owning component slot | frame top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -6574,7 +6578,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS6.root | 100% scene | 100% scene | owning component slot | scene top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS6.root | 100% scene | 100% scene | owning component slot | frame top / behind floor | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
@@ -6609,7 +6613,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS7.root | 100% of host | floor line to host bottom (config.background.floorHeightPercent of the scene window) | owning component slot | floor line / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Compact**
 
@@ -6622,7 +6626,7 @@ On dispose: release timers, observers and events
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS7.root | 100% of host | floor line to host bottom (config.background.floorHeightPercent of the scene window) | owning component slot | floor line / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Portrait / iPhone SE (3rd generation)**
 
@@ -6638,7 +6642,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS7.root | 100% of host | floor line to host bottom (config.background.floorHeightPercent of the scene window) | owning component slot | floor line / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 
 **Portrait / Galaxy S24**
@@ -6655,7 +6659,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
 |---|---|---|---|---|---|---|---|---|
-| WGS7.root | 100% scene | config.background.floorHeightPercent | owning component slot | scene bottom / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
+| WGS7.root | 100% of host | floor line to host bottom (config.background.floorHeightPercent of the scene window) | owning component slot | floor line / ahead of skyline | inherited semantic alignment | normal flow unless overlay | shared token | Preserve proportions and readable minimums in every mode |
 
 **Language-agnostic pseudocode**
 
