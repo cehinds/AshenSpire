@@ -27,9 +27,12 @@ export function wireCombatLayout(combatEl) {
     // the hand they wrap stay clear of a notch.
     const width = combatEl.clientWidth - inlinePadding(handArea);
     const bands = allocateCombatBands({ width, height: combatEl.clientHeight, zoom, rem });
-    combatEl.style.setProperty('--wireframe-band-hud', bands.hud + 'px');
-    combatEl.style.setProperty('--wireframe-band-hand', bands.hand + 'px');
-    combatEl.style.setProperty('--wireframe-band-footer', bands.footer + 'px');
+    // The W4 parent's bands (kit.css, shared with the quest dialogue): the
+    // battlefield is the scene band, the grid's flexible row; the hand is the
+    // context band.
+    combatEl.style.setProperty('--w4-band-hud', bands.hud + 'px');
+    combatEl.style.setProperty('--w4-band-context', bands.hand + 'px');
+    combatEl.style.setProperty('--w4-band-footer', bands.footer + 'px');
     combatEl.dataset.combatGeometry = bands.supported ? 'supported' : 'unsupported';
     // WCM0: every combatant's meter rows share one geometry.
     const meters = combatantMeterGeometry({ zoom, rem });
