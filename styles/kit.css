@@ -568,20 +568,20 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
    advance box, which made the MISSING compensation look green — two errors
    cancelling — and that false green is what invited #910.
 
-   A residual remains at 2550x1305 Text XL: the gate reads +1.605px against a
-   1px tolerance. DO NOT TUNE THIS RULE TO CLEAR IT. At that exact shape and
-   text size the painted ink measures -2.5px WITH this transform and -6.5px
-   without, so the gate and the pixels disagree in SIGN: the gate says the
-   wordmark sits right of centre, the glyphs say it sits left. Moving the
-   wordmark right to satisfy the gate would take the ink to about -4px, away
-   from centre, and the check would go green while the defect got worse.
-
-   The cause is that advance-minus-trailing is still not ink: it carries the
-   first and last glyphs' side bearings, which do not cancel in a display face.
-   The fix belongs in the measurement, not here — startup-gate already captures
-   a screenshot, so it can scan for lit columns instead of doing Range
-   arithmetic. Left red deliberately, and NOT by widening the tolerance. */
-.as-titlemenu .tm-name { --track: 0.08em; margin: 0; transform: translateX(calc(var(--track) / 2)); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
+   `--ink-bias` IS THE SECOND, SEPARATE HALF OF THE SAME CORRECTION. Half a
+   track centres the glyphs' ADVANCES; ink is narrower than advances by each
+   end glyph's side bearing, and those do not cancel. In Cinzel 700 the
+   leading A's left bearing is 0.008em and the trailing E's right bearing is
+   0.045em (both read from a 1000px raster of each glyph), so the ink sits
+   (0.045 - 0.008) / 2 = 0.0185em LEFT of its advances' centre. That is about
+   1px at 1x, which is why it hid inside the tolerance — but `body { zoom }`
+   is 1.7 at 2550x1305, and at Text XL (57.6px) it grew to 1.8px of the
+   -2.67px startup-gate read there against its 2.5px ink budget. It is an em
+   quantity, so it scales with the type and the zoom and needs no per-shape
+   tuning. Inter (the readable-ui face) reads 0.0136em, within 0.3px at this
+   size, so one token serves both. It is specific to the A…E lockup: a
+   different name needs its own end-glyph bearings measured. */
+.as-titlemenu .tm-name { --track: 0.08em; --ink-bias: 0.0185em; margin: 0; transform: translateX(calc(var(--track) / 2 + var(--ink-bias))); font: 700 5.4rem/1.25 var(--font-display); font-size: min(12cqi, 5.4rem); letter-spacing: var(--track); text-indent: 0; color: var(--parchment); white-space: nowrap; text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28); }
 .as-titlemenu .tm-sub { --track: 0.28em; margin: 0.75rem 0 0; font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; color: var(--muted); white-space: nowrap; }
 .as-titlemenu ul { list-style: none; margin: 1.8rem 0; padding: 0; }
 .as-titlemenu li + li { border-top: 1px solid var(--rule); }
