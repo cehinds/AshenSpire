@@ -36,6 +36,7 @@ function renderSceneComposition(id,mode,config,notify){
    const host=document.createElement('div');host.className='layer-figure';host.dataset.component=component;host.dataset.side=side;host.dataset.layer=layer;
    const speaking=layer===speaker;host.classList.add(speaking?'speaking':'listening');
    host.style.zIndex=String(z(layer)+(speaking&&portraits.speakerAbove?1:0));
+   const listener=portraits.listener;if(listener)for(const [key,value] of Object.entries({'--listener-opacity':listener.minOpacity,'--listener-brightness':listener.brightness,'--listener-saturation':listener.saturation}))host.style.setProperty(key,String(value));
    host.append(parts.sprite(role));return host;
   });
   hud.style.zIndex=String(z('hud'));body.style.zIndex=String(z('context'));footer.style.zIndex=String(z('footer'));
@@ -51,12 +52,18 @@ function renderSceneComposition(id,mode,config,notify){
    const floorLine=hudHeight+window*(1-config.background.floorHeightPercent/100);
    sky.style.height=floorLine+'px';ground.style.top=floorLine+'px';
    const slot=portraits.slot,compact=mode!=='wide';
-   const width=W*(compact?slot.compactWidthVw:slot.widthVw)/100,inset=W*slot.insetVw/100,top=hudHeight+H*slot.topOffsetVh/100;
-   const fraction=portraits.visibleFraction,height=(reveal-top)*fraction.denominator/fraction.numerator;
+   // Each figure keeps to its lane: half the frame less the insets and the minimum gap.
+   const inset=W*slot.insetVw/100,gap=W*portraits.minGapVw/100,lane=(W-2*inset-gap)/2;
+   const width=Math.min(W*(compact?slot.compactWidthVw:slot.widthVw)/100,lane),top=hudHeight+H*slot.topOffsetVh/100;
+   const fraction=portraits.visibleFraction,share=fraction.numerator/fraction.denominator,zoomed=(reveal-top)/share;
    for(const host of figures){
     const box=host.querySelector('svg')?.viewBox?.baseVal,aspect=box&&box.height?box.width/box.height:1;
-    const center=host.dataset.side==='left'?inset+width/2:W-inset-width/2;
-    Object.assign(host.style,{top:top+'px',height:height+'px',width:height*aspect+'px',left:center-height*aspect/2+'px'});
+    // shrinkToLane: a figure wider than its lane scales down as a whole;
+    // anchor revealLine: it sinks so its top share still stands on the reveal line.
+    const height=portraits.fit==='shrinkToLane'?Math.min(zoomed,lane/aspect):zoomed,figureTop=portraits.anchor==='revealLine'?reveal-height*share:top,half=height*aspect/2;
+    const left=host.dataset.side==='left',laneStart=left?inset:W-inset-lane,slotCenter=left?inset+width/2:W-inset-width/2;
+    const center=Math.min(Math.max(slotCenter,laneStart+half),laneStart+lane-half);
+    Object.assign(host.style,{top:figureTop+'px',height:height+'px',width:2*half+'px',left:center-half+'px'});
    }
    scene.style.setProperty('--reveal-line',reveal+'px');
   };

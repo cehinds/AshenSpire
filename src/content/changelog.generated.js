@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-15",
     "summary": "Every place a fighter can stand now has a name",
     "detail": "Nothing you see changes. The twelve spots on the battlefield are named by a row letter and a column number: rows A, B and C run from the top of the ground to the bottom, and columns 1 to 4 count across the field from your back line, through both front lines, to the enemy's back line. Your rear spot on the bottom row is C1; the enemy's rear spot on the top row is A4. Where everyone stands, how large they are and what you can target are exactly as before. The design notes for the battlefield use the same names, so a spot means one thing wherever it is written.",
-    "build": "0.7.1.68",
+    "build": "0.7.1.69",
     "pullRequest": 1107,
     "url": "https://github.com/cehinds/AshenSpire/pull/1107"
+  },
+  {
+    "id": "pr-1106",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Quest conversations take place in the world, face to face",
+    "detail": "A conversation used to open in a panel of its own, with small full-length figures above the text. Now it happens where you stand. You see the same sky and ground you fight on, with the HUD along the top as it is in a fight. You on the left and whoever is speaking on the right both appear close up, from the waist up, and the one talking is lit while the other is dimmed. The words sit in a band underneath, with just the quest's name above them, and when it is your turn to answer, up to four answers show at once without scrolling, side by side on a short screen. Back, Skip speech and Continue are three equal buttons along the bottom. As the scene opens, the two of you fade in first and then the words; the buttons only start working once the words have fully appeared. The Grave of the Nameless steps look like this, and your answers count exactly as before.",
+    "build": "0.7.1.67",
+    "pullRequest": 1106,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1106"
   },
   {
     "id": "pr-997",

@@ -29,6 +29,55 @@ function imageBounds(img, refresh) {
   return bounds;
 }
 
+// W4c close-up (models/PortraitCropModel.js): the visible art's box inside
+// `host`, in the host's local px before any transform, read from the same
+// opaque bounds the formation fits by. A mirrored facing layer flips the
+// bounds' horizontal centre. Null while the image is still loading (`refresh`
+// runs when it lands); a host without an image, or one whose pixels cannot be
+// read, is its own box.
+export function visibleArtBox(host, refresh) {
+  const width = host.offsetWidth, height = host.offsetHeight;
+  const whole = { top: 0, height, centerX: width / 2, width };
+  const hostRect = host.getBoundingClientRect();
+  const zoom = hostRect.width / width || 1;
+  // A painted player stage reports its idle body as ratios of the stage, whose
+  // bottom edge is the frames' floor line (paintedOutfits.createPaintedStage).
+  const stage = host.querySelector('.painted-stage');
+  if (stage && !host.querySelector('.rendered-stage')) {
+    const box = stage.getBoundingClientRect();
+    const stageLeft = (box.left - hostRect.left) / zoom, stageTop = (box.top - hostRect.top) / zoom;
+    const stageWidth = box.width / zoom, stageHeight = box.height / zoom;
+    if (!(stageHeight > 0)) return whole;
+    const ratio = Number(stage.dataset.idleHeightRatio || 1);
+    return {
+      top: stageTop + stageHeight * (1 - ratio),
+      height: Math.max(1, stageHeight * ratio),
+      centerX: stageLeft + stageWidth / 2,
+      width: Math.max(1, stageHeight * Number(stage.dataset.idleWidthRatio || stageWidth / stageHeight)),
+    };
+  }
+  const img = host.querySelector('.enemy-pose-idle, .painted-presentation, .facing > img');
+  if (!img) return whole;
+  const bounds = imageBounds(img, refresh);
+  if (!bounds) return img.complete && img.naturalWidth ? whole : null;
+  const rect = img.getBoundingClientRect();
+  const left = (rect.left - hostRect.left) / zoom, top = (rect.top - hostRect.top) / zoom;
+  const boxWidth = rect.width / zoom, boxHeight = rect.height / zoom;
+  // object-fit: contain, centred; a painted enemy's box is its own ratio.
+  const scale = Math.min(boxWidth / img.naturalWidth, boxHeight / img.naturalHeight);
+  const contentLeft = left + (boxWidth - img.naturalWidth * scale) / 2;
+  const contentTop = top + (boxHeight - img.naturalHeight * scale) / 2;
+  const ground = img.dataset.artSource ? 364 : bounds.y1 + 1;
+  const middle = (bounds.x0 + bounds.x1 + 1) / 2;
+  const mirrored = img.closest('.facing')?.dataset.facing === 'mirrored';
+  return {
+    top: contentTop + bounds.y0 * scale,
+    height: Math.max(1, (ground - bounds.y0) * scale),
+    centerX: contentLeft + (mirrored ? img.naturalWidth - middle : middle) * scale,
+    width: Math.max(1, (bounds.x1 + 1 - bounds.x0) * scale),
+  };
+}
+
 export function combatSpriteGeometry(sprite, refresh) {
   const host = sprite.firstElementChild;
   const boxHeight = sprite.offsetHeight, boxWidth = sprite.offsetWidth;
