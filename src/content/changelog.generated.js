@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-15",
     "summary": "Five fixes: free cards show their cost, a won fight can no longer be saved into a dead slot, and a co-op party can see where it is and what it is fighting",
     "detail": "Cards that cost nothing to play — Shiv, Quick Cut, Comet Fragment, Warcry — printed no action cost at all, so the one place you count what a turn can still afford simply said nothing about them. They now read ◆ 0, which is the point of a free card. When a fight ends there is a short beat before the spoils open, and during it the menu was still live: saving in that moment wrote a save that loaded back into a fight already won, with nothing left to kill and no way onward. The menu now closes the moment the fight resolves, the game refuses to save a finished fight at all, and a save already stuck that way now reopens at the fight instead of a dead end. In a co-op party, the heading over the fight and over the map said only “ACT II” where a solo run names the place — The Pale Marches, The Cinder Reach — because the host never sent it. It sends it now. And reading an enemy in co-op, the list of what it had already done always said the same thing whether it had acted or not; a co-op client can now see the moves an enemy has actually made, and an enemy that has done nothing yet says so. Behind all of this, the tool that grades the game’s difficulty had been calling every fight in the game a first-act fight since the regions were reworked, so its warnings about late-game fights were measured against a starting deck; it reads the real region now, and four late bosses turn out to be closer races than it had been reporting.",
-    "build": "0.7.1.62",
+    "build": "0.7.1.66",
     "pullRequest": 1111,
     "url": "https://github.com/cehinds/AshenSpire/pull/1111"
+  },
+  {
+    "id": "pr-1105",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Your relics keep their powers, held in the same place as every other worn power",
+    "detail": "Nothing you see changes. Every relic that does something when a fight gives it its moment — 48 of the 55 — now holds that power in the game's one list of powers a worn thing can grant, the list added two changes ago, instead of carrying it privately. Each still reads exactly as it did, fires exactly when it did, and fires once where it fired once; a fight you saved before this change and reload still remembers which relics have already gone off. The seven relics that simply change a number while you own them are untouched, because the Smith upgrades those on your copy and a shared list has only one copy.",
+    "build": "0.7.1.62",
+    "pullRequest": 1105,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1105"
   },
   {
     "id": "pr-994",

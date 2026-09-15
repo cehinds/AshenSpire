@@ -76,12 +76,12 @@ import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
-import { setStatusTrayOverflow } from '../components/statusTray.js';
+import { iconTray, observeIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from '../components/iconTray.js';
 import { planCombatantStack } from '../models/CombatantStackModel.js';
 import { meterRowSelectedOnly } from '../models/CombatantMeterModel.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
 import { intentVisible } from '../models/CombatOverlayModel.js';
-import { el, slot, meter, meters, pill, pips, pip, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
+import { el, meter, meters, pill, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
@@ -169,6 +169,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           ${html(button({ label: 'End Turn', weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall' }))}
           ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
           ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
+          <!-- The Potions minis: the shared icon tray over the Potions control,
+               out of the row's grid (renderPotionTray). -->
+          <div class="combat-potion-tray as-pips icon-tray" aria-label="${esc(t('iconTray.potions'))}"></div>
         </div>
         <!-- Context hints: the strip is mounted for its readers but stays hidden
              on this screen — the action row carries every key it would name. -->
@@ -366,12 +369,13 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     ));
   }
 
-  // `shortcut` is the flask action a key pressed (flask1..flask3); the entry
-  // that owns it opens folded out. Found by action, not by list position.
+  // `shortcut` is the flask action a key pressed (flask1..flask3), or the WGH8
+  // entry key a Potions mini was tapped for; that entry opens folded out.
+  // Found by action or key, not by list position.
   function openPotions(shortcut = null) {
     const opener = $('.combat-potions');
     const entries = potionEntries();
-    const shortcutIndex = shortcut == null ? -1 : entries.findIndex((row) => row.options.useActionId === shortcut);
+    const shortcutIndex = shortcut == null ? -1 : entries.findIndex((row) => row.options.useActionId === shortcut || row.entry.key === shortcut);
     let shell;
     shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
       entries.forEach((row, index) => {
@@ -890,6 +894,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   function render() {
     renderTopbar();
+    renderPotionTray();
     renderCombatantStage();
     renderHand();
     renderControls();
@@ -933,6 +938,51 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     $('.topbar .shared-hud')?.setAttribute('data-has-utility-potions', 'false');
     topbarRenderKey = key;
+  }
+
+  // THE POTIONS MINIS (owner, 2026-09-14): the WGH8 entries — the charge
+  // flasks and the carried consumables, each with its count — as the shared
+  // icon tray, hung over the footer Potions control (WGC11) that owns them.
+  // The top HUD never draws potions. A tap explains a potion; a second tap (or
+  // Enter) opens the Potions list with that potion folded out. The render key
+  // lives on the tray, not in a `let`: render() runs before this file's later
+  // declarations on the first paint (see `endTurnBeat` above).
+  function renderPotionTray() {
+    const tray = $('.combat-potion-tray');
+    if (!tray) return;
+    placePotionTray(tray);
+    if (!tray.dataset.placed && typeof ResizeObserver !== 'undefined') {
+      tray.dataset.placed = 'true';
+      new ResizeObserver(() => placePotionTray(tray)).observe(tray.parentElement);
+    }
+    const rows = potionEntries().filter((row) => row.def);
+    const key = JSON.stringify(rows.map(({ entry }) => [entry.key, entry.count]));
+    if (tray.dataset.renderKey === key) return;
+    tray.dataset.renderKey = key;
+    tray.style.setProperty('--icon-tray-slots', String(wireframeUi.iconTray.footerPotionIcons));
+    // Where the tray cannot hold every mini, its +N opens the whole list.
+    setIconTrayOverflow(tray, () => openPotions());
+    setIconTrayItems(tray, rows.map(({ entry, def }) => trayIcon({
+      art: flaskPresentation(def, { showName: false }), count: entry.count, tone: def.tint || '',
+      label: `${def.name}, ${tFull(potionCountStringId(entry), { count: entry.count })}`, disabled: entry.count <= 0,
+      attrs: { class: 'potion-mini', dataset: { potionKey: entry.key } },
+      tip: () => flaskTooltipHtml(def, entry.category === 'charge' ? { charges: entry.count } : {}),
+      activate: () => openPotions(entry.key),
+    })));
+    observeIconTray(tray);
+  }
+
+  // Where the Potions control stands in the action row, in the row's local px
+  // (offsets, so no zoom arithmetic): the minis' right edge goes on the
+  // control's, and on a narrow layout they ride inside its top edge at its
+  // width (styles/combat.css reads the three values).
+  function placePotionTray(tray) {
+    const control = $('.combat-potions');
+    const row = tray.offsetParent;
+    if (!control || !row || control.offsetParent !== row) return;
+    tray.style.setProperty('--potion-tray-right', `${row.clientWidth - control.offsetLeft - control.offsetWidth}px`);
+    tray.style.setProperty('--potion-control-top', `${control.offsetTop}px`);
+    tray.style.setProperty('--potion-control-width', `${control.offsetWidth}px`);
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -998,12 +1048,17 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function statusRow(entity) {
-    // The status row is the kit's Pips: one round badge per effect, its count a
-    // round StatePill on the corner.
-    // Each meaningful battlefield detail has its own half-second explanation.
-    // The frame remains the broader reading when the pointer leaves a detail.
-    const row = pips([], { class: 'statuses' });
+    // The status row is THE shared icon tray (components/iconTray.js) — the
+    // reference the relic rail and the Potions minis inherit: one round Pip per
+    // effect, its count a round StatePill on the corner, one row that never
+    // wraps. Each meaningful battlefield detail has its own half-second
+    // explanation; the frame remains the broader reading when the pointer
+    // leaves a detail. A tap explains at once, and yields while a card or flask
+    // is armed: then a tap on the frame is a play, and swallowing it would
+    // make the pips dead patches on a target.
+    const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     markUiComponent(row, UI.statusEffectTray, entity.kind);
+    const armed = () => !!(selected || selectedFlask != null || selfArm);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
@@ -1013,11 +1068,18 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // after a burst) is an empty frame, not information (Sunna's S-flag).
       if (def.proc && stacks <= 0) continue;
       const shownValue = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
-      const el = pip({ glyph: def.icon || '?', count: shownValue, tone: def.tint || 'var(--muted)', ring: plan.pips.includes(sid), attrs: { class: 'status-icon' } });
+      const statusTip = () => {
+        let extra = '';
+        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+      };
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      const el = trayIcon({
+        glyph: def.icon || '?', count: shownValue, tone: def.tint || 'var(--muted)', ring: plan.pips.includes(sid),
+        label: semanticAttrs['aria-label'], attrs: { class: 'status-icon' }, tip: statusTip, yieldTap: armed,
+      });
       el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
       el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
-      el.setAttribute('aria-label', semanticAttrs['aria-label']);
       // Collapsed proc meter (M4 display cap): ring-fill pip — the pip's own
       // background is a conic fill in the row's tint, same value/threshold
       // semantics as the bar it stands in for. A resistance pip's number is its
@@ -1028,19 +1090,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         el.classList.add('proc-pip');
         el.style.background = `conic-gradient(${def.tint || 'var(--muted)'} ${fillPct}%, transparent ${fillPct}%)`;
       }
-      const statusTip = () => {
-        let extra = '';
-        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
-      };
-      attachTooltip(el, statusTip);
-      answerOnTap(el, statusTip);
       row.appendChild(el);
     }
     // The final +N tile opens the inspector, which lists every effect.
     // Like the pips, it yields while a card or flask is armed: the tap is a play.
-    setStatusTrayOverflow(row, (opener) => {
-      if (selected || selectedFlask != null || selfArm) return false;
+    setIconTrayOverflow(row, (opener) => {
+      if (armed()) return false;
       openCombatantDoor(combatantSubject(entity.kind === 'enemy' ? 'enemy' : 'player', entity), opener);
     });
     return row;

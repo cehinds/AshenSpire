@@ -17,3 +17,18 @@
 
 /* Announce reference feedback without covering the footer controls. */
 .scene-controls .cc-feedback{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:0!important;overflow:hidden!important;clip-path:inset(50%);white-space:nowrap;pointer-events:none}
+/* W4c layer stack: the plate is the bottom of the stack; bands are panels over it. */
+.scene-composition.layered-scene{position:relative;isolation:isolate;overflow:hidden}
+.layered-scene>.layer-plate{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.layered-scene .layer-skybox{position:absolute;left:0;right:0;top:0;min-height:0}
+.layered-scene .layer-floor{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(var(--floor-color,#382c20),#1b140e);border-top:.0625rem solid #9e8457}
+.layered-scene>.layer-figure{position:absolute;pointer-events:none}
+.layered-scene>.layer-figure>*{height:100%!important;min-height:0!important;width:100%}
+.layered-scene>.layer-figure svg{height:100%;width:100%;max-width:none}
+.layered-scene>.layer-figure.listening{filter:brightness(.72) saturate(.6)}
+.layered-scene>.layer-figure.speaking{filter:drop-shadow(0 0 .3rem var(--cc-gold,#d1ab61))}
+.layered-scene>.scene-stage{background:transparent;overflow:visible;position:relative}
+.layered-scene>.scene-hud,.layered-scene>.scene-context,.layered-scene>.scene-controls{position:relative;background:#1b150f}
+.layered-scene>.scene-context{border-top:.0625rem solid #8c7446}
+.layered-scene>.layer-off{background:transparent!important;border-color:transparent!important}
+.layered-scene>.layer-off>*{visibility:hidden}

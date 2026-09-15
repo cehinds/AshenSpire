@@ -2301,7 +2301,6 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 .shared-hud {
   --hud-quick-tile-size: max(2.8rem, var(--tap-floor));
   --hud-quick-tile-gap: 0.45rem;
-  --hud-belt-tile-face-size: 2.8rem;
 }
 .shared-hud .hud-control-grid,
 .shared-hud .hud-control-grid > .as-cluster { gap: var(--hud-quick-tile-gap); }
@@ -2318,9 +2317,12 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   transform: translate(-50%, -50%);
 }
 
-/* Relics and utility potions leave the HUD band and hang directly beneath its
-   left and right edges. Their 28px visible wells share the same size; the real
-   Slots remain at the tap floor so interactive potions stay easy to hit. */
+/* The relic rail leaves the HUD band and hangs directly beneath its left edge,
+   on every screen. It is the shared icon tray (§ ICON TRAY): the combatant
+   card's status row is its reference, so a relic is the same round Pip at the
+   same size and gap, and the row never wraps. Potions are not here — the
+   combat footer's Potions control and its minis own them (WGH6, WGH8). Only
+   the icons take a press; the empty rest of the row passes it to the screen. */
 .shared-hud .hud-bottom {
   position: absolute;
   z-index: 85;
@@ -2329,42 +2331,7 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
   width: auto;
   pointer-events: none;
 }
-.shared-hud .hud-bottom > * { pointer-events: auto; }
-.shared-hud .hud-bottom .as-slot {
-  position: relative;
-  isolation: isolate;
-  width: var(--iconbtn-size); height: var(--iconbtn-size);
-  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-.shared-hud .hud-bottom .as-slot::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  left: 50%; top: 50%;
-  width: var(--hud-belt-tile-face-size); height: var(--hud-belt-tile-face-size);
-  transform: translate(-50%, -50%);
-  box-sizing: border-box;
-  background: var(--panel);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--r-2);
-}
-.shared-hud .hud-bottom .as-slot:hover,
-.shared-hud .hud-bottom .as-slot:focus-visible {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-.shared-hud .hud-bottom .as-slot:hover::before,
-.shared-hud .hud-bottom .as-slot:focus-visible::before {
-  border-color: var(--gold);
-}
-.shared-hud .hud-bottom .as-slot.is-selected::before {
-  border-color: var(--parchment);
-  box-shadow: 0 0 0 1px var(--parchment);
-}
+.shared-hud .hud-bottom > :not(.icon-tray) { pointer-events: auto; }
 .as-band { position: relative; }
 /* A detail selected by a tap, waiting for the second tap that explains it
    (components/tooltip.js). Screens with their own selected look (the combat
@@ -2503,6 +2470,43 @@ body.pad-mode .as-keycap.float { display: none; }
 .as-pip { position: relative; display: inline-grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 50%; background: var(--panel); border: 1.5px solid var(--pip-tone, var(--muted)); font-size: 1.1rem; line-height: 1; color: var(--parchment); cursor: default; }
 .as-pip > .as-pill.round { position: absolute; right: -0.5rem; bottom: -0.5rem; padding: 0 0.3rem; background: var(--bg); color: var(--parchment); border-color: var(--line); font-size: 0.85rem; letter-spacing: 0; line-height: 1.4; }
 .as-pip.ring { color: #fff; text-shadow: 0 0 2px #000; }
+
+/* ═══ ICON TRAY — the one row of round icons (components/iconTray.js) ═══════
+   The combatant card's status effects, the relic rail and the Potions minis
+   are one component (owner, 2026-09-14), the status row its reference. A Pips
+   row that never wraps or scrolls: iconTray.js writes --icon-tray-size and
+   --icon-tray-gap from planIconTray, and what does not fit is the final +N
+   tile. The fallbacks are that plan's numbers before its first fit. Only the
+   icons take a press; the row itself passes it through. */
+.as-pips.icon-tray {
+  flex-wrap: nowrap; justify-content: flex-start; align-items: center;
+  gap: var(--icon-tray-gap, calc(3px / var(--ui-zoom, 1)));
+  min-width: 0; min-height: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1)));
+  pointer-events: none;
+}
+.icon-tray > * { pointer-events: auto; }
+.icon-tray .as-pip {
+  flex: none; box-sizing: border-box;
+  width: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))); height: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1)));
+  min-width: 0; min-height: 0;
+  font-size: calc(var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))) * 0.62);
+  cursor: pointer;
+}
+.icon-tray .as-pip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.icon-tray .as-pip[aria-disabled="true"] > :not(.as-pill) { opacity: 0.5; filter: grayscale(0.6); }
+/* A painted face (a flask) sits in the round well the way a glyph does. */
+.icon-tray .as-pip > .flask-identity { display: grid; place-items: center; width: 78%; height: 78%; }
+.icon-tray .as-pip > .flask-identity :is(.flask-art, .flask-art-image) { display: grid; place-items: center; width: 100%; height: 100%; object-fit: contain; }
+/* The +N tile: a round tile that opens the host's full list (WCF2), or a
+   disclosure whose popover holds the rest. */
+.icon-tray > .status-overflow-more {
+  flex: none; box-sizing: border-box; padding: 0; min-width: 0; min-height: 0;
+  width: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))); height: var(--icon-tray-size, calc(25px / var(--ui-zoom, 1)));
+  display: grid; place-items: center; border-radius: 50%; line-height: 1; color: var(--gold);
+}
+.status-overflow { position: relative; font-size: calc(11px / var(--ui-zoom, 1)); }
+.status-overflow summary { cursor: pointer; list-style: none; padding: 2px; color: var(--gold); }
+.status-overflow-list { position: absolute; top: 100%; right: 0; display: flex; flex-wrap: wrap; gap: 8px; padding: 10px; width: calc(170px / var(--ui-zoom, 1)); background: #17130f; border: 1px solid var(--gold); z-index: 100; }
 /* Legend rows and other read-only Rows: no hover, no cursor. */
 .as-row.static, .as-row.static:hover { cursor: default; background: transparent; }
 
@@ -3335,7 +3339,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   .inspection-effect { font-size:16px; }
   .inspection-tag { min-height:32px; display:inline-flex; align-items:center; }
 }
-.equipment-choose { width:100%; margin-top:10px; min-height:44px; }
+.equipment-choose { width:100%; margin-top:10px; min-height:var(--tap-floor); }
 .poker-equipment-choice.on { outline:2px solid #d0ac5d; border-radius:10px; }
 
 /* Creation keeps card nodes in place so focus can lift and settle smoothly.
@@ -3381,11 +3385,34 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    Measured whole and clear of the section face at 1280, 1366, 1440, 1920 and
    390, at UI sizes Auto, S, M and XL, under normal motion.
 */
-.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(2,minmax(0,1fr)); grid-row:1 / span 2; align-content:start; }
-.cc-card-selectors .poker-equipment-choice { min-width:0; max-width:220px; width:100%; justify-self:center; }
+.cc-equip-group > .cc-card-selectors:has(.poker-equipment-choice) { --cc-choice-rise:calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--inspect-gap, calc(10px / var(--ui-zoom, 1))) + 26px); --cc-choice-head:max(80px, var(--cc-choice-rise)); padding:var(--cc-choice-head) 6px 14px; gap:calc(64px + var(--cc-choice-head) - 80px) 12px; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); grid-row:1 / span 2; align-content:start; }
+.cc-card-selectors .poker-equipment-choice { position:relative; min-width:0; max-width:152px; width:100%; justify-self:center; padding:4px; }
+/* FOUR CHOICES IN THE GLASS, NOT TWO (2026-09-12). Constantine: "cards are
+   too big. I should easily be able to see 4 cards on this screen." Measured
+   before this rule, the Main Hand choices column showed exactly two cards at
+   every desktop size (1366x768: a 497x505 scrollport holding 228x371 cards;
+   1440x900: 548x600 holding 252x412; 1920x1080: 703x710 holding 326x529) —
+   the column was pinned to two tracks, so a wide pane bought bigger cards
+   rather than more of them. The track count above is therefore unpinned and
+   the card is browsing-sized at 152px; the reading is the detail pane's job
+   and the art is the inspect modal's.
+   THE HEAD AND ROW GAP ABOVE ARE NOT PART OF THAT SAVING. This branch also
+   removed them, on the premise that the information badge sat inside the
+   card's corner and the head was reserving nothing. That premise no longer
+   holds: the badge hangs ABOVE a selected card on every surface, and the head
+   is what keeps the first row's badge off the section face. So the derived
+   head and gap stand exactly as they are, and only the track count and the
+   card cap come across.
+   THE CHOOSE BUTTON OVERLAYS ITS CARD rather than standing under it. Under
+   it, the button's tap floor and 10px margin were charged to EVERY row —
+   a second row's worth of height across four cards — while only the focused
+   card ever shows one. Laid over the card's foot it still never moves the
+   grid (the slot it used to reserve is gone for every card alike), and it
+   covers the flavour line, which the detail pane prints in full. */
+.cc-card-selectors .equipment-choose { position:absolute; left:6px; right:6px; bottom:6px; z-index:4; width:auto; margin-top:0; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
-.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.3; padding:8px; }
+.cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.2; padding:6px 4px; font-size:14px; }
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
 .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
@@ -3417,6 +3444,14 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    long button's box at 1440 wide (measured: scrollWidth 210 in a 208 box).
    Less side padding than the row's clamp gives it, so the words stay whole. */
 .cz-next { padding-inline:clamp(0.5rem, 5%, 1rem); }
+/* AND THE ROW GIVES THE WORDS THE ROOM, because the padding alone could not.
+   Creation's physical text floor (`.customize :is(..., button)`, 16px over the
+   zoom) outranks the ButtonRow's fit-to-box type clamp, so the label does not
+   shrink into a `long` row: "Continue to character" wanted 227px of that row's
+   208px box at 1280x720 and ellipsed to "Continue to chara...". The step's way
+   on is one button alone on its row, so the row is sized to the longest of
+   those labels instead of the shared `long` step. */
+.as-btnrow:has(> .cz-next), .modal-btnrow:has(> .cz-next) { --step: 26rem; }
 /* THE WAY ON NEVER SCROLLS OUT OF REACH (Constantine, 2026-09-12: *"the
    continue button always in view and not requiring too much scrolling"*).
    MEASURED: with the right-hand section open at 390x844 the creation scroll is
@@ -3538,6 +3573,35 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-summary-character > .cc-derived { margin-top:auto; gap:4px 8px; }
 .cc-summary-character > .cc-derived .as-chip { font-size:11px; }
 .cc-summary-calculations { margin-top:4px; }
+/* THE CLASS STEP FITS THE GLASS ON DESKTOP (2026-09-12).
+   Constantine: "continue button is cut off". The step's one way on — its
+   "Continue to character" — stood below the door's foot at EVERY desktop size
+   measured, because the split grows to its content inside a scrolling body and
+   the Continue row is the last thing in that column:
+
+     1280x720   glass 477px, step 598px, Continue at y=725, foot at y=621
+     1366x768   glass 515px, step 628px, Continue at y=762, foot at y=666
+     1512x860   glass 584px, step 694px, Continue at y=842, foot at y=752
+     1920x1080  glass 737px, step 859px, Continue at y=1044, foot at y=946
+
+   Same cure as THE OPEN EQUIPMENT SECTION below, one step later in the same
+   flow: the split is capped to what the door body leaves under the step's own
+   face, and its two panes scroll INSIDE that cap — the class list and the
+   preview each own their overflow — so the Continue never leaves the glass.
+   The subtraction is the same one, for the same reason: the door's head and
+   foot, the step face and the panel's breathing room, over the zoom (the
+   chrome measured 23.2-24.5rem across the four sizes above, so 25rem is the
+   conservative floor for all of them). The `max()` keeps a short window from
+   collapsing the split to nothing — under it the body scrolls as it did.
+   Below the split's own stacking width the phone layout stands: chooser first,
+   preview after it, the page scrolling as one. */
+@container (width > 64rem) {
+  .cc-class-split { max-height: max(30rem, calc(100dvh / var(--ui-zoom, 1) - 25rem)); grid-template-rows: minmax(0, 1fr); }
+  .cc-class-split > .as-split-pane { min-height: 0; }
+  .cc-class-split > .as-split-pane > .as-pane { min-height: 0; overflow: hidden; }
+  .cc-class-split > .cc-class-preview-host > .as-pane { overflow-y: auto; scrollbar-gutter: stable; }
+  .cc-class-split .cc-choice-collection { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+}
 /* THE OPEN EQUIPMENT SECTION FITS THE GLASS ON DESKTOP (2026-09-11).
    Constantine: "the screen is slightly too big, i should be able to see
    everything when it opens on desktop." Measured at 1366x768 before this

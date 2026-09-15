@@ -402,8 +402,9 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .world-atlas-screen .atlas-roads .traveled { stroke:#b27c1f; stroke-width:4; }
 @media(min-width:1000px) { .atlas-layout { grid-template-columns:minmax(0,min(100%,calc(100vh - 240px))) 270px; justify-content:center; } }
 
-/* Keep map navigation clear of the combat inventory strip, including its hit targets. */
-.mapscreen .shared-hud .hud-bottom { display:none; }
+/* The relic rail shows on the map as on every screen (owner, 2026-09-14). It is
+   an icon tray, so only its icons take a press: the board under the empty rest
+   of the row stays live, which is what hiding the rail used to buy. */
 
 /* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
 .atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }

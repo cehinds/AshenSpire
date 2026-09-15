@@ -1,25 +1,32 @@
-// WGH6 relic rail tiles: ONE renderer for the shared run HUD on every screen
-// (combat and the rooms drew the same tile twice, and only combat's carried
-// the relic's id). Each tile is the kit Slot, keyed by its stable relic id,
-// and opens the shared collectible card (WC2b) on activation.
+// WGH6 relic rail: ONE renderer for the shared run HUD on every screen. The
+// rail is the shared icon tray (components/iconTray.js) — the combatant card's
+// status row is its reference, so a relic wears the same round Pip, the same
+// non-wrapping row with its `+N` tile, and the same tooltip: hover or a tap
+// explains it, a second tap (or Enter) opens the shared collectible card
+// (WC2b). Each icon is keyed by its stable relic id.
 import { openCollectibleInspection } from './collectibleCard.js';
-import { attachTooltip, esc } from './tooltip.js';
+import { esc } from './tooltip.js';
 import { relicText } from './card.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
-import { slot } from '../kit/index.js';
+import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
 
 export function relicRailTile(registries, relicId) {
   const def = registries.relics.get(relicId);
-  const tile = slot({ art: def.icon || '◆', small: true, tag: 'button', label: def.name, className: 'relic', attrs: { dataset: { relicId } } });
+  const tile = trayIcon({
+    glyph: def.icon || '◆', tone: def.tint || '', label: def.name,
+    attrs: { class: 'relic', dataset: { relicId } },
+    tip: () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`,
+    activate: (node) => openCollectibleInspection(registries, def, 'Relic', node),
+  });
   markUiComponent(tile, UI.relicSlot);
-  tile.addEventListener('click', () => openCollectibleInspection(registries, def, 'Relic', tile));
-  attachTooltip(tile, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
   return tile;
 }
 
-/** mountRelicRail(host, registries, relicIds) — replace the rail's tiles; a
- * host whose relic layer is off (no host) draws nothing. */
+/** mountRelicRail(host, registries, relicIds) — replace the rail's icons and
+ * keep them fitted to the rail; a host whose relic layer is off (no host)
+ * draws nothing. */
 export function mountRelicRail(host, registries, relicIds = []) {
   if (!host) return;
-  host.replaceChildren(...relicIds.map((relicId) => relicRailTile(registries, relicId)));
+  setIconTrayItems(host, relicIds.map((relicId) => relicRailTile(registries, relicId)));
+  observeIconTray(host);
 }

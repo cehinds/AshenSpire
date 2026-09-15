@@ -6,8 +6,8 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 437,
-  "distinct": 366,
+  "sites": 436,
+  "distinct": 365,
   "files": {
     "src/ui/screens/settings.js": 100,
     "src/ui/screens/customize.js": 50,
@@ -55,7 +55,6 @@
     "src/ui/components/overlay.js": 1,
     "src/ui/components/quicknav.js": 1,
     "src/ui/components/statAllocationCard.js": 1,
-    "src/ui/components/statusTray.js": 1,
     "src/ui/debuglog.js": 1,
     "src/ui/kit/index.js": 1,
     "src/ui/models/BattlefieldStageModel.js": 1,

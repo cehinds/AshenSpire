@@ -382,6 +382,37 @@ function knownPassive(key) {
   console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
 }
 
+/**
+ * carrierRules(registries, tagIds) → the rules a tag set confers, in tag order:
+ * each tag's one rule, kept only if every tag it `requires` is on the same
+ * carrier and none it `excludes` is. An unknown tag throws — validate.js has
+ * already refused it at boot.
+ *
+ * IT LIVES HERE RATHER THAN BESIDE THE MOUNT because two layers ask the same
+ * question and neither may ask the other: engine/properties.js resolves a
+ * carrier's rules to mount them, and the relic sentence in ui/components/card.js
+ * resolves the same rules to read their triggers' numbers (plan phase 2, where a
+ * relic's triggers moved into its rule). Rule resolution is a fact about content;
+ * mounting is what the engine does with it.
+ */
+export function carrierRules(registries, tagIds) {
+  const held = new Set(tagIds || []);
+  const rules = [];
+  for (const tag of tagIds || []) {
+    const rule = registries.propertyRules.get(tag);
+    if ((rule.requires || []).some((t) => !held.has(t))) continue;
+    if ((rule.excludes || []).some((t) => held.has(t))) continue;
+    rules.push(rule);
+  }
+  return rules;
+}
+
+/** The property rules a relic definition confers — empty for a passives-only relic. */
+export function relicPropertyRules(registries, def) {
+  const tags = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tags.length ? carrierRules(registries, tags) : [];
+}
+
 // MOUNTED PROPERTY RULES CONFER PASSIVES EXACTLY AS AN OWNED RELIC DOES
 // (engine/properties.js). `mounts` is ONE owner's mount map —
 // { [sourceKey]: { rules } }, what propertyMountsOf(ctx, entity) returns — and
