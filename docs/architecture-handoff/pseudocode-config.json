@@ -114,6 +114,10 @@
     "value_0_875": {
       "value": 0.875,
       "unit": "count"
+    },
+    "value_2": {
+      "value": 2,
+      "unit": "count"
     }
   }
 }
