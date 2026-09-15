@@ -70,7 +70,7 @@ export function mountMountServiceModal(host, initialModel, {
   function candidateCard(item, row) {
     const card = railItem({
       tag: 'div', label: '', member: item.itemRef, current: item.selected,
-      className: `smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected' : ''}`,
+      className: `smith-candidate-card smith-weapon-card rarity-${item.rarity}${item.selected ? ' selected is-chosen' : ''}`,
       attrs: { role: 'option', 'aria-controls': 'mount-preview-region' },
     });
     card.dataset.itemRef = item.itemRef;
@@ -241,6 +241,10 @@ export function mountMountServiceModal(host, initialModel, {
     for (const card of cards) {
       const on = Boolean(selected) && card.dataset.itemRef === selected.itemRef;
       card.classList.toggle('selected', on);
+      // The picked item wears the game's one chosen ring (kit.css), not a gold
+      // outline of the stables' own invention (#997). Toggled here as well as
+      // at build time so a redraw cannot leave the ring on a stale row.
+      card.classList.toggle('is-chosen', on);
       markUiComponent(card, UI.mountCandidateCard, on ? 'selected' : 'available');
     }
     const face = smithSelectorFace(model);
@@ -292,6 +296,7 @@ export function mountMountServiceModal(host, initialModel, {
         for (const card of p.selectedMount.cards) {
           const face = renderCard(registries, { cardId: card.cardId, upgraded: card.upgraded, instanceId: card.instanceId }, { small: true });
           face.classList.toggle('selected', card.selected);
+          face.classList.toggle('is-chosen', card.selected);
           face.setAttribute('role', 'option');
           face.setAttribute('aria-selected', String(card.selected));
           face.dataset.instanceId = card.instanceId;
