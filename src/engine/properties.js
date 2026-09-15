@@ -30,6 +30,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { PROPERTY_CARRIER_FAMILIES } from '../model/schemas.js';
+import { carrierRules } from '../model/registries.js';
 import { equippedPieces, pieceItemRef } from '../model/loadout.js';
 import { triggerOwnerKey } from './triggers.js';
 
@@ -53,23 +54,6 @@ function assertCarrier(carrier) {
   if (typeof c.ownerKey !== 'string' || !c.ownerKey) problems.push('ownerKey must be a non-empty string');
   if (!Array.isArray(c.tagIds)) problems.push('tagIds must be an array');
   if (problems.length) throw new Error(`Property carrier refused: ${problems.join('; ')} (got ${JSON.stringify(carrier)})`);
-}
-
-/**
- * The rules a tag set confers, in tag order: each tag's one rule, kept only if
- * every tag it `requires` is on the same carrier and none it `excludes` is.
- * An unknown tag throws — validate.js has already refused it at boot.
- */
-export function carrierRules(registries, tagIds) {
-  const held = new Set(tagIds);
-  const rules = [];
-  for (const tag of tagIds) {
-    const rule = registries.propertyRules.get(tag);
-    if ((rule.requires || []).some((t) => !held.has(t))) continue;
-    if ((rule.excludes || []).some((t) => held.has(t))) continue;
-    rules.push(rule);
-  }
-  return rules;
 }
 
 /**
@@ -118,6 +102,39 @@ export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgr
       ownerKey,
       tagIds: [...piece.propertyTags],
     }));
+}
+
+/**
+ * relicCarrier(registries, relicId, ownerKey) → the carrier a held relic
+ * presents, or null when it confers no property (a passives-only relic, whose
+ * numbers still reach the readers through passiveSum's upgrade-aware path).
+ *
+ * `instanceId` is the relic id: a relic is held once, so the id already names
+ * the copy. Equipment needs its item ref because the same armament can sit in
+ * two hands.
+ */
+export function relicCarrier(registries, relicId, ownerKey) {
+  const def = registries.relics.get(relicId);
+  const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tagIds.length ? { kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+/**
+ * syncRelicProperties(combat, entity) — mount every relic the entity holds that
+ * is not mounted yet. Relics are never taken away mid-run, so this only ever
+ * adds: `addRelic` calls it for the one new relic and combat start calls it for
+ * the lot, and a relic mounted twice would throw rather than double-fire.
+ */
+export function syncRelicProperties(combat, entity) {
+  const owner = entity || (combat && combat.player);
+  if (!combat || !owner) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  for (const relicId of owner.relicIds || []) {
+    const carrier = relicCarrier(combat.registries, relicId, ownerKey);
+    if (!carrier) continue;
+    const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
+    if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
 }
 
 /**

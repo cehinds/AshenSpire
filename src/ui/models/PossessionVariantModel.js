@@ -1,4 +1,5 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { relicPropertyRules } from '../../model/registries.js';
 import { resources as resourceTable } from '../../content/resources.js';
 import { statuses as statusTable } from '../../content/statuses.js';
 import { t, tFull, has } from '../strings.js';
@@ -52,13 +53,29 @@ export function equipmentKind(item) {
   return null;
 }
 
-/** WC2b: passive, triggered, both — or neither, when nothing is authored. */
-export function relicEffectModes(relic) {
+/**
+ * WC2b: passive, triggered, both — or neither, when nothing is authored.
+ *
+ * TWO HOMES, ONE QUESTION (plan phase 2). A relic's passives are its own; its
+ * triggers are its property rules'. `registries` is what reaches the second,
+ * and a caller without them sees only the passive half — which for a
+ * triggers-only relic is "neither", so every caller inside the app passes them.
+ */
+export function relicEffectModes(relic, registries = null) {
   const passives = relic?.passives || {};
   const passive = (passives.modifiers || []).length > 0
     || Object.entries(passives).some(([key, value]) => key !== 'modifiers' && value != null && value !== false && value !== 0);
-  const triggered = Array.isArray(relic?.triggers) && relic.triggers.length > 0;
+  const triggered = relicTriggers(relic, registries).length > 0;
   return Object.freeze([...(passive ? ['passive'] : []), ...(triggered ? ['triggered'] : [])]);
+}
+
+/** The triggers a relic fires, read from its property rules (and its own, pre-phase-2). */
+export function relicTriggers(relic, registries = null) {
+  const own = Array.isArray(relic?.triggers) ? relic.triggers : [];
+  if (!registries || !relic) return own;
+  const fromRules = relicPropertyRules(registries, relic)
+    .flatMap((rule) => (Array.isArray(rule.triggers) ? rule.triggers : []));
+  return [...own, ...fromRules];
 }
 
 function effectPurpose(effect, registries) {
@@ -178,7 +195,7 @@ function triggerGate(trigger) {
 }
 
 function relicRows(registries, relic, omit) {
-  const modes = relicEffectModes(relic);
+  const modes = relicEffectModes(relic, registries);
   const families = ['WC2', 'WC2b'];
   const first = [];
   const second = [];
@@ -191,7 +208,7 @@ function relicRows(registries, relic, omit) {
   }
   if (modes.includes('triggered')) {
     families.push('WC2b2');
-    const triggers = relic.triggers;
+    const triggers = relicTriggers(relic, registries);
     const label = (on) => (has(`possession.trigger.${on}`) ? copy(`possession.trigger.${on}`) : null);
     for (const on of unique(triggers.map((trigger) => trigger.on)).filter((on) => !label(on))) {
       omit('WC2b2.body.detail1', `No label is authored for trigger event '${on}'.`, on);

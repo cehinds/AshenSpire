@@ -29,3 +29,62 @@ siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {rest
 # No shipped armament is a wand yet, so no row carries overcharge; the rule is
 # here so the first wand is a tagging row, not a code change.
 overcharge,,,Your hits build Arcane Exposure faster.
+
+# ---- relic properties (plan phase 2) -------------------------------------------
+# A relic's triggers live here; its passives do NOT, and that is a constraint
+# rather than a staging choice. Relic passives are upgraded PER RUN AND PER COPY
+# at the smith (model/itemUpgrades.js resolveUpgradedRelic), and a rule in this
+# table is one global row — it has nowhere to put "this copy is at tier 2". So
+# the sentence stays on the relic too, since a template split across a relic's
+# passives and its rule's triggers would renumber its own {block.2} tokens for
+# no reader's benefit. Phase 2b moves both, after a mount can carry a resolved
+# per-instance value. A rule whose carrier states its own sentence leaves
+# textTemplate empty.
+forsakenMedallion,,,
+starstoneShard,,,
+cutpursesCoin,,,
+goldFigurine,,,
+goldenSprout,,,
+whetstoneFragment,,,
+kindlingCharm,,,
+goldleafCharm,,,
+crackedLantern,,,
+sacrificialKnife,,,
+curedHide,,,
+ivoryComb,,,
+fellWardenBrand,,,
+bloodiedTalisman,,,
+twinnedArmor,,,
+blightTouchedIdol,,,
+warhorn,,,
+vowOfVengeance,,,
+pearlOfSagacity,,,
+blessedDew,,,
+azureSigil,,,
+bloodstainedChalice,,,
+goldboughSapling,,,
+wyrmHeart,,,
+titansCinder,,,
+radiantAegis,,,
+flayersCenser,,,
+vigilantHalo,,,
+carrionTalon,,,
+emberIdol,,,
+crownOfStitches,,,
+wardenHorn,,,
+ashOfRemembrance,,,
+cinderOfTheFallen,,,
+crimsonCovenant,,,
+travelersWhetstone,,,
+moonlitVial,,,
+wardensLantern,,,
+hollowedHorn,,,
+gildedTear,,,
+watchmansBadge,,,
+howlingStandard,,,
+emberwickCharm,,,
+carrionMorsel,,,
+gravetendersBell,,,
+sentinelsOath,,,
+forsakenWarflag,,,
+wrathCoil,,,
