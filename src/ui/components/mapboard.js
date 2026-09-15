@@ -162,7 +162,8 @@ function indexNodes(nodes) {
  *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
  *   `classes`   (node) → extra classes. `my-vote` lives here.
  *   `tooltip`   (node, reading) → html.
- *   `onPick`    (id) → void, fired only for reachable nodes.
+ *   `onPick`    (id, { shownType, revealed }) → void, fired only for reachable
+ *               nodes; the reading is what this board drew for the node.
  *
  * `chromeHtml` is emitted BETWEEN the scrollport and the tap note, and the
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
@@ -409,7 +410,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
     el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: x(n.col), y: y(n.floor), radius: r, reachable: isReachable })}${mark || ''}`);
-    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
+    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
   }

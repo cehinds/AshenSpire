@@ -599,6 +599,7 @@ function enemyPhase(C) {
 // A move's self/enemy-targeted parts apply once; player-targeted damage +
 // effects fan out to every living player (each blocks independently).
 function executeMove(C, enemy, move, moveId) {
+  (enemy.performedMoves ||= []).push(moveId); // performed, not rolled (see combat.js)
   C.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.block != null) {
     setActive(C, firstLiving(C));

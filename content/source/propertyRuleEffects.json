@@ -1,0 +1,31 @@
+{
+  "siphon": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "all",
+          "preds": [
+            { "p": "eventSourceIsOwner" },
+            { "p": "not", "pred": { "p": "skillLevelAtLeast", "skill": "focus", "level": { "balance": "exposure.siphonMasteryLevel" } } }
+          ]
+        },
+        "do": [{ "op": "restoreMana", "target": "self", "amount": { "balance": "exposure.siphonRefund" } }]
+      },
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "all",
+          "preds": [
+            { "p": "eventSourceIsOwner" },
+            { "p": "skillLevelAtLeast", "skill": "focus", "level": { "balance": "exposure.siphonMasteryLevel" } }
+          ]
+        },
+        "do": [{ "op": "restoreMana", "target": "self", "amount": { "balance": "exposure.siphonRefundMastered" } }]
+      }
+    ]
+  },
+  "overcharge": {
+    "passives": { "exposureBuildupMult": { "balance": "exposure.overchargeBuildupMult" } }
+  }
+}

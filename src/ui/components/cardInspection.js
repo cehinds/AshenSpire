@@ -2,7 +2,7 @@ import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat } from './cardSelection.js';
-import { wireframeUi } from '../../content/wireframeUi.js';
+import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -75,14 +75,14 @@ export function openCardInspection({ title, card, details, opener, actions = nul
     if (row.reason) button.title = row.reason;
     return button;
   });
-  const back = document.createElement('button');
-  back.type = 'button'; back.textContent = 'Back'; back.className = 'card-inspection-back';
+  // W1o: the header close is the way out. The footer holds only applicable
+  // actions — one fills it — and a read-only door has no footer at all, not a
+  // redundant Back beside the close it duplicates.
   const shell = openModal({ title, size: 'lg',
     className: 'card-inspection-modal', opener,
     primary: buttons[0] || null,
-    secondary: [back, ...buttons.slice(1)],
+    secondary: buttons.slice(1),
     body: cardInspectionLayout(card, details) });
-  back.addEventListener('click', shell.close);
   for (const button of buttons) {
     button.addEventListener('click', () => {
       // Re-read rather than trusting the row this button was drawn from: the
@@ -137,7 +137,7 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   const revealDelayMs = () => {
     const raw = getComputedStyle(card).getPropertyValue('--card-info-delay').trim();
     const ms = raw.endsWith('ms') ? parseFloat(raw) : raw.endsWith('s') ? parseFloat(raw) * 1000 : parseFloat(raw);
-    return Number.isFinite(ms) && ms >= 0 ? ms : wireframeUi.card.inspectDelayMs;
+    return Number.isFinite(ms) && ms >= 0 ? ms : selectionRevealDelayMs();
   };
   const revealInfo = () => {
     if (revealTimer !== null || card.classList.contains('inspection-info-visible')) return;

@@ -76,14 +76,26 @@ try {
     check((await page.locator('[data-face=rightHand]').innerText()).includes('Empty Hand'),`${name}: moving the weapon empties its previous hand`);
     if(name==='desktop')await snapshot(page,'weapon-hand-transfer');
     await chooseItem(off.locator('[data-armament-id=empty-hand]'));
+    // THE STARTING CARDS ARE BEHIND A FOLD NOW (#1003), so they have to be asked
+    // for before they can be measured. A closed `<details>` hides its content, and
+    // a hidden element's getBoundingClientRect() is all zeros — which passes a
+    // careless check and proves nothing. Opened through the element rather than by
+    // clicking the summary so the measurement does not race the disclosure.
+    await off.locator('.cc-starting-fold').evaluate(el=>{el.open=true;});
+    await page.waitForTimeout(120);
+    check(await off.locator('.cc-starting-summary').isVisible(),`${name}: the starting cards sit behind a summary that can be opened`);
     await off.locator('.cc-equipment-details').evaluate(el=>el.scrollIntoView({block:'start'}));await snapshot(page,`${name}-unarmed-cards`);
     const grid=off.locator('.cc-starting-card-grid');
     // Add a fourth representative card only to measure four-card capacity; no game state changes.
     await grid.evaluate(el=>el.append(el.firstElementChild.cloneNode(true)));
     const boxes=await grid.locator('.cc-starting-card > .card').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,w:r.width};}));
-    check(boxes.length===4&&Math.abs(boxes[0].y-boxes[1].y)<2&&boxes[2].y>boxes[0].bottom&&Math.abs(boxes[2].y-boxes[3].y)<2,`${name}: four cards fit a 2 by 2 grid`);
+    // THREE TO A ROW INSIDE THE FOLD (#1003): the faces there are a reference, not
+    // a thing to choose between, so four cards are a row of three and then one —
+    // not the two-by-two this asserted while the grid was two columns.
+    check(boxes.length===4&&Math.abs(boxes[0].y-boxes[1].y)<2&&Math.abs(boxes[1].y-boxes[2].y)<2&&boxes[3].y>boxes[0].bottom,`${name}: four cards fit a three-wide fold grid, three then one`);
+    check(await grid.evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length)===3,`${name}: the fold's card grid is three columns`);
     check(boxes.every(b=>b.x>=0&&b.right<=width+1),`${name}: grid stays in viewport`);
-    check(boxes[3].bottom-boxes[0].y<height-130,`${name}: four-card grid fits available screen height`);
+    check(boxes[3].bottom-boxes[0].y<height-130,`${name}: the fold's card grid fits available screen height`);
     await grid.evaluate(el=>el.scrollIntoView({block:'center'}));await snapshot(page,`${name}-four-card-capacity`);
     await off.locator('.cc-equipment-continue').click();
     const relic=page.locator('[data-equipment-section=relic]');check(await relic.isVisible(),`${name}: Continue reaches Relic`);

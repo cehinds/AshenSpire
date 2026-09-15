@@ -43,6 +43,11 @@
 .environment-backdrop { opacity: 1; overflow: hidden; background: #17130f; top: var(--environment-top, 0); bottom: auto; height: var(--environment-height, 65%); }
 .environment-backdrop > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform:scale(1.06); transform-origin:center; }
 @media (max-width:600px) { .environment-backdrop > svg { transform:scale(1.02); } }
+/* WGS1: once the battlefield stage has fitted the plate (SceneLayerModel), its
+   viewBox already carries the bleed and the floor alignment; a CSS zoom about
+   the centre would move the painted ground off the floor band. */
+.environment-backdrop[data-scene-fit] > svg { transform: none; }
+.environment-backdrop[data-skyline='off'] > svg { display: none; }
 .environment-backdrop::after { display: none; }
 .environment-backdrop::before {
   z-index: 1;
@@ -204,8 +209,11 @@
 .combatant.player.armed { cursor: pointer; }
 
 .enemy .sprite { cursor: pointer; }
-.enemy.targetable .sprite { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: var(--r-3); }
-.enemy.hover-target .sprite { outline-style: solid; }
+/* WGC4: eligible targets are dashed, the active one (pointer or keyboard) is
+   solid. Width and offset come from TargetLayerModel via the battlefield stage,
+   held at a physical minimum under the sprite's depth zoom. */
+.enemy.targetable .sprite { outline: var(--target-outline-width, 2px) dashed var(--gold); outline-offset: var(--target-outline-offset, 6px); border-radius: var(--r-3); }
+.enemy.hover-target .sprite, .enemy.targetable:is(.gp-focus, :focus-visible) .sprite { outline-style: solid; }
 
 /* ---------- hand + controls ---------- */
 /* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
@@ -296,10 +304,8 @@
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
 }
-.hand .card.selected {
-  border-color: var(--gold);
-  outline: 2px solid var(--parchment); outline-offset: 2px;
-}
+/* The selected card's glow is the shared WCF3 filter (kit.css); no second outline. */
+.hand .card.selected { border-color: var(--gold); }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
    visual above. The ghost names whether the current point can commit; enemies
@@ -639,8 +645,10 @@
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
-.combatant.context-selected .combatant-card {
-  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+/* WCF3: one glow over the whole selected assembly — intent, the delayed
+   inspect control, art, name and lower stack — never one per child. */
+.combatant.context-selected > .combatant-stack {
+  filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
@@ -1393,4 +1401,9 @@
   :root:has(.combat) .hud-relics { pointer-events: none; }
   :root:has(.combat) .hud-relics > * { pointer-events: auto; }
 }
+/* WCO1 headroom: on every host the relic row's box spans the band's width
+   under the HUD row, over the enemies' intent and Inspect controls. Only the
+   relics themselves answer a press. */
+:root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
+:root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
 

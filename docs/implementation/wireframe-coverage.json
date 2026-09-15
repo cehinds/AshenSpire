@@ -51,12 +51,16 @@
       "id": "W1a",
       "name": "Settings",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/settings.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SettingsWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -66,7 +70,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-settings. Rail (wide) or selector above the pane (compact) is chosen by SettingsWorkspaceModel from wireframeUi.settings; no pane heading; header is title + exit only; help hidden on seven self-evident rows; condition, status, applied lines and persistence unchanged. Browser-measured at 1440x860, 1280x800 (rail) and 390x844, 375x667, 844x390 (selector) with emulation only; verification states stay pending until the owner reviews. Changelog and About remain in the rail; Display is labelled Display (was Game). Branch claude/w1-compact-category-selector (#1081): the rail/selector is now the kit's shared categoryNav and CategoryNavModel (budget moved to wireframeUi.categoryNav; settingsNavigationPlan is that function); Escape with the compact list open closes only the list; choice chips, segmented chips, toggles and row buttons have a >= 44 px physical hit area through --tap-floor (narrow S/L/XL chips widen to the floor, wrapped chip rows stand 2px apart)."
     },
     {
       "id": "W1b",
@@ -122,12 +127,16 @@
       "id": "W1d",
       "name": "Shop",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/shop.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ShopWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -137,13 +146,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-shop. The merchant is a W1d workspace: W0 head (title, exit), a category rail (Cards, Armaments, Weapon arts, Relics, Flasks, Services, and Sell while its toggle is on) beside the pane on wide frames and above it on compact frames, one W1v pane, and a W0 foot with Leave and the selected offer's action. The disclosure fold is gone (rule 11). Layout numbers come from wireframeUi.shop through ShopWorkspaceModel.js. Browser-measured at 1440x860, 1280x800, 390x844, 375x667, 844x390 and 360x780 (Galaxy S24): no page scroll, every target at least 44 px, and a purchase still asks its beat. The run HUD band stays above the frame, so the frame is shorter than W1's 90vh. Full reference parity is NOT verified. Branch claude/w1-compact-category-selector (#1081): compact frames no longer lay the rail down as a horizontal strip; the kit's shared categoryNav draws one [Category ▾] selector above the pane that opens the same rail as a vertical list, and data-shop-rail mirrors its decision."
     },
     {
       "id": "W1e",
       "name": "Armoury",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -153,6 +163,10 @@
         {
           "file": "src/ui/models/ArmouryModels.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ArmouryWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -162,13 +176,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Head: one title (Armoury) and the close; the views moved from head tabs to the W1 category rail (kit .as-railed; above the pane on narrow hosts, as a wrapping grid). Saved view ids grid/rack/hybrid/cards are unchanged; labels stay the authored Character/Equipment/Inventory/Cards (four categories, not the drawing's three). Footer: Back, plus the selected Inventory item's action. Equipment's grid presentation places the tiles beside the shared detail; its list presentation keeps each position's detail in place. Branch claude/w1-compact-category-selector (#1081): the narrow wrapping grid of view cells is gone; the views are the kit's shared categoryNav (rail when CategoryNavModel says it fits, including 844x390; one [Category ▾] selector above the pane on phones)."
     },
     {
       "id": "W1f",
       "name": "Compendium",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -183,13 +198,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "mountCompendium is a W1 page door (w1-workspace): title Compendium with the held count as eyebrow and exit; armament kinds on the rail (a [Kind ▾] selector above the pane on compact hosts); the pane splits the entry list from the selected entry's known facts; one Back fills the footer. CompendiumModel projects sections, selection and entryDetail, which withholds name (unless listed), mods and tags exactly as the tooltip does. Frame shares in wireframeUi.workspace. Hooks .cp-cell/.cp-grid/.cp-scroll/#cp-back kept. Galaxy S24 not measured. Branch claude/w1-compact-category-selector (#1081): the [Kind ▾] selector is the kit's shared categoryNav, decided by CategoryNavModel from the host's box instead of data-layout='narrow'."
     },
     {
       "id": "W1g",
       "name": "Profile",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -204,13 +220,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openProfileArchive is a W1 workspace door: rail categories are the two drawer kinds save.js writes (set-aside profiles, set-aside runs), a [Kind ▾] selector on compact hosts; the pane shows current profile identity beside the selected category's records with their export/restore actions and status; one Back fills the footer. ProfileWorkspaceModel projects categories, counts and empty states. Owner decision open: the gallery example's Overview/History/Discoveries/Progression categories were not bound (those live on other routes). Galaxy S24 not measured. Branch claude/w1-compact-category-selector (#1081): the [Kind ▾] selector is the kit's shared categoryNav, decided by CategoryNavModel from the host's box instead of data-layout='narrow'."
     },
     {
       "id": "W1h",
       "name": "Discard / Exhaust viewer",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -225,18 +242,23 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openSpentPileModal on the W1 rail (kit railed/rail/railItem): Discard and Exhaust are rail categories (above the pane on compact hosts), never head tabs; the pane shows the pile beside the selected card reading (cardDetailHtml, the inspect door body); single Close footer. PileViewerModel.spentPileView projects labels, counts, empty state and the reading. Rail items keep role=tab, aria-selected and data-modal-tab. Branch claude/w1-compact-category-selector (#1081): compact hosts get the kit's shared categoryNav, one [Pile ▾] selector above the pane instead of a horizontal strip; items also carry data-member; the pile's own arrow-key handler is gone (the input router moves the cursor; the kit adds Home/End)."
     },
     {
       "id": "W1i",
       "name": "Smith upgrade",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/smithUpgradeModal.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SmithWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -246,17 +268,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/smith-w1ijk-workspace: W1 frame (workspaceFrame) with no category rail; the candidates are the left column (kit rail via the shared categoryNav, 44vw from wireframeUi.smith) and fold into one [Selection ▾] selector on compact hosts; the pane shows the selected item, stats/requirements/affected cards, and the Stone cost pinned last. Header title + exit only; footer Back + Upgrade. Measured by CDP at 1440x860, 1280x800, 390x844, 375x667 and 844x390 (no page scroll, targets >= 44 px). Upgrade flow, hold/confirm and two-tap candidate policy unchanged. Owner review pending."
     },
     {
       "id": "W1j",
       "name": "Extract card",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/mountServiceModal.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -267,17 +294,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/smith-w1ijk-workspace: same W1 frame as W1i; the pane registers selected item, mount selector, the extraction preview (the card that leaves and what the mount then shows) once a mount is chosen, and the pinned cost. Follows the wide ASCII (items beside the pane) rather than the table's three stacked rows. A fresh class kit carries no extractable card, so the Shrine shot offers no extraction: the flow was proved on a run built in-page from source modules (Greatsword's Sundering Hew). Owner review pending."
     },
     {
       "id": "W1k",
       "name": "Install card",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/smithServices.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/mountServiceModal.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -288,7 +320,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/smith-w1ijk-workspace: same W1 frame as W1i; the pane registers selected item, mount selector, the compatible deck-card selector once a mount is chosen, the install preview once a card is chosen, and the pinned cost. Dependent mount/card choices still clear when the parent changes (smithServices.js, unchanged). Proved by CDP after an extraction emptied the mount on an in-page run. Owner review pending."
     },
     {
       "id": "W1l",
@@ -336,12 +369,20 @@
       "id": "W1n",
       "name": "Inventory selection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/equipment.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/components/disclosure.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ArmouryWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -351,13 +392,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Rendered inside W1e's Inventory category, one shell. Items stay the existing disclosure faces; the selected item's reveal renders in a separate detail column (mountDisclosure revealHost). The detail adds Compared with equipped (what the position holds and moved role values, from the candidate receipt) and an eligibility line (canEquip/equipTransitionReceipt refusals; requirement shortfalls stated as facts because equipPiece does not refuse on them). The footer's primary is the same act as the card, through the same hold. Comparison presentation stays the authored tooltip hold preview for the full receipt."
     },
     {
       "id": "W1o",
       "name": "Item inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -372,13 +414,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openCardInspection: the header close is the way out; the footer holds only applicable actions (one fills it) and a read-only door has no footer, no redundant Back."
     },
     {
       "id": "W1p",
       "name": "Combatant inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -397,13 +440,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Sections: Summary (HP/intent/defense), Current state, Previous actions newest first (movesHistory), Known abilities, Known traits (tags), Lore (unknown until authored). No knowledge filter exists yet."
     },
     {
       "id": "W1q",
       "name": "Potion inspection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -418,7 +462,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "openFlaskInspectModal via PotionInspectionModel.potionInspectionView: art beside effect and remaining charges; the host plan's Use row is the one footer action (disabled with its reason, which the body also states as the eligibility line); no footer Close beside the header close. The menu passes its Use row and rings onAction('use') only when the door's Use is pressed. Capacity is not shown: flask definitions carry none."
     },
     {
       "id": "W1r",
@@ -445,7 +490,7 @@
       "id": "W1s",
       "name": "Rest",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -460,13 +505,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Shared W1 choice-body frame (components/choiceBody.js, wireframeUi.choiceBody): head \"{available} of {total} available\" from restChoiceStatus, option cards beside an availability column with the refill sentence; side by side on wide, stacked on narrow. Multi-use Leave is the foot's Continue; a single-use Shrine has no foot. HUD leaves the frame 71-77% of the height, not 90%. Galaxy S24 not measured."
     },
     {
       "id": "W1t",
       "name": "Rewards",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -481,13 +527,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Head status \"{claimed} of {total} claimed\" and a claim-status column (per-row state, required choice slot) from rewardClaimStatus; side by side on wide, stacked on narrow. Door keeps its md width over the battlefield."
     },
     {
       "id": "W1u",
       "name": "Event",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -502,18 +549,23 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Shared W1 choice-body frame: event name title with {Status} (Choose a response / {available} of {total} available / Resolved) from eventResponseStatus, authored narrative beside the responses, Continue in the foot disabled until a response is taken. No close control is built. Cost/consequence stays in the authored labels. Galaxy S24 not measured."
     },
     {
       "id": "W1v",
       "name": "Shop offers",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/screens/shop.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ShopWorkspaceModel.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
@@ -523,7 +575,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-shop. The active pane shows the category {Status}, the offer tiles with a price each and a refusal reason when an offer cannot be taken, and the selected offer's detail: side by side on wide frames, stacked with the detail capped at half the body on compact frames. Reasons come only from the existing plans (armament and weapon-art plan reasons, the flask belt, the purse). Selecting a tile does not buy; the footer's action carries the existing beat (shopBuy, shopSell). Cards keep their own armed second tap and the burn grid keeps its three doors. Selection is kept per category across purchases by stable offer references. Full reference parity is NOT verified."
     },
     {
       "id": "W1w",
@@ -549,13 +602,13 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Rebased onto current dev. Shared card proportions, selection timer, hand layout/order, inspector shell, or battlefield geometry changed. Full reference parity is NOT verified."
+      "notes": "Combatant door is a two-column W1w layout: sprite/name/HP preview (0.38) left, ordered details right; only details scroll. Unknown and none are distinct."
     },
     {
       "id": "W2",
       "name": "Confirmation variant",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -570,13 +623,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Already implemented by openConfirmationModal: question title + close, message + consequence details, Back left / action-named primary right, danger as alertdialog."
     },
     {
       "id": "W2a",
       "name": "Service confirmation",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -591,7 +645,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Merchant Buy (card/relic/flask), Burn and Sell, and Shrine Rest now fill W2's slots from ui/models/ConfirmationReviewModel.js: question title, target line (.confirmation-target), exact cinders/HP consequence. No STATE CHANGE eyebrow or generic review line. Burn is an alertdialog because action.removeCard is DESTRUCTIVE. Smith upgrade and mount install/extract read Back, not 'Keep reviewing'. CDP evidence at 1440x860, 390x844 and 844x390. Open: consequence tag as eyebrow vs body (owner decision)."
     },
     {
       "id": "W2b",
@@ -660,7 +715,7 @@
       "id": "W2e",
       "name": "Quit confirmation",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -675,13 +730,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Quit Without Saving now names the run it leaves: class, slot, and the same act/floor/HP facts the save slots print. Title, message, alertdialog tone (policy.discardUnsavedProgress) and Back focus are unchanged. The title keeps the actual operation's label ('Quit without saving?'), not the gallery's 'Leave this run?'. CDP evidence at 1440x860, 390x844 and 844x390."
     },
     {
       "id": "W3",
       "name": "Main-menu composition",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -696,13 +752,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Title keeps the centred wordmark; with a save the menu list and a save preview share the body (stacked on narrow). Menu order/labels differ from W3 (owner decision)."
     },
     {
       "id": "W3a",
       "name": "Main menu — centered, no preview",
       "parent": "W3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -717,13 +774,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "No save: lone centred menu, Continue disabled, no empty preview placeholder."
     },
     {
       "id": "W3b",
       "name": "Main menu — Continue highlighted",
       "parent": "W3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -738,13 +796,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Save available: Continue highlighted and focused; preview shows class, slotFacts, and Slot/Seed beside the menu (below on narrow). Verified with a fixture save through the production mountTitle."
     },
     {
       "id": "W4",
       "name": "Gameplay / encounter regions",
       "parent": "W0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -761,13 +820,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "W4a/W4b band models and tests unchanged; 138/138 node suite",
+        "wide": "Combat field 1440x459.9 (1440x860) and 1280x423.9 (1280x800), stacked; no page scroll",
+        "compact": "844x390: rails arrangement, field 844x148, no page scroll; HUD icon buttons 44x32 (pre-existing)",
+        "iphoneSE": "375x667: field 375x336.4, no page scroll",
+        "galaxyS24": "360x780: stacked, no page scroll",
+        "interactions": "Card play on a tapped enemy verified at every viewport"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Parent host verified through its combat body: shared HUD, battlefield, hand and footer bands (W4a) and the map body (W4b) are its registered variants; this branch changes neither band plan. W4c dialogue was not assessed. Full reference parity is NOT verified."
     },
     {
       "id": "W4a",
@@ -792,18 +852,18 @@
       "verification": {
         "structural": "targeted tests passed",
         "wide": "reviewed; incomplete",
-        "compact": "short landscape has unresolved legibility limits",
+        "compact": "Rails arrangement supported in emulation at 844x390 and 915x412 (battlefield 148/163 px, no scroll, 44 px targets, card play and held End Turn verified). 740x360 and 667x375 plan supported but the upright gate covers them by default. Not complete.",
         "iphoneSE": "reviewed; incomplete",
         "galaxyS24": "Reviewed at 360x780: page contained; hand has 7 local pixels of horizontal overflow. Not complete.",
         "interactions": "adjacent hand selection and card inspection verified; remaining interactions pending"
       },
-      "notes": "Bands now come from allocateCombatBands (10/55/30/5 with 208/56 px hand/footer minimums); 844x390 reports data-combat-geometry=unsupported. Full reference parity is NOT verified."
+      "notes": "Bands now come from allocateCombatBands (10/55/30/5 with 208/56 px hand/footer minimums). When the stacked plan cannot hold one readable combatant and the width allows, the footer row folds into rails beside the hand (data-combat-arrangement=rails); 844x390 now plans supported. Hosts that still cannot fit report data-combat-geometry=unsupported. Full reference parity is NOT verified."
     },
     {
       "id": "W4b",
       "name": "Map — 10 / 60 / 20 / 10",
       "parent": "W4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -826,7 +886,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Classic act map: select then Enter, context band, Recenter/Enter footer. Header (run HUD + route strip) is now W4b's 10 vh via the map-compact HUD context (MapHeaderLayout, wireframeUi.map.header): 10% at 1280x800, 1440x860, 390x844 and 375x667; 52 px physical floor (13.3%) at 844x390. Map scene 58.9% at 1280x800, 68.6% at 390x844. Atlas pending in its own branch; it can opt into the same header."
     },
     {
       "id": "W4c",
@@ -1099,7 +1160,7 @@
       "id": "WC2",
       "name": "Possession card",
       "parent": "WC0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1126,13 +1187,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Possession card on the shared equipment poker canvas (equipmentCard.js). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2a",
       "name": "Equipment card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1159,13 +1221,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Equipment card: body row one is Slot / requirements (type label, then requirement). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label. Equipped comparison row not built."
     },
     {
       "id": "WC2a1",
       "name": "Weapon card",
       "parent": "WC2a",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1192,13 +1255,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Weapon card rows from PossessionVariantModel (an authored hand makes it a weapon; no id switch). Row one is Hand / requirements: the authored attribute requirement, else the authored hand label. Detail one keeps intrinsic Attack / Defense / Weight (no per-weapon attribute scaling is authored, so scaling is omitted). Effect row is Granted card package: weapon-art card names from weaponCardPackage, then the authored modifiers; the face shows one entry and the rest stay hidden and listed in inspection. WC2a Equipped comparison is still not built."
     },
     {
       "id": "WC2a2",
       "name": "Armor card",
       "parent": "WC2a",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1225,13 +1289,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Armour (kind armor / item:armor tag). Detail one shows the authored Poise threshold (no armour defense or resistance values are authored); row one keeps the class-outfit requirement (no armour weight is authored); effect row is Granted modifiers from the authored mods."
     },
     {
       "id": "WC2b",
       "name": "Relic card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1258,13 +1323,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Relic card through renderCollectibleCard (same canvas). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2b1",
       "name": "Passive relic",
       "parent": "WC2b",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1291,13 +1357,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Passive relic (passives.modifiers, or any set passive key). Lines: Passive: numeric modifiers as authored (Max HP +10, Cinder gain x1.25); Affects: the resources/stats they touch. Flag keys have no number, so only Affects names them. Row one reads Relic / Active while owned; modes lead the lines."
     },
     {
       "id": "WC2b2",
       "name": "Triggered relic",
       "parent": "WC2b",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1324,13 +1391,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Triggered relic (triggers[]); coexists with WC2b1 on 4 relics. Lines: Trigger: event labels from trigger.on; Limit: once per combat / limitPerTurn / No limit (paired with events when gates differ). If-conditions stay in the effect text; the trigger DSL authors no cooldown."
     },
     {
       "id": "WC2c",
       "name": "Consumable card",
       "parent": "WC2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1357,13 +1425,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Consumable (potion) card through renderCollectibleCard (same canvas). Footer is metadata only via WCI3 metadataFooter: rarity start, Owned: n end when the host knows the count (Armoury inventory row.count, Smith inventoryCount); requirement moved into body row one beside the slot/type label."
     },
     {
       "id": "WC2c1",
       "name": "Healing consumable",
       "parent": "WC2c",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1390,13 +1459,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Healing consumable (effect op heal): Heals N% of max HP / Heals N HP from the authored amount. A live capped preview is not built (no card host supplies HP). Charges line appears only when a host passes charges; none does yet."
     },
     {
       "id": "WC2c2",
       "name": "Resource consumable",
       "parent": "WC2c",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1423,13 +1493,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Resource consumable (op restore<Resource> naming a registered resource): Restores N <resource>, marked with the registered resource tint (MP #315c9b), not a generic green."
     },
     {
       "id": "WC2c3",
       "name": "Utility consumable",
       "parent": "WC2c",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1456,7 +1527,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Utility consumable (any other op): <Status> <stacks> or Block N, then target (Self / Enemy). A scripted effect (Wondrous Draught) states no purpose and attaches no sub-variant."
     },
     {
       "id": "WC3",
@@ -1621,7 +1693,7 @@
       "id": "WC4b",
       "name": "Standard combatant",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1638,19 +1710,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
+        "structural": "No size-variant host exists",
+        "wide": "Anatomy verified by the meters/overlays branches",
         "compact": "pending",
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Anatomy already met through WCM0-WCM4, WCO1-WCO3, WCF3 and WCB1 (name above HP, intent above sprite, guard at 12%/88%, half-height secondary rows, 1.575rem icons, whole-assembly glow, delayed inspect). The fixed clamp(12rem, 18vw, 16rem) size is not built: the battlefield sizes combatants by shared formation fit and the inspector preview has its own bounds, so no production host uses a standard-size combatant. Owner call if one is wanted."
     },
     {
       "id": "WC4c",
       "name": "Expanded combatant",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1667,13 +1740,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
+        "structural": "No size-variant host exists",
+        "wide": "Anatomy verified by the meters/overlays branches",
         "compact": "pending",
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). As WC4b: anatomy met; the expanded clamp(16rem, 24vw, 20rem) size has no production host (formation fit sizes battlefield combatants; W1w bounds the inspector preview). Not built. Owner call if one is wanted."
     },
     {
       "id": "W1x",
@@ -1808,6 +1882,14 @@
         {
           "file": "styles/kit.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ButtonSizeModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/screens/gameover.js",
+          "existsOnImplementationBase": true
         }
       ],
       "verification": {
@@ -1818,13 +1900,13 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence; the nine size presets are still pending a consuming workspace."
+      "notes": "Appearance roles resolved by ControlAppearance.js with contract precedence. The nine size presets (third/half/full × standard/tall/double) live in wireframeUi.buttons and resolve through ButtonSizeModel.js; the kit writes their tokens onto :root. Consumers: every modalFooter (equal shares after gaps, a sole action fills the foot) and the game-over choice row (half preset capped by the equal share, labels wrap). Header exits, steppers, inspect, map nodes, status icons and the packed combat footer keep their own geometry. Other button rows still use the short/medium/long/fill ladder."
     },
     {
       "id": "WCB1",
       "name": "Inspect control",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1847,13 +1929,15 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "InspectControlModel.js with wireframeUi.inspect (sizeRem 2.75, labelPx 16, gapPx 10). main.js writes --inspect-size / --inspect-label / --inspect-gap; card, equipment card, combatant and hand-portal controls all read them (one 44 physical px circle, 16 px label, 10 px above the owner; combatant control above the intent). The reveal delay is selection.revealDelayMs. Only the creation corner still declares its own --card-info-size."
     },
     {
       "id": "WCB2",
       "name": "Context action",
       "parent": "WCB0",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Choice groups use kit choiceRow(): siblings share one WCB0 preset (half by default) capped by the equal share after gaps. The game-over door is the first consumer; modal footers use equal shares. The selected-card full-width Use action is not migrated.",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -1988,7 +2072,7 @@
       "id": "WCF0",
       "name": "Component foundations",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2011,13 +2095,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Foundations: ComponentModel.js (immutable, serializable, validated records) plus the WCF3 selection effect from wireframeUi.selection via SelectionEffectModel.js."
     },
     {
       "id": "WCF1",
       "name": "Component contract",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2040,7 +2125,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "componentModel() validates the registered id, serializable properties/tokens/accessibility, Behavior Models and child Component Models, and freezes the record; owner selection is the only selected state (cards: cardSelection store; combatants: context-selected)."
     },
     {
       "id": "WCF2",
@@ -2076,7 +2162,7 @@
       "id": "WCF3",
       "name": "Selection effect",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2099,13 +2185,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "One shared glow, selectionGlowFilter() = drop-shadow(0 0 0.35rem var(--gold)), written once to :root as --selection-glow. It is applied to the whole owner: a selected card (its inspect control is a child; the hand portal wears the same filter) and a selected combatant's whole stack (intent, inspect, art, name, lower stack). Per-child outlines and glow shadows removed. Reveal delay has one home, selection.revealDelayMs (1000 ms), read by card inspection, equipment cards and combatant inspection."
     },
     {
       "id": "WCF4",
       "name": "Inspector facts",
       "parent": "WCF0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2128,13 +2215,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Inspector facts render as uniform label/value rows from CombatantInspectorSections; empty states say None. or Unknown."
     },
     {
       "id": "WCI0",
       "name": "Identity and artwork",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2157,13 +2245,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "IdentityModel.js (IDENTITY_PARTS name/artwork/metadata) with wireframeUi.identity. Cards, combatants and the inspector preview stamp data-identity-part on the parts they own; values stay with the owner."
     },
     {
       "id": "WCI1",
       "name": "Nameplate",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2186,13 +2275,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Card header, combatant nameplate and inspector title carry data-identity-part=name. The combatant nameplate is the card child directly above the meters (HP first)."
     },
     {
       "id": "WCI2",
       "name": "Sprite / artwork",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2215,13 +2305,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "artworkAnchor(host): card and inspector centre, combatant bottom (baseline); artwork keeps its intrinsic ratio (object-fit contain). Facing mirrors only the .facing art layer, never text or controls."
     },
     {
       "id": "WCI3",
       "name": "Metadata footer",
       "parent": "WCI0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2244,13 +2335,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "metadataFooter: rarity at the start, Owned: n at the end (wireframeUi.identity.metadataSlots); an unstated fact is absent. Reward, shop and draft offers pass the deck count; deck and pile views omit it. Equipment cards keep their own footer (WC2)."
     },
     {
       "id": "WCM0",
       "name": "Meters and statuses",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2273,13 +2365,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-meters: CombatantMeterModel.js owns row heights and selected-only visibility from wireframeUi.combatantMeters; the combat layout adapter writes them as CSS variables."
     },
     {
       "id": "WCM1",
       "name": "Health meter",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2302,13 +2395,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "HP at least max(0.85rem, 14 physical px); compact current/maximum at 12 physical px; full accessible label kept."
     },
     {
       "id": "WCM2",
       "name": "Resource meter",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2331,13 +2425,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Half the HP height, at least 0.45rem; exact values in the tooltip and inspector (the row is too short for readable text). Selected-only by default."
     },
     {
       "id": "WCM3",
       "name": "Buildup meter",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2360,13 +2455,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Buildup rows share the secondary height; glyph nub kept. Selected-only by default."
     },
     {
       "id": "WCM4",
       "name": "Stance strip",
       "parent": "WCM0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2389,7 +2485,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "The stance chip renders as a strip the size of HP in formation, after the buildup rows. Selected-only by default."
     },
     {
       "id": "WCM5",
@@ -2455,7 +2552,7 @@
       "id": "WCO0",
       "name": "Combat overlays",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2478,13 +2575,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch feature/wireframe-overlays (#1030): CombatOverlayModel.js owns intent visibility and the guard badge geometry from wireframeUi.overlay; the combat layout adapter writes it as CSS variables."
     },
     {
       "id": "WCO1",
       "name": "Intent indicator",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2507,13 +2605,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Above the sprite, below Inspect; at least 2.8rem tall with a 13.2 physical px value font. Visibility per role from overlay.intentVisibleByRole (enemy shown, player hidden)."
     },
     {
       "id": "WCO2",
       "name": "Defense badge",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2536,13 +2635,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Outside the sprite by 0.5rem: player upper-right at 12%, enemy lower-left at 88% (overlay.defenseAnchorByRole, the accepted guard geometry); at least 3.5rem; 13.2 physical px value; never mirrored."
     },
     {
       "id": "WCO3",
       "name": "Aura layer",
       "parent": "WCO0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2565,7 +2665,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "The stance aura spans the sprite bounds (inset 0) behind the artwork, input transparent."
     },
     {
       "id": "WCO4",
@@ -2594,7 +2695,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Not built: no buff visuals exist to fill a front layer. Deferred until buff art or effects are specified."
     },
     {
       "id": "WCO5",
@@ -2630,7 +2732,7 @@
       "id": "WCT0",
       "name": "Tooltip components",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "shared-components",
       "sourceReferences": [
         {
@@ -2644,6 +2746,14 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "styles/kit.css",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
+          "existsOnImplementationBase": true
         }
       ],
       "verification": {
@@ -2653,7 +2763,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. One presenter (tooltip.js) with two panels; its four measured rungs map onto WT1/WT2/WT3 through wireframeUi.tooltip (no second size system) and stamp data-wireframe. WT0.arrow added (TooltipPlacementModel.tooltipArrow, kit.css #tooltip::after). Browser-measured with CDP emulation at 1440x860, 1280x800, 390x844, 375x667 and 844x390; verification states stay pending until the owner reviews. See approved-wireframes.md, Tooltips."
     },
     {
       "id": "WCT1",
@@ -2683,13 +2794,13 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js; not changed in this task."
+      "notes": "Presenter timing, cancellation, Escape, and levels are owned by tooltip.js. Branch claude/tooltip-wireframes-wt: a repeated hover/focus on the element already counting down no longer restarts its timer; the arrow is pointed after every placement and on resize; fitRung stamps data-wireframe. Delays, cancellation paths, levels and the stick are otherwise unchanged."
     },
     {
       "id": "WGC0",
       "name": "Combat composition",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2706,13 +2817,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Composition order and band plan unchanged",
+        "wide": "CDP emulation, ?shot=combat, reduced motion; no page scroll at 1440x860, 1280x800, 390x844, 375x667, 360x780 and 844x390 (rails)",
+        "compact": "844x390 rails: footer folds beside the hand (compact-landscape branch); unchanged",
+        "iphoneSE": "Verified at 375x667",
+        "galaxyS24": "Verified at 360x780",
+        "interactions": "Select card, tap enemy, card plays (hand 5 to 4, enemy 16 to 9 HP)"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Already met: HUD, battlefield (WGC1), hand (WGC5) and packed footer (WGC6) compose from the W4a band plan (allocateCombatBands) with the Potions control as the single WGC11. No change needed. Full reference parity is NOT verified."
     },
     {
       "id": "WGC1",
@@ -2748,7 +2860,7 @@
       "id": "WGC2",
       "name": "Player placement",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2765,19 +2877,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "combat-formation and scene-layer tests: every foot of a 6v6 formation is on the floor band",
+        "wide": "Player foot at 0.504 (1440x860) and 0.502 (1280x800) of field height",
+        "compact": "844x390: foot 0.641",
+        "iphoneSE": "375x667: foot 0.498",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Selection growth and inspect unchanged"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Already met: CombatFormationModel places allies from the left in the six reserved mirrored slots by stable actor id; the player faces right, its intent is hidden by overlay.intentVisibleByRole, and it shares the enemies' unselected category fit before row and selected-growth factors at the fixed foot anchor. Feet now stand on the WGS7 floor band at every viewport. Full reference parity is NOT verified."
     },
     {
       "id": "WGC3",
       "name": "Enemy placements",
       "parent": "WC4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2794,19 +2907,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Mirror symmetry covered by combat-formation tests",
+        "wide": "Enemy feet share the player tier (0.504 at 1440x860)",
+        "compact": "844x390: 0.641",
+        "iphoneSE": "375x667: 0.498",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Tap-to-play on an enemy verified at every viewport"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Already met: enemies take the mirrored slots from the right with the same combatant component and category fit; intent visible by role default; names and controls are not mirrored. Full reference parity is NOT verified."
     },
     {
       "id": "WGC4",
       "name": "Target layer",
       "parent": "WCF3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -2823,13 +2937,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-scene-layers tests: eligibility and outline minimums",
+        "wide": "Outline 3 px, offset 11/9 px at 1440x860/1280x800 (unchanged); hover solid",
+        "compact": "844x390: outline 2 px, offset 4 px (dev 1/2)",
+        "iphoneSE": "375x667: 2 px / 4 px (dev 1/4)",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Arm, tap enemy: plays; layer idle with 0 targetable after, at all six viewports. Pointer hover solid on desktop. Keyboard targeting not verified."
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Implemented: src/ui/models/TargetLayerModel.js is the one home for eligibility (living enemies while a targeted card or flask is armed) and the outline geometry (wireframeUi.targetLayer). combat.js applies it from selection changes and from every render, so a play or cancel clears the highlight (dev kept 'targetable' on enemies after a play: selection toggled a class the frame update did not own). Defeated enemies are never highlighted. The dashed outline and 6 px offset are authored in sprite px and held at 2 px / 4 px physical under the depth zoom (dev drew 1 px on phones). A CSS rule also gives a keyboard-focused target the solid active outline, like pointer hover (not browser-verified: the CDP key did not reach the shortcut handler). Required targeting still gates the command (needsTarget arms instead of playing). Full reference parity is NOT verified."
     },
     {
       "id": "WGC5",
@@ -2893,7 +3008,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and provisional 4rem readable floor. Verified in emulation at 1440x860, 375x667, 360x780."
+      "notes": "Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and the owner-confirmed 4rem (64 physical px) readable floor. Verified in emulation at 1440x860, 375x667, 360x780. Packed five-track footer from packCombatFooter: centered gap-first grid, 95% height circles capped at 20%, End Turn up to 40%, piles up to 10% with 44 px target and provisional 4rem readable floor. Verified in emulation at 1440x860, 375x667, 360x780. Short landscape uses packCombatRails: the same grid wraps the hand, (Actions)[Draw] leading and End Turn over [Discard](Potions) trailing, with 53.2 px circles, 64x44 px piles and a 120 px End Turn at 844x390."
     },
     {
       "id": "WGC7",
@@ -3069,7 +3184,8 @@
       "id": "WGH0",
       "name": "HUD composition contract",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Host HUD context: runHudHtml/RunHudViewModel accept layout ('map-compact') and orientationHtml; the map's header is sized by src/ui/models/MapHeaderLayout.js (10 vh, one-tap-row floor). Combat and the rooms pass no context and draw unchanged. Placement presets beyond this are not implemented.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3132,7 +3248,8 @@
       "id": "WGH2",
       "name": "Armoury control",
       "parent": "WCB2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the Armoury control sits right of the vitals, before Menu, at the 44 px tap floor, dispatching the host open-armoury command; a host without an Armoury removes it. It is now a WGH0 layer (wireframeUi.hud.layers.armoury) and has no flask siblings in the model. Not changed: the face stays the icon glyph with an accessible name, not the drawn visible label, and combat at 844x390 still draws it 44x32 inside the 39 px band (combat.css short-landscape rule; the sizing contract names no HUD minimum). Both are owner decisions.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3157,7 +3274,8 @@
       "id": "WGH3",
       "name": "Menu control",
       "parent": "WCB2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the Menu control sits far right of the primary row at the tap floor, opens the quick-nav (or Settings) and quicknav restores focus to it on dismissal. It is now a WGH0 layer (wireframeUi.hud.layers.menu). Same two owner decisions as WGH2: visible label, and 44x32 in combat at 844x390.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3182,7 +3300,8 @@
       "id": "WGH4",
       "name": "Total HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "W4b map context: the total HUD fits W4b's 10 vh header as one grid (route | facts over meters | Armoury, Menu on wide hosts; facts, meters, route beside the controls on narrow). Meters sit side by side; relics stay off the map as before. W4a combat HUD unchanged.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3231,7 +3350,8 @@
       "id": "WGH6",
       "name": "Relic rail",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Relic rail: one tile renderer for combat and the rooms (components/relicRail.js); every tile now carries its stable relic id (rooms lacked it) and opens the shared collectible card. Relics and the rail are WGH0 layers. Combat renders no potion tray at all (before: an empty hidden one). Rooms without a footer HUD (shop, rest, event) keep their flask tiles in the rail while wireframeUi.hud.potions.roomRail is true, because that rail is the only place a charge flask is drunk or a carried one dropped outside combat; false applies the footer-only rule there too. Owner decision. The map still hides its rail (relics off the map, as before).",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3256,7 +3376,8 @@
       "id": "WGH7",
       "name": "Run header strip",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Run header: class, Cinders and Act/Floor tracks are WGH0 layers filtered before layout (a track that is off leaves no gap). Labels are uiStrings rows (hud.class, hud.cinders, hud.act, hud.floor, hud.position) via t(); the act seat is its own semantic field (RunHudViewModel seat), printed after the act number, instead of being concatenated into the act value. Rendered text unchanged.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3281,7 +3402,8 @@
       "id": "WGH8",
       "name": "Potions contents",
       "parent": "WCB2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Potions contents: one pure projection (src/ui/models/PotionContentsModel.js) of the HP and MP charge flasks and the carried consumables with counts. Carried flasks of one kind are one entry with a count (Use spends the first slot); hotkeys F/G/H follow their entries by action id. Config hides either category (wireframeUi.hud.potions.chargeFlasks / carried). Combat footer Potions (WGC11) lists it; the room rail tiles read the same projection and carried tiles now show their count. Count copy agrees in number via uiStrings (fixes \"1 charges\"). Use still goes through the hold/confirm beat and targeting.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3406,7 +3528,7 @@
       "id": "WGM4",
       "name": "Node details",
       "parent": "WCF4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3425,7 +3547,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Selected node context band: floor, kind, blurb, boss destination, key reveal; shown kind under fog; sizes to content up to 20%."
     },
     {
       "id": "WGM5",
@@ -3456,7 +3579,7 @@
       "id": "WGM6",
       "name": "Recenter button",
       "parent": "WCB4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3475,13 +3598,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Footer Recenter calls the board resetFraming."
     },
     {
       "id": "WGM7",
       "name": "Enter node button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3500,7 +3624,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Footer Enter disabled until a reachable node is selected, then names the kind; picking the selected node again also enters."
     },
     {
       "id": "WGP0",
@@ -3988,7 +4113,7 @@
       "id": "WGS0",
       "name": "Shared scene layers",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4005,19 +4130,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Scene-layer model tests",
+        "wide": "CDP emulation, ?shot=combat, reduced motion; no page scroll at 1440x860, 1280x800, 390x844, 375x667, 360x780 and 844x390 (rails)",
+        "compact": "844x390 verified",
+        "iphoneSE": "375x667 verified",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Co-op (?shot=coop) verified at 390x844 and 1440x860: ground 0.199-0.200"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Shared HUD composed once above the scene; background layers below it through WGS1. The layer toggles (wireframeUi.scene.skyline/floor) are independent and never move actors. Combat and co-op share the battlefield stage, so both get the fit. Full reference parity is NOT verified."
     },
     {
       "id": "WGS1",
       "name": "Background composition",
       "parent": "WCI2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4034,19 +4160,21 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "All 20 scenes x 6 field shapes: crop inside the painting, aspect kept, ground on the floor top",
+        "wide": "Painted ground 0.1998 (1440x860), 0.1999 (1280x800)",
+        "compact": "844x390: 0.1997",
+        "iphoneSE": "375x667: 0.1997",
+        "galaxyS24": "360x780 verified",
+        "interactions": "Refits on resize and selection like the formation"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). Implemented: src/ui/models/SceneLayerModel.js fits each scene's single painted plate to the battlefield without distortion so its authored ground line (environments.js floorStart) sits at the floor band's top: 80% ground, 20% sky (wireframeUi.scene, moved from the unused formation.floorFraction). The battlefield stage writes the crop as the SVG viewBox and drops the 1.06/1.02 CSS zoom it replaces. On dev the ground line fell at 0.19-0.74 of the field and back-tier feet stood above painted ground in 2-6 of 20 scenes per viewport; now 0.200 everywhere and 0/20. Owner decision: phones crop the plate harder (390x844 zoom 0.90x to 1.12-1.63x)."
     },
     {
       "id": "WGS2",
       "name": "Shared HUD",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Shared HUD: combat, map and rooms still render the one RunHudViewModel/sharedRunHudHtml. WGH0 layers (wireframeUi.hud.layers) and the potion rule (models/RunHudLayerModel.js) are decided before layout; defaults draw exactly what dev drew except combat no longer carries an empty hidden potion tray. Map-compact (PR #1052) unchanged. Not done: the spec default of stamina off in scene HUDs (hudparity P1 requires HP/MP/SP; resource rows are content/resources.js) and WGH5 (XP blocked on plan 12.5).",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4075,7 +4203,8 @@
       "id": "WGS3",
       "name": "HUD identity",
       "parent": "WCI1",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "HUD identity: same WGH7 header contract (class / Cinders / Act-Floor), labels from uiStrings, seat as a semantic field; each track is a layer.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4104,7 +4233,8 @@
       "id": "WGS4",
       "name": "HUD resource strip",
       "parent": "WCM2",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the resource strip is the shared resbars (one resourceBarPlan for map, combat and rooms, 200/20/20 references). Vitality is now a WGH0 layer; the rows themselves remain content/resources.js decisions.",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4133,7 +4263,8 @@
       "id": "WGS5",
       "name": "HUD menu button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
+      "notes": "Already met: the HUD Menu button is the WGH3 slot, right-aligned, separate from WGH2 Armoury. Visible label is an owner decision (see WGH2).",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4162,7 +4293,7 @@
       "id": "WGS6",
       "name": "Skyline layer",
       "parent": "WGS1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4179,19 +4310,20 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Toggle covered by scene-layer tests",
+        "wide": "Sky band 20% of field at 1440x860 and 1280x800",
+        "compact": "844x390 verified",
+        "iphoneSE": "375x667 verified",
+        "galaxyS24": "360x780 verified",
+        "interactions": "n/a (decorative)"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). The skyline is the painted plate's region above the ground line; it fills the battlefield behind the floor and actors, noninteractive. scene.skyline=false paints no plate (backdrop colour only). No separate skyline asset exists. Full reference parity is NOT verified."
     },
     {
       "id": "WGS7",
       "name": "Floor layer",
       "parent": "WGS1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4208,13 +4340,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "Feet on floor band for 6v6 formations at 6 field shapes",
+        "wide": "Floor top 0.200 of field; highest foot 0.504",
+        "compact": "844x390: floor top 0.200, foot 0.641",
+        "iphoneSE": "375x667: floor top 0.200, foot 0.498",
+        "galaxyS24": "360x780 verified",
+        "interactions": "n/a (decorative)"
+      },
+      "notes": "Branch claude/combat-composition-scene-layers (dev 8797fc9a). The floor band is the bottom 80% of the battlefield (scene.floorFraction) and the plate's painted ground starts at its top; every formation foot stands inside it. A separate foreground ground cutout (scene.groundCutout) is not possible without a separate ground asset: each scene is one plate. scene.floor=false falls back to a centred cover crop without moving actors. Full reference parity is NOT verified."
     },
     {
       "id": "WGS8",
@@ -4266,17 +4399,21 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default; not changed in this task."
+      "notes": "Tooltip timing already runs through one service (tooltip.js + model/tooltipSettings.js) with a 1s default. Branch claude/tooltip-wireframes-wt: 'above' now flips below before going sideways (fx.js placeAnchored), the WT0 arrow follows the trigger after flip/shift, and a repeated event keeps the pending timer. Focus keeps its own 500 ms and tap keeps select-then-explain; both differ from the spec's 1s line and are left for the owner."
     },
     {
       "id": "WT1",
       "name": "Compact tooltip",
       "parent": "WT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -4287,17 +4424,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. The presenter's small rung draws WT1 (wireframeUi.tooltip.wireframeByRung) and the panel carries data-wireframe=\"WT1\". Width stays the rung's 25.5rem, not the 12vw/18vw/36vw nominal; owner to decide."
     },
     {
       "id": "WT2",
       "name": "Standard tooltip",
       "parent": "WT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -4308,17 +4450,22 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. The presenter's medium rung (also its fallback) draws WT2 and the panel carries data-wireframe=\"WT2\". Width stays the rung's 31.5rem, not the 20vw/30vw/60vw nominal; owner to decide."
     },
     {
       "id": "WT3",
       "name": "Expanded tooltip",
       "parent": "WT0",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/tooltip.js",
+          "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/content/wireframeUi.js",
           "existsOnImplementationBase": true
         }
       ],
@@ -4329,7 +4476,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Branch claude/tooltip-wireframes-wt. The presenter's large and expanded rungs both draw WT3 (same 37.5rem width; expanded only reaches further down) and the panel carries data-wireframe=\"WT3\". Content past the expanded rung still scrolls inside the panel unless the surface routes it to inspection (expand: true); owner to decide."
     }
   ],
   "rebasedImplementationCommit": "b07b8747",

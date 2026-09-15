@@ -51,12 +51,13 @@ import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds } from '../../model/rewardplan.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
 import { el, modalHead, modalFooter, button } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -70,6 +71,12 @@ export function mountRewards(app, {
   registries, run, rewards, onDone, saves = null, rng = null,
   onCollectArmament = null, onPersist = null, checkpoint = null,
 }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
     // The bag's room, read from the same array addToStorage writes — one
@@ -270,10 +277,10 @@ export function mountRewards(app, {
   // rebuilt: kit head (Eyebrow + Title, no way out but a choice), a body, and
   // a foot on the button ladder. It lives inside `app`, so the next screen's
   // own mount clears it exactly as it cleared the old full-screen menu.
-  function door({ eyebrow, title, body, foot, attrs = {} }) {
+  function door({ eyebrow, title, body, foot, attrs = {}, status = null }) {
     app.querySelector('.reward-veil')?.remove();
     if (!app.firstElementChild) app.appendChild(el('div', { class: 'screen reward-backdrop' }));
-    const head = modalHead({ eyebrow, title, closeLabel: t('reward.close') });
+    const head = modalHead({ eyebrow, title, closeLabel: t('reward.close'), extras: status });
     head.querySelector('.modal-close').hidden = true;
     const modal = el('section', {
       class: 'modal reward-door', dataset: { size: 'md' }, role: 'dialog', 'aria-modal': 'true', 'aria-label': title, ...attrs,
@@ -331,10 +338,19 @@ export function mountRewards(app, {
     const note = foot.querySelector('.modal-foot-note');
     note.id = 'reward-hold-copy';
     note.setAttribute('aria-live', 'polite');
+    // W1t: the choices beside their claim status, and the count in the head.
+    const claim = rewardClaimStatus(plan, states);
     door({
       eyebrow: plan.rows.length ? t('reward.eyebrow.claim') : t('reward.eyebrow.spoils'),
       title: rewards.title || t('reward.title.victory'),
-      body: el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+      // No live region: the door is rebuilt each render, and the footer note
+      // already announces progress.
+      status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
+        text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
+      body: el('div', { class: 'reward-claim-layout' }, [
+        el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+        plan.rows.length ? claimStatusPanel(claim) : null,
+      ]),
       foot,
     });
 
@@ -402,6 +418,24 @@ export function mountRewards(app, {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
     }
+  }
+
+  // The W1t claim-status column: every row's state, then the one choice still
+  // waiting. That optional slot collapses when nothing waits.
+  function claimStatusPanel(claim) {
+    const lines = claim.rows.map((entry) => el('li', { class: 'reward-claim-row', dataset: { kind: entry.kind, state: entry.state } }, [
+      el('span', { class: 'reward-claim-name', text: rowBody(plan.rows.find((row) => row.kind === entry.kind)).title }),
+      el('span', { class: 'reward-claim-state', text: t(entry.state === 'blocked' ? 'reward.claim.blocked' : `reward.state.${entry.state}`) }),
+    ]));
+    const required = claim.requiredChoice ? el('p', { class: 'reward-claim-required', dataset: { required: claim.requiredChoice.kind } }, [
+      el('span', { class: 'as-eyebrow', text: t('reward.claim.required') }),
+      el('span', { text: t('reward.card.chooseOne', { count: claim.requiredChoice.count }) }),
+    ]) : null;
+    return el('aside', { class: 'reward-claim-status', 'aria-label': t('reward.claim.heading') }, [
+      el('h3', { class: 'as-eyebrow', text: t('reward.claim.heading') }),
+      el('ul', { class: 'reward-claim-list' }, lines),
+      required,
+    ]);
   }
 
   // Potions, armaments and relics are inspect-before-collect surfaces. Opening one
@@ -478,6 +512,7 @@ export function mountRewards(app, {
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
       const el = renderCard(registries, { cardId, upgraded: false }, {
+        owned: run.deck.filter((c) => c.cardId === cardId).length,
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: states.card ? t('reward.card.alreadyTaken') : true },

@@ -55,15 +55,19 @@
 // first. A constant grid that fills in reads as a map of what exists; a
 // re-sorting list reads as a scoreboard.
 //
-// ON THE KIT (kit §04 body A): the sections are a NavRail — one RailItem per
-// kind, its held count as StatusText — and the Pane shows the current kind:
-// Eyebrow + Title·M + Subtitle (the whole count), a PaneHead naming the kind,
-// and a grid of OptionCards. Each card is the kit's OptionCard with an ArtWell
-// for its Glyph: name as Title·S, rarity · hand as meta; a withheld piece is
-// the `is-ghost` variant (dashed, the icon painted out, no name) and carries
-// its rarity on the card's edge. The Back button is the pane's ButtonRow.
-// The hooks tools read (`.compendium[data-surface]`, `.cp-cell`, `.cp-grid`,
-// `.cp-scroll`, `#cp-back`) ride on kit parts and draw nothing.
+// ON THE KIT, AS WIREFRAME W1f: a W1 workspace standing on the page. The head
+// is the title "Compendium" (the whole count as its eyebrow) with the close in
+// the corner; the body is a NavRail — one RailItem per kind, its held count as
+// StatusText — beside a Pane split into the entry list (a grid of OptionCards)
+// and the selected entry's known facts; the foot is the one Back action. On a
+// compact host the rail becomes one `[Kind ▾]` selector above the pane and the
+// two slots stack (components/w1Workspace.js). Each card is the kit's
+// OptionCard with an ArtWell for its Glyph; a withheld piece is the `is-ghost`
+// variant (dashed, the icon painted out, no name) and carries its rarity on
+// the card's edge. The detail slot says exactly what the tooltip says, from
+// models/CompendiumModel.js. The hooks tools read (`.compendium[data-surface]`,
+// `.cp-cell`, `.cp-grid`, `.cp-scroll`, `#cp-back`) ride on kit parts and draw
+// nothing.
 //
 // ---- WHAT AN AUTHOR WRITES, AND WHAT DERIVES (Law 0 clause 1) ---------------
 //
@@ -133,8 +137,11 @@ import { assetUrl } from '../assetmap.js';
 import { pieceReveal } from '../../model/unlocks.js';
 import { ownership, modEffectLine } from '../../model/loadout.js';
 import { LOCK_COPY, armamentKindLabel } from '../uiContent.js';
+import { t } from '../strings.js';
+import { compendiumView, entryDetail } from '../models/CompendiumModel.js';
+import { workspaceFrame, markCurrent, land } from '../components/w1Workspace.js';
 import {
-  el, railed, rail, railItem, pane, optionCard, options, artWell, button, buttonRow, titleS, statusText,
+  el, railed, railItem, categoryNav, pane, optionCard, options, artWell, button, statusText, detailCard, pageDoor, prose,
 } from '../kit/index.js';
 
 /** A piece's mods, written the way a player reads them. The second regex over
@@ -145,23 +152,13 @@ function modSummary(modFields, piece) {
   return (piece.mods || []).map((raw) => modEffectLine(modFields, raw));
 }
 
-/**
- * The sections, DERIVED. A kind exists because a row is filed under it, in the
- * order the table first mentions it — the same shape #88 gave settings
- * categories. There is no list of sections to fall out of step with the table,
- * so a new kind of armament appears here the day it is authored and an emptied
- * kind takes its heading with it. A heading over nothing is the defect one level
- * up from the fourth cell, and this is how it cannot happen.
- */
-function sections(rows) {
-  const order = [];
-  const by = new Map();
-  for (const r of rows) {
-    if (!by.has(r.kind)) { by.set(r.kind, []); order.push(r.kind); }
-    by.get(r.kind).push(r);
-  }
-  return order.map((kind) => ({ kind, label: armamentKindLabel(kind), rows: by.get(kind) }));
-}
+// The sections, DERIVED, now in models/CompendiumModel.js (compendiumSections):
+// a kind exists because a row is filed under it, in the order the table first
+// mentions it — the same shape #88 gave settings categories. There is no list
+// of sections to fall out of step with the table, so a new kind of armament
+// appears here the day it is authored and an emptied kind takes its heading
+// with it. A heading over nothing is the defect one level up from the fourth
+// cell, and this is how it cannot happen.
 
 function cell(piece, { state, hint, gate }, modFields, tags = []) {
   const held = state === 'held';
@@ -170,13 +167,14 @@ function cell(piece, { state, hint, gate }, modFields, tags = []) {
   // is, which is a shape you do not have. Screen readers get the same deal the
   // eye does — the alternative is an accessible label that leaks every name the
   // picture is deliberately hiding.
+  const unknown = t('compendium.unknown', { kind: piece.kind });
   const card = optionCard({
-    name: named ? piece.name : `Unknown ${piece.kind}`,
+    name: named ? piece.name : unknown,
     meta: `${piece.rarity || 'common'} · ${piece.hand} hand`,
     arrow: false,
     className: `cp-cell rarity-${piece.rarity || 'common'} state-${state}${held ? '' : ' is-ghost'}`,
     attrs: {
-      'aria-label': named ? piece.name : `Unknown ${piece.kind}`,
+      'aria-label': named ? piece.name : unknown,
       dataset: { member: piece.id, rarity: piece.rarity || 'common', state },
     },
   });
@@ -238,49 +236,99 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     if (r.state === 'hidden') continue;
     drawn.push({ piece, r });
   }
-  const total = drawn.length;
-  const heldCount = drawn.filter(({ r }) => r.state === 'held').length;
-  const kinds = sections(drawn.map(({ piece }) => piece)).map((sec) => {
-    const mine = drawn.filter(({ piece }) => piece.kind === sec.kind);
-    return { ...sec, mine, have: mine.filter(({ r }) => r.state === 'held').length };
-  });
+  // The model derives the sections (see above) and adds the selection and the
+  // counts, and nothing else. The heading words stay uiContent's.
+  const labelOf = armamentKindLabel;
+  const drawnEntries = drawn.map(({ piece, r }) => ({ piece, reveal: r }));
+  let current = null;
+  let selectedId = null;
+  let view = compendiumView(drawnEntries, { labelOf });
 
-  let current = kinds[0]?.kind || null;
-  const items = kinds.map((sec) => {
-    const item = railItem({ label: sec.label, member: sec.kind, current: sec.kind === current, className: 'with-status cp-kind' });
-    item.appendChild(statusText(`${sec.have}/${sec.mine.length}`));
-    item.addEventListener('click', () => { current = sec.kind; render(); });
+  const items = view.categories.map((cat) => {
+    const item = railItem({ label: cat.label, member: cat.kind, id: `cp-kind-${cat.kind}`, current: cat.selected, className: 'with-status cp-kind', attrs: { 'aria-controls': 'cp-panel' } });
+    item.appendChild(statusText(`${cat.have}/${cat.total}`));
     return item;
   });
-  const back = button({ label: 'Back', role: 'exit', id: 'cp-back' });
-  const grid = options([], { class: 'grid cp-grid cp-scroll' });
-  const head = el('div', { class: 'as-pane-head' });
-  const panel = pane({
-    eyebrow: 'Compendium',
-    title: 'Armaments',
-    subtitle: `${heldCount} of ${total} held`,
-    children: [head, grid, buttonRow({ size: 'short', buttons: [back] })],
-    attrs: { class: 'cp-pane' },
+  const nav = categoryNav({
+    items, ariaLabel: t('compendium.kinds'),
+    choose: (kind) => { current = kind; selectedId = null; render(); },
   });
+  const grid = options([], { class: 'grid cp-grid cp-scroll' });
+  const detail = el('div', { class: 'cp-detail', 'aria-live': 'polite' });
+  const panel = pane({
+    children: el('div', { class: 'w1-split' }, [el('div', { class: 'cp-list' }, grid), detail]),
+    attrs: { class: 'cp-pane', id: 'cp-panel', role: 'tabpanel' },
+  });
+  const back = button({ label: t('common.back'), role: 'exit', id: 'cp-back' });
+  const door = workspaceFrame(pageDoor({
+    eyebrow: t('compendium.eyebrow', { held: view.held, total: view.total }),
+    title: t('compendium.title'),
+    size: 'xl',
+    body: railed(nav, panel),
+    bodyClassName: 'compendium-body',
+    primary: back,
+    footSize: 'short',
+    onClose: onBack,
+    closeLabel: t('compendium.close'),
+  }));
+
+  // The selected entry's known facts: the tooltip's decision at a larger
+  // magnification, never more than it.
+  function paintDetail() {
+    for (const node of grid.children) {
+      const on = node.dataset.member === view.selected?.piece.id;
+      node.classList.toggle('is-selected', on);
+      node.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    if (!view.selected) { detail.replaceChildren(); return; }
+    const { piece, reveal } = view.selected;
+    const facts = entryDetail(piece, reveal, {
+      modLines: reveal.state === 'held' ? modSummary(eq.modFields, piece) : [],
+      tags: registries.tags || [],
+      lockCopy: LOCK_COPY,
+    });
+    const art = artWell({ src: assetUrl(`assets/equipment/icon_${facts.id}.webp`), alt: '' });
+    art.querySelector('img').addEventListener('error', (e) => e.target.remove());
+    detail.dataset.state = facts.state;
+    detail.dataset.rarity = facts.rarity;
+    detail.replaceChildren(art, detailCard({
+      eyebrow: `${facts.rarity} · ${facts.hand} hand`,
+      name: facts.named ? facts.name : t('compendium.unknown', { kind: facts.kind }),
+      line: facts.hint,
+      children: [
+        ...facts.mods.map((line) => prose(line, { class: 'cp-mod' })),
+        facts.tags.length ? el('div', { class: 'inspection-tags' }, facts.tags.map((tag) => el('span', {
+          class: 'inspection-tag', role: 'button', tabindex: '0', dataset: { tip: tag.blurb }, text: tag.label,
+        }))) : null,
+      ],
+      attrs: { class: 'cp-detail-card' },
+    }));
+  }
 
   function render() {
-    for (const item of items) {
-      const on = item.dataset.member === current;
-      item.classList.toggle('on', on);
-      item.setAttribute('aria-selected', on ? 'true' : 'false');
-      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
-    }
-    const sec = kinds.find((k) => k.kind === current);
-    head.innerHTML = '';
-    grid.innerHTML = '';
-    if (!sec) return;
-    head.append(titleS(sec.label, { tag: 'h3' }), statusText(`${sec.have} of ${sec.mine.length} held`));
-    for (const { piece, r } of sec.mine) grid.appendChild(cell(piece, r, eq.modFields, registries.tags));
+    view = compendiumView(drawnEntries, { current, selectedId, labelOf });
+    current = view.current;
+    // The selector's face ("Swords 3/9") follows the selection on its own.
+    markCurrent(items, current);
+    const cat = view.categories.find((c) => c.selected);
+    panel.setAttribute('aria-labelledby', `cp-kind-${current}`);
+    grid.setAttribute('aria-label', cat ? cat.label : '');
+    grid.replaceChildren(...view.entries.map(({ piece, reveal }) => {
+      const node = cell(piece, reveal, eq.modFields, registries.tags);
+      node.addEventListener('click', () => {
+        selectedId = piece.id;
+        view = compendiumView(drawnEntries, { current, selectedId, labelOf });
+        paintDetail();
+      });
+      return node;
+    }));
+    paintDetail();
   }
   render();
 
   app.innerHTML = '';
-  app.appendChild(el('div', { class: 'screen compendium', dataset: { surface: 'compendium' } },
-    railed(rail(items, { 'aria-label': 'Armament kinds' }), panel)));
+  app.appendChild(el('div', { class: 'screen compendium', dataset: { surface: 'compendium' } }, door));
   back.addEventListener('click', onBack);
+  // The keyboard and the pad start on the category navigation.
+  land(nav.start());
 }
