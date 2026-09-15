@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1094",
+    "date": "2026-09-14",
+    "group": "2026-09-14",
+    "summary": "The plan for how your character grows now includes quests you talk through",
+    "detail": "Nothing you see changes yet. The written plan now gives quests two things. Each quest finishes exactly once, whether it's a chain of events like the Grave of the Nameless or a road quest taken on the world map, and that one finish is what future experience and rewards count. And every quest exchange is spoken: each step of a chain, and taking or turning in a quest at a town's quest board, opens a conversation with the person who gives it. You stand on the left, they stand on the right, and your answers are the quest's own choices. Text comes first; voice, when it arrives, can never answer for you.",
+    "build": "0.7.1.52",
+    "pullRequest": 1094,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1094"
+  },
+  {
     "id": "pr-1091",
     "date": "2026-09-14",
     "group": "2026-09-14",
