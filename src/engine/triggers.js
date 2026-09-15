@@ -288,6 +288,13 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     }
     case 'random':
       return ctx.rng.float('misc') * 100 < pred.pct;
+    // Progression gates (plan phase 1a). They read the skill and class ledger
+    // that phase 4 adds to run state. Until that ledger exists no level has
+    // been reached, so both answer false rather than guessing its shape — a
+    // property branch gated on them is inert, never half-live.
+    case 'skillLevelAtLeast':
+    case 'classLevelAtLeast':
+      return false;
     case 'all':
       return pred.preds.every((sub) => evalPredicate(ctx, sub, pctx));
     case 'any':

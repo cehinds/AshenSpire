@@ -45,16 +45,18 @@ export function deepFreeze(value) {
   return value;
 }
 
-function makeRegistry(typeName, defs) {
+// `key` is the field a def is indexed by — `id` everywhere except the property
+// rules table, whose rows are keyed by the tag they give behaviour to.
+function makeRegistry(typeName, defs, key = 'id') {
   const byId = new Map();
   for (const def of defs || []) {
-    if (!def || typeof def.id !== 'string') {
-      throw new Error(`Every ${typeName} def must have a string id (got ${JSON.stringify(def && def.id)})`);
+    if (!def || typeof def[key] !== 'string') {
+      throw new Error(`Every ${typeName} def must have a string ${key} (got ${JSON.stringify(def && def[key])})`);
     }
-    if (byId.has(def.id)) {
-      throw new Error(`Duplicate ${typeName} id '${def.id}'`);
+    if (byId.has(def[key])) {
+      throw new Error(`Duplicate ${typeName} ${key} '${def[key]}'`);
     }
-    byId.set(def.id, deepFreeze(def));
+    byId.set(def[key], deepFreeze(def));
   }
   return Object.freeze({
     type: typeName,
@@ -140,6 +142,14 @@ const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
 
 function stampTags(bundle) {
   const { families, index, keyOf } = tagIndex(bundle);
+  // PROPERTY TAGS NEVER JOIN `tags`. They are the one domain that confers
+  // behaviour (content/source/tagDomains.csv), and their one reader is the
+  // mount path (engine/properties.js). Stamped onto `propertyTags` instead —
+  // and only when an object holds any — so every existing reader of `tags`
+  // (chips, the card/weapon fit check, the class leaning the starting deck
+  // reads) sees exactly what it saw before the domain existed.
+  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
+    .filter((t) => t && t.domain === 'property').map((t) => t.id));
   const stamped = new Map();
   for (const spec of families.values()) {
     // A non-string source is refused BY NAME in model/tags.js. Skipping it here
@@ -152,16 +162,20 @@ function stampTags(bundle) {
     stamped.set(spec.source, node.map((def) => {
       if (!def) return def;
       const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
-      const entityTags = [...(index.get(keyOf(spec.family, scope, def.id)) || [])];
+      const authored = index.get(keyOf(spec.family, scope, def.id)) || [];
+      const entityTags = authored.filter((tag) => !propertyIds.has(tag));
+      const propertyTags = authored.filter((tag) => propertyIds.has(tag));
+      const conferred = propertyTags.length ? { propertyTags } : {};
       // Equipment splits its stamped tags four ways, exactly as content's
       // normPiece used to before the tags moved into tagging.csv: the complete
       // authored vocabulary, the item-type half the Armoury and the smith name
       // the piece by, and the gameplay/presentation half that stays `tags`. An
       // item card never infers its type from `kind` or a UI call site.
-      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags };
+      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags, ...conferred };
       const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
       return {
         ...def,
+        ...conferred,
         entityTags,
         itemTypeTags,
         itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
@@ -186,6 +200,10 @@ export function createRegistries(contentBundle) {
   for (const type of REGISTRY_TYPES) {
     registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
   }
+  // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
+  // Read only by the mount path; a getter throws on an unknown tag like every
+  // other registry, and validate.js has already refused a tag with no rule.
+  registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   // Quest steps (E12): which events an Unknown node may roll only once the

@@ -166,10 +166,21 @@ export const PREDICATES = Object.freeze([
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
+  // Progression gates (plan phase 1a). They read the skill and class ledger
+  // phase 4 adds to run state, and answer false until it exists.
+  'skillLevelAtLeast',
+  'classLevelAtLeast',
   'all',
   'any',
   'not',
 ]);
+
+// The families that may carry a `property` tag — the carriers of
+// docs/proposal-progression-and-property-system.md §3. A card is never one: its
+// behaviour is its own effect list. validate.js refuses a tagFamilyDomains or
+// tagging row that pairs `property` with any other family, by name. Phase 7
+// adds `location`.
+export const PROPERTY_CARRIER_FAMILIES = Object.freeze(['armament', 'armour', 'relic', 'class']);
 
 // Relic passive keys — data the run systems (rewards, shops, shrines, map)
 // and cost/flask math consult. Closed set; each key is generic capability,
@@ -204,6 +215,13 @@ export const PASSIVE_TYPES = Object.freeze({
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
+
+// The passives node's fields, DERIVED FROM PASSIVE_TYPES once and shared by
+// every schema that carries passives (a relic, a property rule), so there is
+// one home for what a passive may be and no second hand-typed copy to drift.
+const passiveFields = Object.freeze(Object.fromEntries(
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, { k: t === 'bool' ? 'bool' : 'num', opt: true }])
+));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
 // turn loop (SPEC §3.7, §4.2). Semantics:
@@ -635,9 +653,7 @@ export const SCHEMAS = Object.freeze({
     // is exactly why it must not be a second list.
     passives: opt(
       obj({
-        ...Object.fromEntries(
-          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-        ),
+        ...passiveFields,
         // Semantics and strict field validation live in validate.js beside the
         // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
         // discriminated object shapes in this generic schema walker.
@@ -647,6 +663,22 @@ export const SCHEMAS = Object.freeze({
     icon: opt(str),
     flavor: opt(str),
     script: opt(ref('scripts')),
+  }),
+
+  // One row of content/source/propertyRules.csv joined with its sidecar entry
+  // (src/content/propertyRules.js). Built from the relic's nodes: the same
+  // passives fields (PASSIVE_TYPES, via passiveFields) and the same triggers
+  // node, so a property can confer nothing a relic could not. Relic `modifiers`
+  // are not carried — their semantics live beside RELIC_MODIFIER_TAGS and phase
+  // 2 moves them with the relics. Cross-row rules (one rule per property tag,
+  // requires/excludes resolve, no cycles, carriers only) live in validate.js.
+  propertyRule: obj({
+    tag: str,
+    requires: opt(arr(str)),
+    excludes: opt(arr(str)),
+    textTemplate: str,
+    passives: opt(obj(passiveFields)),
+    triggers: opt(triggersNode),
   }),
 
   status: obj({

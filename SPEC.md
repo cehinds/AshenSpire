@@ -170,6 +170,7 @@ defect this layering exists to catch.
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
 | Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction, swapCostDelta` |
+| PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` — what one `property`-domain tag confers, keyed by the tag. Authored in `content/source/propertyRules.csv` with a JSON sidecar `propertyRuleEffects.json` for the relic-shaped `passives`/`triggers`, joined in `src/content/propertyRules.js`; its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Exactly one rule per property tag. Only a carrier holds a property tag — an armament, armour, relic or class (`PROPERTY_CARRIER_FAMILIES`); a card never does, because a card's behaviour is its own effect list. Property tags are stamped onto a carrier's `propertyTags`, never its `tags`. Sidecar numbers name `balance.js` rows (`{ "balance": "path" }`) |
 | Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
@@ -262,7 +263,7 @@ phases: [{ on: 'hpBelowPct', pct: 50, once: true,
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), and `all / any / not` combinators.
+Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), `{ p: 'skillLevelAtLeast', skill, level }` / `{ p: 'classLevelAtLeast', level }` (progression gates; they read the skill and class ledger of plan phase 4 and are **false until that ledger exists**, so a branch gated on them is inert), and `all / any / not` combinators.
 
 ### 3.7 Status model — statuses are content, not code
 
@@ -613,6 +614,11 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
    its act's rollable band, a proc row whose `burstMin` exceeds its `burstMax`, a music bed
    that is quiet by accident rather than by the declared silence word (§7.4) — each failing
    **naming the entry**, per Law 1 clause 5.
+7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
+   a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
+   `{ "balance": "path" }` names a real balance number; and `property` is paired with, or
+   written on, carrier families only — a card-family pairing or tagging row fails with
+   *cards never carry properties*. Each refusal names its row (`tests/engine.test.js` test 80).
 
 **Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
 failures *downstream of itself*, so the standing check is over observable outcome, in the

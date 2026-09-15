@@ -11,6 +11,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { tagService } from '../src/model/tagService.js';
 import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
+import { evalPredicate } from '../src/engine/triggers.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
 import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances } from '../src/model/loadout.js';
 import { extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, mountRows } from '../src/model/cardExtraction.js';
@@ -2060,7 +2061,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme', 'armaments allow categorized combat tags alongside legacy tags');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme|property', 'armaments allow categorized combat tags alongside legacy tags');
     assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
@@ -7906,6 +7907,91 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
     assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
       'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
+  });
+
+  // ---- 80. Property rules: the registry and its refusals (plan phase 1a) ------
+  // docs/proposal-progression-and-property-system.md §3. Each refusal is a
+  // fixture bundle that differs from shipped content by one row, and each is
+  // asserted by the words it is refused with, in the style of test 15.
+  test('80. property rules: one rule per property tag, requires/excludes resolve, no cycles, never on a card — each refused by name', () => {
+    const propTag = (id) => ({ id, domain: 'property', label: id, color: '7FA8C9', glyph: '◈', blurb: 'Test fixture property.' });
+    const rule = (tag, extra = {}) => ({ tag, requires: [], excludes: [], textTemplate: 'Fixture.', ...extra });
+    const withRules = (tags, rules, extra = {}) => ({
+      ...contentBundle,
+      tags: [...contentBundle.tags, ...tags.map(propTag)],
+      propertyRules: rules,
+      ...extra,
+    });
+    const said = (bundle) => validateContent(bundle).errors.map((e) => `${e.path}: ${e.msg}`).join(' | ');
+    const refuses = (bundle, pattern, what) => {
+      const words = said(bundle);
+      assert(pattern.test(words), `${what} — said ${JSON.stringify(words.slice(0, 240))}`);
+    };
+
+    // 80.0 — the edges that must PASS: shipped content, and one well-formed
+    // rule on a real carrier, which the registry then indexes by its tag.
+    assert(validateContent(contentBundle).ok, 'shipped content validates with the property domain present');
+    const siphonLike = rule('fxSiphon', {
+      textTemplate: 'Arcane break: restore {restoreMana} Mana.',
+      triggers: [{ on: 'arcaneBreak', if: { p: 'eventSourceIsOwner' }, do: [{ op: 'restoreMana', target: 'self', amount: 1 }] }],
+    });
+    const good = withRules(['fxSiphon'], [siphonLike], {
+      tagging: [...contentBundle.tagging, { family: 'armament', scope: '', objectId: 'boneSceptre', tagId: 'fxSiphon' }],
+    });
+    assert(validateContent(good).ok, `a well-formed property rule on an armament validates — said ${JSON.stringify(said(good).slice(0, 240))}`);
+    const R = createRegistries(good);
+    eq(R.propertyRules.get('fxSiphon').triggers[0].on, 'arcaneBreak', 'the registry indexes a rule by its tag');
+    const sceptre = R.equipment.armaments.find((a) => a.id === 'boneSceptre');
+    assert(sceptre.propertyTags.includes('fxSiphon'), 'the carrier is stamped with its property tag');
+    assert(!sceptre.tags.includes('fxSiphon') && !sceptre.entityTags.includes('fxSiphon'),
+      'a property tag never joins `tags`, so chips and the fit check are unchanged');
+    for (const piece of [...REG.equipment.armaments, ...REG.equipment.armour]) {
+      for (const tag of piece.propertyTags || []) assert(REG.propertyRules.has(tag), `${piece.id}: stamped property tag '${tag}' resolves to a rule`);
+    }
+
+    // 80.1 — a property tag with no rule.
+    refuses(withRules(['fxLost'], []), /tags\.fxLost: property tag 'fxLost' has no rule/, 'a property tag with no rule is refused by name');
+    // 80.2 — two rules for one tag.
+    refuses(withRules(['fxTwice'], [rule('fxTwice'), rule('fxTwice')]), /duplicate rule for property tag 'fxTwice'/, 'a second rule for one tag is refused by name');
+    // 80.3 — a rule for a tag outside the property domain.
+    refuses(withRules([], [rule('blade')]), /propertyRules\.blade: 'blade' is not a property tag/, 'a rule for a card-domain tag is refused by name');
+    // 80.4 / 80.5 — requires and excludes resolve.
+    refuses(withRules(['fxNeedy'], [rule('fxNeedy', { requires: ['fxNowhere'] })]), /propertyRules\.fxNeedy\.requires: requires 'fxNowhere', which is not a property tag/,
+      'an unresolved requires is refused by name');
+    refuses(withRules(['fxShy'], [rule('fxShy', { excludes: ['blade'] })]), /propertyRules\.fxShy\.excludes: excludes 'blade', which is not a property tag/,
+      'an excludes naming a non-property tag is refused by name');
+    refuses(withRules(['fxSelfish'], [rule('fxSelfish', { excludes: ['fxSelfish'] })]), /'fxSelfish' excludes itself/, 'a rule excluding itself is refused by name');
+    // 80.6 — no requires cycles, direct or through a partner.
+    refuses(withRules(['fxA', 'fxB'], [rule('fxA', { requires: ['fxB'] }), rule('fxB', { requires: ['fxA'] })]), /requires cycle fxA → fxB → fxA/,
+      'a two-rule requires cycle is refused by name');
+    refuses(withRules(['fxLoop'], [rule('fxLoop', { requires: ['fxLoop'] })]), /requires cycle fxLoop → fxLoop/, 'a rule requiring itself is refused by name');
+    // 80.7 — a card never carries a property, whether by tagging row …
+    refuses(withRules(['fxSiphon'], [siphonLike], {
+      tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'fxSiphon' }],
+    }), /tagging\.card\.strike: cards never carry properties — 'strike' is given the property tag 'fxSiphon'/, 'a card-family property tagging row is refused by name');
+    // 80.8 — … or by a pairing row that would switch the generic domain check off.
+    refuses(withRules(['fxSiphon'], [siphonLike], {
+      tagFamilyDomains: [...contentBundle.tagFamilyDomains, { family: 'card', domain: 'property' }],
+    }), /tagFamilyDomains\.card\.property: cards never carry properties/, 'pairing the card family with the property domain is refused by name');
+    refuses(withRules(['fxSiphon'], [siphonLike], {
+      tagFamilyDomains: [...contentBundle.tagFamilyDomains, { family: 'enemy', domain: 'property' }],
+    }), /'enemy' is not a property carrier/, 'pairing any non-carrier family with the property domain is refused by name');
+    // 80.9 — passives come from the one PASSIVE_TYPES home the relic schema uses.
+    refuses(withRules(['fxOdd'], [rule('fxOdd', { passives: { notAPassive: 1 } })]), /propertyRules\.fxOdd\.passives\.notAPassive: Unknown field 'notAPassive'/,
+      'an unknown passive key on a rule is refused by the shared schema');
+    // 80.10 — a sidecar number must name a real balance row.
+    refuses(withRules(['fxDrift'], [rule('fxDrift', { passives: { flaskPowerMult: { balance: 'no.such.row' } } })]), /names balance row 'no\.such\.row'/,
+      'a balance reference naming no row is refused by name');
+    // 80.11 — the progression predicates are closed-set members, checked for shape,
+    // and answer false until the phase-4 skill/class ledger exists.
+    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'skillLevelAtLeast', skill: 'focus', level: 0 }, do: [] }] })]),
+      /propertyRules\.fxGate\.triggers\[0\]\.if\.level: level must be a positive integer/, 'a non-positive skill level is refused by name');
+    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'classLevelAtLeast' }, do: [] }] })]),
+      /if\.level: level must be a positive integer/, 'a class-level gate with no level is refused by name');
+    assert(validateContent(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'skillLevelAtLeast', skill: 'focus', level: 7 }] }, do: [] }] })])).ok,
+      'a well-formed skill gate validates');
+    eq(evalPredicate({}, { p: 'skillLevelAtLeast', skill: 'focus', level: 1 }), false, 'skillLevelAtLeast is false until the skill ledger exists');
+    eq(evalPredicate({}, { p: 'classLevelAtLeast', level: 1 }), false, 'classLevelAtLeast is false until the class ledger exists');
   });
 
   const passed = results.filter((r) => r.ok).length;

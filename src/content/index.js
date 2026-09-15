@@ -30,6 +30,7 @@ import { worldAtlas } from './generated/worldAtlas.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
+import { PROPERTY_RULES } from './propertyRules.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
@@ -126,6 +127,8 @@ export const contentBundle = {
   tagFamilies: TAG_FAMILIES,
   tagFamilyDomains: TAG_FAMILY_DOMAINS,
   tagging: TAGGING,
+  // What each `property` tag confers — one rule per tag (content/propertyRules.js).
+  propertyRules: PROPERTY_RULES,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting
