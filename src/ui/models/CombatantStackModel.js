@@ -26,12 +26,5 @@ export function planCombatantStack({ resources = [], buildups = [], stance = fal
   });
 }
 
-// One non-wrapping icon row. When the icons do not fit, the last tile becomes
-// the `+N` disclosure, so the row never scrolls or wraps. Local CSS px.
-export function planIconTray({ count, width, rem = 16 } = {}, config = wireframeUi.combatantStack) {
-  const size = config.iconRem * rem;
-  const gap = config.iconGapRem * rem;
-  const capacity = Math.max(1, Math.floor((Math.max(0, width) + gap) / (size + gap)));
-  const shown = count <= capacity ? count : Math.max(0, capacity - 1);
-  return Object.freeze({ size, gap, capacity, shown, hidden: count - shown });
-}
+// The icon row itself is the shared icon tray: models/IconTrayModel.js plans
+// it, components/iconTray.js draws it.

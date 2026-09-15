@@ -1175,6 +1175,27 @@
   width: 100%; padding: calc(8px / var(--ui-zoom,1)); margin: 0; align-items: center;
 }
 :root .combat[data-layout='formation'] .combat-action-row { --combat-control-size: calc(52px / var(--ui-zoom,1)) !important; }
+/* THE POTIONS MINIS stand over the footer's Potions control, outside the row's
+   grid. The row is wider than its grid on a wide screen, so combat.js
+   (placePotionTray) writes where the control is. The tray is the shared icon
+   tray (styles/kit.css § ICON TRAY): --icon-tray-slots of its own icons wide
+   (wireframeUi.iconTray.footerPotionIcons), its right edge on the control's,
+   and what does not fit is its +N tile, which opens the Potions list. */
+:root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray {
+  position: absolute; inset: auto var(--potion-tray-right, 0px) calc(100% + 0.3rem) auto; margin: 0; z-index: 1;
+  width: calc(var(--icon-tray-slots, 4) * (var(--icon-tray-size, calc(25px / var(--ui-zoom,1))) + var(--icon-tray-gap, calc(3px / var(--ui-zoom,1)))) - var(--icon-tray-gap, calc(3px / var(--ui-zoom,1))));
+  max-width: 100%; height: auto; max-height: none; justify-content: flex-end; align-self: auto;
+}
+/* Narrow: the fan reaches down to the row beside the control, so there is no
+   room above it. The minis ride inside the control's top edge, as wide as the
+   control (its +N opens the list), and the control's label moves down. */
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray {
+  top: calc(var(--potion-control-top, 0px) + 2px); bottom: auto;
+  width: var(--potion-control-width, var(--combat-control-size)); justify-content: center;
+}
+:root[data-layout='narrow'] .combat[data-layout='formation'] .combat-action-row > .combat-potions {
+  justify-content: flex-end; padding-bottom: calc(6px / var(--ui-zoom, 1));
+}
 /* THE DESKTOP ACTION ROW (owner, 2026-09-11): Draw and Discard were stretched
    to a third of a 1920 window each, and Actions / End Turn / Potions stood
    52-64 px tall in a row that owns 15% of the viewport. The row keeps the
@@ -1322,23 +1343,12 @@
    what `elementFromPoint` returned at the centre of the second Blight Hound's
    name at 390x650 (tools/screenreach.mjs, red on dev since #788). Only the pips
    inside it are controls; the tray and its gaps pass the press through. */
+/* The row, its icons and its +N tile are the shared icon tray (styles/kit.css
+   § ICON TRAY); the card only reserves the tray's height and gives it the
+   card's width. */
 :root .combat[data-layout='formation'] .combatant .statuses {
- display:flex; flex-wrap:nowrap; align-items:center; gap:var(--status-icon-gap, calc(3px / var(--ui-zoom,1)));
- height:var(--status-icon-size, calc(24px / var(--ui-zoom,1))); min-height:var(--status-icon-size, calc(24px / var(--ui-zoom,1))); width:100%; margin:0; pointer-events:none;
+ height:var(--icon-tray-size, calc(25px / var(--ui-zoom,1))); min-height:var(--icon-tray-size, calc(25px / var(--ui-zoom,1))); width:100%; margin:0;
 }
-:root .combat[data-layout='formation'] .combatant .statuses > * { pointer-events:auto; }
-:root .combat[data-layout='formation'] .statuses .status-icon {
- flex:none; width:var(--status-icon-size, calc(21px / var(--ui-zoom,1))); height:var(--status-icon-size, calc(21px / var(--ui-zoom,1))); min-width:0; min-height:0;
- font-size:calc(13px / var(--ui-zoom,1)); box-sizing:border-box;
-}
-.status-overflow { position:relative; font-size:calc(11px / var(--ui-zoom,1)); }
-/* WCF2: where a host registers the inspector, +N is a tile that opens it. */
-:root .combat .statuses > .status-overflow-more {
-  flex:none; width:var(--status-icon-size); height:var(--status-icon-size); min-width:0; min-height:0; padding:0;
-  display:grid; place-items:center; border-radius:50%; line-height:1; color:var(--gold); pointer-events:auto;
-}
-.status-overflow summary { cursor:pointer; list-style:none; padding:2px; color:var(--gold); }
-.status-overflow-list { position:absolute; top:100%; right:0; display:flex; flex-wrap:wrap; gap:8px; padding:10px; width:calc(170px / var(--ui-zoom,1)); background:#17130f; border:1px solid var(--gold); z-index:100; }
 .player .status-overflow-list { left:0; right:auto; }
 /* Lite keeps the target color and selection affordance without cloning art. */
 :root[data-performance='lite'] .aim-silho.aim-outline {

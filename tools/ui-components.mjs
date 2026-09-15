@@ -294,8 +294,11 @@ export function findings(r) {
       || !/--hud-quick-tile-gap:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
       || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \.as-slot::before \{[\s\S]*?width: var\(--hud-belt-tile-face-size\); height: var\(--hud-belt-tile-face-size\);/.test(r.kit)
+      // The relic rail is the shared icon tray (components/iconTray.js), the
+      // combatant card's status row its reference: the rail wears the tray's
+      // classes and the tray sizes every icon from its own plan.
+      || !/class="relics hud-relics as-pips icon-tray grow"/.test(r.hud)
+      || !/\.icon-tray \.as-pip \{[\s\S]*?width: var\(--icon-tray-size[\s\S]*?height: var\(--icon-tray-size/.test(r.kit)
       || !/iconButton\(\{/.test(r.hud)
       || !/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(r.quickSettings)
       || !/\.as-iconbtn, \.modal-iconbtn, \.modal-close \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)

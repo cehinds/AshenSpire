@@ -57,6 +57,8 @@ import { renderCard } from '../components/card.js';
 import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
+import { iconTray, trayIcon } from '../components/iconTray.js';
+import { t } from '../strings.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
@@ -492,23 +494,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   // ---- shared board helpers (snapshot-fed twins of combat.js) ---------------
+  // The shared icon tray, as on the solo card (components/iconTray.js): the
+  // same Pip, row and tooltip. A tap is a play while a card or flask is armed.
   function statusRow(statuses) {
-    const row = document.createElement('div');
-    row.className = 'statuses';
+    const row = iconTray({ label: t('iconTray.status'), attrs: { class: 'statuses' } });
     for (const [sid, inst] of Object.entries(statuses || {})) {
       if (!registries.statuses.has(sid)) continue;
       const def = registries.frameworkTerms.withStatusWords(registries.statuses.get(sid));
-      const stacks = inst.meter ? inst.meter.value : inst.stacks;
       const presentation = statusInstancePresentation(def, inst);
-      const el = document.createElement('div');
-      el.className = 'status-icon';
       const semanticAttrs = statusInstanceSemanticAttrs(presentation);
+      const el = trayIcon({
+        glyph: def.icon || '?', count: presentation.valueText, tone: def.tint || 'var(--muted)', // status-pip accent (data: status def)
+        label: semanticAttrs['aria-label'], attrs: { class: 'status-icon' },
+        tip: () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`,
+        yieldTap: () => !!armedFriendlyCard || armedFlask != null,
+      });
       el.setAttribute('data-status-id', semanticAttrs['data-status-id']);
       el.setAttribute('data-status-value-token', semanticAttrs['data-status-value-token']);
-      el.setAttribute('aria-label', semanticAttrs['aria-label']);
-      el.style.borderColor = def.tint || 'var(--muted)'; // status-pip accent (data: status def)
-      el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${esc(presentation.valueText)}</span>`;
-      attachTooltip(el, () => `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}`, { tapToExplain: () => !armedFriendlyCard && armedFlask == null });
       row.appendChild(el);
     }
     return row;
