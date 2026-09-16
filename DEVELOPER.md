@@ -19,6 +19,17 @@ Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.
 Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
 `--check` verifies complete attack-source mappings and the review table.
 `node tests/run-node.mjs` includes its focused engine regression suite.
+
+Layout numbers (sizes, positions, layers, timings, which parts appear) are
+authored as JSON in `content/config/`, the third authored tree after
+`content/source/` and `content/framework/`. Its README explains the folders,
+the sections, and the `"$name"` variables. `node tools/config-build.mjs`
+compiles it into `src/config/generated/ui.js` (`uiConfig`), and
+`tools/launch.mjs` runs it before every build. `--check` is the drift gate that
+`tests/run-node.mjs` runs, and `tools/content-build.mjs` refuses a config file
+the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
+a compatibility shim composed from `uiConfig`, so change the JSON, never the
+shim or the generated module.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
 three-build policy through the actual combat engine. Ordinary runs do not select
@@ -90,8 +101,14 @@ only explicit Use may spend a charge. The map Quick Access faces retain real
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
 
+# build the authored trees (launch.mjs runs the first two for you)
+node tools/config-build.mjs            # content/config/**.json → src/config/generated/ui.js
+node tools/content-build.mjs           # content/source/* → src/content/generated/
+node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/
+node tools/config-build.mjs --check    # drift gate: the generated UI config is current
+
 # tests (22 assertions, SPEC §8)
-node tests/run-node.mjs        # CI-style, exits 1 on failure
+node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
 # or open tests/index.html in a browser — same suite, green/red list
 
 # what raises the red failure banner, and what must not

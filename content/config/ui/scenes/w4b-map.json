@@ -1,0 +1,18 @@
+{
+  "sizing": {
+    "header": {
+      "heightFraction": 0.1,
+      "minimumTargetPx": "$targetPx",
+      "lineHeightPx": "$refRemPx",
+      "lineGapPx": 2,
+      "wideMinWidthPx": 640,
+      "narrowRouteLines": 3
+    }
+  },
+  "positioning": {
+    "header": { "insetPx": 4 }
+  },
+  "behavior": {
+    "repeatPickDelayMs": 400
+  }
+}

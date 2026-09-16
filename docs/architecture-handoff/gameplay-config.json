@@ -498,7 +498,16 @@
       },
       "speaker": "npcPortrait",
       "speakerAbove": true,
-      "mirrorNpc": true
+      "mirrorNpc": true,
+      "alwaysVisible": true,
+      "minGapVw": 2,
+      "fit": "shrinkToLane",
+      "anchor": "revealLine",
+      "listener": {
+        "minOpacity": 0.85,
+        "brightness": 0.8,
+        "saturation": 0.7
+      }
     },
     "entrance": [
       {

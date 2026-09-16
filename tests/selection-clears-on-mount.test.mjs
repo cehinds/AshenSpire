@@ -38,8 +38,7 @@ for (const screen of SCREENS) {
   ok(/clearSelection\(\)/.test(source), `${screen}.js clears the selection`);
   // It has to be the FIRST thing the mount does, not a line buried in a branch
   // that a particular run may not reach.
-  const mount = source.match(/export function mount\w+\([^)]*\{[\s\S]*?\n\}\) \{\n([\s\S]{0,400})/)
-    || source.match(/export function mount\w+\([^\n]*\) \{\n([\s\S]{0,400})/);
+  const mount = source.match(/export function mount\w+[^\n]*\n([\s\S]{0,400})/);
   ok(!!mount, `${screen}.js has a mount whose opening lines can be read`);
   ok(/clearSelection\(\);/.test(mount[1]),
     `${screen}.js clears the selection in the opening lines of its mount, not deeper in`);

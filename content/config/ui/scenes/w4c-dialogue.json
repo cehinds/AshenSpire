@@ -1,0 +1,64 @@
+{
+  "vars": {
+    "compactLineHeight": 1.2,
+    "bandGapRem": 0.25
+  },
+  "sizing": {
+    "bands": { "hud": 10, "scene": 40, "context": 35, "footer": 15 },
+    "floorPercent": 60,
+    "portraitSlot": { "widthVw": 20, "compactWidthVw": 30 },
+    "context": {
+      "widthVw": 95,
+      "captionLines": 3,
+      "captionLineHeight": 1.45,
+      "titleRem": 0.95,
+      "titleLineHeight": "$compactLineHeight",
+      "textRem": 0.9,
+      "paddingRem": 0.35,
+      "gapRem": "$bandGapRem"
+    },
+    "responses": {
+      "fontRem": 0.85,
+      "lineHeight": "$compactLineHeight",
+      "paddingBlockRem": 0.2,
+      "paddingInlineRem": 0.5,
+      "gapRem": "$bandGapRem",
+      "maxLines": 2
+    },
+    "footer": { "heightVh": 6 }
+  },
+  "positioning": {
+    "portraitSlot": { "insetVw": "$gutterVw", "topOffsetVh": "$insetVh" },
+    "portraits": { "visibleFraction": { "numerator": 1, "denominator": 3 }, "mirrorNpc": true },
+    "context": { "insetVw": "$gutterVw", "insetVh": "$insetVh" },
+    "footer": { "sideInsetVw": "$gutterVw", "gapVw": "$gapVw" }
+  },
+  "layering": {
+    "layers": [
+      { "id": "skybox", "z": 2, "enabled": true },
+      { "id": "floor", "z": 3, "enabled": true },
+      { "id": "playerPortrait", "z": 4, "enabled": true },
+      { "id": "npcPortrait", "z": 4, "enabled": true },
+      { "id": "context", "z": 5, "enabled": true, "occludes": true },
+      { "id": "hud", "z": 6, "enabled": true },
+      { "id": "footer", "z": 6, "enabled": true }
+    ],
+    "speakerAbove": true
+  },
+  "motion": {
+    "entrance": [
+      { "layers": ["skybox", "floor", "hud", "footer"], "atMs": 0, "fadeMs": 0 },
+      { "layers": ["playerPortrait", "npcPortrait"], "atMs": 0, "fadeMs": 400 },
+      { "layers": ["context"], "atMs": 400, "fadeMs": 300, "riseVh": 2 }
+    ]
+  },
+  "components": { "footer": { "actions": ["back", "skipSpeech", "continue"] } },
+  "behavior": {
+    "maxVisibleResponses": 4,
+    "responseLayouts": [
+      { "columns": 1, "placement": "below" },
+      { "columns": 2, "placement": "below" },
+      { "columns": 2, "placement": "beside", "textShare": 0.45 }
+    ]
+  }
+}

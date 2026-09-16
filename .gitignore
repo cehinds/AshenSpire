@@ -489,6 +489,7 @@ standalone/
 #   node tools/launch.mjs --build-only && git status --short dist
 dist/AshenSpire-*.html
 .coop-session.json
+/.vs
 
 # Personal Claude Code settings (per-user, not committed)
 .claude/settings.local.json
