@@ -14,24 +14,30 @@ import { heraldCards } from './cards/herald.js';
 import { rogueCards } from './cards/rogue.js';
 import { colorlessCards } from './cards/colorless.js';
 import { coopCards } from './cards/coop.js';
+import { armamentCards } from './cards/armaments.js';
 import { relics } from './relics.js';
 import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
 import { act2Enemies } from './enemies/act2.js';
 import { act3Enemies } from './enemies/act3.js';
-import { act1Encounters } from './encounters/act1.js';
-import { act2Encounters } from './encounters/act2.js';
-import { act3Encounters } from './encounters/act3.js';
-import { events } from './events.js';
+import { wealdEncounters } from './encounters/weald.js';
+import { marchesEncounters } from './encounters/marches.js';
+import { reachEncounters } from './encounters/reach.js';
+import { SEATS } from './seats.js';
+import { events, eventHistoryRequirements, eventChoiceIds, questChains, eventSpeakers } from './events.js';
+import { speakers } from './generated/speakers.js';
+import { worldAtlas } from './generated/worldAtlas.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
-import { cardTags } from './generated/cardTags.js';
+import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
+import { PROPERTY_RULES } from './propertyRules.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
-  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI,
+  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, EQUIPMENT_GRANTS, ARMOURY_UI,
+  ITEM_UPGRADE_CHANGES,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
@@ -40,7 +46,7 @@ import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
 import { characterCreation } from './generated/characterCreation.js';
 
-const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards];
+const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards, ...armamentCards];
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
 const cards = authoredCards.map((card) => {
   const carrier = exposureByCard.get(card.id);
@@ -48,7 +54,13 @@ const cards = authoredCards.map((card) => {
 });
 
 export const contentBundle = {
-  version: '0.4.0',
+  // Release series and candidate live here; tools/buildversion.mjs derives the
+  // fourth component and resets it to zero whenever this release changes.
+  // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
+  // 0.7.1: the first candidate of the 0.7 line — seats (SPEC §13), a new
+  // run-order system live for players with its save-schema migration, is a
+  // MINOR under docs/versioning.md rule 2; the owner's release cut names 0.7.0.
+  version: '0.7.1',
   balance,
   cards,
   relics,
@@ -58,8 +70,23 @@ export const contentBundle = {
   resources,
   keywords,
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
-  encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
+  // Bundle order is read order: the boss pool a map draws from is this list
+  // filtered, so a seat's bosses keep the columns they have always landed in
+  // (SPEC §13.6). The Valkyrie row sits first in reach.js for the same reason.
+  encounters: [...wealdEncounters, ...marchesEncounters, ...reachEncounters],
+  // The seats (SPEC §13.1): a registry, so an encounter's `seat` is a ref the
+  // validator resolves like any other id.
+  seats: SEATS,
   events,
+  eventHistoryRequirements,
+  // Plan phase 10a: quest chains complete through one door, and every chain
+  // step is spoken by a speaker row (content/source/speakers.csv). Atlas quest
+  // rows ride along so validation can resolve their speakers too.
+  eventChoiceIds,
+  questChains,
+  eventSpeakers,
+  speakers,
+  atlasQuests: worldAtlas.quests,
   flasks,
   classes,
   mapConfigs,
@@ -83,14 +110,25 @@ export const contentBundle = {
     cardExposure: CARD_EXPOSURE,
     startingKits: STARTING_KITS,
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
+    itemUpgradeChanges: ITEM_UPGRADE_CHANGES,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
+    equipmentGrants: EQUIPMENT_GRANTS,
     armouryUi: ARMOURY_UI,
   },
   unlocks,
-  // The card-tag registry rides the bundle so effect `tags` and
-  // taggedVulnerability lists validate against ONE vocabulary home (#61).
-  tags: cardTags,
+  // The tag schema rides the bundle so every carrier — effect `tags`,
+  // taggedVulnerability lists, creature kinds, equipment, relics — validates
+  // against ONE vocabulary home (#61). Five normalised tables: the domain
+  // lookup, the registry, what can be tagged, who may carry which domain, and
+  // the association rows themselves (content/tags.js says why five).
+  tagDomains: TAG_DOMAINS,
+  tags: TAGS,
+  tagFamilies: TAG_FAMILIES,
+  tagFamilyDomains: TAG_FAMILY_DOMAINS,
+  tagging: TAGGING,
+  // What each `property` tag confers — one rule per tag (content/propertyRules.js).
+  propertyRules: PROPERTY_RULES,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting

@@ -43,6 +43,7 @@ import { DISCLOSURE_TIERS } from './disclosure.js';
 export const COMBAT_OPCODES = Object.freeze([
   'damage',
   'block',
+  'dodgeRoll',
   'applyStatus',
   'removeStatus',
   'draw',
@@ -51,6 +52,7 @@ export const COMBAT_OPCODES = Object.freeze([
   'addCard',
   'gainEnergy',
   'restoreMana',
+  'restoreStamina',
   'loseHp',
   'heal',
   'shuffleDiscardIntoDraw',
@@ -87,6 +89,7 @@ export const TARGETS = Object.freeze([
 
 // Event bus events emitted by executed actions (SPEC §3.10).
 export const EVENTS = Object.freeze([
+  'evadeGained', 'attackEvaded', 'impactDealt', 'manaRecovered',
   'combatStart',
   'combatEnd',
   'playerTurnStart',
@@ -122,9 +125,16 @@ export const EVENTS = Object.freeze([
   'energySpent',
   'manaRestored',
   'manaSpent',
+  'staminaSpent',
+  'staminaRecovered', // framework Mana & Stamina rule: an idle turn's recovery
+  'dodgeRolled', // framework Weight Class & Dodge Roll: the roll's receipt
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
+  // Plan phase 10a: a quest completed, once per quest per run. Emitted only by
+  // the quest door (engine/quests.js completeQuest), for an event chain's
+  // completing choice and an atlas quest's claimed reward alike.
+  'questCompleted',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -152,13 +162,25 @@ export const PREDICATES = Object.freeze([
   'everyNthCardThisCombat',
   'random',
   'eventIsAttack',
+  'hpDamagePositive',
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
+  // Progression gates (plan phase 1a). They read the skill and class ledger
+  // phase 4 adds to run state, and answer false until it exists.
+  'skillLevelAtLeast',
+  'classLevelAtLeast',
   'all',
   'any',
   'not',
 ]);
+
+// The families that may carry a `property` tag — the carriers of
+// docs/proposal-progression-and-property-system.md §3. A card is never one: its
+// behaviour is its own effect list. validate.js refuses a tagFamilyDomains or
+// tagging row that pairs `property` with any other family, by name. Phase 7
+// adds `location`.
+export const PROPERTY_CARRIER_FAMILIES = Object.freeze(['armament', 'armour', 'relic', 'class']);
 
 // Relic passive keys — data the run systems (rewards, shops, shrines, map)
 // and cost/flask math consult. Closed set; each key is generic capability,
@@ -190,9 +212,20 @@ export const PASSIVE_TYPES = Object.freeze({
   // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
   // Deltas sum across relics; the total is added to the base and floored at 0.
   swapCostDelta: 'num', // a mid-fight armament swap costs N more (negative = less)
+  // Arcane Exposure buildup per hit × (multiplies across sources). Read for the
+  // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
+  // properties alike. The wand's `overcharge` property confers it (plan 1b).
+  exposureBuildupMult: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
+
+// The passives node's fields, DERIVED FROM PASSIVE_TYPES once and shared by
+// every schema that carries passives (a relic, a property rule), so there is
+// one home for what a passive may be and no second hand-typed copy to drift.
+const passiveFields = Object.freeze(Object.fromEntries(
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, { k: t === 'bool' ? 'bool' : 'num', opt: true }])
+));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
 // turn loop (SPEC §3.7, §4.2). Semantics:
@@ -251,21 +284,29 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 //   additive       — (mult−1) sums across additive sources, applied once.
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
-// Creature tags — the closed vocabulary proc resistance may gate on. An
-// enemy's `tags` and a proc row's `resistance.tags` must both draw from this
-// set. Distinct from card/effect tags (content/tags.js): creature identity vs
-// attack school — two concepts, deliberately two vocabularies.
-export const CREATURE_TAGS = Object.freeze([
-  'beast',
-  'humanoid',
-  'undead',
-  'construct',
-  'spirit',
-]);
+// Creature tags used to be a frozen array here, and then a field on the enemy
+// def. They are now rows in the one tag registry (content/source/tags.csv)
+// carrying domain 'creature', authored in content/source/tagging.csv like every
+// other tag and stamped onto the enemy at boot. Nothing about them is a schema
+// field any more, which is why neither the enemy nor the profile declares one.
+// model/tags.js gates them: an enemy and a proc row's `resistance.tags` may
+// draw from that domain and no other.
 
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+// Where a relic COMES FROM, as opposed to how rare it is. `reward` (the
+// default when the field is absent) is every generic pool — elite and boss
+// drops, the shop's stock, an event's "random relic". `quest` reserves the
+// relic for the event choice that names it by id (E12): no generic pool may
+// draw it, so the quest's promise is never pre-empted by a shop or a drop
+// and then silently kept by `addRelic`'s duplicate-ignore. validate.js refuses
+// a quest-pool relic that no event choice grants, because it would then be
+// unreachable content.
+export const RELIC_POOLS = Object.freeze(['reward', 'quest']);
+export function relicInRewardPool(relic) {
+  return (relic.pool || 'reward') === 'reward';
+}
 export const FLASK_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
 // What a flask IS, as opposed to how rare it is. The grace refill table
 // (balance.graceRefill) names kinds, never ids, so "restore 3 hp flasks" keeps
@@ -327,6 +368,9 @@ export const REGISTRY_TYPES = Object.freeze([
   'events',
   'flasks',
   'classes',
+  // The seats (SPEC §13.1): a region with its content. A registry so that an
+  // encounter's `seat` is a ref the validator resolves like any other id.
+  'seats',
 ]);
 
 // Per-opcode field contracts used by validate.js. `refs` maps a field to the
@@ -336,8 +380,12 @@ export const EFFECT_SPECS = Object.freeze({
   // `tags` scopes the hit for tag-scoped vulnerability (frost/insanity
   // exposure): values must exist in the card-tag registry (one vocabulary,
   // two carriers — card chips for display, effect tags for combat).
-  damage: { allowed: ['hits', 'tags'], required: ['amount'], refs: {} },
+  damage: { allowed: ['hits', 'tags', 'attack'], required: ['amount'], refs: {} },
   block: { allowed: [], required: ['amount'], refs: {} },
+  // The dodge roll (framework contract: Weight Class and Dodge Roll): a
+  // target and nothing else — the check, the die and the guard are the
+  // framework's, and the price is the Weight Class's.
+  dodgeRoll: { allowed: [], required: [], refs: {} },
   applyStatus: { allowed: ['status', 'stacks'], required: ['status'], refs: { status: 'statuses' } },
   removeStatus: { allowed: ['status'], required: ['status'], refs: { status: 'statuses' } },
   draw: { allowed: [], required: ['amount'], refs: {} },
@@ -345,6 +393,7 @@ export const EFFECT_SPECS = Object.freeze({
   exhaust: { allowed: ['random'], required: [], refs: {} },
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
+  restoreStamina: { allowed: [], required: ['amount'], refs: {} },
   restoreMana: { allowed: [], required: ['amount'], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
@@ -383,6 +432,9 @@ const obj = (fields) => ({ k: 'obj', fields });
 const ref = (reg) => ({ k: 'ref', reg });
 const union = (...anyOf) => ({ k: 'union', anyOf });
 const opt = (node) => ({ ...node, opt: true });
+// The literal null — for the ONE field the spec admits it on (encounter.seat,
+// SPEC §13.5) and nowhere else. `opt` is absence; this is presence-as-null.
+const nul = { k: 'null' };
 
 // A FLOOR ANCHOR — the closed set in model/floorplan.js, as a schema node.
 // `index` and `of` are optional here because which one is required depends on
@@ -434,6 +486,13 @@ const enemyPhaseSchema = obj({
   if: opt({ k: 'predicate' }),
   do: effects,
   unlockMoves: opt(arr(str)), // checked against the enemy's own moves in validate.js
+});
+
+// #237 defined the band vocabulary; #238 makes it complete authored content.
+// validate.js additionally enforces positive integers and min <= max.
+const levelBandSchema = obj({
+  min: int,
+  max: int,
 });
 
 // SFX layer schemas (#46), keyed by `kind` — validate.js discriminates on the
@@ -509,7 +568,6 @@ export const SCHEMAS = Object.freeze({
     rounding: en('floor', 'ceil', 'round'),
     gainPerTier: num,
     cap: union(num, str),
-    tags: arr(str),
     flavor: str,
     mods: arr(str),
     compatibility: en('attack-v1', 'guard-v1', 'technique-v1'),
@@ -563,7 +621,9 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...CARD_RARITIES),
     cost: costNode,
     manaCost: opt(int),
+    staminaCost: opt(int),
     type: en(...CARD_TYPES),
+    attack: opt(any),
     damageSchool: opt(en(...DAMAGE_SCHOOLS)),
     exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
@@ -573,6 +633,8 @@ export const SCHEMAS = Object.freeze({
       obj({
         name: opt(str),
         cost: opt(costNode),
+        manaCost: opt(int),
+        staminaCost: opt(int),
         effects: opt(effects),
         keywords: opt(arr(ref('keywords'))),
         textTemplate: opt(str),
@@ -587,16 +649,23 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     rarity: en(...RELIC_RARITIES),
+    pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
-    triggers: triggersNode,
+    // OPTIONAL SINCE PLAN PHASE 2, AND EMPTY ON EVERY SHIPPED RELIC: a relic's
+    // triggers are a property rule now (content/source/propertyRules.csv), and
+    // it carries them through the same mount path equipment does. The field
+    // stays declared for one release so a relic authored against the old shape
+    // is refused BY NAME here instead of loading with its triggers silently
+    // inert; validate.js says which rule to move them to. Its passives did NOT
+    // move and are not expected to — they are upgraded per copy at the smith
+    // (model/itemUpgrades.js), which a global rule row cannot express.
+    triggers: opt(triggersNode),
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
     passives: opt(
       obj({
-        ...Object.fromEntries(
-          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-        ),
+        ...passiveFields,
         // Semantics and strict field validation live in validate.js beside the
         // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
         // discriminated object shapes in this generic schema walker.
@@ -608,12 +677,30 @@ export const SCHEMAS = Object.freeze({
     script: opt(ref('scripts')),
   }),
 
+  // One row of content/source/propertyRules.csv joined with its sidecar entry
+  // (src/content/propertyRules.js). Built from the relic's nodes: the same
+  // passives fields (PASSIVE_TYPES, via passiveFields) and the same triggers
+  // node, so a property can confer nothing a relic could not. Relic `modifiers`
+  // are not carried — their semantics live beside RELIC_MODIFIER_TAGS and phase
+  // 2 moves them with the relics. Cross-row rules (one rule per property tag,
+  // requires/excludes resolve, no cycles, carriers only) live in validate.js.
+  propertyRule: obj({
+    tag: str,
+    requires: opt(arr(str)),
+    excludes: opt(arr(str)),
+    textTemplate: str,
+    passives: opt(obj(passiveFields)),
+    triggers: opt(triggersNode),
+  }),
+
   status: obj({
     id: str,
     name: str,
     icon: opt(str),
     tint: opt(str), // status-pip accent CSS color (display; proc bars tint from this too)
     stackMode: en(...STACK_MODES),
+    stacking: opt(obj({ mode: en('add', 'refresh', 'replace', 'strongest', 'independent', 'unique'), cap: int,
+      duration: opt(int), clock: opt(en('ownerTurnStart', 'ownerTurnEnd')), refresh: opt(bool) })),
     decay: union(en('none', 'perTurnEnd', 'onConsume'), obj({ duration: int })),
     instancePresentation: opt(obj({
       valueToken: en(...STATUS_VALUE_TOKENS),
@@ -639,7 +726,7 @@ export const SCHEMAS = Object.freeze({
         resistance: opt(
           obj({
             status: ref('statuses'), // the resist row applied post-proc
-            tags: arr(str), // creature-tag gate, ⊆ CREATURE_TAGS (validated)
+            tags: arr(str), // creature-tag gate; domain 'creature' of the tag registry
           })
         ),
       })
@@ -707,13 +794,19 @@ export const SCHEMAS = Object.freeze({
     name: str,
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
-    tags: opt(arr(str)), // creature tags ⊆ CREATURE_TAGS — gates proc resistance
+    levelProfile: levelBandSchema,
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),
     art: opt(str),
     size: opt(en('small', 'medium', 'large')), // sprite size tier (display)
     tint: opt(str), // border/accent CSS color (display)
+    // WHICH WAY THIS ASSET WAS DRAWN (display). The board's own direction is
+    // one constant in ui/assets.js; only a mismatch between the two mirrors the
+    // sprite. `front` is not a third direction and never mirrors — a figure
+    // looking at the viewer has no left or right to turn — so a front-facing
+    // render declares nothing and is left exactly as drawn.
+    artFaces: opt(en('left', 'right', 'front')),
     // Strict absent | immune | configured Arcane Exposure policy. Absence is
     // represented by no field; it is not silently defaulted by the engine.
     arcaneExposure: opt(union(
@@ -741,7 +834,20 @@ export const SCHEMAS = Object.freeze({
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
-    act: opt(int), // defaults to 1
+    // The seat this row belongs to (SPEC §13.2). `act` is RETIRED: an act is a
+    // tier, and a row bound to a tier would be fought at the wrong strength in
+    // every seat but one. The one admitted null is the Valkyrie (§13.5), and
+    // validate.js holds it to exactly one row.
+    seat: union(ref('seats'), nul),
+    floorBand: levelBandSchema,
+    targetBand: levelBandSchema,
+  }),
+
+  seat: obj({
+    id: str,
+    regionId: str,
+    name: str,
+    baseTier: int,
   }),
 
   event: obj({
@@ -787,7 +893,6 @@ export const SCHEMAS = Object.freeze({
     id: str,
     name: str,
     maxHp: int,
-    hpPerConTier: int,
     startingFlaskAllocation: obj({ hp: int, mana: int }),
     glyph: opt(str), // class sigil glyph (display)
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
@@ -827,8 +932,14 @@ export const SCHEMAS = Object.freeze({
     floorRules: opt(
       obj({
         fixed: opt(arr(floorAnchor({ type: en(...NODE_TYPES) }))),
-        noEliteOrShrineBefore: opt(floorAnchor()),
+        noShrineBefore: opt(floorAnchor()),
+        noEliteBefore: opt(floorAnchor()),
         noShrineOn: opt(floorAnchor()),
+        // The split key is NOT declared here, so an act that still authors it
+        // is refused for an undeclared field by the shape layer AND named by
+        // resolveFloorPlan's meaning layer. Two refusals is not redundancy: the
+        // schema cannot say what to write instead, and the resolver can.
+        restBeforeElite: opt(bool),
         minElites: opt(int),
         minMerchants: opt(int),
       })

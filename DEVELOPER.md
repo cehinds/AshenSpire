@@ -4,16 +4,124 @@ How to run, test, and add content. The architecture contract lives in
 [SPEC.md §3](SPEC.md); exact engine signatures in
 [docs/ENGINE-API.md](docs/ENGINE-API.md). This file is the practical guide.
 
+For how work is branched, reviewed, and merged, see
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Run & test
+
+`node tools/launch.mjs --build-only` produces the standalone aliases and an
+external-art web edition in `build/web/`. Serve the whole web directory for
+mobile testing. Rendering-quality behavior and performance checks are described
+in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
+
+The opt-in combat workshop is documented in [docs/COMBAT-WORKSHOP.md](docs/COMBAT-WORKSHOP.md).
+Tag assignments and source ownership are documented in [docs/COMBAT-TAG-SOURCES.md](docs/COMBAT-TAG-SOURCES.md).
+Run `node tools/attack-source-audit.mjs --write` after editing the tag junction;
+`--check` verifies complete attack-source mappings and the review table.
+`node tests/run-node.mjs` includes its focused engine regression suite.
+
+Layout numbers (sizes, positions, layers, timings, which parts appear) are
+authored as JSON in `content/config/`, the third authored tree after
+`content/source/` and `content/framework/`. Its README explains the folders,
+the sections, and the `"$name"` variables. `node tools/config-build.mjs`
+compiles it into `src/config/generated/ui.js` (`uiConfig`), and
+`tools/launch.mjs` runs it before every build. `--check` is the drift gate that
+`tests/run-node.mjs` runs, and `tools/content-build.mjs` refuses a config file
+the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
+a compatibility shim composed from `uiConfig`, so change the JSON, never the
+shim or the generated module.
+`node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
+and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
+three-build policy through the actual combat engine. Ordinary runs do not select
+this ruleset yet. See the workshop's remaining content-expansion gate.
+
+Boss destinations are assigned when an act map is created. `bossIds` lists the
+terminal nodes, each carrying its saved `encounterId`; `bossId` remains a
+compatibility alias. Resolve the chosen terminal through
+`bossEncounterForNode()` in solo, LAN and simulations. Legacy maps without this
+metadata resolve their original act boss without consuming RNG. Run
+`node tests/branchingBosses.test.mjs` for topology, deterministic selection,
+LAN choice and real save-manager round trips.
+Loading validates explicit and legacy boss references before accepting a save.
+Existing destination labels refresh from current content without changing the
+saved graph's paths, encounter identities, selection or RNG counters. Run
+`node --test tests/legacyBossReferences.test.mjs tests/bossDestinationLabels.test.mjs`
+for content-update regressions in solo and LAN restoration.
+Enemy expansion checks: `node tests/expandedRoster.test.mjs` covers all 46 new
+moves, phases, seeded encounter reachability and ten named boss locations.
+`node tests/branchingBosses.test.mjs` covers map and save compatibility.
+`node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
+using trusted desktop and phone inputs, including OS and in-game Reduced motion.
+Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
+existing weighted move selector; rendering never chooses or rerolls an intent.
+Attack motion uses the actor/action, tag, intent and neutral precedence in
+`src/content/actionAnimations.js`. Keep those mappings separate from mechanics.
+
+Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
+the shared `enemySprite()` asset function. The twelve PNGs in
+`assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
+384px square canvas and common foot anchor when replacing them. Keep the
+original sprite files as fallback assets. See CREDITS.md and the extraction
+manifest beside the images for provenance.
+Combat stature is presentation-only: `CombatSpriteScaleModel.js` uses the
+encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
+`combatSpriteGeometry.js` caches visible idle bounds, while painted player
+stages expose their existing authored idle bounds. The shared formation fit
+reduces all art together when space is limited, retaining per-row depth and
+ground anchors. Names, health bars and their inspection targets do not shrink.
+Run `node --test tests/combat-sprite-scale.test.mjs` and
+`node tools/combat-sprite-scale-qa.mjs` against `COMBAT_QA_URL`; set
+`COMBAT_QA_OUT` for screenshots outside the checkout. The browser check needs
+Playwright and Edge and covers elite/boss ratios, feet, health bars, card
+selection and returning from an enemy turn at desktop and narrow widths.
+The fourteen new frames in `assets/enemies-expansion/` use the same canvas,
+left-facing orientation and foot anchor (192, 364). They are transparent idle
+paintings; runtime motion supplies their action feedback, not authored attack
+strips. Preserve both imported Unity art and the original fallback assets.
+
+Armament trading uses `src/model/armamentTrading.js` for inert quotes and atomic
+commits. Stored ownership, equipped sets, capacity, currency and stock revisions
+are rechecked at commit. Selling retains upgrades, mount history and permanent
+discovery; it removes only card instances granted by the sold item. Legacy shops
+without the new shelves retain empty shelves instead of rerolling their stock.
+Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
+mounting and save round-trip coverage. Weapon-art packages are authored in
+`content/source/weaponCardPackages.json`; regenerate with `node tools/content-build.mjs`.
+Combat HUD regression checks: `node tools/combat-hud-menus.mjs` exercises
+desktop and phone potion quantities, cancellation, weapon-art targeting and
+separate pile tabs. `node tools/ui-sweep.mjs --out docs/sweep` photographs every
+room at a desk and a phone width and asserts the facts the 2026-09-11 review's
+fixes stand on (the run band on every room, wrapped event choices, the phone
+action row, the map camera under reduced motion). `node tools/screenreach.mjs --only 390x650` checks reachable
+controls across screens. Potion selection uses the shared flask action plan;
+only explicit Use may spend a charge. The map Quick Access faces retain real
+44px target boxes to prevent neighboring invisible hit regions overlapping.
 
 ```
 # play (no build step — any static server, or open index.html directly)
 npx serve .            # then http://localhost:3000
 
+# build the authored trees (launch.mjs runs the first two for you)
+node tools/config-build.mjs            # content/config/**.json → src/config/generated/ui.js
+node tools/content-build.mjs           # content/source/* → src/content/generated/
+node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/
+node tools/config-build.mjs --check    # drift gate: the generated UI config is current
+
 # tests (22 assertions, SPEC §8)
-node tests/run-node.mjs        # CI-style, exits 1 on failure
+node tests/run-node.mjs        # CI-style, exits 1 on failure (runs config-build --check)
 # or open tests/index.html in a browser — same suite, green/red list
+
+# what raises the red failure banner, and what must not
+node --test tests/debug-banner.test.mjs
 ```
+
+The failure banner (`src/ui/debuglog.js`) is the game's one claim that a control
+died, so it must never make that claim about a working screen. `window.onerror`
+also carries browser *notifications* — `ResizeObserver loop completed with
+undelivered notifications` is the one a player met, arriving with no filename and
+no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
+and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
+`tests/debug-banner.test.mjs` holds both edges.
 
 ## The CI door: a tool's silence is not its success (#12)
 
@@ -93,6 +201,40 @@ question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
 enforces that by refusing bare specifiers); the refusal is what makes the gap
 loud in the meantime.
 
+## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
+
+Every merged pull request must be named by an entry in
+[CHANGELOG.md](CHANGELOG.md) before that work is promoted from `dev` to `test`.
+The changelog you can read inside the game is a projection of that file (#189),
+so a merge with no receipt is missing for a **player**, not only for the
+repository.
+
+```
+node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
+node tools/receipts.mjs --check --since dev  # any other range
+node tools/receipts.mjs --selftest           # the known-bad corpus
+```
+
+`.github/workflows/receipts.yml` runs both on every push to `dev`. It is bounded
+at the promotion target on purpose: the question is never "does every merge in
+history have a receipt" — the changelog's own header records which stretch is
+deliberately unreconstructed — but "is *this* promotion complete", asked while
+the answer can still be acted on. It does not run on pull requests, where the
+answer would be about merges the author did not make.
+
+The tool checks **coverage**, not truth: whether an entry exists naming each
+merged pull request. Whether the prose is accurate is not machine-checkable, and
+whether the ordinal on it is the one committed at that merge belongs to
+`tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
+yields no pull-request references at all, that is this tool's own syntax having
+moved out from under it, and it exits **2 (harness could not run)** rather than
+reporting every merge as unreceipted.
+
+Writing one is in the file's own header: a receipt for already-landed work names
+the ordinal **as committed at that merge**; a receipt shipping in its own pull
+request is written one ahead, then `node tools/about-changelog.mjs --write` and a
+rebuild converge the box to the receipt.
+
 ## The four layers (dependencies point down only)
 
 ```
@@ -129,6 +271,116 @@ For migrated slices, keep these responsibilities separate:
 
 Menu and Armoury are the reference implementations. Keep public entry points
 compatible while migrating a vertical slice; do not bulk-move unrelated code.
+
+### Armoury configuration and documentation
+
+The current player contract is summarized in
+[`docs/ARMOURY-LAYOUT-BRIEF.md`](docs/ARMOURY-LAYOUT-BRIEF.md); stable rendered
+names and selectors live in
+[`docs/ASSET-COMPONENTS.md`](docs/ASSET-COMPONENTS.md). The reusable semantic
+model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
+
+- Author view labels, pane composition, ratios, snap stops, compact thresholds,
+  List/Grid defaults, comparison presentation, and card-class capabilities in
+  `content/source/armouryUi.json`. Run the content build; never hand-edit
+  `src/content/generated/armouryUi.js`.
+- The persisted view keys remain `grid`, `rack`, and `hybrid` for save
+  compatibility, but their player-facing labels are **Character**,
+  **Inventory**, and **Hybrid**. Do not expose the compatibility keys as UI
+  names.
+- `equipSlots.csv` and the loadout ladder own equipment group order, position
+  count, labels, short codes, lock state, and socket identity. Renderers iterate
+  those records; they must not branch on Right Hand, Left Hand, Armour, or a
+  fixed number of positions.
+- `layout.cardClasses.inventoryItem.holdAction` is the class capability switch.
+  When true and the shared hold-confirm setting is active, the folded face and
+  expanded reveal are one action surface and one progress presentation. When
+  hold-confirm is off, a tap still discloses details and the explicit in-card
+  action remains available. Do not add a second nested action button to the
+  hold-enabled presentation.
+- `layout.comparison.presentation` chooses `tooltip` or `inline`.
+  `holdPreviewDelayMs`, `tooltipWidthRem`, and `tooltipMaxHeightRatio` configure
+  the shared tooltip. Hover/focus alone never opens comparison. A timed whole-card
+  Equip/Move/Unequip hold also previews comparison through the same lifecycle;
+  with hold-confirm off, the explicit action button commits and the card keeps a
+  separate read-only hold-to-compare gesture.
+- In combat, never mutate `run.loadout` from the Armoury. Prepared-set changes
+  dispatch `swapArmament`; item replace/move/unequip actions dispatch
+  `changeEquipment`. Both are player-turn-only, pay the authored equipment
+  action price, and let the engine reconcile cards, resource vessels, Poise,
+  events, and the persisted combat snapshot atomically.
+- Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
+  Folding collapses to the standard header without erasing the remembered
+  expanded size. Sort controls and resize handles exist only while expanded
+  and only when that tray model declares the corresponding capability.
+  Armaments is currently non-resizable; Inventory also disables height resizing
+  while it fills the Inventory-view pane.
+
+After an Armoury contract change, update the JSON registry, Markdown catalogs,
+interactive catalog description, GDD/SPEC, and changelog in the same change.
+Run at least:
+
+```bash
+node tools/content-build.mjs --check
+node tools/ui-components.mjs --selftest
+node tools/tray-components.mjs
+node tests/run-node.mjs
+```
+
+Cold-boot startup changes additionally run the rendered input contract and its
+same-door known-bad corpus:
+
+```bash
+node tools/startup-gate.mjs
+node tools/startup-gate.mjs --selftest
+```
+
+Exact combat-save changes additionally run the real Save / Save and Quit /
+Load-review path at desktop and phone sizes, plus its copied-tree known-bad
+corpus:
+
+```bash
+node tools/combat-save.mjs
+node tools/combat-save.mjs --selftest
+# after the one authorized artifact regeneration:
+node tools/combat-save.mjs --artifact --screenshots
+```
+
+## Reword the interface (one file: `content/source/uiStrings.csv`)
+
+Every sentence a screen says is a row in `content/source/uiStrings.csv`, and a
+screen asks for it by id:
+
+```js
+import { t, tFull, tTip } from '../strings.js';
+t('reward.continue')                         // the control's own words
+t('reward.cinders.title', { amount: 40 })    // {tokens} come from the caller
+tFull('reward.blocked.storage')              // the sentence it means
+tTip('reward.skip')                          // the tooltip a small face gets
+```
+
+Three authored forms per id, never a runtime guess between them: `short` is
+what the control wears, `full` is the sentence it means, `tip` is the tooltip
+title. A blank cell means "this id has no such form", and asking for it throws
+by name — an empty button is the defect this prevents. `extends` fills only the
+cells a row leaves blank, so `reward.skip` is the house Skip with one sentence
+changed.
+
+Rewording the game is then a spreadsheet edit and a rebuild, touching no code:
+
+```bash
+node tools/content-build.mjs      # csv → src/content/generated/uiStrings.js
+node tools/uistrings.mjs --check  # the ratchet, below
+node tests/run-node.mjs           # tests/ui-strings.test.mjs holds the rules
+```
+
+**The migration is a one-way street.** Most screens still hold their own
+sentences; `tools/uistrings.mjs` counts what is left, per file, against
+`tools/uistrings-baseline.json`, and `--check` fails in BOTH directions — a
+file that grew a hardcoded sentence, and a file that migrated one without
+recording it (an overstated baseline hides the next regression in its slack).
+A screen you migrate ends with `node tools/uistrings.mjs --write-baseline` in
+the same commit.
 
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
@@ -230,6 +482,17 @@ but run-level (SPEC §3.4): `addCinders`, `addRelic {random?|id}`,
 (e.g. `{ cinders: 50 }`) gates a choice; a `startCombat` effect hands control to
 the combat orchestrator after `resultText` shows. Nothing to register — every
 shipped event is reachable via Unknown nodes.
+
+A **quest chain** is a sidecar beside the events in the same file: list its
+steps and completing choices in `questChains`, and name each step's speaker in
+`eventSpeakers`. A speaker is a row in `content/source/speakers.csv`
+(`id,name,portraitKey`; the key names existing art, and a blank key shows the
+name plate). A chain's steps open in the dialogue screen, one beat per
+blank-line paragraph of the event's `text`. Both event screens commit a choice
+through `commitEventChoice` (`src/engine/quests.js`); do not call
+`executeRunEffects` and `recordEventChoice` separately, or completion is
+skipped. `node --test tests/quest-dialogue.test.mjs` covers the door, the
+validation refusals and the dialogue model.
 
 > Each walkthrough above is **validation-checked**: add the snippet and run the
 > suite — test 15 (content validation) rejects unknown fields, bad enums,
@@ -351,6 +614,20 @@ flow.
 
 ## Standalone build (`build/AshenSpire.html`)
 
+## Shared Load / Quit confirmation
+
+`node tools/confirmation-modal.mjs` drives Load and Quit Without Saving from
+both Map and Combat through the real Quick Menu at 1200×730, 390×844, and
+320×640. It verifies the themed
+`alertdialog`, neutral initial focus, cancellation and launcher restoration,
+one-layer Escape behavior over Settings, explicit commit, viewport fit, and
+44px action targets, while capturing overflow plus console/network diagnostics.
+Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
+`--artifact --screenshots` only after the serialized standalone build has been
+regenerated from frozen source.
+
+## Standalone build (`build/AshenSpire.html`)
+
 `node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
 all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
 per-module-closure runtime (so file:// has no module/CORS issue). Double-click
@@ -385,3 +662,29 @@ zero crashes, and the Herald completes full 3-act runs even naively.
 4. **Goreblood** freezes Poise thresholds as well as Bleed (the
    `meterMaxGrowthDisabled` flag is global by design — strictly a buff; the
    card text says so honestly).
+
+## Dodge outcome presentation
+
+The engine emits dodgeRolled once per resolved roll. The combat screen retains its last player receipt before animation playback, so skipping playback cannot discard the explanation. The shared dodgeReceipt formatter labels temporaryGuard as base guard; ordinary blockGained events remain responsible for the applied Block amount. The persistent result uses the standard modal shell and focus return; a live region announces new outcomes.
+
+Regression coverage: node tests/framework.test.mjs checks weight-class costs, deterministic outcomes, atomic resource refusal, stale activation and ordinary Block absorption. Browser evidence must additionally exercise the result modal, keyboard focus and normal/reduced-motion playback on desktop and phones.
+
+### Every-weapon card preview
+Open `weapon-cards-preview.html` through the local server to browse every canonical
+armament using the production card renderer. Search by name, type or tag; enlarge
+any card or open its full explanations. Merchant offers and buy/sell inspectors
+reuse this card while preserving the live quote, smithing tier and mounted cards.
+
+Run `node tools/weapon-card-preview.mjs --shots <output-directory>` to check every
+armament at 1280x1000 and 390x844, capture every card and grouped gallery screenshots,
+and verify keyboard tooltips, full details, filtering and read-only merchant
+inspection. Uses `tools/browser.mjs`; set `CHROME` when automatic discovery does
+not locate your Chromium browser. `--shots` is optional for test-only runs.
+
+### Mobile card interaction checks
+
+Combat cards select before committing. A selected card retains its fan position and reveals above its siblings. Confirm using the shared hold duration/progress, a double-tap after selection, or a valid target tap/drop. A single extra tap does not play. Empty-field taps and Escape cancel; invalid/cancelled drags spend nothing. Test both a self skill and an enemy attack, including switching selection, at 320x568, 375x667 and desktop sizes.
+
+Phone checks must include browser bars expanded/collapsed, full detail titles, and equipment explanations. Chromium mobile emulation cannot certify iPhone Safari fullscreen or audio. Unsupported fullscreen should explain Safari Share → Add to Home Screen. Volume sliders adjust game mix; device volume remains under the player's control.
+
+Combatant overhead UI: `node tools/combatant-overhead-qa.mjs` checks delayed touch/hover/focus explanations, inspection, co-op, and grounded geometry at desktop, phone, narrow, and landscape widths. Set `COMBAT_QA_URL` to the source preview URL and `COMBAT_QA_OUT` for screenshots. Requires Playwright with Edge.

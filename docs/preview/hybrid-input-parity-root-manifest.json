@@ -19,8 +19,8 @@
   "toolFile": {
     "path": "tools/hybrid-input-parity.mjs",
     "identity": {
-      "canonicalLfSha256": "003925a391bacc4401a5804f4d43764016821f47fad8191fc0eb90100abe07aa",
-      "gitBlobOidSha1": "87bef02a37f1b463f3986a6ac936c0e8583183ad"
+      "canonicalLfSha256": "cc97e28b862027b7b2395a26f19143edda161214f520141ca805a9d3b920264e",
+      "gitBlobOidSha1": "a196fcb364decaffeafa63924da0ac32122391ea"
     }
   },
   "sourceFiles": {

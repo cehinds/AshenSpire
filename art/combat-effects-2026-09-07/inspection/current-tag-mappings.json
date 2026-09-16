@@ -1,0 +1,1535 @@
+[
+  {
+    "type": "attack",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "heavyImpact",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Rend",
+      "Rend+",
+      "Cleaving Blow",
+      "Cleaving Blow+",
+      "Stomp",
+      "Stomp+",
+      "Twinblade Flurry",
+      "Twinblade Flurry+",
+      "Kick Off",
+      "Kick Off+",
+      "Impale",
+      "Impale+",
+      "Executioner",
+      "Executioner+",
+      "Stitched Arms",
+      "Stitched Arms+",
+      "Ruinous Blow",
+      "Ruinous Blow+",
+      "Bloodhunter's Strike",
+      "Bloodhunter's Strike+",
+      "Goreslash",
+      "Goreslash+",
+      "Flame to Blade",
+      "Flame to Blade+",
+      "Blood Tithe",
+      "Blood Tithe+",
+      "Poise Breaker",
+      "Poise Breaker+",
+      "Sunderplate",
+      "Sunderplate+",
+      "Star Shower",
+      "Star Shower+",
+      "Star Slicer",
+      "Star Slicer+",
+      "Starlance",
+      "Starlance+",
+      "Starstone Arc",
+      "Starstone Arc+",
+      "Moonrend Cut",
+      "Moonrend Cut+",
+      "Meteorite",
+      "Meteorite+",
+      "Meteor Swarm",
+      "Meteor Swarm+",
+      "Astral Cleave",
+      "Astral Cleave+",
+      "Radiant Spray",
+      "Radiant Spray+",
+      "Supernova",
+      "Supernova+",
+      "Starstone Kris",
+      "Starstone Kris+",
+      "Starfall Beam",
+      "Starfall Beam+",
+      "Starcaller",
+      "Starcaller+",
+      "Shooting Shard",
+      "Shooting Shard+",
+      "Celestial Lance",
+      "Celestial Lance+",
+      "Star Spark",
+      "Star Spark+",
+      "Flagellation",
+      "Flagellation+",
+      "Grave Offering",
+      "Grave Offering+",
+      "Cull the Weak",
+      "Cull the Weak+",
+      "Plague Bearer",
+      "Plague Bearer+",
+      "Exsanguinate",
+      "Exsanguinate+",
+      "Scourge",
+      "Scourge+",
+      "Blight Nova",
+      "Blight Nova+",
+      "Pain Offering",
+      "Pain Offering+",
+      "Withering Touch",
+      "Withering Touch+",
+      "Desperate Rite",
+      "Desperate Rite+",
+      "Blood Offering",
+      "Blood Offering+",
+      "Blightward Lash",
+      "Blightward Lash+",
+      "Twin Fang",
+      "Twin Fang+",
+      "Bashing Blow",
+      "Bashing Blow+",
+      "Sweeping Blow",
+      "Sweeping Blow+",
+      "Colossus Smash",
+      "Colossus Smash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "lifeDrain",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Sacred Harvest",
+      "Sacred Harvest+",
+      "Crimson Rite",
+      "Crimson Rite+",
+      "Blood Harvest",
+      "Blood Harvest+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "basic"
+    ],
+    "profile": "unarmedAttack",
+    "plan": {
+      "kind": "heavyImpact",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Unarmed Strike",
+      "Unarmed Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Strike",
+      "Strike+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade"
+    ],
+    "profile": "bladeAttack",
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Slashing Strike",
+      "Slashing Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Crimson Cleave",
+      "Crimson Cleave+",
+      "Serrated Blade",
+      "Serrated Blade+",
+      "Serrated Shiv",
+      "Serrated Shiv+",
+      "Garrote",
+      "Garrote+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "blood",
+      "gorefire"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "emberbolt",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Gorefire Slash",
+      "Gorefire Slash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "extractable"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Sundering Hew",
+      "Sundering Hew+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "extractable",
+      "flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Draw Cut",
+      "Draw Cut+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Shiv",
+      "Shiv+",
+      "Quick Cut",
+      "Quick Cut+",
+      "Blade Dance",
+      "Blade Dance+",
+      "Thousand Cuts",
+      "Thousand Cuts+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "crossSlash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Twin Prick",
+      "Twin Prick+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Shield Bash",
+      "Shield Bash+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "slash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Ambush",
+      "Ambush+",
+      "Hamstring",
+      "Hamstring+",
+      "Low Blow",
+      "Low Blow+",
+      "Cheap Shot",
+      "Cheap Shot+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blade",
+      "precision"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Coup de Grace",
+      "Coup de Grace+",
+      "Assassinate",
+      "Assassinate+",
+      "Deathblow",
+      "Deathblow+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blight",
+      "ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "blight",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Blight Touch",
+      "Blight Touch+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "blight",
+      "ritual"
+    ],
+    "profile": "sceptreArcaneAttack",
+    "plan": {
+      "kind": "arcaneBurst",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Arcane Strike",
+      "Arcane Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "flourish",
+      "guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "whirlwind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Guard Counter",
+      "Guard Counter+",
+      "Riposte",
+      "Riposte+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "flourish",
+      "pierce"
+    ],
+    "profile": "daggerPierceAttack",
+    "plan": {
+      "kind": "thrust",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Piercing Flurry",
+      "Piercing Flurry +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "guard"
+    ],
+    "profile": "shieldAttack",
+    "plan": {
+      "kind": "shieldBash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Shield Strike",
+      "Shield Strike +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "guard",
+      "starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true
+    },
+    "owner": "any class",
+    "cards": [
+      "Starblade Phalanx",
+      "Starblade Phalanx+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "shadowbolt",
+      "projectile": true
+    },
+    "owner": "any class",
+    "cards": [
+      "Sap",
+      "Sap+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "pierce",
+      "precision",
+      "ranged"
+    ],
+    "profile": "bowPierceAttack",
+    "plan": {
+      "kind": "thrust",
+      "projectile": true
+    },
+    "owner": "any class",
+    "cards": [
+      "Piercing Shot",
+      "Piercing Shot +"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "pierce",
+      "ranged"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "thrust",
+      "projectile": true
+    },
+    "owner": "any class",
+    "cards": [
+      "Ricochet",
+      "Ricochet+",
+      "Fan of Knives",
+      "Fan of Knives+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "starstone"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true
+    },
+    "owner": "any class",
+    "cards": [
+      "Starstone Pebble",
+      "Starstone Pebble+",
+      "Comet Fragment",
+      "Comet Fragment+",
+      "Frost Nova",
+      "Frost Nova+"
+    ]
+  },
+  {
+    "type": "attack",
+    "tags": [
+      "starstone"
+    ],
+    "profile": "staffMagicAttack",
+    "plan": {
+      "kind": "starbolt",
+      "projectile": true
+    },
+    "owner": "any class",
+    "cards": [
+      "Staff Magic Strike",
+      "Staff Magic Strike +"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "gorefire",
+      "projectile": false
+    },
+    "owner": "reaver",
+    "cards": [
+      "Rallying Standard",
+      "Rallying Standard+",
+      "Goreblood",
+      "Goreblood+",
+      "Unbreakable",
+      "Unbreakable+",
+      "Sanguine Pact",
+      "Sanguine Pact+",
+      "Iron Vow",
+      "Iron Vow+",
+      "Stargazer",
+      "Stargazer+",
+      "Astral Armor",
+      "Astral Armor+",
+      "Azure Coil",
+      "Azure Coil+",
+      "Constellation",
+      "Constellation+",
+      "Waxing Moon",
+      "Waxing Moon+",
+      "Moonlit Shield",
+      "Moonlit Shield+",
+      "Astromancer",
+      "Astromancer+",
+      "Thorn Halo",
+      "Thorn Halo+",
+      "Communion",
+      "Communion+",
+      "Stigmata",
+      "Stigmata+",
+      "Life Tithe",
+      "Life Tithe+",
+      "Zealotry",
+      "Zealotry+",
+      "Ember Tide",
+      "Ember Tide+",
+      "Harbinger of Blight",
+      "Harbinger of Blight+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "starbolt",
+      "projectile": false
+    },
+    "owner": "starseer",
+    "cards": [
+      "Rallying Standard",
+      "Rallying Standard+",
+      "Goreblood",
+      "Goreblood+",
+      "Unbreakable",
+      "Unbreakable+",
+      "Sanguine Pact",
+      "Sanguine Pact+",
+      "Iron Vow",
+      "Iron Vow+",
+      "Stargazer",
+      "Stargazer+",
+      "Astral Armor",
+      "Astral Armor+",
+      "Azure Coil",
+      "Azure Coil+",
+      "Constellation",
+      "Constellation+",
+      "Waxing Moon",
+      "Waxing Moon+",
+      "Moonlit Shield",
+      "Moonlit Shield+",
+      "Astromancer",
+      "Astromancer+",
+      "Thorn Halo",
+      "Thorn Halo+",
+      "Communion",
+      "Communion+",
+      "Stigmata",
+      "Stigmata+",
+      "Life Tithe",
+      "Life Tithe+",
+      "Zealotry",
+      "Zealotry+",
+      "Ember Tide",
+      "Ember Tide+",
+      "Harbinger of Blight",
+      "Harbinger of Blight+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "shadowbolt",
+      "projectile": false
+    },
+    "owner": "rogue",
+    "cards": [
+      "Rallying Standard",
+      "Rallying Standard+",
+      "Goreblood",
+      "Goreblood+",
+      "Unbreakable",
+      "Unbreakable+",
+      "Sanguine Pact",
+      "Sanguine Pact+",
+      "Iron Vow",
+      "Iron Vow+",
+      "Stargazer",
+      "Stargazer+",
+      "Astral Armor",
+      "Astral Armor+",
+      "Azure Coil",
+      "Azure Coil+",
+      "Constellation",
+      "Constellation+",
+      "Waxing Moon",
+      "Waxing Moon+",
+      "Moonlit Shield",
+      "Moonlit Shield+",
+      "Astromancer",
+      "Astromancer+",
+      "Thorn Halo",
+      "Thorn Halo+",
+      "Communion",
+      "Communion+",
+      "Stigmata",
+      "Stigmata+",
+      "Life Tithe",
+      "Life Tithe+",
+      "Zealotry",
+      "Zealotry+",
+      "Ember Tide",
+      "Ember Tide+",
+      "Harbinger of Blight",
+      "Harbinger of Blight+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "sacredbolt",
+      "projectile": false
+    },
+    "owner": "herald",
+    "cards": [
+      "Rallying Standard",
+      "Rallying Standard+",
+      "Goreblood",
+      "Goreblood+",
+      "Unbreakable",
+      "Unbreakable+",
+      "Sanguine Pact",
+      "Sanguine Pact+",
+      "Iron Vow",
+      "Iron Vow+",
+      "Stargazer",
+      "Stargazer+",
+      "Astral Armor",
+      "Astral Armor+",
+      "Azure Coil",
+      "Azure Coil+",
+      "Constellation",
+      "Constellation+",
+      "Waxing Moon",
+      "Waxing Moon+",
+      "Moonlit Shield",
+      "Moonlit Shield+",
+      "Astromancer",
+      "Astromancer+",
+      "Thorn Halo",
+      "Thorn Halo+",
+      "Communion",
+      "Communion+",
+      "Stigmata",
+      "Stigmata+",
+      "Life Tithe",
+      "Life Tithe+",
+      "Zealotry",
+      "Zealotry+",
+      "Ember Tide",
+      "Ember Tide+",
+      "Harbinger of Blight",
+      "Harbinger of Blight+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "flourish",
+      "oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "sacredAura",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Afterimage",
+      "Afterimage+",
+      "Deadly Tempo",
+      "Deadly Tempo+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "guile",
+      "oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "sacredAura",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Opportunist",
+      "Opportunist+"
+    ]
+  },
+  {
+    "type": "power",
+    "tags": [
+      "oath",
+      "venom"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "poisonAura",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Envenom",
+      "Envenom+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": null,
+    "owner": "any class",
+    "cards": [
+      "Footwork",
+      "Footwork+",
+      "Evasive Guard",
+      "Evasive Guard+",
+      "Dodge Roll",
+      "Dodge Roll+",
+      "Hemorrhage",
+      "Hemorrhage+",
+      "Shieldwall",
+      "Shieldwall+",
+      "Warding Lunge",
+      "Warding Lunge+",
+      "Warcry",
+      "Warcry+",
+      "Last Stand",
+      "Last Stand+",
+      "Warrior's Vow",
+      "Warrior's Vow+",
+      "Rondel Parry",
+      "Rondel Parry+",
+      "Scholar's Insight",
+      "Scholar's Insight+",
+      "Twinkling",
+      "Twinkling+",
+      "Lucidity",
+      "Lucidity+",
+      "Gravity Well",
+      "Gravity Well+",
+      "Time Dilation",
+      "Time Dilation+",
+      "Star Path",
+      "Star Path+",
+      "Astral Insight",
+      "Astral Insight+",
+      "Bloodletting",
+      "Bloodletting+",
+      "Contagion",
+      "Contagion+",
+      "Blightward",
+      "Blightward+",
+      "Martyr's Blood",
+      "Martyr's Blood+",
+      "Blight Bloom",
+      "Blight Bloom+",
+      "Plague of Butterflies",
+      "Plague of Butterflies+",
+      "Honed Edge",
+      "Honed Edge+",
+      "Iron Skin",
+      "Iron Skin+",
+      "Transmute",
+      "Transmute+",
+      "Blinding Sand",
+      "Blinding Sand+",
+      "Hamstring",
+      "Hamstring+",
+      "Master of Strategy",
+      "Master of Strategy+",
+      "Quick Guard",
+      "Quick Guard+",
+      "Enfeeble",
+      "Enfeeble+",
+      "Rallying Banner",
+      "Rallying Banner+",
+      "Shared Flame",
+      "Shared Flame+",
+      "Oath of Ash",
+      "Oath of Ash+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": null,
+    "owner": "reaver/starseer/rogue",
+    "cards": [
+      "War Surgeon",
+      "War Surgeon+",
+      "Penance",
+      "Penance+",
+      "Transfusion",
+      "Transfusion+",
+      "Reclamation",
+      "Reclamation+",
+      "Second Bloom",
+      "Second Bloom+",
+      "Last Rites",
+      "Last Rites+",
+      "Last Mercy",
+      "Last Mercy+",
+      "Field Dressing",
+      "Field Dressing+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "cleanse",
+      "projectile": false
+    },
+    "owner": "herald",
+    "cards": [
+      "War Surgeon",
+      "War Surgeon+",
+      "Penance",
+      "Penance+",
+      "Transfusion",
+      "Transfusion+",
+      "Reclamation",
+      "Reclamation+",
+      "Second Bloom",
+      "Second Bloom+",
+      "Last Rites",
+      "Last Rites+",
+      "Last Mercy",
+      "Last Mercy+",
+      "Field Dressing",
+      "Field Dressing+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "bulwarkStance",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Bracing Stance",
+      "Bracing Stance+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "barrier",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Crystal Barrier",
+      "Crystal Barrier+",
+      "Umbral Ward",
+      "Umbral Ward+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "frostAura",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Frost Veil",
+      "Frost Veil+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "arcaneWard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Starstone Ward",
+      "Starstone Ward+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "magicGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Warding Star",
+      "Warding Star+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Litany",
+      "Litany+",
+      "Hex",
+      "Hex+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ash",
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Smoke Pellet",
+      "Smoke Pellet+",
+      "Vanish",
+      "Vanish+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ash",
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Pocket Sand",
+      "Pocket Sand+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ash",
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "ash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Smoke Bomb",
+      "Smoke Bomb+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "blade",
+      "blood"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bloodSlash",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Bloodletter",
+      "Bloodletter+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "blade",
+      "flourish"
+    ],
+    "profile": "weaponTechnique",
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Weapon Technique",
+      "Weapon Technique +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "blade",
+      "precision"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Execution Window",
+      "Execution Window+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "blood",
+      "ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Blood Pact",
+      "Blood Pact+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "flourish"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Quickstep",
+      "Quickstep+",
+      "Acrobatics",
+      "Acrobatics+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "flourish"
+    ],
+    "profile": "unarmedTechnique",
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Dodge Roll",
+      "Dodge Roll +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "flourish",
+      "guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Backstep",
+      "Backstep+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "flourish",
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Shadowstep",
+      "Shadowstep+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "gorefire",
+      "oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "emberbolt",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Enter: Gorefire",
+      "Enter: Gorefire+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guard"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Defend",
+      "Defend+",
+      "Iron Resolve",
+      "Iron Resolve+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guard"
+    ],
+    "profile": "shieldGuard",
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Shield Defend",
+      "Shield Defend +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guard"
+    ],
+    "profile": "unarmedGuard",
+    "plan": {
+      "kind": "guardPulse",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Evasive Guard",
+      "Evasive Guard +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guard"
+    ],
+    "profile": "weaponGuard",
+    "plan": {
+      "kind": "parry",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Weapon Guard",
+      "Weapon Guard +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guard",
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Smoke Veil",
+      "Smoke Veil+",
+      "Misdirect",
+      "Misdirect+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guard",
+      "oath"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "physicalGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Enter: Bulwark",
+      "Enter: Bulwark+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "dustStep",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Feint",
+      "Feint+",
+      "Pilfer",
+      "Pilfer+",
+      "Setup",
+      "Setup+",
+      "Perfect Heist",
+      "Perfect Heist+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "guile"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "bind",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Disorient",
+      "Disorient+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "oath",
+      "ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Gilded Oath",
+      "Gilded Oath+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "oath",
+      "venom"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "venom",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Venomcoat",
+      "Venomcoat+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "precision",
+      "ranged"
+    ],
+    "profile": "bowTechnique",
+    "plan": {
+      "kind": "steelGlint",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Steady Aim",
+      "Steady Aim +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ranged",
+      "venom"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "venom",
+      "projectile": false,
+      "at": "target"
+    },
+    "owner": "any class",
+    "cards": [
+      "Toxic Volley",
+      "Toxic Volley+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false
+    },
+    "owner": "reaver/starseer/rogue",
+    "cards": [
+      "Urgent Heal",
+      "Urgent Heal+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ritual"
+    ],
+    "profile": null,
+    "plan": {
+      "kind": "cleanse",
+      "projectile": false
+    },
+    "owner": "herald",
+    "cards": [
+      "Urgent Heal",
+      "Urgent Heal+"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ritual"
+    ],
+    "profile": "sceptreGuard",
+    "plan": {
+      "kind": "arcaneWard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Ritual Ward",
+      "Ritual Ward +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "ritual"
+    ],
+    "profile": "staffTechnique",
+    "plan": {
+      "kind": "focusMotes",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Staff Channel",
+      "Staff Channel +"
+    ]
+  },
+  {
+    "type": "skill",
+    "tags": [
+      "starstone"
+    ],
+    "profile": "staffGuard",
+    "plan": {
+      "kind": "magicGuard",
+      "projectile": false
+    },
+    "owner": "any class",
+    "cards": [
+      "Arcane Ward",
+      "Arcane Ward +"
+    ]
+  }
+]

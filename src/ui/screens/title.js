@@ -1,95 +1,340 @@
-// src/ui/screens/title.js — animated main menu + save slots (SPEC §7.1, §3.12)
+// src/ui/screens/title.js — folded title menu with load/new slot modal.
 //
-// Ambient animation only (gold-glow pulse, drifting embers) — feedback
-// animations stay ≤300 ms elsewhere; ambient loops respect
-// prefers-reduced-motion (styles/ui.css). The menu is a list of save slots
-// (one run each): Continue an occupied slot, or Begin a climb in an empty one.
+// The title owns layout and interaction state; save-slot content stays in the
+// records handed in by main.js. The same modal shell serves LOAD and NEW so the
+// art and spacing can evolve without duplicating the screen structure.
 
-import { esc } from '../components/tooltip.js';
-import { beatArmer } from '../components/holdconfirm.js';
+import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
+import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
+import { el, html, titleMenu } from '../kit/index.js';
+import { t } from '../strings.js';
+import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
+import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
+import { focusElement } from '../input.js';
+import { offlinePlay } from '../../content/offlinePlay.js';
 
-export function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
-  // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
-  const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
-  const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
-  const embers = Array.from({ length: emberN }, (_, i) => {
-    const left = 8 + ((i * 13.7) % 84);
-    const delay = (i * 1.7) % 9;
-    const dur = 7 + (i % 4) * 2;
-    return `<span class="ember" style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s"></span>`;
-  }).join('');
+let releaseActiveTitleBack = null;
 
-  const slotCards = slots
-    .map(({ slot, summary }) =>
-      summary
-        ? `<div class="slot occupied">
-             <div class="slot-info">
-               <span class="slot-tag">SLOT ${slot}</span>
-               <span class="slot-title">${esc(summary.className)}</span>
-               <span class="slot-meta">Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP</span>
-               <span class="slot-seed">SEED ${esc(summary.seedString)}</span>
-             </div>
-             <div class="slot-actions">
-               <button class="slot-continue" data-slot="${slot}">CONTINUE</button>
-               <button class="subtle slot-delete" data-slot="${slot}">✕</button>
-             </div>
-           </div>`
-        : `<div class="slot empty">
-             <div class="slot-info"><span class="slot-tag">SLOT ${slot}</span><span class="slot-empty-label">Empty</span></div>
-             <button class="slot-new" data-slot="${slot}">BEGIN A CLIMB</button>
-           </div>`
-    )
-    .join('');
+export function focusTitleDefault(app, { showCursor = true } = {}) {
+  const control = app?.querySelector('.title-menu .slot-continue:not([disabled]), .title-menu .slot-new:not([disabled]), .title-menu button:not([disabled])');
+  if (!control) return false;
+  control.focus({ preventScroll: true });
+  if (showCursor) focusElement(control);
+  return document.activeElement === control;
+}
+export function mountTitle(app, {
+  slots,
+  meta,
+  registries,
+  onContinue,
+  onNew,
+  onDelete,
+  onHistory,
+  onProfile,
+  onSettings,
+  onOffline,
+  onSettingsChange,
+  onCollapse,
+  onQuit,
+  onCustom,
+  onLan,
+  onCompendium,
+  reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
+}) {
+  const occupied = slots.filter(({ summary }) => !!summary);
+  let modal = null;
+  let selectedSlot = null;
+  let newReviewSlot = null; // the slot the New Game decision door is asking about
+  let activatedSlot = null; // the slot the last tap landed on — a second tap on it opens the door
 
-  app.innerHTML = `
-    <div class="screen title-screen">
-      ${embers}
-      <div class="title-stack">
-        <h1 class="title-big title-glow">ASHEN SPIRE</h1>
-        <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER</p>
-      </div>
-      <div class="slot-list">${slotCards}</div>
-      <div class="title-menu">
-        <button class="subtle" id="lan-play" hidden>FORSAKEN TOGETHER</button>
-        <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
-        <button class="subtle" id="armaments">ARMAMENTS</button>
-        <button class="subtle" id="run-history">RUN HISTORY</button>
-        <button class="subtle" id="settings">SETTINGS</button>
-        <button class="subtle" id="quit-game">QUIT</button>
-      </div>
-      <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">THE EMBER FLOWS UPWARD. FOLLOW IT.</p>
-      ${buildStampHtml('title')}
-    </div>`;
+  // Only one title mount may own the global Cancel action. render() replaces
+  // the title DOM in place, so this listener lives for the mount rather than
+  // for one rendered root and is released when another screen replaces it.
+  releaseActiveTitleBack?.();
+  const titleBackAbort = new AbortController();
+  let titleBackObserver = null;
+  const releaseTitleBack = () => {
+    titleBackAbort.abort();
+    titleBackObserver?.disconnect();
+    titleBackObserver = null;
+    if (releaseActiveTitleBack === releaseTitleBack) releaseActiveTitleBack = null;
+  };
+  releaseActiveTitleBack = releaseTitleBack;
 
-  app.querySelector('#run-history').addEventListener('click', onHistory);
-  app.querySelector('#settings').addEventListener('click', onSettings);
-  if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
-  if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
-  // ARMAMENTS — the Compendium. NAMED, not "Armoury": the Armoury is the screen
-  // where you equip things and it is only reachable inside a run. Two screens
-  // one letter apart in a menu is a naming call, and naming is Viki's lens —
-  // this is my proposal, hers to overrule on sight.
-  if (onCompendium) app.querySelector('#armaments').addEventListener('click', onCompendium);
-  // LAN play only exists when the launcher's server is behind the page — the
-  // orchestrator un-hides the button once /api/lan/info answers.
-  if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);
-  app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
-  app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
-  // DELETE RIDES THE SHARED MACHINERY (secondbeat.js, `deleteSave` — collapsed
-  // 2026-08-14). This screen used to answer it in its own hand: a two-click,
-  // self-resetting arm with a hard-coded 2500 ms that never read the dial —
-  // `off` still demanded two clicks, `long` lengthened nothing. The screen now
-  // names its action and hands over the commit; the table picks the form and
-  // `balance.ui.holdConfirm` is the one home of the duration.
-  const arm = beatArmer(meta, registries);
-  app.querySelectorAll('.slot-delete').forEach((b) => {
-    arm(b, 'deleteSave', { onConfirm: () => onDelete(+b.dataset.slot) });
-    // The word HOLD does not fit beside an icon glyph — the flask-slot
-    // precedent (ui.css hides `.slot-delete .hold-hint`). The sentence moves
-    // into the native tooltip and READS the state the machinery dressed, so
-    // the words and the gesture cannot drift: no `data-holdMs` means the dial
-    // is off and a tap commits.
-    b.title = b.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
+  const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
+
+  const modalSlotRows = (model) => model.children
+    .filter((child) => child.component === UI.titleSaveSlot)
+    .map(({ properties }) => {
+      const { slot, selectable, selected } = properties;
+      const summary = slots.find((record) => record.slot === slot)?.summary || null;
+      return slotOption({ slot, summary, selected, selectable, deletable: !!(summary && onDelete) });
+    });
+
+  // THE FRONT DOOR IS THE KIT'S TitleMenu: display face, centred, ornamented,
+  // the one menu with no panel around it. The stable component ids ride on
+  // the kit's parts (the lockup is the assembly, the wordmark its name, the
+  // divider its first ornament, the gem its second) so the tools that read
+  // the page keep reading it.
+  const menuHtml = () => {
+    const continueSlot = occupied[0]?.slot ?? null;
+    const entry = (label, action, { id = '', className = '', disabled = false } = {}) => ({
+      label,
+      className: `title-menu-item ${className}`.trim(),
+      disabled,
+      attrs: { id: id || null, dataset: { titleAction: action, component: UI.titleMenuItem } },
+    });
+    const menu = titleMenu({
+      name: 'ASHEN SPIRE',
+      subtitle: 'A roguelike deckbuilder',
+      entries: [
+        entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null }),
+        entry('Load', 'load', { id: 'load-game' }),
+        entry('New', 'new', { id: 'new-game', className: 'slot-new' }),
+        // #armaments remains the compatibility anchor for the existing watched probe.
+        entry('Collection', 'collection', { id: 'armaments' }),
+        entry('Settings', 'settings', { id: 'settings' }),
+        ...(onOffline ? [entry(offlinePlay.title, 'offline', { id: 'download-game' })] : []),
+        entry('Quit', 'quit', { id: 'quit-game' }),
+      ],
+      attrs: { 'data-component': UI.titleBrandLockup },
+    });
+    menu.querySelector('.tm-name').dataset.component = UI.titleWordmark;
+    menu.querySelector('.tm-name').classList.add('title-glow');
+    menu.querySelector('.tm-sub').dataset.component = UI.titleSubtitle;
+    const [first, second] = menu.querySelectorAll('.as-ornament');
+    first.dataset.component = UI.titleDivider;
+    second.querySelector('span').dataset.component = UI.titleMenuGem;
+    const list = menu.querySelector('ul');
+    list.className = 'title-menu';
+    list.dataset.component = UI.titleMenu;
+    list.setAttribute('aria-label', 'Ashen Spire main menu');
+    // W3b: an available Continue is highlighted and its exact save sits beside
+    // the menu (below it on narrow hosts); the wordmark above stays centred.
+    // With no save this is W3a: the lone centred menu, no empty placeholder.
+    const saved = occupied[0];
+    if (saved) {
+      list.querySelector('.slot-continue')?.classList.add('is-highlighted');
+      const home = document.createElement('div');
+      home.className = 'title-home';
+      list.replaceWith(home);
+      home.append(list, el('aside', { class: 'title-save-preview', 'aria-label': t('title.save.aria', { slot: saved.slot }) }, [
+        el('p', { class: 'as-eyebrow', text: t('title.save.eyebrow') }),
+        el('p', { class: 'title-save-name', text: saved.summary.className }),
+        el('p', { class: 'title-save-facts', text: slotFacts(saved.summary) }),
+        el('p', { class: 'title-save-identity', text: t('title.save.identity', { slot: saved.slot, seed: saved.summary.seedString || '—' }) }),
+      ]));
+    }
+    const tagline = document.createElement('p');
+    tagline.className = 'tm-foot title-tagline';
+    tagline.dataset.component = UI.titleTagline;
+    tagline.textContent = 'The ember flows upward. Follow it.';
+    menu.appendChild(tagline);
+    return html(menu);
+  };
+
+  const modalHtml = () => {
+    if (!modal) return '';
+    if (newReviewSlot != null) {
+      const summary = slots.find((record) => record.slot === newReviewSlot)?.summary || null;
+      return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(slotDecisionDoor({ kind: 'new', slot: newReviewSlot, summary }))}</div>`;
+    }
+    const model = selectionModel();
+    const door = slotDoor({
+      eyebrow: 'New game',
+      title: 'Choose a slot',
+      closeLabel: 'Close New Game',
+      rows: modalSlotRows(model),
+      backLabel: 'Back',
+      continueLabel: 'Continue',
+      canContinue: !!model.properties.canContinue,
+      actionSlot: model.properties.actionSlot,
+    });
+    return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(door)}</div>`;
+  };
+
+  const focusModal = (selector = '.title-slot-pick:not([disabled]), .title-modal-back') => {
+    const control = app.querySelector(selector);
+    if (control) {
+      control.focus({ preventScroll: true });
+      focusElement(control);
+    }
+  };
+
+  const openModal = (kind) => {
+    modal = kind;
+    activatedSlot = null;
+    selectedSlot = saveSlotSelectionModel(slots, { kind }).properties.selectedSlot;
+    render();
+    focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
+  };
+
+  const openLoadSelector = (launcher) => {
+    openSaveSlotSelector({
+      host: app,
+      slots,
+      meta,
+      registries,
+      inlineReview: true,
+      returnFocusElement: launcher,
+      onRequestLoad: (slot) => onContinue(slot),
+      onRequestNew: (slot) => onNew(slot),
+      onDelete: (slot) => onDelete(slot, 'load'),
+    });
+  };
+
+  const openNewReview = (slot) => {
+    if (slot == null) return;
+    newReviewSlot = slot;
+    render();
+    focusModal('[data-title-action="review-new"]');
+  };
+  const closeNewReview = () => {
+    const slot = newReviewSlot;
+    newReviewSlot = null;
+    render();
+    focusModal(`[data-slot-pick="${slot}"]`);
+  };
+  const closeModal = () => {
+    modal = null;
+    selectedSlot = null;
+    newReviewSlot = null;
+    activatedSlot = null;
+    render();
+    focusTitleDefault(app, { showCursor: false });
+  };
+
+  const activateSlot = (slot) => {
+    // Two taps: the first highlights, the second on the highlighted slot opens
+    // its decision door (Start / Overwrite). Continue opens it as well.
+    const repeat = selectedSlot === slot && activatedSlot === slot;
+    selectedSlot = slot;
+    activatedSlot = slot;
+    if (repeat) { openNewReview(slot); return; }
+    render();
+    focusModal(`[data-slot-pick="${selectedSlot}"]`);
+  };
+
+  const wireDelete = (root) => {
+    if (!onDelete) return;
+    const arm = beatArmer(meta, registries);
+    root.querySelectorAll('.title-slot-delete').forEach((button) => {
+      const slot = +button.dataset.slotDelete;
+      arm(button, 'deleteSave', {
+        ...deleteSlotReview(slot, slots.find((record) => record.slot === slot)?.summary || null),
+        onConfirm: () => onDelete(slot, 'new'),
+      });
+      button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
+    });
+  };
+
+  function render() {
+    app.innerHTML = `
+      <div class="screen title-screen">
+        <div class="tower-hall" aria-hidden="true"><div class="tower-interior-city"></div><div class="tower-door-frame"></div></div>
+        ${Array.from({ length: 7 }, (_, i) => `<span class="ember" style="left:${8 + ((i * 13.7) % 84)}%;animation-delay:${(i * 1.7) % 9}s;animation-duration:${7 + (i % 4) * 2}s"></span>`).join('')}
+        ${hudQuickSettingsHtml(hudQuickSettingsModel({ place: 'title', presentation: registries.balance.ui.hudQuickSettings, settings: meta.settings || {} }))}
+        ${menuHtml()}
+        ${buildStampHtml('title')}
+        <button type="button" class="tower-preview-replay">Replay entrance</button>
+        ${modalHtml()}
+      </div>`;
+
+    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+    const root = app.querySelector('.title-screen');
+    root.querySelector('.tower-preview-replay')?.addEventListener('click', () => onCollapse?.());
+    root.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (newReviewSlot != null) closeNewReview();
+        else closeModal();
+      } else if (event.key === 'Tab' && modal) {
+        const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus({ preventScroll: true });
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus({ preventScroll: true });
+        }
+      }
+    });
+    root.querySelectorAll('[data-title-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.titleAction;
+        if (action === 'continue') onContinue(occupied[0].slot);
+        else if (action === 'load') openLoadSelector(button);
+        else if (action === 'new') openModal(action);
+        else if (action === 'collection' && onCompendium) onCompendium();
+        else if (action === 'settings') onSettings();
+        else if (action === 'offline') onOffline?.();
+        else if (action === 'quit' && onQuit) onQuit();
+        else if (action === 'close-modal' || action === 'back') closeModal();
+        else if (action === 'modal-continue') openNewReview(selectionModel().properties.actionSlot);
+        else if (action === 'review-back') closeNewReview();
+        else if (action === 'review-new') {
+          if (newReviewSlot == null) return;
+          onNew(newReviewSlot);
+        }
+      });
+    });
+    root.querySelector('[data-title-modal-scrim]')?.addEventListener('click', (event) => {
+      if (event.target === event.currentTarget) closeModal();
+    });
+    root.querySelectorAll('[data-slot-pick]').forEach((button) => {
+      button.addEventListener('click', () => {
+        activateSlot(+button.dataset.slotPick);
+      });
+    });
+    wireDelete(root);
+    if (onHistory) void onHistory;
+    if (onProfile) void onProfile;
+    if (onCustom) void onCustom;
+    if (onLan) void onLan;
+  }
+
+  render();
+  // Back where the player was: a delete remounts the title, and the door it
+  // was done from re-opens with the slot now empty.
+  if (reopen === 'new') openModal('new');
+  else if (reopen === 'load') openLoadSelector(app.querySelector('[data-title-action="load"]'));
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+
+    // Controller Cancel is synthesized at window rather than at the focused
+    // element. Give the title's own modal and the shared Load selector the same
+    // priority they receive from a physical keyboard press.
+    if (modal) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeModal();
+      return;
+    }
+    if (document.querySelector('.title-modal-veil')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeSaveSlotSelector();
+      return;
+    }
+
+    // Other dialogs and selectors own Back before the expanded title does.
+    if (document.querySelector('[aria-modal="true"]') || typeof onCollapse !== 'function') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    onCollapse();
+  }, { signal: titleBackAbort.signal });
+
+  titleBackObserver = new MutationObserver(() => {
+    queueMicrotask(() => {
+      if (!app.querySelector('.title-screen')) releaseTitleBack();
+    });
   });
+  titleBackObserver.observe(app, { childList: true });
 }

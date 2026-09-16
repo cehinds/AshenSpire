@@ -1,0 +1,26 @@
+[
+  {
+    "activation": "mundaneLow",
+    "kind": "slash",
+    "size": 128,
+    "cast": false
+  },
+  {
+    "activation": "mundaneHigh",
+    "kind": "whirlwind",
+    "size": 179.2,
+    "cast": false
+  },
+  {
+    "activation": "resourceLow",
+    "kind": "bloodSlash",
+    "size": 160,
+    "cast": true
+  },
+  {
+    "activation": "resourceHigh",
+    "kind": "bloodSlash",
+    "size": 200,
+    "cast": true
+  }
+]

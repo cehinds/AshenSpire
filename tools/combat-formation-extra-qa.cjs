@@ -1,0 +1,18 @@
+const {chromium}=require('playwright');const fs=require('fs');(async()=>{
+const b=await chromium.launch({channel:'msedge',headless:true});const p=await b.newPage({viewport:{width:390,height:844}});const errors=[];p.on('pageerror',e=>errors.push(e.message));
+const base=process.env.COMBAT_QA_URL || 'http://localhost:8212/index.html';
+await p.goto(base+'?shot=combat&shotScene=cinder-reach-4',{timeout:60000});await p.waitForSelector('.enemy');await p.waitForTimeout(1000);
+await p.evaluate(()=>{const c=window.__combat;c.enemies.push(...c.enemies.map((e,i)=>({...structuredClone(e),id:'extra'+i})));window.__renderCombatForShot()});await p.waitForTimeout(900);
+await p.screenshot({path:'outputs/combat-formation/six-enemies-phone.png'});
+const before=await p.locator('.combatant').evaluateAll(xs=>xs.map(x=>({id:x.dataset.eid,rect:x.getBoundingClientRect().toJSON(),name:x.querySelector('.nm').getBoundingClientRect().toJSON()})));
+for(const enemy of await p.locator('.enemy:not(.dead) .nm').all()){await enemy.hover();await p.mouse.move(2,2)}
+await p.evaluate(()=>{window.__combat.enemies[1].alive=false;window.__combat.enemies[1].hp=0;window.__renderCombatForShot()});await p.waitForTimeout(1000);
+const after=await p.locator('.combatant').evaluateAll(xs=>xs.map(x=>({id:x.dataset.eid,rect:x.getBoundingClientRect().toJSON(),name:x.querySelector('.nm').getBoundingClientRect().toJSON()})));
+if(before.some((a,i)=>Math.abs(a.rect.x-after[i].rect.x)>1||Math.abs(a.name.y-after[i].name.y)>1))throw Error('Death rearranged slots');
+await p.screenshot({path:'outputs/combat-formation/defeated-slot-phone.png'});
+await p.goto(base+'?shot=coop',{timeout:60000});await p.waitForSelector('.enemy');await p.waitForTimeout(1200);
+await p.evaluate(()=>{const s=structuredClone(window.__coopSnapshotForShot);s.scene.turn++;s.scene.events=s.scene.enemies.map(e=>({type:'enemyMoveStarted',sourceId:e.id,enemyId:e.enemyId,moveId:e.intent.moveId,kind:e.intent.kind}));window.__receiveCoopSnapshotForShot(s)});
+await p.waitForFunction(()=>document.querySelector('.combat').dataset.turn==='enemy');const count=await p.evaluate(()=>window.__coopSentForShot.length);await p.keyboard.press('1');await p.keyboard.press('e');await p.locator('.hand .card').first().evaluate(e=>e.click());if(await p.evaluate(()=>window.__coopSentForShot.length)!==count)throw Error('Enemy playback accepted co-op input');
+await p.waitForFunction(()=>document.querySelector('.combat').dataset.turn==='player');
+await p.goto(base+'?shot=atlas',{timeout:60000});await p.waitForSelector('.atlas-world');await p.waitForTimeout(500);const zoom=await p.locator('.atlas-world').evaluate(e=>getComputedStyle(e).getPropertyValue('--atlas-zoom'));if(+zoom<=1 || await p.locator('.atlas-scrollport').getAttribute('data-camera-mode')!=='close')throw Error('Map did not frame the current junction');await p.locator('[data-atlas-zoom="0"]').click();if(+(await p.locator('.atlas-world').evaluate(e=>getComputedStyle(e).getPropertyValue('--atlas-zoom')))!==1)throw Error('Fit failed');await p.locator('[data-atlas-center]').click();await p.screenshot({path:'outputs/combat-formation/atlas-focused-phone.png'});
+if(errors.length)throw Error(errors.join(';'));fs.writeFileSync('outputs/combat-formation/additional-checks.json',JSON.stringify({passed:['Six enemy nameplates can be pointed at','Defeat retains formation','Co-op keyboard and pointer blocked during enemy playback','Atlas frames its current junction; Fit and You work'],errors},null,2));console.log('PASS six enemies, defeated slot, input lock, atlas camera');await b.close();})().catch(e=>{console.error(e);process.exit(1)});

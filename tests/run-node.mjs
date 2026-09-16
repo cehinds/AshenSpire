@@ -77,6 +77,14 @@ for (const r of results) {
 // in engine.test.js. Two files, no git conflict, and a suite that would have
 // printed "35." twice — the collision a merge cannot see.
 let zoomExtra = 0;
+{
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const files = ['wireframe-card.test.mjs', 'wireframe-hand.test.mjs', 'wireframe-map-selection.test.mjs', 'combat-formation.test.mjs', 'combat-sprite-scale.test.mjs', 'wireframe-combatant-stack.test.mjs', 'wireframe-control-appearance.test.mjs', 'wireframe-combat-layout.test.mjs', 'reward-claim-status.test.mjs', 'wireframe-combatant-inspector.test.mjs', 'wireframe-identity.test.mjs', 'wireframe-selection-effect.test.mjs', 'wireframe-inspect-control.test.mjs', 'wireframe-button-sizes.test.mjs', 'wireframe-combatant-meters.test.mjs', 'wireframe-combat-overlay.test.mjs', 'wireframe-combat-landscape.test.mjs', 'wireframe-map-header.test.mjs', 'wireframe-pile-viewer.test.mjs', 'wireframe-potion-inspection.test.mjs', 'wireframe-settings-workspace.test.mjs', 'wireframe-compendium-profile.test.mjs', 'wireframe-choice-body.test.mjs', 'wireframe-shop.test.mjs', 'wireframe-armoury.test.mjs', 'wireframe-confirmation.test.mjs', 'wireframe-tooltip.test.mjs', 'wireframe-scene-layers.test.mjs', 'wireframe-run-hud.test.mjs', 'wireframe-category-nav.test.mjs', 'wireframe-smith-workspace.test.mjs', 'wireframe-possession-variants.test.mjs', 'quest-dialogue.test.mjs', 'wireframe-dialogue-frame.test.mjs', 'property-mount.test.mjs', 'ui-config.test.mjs'];
+  const result = spawnSync(process.execPath, ['--test', ...files.map(file => fileURLToPath(new URL(file, import.meta.url)))], { encoding: 'utf8' });
+  if (result.status !== 0) { zoomExtra++; console.log(result.stdout, result.stderr); }
+  console.log(`${result.status === 0 ? 'PASS' : 'FAIL'} approved wireframe geometry and runtime card costs (${files.length} test files; no browser parity claim)`);
+}
 let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the same
                     // two-homes defect these two lines exist to catch.
 {
@@ -747,8 +755,159 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 73/74 — module URL/filesystem path conversions use node:url (#13).
+  // 73 proves the two required known-bads through the real scanner and runs
+  // both from a working directory containing spaces. 74 scans tools/ + tests/.
+  // These numbers follow the suite's own 64/65 uniqueness gate and the 67/68
+  // gate-list pair; tools/testnumbers.mjs is the authority that verifies them.
+  const runUrlPath = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+
+  const urlPathSelf = runUrlPath(['--selftest']);
+  const urlPathSelfV = quote(urlPathSelf.out);
+  console.log(
+    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
+      ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
+  );
+  if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const urlPathTree = runUrlPath([]);
+  const urlPathTreeV = quote(urlPathTree.out);
+  console.log(
+    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
+      ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
+      ` (\`node tools/urlpath-conversions.mjs\` names each site)`
+  );
+  if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
+  else zoomPassed++;
+
+  // 77/78 — fixed attack-slot composition. The first line proves the old
+  // right-hand-only lookup is still discriminating; the second runs the full
+  // 0/1/2 weapon, persistence, mutation, and live-pile matrix.
+  const runWeaponPackages = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/weapon-card-packages.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  const weaponSelf = runWeaponPackages(['--selftest']);
+  const weaponSelfV = quote(weaponSelf.out);
+  console.log(
+    `${weaponSelf.code === 0 && weaponSelfV.text ? 'PASS' : 'FAIL'}  77. the weapon-package check catches the right-hand-only lookup` +
+      ` — ${weaponSelfV.text || `weapon-card-packages --selftest (exit ${weaponSelf.code}): ${weaponSelfV.why}`}`
+  );
+  if (weaponSelf.code !== 0 || !weaponSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const weaponTree = runWeaponPackages([]);
+  const weaponTreeV = quote(weaponTree.out);
+  console.log(
+    `${weaponTree.code === 0 && weaponTreeV.text ? 'PASS' : 'FAIL'}  78. equipped weapons deterministically rebind the fixed authored attack slots` +
+      ` — ${weaponTreeV.text || `weapon-card-packages (exit ${weaponTree.code}): ${weaponTreeV.why}`}`
+  );
+  if (weaponTree.code !== 0 || !weaponTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
+// 76 — destructive quit/load confirmation without a native browser prompt.
+// This is a DOM behavior test with a deliberately tiny host: it exercises the
+// shared component's event contract, while source reads prove both controller
+// paths use it and the underlying overlay yields Escape to the top veil. It
+// does not render pixels or claim responsive geometry; that remains browser QA.
+{
+  const { runConfirmationModalContract } = await import('./confirmation-modal.test.mjs');
+  const confirmation = await runConfirmationModalContract();
+  console.log(
+    `${confirmation.ok ? 'PASS' : 'FAIL'}  76. quit and load use one reversible themed confirmation behavior` +
+      ` — ${confirmation.detail}`
+  );
+  if (confirmation.ok) zoomPassed++;
+  else zoomExtra++;
+}
+
+// 79 — the shipped pose frames and their generated table agree.
+//
+// Two ways this goes wrong silently. The table (src/content/poseSprites.js) is
+// generated from art/poses by tools/pose-ship.mjs; rerunning it for a different
+// pose set, or committing one side without the other, leaves rows naming files
+// that are not there — the figure then loads nothing for a pose and holds the
+// last frame. And registration lives entirely in these numbers: a frame whose
+// floor line is not below its crop top would place the figure off its feet.
+{
+  const { existsSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const { POSE_FRAMES, POSE_STRIP, POSE_DIR, POSE_CANVAS } = await import('../src/content/poseSprites.js');
+  const classes = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_')[0]))];
+  const tints = [...new Set([...POSE_FRAMES.keys()].map((k) => k.split('_').at(-1)))];
+  const bad = [];
+  for (const c of classes) {
+    for (const t of tints) {
+      for (const pose of POSE_STRIP) {
+        const row = POSE_FRAMES.get(`${c}_${pose}_${t}`);
+        if (!row) { bad.push(`${c}/${pose}/${t}: no row`); continue; }
+        if (!existsSync(resolve(root, POSE_DIR + row.f))) bad.push(`${c}/${pose}/${t}: ${row.f} missing`);
+        if (!(row.g > row.y)) bad.push(`${c}/${pose}/${t}: floor ${row.g} is not below the crop top ${row.y}`);
+        if (row.x + row.w > POSE_CANVAS.width + 1 || row.y + row.h > POSE_CANVAS.height + 1) {
+          bad.push(`${c}/${pose}/${t}: crop runs off the ${POSE_CANVAS.width}x${POSE_CANVAS.height} canvas`);
+        }
+      }
+    }
+  }
+  const want = classes.length * tints.length * POSE_STRIP.length;
+  console.log(
+    `${bad.length ? 'FAIL' : 'PASS'}  79. every shipped pose frame has a file and registers on its floor` +
+      ` — ${bad.length ? `${bad.length} bad: ${bad.slice(0, 3).join('; ')}` : `${want}/${want} frames over ${classes.length} classes x ${tints.length} tints x ${POSE_STRIP.length} poses.`}` +
+      ' (tools/pose-ship.mjs regenerates both sides; this check reads them, it does not run it)'
+  );
+  if (bad.length) zoomExtra++;
+  else zoomPassed++;
+}
+
+{
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['--test', 'tests/combat-foundations.test.mjs', 'tests/attack-sources.test.mjs', 'tests/combat-abilities.test.mjs', 'tests/tooltip-settings.test.mjs', 'tests/offline-play.test.mjs', 'tests/ui-strings.test.mjs'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    execFileSync(process.execPath, ['tools/attack-source-audit.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  combat foundations: engine, co-op, save, preview and trigger regression suite');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  combat foundations: ${error.stdout || error.message}`);
+    zoomExtra++;
+  }
+}
+// The third authored tree: content/config/**.json compiles to
+// src/config/generated/ui.js. A hand edit to the generated module, or a JSON
+// edit nobody compiled, is red here (tests/ui-config.test.mjs holds the rules).
+{
+  const { execFileSync } = await import('node:child_process');
+  try {
+    execFileSync(process.execPath, ['tools/config-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated UI config is current with content/config (config-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
+    zoomExtra++;
+  }
+}
+try {
+  const { runRewardConfirmTests } = await import('./reward-confirm.test.mjs');
+  const count = runRewardConfirmTests();
+  console.log('PASS  reward selection and confirmation: ' + count + ' checks');
+  zoomPassed++;
+} catch (error) {
+  console.log('FAIL  reward selection and confirmation: ' + error.message);
+  zoomExtra++;
+}
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
@@ -833,4 +992,83 @@ console.log('          `by` in tools/watched-probes.json names who picked it. It
 console.log('          READ door of tools/watched.mjs: nothing in this suite opens the build, drives');
 console.log('          a probe, or photographs a control, so `watched` as a VERDICT is still');
 console.log('          unwatched by CI — only the derivations behind it are.');
+console.log('          73–74 guard module URL/path conversion shapes in tools/ and tests/:');
+console.log('          actual dynamic file:// templates/concats and same-file static URL');
+console.log('          pathname conversions through direct, grouped, bracket, destructuring,');
+console.log('          or bounded local-alias forms. A platform consumer is trusted only through');
+console.log('          its static node:url import; ambiguous lexical, binding, or alias flow fails');
+console.log('          closed. They prove both fixtures fail from a spaced working directory;');
+console.log('          they do not cover cross-module flow or platform-API semantic correctness.');
+console.log('          76 drives the shared confirmation component in a minimal DOM and reads');
+console.log('          the two controller call sites. It proves cancellation/commit semantics,');
+console.log('          focus containment/return, and native-prompt removal; it does not paint');
+console.log('          the dialog or prove responsive geometry in a real browser.');
+try {
+  const { runCardRemovalFlickTests } = await import('./card-removal-flick.test.mjs');
+  const result = runCardRemovalFlickTests();
+  console.log(`PASS  Card removal and touch flick regressions: ${result.checks} checks`);
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL  Card removal and touch flick regressions:', error);
+}
+try {
+  await import('./card-two-beats.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Every card owes two beats:', error);
+}
+try {
+  await import('./selection-clears-on-mount.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL A spent beat belongs to the screen that spent it:', error);
+}
+try {
+  await import('./combat-disarms-when-selection-clears.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL An armed card that stopped looking armed is still armed:', error);
+}
+try {
+  await import('./creation-continue-stacking.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error("FAIL The substep's way on outranks the stage's skip:", error);
+}
+try {
+  await import('./hand-forwards-surface.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The hand forwards its surface to the inspect door:', error);
+}
+try {
+  await import('./card-actions.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card action service:', error);
+}
+try {
+  await import('./playing-card-model.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The playing card model:', error);
+}
+try {
+  await import('./card-selection-store.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card selection store:', error);
+}
+try {
+  await import('./starting-equipment-preview.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Starting equipment previews:', error);
+}
+try {
+  await import('./armament-combat-kits.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Armament combat kits:', error);
+}
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

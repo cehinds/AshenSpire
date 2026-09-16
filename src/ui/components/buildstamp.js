@@ -22,8 +22,15 @@
 // gate measures INK inside this element's box and not its presence — and why
 // styles/ui.css keeps `.build-stamp` out of every narrow-layout hide rule
 // deliberately rather than by luck.
+//
+// THE SENTENCE IT SPEAKS ON HOVER GOES THROUGH THE ONE TOOLTIP SERVICE
+// (components/tooltip.js), never a `title=` attribute — the house's one rule
+// for tooltips. The stamp is built as a string by string-building screens, so
+// the wiring is this module's own: after any placement is written, the next
+// microtask finds every unwired stamp on the page and attaches its tooltip.
+// One home for the markup, one for the sentence, one for the hover.
 
-import { esc } from './tooltip.js';
+import { esc, attachTooltip } from './tooltip.js';
 import { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED, SOURCE } from '../../buildversion.js';
 
 /**
@@ -43,6 +50,23 @@ const WHY = !BUILD_IS_STAMPED
       + ` beside it still names this exact tree. Quote this whole line when something looks wrong.`;
 
 /**
+ * wireBuildStamps(root) → how many stamps were wired.
+ * Attaches the WHY tooltip to every stamp under `root` that does not have one
+ * yet. Idempotent: attachTooltip may be called once per element, and the
+ * `data-tip` mark is how a second pass knows to leave a stamp alone.
+ */
+export function wireBuildStamps(root = typeof document !== 'undefined' ? document : null) {
+  if (!root || typeof root.querySelectorAll !== 'function') return 0;
+  let wired = 0;
+  for (const stamp of root.querySelectorAll('.build-stamp:not([data-tip])')) {
+    stamp.dataset.tip = 'why';
+    attachTooltip(stamp, () => `<div class="tt-title">Build stamp</div>${esc(WHY)}`);
+    wired += 1;
+  }
+  return wired;
+}
+
+/**
  * buildStampHtml(place) → the stamp, ready to drop into a template.
  * `place` names the surface ('title' | 'map' | 'combat') and reaches the DOM so
  * the gate can count placements instead of taking three on trust.
@@ -55,5 +79,8 @@ export function buildStampHtml(place, { split = false, seed = null } = {}) {
   const seedAttrs = split && seed != null
     ? ` data-seed="${esc(seed)}" aria-label="BUILD ${esc(BUILD_VERSION)}, SEED ${esc(seed)}, SOURCE ${esc(SOURCE)}"`
     : '';
-  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}"${seedAttrs} title="${esc(WHY)}">${contents}</span>`;
+  // The caller writes this string into the page synchronously; by the next
+  // microtask the element exists and the tooltip can be attached to it.
+  if (typeof queueMicrotask === 'function') queueMicrotask(() => wireBuildStamps());
+  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}"${seedAttrs}>${contents}</span>`;
 }

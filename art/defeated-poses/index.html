@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="/"><title>AshenSpire · Hurt and defeated poses</title>
+<link rel="stylesheet" href="styles/combat.css">
+<style>body{margin:24px;background:#171512;color:#e8dcc5;font:16px system-ui}h1,h2{color:#e5c984;font-family:Georgia}a{color:#dfb966}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}article{background:#262018;padding:20px;border:1px solid #58462c;border-radius:10px;overflow:hidden}article[hidden]{display:none}.scene{height:230px;display:flex;justify-content:center;align-items:end;margin:20px}.sprite{position:relative}button,input{font:inherit;color:inherit;background:#3d3121;border:1px solid #907348;padding:9px;border-radius:5px;margin:4px}input{width:min(90%,600px)}.controls{display:flex;flex-wrap:wrap;gap:4px} @media(max-width:600px){body{margin:12px}main{grid-template-columns:1fr}}</style>
+<h1>Hurt and defeated poses</h1><p>33 enemies and 16 player outfits. Hurt → red hurt → hurt; defeated characters lie on the ground until revived.</p><p><a href="art/enemy-states/index.html">Enemy poses and buff auras</a></p><input id="search" aria-label="Find character" placeholder="Find a character…"><main></main>
+<script type="module">
+import {enemySprite,classSprite} from './src/ui/assets.js';
+import {stageFor} from './src/ui/services/PoseAnimator.js';
+import {animateEvents} from './src/ui/fx.js';
+import {DEFEATED_ART} from './src/content/defeatedArt.js';
+const {entries}=await(await fetch('assets/enemy-poses/manifest.json')).json();
+const names=new Map(entries.map(e=>[e.id,e.name]));
+window.reviewStages=new Map();
+for(const [id,art] of Object.entries(DEFEATED_ART)){
+ const card=document.createElement('article');card.dataset.id=id;card.className=art.kind;
+ const h=document.createElement('h2');h.textContent=names.get(id)||id;card.append(h);
+ const scene=document.createElement('div');scene.className='scene';const sprite=document.createElement('div');sprite.className='sprite';
+ const [cls,...armour]=id.split('-');
+ sprite.append(art.kind==='enemy'?enemySprite({id,size:'medium'},{hp:100,maxHp:100}):classSprite(cls,'#ddd',null,null,'animated',id,armour.join('-')||'default'));
+ scene.append(sprite);card.append(scene);const stage=stageFor(sprite);window.reviewStages.set(id,{stage,sprite});
+ const controls=document.createElement('div');controls.className='controls';
+ const reset=()=>{stage.setState?.({hp:100,maxHp:100,statuses:{}});stage.setRestPose?.('idle');stage.settle();};
+ for(const [label,act] of [['Hurt',()=>{reset();animateEvents([{type:'hpLost',targetId:id,amount:3,cause:'effect'}],{layer:scene,anchorFor:()=>sprite},()=>{});} ],['Defeated',()=>stage.play('defeated')],['Revive',reset]]){const b=document.createElement('button');b.textContent=label;b.onclick=act;controls.append(b);}
+ card.append(controls);document.querySelector('main').append(card);
+}
+document.querySelector('#search').oninput=e=>{for(const card of document.querySelectorAll('article'))card.hidden=!card.textContent.toLowerCase().includes(e.target.value.toLowerCase())};
+</script></html>

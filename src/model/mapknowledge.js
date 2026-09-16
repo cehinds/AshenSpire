@@ -375,7 +375,8 @@ export function litNodes({ graph, run }) {
   };
 
   for (const id of (graph.startIds || [])) add(id);
-  add(graph.bossId);
+  for (const id of graph.bossIds || Object.values(graph.nodes).filter((node) => node.type === 'boss').map((node) => node.id)) add(id);
+  add(graph.bossId); // legacy singular graphs
   const path = (run && run.path) || [];
   for (const id of path) { shine(id); shrineAhead(id); }
   // Belt and braces: in play `mapNodeId` is always the last element of `path`

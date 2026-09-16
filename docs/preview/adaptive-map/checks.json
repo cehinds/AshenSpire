@@ -1,0 +1,62 @@
+{
+  "base": "http://localhost:8212/AshenSpire.html",
+  "results": [
+    {
+      "mode": "traditional",
+      "width": 390,
+      "close": "1536",
+      "peak": 2,
+      "requests": 2
+    },
+    {
+      "mode": "coop",
+      "width": 390,
+      "close": "1536",
+      "peak": 2,
+      "requests": 2
+    },
+    {
+      "mode": "wanderer",
+      "width": 390,
+      "close": "1254",
+      "peak": 3,
+      "requests": 5
+    },
+    {
+      "mode": "expedition",
+      "width": 390,
+      "close": "1254",
+      "peak": 3,
+      "requests": 5
+    },
+    {
+      "mode": "traditional",
+      "width": 1440,
+      "close": "1536",
+      "peak": 2,
+      "requests": 2
+    },
+    {
+      "mode": "coop",
+      "width": 1440,
+      "close": "1536",
+      "peak": 2,
+      "requests": 2
+    },
+    {
+      "mode": "wanderer",
+      "width": 1440,
+      "close": "1254",
+      "peak": 3,
+      "requests": 8
+    },
+    {
+      "mode": "expedition",
+      "width": 1440,
+      "close": "1254",
+      "peak": 3,
+      "requests": 8
+    }
+  ],
+  "failureFallback": true
+}

@@ -716,8 +716,8 @@ if (args.includes('--selftest')) {
           // another file, and nothing but this drift report checks that the two
           // still agree. That is the defect this whole tool is about, sitting
           // inside its own selftest — declared, not quietly fixed.
-          find: `        run: node tools/hintstrip.mjs${workflowEol}`,
-          replace: `        run: echo node tools/hintstrip.mjs${workflowEol}`,
+          find: `        run: node tools/verdict.mjs -- node tools/hintstrip.mjs${workflowEol}`,
+          replace: `        run: echo node tools/verdict.mjs -- node tools/hintstrip.mjs${workflowEol}`,
         }],
         expectRed: /BAD\s+G1 /,
       },

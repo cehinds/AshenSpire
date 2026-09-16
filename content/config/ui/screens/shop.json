@@ -1,0 +1,11 @@
+{
+  "sizing": {
+    "railFraction": { "numerator": 21.6, "denominator": 95 },
+    "railMinRem": "$w1RailMinRem",
+    "railMaxRem": 28,
+    "offersFraction": 0.5,
+    "wideMinRem": 60,
+    "detailMaxFraction": 0.5
+  },
+  "positioning": { "gapRem": 1 }
+}

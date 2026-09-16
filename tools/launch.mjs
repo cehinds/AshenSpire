@@ -8,7 +8,7 @@
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, copyFileSync, existsSync } from 'node:fs';
+import { mkdirSync, copyFileSync, existsSync, cpSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -69,6 +69,16 @@ function version() {
 
 const args = process.argv.slice(2);
 
+// 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
+// Runs before the content build, whose stray-source sweep refuses a config file
+// the generated module was not compiled from.
+console.log('launch: compiling presentation config…');
+const uiConfig = spawnSync(process.execPath, [resolve(ROOT, 'tools/config-build.mjs')], { stdio: 'inherit' });
+if (uiConfig.status !== 0) {
+  console.error('launch: config build failed — fix content/config and retry.');
+  process.exit(uiConfig.status || 1);
+}
+
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.
@@ -103,12 +113,19 @@ const aliases = [
   resolve(distDir, `AshenSpire-${ver}.html`),
 ];
 for (const dest of aliases) copyFileSync(src, dest);
+// Optional hosted detail is separate from the offline-safe HTML fallback.
+if (existsSync(resolve(ROOT, 'map-detail'))) cpSync(resolve(ROOT, 'map-detail'), resolve(distDir, 'map-detail'), {recursive:true});
 const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
 if (landed !== aliases.length) {
   console.error(`launch: REFUSED — ${landed} of ${aliases.length} current-build aliases exist after the copy.`);
   process.exit(1);
 }
+
+// Produce the mobile/web edition with the same source stamp and external art.
+console.log('launch: building the external-art web edition…');
+const web = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--external-art', '--out', 'build/web'], { stdio: 'inherit' });
+if (web.status !== 0) process.exit(web.status || 1);
 
 if (args.includes('--build-only')) {
   // The terminated verdict line #12's contract requires: one line, one count.

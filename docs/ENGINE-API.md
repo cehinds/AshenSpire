@@ -100,6 +100,9 @@ keyword; a playable status card (cost + effects) simply omits it.
 ### Relic
 ```js
 { id, name, rarity,          // starter|common|uncommon|rare|boss
+  pool?,                     // reward (default) | quest — a quest relic is
+                             // never rolled by any generic pool; only the
+                             // event choice that names it grants it (E12)
   textTemplate, triggers: [ /* trigger DSL, §5 */ ], icon?, flavor?, script? }
 ```
 
@@ -250,6 +253,7 @@ enemy-sourced effect it resolves to the player.
 | `heal` | `amount` | capped at maxHp → `healed` (amount = actual gained) |
 | `shuffleDiscardIntoDraw` | — | → `deckShuffled` |
 | `enterStance` | `stance` | no-op if already in that stance (StS); else exits previous → `stanceExited`, `stanceEntered`, then enqueues the stance's `onEnter` effects |
+| `dodgeRoll` | — (player only; ignored for any other source) | rolls `1..framework.dodgeDie()` on stream `misc`; the framework `dodgeRoll` rule (`src/framework/weight.js`, `mechanics.json`) turns roll + the player's Dexterity + the live Weight Class (`playerWeightClass`) into `{ check, difficulty, success, temporaryGuard }`; on success the guard lands as Block through `gainBlock` (→ `blockGained`) → `dodgeRolled { sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }`. A PURE dodge (a card whose every effect is `dodgeRoll`) is priced by the class: `costProfile(def, { weightClass })` returns the class's dodge Action/Stamina cost |
 | `poiseDamage` | `amount` | feeds the enemy's poise meter; on fill: skip flag set, pending delayed move cancelled, `meterFilled(meter:'poise')` + `enemyStaggered` emitted, `balance.poise.onFill` enqueued, `poiseMax ×= growthMult` (ceil) unless growth disabled |
 
 Run-level opcodes (`addCinders {amount}`, `removeCardFromDeck {card?|random?}`,
@@ -380,6 +384,34 @@ Powers leave play entirely when played (they appear in **no** pile — StS
 behavior). `combat.queue`, `triggerState`, `_`-prefixed fields, and the
 `emit`/`enqueue`/`nextInstanceId` methods are engine-internal.
 
+### Exact combat saves — `src/engine/combatSnapshot.js`
+
+```js
+import {
+  serializeCombatSnapshot,
+  restoreCombatSnapshot,
+  commitCombatSnapshot,
+} from './src/engine/combatSnapshot.js';
+```
+
+- `serializeCombatSnapshot(combat)` returns a versioned, JSON-safe copy of one
+  fully committed combat state. It refuses while the action queue or event
+  buffer is live rather than writing a torn turn.
+- `restoreCombatSnapshot({ registries, rng, snapshot })` validates the stored
+  model, clones it, and reconnects registries, RNG, the trigger map, and runtime
+  methods without replaying combat setup.
+- `commitCombatSnapshot({ run, combat, nodeId, encounterId })` is the Save Game
+  command boundary. It writes `run.combatEntered.snapshot` and projects the
+  same live HP, resource maxima, flask charges, loadout, and equipment-pool
+  deficits into the run-level slot summary.
+
+The closed persisted model and field-addressed validation live in
+`src/model/combatSnapshot.js`. After the ordinary run-shape door, `save.js`
+also validates every snapshot content reference against the live registries;
+malformed or dangling snapshots are refused and their original bytes archived.
+An older `combatEntered` record without `snapshot` remains a supported
+deterministic encounter checkpoint.
+
 ### `dispatch(combat, intent)` → `{ events }`
 
 Combat intents (closed set for M1):
@@ -389,6 +421,8 @@ Combat intents (closed set for M1):
 | `{ type:'playCard', cardInstanceId, targetId? }` | validates phase / hand / `unplayable` keyword / cost (X-cost = all current energy, always affordable); pays cost (`energySpent`), removes from hand, bumps counters, enqueues card effects then emits `cardPlayed`, drains the queue; then places the card (Exhaust keyword → exhaust pile + `cardExhausted(played)`; power → removed from play; else → discard, silently). `targetId` required semantics: cards with any `target:'enemy'` effect should get one from the UI (engine falls back to the first living enemy). |
 | `{ type:'endTurn' }` | `playerTurnEnd` + owner hooks → player decay → discard hand except **Retain**, **Ethereal** in hand exhausts (`cardExhausted(ethereal)`) → energy zeroed → enemy phase (below) → intents rerolled → next player turn starts. Returns after the whole cycle. |
 | `{ type:'useFlask', slot, targetId? }` | consumes `player.flasks[slot]`, emits `flaskUsed`, enqueues the flask's effects, drains. Throws on empty slot (no-op registries are fine — just don't give the player flasks). |
+| `{ type:'swapArmament', slotId, setIndex }` | during the player turn, selects another prepared set allowed by the slot and pays the authored equipment-action price; immediately reconciles equipment-granted cards, restamps live piles, updates resource vessels and Poise, and emits `armamentSwapped`. |
+| `{ type:'changeEquipment', slotId, setIndex, pieceId? }` | during the player turn, replaces, moves, or unequips carried gear when `allowChangesInCombat` is on. It pays the same authored equipment-action price, atomically updates the live combat projections, and emits `equipmentChanged` plus `equipmentRearmed`. `pieceId:null` unequips. |
 
 Enemy phase order (per SPEC §4.1(5)): `enemyTurnStart` → all living enemies
 lose block (unless `retainBlock`) → for each enemy in row order:
@@ -455,8 +489,11 @@ current dispatch's `events`.
 | `enemyDied` | `{ targetId, enemyId }` |
 | `enemyStaggered` | `{ targetId, enemyId, cancelledMove: moveId\|null }` |
 | `energyGained` / `energySpent` | `{ amount }` |
+| `staminaSpent` / `staminaRecovered` | `{ amount }` on a spend; `{ amount, reason: 'idle' }` (co-op adds `playerId`) when the framework Mana & Stamina rule recovers an idle turn's stamina at the player's turn end |
+| `dodgeRolled` | `{ sourceId, roll, check, difficulty, success, temporaryGuard, weightClass }` — the `dodgeRoll` opcode's receipt |
 | `flaskUsed` | `{ flaskId, slot, targetId }` |
 | `relicTriggered` | `{ relicId }` |
+| `questCompleted` | `{ questId, source: 'event'\|'atlas' }` — emitted only by the quest door (`engine/quests.js completeQuest`), at most once per quest per run; `commitEventChoice` and `atlasQuestAction` return it in their `events` and call `ctx.emit` when the caller supplies one |
 
 (Run-level `executeRunEffects` additionally emits a non-bus `cindersChanged
 { amount, total }`.)

@@ -28,7 +28,7 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic']);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -40,6 +40,11 @@ const KINDS = {
   cinders: {
     present: (r) => Number.isFinite(r.cinders) && r.cinders > 0,
     row: (r) => ({ amount: r.cinders }),
+    blocked: () => null,
+  },
+  smithingStone: {
+    present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
+    row: (r) => ({ ...r.smithingStoneReceipt }),
     blocked: () => null,
   },
   card: {
@@ -132,6 +137,32 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     }
   }
   return { take, leave };
+}
+
+/**
+ * rewardClaimStatus(plan, states) → the W1t claim summary.
+ *
+ * Per-kind state (taken | skipped | blocked | available), the counts the
+ * header status prints, and the one choice still waiting, if any. Derived
+ * here with the menu itself, so the screen, co-op and any instrument read
+ * the same answer.
+ */
+export function rewardClaimStatus(plan, states = {}) {
+  const rows = plan.rows.map((row) => Object.freeze({
+    kind: row.kind,
+    state: states[row.kind] || (row.blockedBy ? 'blocked' : 'available'),
+  }));
+  const count = (state) => rows.filter((row) => row.state === state).length;
+  const card = plan.rows.find((row) => row.kind === 'card');
+  return Object.freeze({
+    total: rows.length,
+    claimed: count('taken'),
+    skipped: count('skipped'),
+    blocked: count('blocked'),
+    available: count('available'),
+    requiredChoice: card && card.choice && !states.card ? Object.freeze({ kind: 'card', count: card.cardIds.length }) : null,
+    rows: Object.freeze(rows),
+  });
 }
 
 /**

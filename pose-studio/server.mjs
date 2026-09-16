@@ -1,0 +1,8 @@
+import http from 'node:http';
+import {readFile,stat} from 'node:fs/promises';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),port=Number(process.env.POSE_STUDIO_PORT||4318);
+const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.webp':'image/webp','.png':'image/png','.svg':'image/svg+xml'};
+export function handler(req,res){(async()=>{if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}const url=new URL(req.url,'http://localhost'),decoded=decodeURIComponent(url.pathname);const name=decoded==='/'?'/pose-studio/index.html':decoded;if(!/^\/(pose-studio|src|assets|art)\//.test(name)&&name!=='/AshenSpire.html'){res.writeHead(404);return res.end();}if(name.includes('\\')||name.includes('\0')||name.split('/').some(p=>p.startsWith('.'))){res.writeHead(403);return res.end();}let target=path.resolve(root,'.'+name);if(!target.startsWith(root+path.sep)){res.writeHead(403);return res.end();}if((await stat(target)).isDirectory())target=path.join(target,'index.html');const bytes=await readFile(target);res.writeHead(200,{'Content-Type':types[path.extname(target)]||'application/octet-stream','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});res.end(req.method==='HEAD'?undefined:bytes);})().catch(()=>{if(!res.headersSent)res.writeHead(404);res.end('Not found');});}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))http.createServer(handler).listen(port,'127.0.0.1',()=>console.log(`Pose Studio ready: http://127.0.0.1:${port}/pose-studio/index.html`));

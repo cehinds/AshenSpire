@@ -9,8 +9,10 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { foundationEvent, foundationTriggerAllowed } from './combatRules.js';
 import { TRIGGER_EVENTS } from '../model/schemas.js';
-import { getStacks } from './statuses.js';
+import { getStacks } from '../framework/statusSemantics.js';
+import { advanceStatusClock } from './statuses.js';
 
 const MAX_EMIT_DEPTH = 64;
 
@@ -20,7 +22,7 @@ const MAX_EMIT_DEPTH = 64;
  * event object. Every event carries { type, ...payload }.
  */
 export function emitEvent(ctx, type, payload = {}) {
-  const event = { type, ...payload };
+  const event = { type, ...foundationEvent(ctx, type, payload) };
   ctx.eventLog.push(event);
   if (ctx._buffer) ctx._buffer.push(event);
   ctx._emitDepth = (ctx._emitDepth || 0) + 1;
@@ -48,34 +50,70 @@ export function emitEvent(ctx, type, payload = {}) {
  * keep their own (already unique) entity ids.
  */
 function ownerKeyFor(ctx, entity) {
+  if (ctx.foundation && ctx.playerIdForEntity) return ctx.playerIdForEntity(entity) || entity?.id || 'none';
   if (entity && entity.kind === 'player' && ctx.playerKey) return ctx.playerKey;
   return entity ? entity.id : 'none';
+}
+
+/** The owner key an entity's trigger gates and property mounts live under. */
+export function triggerOwnerKey(ctx, entity) {
+  return ownerKeyFor(ctx, entity);
 }
 
 function scanTriggers(ctx, event) {
   const player = ctx.player;
   if (!player) return; // run-level contexts have no combat trigger sources
   const pKey = ownerKeyFor(ctx, player);
+  const pending = [];
+  const schedule = (key, trigger, owner, after) => {
+    if (ctx.foundation) pending.push({ key, trigger, owner, after });
+    else { const fired = maybeFire(ctx, key, trigger, owner, event); if (fired) after?.(); }
+  };
 
-  // Relics (player-owned).
-  for (const relicId of player.relicIds) {
-    const def = ctx.registries.relics.get(relicId);
-    (def.triggers || []).forEach((trig, i) => {
-      if (trig.on !== event.type) return;
-      const fired = maybeFire(ctx, `relic:${pKey}:${relicId}:${i}`, trig, player, event);
-      if (fired && event.type !== 'relicTriggered') {
-        emitEvent(ctx, 'relicTriggered', { relicId });
-      }
-    });
-  }
+  const owners = ctx.foundation && ctx.players && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded'].includes(event.type)
+    ? [...ctx.players.values()].filter((p) => p.entity.alive && p.connected).map((p) => p.entity) : [player];
+  // Relics and stances react for their actual owner, including inactive co-op seats.
+  for (const player of owners) {
+  const pKey = ownerKeyFor(ctx, player);
+  // Relics react through the mount path below, not here: plan phase 2 moved
+  // their triggers into propertyRules and their carriers are mounted beside the
+  // loadout's. What they kept is `relicTriggered`, emitted from the mount scan
+  // for a relic-kind source so the relic still flashes (ui/fx.js).
 
   // Stance hooks (player).
   if (player.stanceId) {
     const stance = ctx.registries.stances.get(player.stanceId);
     (stance.hooks || []).forEach((trig, i) => {
       if (trig.on !== event.type) return;
-      maybeFire(ctx, `stance:${pKey}:${player.stanceId}:${i}`, trig, player, event);
+      schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player);
     });
+  }
+
+  // Mounted properties (engine/properties.js) react for their carrier's owner,
+  // exactly as a relic does. Source keys are walked SORTED, so a restored
+  // snapshot — which re-derives its mounts rather than saving them — fires
+  // them in the same order the live fight did. The index runs across the
+  // mount's rules in order, so each trigger keeps one stable gate key.
+  const mounts = ctx.propertyMounts && ctx.propertyMounts[pKey];
+  if (mounts) {
+    for (const sourceKey of Object.keys(mounts).sort()) {
+      let index = 0;
+      // A relic-kind source still announces itself: `relicTriggered` is what
+      // ui/fx.js animates, and a relic that stopped flashing when its triggers
+      // moved would be a player-visible regression of a pure refactor.
+      const relicId = mounts[sourceKey].kind === 'relic' ? mounts[sourceKey].id : null;
+      const announce = relicId && event.type !== 'relicTriggered'
+        ? () => emitEvent(ctx, 'relicTriggered', { relicId })
+        : undefined;
+      for (const rule of mounts[sourceKey].rules) {
+        for (const trig of rule.triggers || []) {
+          const i = index++;
+          if (trig.on !== event.type) continue;
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce);
+        }
+      }
+    }
+  }
   }
 
   // Status hooks on every living combatant (owner-relative hooks —
@@ -86,10 +124,13 @@ function scanTriggers(ctx, event) {
       const def = ctx.registries.statuses.get(statusId);
       (def.hooks || []).forEach((trig, i) => {
         if (trig.on !== event.type) return;
-        maybeFire(ctx, `status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity, event);
+        schedule(`status:${ownerKeyFor(ctx, entity)}:${statusId}:${i}`, trig, entity);
       });
     }
   }
+
+  pending.sort((a, b) => (a.trigger.priority || 0) - (b.trigger.priority || 0) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  for (const row of pending) if (maybeFire(ctx, row.key, row.trigger, row.owner, event)) row.after?.();
 
   // Enemy phases hooked on bus events (hpBelowPct phases run via checkPhases).
   for (const enemy of ctx.enemies || []) {
@@ -103,7 +144,8 @@ function scanTriggers(ctx, event) {
 }
 
 function allCombatants(ctx) {
-  return [ctx.player, ...(ctx.enemies || [])];
+  const players = ctx.foundation && ctx.players ? [...ctx.players.values()].filter((p) => p.connected).map((p) => p.entity) : [ctx.player];
+  return [...players, ...(ctx.enemies || [])];
 }
 
 /**
@@ -113,7 +155,8 @@ function allCombatants(ctx) {
  */
 export function fireOwnerHooks(ctx, entity, hookName) {
   if (!entity.alive) return;
-  const syntheticEvent = { type: hookName, ownerId: entity.id };
+  advanceStatusClock(ctx, entity, hookName);
+  const syntheticEvent = { type: hookName, ...foundationEvent(ctx, hookName, { ownerId: entity.id }) };
   const oKey = ownerKeyFor(ctx, entity);
   for (const statusId of Object.keys(entity.statuses)) {
     const def = ctx.registries.statuses.get(statusId);
@@ -149,10 +192,11 @@ function maybeFire(ctx, key, trigger, owner, event) {
   const target = resolveEventEntity(ctx, event);
   if (trigger.if && !evalPredicate(ctx, trigger.if, { owner, target, event })) return false;
 
+  if (!foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
   for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, meta: { event } });
+    ctx.enqueue({ effect: eff, source: owner, owner, target, meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   return true;
 }
@@ -160,6 +204,7 @@ function maybeFire(ctx, key, trigger, owner, event) {
 // Best-effort contextual entity for a trigger's effects: the event's target
 // if it names one, else null (effects should declare explicit targets).
 function resolveEventEntity(ctx, event) {
+  if (ctx.foundation && event.targetPlayerId && ctx.players) return ctx.players.get(event.targetPlayerId)?.entity || null;
   const id = event.targetId || event.enemyId || null;
   if (!id) return null;
   return findEntity(ctx, id);
@@ -252,9 +297,13 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     }
     case 'eventIsAttack':
       return !!pctx.event && pctx.event.isAttack === true;
+    case 'hpDamagePositive':
+      return pctx.event?.type === 'damageDealt' && pctx.event.amount > pctx.event.blocked;
     case 'eventSourceIsOwner':
+      if (ctx.foundation && pctx.event?.sourcePlayerId) return pctx.event.sourcePlayerId === ctx.playerIdForEntity?.(pctx.owner);
       return !!pctx.event && !!pctx.owner && pctx.event.sourceId === pctx.owner.id;
     case 'eventTargetIsOwner':
+      if (ctx.foundation && pctx.event?.targetPlayerId) return pctx.event.targetPlayerId === ctx.playerIdForEntity?.(pctx.owner);
       return !!pctx.event && !!pctx.owner && pctx.event.targetId === pctx.owner.id;
     case 'eventStatusIs':
       return !!pctx.event && pctx.event.status === pred.status;
@@ -265,6 +314,13 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     }
     case 'random':
       return ctx.rng.float('misc') * 100 < pred.pct;
+    // Progression gates (plan phase 1a). They read the skill and class ledger
+    // that phase 4 adds to run state. Until that ledger exists no level has
+    // been reached, so both answer false rather than guessing its shape — a
+    // property branch gated on them is inert, never half-live.
+    case 'skillLevelAtLeast':
+    case 'classLevelAtLeast':
+      return false;
     case 'all':
       return pred.preds.every((sub) => evalPredicate(ctx, sub, pctx));
     case 'any':

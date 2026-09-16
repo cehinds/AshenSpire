@@ -1,5 +1,5 @@
 // tools/menufit.mjs — the two surfaces a player manages a RUN from: the Armoury
-// (equip slots) and the in-run ☰ overlay (deck, relics, stats). Does either fit
+// (equip slots) and the in-run ☰ overlay (deck, stats, settings). Does either fit
 // the phone it is opened on?
 //
 // WHY THIS EXISTS. Constantine, from his own device: "it's hard to manage equip

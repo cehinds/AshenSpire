@@ -1,0 +1,24 @@
+{
+  "base": "http://localhost:8210",
+  "browser": "Edge headless",
+  "viewports": [
+    "1440x1080",
+    "390x844"
+  ],
+  "results": [
+    "Real game generates 20 active nodes",
+    "Save, quit and Continue preserve the manifest",
+    "Standalone world artwork is embedded",
+    "Market stock survives leaving and returning",
+    "Inspecting a road does not travel",
+    "Explicit travel enters an authored encounter",
+    "Combat scenery follows the traveled region",
+    "Phone has no page-level horizontal overflow",
+    "Phone dialog stays within viewport",
+    "Escape closes location dialog",
+    "Focus returns after dialog close",
+    "No browser runtime errors"
+  ],
+  "errors": [],
+  "boundary": "Actual game new-run, service and combat entry checks. Revealed/all-node/interior pictures are labeled authoring previews; no combat-balance or full-run victory claim."
+}

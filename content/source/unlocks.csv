@@ -23,8 +23,8 @@ beatFellWarden,outfit,starlit,Starlit Silks,beatBoss,fellWarden,listed,Defeat th
 winTwice,outfit,astral,Astral Vestment,winRuns,2,listed,Win two runs.
 beatKingAsHerald,outfit,emberhabit,Emberlight Habit,beatBoss,stitchedKing,listed,Defeat the Stitched King.
 reachStitchedCourt,outfit,pilgrim,Pilgrim Wrap,reachAct,2,listed,Reach the Stitched Court.
-rack2Right,slot,rightHand,Second Rack Slot,reachAct,2,listed,Reach the Stitched Court.
-rack3Right,slot,rightHand,Third Rack Slot,winRuns,1,listed,Win a run.
+rack2Right,slot,rightHand,Second Main-hand Slot,reachAct,2,listed,Reach the Stitched Court.
+rack3Right,slot,rightHand,Third Main-hand Slot,winRuns,1,listed,Win a run.
 rack2Left,slot,leftHand,Second Off-hand Slot,reachAct,3,listed,Reach the Ashen Crown.
 rack3Left,slot,leftHand,Third Off-hand Slot,winRuns,2,listed,Win two runs.
 winAsRogue,outfit,duelist,Duelist Jerkin,winAsClass,rogue,listed,Win a run as the Rogue.

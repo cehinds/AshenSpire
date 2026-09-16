@@ -1,278 +1,668 @@
-// src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
+// src/ui/components/tooltip.js — ONE tooltip service: one panel per level,
+// one placer, one timing machine (kit §08 Tooltips, §09 Three tiers).
+//
+// WHAT EVERY SURFACE INHERITS BY ATTACHING (attachTooltip) OR BY WRITING A
+// `title` ATTRIBUTE — the second is adopted, so the native yellow box never
+// shows and every hint in the game opens on the same clock:
+//
+//   Hover, handover, nested terms and focus use the authored delay with the
+//   player's preference applied. Leaving early cancels. The owner and panel
+//   form one region; its closing delay is independently configurable. Explicit actions remain
+//   available without manufacturing hover from a touch pointer.
+//
+//   FOUR RUNGS, BY HEIGHT: small · medium · large · expanded. The rung is
+//     derived from the content, then MEASURED: the panel steps up while it
+//     overflows. A tooltip never scrolls and never clips; past `expanded` the
+//     answer belongs to the `full` tier (a body-B modal), which a click on a
+//     non-button target opens (`expand: true`).
+//
+//   TWO LEVELS AND NO MORE. A term inside the panel that carries `data-tip`
+//     or `title` opens the second panel; two is a player asking "and what is
+//     that?", three is a maze. Escape closes the topmost first.
+//
+//   INPUT PARITY. Focus (the pad cursor's gpfocus) is the hover equivalent.
+//     Touch: double tap → the tooltip; press-and-hold → the expanded modal,
+//     UNLESS the target is a button (hold-to-confirm already owns that
+//     gesture there); a single tap is always the element's own action.
+//
+// The public entry points below are the ones 23 surfaces already call; their
+// shape is unchanged so nothing had to be re-wired to inherit the machine.
 
-import { placeAnchored } from '../fx.js';
+import { placeAnchored, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import {
+  tooltipPlacementIntent, TOOLTIP_RUNGS, tooltipWireframe, tooltipArrow, tooltipArrowSize,
+} from '../models/TooltipPlacementModel.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
-let tipEl = null;
-let showTimer = null;
+import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
+import { reducedMotionRequested } from '../motion.js';
+let tooltipSettings = resolveTooltipSettings();
+
+export function configureTooltipSettings(settings) {
+  tooltipSettings = resolveTooltipSettings(settings);
+  hideTooltip();
+}
+// The rung list has one home (TooltipPlacementModel); wireframeUi.tooltip
+// names the wireframe each rung draws (WT1 compact, WT2 standard, WT3).
+const RUNGS = TOOLTIP_RUNGS;
+
+// ---- the two panels ---------------------------------------------------------
+const panels = [null, null];
+const state = [{ target: null, open: false }, { target: null, open: false }];
+let openTimer = null;
+let closeTimer = null;
+let dwellTimer = null;
+let fadeTimer = null;
+let expander = null; // the `full` tier opener, injected to avoid a circular import
+let selectedControl = null;
+let touchSelectedControl = null;
+function clearControlSelection() {
+  selectedControl?.classList.remove("tooltip-selected");
+  selectedControl = touchSelectedControl = null;
+}
+let pending = null;  // { el, show } — the show an open timer is counting down to
+let nestedOpenTimer = null;
+let nestedCloseTimer = null;
+let nestedPending = null;
+let tooltipDecorator = () => {};
+export function registerTooltipDecorator(fn) { tooltipDecorator = fn; }
+
+function cancelOpen(el = null) {
+  if (el && pending?.el !== el) return;
+  clearTimeout(openTimer); openTimer = null; pending = null;
+}
+function cancelNested() { clearTimeout(nestedOpenTimer); nestedPending = null; }
+function closeNestedLater() {
+  clearTimeout(nestedCloseTimer);
+  nestedCloseTimer = setTimeout(() => conceal(1), tooltipSettings.close);
+}
+function queueNested(term) {
+  clearTimeout(nestedCloseTimer);
+  if (term === state[1].target || term === nestedPending) return;
+  cancelNested(); nestedPending = term;
+  nestedOpenTimer = setTimeout(() => {
+    nestedPending = null;
+    if (term.isConnected && state[0].open) showNested(term);
+  }, tooltipSettings.open);
+}
+
+function panel(level) {
+  if (!panels[level]) {
+    const el = document.createElement('div');
+    el.id = level ? 'tooltip-2' : 'tooltip';
+    el.className = 'as-tip';
+    el.setAttribute('role', 'tooltip');
+    el.setAttribute('aria-hidden', 'true');
+    el.dataset.open = 'false';
+    el.dataset.level = String(level);
+    if (level === 0) markUiComponent(el, UI.tooltip);
+    // The panel is part of the target while open: entering it cancels the
+    // close, leaving it schedules one, and a term inside it may open level 2.
+    el.addEventListener('pointerenter', () => {
+      cancelOpen(); clearTimers();
+      if (level === 1) clearTimeout(nestedCloseTimer);
+    });
+    el.addEventListener('focusin', clearTimers);
+    el.addEventListener('focusout', (ev) => { if (!el.contains(ev.relatedTarget)) scheduleClose(); });
+    el.addEventListener('pointerleave', (ev) => {
+      if (level === 0) cancelNested();
+      if (level === 1 && !state[1].target?.contains(ev.relatedTarget)) closeNestedLater();
+      if (panels.some((p) => p && p !== el && p.contains(ev.relatedTarget))) return;
+      if (state[0].target && state[0].target.contains?.(ev.relatedTarget)) return;
+      scheduleClose();
+    });
+    el.addEventListener('pointerover', (ev) => {
+      if (level !== 0) return;
+      const term = nestedTarget(ev.target, el);
+      if (tooltipSettings.hoverEnabled && ev.pointerType !== 'touch' && term) queueNested(term);
+    });
+    el.addEventListener('pointerout', (ev) => {
+      if (level !== 0) return;
+      const term = nestedTarget(ev.target, el);
+      if (term && !term.contains(ev.relatedTarget)) {
+        cancelNested();
+        if (!panels[1]?.contains(ev.relatedTarget)) closeNestedLater();
+      }
+    });
+    el.addEventListener('focusin', ev => {
+      const term = level === 0 && nestedTarget(ev.target, el);
+      if (term) queueNested(term);
+    });
+    el.addEventListener('focusout', ev => {
+      if (level === 0 && nestedTarget(ev.target, el)) { cancelNested(); closeNestedLater(); }
+    });
+    document.body.appendChild(el);
+  }
+  return panels[level] = panels[level] || document.getElementById(level ? 'tooltip-2' : 'tooltip');
+}
+let tipEl = null; // level 0, kept under its old name for the stick logic below
+
+function conceal(level = 0) {
+  if (level === 1) { cancelNested(); clearTimeout(nestedCloseTimer); }
+  if (level === 0) hoverCloseCallback = null;
+  const el = panels[level];
+  if (!el) return;
+  el.style.display = 'none';
+  el.dataset.open = 'false';
+  el.classList.remove('is-fading');
+  el.setAttribute('aria-hidden', 'true');
+  const owner = state[level].target;
+  if (owner?.getAttribute) {
+    const ids = (owner.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id && id !== el.id);
+    if (ids.length) owner.setAttribute('aria-describedby', ids.join(' '));
+    else owner.removeAttribute('aria-describedby');
+  }
+  state[level].target?.removeAttribute?.('data-tip-open');
+  state[level].target = null;
+  state[level].open = false;
+}
+function hide(level) { conceal(level); }
+
+function clearTimers() {
+  clearTimeout(closeTimer); clearTimeout(dwellTimer); clearTimeout(fadeTimer);
+  closeTimer = null; dwellTimer = null; fadeTimer = null;
+}
+let hoverCloseCallback = null;
+function closeAfterHover() {
+  if (panels.some(p => p?.contains(document.activeElement))) return;
+  const callback = hoverCloseCallback;
+  if (selectedControl === state[0].target && pending?.el !== selectedControl) clearControlSelection();
+  hoverCloseCallback = null;
+  // The old owner's close and a new owner's open can expire on the same tick.
+  // Dismiss only the old panels; do not cancel the new owner's pending hover.
+  sceneAnchor = null; unstick(); clearTimers(); conceal(1); conceal(0);
+  callback?.();
+}
+function scheduleClose() {
+  if (stuck) return;
+  clearTimeout(closeTimer);
+  closeTimer = setTimeout(closeAfterHover, tooltipSettings.close);
+}
+function scheduleAutoHide(autoHideMs) {
+  if (!(autoHideMs > 0)) return;
+  clearTimeout(fadeTimer);
+  fadeTimer = setTimeout(() => {
+    if (!tipEl) return;
+    const systemReducedMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.body.classList.contains('reduced-motion') || systemReducedMotion) { hideTooltip(); return; }
+    tipEl.classList.add('is-fading');
+    fadeTimer = setTimeout(() => hideTooltip(), tooltipSettings.fade);
+  }, autoHideMs);
+}
 
 // ---------------------------------------------------------------------------
-// E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
-//
-//   "when selecting and holding on a card the tool tip pops up for a second and
-//    then the zoom in card replaces it. instead keep the tooltip up after
-//    holding the card for a set period of time and disappears once another card
-//    is selected or it is played or another menu or game state activates"
-//
-// So a tooltip a COMPLETED HOLD summoned is STUCK: it outlives the thing that
-// used to kill it — the zoom card opening, and then the pointer leaving on the
-// lift, which on a phone is the same instant. Nothing else changes. A hover
-// tooltip, a focus-cursor tooltip and the tap refusal keep today's behaviour to
-// the line, because he was talking about the hold and about nothing else.
-//
-// WHAT ENDS IT — his three, on TWO wires, and the split is measured.
-// He named: another card selected · it is played · another menu or game state
-// activates.
-//   · PLAYED, END TURN, a flask, Escape, arming a self card, a menu opening —
-//     every one of those ALREADY calls hideTooltip(), from combat.js, quicknav
-//     and disclosure. They keep working with no edit at all, because
-//     hideTooltip() is still the unconditional off switch. Two thirds of his
-//     ask turned out to be wired before he asked for it; only the zoom was
-//     fighting it.
-//   · ANOTHER CARD SELECTED had NO wire. Merely selecting a targetable card
-//     hides no tooltip anywhere in the tree — invisible until now, because the
-//     pointer leaving killed it first. That one is carried below: A STUCK
-//     TOOLTIP ENDS WHEN THE CARD IT EXPLAINS LEAVES THE DOM, and combat
-//     rebuilds `.hand` wholesale on every state change (hand.js: `innerHTML =
-//     ''`). Derived from the screen instead of restated at each select site —
-//     click, keyboard and flask all re-render, so all three are covered by one
-//     watch rather than by three lines nobody will keep in sync.
-//     THE WATCH IS ON THE DOCUMENT, NOT ON THE CARD'S PARENT, and the reason is
-//     measured: co-op replaces `.hand` instead of emptying it, which a parent
-//     watch cannot see. See stickTooltip() — the sentence that used to stand
-//     here was true of combat.js and false of the other screen that mounts
-//     this same hand. (Bjorn, gating this commit.)
-// I WROTE "ALL THREE ARE ONE MECHANISM" HERE FIRST AND IT WAS WRONG:
-// tooltippersist --selftest P3 cuts the watch and only the SELECT case goes
-// red. The sentence now says what the plant showed.
-//
-// AND THE FLOOR, WHICH IS THE HALF THAT COULD HURT SOMEONE: a tooltip that
-// cannot be got rid of is a worse bug than one that vanishes too soon. Three
-// things hold it down. (1) `#tooltip` is `pointer-events: none` (ui.css:5), so
-// however long it stays it can never swallow a tap meant for the game. (2) Any
-// other tooltip replaces it — hover anything and the stick is gone with it.
-// (3) stickTooltip() REFUSES to stick at all unless the thing that will end it
-// is watchable; see there. Persistence is granted only where an exit exists.
-//
-// WHAT IS DELIBERATELY NOT HERE: no timeout — his sentence gives a closed list
-// of endings and a clock is not on it; no dismissal on a press elsewhere — he
-// did not say that, and inventing it is how a silence becomes a rule.
+// E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. A tooltip a COMPLETED
+// HOLD summoned is STUCK: it outlives the pointer leaving. It ends when the
+// card it explains leaves the DOM (the watch is on the document, because
+// co-op replaces `.hand` instead of emptying it), or when anything else calls
+// hideTooltip(). The floor: the panel is pointer-events: none while closed
+// and any other tooltip replaces it, so it can never be un-dismissable.
 // ---------------------------------------------------------------------------
 let stuck = false;
 let stuckWatch = null;
-
 function unstick() {
   stuck = false;
+  if (tipEl) tipEl.dataset.stuck = 'false';
   if (stuckWatch) { stuckWatch.disconnect(); stuckWatch = null; }
 }
 
 function ensure() {
-  if (!tipEl) {
-    tipEl = document.createElement('div');
-    tipEl.id = 'tooltip';
-    markUiComponent(tipEl, UI.tooltip);
-    document.body.appendChild(tipEl);
-  }
+  tipEl = panel(0);
   return tipEl;
 }
+/** Ensure the singleton exists before a control references it with aria-describedby. */
+export function ensureTooltip() { return ensure(); }
 
-// Container: THE VIEWPORT. #tooltip is `position: fixed` (ui.css:5), so the
-// viewport is its containing block — the right bound for this one element, which
-// must be readable wherever the pointer is. That is not the default answer for a
-// positioned element and it is written down because it is a decision.
-//
-// EldenSpire#15 — and read the fix as an ORDER, not as an addition. The clamps
-// were already here, on both axes in both directions, and they were
-// arithmetically correct: they compared `innerWidth`/`innerHeight` against a
-// `getBoundingClientRect()`, all visual px, like with like. Then the result was
-// written into `style.left`, which <body>'s `zoom: var(--ui-zoom)` reads in LOCAL
-// px, and multiplied it back up. At 1920×1080 (zoom 1.48) the tooltip landed at
-// top 1406 in a 1080px viewport with not one pixel on screen: the hover fired, the
-// card lifted, and the explanation was simply nowhere the player could look. Right
-// arithmetic, wrong room.
-//
-// BESIDE THE ANCHOR, NEVER OVER IT — and the anchor is a BOX, because a point
-// is a box with no extent and that is the only difference between the two ways
-// a tooltip gets summoned.
-//
-// This function had two callers giving it two different answers for the same
-// question. Hover passed the POINTER, so the tooltip appeared 14px inside a
-// card the pointer was sitting on and covered the thing it was explaining; the
-// gamepad focus cursor passed the ELEMENT'S RIGHT EDGE and did not. One
-// tooltip, one element, two positions depending on which device you held.
-// Measured on the Smith preview at 1200x730: the hover tooltip covered 16.53%
-// of the card face on 15 of 20 candidates.
-//
-// THE ARITHMETIC LEFT THIS FILE, 2026-08-17. Every line that used to be here is
-// `placeAnchored` in ui/fx.js, unchanged in what it computes and no longer this
-// component's private property: quicknav.js had written the same shape out a
-// second time, so a placement fix had two files to land in and landed in
-// neither. What stays here is the two things that ARE the tooltip's own —
-// WHICH INTENT ('beside': a tooltip may not sit on the thing it explains, so any
-// side that fits will do) and WHAT IT SHOULD KEEP OFF (see attachTooltip).
-//
-// AND THE GAP IS NO LONGER `const pad = 14`. It is `#tooltip { --place-gap }` in
-// ui.css — one home for a length, read by placeAnchored and by any instrument
-// through the same getComputedStyle. Law 0 clause 4, and the reason Sunna refused
-// this extraction twice: a shared placement function that HARD-CODES a gap
-// re-commits the second-copy defect at the exact moment it claims to remove one.
+/** registerTooltipExpander(fn) — the `full` tier: fn(html, { title, eyebrow }) opens a body-B modal. */
+export function registerTooltipExpander(fn) { expander = fn; }
+
+// ---- the rung ---------------------------------------------------------------
+function derivedRung(el) {
+  const text = el.textContent || '';
+  const hasList = !!el.querySelector('ul, ol, table');
+  const detail = el.querySelector('.ti-detail, .tt-kw');
+  if (hasList || text.length > tooltipSettings.textLengths.large) return 'large';
+  if (detail && text.length > tooltipSettings.textLengths.detailedLarge) return 'large';
+  if (detail || text.length > tooltipSettings.textLengths.medium) return 'medium';
+  return 'small';
+}
+/** Step the panel up the ladder until its content fits; true when it does. */
+function fitRung(el, pinned) {
+  let at = RUNGS.indexOf(pinned || el.dataset.size || derivedRung(el));
+  if (at < 0) at = 1;
+  el.dataset.size = RUNGS[at];
+  while (el.scrollHeight > el.clientHeight + 1 && at < RUNGS.length - 1) {
+    at += 1;
+    el.dataset.size = RUNGS[at];
+  }
+  const fits = el.scrollHeight <= el.clientHeight + 1;
+  el.dataset.overflow = fits ? 'false' : 'true';
+  el.dataset.wireframe = tooltipWireframe(el.dataset.size);
+  return fits;
+}
 
 /**
- * The one way the tooltip is ever shown: fill it, reveal it, place it beside
- * its anchor. Both entry points below are this function plus an anchor — the
- * element for hover and the focus cursor, a zero-size box for a tap — so the
- * "how" cannot drift between them while the "where" differs.
- *
- * `clear` is the anchor's own GROUP, and only a caller knows what that is: the
- * tooltip for a hand card should not sit on the other hand cards, and no
- * geometry in fx.js can work that out from the card alone.
+ * WT0.ARROW FOLLOWS THE TRIGGER. Once the panel is placed — flipped or shifted
+ * included — the arrow goes on the edge that faces the anchor and points at
+ * its centre. `#tooltip::after` draws it from these properties (kit.css);
+ * `data-arrow="none"` (the panel sits on its anchor) draws nothing.
  */
-function showWith(html, anchor, clear = null) {
+function pointArrow(t, placed, anchor) {
+  const root = getComputedStyle(document.documentElement);
+  const zoom = parseFloat(root.getPropertyValue('--ui-zoom')) || 1;
+  const rootFontPx = parseFloat(root.fontSize) || 16;
+  const arrow = tooltipArrow(placed, anchorLocalBox(VIEWPORT_ORIGIN, anchor), tooltipArrowSize({ zoom, rootFontPx }));
+  t.dataset.arrow = arrow.edge;
+  t.style.setProperty('--tip-arrow-left', `${arrow.left}px`);
+  t.style.setProperty('--tip-arrow-top', `${arrow.top}px`);
+  t.style.setProperty('--tip-arrow-w', `${arrow.width}px`);
+  t.style.setProperty('--tip-arrow-h', `${arrow.height}px`);
+}
+
+/**
+ * THE RUNG STEPS, IT DOES NOT JUMP. When an open panel re-opens larger — the
+ * pointer hopped from a value-and-a-line to a card with a glossary — the new
+ * box is revealed from the old one's size over tooltipHelp.stepMs, anchored on
+ * the edge that faces the control (a panel above its anchor grows upward). A
+ * clip reveal, never a size transition: fitRung reads scrollHeight against
+ * clientHeight the tick it writes the rung, and the instruments read the
+ * panel's rect the tick it opens, so the box itself is always final. Shrinks
+ * cut. Reduced motion (either ask) skips it.
+ */
+function stepRung(t, before, intent) {
+  if (typeof t.animate !== 'function' || !(tooltipSettings.step > 0) || reducedMotionRequested()) return;
+  const dw = Math.max(0, t.offsetWidth - before.w);
+  const dh = Math.max(0, t.offsetHeight - before.h);
+  if (dw < 2 && dh < 2) return;
+  const top = intent === 'above' ? dh : 0, bottom = intent === 'above' ? 0 : dh;
+  const left = intent === 'left' ? dw : 0, right = intent === 'left' ? 0 : dw;
+  t.animate([{ clipPath: `inset(${top}px ${right}px ${bottom}px ${left}px)` }, { clipPath: 'inset(0px)' }],
+    { duration: tooltipSettings.step, easing: 'ease-out' });
+}
+
+/**
+ * The one way the tooltip is ever shown: fill it, reveal it, size it by rung,
+ * place it beside its anchor. Every entry point is this function plus an
+ * anchor, so the "how" cannot drift while the "where" differs.
+ */
+// ---- A TOOLTIP DIES WITH THE SURFACE IT WAS ON (Constantine, 2026-09-04:
+// "in modal changes tool tips from the previous screen should auto close").
+// One observer: when the level-0 anchor leaves the document, or a veil that
+// does not contain it is raised over it, the tooltip closes at once — no
+// surface has to remember to call hideTooltip() on its way out.
+let sceneWatch = null;
+let sceneAnchor = null;
+// The observer is connected only while a tooltip is open or pending and is
+// released the moment neither holds. Combat rebuilds whole rows of the board
+// per animation beat; a subtree observer that stays attached pays a record
+// for every one of those nodes even when there is nothing to close.
+//
+// A veil is only ever raised as a child of <body> or of the screen root, so
+// the nested `querySelector` runs for those records alone; a deep record —
+// a card added to the hand, a status pip — is answered by `matches` only.
+function watchScene() {
+  if (sceneWatch) return;
+  sceneWatch = new MutationObserver((records) => {
+    if (selectedControl && !selectedControl.isConnected) clearControlSelection();
+    if (pending && !pending.el.isConnected) cancelOpen();
+    if (!sceneAnchor && !pending) { unwatchScene(); return; }
+    if (sceneAnchor && !sceneAnchor.isConnected) { hideTooltip(); return; }
+    const subject = sceneAnchor || pending?.el;
+    for (const record of records) {
+      if (!record.addedNodes.length) continue;
+      const top = record.target === document.body || record.target.id === 'app';
+      for (const node of record.addedNodes) {
+        if (node.nodeType !== 1) continue;
+        const veil = node.classList.contains('modal-veil') ? node : (top ? node.querySelector('.modal-veil') : null);
+        if (veil && !veil.contains(subject)) { hideTooltip(); return; }
+      }
+    }
+  });
+  sceneWatch.observe(document.documentElement, { childList: true, subtree: true });
+}
+function unwatchScene() {
+  if (!sceneWatch) return;
+  sceneWatch.disconnect();
+  sceneWatch = null;
+}
+
+function showWith(html, anchor, clear = null, intent = 'above', appearance = null, placementModel = null, autoHideMs = 0, align = 'start', level = 0, target = null, action = null) {
   if (!html) return false;
-  // "…until SOMETHING REPLACES IT." This is that something, and it is the only
-  // place the word is spoken: whatever was stuck is now gone, and what takes its
-  // place is an ordinary tooltip again unless its own hold sticks it.
-  unstick();
-  const t = ensure();
+  // `anchor` is a rect; `target` is the element it was measured from (null
+  // for a caller-owned rect — then there is no surface to watch).
+  if (level === 0) { sceneAnchor = target instanceof Node ? target : null; watchScene(); }
+  if (level === 0) { cancelOpen(); unstick(); hide(1); }
+  clearTimers();
+  const t = level === 0 ? ensure() : panel(1);
+  t.style.setProperty('--tooltip-fade-duration', `${tooltipSettings.fade}ms`);
+  // The box this panel stood at, if it stood at all: a hop from one control to
+  // the next re-opens at the new rung, and the difference is revealed, not cut.
+  const stoodAt = t.dataset.open === 'true' && t.style.display !== 'none' ? { w: t.offsetWidth, h: t.offsetHeight } : null;
+  conceal(level);
   t.innerHTML = html;
+  // At the second level definitions are terminal: no unreachable third panel.
+  if (level === 0) tooltipDecorator(t);
+  t.setAttribute('role', action ? 'dialog' : 'tooltip');
+  if (action) {
+    t.setAttribute('aria-label', action.getAttribute('aria-label') || action.textContent);
+    t.appendChild(action);
+  } else t.removeAttribute('aria-label');
+  t.style.removeProperty('width');
+  t.style.removeProperty('max-width');
+  t.style.removeProperty('max-height');
+  t.dataset.tooltipVariant = appearance?.variant || '';
+  delete t.dataset.size;
+  const room = viewportLocalBox();
+  const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+  if (appearance?.widthRem) {
+    const widthPx = Math.max(0, Math.min(appearance.widthRem * rootFontPx, room.width - 16));
+    t.style.width = `${widthPx}px`;
+    t.style.maxWidth = `${Math.max(0, room.width - 16)}px`;
+  }
+  if (appearance?.maxWidthRem) {
+    t.style.maxWidth = `${Math.max(0, Math.min(appearance.maxWidthRem * rootFontPx, room.width - 16))}px`;
+  }
   t.style.display = 'block';
-  // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
-  // explains a control, so it may not sit on it, and any of the four sides that
-  // fits is an acceptable answer.
-  placeAnchored(t, anchor, { intent: 'beside', clear });
+  t.dataset.open = 'true';
+  t.setAttribute('aria-hidden', 'false');
+  fitRung(t, appearance?.rung);
+  if (appearance?.maxHeightRatio) t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
+  const resolvedIntent = placementModel
+    ? tooltipPlacementIntent(anchor, { width: innerWidth, height: innerHeight }, placementModel, {
+      narrow: document.documentElement.dataset.layout === 'narrow',
+    })
+    : intent;
+  t.dataset.tooltipPlacement = resolvedIntent;
+  pointArrow(t, placeAnchored(t, anchor, { intent: resolvedIntent, clear, align }), anchor);
+  if (stoodAt) stepRung(t, stoodAt, resolvedIntent);
+  state[level].target?.removeAttribute?.('data-tip-open');
+  hoverCloseCallback = null;
+  state[level].target = target;
+  state[level].open = true;
+  if (target?.setAttribute) target.setAttribute('data-tip-open', 'true');
+  if (target?.setAttribute) target.setAttribute('aria-describedby', [...new Set([...(target.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean), t.id])].join(' '));
+  scheduleAutoHide(autoHideMs);
   return true;
 }
 
-/**
- * attachTooltip(el, contentFn) — contentFn() → HTML string (computed at show
- * time so numbers are always live). Shows on pointer hover AND on the
- * keyboard/gamepad focus cursor (input.js dispatches gpfocus/gpblur when the
- * gp-focus cursor lands on / leaves an element), so controller players get
- * every tooltip a mouse would.
- */
-export function attachTooltip(el, contentFn) {
-  // Both input paths anchor to the ELEMENT, which is what they are both
-  // explaining. The pointermove listener that used to drag the tooltip back
-  // under the cursor is gone with the pointer anchor it served: a tooltip that
-  // follows the pointer across a card is a tooltip that sits on the card.
-  //
-  // …AND OFF ITS NEIGHBOURS, WHICH IS THE HALF THE OLD RULE HAD NO WORD FOR.
-  // "Beside the anchor" was true and not enough: a hand card is one of five in a
-  // row, so "right of it" is ON the next card. Measured on ?shot=combat before
-  // this line existed — a standing (held) tooltip touched 2 of 5 cards at
-  // 390x844 (52.4% of one of them) and 3 of 5 at 1200x730, where the worst hold
-  // buried two cards at 96.2% and 71.0%. It is inert (pointer-events: none) and
-  // the next tap clears it, so nobody is blocked; it is still the player's own
-  // hand hidden behind the thing explaining it.
-  //
-  // THE GROUP IS THE PARENT, and the call site is the only place that can say so
-  // — fx.js sees a box and cannot know a card has siblings. `parentElement` is
-  // the honest general answer for a control that lives in a row of peers (a hand
-  // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
-  // is a PREFERENCE, not a constraint: where the group fills the room, the
-  // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), el.parentElement);
-  el.addEventListener('pointerenter', () => {
-    clearTimeout(showTimer);
-    showTimer = setTimeout(show, 140);
-  });
-  el.addEventListener('pointerleave', () => {
-    // The timer is cleared either way — that is today's behaviour and a stuck
-    // tooltip is no reason to let a half-started hover fire behind it.
-    clearTimeout(showTimer);
-    if (stuck) return; // E8: a completed hold outlives the pointer leaving
-    if (tipEl) tipEl.style.display = 'none';
-  });
-  el.addEventListener('gpfocus', () => {
-    clearTimeout(showTimer);
-    showTimer = setTimeout(show, 160);
-  });
-  el.addEventListener('gpblur', () => {
-    // Same guard, and it can only ever fire on a tooltip the pad did not
-    // summon: the hold is a pointer gesture, so nothing the focus cursor shows
-    // is ever stuck. Guarded for consistency, not for a case we have seen.
-    if (stuck) return;
-    hideTooltip();
-  });
+// ---- the nested level -------------------------------------------------------
+function nestedTarget(node, within) {
+  const el = node?.closest?.('[data-tip], [title]');
+  if (!el || !within.contains(el) || el === within) return null;
+  adoptTitle(el);
+  return el.dataset.tip && el.dataset.tip !== 'off' ? el : null;
+}
+function showNested(term) {
+  showWith(`<div>${esc(term.dataset.tip)}</div>`, term.getBoundingClientRect(), panels[0], 'above', null, null, 0, 'start', 1, term);
+}
+/** A `title` is adopted into the machine and removed, so the native box never races the panel. */
+function adoptTitle(el) {
+  if (!el?.hasAttribute?.('title')) return;
+  const title = el.getAttribute('title');
+  if (title && !el.dataset.tip) el.dataset.tip = title;
+  el.removeAttribute('title');
 }
 
+// ---- attaching --------------------------------------------------------------
+/**
+ * attachTooltip(el, contentFn, options) — contentFn() → HTML string (computed at
+ * show time so numbers are always live). Shows on pointer hover AND on the
+ * keyboard/gamepad focus cursor. `expand: true` lets a click (or a touch hold
+ * on a non-button) open the same content in the `full` tier.
+ */
+export function attachTooltip(el, contentFn, {
+  intent = 'above', align = 'start', clear = null, delayMs = null, focusDelayMs = null,
+  appearance = null, placementModel = null, autoHideMs = 0, expand = false, expandTitle = null, showFn = null, tapToExplain = false, selectionFirst = false, activate = null,
+} = {}) {
+  adoptTitle(el);
+  el.dataset.tipAttached = 'true';
+  const show = () => {
+    pending = null;
+    if (!el.isConnected || el.closest('[inert], [hidden]') || (selectionFirst && selectedControl !== el)) return false;
+    const information = el.querySelector('.card-info-button');
+    const avoid = clear || (information ? [el.parentElement, information] : el.parentElement);
+    return showFn ? showFn() : showWith(contentFn(), el.getBoundingClientRect(), avoid, intent, appearance, placementModel, 0, align, 0, el);
+  };
+  const queue = delay => {
+    if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
+    if (selectionFirst) {
+      selectedControl = el;
+      el.classList.add('tooltip-selected');
+    }
+    // A repeated hover or focus on the element already counting down keeps
+    // that countdown (CURRENT-SPECIFICATION, Tooltips); restarting it made a
+    // second event push the tooltip a whole delay further away.
+    if (pending?.el === el && openTimer) return;
+    cancelOpen();
+    if (state[0].open && state[0].target === el) { clearTimers(); if (stuck) unstick(); return; }
+    pending = { el, show };
+    watchScene();
+    openTimer = setTimeout(show, delay);
+  };
+  el.addEventListener('pointerover', ev => {
+    if (!tooltipSettings.hoverEnabled || ev.pointerType === 'touch' || ev.target?.closest('[data-tip-attached], [data-tip]') !== el) return;
+    const previous = ev.relatedTarget?.closest?.('[data-tip-attached], [data-tip]');
+    if (previous && previous !== el && el.contains(previous)) queue(delayMs ?? tooltipSettings.handover);
+  });
+  el.addEventListener('pointerenter', ev => {
+    if (!tooltipSettings.hoverEnabled || ev.pointerType === 'touch') return;
+    const child = ev.clientX != null ? document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-tip-attached], [data-tip]') : null;
+    if (child && child !== el && el.contains(child)) return;
+    queue(delayMs ?? tooltipSettings.open);
+  });
+  el.addEventListener('pointerleave', (ev) => {
+    if (selectionFirst && (ev.pointerType === 'touch' || touchSelectedControl === el)) return;
+    cancelOpen(el);
+    if (selectionFirst && selectedControl === el && state[0].target !== el) clearControlSelection();
+    if (stuck) return; // E8: a completed hold outlives the pointer leaving
+    if (panels.some((p) => p && p.contains(ev.relatedTarget))) return;
+    if (state[0].target === el) scheduleClose();
+  });
+  const focus = ev => { if (ev.target === el) queue(focusDelayMs ?? tooltipSettings.focus); };
+  el.addEventListener('gpfocus', focus);
+  el.addEventListener('focus', ev => { if (el.matches(':focus-visible')) focus(ev); });
+  const blur = ev => {
+    if (ev.target !== el) return;
+    cancelOpen(el);
+    if (selectionFirst && selectedControl === el && state[0].target !== el) clearControlSelection();
+    if (stuck) return;
+    if (state[0].target === el && !panels.some(p => p?.contains(ev.relatedTarget))) scheduleClose();
+  };
+  el.addEventListener('gpblur', blur);
+  el.addEventListener('blur', blur);
+  if (selectionFirst) {
+    el.dataset.tooltipSelection = 'true';
+    el.addEventListener('pointerdown', ev => ev.stopPropagation());
+    el.addEventListener('click', ev => {
+      ev.preventDefault(); ev.stopPropagation();
+      const touch = ev.pointerType === 'touch';
+      if (activate && (!touch || (touchSelectedControl === el && selectedControl === el))) {
+        clearControlSelection(); hideTooltip(); activate(el); return;
+      }
+      queue(delayMs ?? tooltipSettings.open);
+      if (touch) touchSelectedControl = el;
+    });
+    el.addEventListener('keydown', ev => {
+      if (['Enter', ' '].includes(ev.key)) ev.stopPropagation();
+    });
+  }
+  const isControl = () => !!el.closest('button, [role="button"], a, input, select, [data-hold]');
+  // TAP TO SELECT, TAP AGAIN TO EXPLAIN (owner, 2026-09-11: "click/tap
+  // highlight target and then tapping/clicking again for tool tip"). A pointer
+  // press on a detail that is not itself a control marks it selected and opens
+  // nothing; the next press on the same detail answers at once. Selection
+  // clears when the press lands elsewhere (hideTooltip) or on Escape. Controls
+  // keep their click for what the click does; keyboard Enter/Space on a
+  // tap-to-explain detail still answers at once — a key press is deliberate.
+  const explainOnSecondTap = ev => {
+    // The first press still travels: a status pip inside an enemy is also how
+    // that enemy is targeted, and the selection survives the screen's board
+    // click now that hideTooltip keeps it. The second press is the
+    // explanation's own — combat closes tooltips on any board click, so it
+    // must not run on top of the panel this just opened.
+    if (selectedControl === el) { ev.stopPropagation(); cancelOpen(); show(); return; }
+    if (selectedControl && selectedControl !== el) { clearControlSelection(); hideTooltip(); }
+    cancelOpen(el);
+    selectedControl = el;
+    el.classList.add('tooltip-selected');
+  };
+  if (tapToExplain) {
+    if (!el.hasAttribute('tabindex')) el.tabIndex = 0;
+    if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+    const answer = ev => {
+      if (typeof tapToExplain === 'function' && !tapToExplain()) return;
+      if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if (ev.type === 'keydown') { cancelOpen(); show(); return; }
+      explainOnSecondTap(ev);
+    };
+    el.addEventListener('click', answer); el.addEventListener('keydown', answer);
+  } else if (!selectionFirst && !expand) {
+    el.addEventListener('click', ev => {
+      if (isControl() || ev.target?.closest('[data-tip-attached], [data-tip]') !== el) return;
+      explainOnSecondTap(ev);
+    });
+  }
+  if (expand) {
+    const open = () => { hideTooltip(); expander?.(contentFn(), { title: expandTitle || el.dataset.tipTitle || '', eyebrow: el.dataset.tipType || 'Detail' }); };
+    if (!isControl()) el.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      if (selectedControl === el) { open(); return; }
+      explainOnSecondTap(ev);
+    });
+    let holdTimer = null;
+    let lastTap = 0;
+    el.addEventListener('touchstart', () => {
+      if (isControl()) return;
+      holdTimer = setTimeout(() => { holdTimer = null; open(); }, tooltipSettings.hold);
+    }, { passive: true });
+    el.addEventListener('touchend', () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      const now = Date.now();
+      if (now - lastTap < tooltipSettings.doubleTap) { show(); lastTap = 0; return; }
+      lastTap = now;
+    }, { passive: true });
+  }
+}
+
+/** Show the shared tooltip for a non-hover gesture, using the same placement. */
+export function showTooltipFor(el, html, { intent = 'above', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+  if (!el) return false;
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs, align, 0, el);
+}
+/** Show the shared tooltip against a caller-owned measured subject rectangle. */
+export function showTooltipForRect(anchor, html, { intent = 'above', align = 'start', clear = null, appearance = null, placementModel = null, autoHideMs = 0, target = null, action = null } = {}) {
+  if (!anchor) return false;
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs, align, 0, target, action);
+}
+/** Give a measured subject the same pointer-to-panel grace as attached hints. */
+export function scheduleTooltipClose(target, onClose = null) {
+  if (state[0].target === target) { hoverCloseCallback = onClose; scheduleClose(); }
+}
 /**
  * stickTooltip(el) → boolean — keep the tooltip that is on screen NOW until
- * something replaces it or `el` leaves the DOM. Returns whether it stuck.
- *
- * The one caller is the hand's completed reading hold (hand.js), which is the
- * gesture E8 is about; `el` is the card being read.
- *
- * IT REFUSES MORE THAN IT ACCEPTS, ON PURPOSE. No tooltip on screen → nothing
- * to keep. An element that is not in the document, or no MutationObserver in
- * this runtime → NOTHING COULD EVER END IT, so it does not begin: the tooltip
- * stays ordinary and hides on the next leave, exactly as it does today. A
- * refusal here is a tooltip that behaves like dev's; the alternative is one a
- * player cannot get rid of, and between those two the choice is not close.
- *
- * THE REFUSAL IS SILENT AND THAT IS A KNOWN BOUNDARY, NOT A CLAIM: hand.js
- * ignores the return value, nothing renders it, and no check plants a runtime
- * without MutationObserver. A refused stick is indistinguishable from dev's
- * behaviour from the outside — which is the point of the floor and also the
- * reason it cannot currently be observed. (Bjorn, gating 87a8ad2.)
+ * something replaces it or `el` leaves the DOM. It refuses when nothing could
+ * ever end it (not connected, no MutationObserver), so a refusal is a tooltip
+ * that behaves as before rather than one a player cannot get rid of.
  */
 export function stickTooltip(el) {
+  // A hold can complete BEFORE the 500ms open delay has shown the tooltip it
+  // wants to keep: then the pending show for this element fires now, so the
+  // stick has something to hold and the later timer cannot unstick it.
+  if ((!tipEl || tipEl.style.display !== 'block') && pending?.el === el) { clearTimeout(openTimer); pending.show(); }
   if (!tipEl || tipEl.style.display !== 'block') return false;
-  // `isConnected`, not `parentNode`: the predicate the watch below tests IS
-  // `el.isConnected`, and a detached subtree has a parentNode. One fact, one
-  // reading — the guard and the watch can no longer disagree.
   if (!el || !el.isConnected || typeof MutationObserver === 'undefined') return false;
   unstick();
-  // WATCHED AT THE DOCUMENT, NOT AT THE CARD'S PARENT, AND THE DIFFERENCE IS A
-  // MEASURED DEFECT rather than a preference. The predicate is `isConnected`,
-  // so the watch has to fire on every change that can falsify it. A childList
-  // observer on the card's own parent fires when that parent's CHILDREN change
-  // and NEVER when the PARENT ITSELF is removed — and both topologies ship:
-  // combat.js empties `.hand` in place (`handEl.innerHTML = ''`, hand.js), so
-  // the parent watch worked there, while coop.js rebuilds the whole screen
-  // (`app.innerHTML = …`) and REPLACES `.hand`, so the watched node was
-  // detached, the callback never ran, and the tooltip outlived the card.
-  // Measured 2026-08-17 on `?shot=coop` at 390x844, before this line changed:
-  // after the hold, "another card selected", END TURN and three further taps
-  // ALL left it standing, naming a card that had left the DOM three renders
-  // ago — all three of his endings dead on that surface, because coop.js also
-  // carries zero hideTooltip() calls of its own. One watch that cannot be
-  // wrong about which parent, instead of two screens that must agree.
-  // Cost, stated: one `isConnected` test per structural mutation anywhere, and
-  // only while a tooltip is stuck. Held by tools/tooltippersist.mjs plant P4.
+  clearTimers();
   stuckWatch = new MutationObserver(() => { if (!el.isConnected) hideTooltip(); });
   stuckWatch.observe(document.documentElement, { childList: true, subtree: true });
   stuck = true;
+  tipEl.dataset.stuck = 'true';
   return true;
 }
-
-/**
- * showTooltipAt(x, y, html) — put the one tooltip at a point, now.
- *
- * A TAP has no element to sit beside, and a tap is the whole of a phone:
- * components/refusal.js calls this so a control that refuses can answer the
- * finger that pressed it, at the place it was pressed. The point becomes a
- * zero-size anchor box, which place() resolves to the exact offsets this path
- * has always used. Empty html shows nothing rather than an empty box.
- *
- * Hover and the focus cursor no longer come through here — they anchor to their
- * element inside attachTooltip. This entry point is the POINT case only.
- */
+/** showTooltipAt(x, y, html) — put the one tooltip at a point, now (a tap's answer). */
 export function showTooltipAt(x, y, html) {
   return showWith(html, { left: x, top: y, width: 0, height: 0 });
 }
-
+// Closes the panels. It does NOT forget a tap-selection: screens call this on
+// every render and on any board click (combat's syncCardSelection), and the
+// first tap of "tap to select, tap again to explain" lands in exactly such a
+// click. The selection ends by its own doors — a press elsewhere, Escape, an
+// activation, or the element leaving the DOM (watchScene).
 export function hideTooltip() {
-  // Still the unconditional off switch, and deliberately so: every screen that
-  // already calls it — play, flask, end turn, Escape, self-arm, drag start,
-  // quicknav, disclosure — is one of his endings, and none of them had to
-  // change. A stuck tooltip is not a stronger tooltip; it is one that ignores
-  // the pointer leaving, and nothing else.
+  sceneAnchor = null;
   unstick();
-  clearTimeout(showTimer);
-  if (tipEl) tipEl.style.display = 'none';
+  clearTimers();
+  cancelOpen();
+  conceal(1);
+  conceal(0);
+  unwatchScene();
 }
-
 export function esc(s) {
   return String(s).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 }
+
+// ---- `title` everywhere is the same machine ---------------------------------
+// A hint written as a title attribute (24 in src/ui alone) opens on the same
+// clock, in the same panel, at the same rung as an attached tooltip. Adopted
+// on first hover and removed, so the native box never shows two answers.
+let titleWired = false;
+function wireTitles() {
+  if (titleWired || typeof document === 'undefined') return;
+  titleWired = true;
+  const adopt = ev => {
+    const el = ev.target?.closest?.('[title], [data-tip]');
+    if (!el || panels.some((p) => p && p.contains(el))) return;
+    // A title INSIDE an attached target (a card's cost badge) is that target's
+    // business — it must not open a second, competing tooltip over the first.
+    adoptTitle(el);
+    if (!el.dataset.tip || el.dataset.tip === 'off' || el.dataset.tipAttached === 'true') return;
+    // A native label inside a card must not race its attached explanation.
+    const owner = el.parentElement?.closest('[data-tip-attached]');
+    if (owner && !el.matches('[role="button"], .ctag, .epc-tag')) return;
+    el.dataset.tipAdopted = 'true';
+    attachTooltip(el, () => `<div>${esc(el.dataset.tip)}</div>`, { intent: 'above', align: 'center' });
+    if (ev.type === 'pointerover' && ev.pointerType !== 'touch') el.dispatchEvent(new PointerEvent('pointerenter', { pointerType: ev.pointerType || 'mouse', clientX: ev.clientX, clientY: ev.clientY }));
+    if (ev.type === 'focusin') el.dispatchEvent(new Event('gpfocus'));
+  };
+  document.addEventListener('pointerover', adopt, true);
+  document.addEventListener('focusin', adopt, true);
+  const explain = ev => {
+    const term = ev.target?.closest?.('.tooltip-keyword[data-tip], .inspection-tag[data-tip], .as-tip [data-tip][role="button"]');
+    if (!term || panels[1]?.contains(term)) return;
+    if (ev.type === 'keydown' && !['Enter', ' '].includes(ev.key)) return;
+    ev.preventDefault(); ev.stopPropagation();
+    if (panels[0]?.contains(term)) { cancelNested(); showNested(term); return; }
+    // Outside the panels the same two-tap rule holds: a click selects the
+    // term, the next click explains it; a key press explains at once.
+    if (ev.type === 'click' && selectedControl !== term) {
+      if (selectedControl) { clearControlSelection(); hideTooltip(); }
+      selectedControl = term;
+      term.classList.add('tooltip-selected');
+      return;
+    }
+    showTooltipFor(term, `<div>${esc(term.dataset.tip)}</div>`);
+  };
+  document.addEventListener('click', explain, true);
+  document.addEventListener('keydown', explain, true);
+  document.addEventListener('pointerdown', ev => {
+    if (!panels.some(p => p?.contains(ev.target)) && !state[0].target?.contains(ev.target) && !selectedControl?.contains(ev.target)) {
+      clearControlSelection(); hideTooltip();
+    }
+  }, true);
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Escape') return;
+    if (state[1].open) { hide(1); ev.stopImmediatePropagation(); }
+    else if (state[0].open || selectedControl) { clearControlSelection(); hideTooltip(); ev.stopImmediatePropagation(); }
+    else { cancelOpen(); cancelNested(); }
+  }, true);
+  const replace = () => {
+    for (const [i, st] of state.entries()) {
+      if (!st.open || !st.target?.getBoundingClientRect || !panels[i]) continue;
+      const rect = st.target.getBoundingClientRect();
+      pointArrow(panels[i], placeAnchored(panels[i], rect, { intent: panels[i].dataset.tooltipPlacement || 'above' }), rect);
+    }
+  };
+  addEventListener('resize', replace);
+}
+wireTitles();

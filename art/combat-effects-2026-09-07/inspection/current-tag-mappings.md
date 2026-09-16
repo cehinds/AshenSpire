@@ -1,0 +1,72 @@
+Current resolved card/tag mappings. Base and upgraded cards are included. Equipment profiles use the same effective tags as solo/co-op combat. Class alternatives are shown only where they change the effect. This is the existing resolver, before the proposed combination-rule refactor.
+
+- **attack · no tags → heavyImpact (target)** — Rend, Rend+, Cleaving Blow, Cleaving Blow+, Stomp, Stomp+, Twinblade Flurry, Twinblade Flurry+, Kick Off, Kick Off+, Impale, Impale+, Executioner, Executioner+, Stitched Arms, Stitched Arms+, Ruinous Blow, Ruinous Blow+, Bloodhunter's Strike, Bloodhunter's Strike+, Goreslash, Goreslash+, Flame to Blade, Flame to Blade+, Blood Tithe, Blood Tithe+, Poise Breaker, Poise Breaker+, Sunderplate, Sunderplate+, Star Shower, Star Shower+, Star Slicer, Star Slicer+, Starlance, Starlance+, Starstone Arc, Starstone Arc+, Moonrend Cut, Moonrend Cut+, Meteorite, Meteorite+, Meteor Swarm, Meteor Swarm+, Astral Cleave, Astral Cleave+, Radiant Spray, Radiant Spray+, Supernova, Supernova+, Starstone Kris, Starstone Kris+, Starfall Beam, Starfall Beam+, Starcaller, Starcaller+, Shooting Shard, Shooting Shard+, Celestial Lance, Celestial Lance+, Star Spark, Star Spark+, Flagellation, Flagellation+, Grave Offering, Grave Offering+, Cull the Weak, Cull the Weak+, Plague Bearer, Plague Bearer+, Exsanguinate, Exsanguinate+, Scourge, Scourge+, Blight Nova, Blight Nova+, Pain Offering, Pain Offering+, Withering Touch, Withering Touch+, Desperate Rite, Desperate Rite+, Blood Offering, Blood Offering+, Blightward Lash, Blightward Lash+, Twin Fang, Twin Fang+, Bashing Blow, Bashing Blow+, Sweeping Blow, Sweeping Blow+, Colossus Smash, Colossus Smash+
+- **attack · no tags → lifeDrain (target)** — Sacred Harvest, Sacred Harvest+, Crimson Rite, Crimson Rite+, Blood Harvest, Blood Harvest+
+- **attack · basic · unarmedAttack → heavyImpact (target)** — Unarmed Strike, Unarmed Strike +
+- **attack · blade → slash (target)** — Strike, Strike+
+- **attack · blade · bladeAttack → slash (target)** — Slashing Strike, Slashing Strike +
+- **attack · blade + blood → bloodSlash (target)** — Crimson Cleave, Crimson Cleave+, Serrated Blade, Serrated Blade+, Serrated Shiv, Serrated Shiv+, Garrote, Garrote+
+- **attack · blade + blood + gorefire → emberbolt (target)** — Gorefire Slash, Gorefire Slash+
+- **attack · blade + extractable → slash (target)** — Sundering Hew, Sundering Hew+
+- **attack · blade + extractable + flourish → whirlwind (target)** — Draw Cut, Draw Cut+
+- **attack · blade + flourish → whirlwind (target)** — Shiv, Shiv+, Quick Cut, Quick Cut+, Blade Dance, Blade Dance+, Thousand Cuts, Thousand Cuts+
+- **attack · blade + flourish → crossSlash (target)** — Twin Prick, Twin Prick+
+- **attack · blade + guard → slash (target)** — Shield Bash, Shield Bash+
+- **attack · blade + guile → slash (target)** — Ambush, Ambush+, Hamstring, Hamstring+, Low Blow, Low Blow+, Cheap Shot, Cheap Shot+
+- **attack · blade + precision → thrust (target)** — Coup de Grace, Coup de Grace+, Assassinate, Assassinate+, Deathblow, Deathblow+
+- **attack · blight + ritual → blight (target)** — Blight Touch, Blight Touch+
+- **attack · blight + ritual · sceptreArcaneAttack → arcaneBurst (target)** — Arcane Strike, Arcane Strike +
+- **attack · flourish + guard → whirlwind (target)** — Guard Counter, Guard Counter+, Riposte, Riposte+
+- **attack · flourish + pierce · daggerPierceAttack → thrust (target)** — Piercing Flurry, Piercing Flurry +
+- **attack · guard · shieldAttack → shieldBash (target)** — Shield Strike, Shield Strike +
+- **attack · guard + starstone → starbolt (projectile → impact)** — Starblade Phalanx, Starblade Phalanx+
+- **attack · guile → shadowbolt (projectile → impact)** — Sap, Sap+
+- **attack · pierce + precision + ranged · bowPierceAttack → thrust (projectile → impact)** — Piercing Shot, Piercing Shot +
+- **attack · pierce + ranged → thrust (projectile → impact)** — Ricochet, Ricochet+, Fan of Knives, Fan of Knives+
+- **attack · starstone → starbolt (projectile → impact)** — Starstone Pebble, Starstone Pebble+, Comet Fragment, Comet Fragment+, Frost Nova, Frost Nova+
+- **attack · starstone · staffMagicAttack → starbolt (projectile → impact)** — Staff Magic Strike, Staff Magic Strike +
+- **power · no tags · reaver → gorefire (caster)** — Rallying Standard, Rallying Standard+, Goreblood, Goreblood+, Unbreakable, Unbreakable+, Sanguine Pact, Sanguine Pact+, Iron Vow, Iron Vow+, Stargazer, Stargazer+, Astral Armor, Astral Armor+, Azure Coil, Azure Coil+, Constellation, Constellation+, Waxing Moon, Waxing Moon+, Moonlit Shield, Moonlit Shield+, Astromancer, Astromancer+, Thorn Halo, Thorn Halo+, Communion, Communion+, Stigmata, Stigmata+, Life Tithe, Life Tithe+, Zealotry, Zealotry+, Ember Tide, Ember Tide+, Harbinger of Blight, Harbinger of Blight+
+- **power · no tags · starseer → starbolt (caster)** — Rallying Standard, Rallying Standard+, Goreblood, Goreblood+, Unbreakable, Unbreakable+, Sanguine Pact, Sanguine Pact+, Iron Vow, Iron Vow+, Stargazer, Stargazer+, Astral Armor, Astral Armor+, Azure Coil, Azure Coil+, Constellation, Constellation+, Waxing Moon, Waxing Moon+, Moonlit Shield, Moonlit Shield+, Astromancer, Astromancer+, Thorn Halo, Thorn Halo+, Communion, Communion+, Stigmata, Stigmata+, Life Tithe, Life Tithe+, Zealotry, Zealotry+, Ember Tide, Ember Tide+, Harbinger of Blight, Harbinger of Blight+
+- **power · no tags · rogue → shadowbolt (caster)** — Rallying Standard, Rallying Standard+, Goreblood, Goreblood+, Unbreakable, Unbreakable+, Sanguine Pact, Sanguine Pact+, Iron Vow, Iron Vow+, Stargazer, Stargazer+, Astral Armor, Astral Armor+, Azure Coil, Azure Coil+, Constellation, Constellation+, Waxing Moon, Waxing Moon+, Moonlit Shield, Moonlit Shield+, Astromancer, Astromancer+, Thorn Halo, Thorn Halo+, Communion, Communion+, Stigmata, Stigmata+, Life Tithe, Life Tithe+, Zealotry, Zealotry+, Ember Tide, Ember Tide+, Harbinger of Blight, Harbinger of Blight+
+- **power · no tags · herald → sacredbolt (caster)** — Rallying Standard, Rallying Standard+, Goreblood, Goreblood+, Unbreakable, Unbreakable+, Sanguine Pact, Sanguine Pact+, Iron Vow, Iron Vow+, Stargazer, Stargazer+, Astral Armor, Astral Armor+, Azure Coil, Azure Coil+, Constellation, Constellation+, Waxing Moon, Waxing Moon+, Moonlit Shield, Moonlit Shield+, Astromancer, Astromancer+, Thorn Halo, Thorn Halo+, Communion, Communion+, Stigmata, Stigmata+, Life Tithe, Life Tithe+, Zealotry, Zealotry+, Ember Tide, Ember Tide+, Harbinger of Blight, Harbinger of Blight+
+- **power · flourish + oath → sacredAura (caster)** — Afterimage, Afterimage+, Deadly Tempo, Deadly Tempo+
+- **power · guile + oath → sacredAura (caster)** — Opportunist, Opportunist+
+- **power · oath + venom → poisonAura (caster)** — Envenom, Envenom+
+- **skill · no tags → no added effect (caster)** — Footwork, Footwork+, Evasive Guard, Evasive Guard+, Dodge Roll, Dodge Roll+, Hemorrhage, Hemorrhage+, Shieldwall, Shieldwall+, Warding Lunge, Warding Lunge+, Warcry, Warcry+, Last Stand, Last Stand+, Warrior's Vow, Warrior's Vow+, Rondel Parry, Rondel Parry+, Scholar's Insight, Scholar's Insight+, Twinkling, Twinkling+, Lucidity, Lucidity+, Gravity Well, Gravity Well+, Time Dilation, Time Dilation+, Star Path, Star Path+, Astral Insight, Astral Insight+, Bloodletting, Bloodletting+, Contagion, Contagion+, Blightward, Blightward+, Martyr's Blood, Martyr's Blood+, Blight Bloom, Blight Bloom+, Plague of Butterflies, Plague of Butterflies+, Honed Edge, Honed Edge+, Iron Skin, Iron Skin+, Transmute, Transmute+, Blinding Sand, Blinding Sand+, Hamstring, Hamstring+, Master of Strategy, Master of Strategy+, Quick Guard, Quick Guard+, Enfeeble, Enfeeble+, Rallying Banner, Rallying Banner+, Shared Flame, Shared Flame+, Oath of Ash, Oath of Ash+
+- **skill · no tags · reaver/starseer/rogue → no added effect (caster)** — War Surgeon, War Surgeon+, Penance, Penance+, Transfusion, Transfusion+, Reclamation, Reclamation+, Second Bloom, Second Bloom+, Last Rites, Last Rites+, Last Mercy, Last Mercy+, Field Dressing, Field Dressing+
+- **skill · no tags · herald → cleanse (caster)** — War Surgeon, War Surgeon+, Penance, Penance+, Transfusion, Transfusion+, Reclamation, Reclamation+, Second Bloom, Second Bloom+, Last Rites, Last Rites+, Last Mercy, Last Mercy+, Field Dressing, Field Dressing+
+- **skill · no tags → bulwarkStance (caster)** — Bracing Stance, Bracing Stance+
+- **skill · no tags → barrier (caster)** — Crystal Barrier, Crystal Barrier+, Umbral Ward, Umbral Ward+
+- **skill · no tags → frostAura (caster)** — Frost Veil, Frost Veil+
+- **skill · no tags → arcaneWard (caster)** — Starstone Ward, Starstone Ward+
+- **skill · no tags → magicGuard (caster)** — Warding Star, Warding Star+
+- **skill · no tags → bind (target)** — Litany, Litany+, Hex, Hex+
+- **skill · ash + guile → dustStep (caster)** — Smoke Pellet, Smoke Pellet+, Vanish, Vanish+
+- **skill · ash + guile → bind (target)** — Pocket Sand, Pocket Sand+
+- **skill · ash + guile → ash (target)** — Smoke Bomb, Smoke Bomb+
+- **skill · blade + blood → bloodSlash (target)** — Bloodletter, Bloodletter+
+- **skill · blade + flourish · weaponTechnique → dustStep (caster)** — Weapon Technique, Weapon Technique +
+- **skill · blade + precision → bind (target)** — Execution Window, Execution Window+
+- **skill · blood + ritual → focusMotes (caster)** — Blood Pact, Blood Pact+
+- **skill · flourish → dustStep (caster)** — Quickstep, Quickstep+, Acrobatics, Acrobatics+
+- **skill · flourish · unarmedTechnique → dustStep (caster)** — Dodge Roll, Dodge Roll +
+- **skill · flourish + guard → physicalGuard (caster)** — Backstep, Backstep+
+- **skill · flourish + guile → dustStep (caster)** — Shadowstep, Shadowstep+
+- **skill · gorefire + oath → emberbolt (caster)** — Enter: Gorefire, Enter: Gorefire+
+- **skill · guard → physicalGuard (caster)** — Defend, Defend+, Iron Resolve, Iron Resolve+
+- **skill · guard · shieldGuard → physicalGuard (caster)** — Shield Defend, Shield Defend +
+- **skill · guard · unarmedGuard → guardPulse (caster)** — Evasive Guard, Evasive Guard +
+- **skill · guard · weaponGuard → parry (caster)** — Weapon Guard, Weapon Guard +
+- **skill · guard + guile → physicalGuard (caster)** — Smoke Veil, Smoke Veil+, Misdirect, Misdirect+
+- **skill · guard + oath → physicalGuard (caster)** — Enter: Bulwark, Enter: Bulwark+
+- **skill · guile → dustStep (caster)** — Feint, Feint+, Pilfer, Pilfer+, Setup, Setup+, Perfect Heist, Perfect Heist+
+- **skill · guile → bind (target)** — Disorient, Disorient+
+- **skill · oath + ritual → focusMotes (caster)** — Gilded Oath, Gilded Oath+
+- **skill · oath + venom → venom (target)** — Venomcoat, Venomcoat+
+- **skill · precision + ranged · bowTechnique → steelGlint (caster)** — Steady Aim, Steady Aim +
+- **skill · ranged + venom → venom (target)** — Toxic Volley, Toxic Volley+
+- **skill · ritual · reaver/starseer/rogue → focusMotes (caster)** — Urgent Heal, Urgent Heal+
+- **skill · ritual · herald → cleanse (caster)** — Urgent Heal, Urgent Heal+
+- **skill · ritual · sceptreGuard → arcaneWard (caster)** — Ritual Ward, Ritual Ward +
+- **skill · ritual · staffTechnique → focusMotes (caster)** — Staff Channel, Staff Channel +
+- **skill · starstone · staffGuard → magicGuard (caster)** — Arcane Ward, Arcane Ward +

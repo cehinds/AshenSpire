@@ -244,6 +244,13 @@ export function statusReach(bundle, opts = {}) {
   const SOURCE_SETS = [
     ['cards', bundle.cards],
     ['relics', bundle.relics],
+    // A CARRIER'S RULES ARE A SOURCE SET OF THEIR OWN (plan phase 2). Relic
+    // triggers moved out of bundle.relics and into this table, and `madness`
+    // went instantly unreachable here — which is the tool doing its job: the
+    // status was still applied, by a row this walk could not see. Equipment and
+    // class properties land in the same table, so every future carrier arrives
+    // covered rather than needing another line.
+    ['propertyRules', bundle.propertyRules],
     ['enemies', bundle.enemies],
     ['events', bundle.events],
     ['flasks', bundle.flasks],
@@ -258,7 +265,9 @@ export function statusReach(bundle, opts = {}) {
       continue;
     }
     for (const row of rows) {
-      const where = `${name}:${(row && row.id) || '(row)'}`;
+      // A property rule is keyed by its tag, not an `id` — name the route by
+      // whatever the row calls itself, so the answer stays actionable.
+      const where = `${name}:${(row && (row.id || row.tag)) || '(row)'}`;
       for (const id of appliersIn(row)) note(id, `R1 ${where}`);
     }
   }
@@ -406,7 +415,7 @@ const BOUNDARY = `
 BOUNDARY — what a green from this tool does NOT mean:
   · REACHED IS NOT EFFECTIVE. This proves something APPLIES the status, never
     that applying it changes a hit. Frost-Exposed and Unraveled now consume
-    cardTagging.csv identity through the action engine, and tests 7e2/7e3 play
+    tagging.csv identity through the action engine, and tests 7e2/7e3 play
     real shipped cards through both preview and execution. This tool runs none
     of that damage path; it stays silent about effectiveness by construction.
   · REACHED IS NOT DRAWABLE. A card with an applier still has to be in a class
@@ -568,6 +577,14 @@ async function selftest(real) {
     for (const p of [...b.equipment.armaments, ...b.equipment.armour]) {
       p.mods = (p.mods || []).filter((m) => !String(m).includes(`.${id}=`));
     }
+    // AND the property rules — the THIRD time this plant has been found sitting
+    // downstream of a route it did not know about, and the third time the tool
+    // was right. Plan phase 2 moved every relic's triggers into propertyRules;
+    // stripping the relic rows stopped meaning anything the day it landed,
+    // because the ops had left those rows. The lesson the two notes above teach
+    // has a name now: this plant must strip every SOURCE_SET, and any set added
+    // there without a line here re-opens the same hole quietly.
+    kill(b.propertyRules);
   };
   strip('bleed');
   r = statusReach(b, codeOk());

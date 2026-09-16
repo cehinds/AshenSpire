@@ -3,6 +3,46 @@
 
 export const characterCreation = {
   "spritePreviewSide": "right",
+  "visibleModeIds": [
+    "standard",
+    "pointbuy"
+  ],
+  "layout": {
+    "classPreviewPercent": 30,
+    "classChoiceView": "list",
+    "equipmentChoiceView": "list",
+    "equipmentAutoAdvance": false
+  },
+  "equipmentSections": [
+    {
+      "id": "armour",
+      "label": "STARTING ARMOUR",
+      "kind": "armour"
+    },
+    {
+      "id": "rightHand",
+      "label": "MAIN HAND",
+      "kind": "hand",
+      "slot": "rightHand"
+    },
+    {
+      "id": "leftHand",
+      "label": "OFF HAND",
+      "kind": "hand",
+      "slot": "leftHand"
+    },
+    {
+      "id": "equipSlot",
+      "label": "EQUIP SLOT",
+      "kind": "slot",
+      "slot": "talisman"
+    },
+    {
+      "id": "relic",
+      "label": "RELIC",
+      "kind": "relic"
+    }
+  ],
   "classes": {
     "reaver": {
       "armourIds": [
@@ -15,6 +55,7 @@ export const characterCreation = {
         "greatsword",
         "buckler"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "forsakenMedallion",
         "goldenSprout"
@@ -29,6 +70,7 @@ export const characterCreation = {
         "ashStaff",
         "starstoneStaff"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "starstoneShard",
         "goldenSprout"
@@ -45,6 +87,7 @@ export const characterCreation = {
         "shortbow",
         "parryDagger"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "cutpursesCoin",
         "goldenSprout"
@@ -59,6 +102,7 @@ export const characterCreation = {
         "boneSceptre",
         "emberlightSceptre"
       ],
+      "equipSlotIds": [],
       "relicIds": [
         "goldFigurine",
         "goldenSprout"
@@ -102,7 +146,7 @@ export const characterCreation = {
       "id": "whetstoneMemory",
       "name": "Whetstone Memory",
       "icon": "🪨",
-      "desc": "Begin with one Strike already upgraded.",
+      "desc": "Begin with one armament already Smithed, improving all of its sourced basic cards.",
       "effects": [
         {
           "op": "upgradeCard",

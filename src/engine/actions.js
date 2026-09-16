@@ -23,13 +23,19 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { COMBAT_OPCODES, RUN_OPCODES } from '../model/schemas.js';
+import * as F from './combatRules.js';
+import { allocateInteger } from '../model/combatRules.js';
+import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { evaluate, isFormula } from '../model/formulas.js';
-import * as statuses from './statuses.js';
+import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
-import { damageTagIds } from '../content/tags.js';
-import { flaskSlotCap } from '../model/gracerefill.js';
+import { playerWeightClass } from '../model/combatWeight.js';
+import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
+import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
 import { syncFlaskGrowth } from '../model/flaskgrowth.js';
+import { passiveMult } from '../model/registries.js';
+import { commitSmithing, smithingPlan } from '../model/smithing.js';
+import { propertyMountsOf } from './properties.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -40,6 +46,7 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
  * Pure (no mutation). Pass target = null to preview without defender mods.
  */
 export function computeAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
+  if (ctx.foundation) return F.foundationDamage(ctx, source, target, base, carrier, attackTags || []).amount;
   let dmg = base;
   const school = carrier && carrier.damageSchool;
   if (source && source.kind === 'player' && school) {
@@ -84,10 +91,39 @@ export function computeAttackDamage(ctx, source, target, base, attackTags, carri
   return dmg < 0 ? 0 : dmg;
 }
 
-/** One derivation for live actions and previews: card identity comes from CSV. */
-export function attackTagsFor(action, effect) {
-  if (action.card && Array.isArray(action.card.tags) && action.card.tags.length) return action.card.tags;
-  return damageTagIds(action.card && action.card.cardId, effect.tags);
+/**
+ * One derivation for live actions and previews: card identity comes from CSV.
+ *
+ * THERE IS NO MODULE-GLOBAL FALLBACK HERE, AND THAT IS THE POINT. Five review
+ * rounds found the same defect at five addresses: a reader that preferred the
+ * ACTIVE content but fell back to the shipped fold in content/tags.js whenever
+ * the active answer looked uninteresting — absent, then empty, then falsy. Each
+ * fix narrowed the condition and the next round found the next condition. The
+ * condition was never the bug; having two sources was. So the global is gone
+ * from this path: what answers is the active content, in the order the run
+ * itself layers it —
+ *
+ *   1. the card INSTANCE (`cardTags`), which model/registries.js writes only
+ *      onto an equipment-generated card. Absent means an ordinary card and is
+ *      the one genuine miss; `[]` is a profile that grants nothing, and says so.
+ *   2. the card ROW in the supplied registries, stamped from that bundle's own
+ *      tagging rows.
+ *   3. the EFFECT, which came out of that same bundle, and is what speaks for a
+ *      non-card effect (no cardId at all) and for isolated engine fixtures whose
+ *      cards carry no rows.
+ *
+ * A caller with no registries and no effect tags gets `[]` — the honest answer,
+ * because nothing it handed us said otherwise. It no longer gets the shipped
+ * game's tags for a bundle it never supplied.
+ */
+export function attackTagsFor(action, effect, registries) {
+  if (action.card && Array.isArray(action.card.tags)) return action.card.tags;
+  const cardId = action.card && action.card.cardId;
+  if (cardId && registries && registries.cards && registries.cards.has(cardId)) {
+    const stamped = registries.cards.get(cardId).tags;
+    if (Array.isArray(stamped) && stamped.length) return stamped;
+  }
+  return Array.isArray(effect.tags) ? effect.tags : [];
 }
 
 /**
@@ -97,16 +133,24 @@ export function attackTagsFor(action, effect) {
  */
 export function applyAttackDamage(ctx, source, target, base, attackTags, carrier = null) {
   if (!target || !target.alive) return 0;
-  const dmg = computeAttackDamage(ctx, source, target, base, attackTags, carrier);
+  if (F.consumeFoundationEvade(ctx, source, target, carrier)) return 0;
+  const receipt = ctx.foundation ? F.foundationDamage(ctx, source, target, base, carrier, attackTags || []) : null;
+  const dmg = receipt ? receipt.amount : computeAttackDamage(ctx, source, target, base, attackTags, carrier);
   const blocked = Math.min(target.block, dmg);
   target.block -= blocked;
   const hpLoss = dmg - blocked;
+  const components = receipt?.components;
+  const hpShares = components && dmg > 0 ? allocateInteger(hpLoss, components.map((c) => c.amount)) : [];
   if (hpLoss > 0) target.hp -= hpLoss;
   ctx.emit('damageDealt', {
+    ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(source), targetPlayerId: ctx.playerIdForEntity(target) } : {}),
     sourceId: source ? source.id : null,
     targetId: target.id,
     amount: dmg,
     blocked,
+    blockRemaining: target.block,
+    ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
+      tags: receipt.tags } : {}),
     isAttack: true,
   });
   if (hpLoss > 0) {
@@ -135,7 +179,11 @@ function applyArcaneExposure(ctx, source, target, carrier) {
     ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'locked', school, attempted: perHit });
     return;
   }
-  const amount = Math.floor(perHit * mapped * cfg.buildupMultiplier);
+  // The hit's SOURCE may multiply its buildup: an `exposureBuildupMult` passive
+  // on a relic it owns or a property it has mounted (a wand's `overcharge`).
+  // Exactly 1 when neither carries one, so every existing hit is unchanged.
+  const sourceMult = passiveMult(ctx.registries, (source && source.relicIds) || [], 'exposureBuildupMult', propertyMountsOf(ctx, source));
+  const amount = Math.floor(perHit * mapped * cfg.buildupMultiplier * sourceMult);
   if (amount <= 0) return;
   cfg.value += amount;
   ctx.emit('arcaneExposureChanged', { targetId: target.id, sourceId: source && source.id, school, amount, value: cfg.value, threshold: cfg.threshold });
@@ -171,7 +219,7 @@ export function gainBlock(ctx, entity, base) {
     amt = Math.max(0, cap - entity.block);
   }
   entity.block += amt;
-  ctx.emit('blockGained', { targetId: entity.id, amount: amt });
+  ctx.emit('blockGained', { targetId: entity.id, amount: amt, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
   return amt;
 }
 
@@ -234,9 +282,11 @@ function afterHpChange(ctx, target) {
  */
 export function staggerEnemy(ctx, enemy) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) return;
   const cancelled = enemy.pendingMove ? enemy.pendingMove.moveId : null;
   enemy.pendingMove = null;
   enemy.skipNextTurn = true;
+  if (ctx.foundation) enemy.impactProtectedUntil = ctx.turn + ctx.foundation.rules.impact.protectionTurns;
   enemy.intent = { kind: 'staggered', moveId: null };
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
 }
@@ -244,6 +294,10 @@ export function staggerEnemy(ctx, enemy) {
 export function dealPoiseDamage(ctx, enemy, amount) {
   if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
   const n = Math.max(0, Math.floor(amount));
+  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) {
+    enemy.poiseMeter.value = Math.min(enemy.poiseMeter.max - 1, enemy.poiseMeter.value + n);
+    return;
+  }
   enemy.poiseMeter.value += n;
   const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   let guard = 0;
@@ -259,6 +313,7 @@ export function dealPoiseDamage(ctx, enemy, amount) {
     if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
       enemy.poiseMeter.max = Math.ceil(enemy.poiseMeter.max * growth);
     }
+    if (ctx.foundation) { enemy.poiseMeter.value = Math.min(enemy.poiseMeter.max - 1, enemy.poiseMeter.value); break; }
   }
 }
 
@@ -394,6 +449,7 @@ function evalNum(ctx, action, value, dflt, target) {
 
 export function executeAction(ctx, action) {
   if (ctx.result) return; // combat already decided; remaining actions fizzle
+  if (ctx.foundation) ctx._foundationAncestry = action.meta?.foundationAncestry || [];
   const eff = action.effect;
 
   // Budgeted escape hatch (SPEC §3.1(6)): { script: 'name', ...args }.
@@ -435,7 +491,8 @@ function runOpcode(ctx, action, eff) {
     case 'damage': {
       // hits may legitimately evaluate to 0 (X-cost at 0 energy whiffs, StS-style).
       const hits = Math.max(0, evalNum(ctx, action, eff.hits, 1));
-      const attackTags = attackTagsFor(action, eff);
+      const attackTags = attackTagsFor(action, eff, ctx.registries);
+      const impact = ctx.foundation ? F.foundationImpact(ctx, action, hits) : [];
       for (let h = 0; h < hits; h++) {
         // Re-resolve per hit so randomEnemy splits across enemies and per-hit
         // triggers (e.g. stance-applied build-up) see live state.
@@ -443,7 +500,18 @@ function runOpcode(ctx, action, eff) {
         for (const t of targets) {
           if (!t.alive) continue;
           const base = evalNum(ctx, action, eff.amount, 0, t);
-          applyAttackDamage(ctx, action.source, t, base, attackTags, action.card);
+          const carrier = eff.attack ? { ...action.card, attack: eff.attack } : action.card;
+          const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
+          applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          if (ctx.foundation && !evaded && t.alive && !(action.meta?.foundationAncestry?.length)) {
+            const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)));
+            dealPoiseDamage(ctx, t, resistedImpact);
+            if (t.kind === 'enemy') ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact });
+            // Only the resolved source contributes contact buildup. A focus
+            // can own effects too; the other hand's sword is never consulted.
+            const weaponBuildup = F.foundationSource(ctx, action.source, carrier).buildup || [];
+            for (const buildup of [...weaponBuildup, ...(carrier?.attack?.buildup || [])]) statuses.applyStatus(ctx, t, buildup.status, buildup.amount, action.source);
+          }
         }
       }
       break;
@@ -452,6 +520,27 @@ function runOpcode(ctx, action, eff) {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
       }
+      break;
+    }
+    case 'dodgeRoll': {
+      if (ctx.foundation) { F.grantFoundationEvade(ctx, action.source); break; }
+      // The dodge (framework contract: Weight Class and Dodge Roll). Player
+      // only — the class, Dexterity and the die live on the player's side of
+      // the board. The engine rolls on its own stream; the framework decides
+      // the check, the difficulty and the temporary guard, which lands as
+      // Block through the same door every block does.
+      const p = ctx.player;
+      if (!action.source || action.source.id !== p.id) break;
+      const roll = ctx.rng.int('misc', 1, ctx.registries.framework.dodgeDie());
+      const dexterity = (ctx.attributes && ctx.attributes.dexterity) || 10;
+      const stance = playerWeightClass(ctx);
+      const receipt = ctx.registries.framework.dodgeRoll({ roll, dexterity, weightClass: stance.weightClass });
+      ctx.emit('dodgeRolled', {
+        ...(ctx.playerIdForEntity ? { sourcePlayerId: ctx.playerIdForEntity(p) } : {}),
+        sourceId: p.id, roll, check: receipt.check, difficulty: receipt.difficulty,
+        success: receipt.success, temporaryGuard: receipt.temporaryGuard, weightClass: stance.weightClass.id,
+      });
+      if (receipt.success && receipt.temporaryGuard > 0) gainBlock(ctx, p, receipt.temporaryGuard);
       break;
     }
     case 'applyStatus': {
@@ -512,6 +601,13 @@ function runOpcode(ctx, action, eff) {
       ctx.emit('energyGained', { amount: n });
       break;
     }
+    case 'restoreStamina': {
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        const amount = Math.min(t.maxStamina - t.stamina, Math.max(0, evalNum(ctx, action, eff.amount, 1)));
+        t.stamina += amount; ctx.emit('staminaRecovered', { targetId: t.id, amount, reason: 'effect' });
+      }
+      break;
+    }
     case 'restoreMana': {
       const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
       for (const t of resolveTargets(ctx, action, eff.target)) {
@@ -547,7 +643,7 @@ function runOpcode(ctx, action, eff) {
         ctx.emit('stanceExited', { stance: ctx.player.stanceId });
       }
       ctx.player.stanceId = stanceId;
-      ctx.emit('stanceEntered', { stance: stanceId });
+      ctx.emit('stanceEntered', { stance: stanceId, playerId: ctx.playerKey || ctx.player.id });
       for (const onEnter of def.onEnter || []) {
         ctx.enqueue({ effect: onEnter, source: ctx.player, owner: ctx.player, target: action.target, meta: action.meta });
       }
@@ -592,23 +688,62 @@ function runRunOpcode(ctx, action, eff) {
       break;
     }
     case 'removeCardFromDeck': {
+      // Run-owned basics retire their slot; item grants remain equipment-owned.
       let idx = -1;
-      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card);
-      else if (eff.random) idx = run.deck.length ? Math.floor(ctx.rng.float('misc') * run.deck.length) : -1;
-      if (idx >= 0) run.deck.splice(idx, 1);
+      if (eff.card) idx = run.deck.findIndex((c) => c.cardId === eff.card && canRemoveDeckCard(c));
+      else if (eff.random) {
+        const candidates = run.deck.map((c, i) => i).filter((i) => canRemoveDeckCard(run.deck[i]));
+        idx = candidates.length ? candidates[Math.floor(ctx.rng.float('misc') * candidates.length)] : -1;
+      }
+      if (idx >= 0) removeDeckCard(run, run.deck[idx].instanceId);
       break;
     }
     case 'upgradeCard': {
-      const candidates = run.deck.filter((c) => !c.upgraded && (!eff.card || c.cardId === eff.card));
+      const plan = smithingPlan(ctx.registries, run);
+      // Since the item-upgrade redesign the plan also offers non-armament
+      // items (no armamentId, no affectedCards); a card upgrade can only ride
+      // an armament, so only those become candidates here.
+      // AND ONLY AN ARMAMENT WITH CARDS IN THE DECK TODAY. A carried armament
+      // with no live cards is a Smithing candidate (the Shrine previews it
+      // through its authored roles), but a "random card" upgrade that landed
+      // on it would set a tier and upgrade zero cards the player holds — the
+      // choice promised a card (Codex, #535).
+      const armaments = plan.candidates
+        .filter((candidate) => candidate.itemKind === 'armament')
+        .filter((candidate) => candidate.affectedCards.length > 0)
+        .filter((candidate) => !eff.card || candidate.affectedCards.some((card) => card.cardId === eff.card))
+        .map((candidate) => ({ kind: 'armament', id: candidate.armamentId }));
+      const ordinary = run.deck
+        // Equipment-composed instances are excluded like sourceArmamentId
+        // ones: a granted/weaponArt instance (grantedBy) is rebuilt from its
+        // package on every reconcile, so a per-copy upgraded flag would not
+        // survive an unequip/re-equip — its upgrade rides the armament. An
+        // UNARMED role instance (equipmentRole without a source piece — the
+        // unarmed Strikes and Evasive Guards) keeps its per-copy flag through
+        // reconcile (loadout.js resets it only when a piece takes the slot),
+        // so it stays a candidate. A card whose upgrade is not authored — the
+        // pure Dodge Roll — is never one: the event would spend for nothing.
+        .filter((card) => !card.sourceArmamentId && !card.grantedBy && !card.upgraded && (!eff.card || card.cardId === eff.card))
+        .filter((card) => ctx.registries.cards.has(card.cardId) && !!ctx.registries.cards.get(card.cardId).upgrade)
+        .map((card) => ({ kind: 'card', card }));
+      const candidates = [...armaments, ...ordinary];
       if (candidates.length === 0) break;
       const chosen = eff.random ? ctx.rng.pick('misc', candidates) : candidates[0];
-      chosen.upgraded = true;
+      if (chosen.kind === 'armament') {
+        const receipt = commitSmithing(ctx.registries, run, chosen.id, undefined, { free: true });
+        ctx.emit('armamentSmithed', receipt);
+      } else {
+        chosen.card.upgraded = true;
+      }
       break;
     }
     case 'addRelic': {
       let relicId = eff.id || null;
       if (!relicId && eff.random) {
-        const pool = ctx.registries.relics.ids().filter((id) => !run.relics.includes(id));
+        // Quest-pool relics are never "a random relic" — they are the named
+        // reward of the choice that grants them (RELIC_POOLS, model/schemas.js).
+        const pool = ctx.registries.relics.ids()
+          .filter((id) => !run.relics.includes(id) && relicInRewardPool(ctx.registries.relics.get(id)));
         if (pool.length === 0) break;
         relicId = ctx.rng.pick('relicRewards', pool);
       }
@@ -677,13 +812,15 @@ function runRunOpcode(ctx, action, eff) {
  * heal apply to the run's HP through a player facade so events like
  * "take 6 damage" and "heal 20% max HP" work.
  */
-export function executeRunEffects({ run, registries, rng }, effects) {
+export function executeRunEffects({ run, registries, rng }, effects, meta = {}) {
   const events = [];
   const facade = {
     id: 'player',
     kind: 'player',
     hp: run.hp,
     maxHp: run.maxHp,
+    mana: run.mana,
+    maxMana: run.maxMana,
     block: 0,
     statuses: {},
     stanceId: null,
@@ -717,7 +854,7 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     },
   };
   for (const eff of effects) {
-    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta: {} });
+    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta });
   }
   let guard = 0;
   while (ctx.queue.length) {
@@ -725,5 +862,30 @@ export function executeRunEffects({ run, registries, rng }, effects) {
     executeAction(ctx, ctx.queue.shift());
   }
   run.hp = Math.min(facade.hp, run.maxHp);
+  run.mana = Math.min(facade.mana, run.maxMana);
   return { events };
+}
+
+/** Spend one permanent restorative charge and apply its authored run effects. */
+export function useRunChargeFlask({ run, registries, rng, kind }) {
+  const def = chargeFlaskDefinition(registries, kind);
+  const currentKey = `${kind}Current`;
+  if (!def || !run.flaskCharges || run.flaskCharges[currentKey] <= 0) {
+    throw new Error(`No ${kind} flask charges`);
+  }
+  // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
+  // The combat path does this in combat.js; a flask drunk on the map is the
+  // same flask and the relic makes the same promise, so it scales here too.
+  // The multiplier is applied at THIS call site rather than inside
+  // executeRunEffects, because that function also runs event choices and
+  // keepsakes, which flaskPowerMult has nothing to do with.
+  const amountMult = passiveMult(registries, run.relics || [], 'flaskPowerMult');
+  const result = executeRunEffects(
+    { run, registries, rng },
+    def.effects || [],
+    amountMult !== 1 ? { amountMult } : {},
+  );
+  run.flaskCharges[currentKey] -= 1;
+  result.events.unshift({ type: 'flaskUsed', flaskId: def.id, chargeKind: kind });
+  return result;
 }

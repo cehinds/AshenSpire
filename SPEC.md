@@ -14,6 +14,23 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 Numbers in this spec are the **initial balance targets**. They will move during the M3 balance pass, but the *structures* (formulas, orderings, state shapes) are contractual.
 
+### Combat and equipment revision: implementation contract
+
+[Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) is the normative
+contract for the next combat ruleset: categorized tags, typed damage and defenses,
+weapon impact, deterministic Evade, trigger/stacking semantics, and the three-build
+prototype gate before equipment and class-card expansion. It also specifies the
+accepted stance, grip, affinity, armor, rune, loot, and empty-hand creation work.
+
+This is a specification change, not a claim that those mechanics are shipped.
+Existing runs use their supported ruleset until an explicit migration is implemented.
+For the new ruleset, the linked contract supersedes the conflicting parts of
+sections 3.3-3.7 (schemas/effects/triggers), 3.8 (equipment and rewards), 3.12 (saves),
+4.1-4.5 (combat), 5.1-5.4 (content), 6 (reward generation), and 7.4 (stance animation).
+Those sections continue to describe legacy behavior during migration. New code
+must not silently combine legacy dodge, idle-only recovery, armor-weight coupling,
+or card-only poise with the replacement rules.
+
 ---
 
 ## 1. Product overview
@@ -23,7 +40,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
-| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open at Settings → Profile (§3.12) |
+| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
 | Entry point | `index.html` opened directly or via any static server |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
@@ -61,18 +78,24 @@ the module**, and the load-bearing runtime claim (*no AI runs while you play*) i
 named string** that both the player and the falsifier are given — it previously existed twice,
 in different words, so no comparison could ever have caught them diverging.
 
-**`approved: true` since 2026-08-07 — and this spec says so because it is true.** The wording
-was Constantine's call at release and he made it; the flag records whose words these are and
-**nothing reads it to decide whether to render** — the acknowledgement always shows. Approval
-is a release gate (§9), not a display condition. **The flag is about THIS wording:** any edit
-to the text returns it to `false` in the same act, or it stops recording anything.
+**The approval flag lives in `src/content/aiDisclosure.js` and this spec no longer restates
+its value.** Read it there, or run `node tools/ai-disclosure.mjs`, which prints the current
+state. The flag records whose words the wording is and **nothing reads it to decide whether to
+render** — the acknowledgement always shows. Approval is a release gate (§9), not a display
+condition. **The flag is about THIS wording:** any edit to the text returns it to `false` in
+the same act, or it stops recording anything.
 
-> **This sentence is a SECOND COPY of a boolean and it went stale the day the boolean moved**
-> *(Saga, 2026-08-07)*. `docs/SPEC-RECONCILE.md` carries a third. Nothing syncs the three —
-> Law 1 clause 2, in the file that states the arrangement. **The honest fix is for the spec to
-> cite the module rather than restate its value**; I am correcting the value rather than
-> restructuring another seat's file, and naming the defect here so the next reader does not
-> have to rediscover it.
+> **This paragraph used to be a SECOND COPY of that boolean, and it went stale exactly as
+> predicted** *(Saga, 2026-08-07: "this sentence is a second copy of a boolean and it went
+> stale the day the boolean moved")*. It said `approved: true` while the module said `false`,
+> giving the release gate two authoritative answers.
+>
+> **Saga named the honest fix and it is now done: the spec cites the module rather than
+> restating its value.** The 2026-08-07 note declined it only to avoid restructuring another
+> seat's file. `docs/SPEC-RECONCILE.md` still carries a third prose copy; it is a historical
+> row recording what change #73 did, and it is annotated rather than rewritten — but it is
+> the remaining copy, and it will go stale the next time the flag moves.
+> *(AS-HD-040, 2026-09-03.)*
 
 *Falsify:* `node tools/ai-disclosure.mjs --check` after the last bundle rebuild — a stale
 bundle ships an acknowledgement that disagrees with the store page. The runtime claim carries
@@ -146,7 +169,8 @@ defect this layering exists to catch.
 | Entity | Key fields |
 |---|---|
 | Card | `id, class, rarity, cost (int \| 'X'), type, keywords[], effects[], textTemplate, upgrade` (partial override object) |
-| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction, swapCostDelta` |
+| Relic | `id, rarity, textTemplate, triggers[], passives?` — passives are a closed key set the run systems consult, and it has **one home**: `PASSIVE_TYPES` in `src/model/schemas.js`, which the relic schema's `passives` node is BUILT FROM rather than restating (the two were separate hand-typed lists until A8, and only the schema enforced anything). Today: `runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction, swapCostDelta, exposureBuildupMult` (Arcane Exposure buildup per hit ×, read for the hit's source). The passive readers (`passiveMult` / `passiveSum` / `passiveFlag`) also read the owner's **mounted property rules** (§3.6) when a combat caller passes them, so a property confers a passive exactly as an owned relic does |
+| PropertyRule | `tag, requires[], excludes[], textTemplate, passives?, triggers?` — what one `property`-domain tag confers, keyed by the tag. Authored in `content/source/propertyRules.csv` with a JSON sidecar `propertyRuleEffects.json` for the relic-shaped `passives`/`triggers`, joined in `src/content/propertyRules.js`; its `passives` node is built from the same `PASSIVE_TYPES` fields as the relic's. Exactly one rule per property tag. Only a carrier holds a property tag — an armament, armour, relic or class (`PROPERTY_CARRIER_FAMILIES`); a card never does, because a card's behaviour is its own effect list. Property tags are stamped onto a carrier's `propertyTags`, never its `tags`. Sidecar numbers name `balance.js` rows (`{ "balance": "path" }`) |
 | Status | `id, name, icon, stackMode, decay, meter?, modifiers?, hooks?` (§3.7) |
 | Stance | `id, name, icon, onEnter?, modifiers?, hooks?` |
 | Keyword | `id, name, tooltip` (display only; semantics are engine primitives) |
@@ -182,7 +206,7 @@ effects: [
 
 **Opcode list** (closed set; extending it is an engine PR):
 
-- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`.
+- Combat: `damage {hits?}`, `block`, `applyStatus`, `removeStatus`, `draw`, `discard {random?}`, `exhaust`, `addCard {card, pile, position}`, `gainEnergy`, `loseHp` (ignores block), `heal`, `shuffleDiscardIntoDraw`, `enterStance`, `poiseDamage`, `dodgeRoll` (player only; no fields — the die, the Dexterity + Weight Class check, the difficulty and the temporary guard are the framework's `dodgeRoll` rule over `mechanics.json`; rolls on stream `misc`; success lands the guard as Block through the block door; emits `dodgeRolled`).
 - Run-level (events, shops, rewards reuse the same DSL): `addRunes`, `addCardToDeck {card}`, `removeCardFromDeck`, `upgradeCard {random?}`, `addRelic {random? | id}`, `addFlask`, `loseMaxHpPct`, `startCombat {encounterId}`.
 
 Common fields on any opcode: `target: self | enemy | allEnemies | randomEnemy` (cards with an `enemy` target require UI targeting), `amount: number | Formula` (§3.5), `if: Predicate` (§3.6) to gate the opcode, `repeat: n` for multi-hit.
@@ -223,7 +247,7 @@ model door.
 
 ### 3.6 Trigger DSL and predicates
 
-Relics, powers, statuses, stances, and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start:
+Relics, powers, statuses, stances, mounted properties, and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start:
 
 ```js
 // Fell Omen Brand: "Whenever an enemy Staggers, draw 2."
@@ -239,7 +263,9 @@ phases: [{ on: 'hpBelowPct', pct: 50, once: true,
 
 Trigger fields: `on` (event name from §3.10, plus `hpBelowPct`), `if?` (predicate), `do` (effects, §3.4), `once?`, `limitPerTurn?`.
 
-Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), and `all / any / not` combinators.
+Predicates (closed set, combinable): `{ p: 'inStance', stance }`, `{ p: 'hasStatus', of, status, atLeast? }`, `{ p: 'hasBlock', of }`, `{ p: 'hpBelowPct', of, pct }`, `{ p: 'firstCardThisTurn' }`, `{ p: 'firstAttackThisCombat' }`, `{ p: 'cardTypeIs', type }`, `{ p: 'everyNthCardThisCombat', n }`, `{ p: 'random', pct }` (uses a named stream), `{ p: 'eventIsAttack' }` / `{ p: 'eventSourceIsOwner' }` / `{ p: 'eventTargetIsOwner' }` / `{ p: 'eventStatusIs', status }` (gate a trigger on its firing event's payload — e.g. a stance that reacts only to the owner's own attack hits, or a relic reacting to Bleed meter fills), `{ p: 'skillLevelAtLeast', skill, level }` / `{ p: 'classLevelAtLeast', level }` (progression gates; they read the skill and class ledger of plan phase 4 and are **false until that ledger exists**, so a branch gated on them is inert), and `all / any / not` combinators.
+
+**Property mounts — the one path a property reaches combat** (`src/engine/properties.js`). A carrier is `{ kind, id, instanceId, ownerKey, tagIds }`; `mountProperties` resolves its property tags to their rules (keeping a rule only when its `requires` are on the same carrier and its `excludes` are not) and records them at `ctx.propertyMounts[ownerKey][sourceKey]`, `sourceKey = kind:instanceId`; `unmountProperties` deletes it. **A source key mounts once:** mounting one already mounted throws by name, so a re-equip can never fire a trigger twice. Today's carriers are the equipped armaments and armour: `createCombat` mounts the loadout's worn pieces before any event, and both equipment doors (`swapArmament`, and `changeEquipment` after `equipPiece`) re-sync — the outgoing piece's properties leave with it, the incoming piece's arrive. Mounts are **never saved**: `restoreCombatSnapshot` re-derives them from the restored loadout. `scanTriggers` walks mounted rules as its fourth source, beside relics, stances and statuses, under the gate key `property:<owner>:<sourceKey>:<i>` (source keys sorted, so a restored fight fires in the live order; the key is stable across unequip and re-equip, so a `once` gate is not reset by swapping). Shipped: both sceptres carry **`siphon`** — when the holder's own hit causes an `arcaneBreak`, restore `balance.exposure.siphonRefund` Mana (`siphonRefundMastered` once the focus skill reaches `siphonMasteryLevel`, a branch inert until plan phase 4). The **`overcharge`** rule (buildup per hit × `balance.exposure.overchargeBuildupMult`, via the `exposureBuildupMult` passive) ships with no carrier: no armament is a wand yet.
 
 ### 3.7 Status model — statuses are content, not code
 
@@ -296,7 +322,8 @@ Two closed vocabularies, both in `balance.equipment`, both derived rather than a
 
 | Question | Word | Chain |
 |---|---|---|
-| what does a mid-fight set-swap cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** `base: 'category'` prices by the DRAWN piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js` and it returns the whole derivation; `engine/combat.js` charges it and the `armamentSwapped` event carries the number. |
+| what does a mid-fight equipment action cost | `swapCostRule` — one of `swapCostRules[].id` | **base → gear → floor 0.** Both prepared-set swaps and item replace/move/unequip actions use this price. `base: 'category'` prices by the destination piece's tags against `swapCostByCategory` (ordered, first match wins), falling through to `swapCost`; `base: 'default'` is `swapCost` for everything. `gear: true` adds the signed total of relic `swapCostDelta` passives and worn `self.swapCost` mods. The truth function is `swapCostFor()` in `model/loadout.js`; `engine/combat.js` charges it and emits `armamentSwapped` or `equipmentRearmed` with the number. |
+| may carried equipment change during combat | `allowChangesInCombat` | When true, the player-turn Armoury may replace, move, or unequip carried gear through the `changeEquipment` combat intent. The engine applies the price, updates resource maxima and Poise, reconciles equipment-granted cards, restamps every live pile, and persists the same loadout object. False closes both UI and mutation paths. |
 | which pieces need no finding | `basicTag` | A piece carrying that tag answers the **found** gate for free (`ownership()`). It has no opinion about the **earned** gate; a row carrying both is refused by name. `persistence` remains the only scope word — profile-wide (`both`, the shipped default) vs this-run-only (`perRun`). |
 
 **A weapon's category is its tags** — `heavy`, `flourish` — never a `swapCost` column, because a
@@ -307,6 +334,161 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 `apply` in `equipMods.csv` is a closed set **per scope** — `CARD_MOD_APPLIES` / `RUN_MOD_APPLIES`
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
+
+**The starting deck.** `balance.startingDeckSize` is a **cap on the BASE cards** — the
+strikes and defends the game mints for you — and it applies at **character creation and
+nowhere else**. The order is fixed:
+
+1. **Bound cards are dealt first.** Anything equipment brings: cards from a piece carrying
+   the `bound` tag (`equipmentGrants.csv`), a weapon package's `grantedCards`, its
+   `weaponArtDefaults`, the class signature, and `startingDeck.global.grants`. These are
+   never capped, never dropped and never refused. They belong to the equipment, not the run.
+2. **Base cards fill what the cap leaves.** `filler = max(0, cap − bound)`, split between
+   attack and guard by the class's `strikeBias`. An odd remainder goes to whichever role
+   `startingDeck.oddFillerGoesTo` names — `attack` by default.
+3. **What those base cards ARE comes from the equipped profile** — a sword-wielder's base
+   attacks are Slashing Strikes, and a bare hand's are the `unarmedProfiles` set. That is
+   the whole of "unarmed fills in": it supplies the identity of base cards, it does not top
+   up a floor.
+
+If equipment alone meets or exceeds the cap, no base cards are minted and the run begins
+with only its equipment cards. That is a **balance question for whoever authors the gear**,
+not a validation failure — `validateEquipment` says so as a warning, naming the class and
+the loadout, and refuses nothing.
+
+**After creation the cap does not apply.** Swapping to gear that lends fewer cards leaves a
+smaller deck; more, a larger one. There is no re-minting of base cards mid-run and no
+attempt to hold a total. What DOES hold mid-run is the attack count: a swap re-skins the
+attack slots the run was born with (`equipmentAttackSlotCount`, recorded at creation and
+read, never re-derived), minus permanently removed slots. `removedAttackSlotIds`
+records unique stable `attack:N` ids from that birth allocation; absent means none.
+Merchant and event removal may remove run-owned basic attacks, including their
+current weapon-derived faces. Removal retires that slot for the run without
+renumbering survivors. Equipment swaps, combat setup, save/load and mid-combat
+restamping use the same surviving slot plan and never restore a removed copy.
+Item-owned grants remain ineligible for permanent deck removal. The merchant
+revalidates the selected instance, funds and nonempty-deck guard before charging.
+
+**Every card has an owner: the run, or one item.** Run-owned cards are the run's for good —
+the base strikes and defends (gear only re-skins them), the class signature, global grants,
+rewards. Item-owned cards ride with the item: equip it and they arrive, unequip it and they
+leave, equip it again and they return identical. **If the item is not equipped, its cards are
+gone** (owner ruling, 2026-09-03). This is one rule with three authoring sources feeding it —
+a weapon package's `grantedCards`, its `weaponArtDefaults`, and the `bound` table
+(`equipmentGrants.csv`, gated by the `bound` tag on any piece, armour included) — and one
+reconcile that applies it on every equip transition, in or out of combat. Item-owned
+instances carry deterministic ids and the owner's namespaced ref, so the reconcile is
+idempotent and a save is stable across it.
+
+Everything above is data. The cap, the per-class bias and its default, the odd-split
+winner, and the grant-source vocabulary are all authored — the sources are rows in the
+`grantSource` tag domain, so adding one is a spreadsheet line rather than a code change.
+The engine mints bound cards at four seams (global, armor, weapon, class) and reads the
+tag each one stamps from `startingDeck.sources`, so RENAMING a source is a data edit too:
+the map, the tag row and `sourceOrder` move together, and a binding that names no
+registered source — or a seam left unbound — is refused by name rather than silently
+dealing that source's cards last.
+
+**Card mounts: the smith's other two services.** Every card an item lends sits in a **mount**
+on that item, keyed by the instance id the composer mints for it, so "the sword's art" is the
+same mount on every restamp, save and fight. A smith — the Shrine's, or one a merchant rolls —
+does three things: **upgrade** an item (the tier promotion), **extract** a card out of one of
+its mounts, and **seat** a run-owned card in an emptied or open mount.
+
+- **Extract.** The card becomes the run's own — a run-owned instance joins the deck and stays
+  whatever the item does — and the mount it left is never dead: it shows its kind's **fallback**
+  until something is seated. A weapon-art mount falls back to the unarmed technique (the Dodge
+  Roll), read from `unarmedProfiles`; a granted mount falls back to nothing; any item may
+  override its fallback under `cardMounts.fallbackByItem`. A fallback is the mount's, not the
+  item's, and is never itself extractable.
+- **What is extractable is a tag on the card** (`cardMounts.extractableTag`, `extractable`
+  today). Strikes and defends do not carry it; the day the game changes its mind, that is a
+  spreadsheet edit. A mount accepts a card carrying any tag in its kind's `accepts` list.
+- **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
+  and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
+  per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
+  the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
+  and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
+  once per visit on the smith's own RNG stream and rides with the stock, so a reload does not
+  roll again and the roll shifts no later reward in an existing seed.
+
+What a smith did is `run.itemMounts` — per item, per mount: emptied, or the card seated —
+read by the composer on every restamp and carried into combat and into a saved fight the way
+the birth quota is, so a mid-fight swap or a load cannot re-mint an extracted card from the
+item's authoring. Nothing here touches an item's authoring, and absent means untouched, so no
+migration invents the field.
+
+**Equipped weapon card packages.** `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
+`EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
+weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;
+two eligible one-handed weapons split right `ceil(N/2)` then left `floor(N/2)`. Within a hand,
+ordered priority/effect references precede repeated filler. Shields and other items without a
+weapon package consume no quota.
+
+The plan preserves `equipmentAttackSlotId`, `instanceId`, upgrades, and acquisition metadata and
+changes only package-derived card/profile/receipt/mod fields. Equip, unequip, hand move, and active
+set swap apply the plan atomically and emit one post-commit `equipmentChanged` receipt; creation
+and load/continue call the same composition service directly. Combat rebinds generated attack
+instances wherever they currently live in hand, draw, discard, or exhaust after the current card
+resolution. Legacy role-only generated attacks map once in deck order to `attack:0..N-1` and are
+never appended. Explicit `handsRequired: 2` claims the whole attack quota and is never inferred
+from tags, names, art, or kind. A conflicting off-hand, duplicate piece without distinct equipment
+instance identity, or a claimed but invalid package fails closed; Unarmed is only the valid
+zero-weapon plan.
+
+An exact active-combat snapshot uses its own saved loadout as the authority. After snapshot shape
+and content-reference validation, the same service migrates the complete generated attack set in
+the fixed pile order `draw`, `hand`, `discard`, `exhaust`; no card moves between piles. The migrated
+snapshot loadout replaces the stale top-level run projection before continue. Package migration
+must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card
+reference. Invalid duplicate or explicit two-handed-plus-offhand snapshot loadouts are archived
+fail-closed rather than normalized or replaced with Unarmed.
+
+#### Complete armament kits
+
+Every shipped hand-equipped armament authors a `weaponCardPackage.combatKit`:
+`{ attackProfileId, guardProfileId, artCardId }`. Weapons, shields, implements,
+and staves each lend one Strike, one Guard, and one signature Armament Art while
+equipped. Armour, talismans, and consumables do not acquire this kit.
+
+These three item-owned cards are guaranteed before the starting filler budget
+is divided. A shield therefore supplies a Strike even beside a sword or when
+the filler budget is zero. Its Strike and Guard use its own profiles, attribute
+scaling, damage school, and smithing level. Attack modifiers are restricted to
+their source armament; Guard modifiers retain the existing loadout-wide rule.
+Run-owned filler attack slots and permanent removals retain their existing
+identities. In a shield/non-shield pair the non-shield retains the filler attack
+quota; the shield still lends its guaranteed Strike. Two other one-handed
+armaments split filler as before. A two-handed armament lends one kit.
+
+Kit basics use deterministic `kit:<item>:attack|guard` identities, are not smith
+mounts, and cannot be extracted or permanently removed. Their owner is recorded
+in `grantedBy`, with `equipmentRole: granted`, `kitRole`, and `profileId`.
+The signature Art uses the existing weapon-art mount and extraction/fallback
+rules. A deliberate smith replacement can therefore change the signature Art.
+Each item's signature mount is installed independently, even when two items
+author the same card; optional non-kit arts retain the existing shared-art rule.
+Reconciliation preserves cards already in discard or exhaust. Unequipping
+removes item-owned contributions and re-equipping restores their stable IDs.
+
+New armed starting decks omit the redundant global technique grant. Empty-hand
+Dodge Roll and fully unarmed Strike/Guard/technique behavior remain unchanged.
+Existing saves retain run-owned cards and their original attack-slot quota;
+normal equipment reconciliation adopts missing item-owned kits without
+re-minting permanently removed filler. Equipment previews use the same composer
+and show the exact contributed cards, including counts.
+
+Shield signature identities are Shield Bash (Round Shield), Riposte (Buckler),
+Guardian (Kite Shield), Bastion (Tower Shield), and Spiked Reprisal (Spiked Shield).
+Guardian costs 1 Energy, grants 5 Block, adds a temporary 1-Energy Enter: Bulwark
+skill to the hand, and Exhausts. The generated skill also Exhausts, is usable by
+every class, and enters the existing Bulwark stance. A full hand sends it to
+discard. It never enters the permanent run deck and disappears after combat.
+Bastion costs 1 Energy, grants 12 Block, applies 1 Weak to self, and Exhausts.
+Spiked Reprisal costs 1 Energy, grants 4 Block, deals 4 damage, and applies 2
+Bleed. Existing card effects supply the other authored armament Arts.
 
 ### 3.9 Action queue
 
@@ -328,13 +510,14 @@ statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
 enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
+equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 ```
 
 ### 3.11 Seeded RNG
 
 - `rng.js` implements **mulberry32**. A run seed (uint32, displayed base-35 like StS, e.g. `3LB6HXYD`) is rolled at run start or entered manually on the class-select screen.
 - **Named streams**, each independently derived from the seed + a stream salt + a monotonically increasing counter that is *saved with the run*:
-  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws).
+  `map`, `shuffle`, `cardRewards`, `relicRewards`, `flaskRewards`, `armaments`, `enemyAI`, `enemyHP`, `events`, `shop`, `misc`, `smith`, `combatProcs`, `seats` (the closed set is `STREAM_NAMES`, `src/engine/rng.js` — an unknown stream name throws). `seats` is drawn exactly once, at run creation, for the seat order (§13); it exists so that order can be seeded without moving a single draw on any other stream.
 - Consequence (StS-faithful): re-fighting the same combat after reload produces the same shuffles; choosing a different path doesn't change what a later card reward would have been on another stream.
 
 ### 3.12 Save format, and the durable profile
@@ -351,9 +534,14 @@ persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`
 drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
 id only (§3.3).
 
-- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**:
-  only `combatEntered` is saved — reload restarts that combat from its start with the same
-  shuffle-stream state (StS behaviour). Abandoning mid-combat = same.
+- Saved after **every** committed player choice (node chosen, reward taken). Entering combat
+  first writes a deterministic `combatEntered` recovery checkpoint. Choosing **Save Game** or
+  **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
+  `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
+  piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
+  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
+  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
+  records without a snapshot remain compatible and restart the encounter deterministically.
 - An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
@@ -402,7 +590,7 @@ five durability properties (#66/#67), each of which is a claim a command can fal
    filename. While in that state the profile is **quarantined**: the next ordinary settings
    write cannot overwrite the original bytes, which are the evidence of every other failure.
 5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `replacePrimaryWith()` are reachable by the player at **Settings → Profile**
+   `replacePrimaryWith()` are reachable by the player from **Profile on the title screen**
    (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
    primary — which archives the outgoing one and clears the quarantine. An archive nothing can
    open is a promise, not a feature.
@@ -428,6 +616,11 @@ Card and relic `textTemplate`s carry tokens: `"Deal {damage}. Apply {bleed} Blee
    its act's rollable band, a proc row whose `burstMin` exceeds its `burstMax`, a music bed
    that is quiet by accident rather than by the declared silence word (§7.4) — each failing
    **naming the entry**, per Law 1 clause 5.
+7. Property rules (§3.3 PropertyRule): every `property` tag has exactly one rule; a rule's tag is
+   a property tag; `requires`/`excludes` name property tags; `requires` has no cycle; a sidecar
+   `{ "balance": "path" }` names a real balance number; and `property` is paired with, or
+   written on, carrier families only — a card-family pairing or tagging row fails with
+   *cards never carry properties*. Each refusal names its row (`tests/engine.test.js` test 80).
 
 **Law 1 clause 6 — the content smoke — is built and runnable** (#64). Validation only covers
 failures *downstream of itself*, so the standing check is over observable outcome, in the
@@ -477,7 +670,8 @@ dmg = floor(dmg); if dmg < 0 → 0
 
 - Types: **Attack, Skill, Power, Curse, Status**. Powers are removed from play when played (not exhausted — they don't hit the exhaust pile). Curses/Statuses are unplayable unless stated.
 - Keywords (exact StS semantics; engine primitives per §3.7): **Exhaust** (removed for the combat after play), **Ethereal** (exhausts if in hand at end of turn), **Innate** (starts on top of draw pile), **Retain** (not discarded at end of turn), **Unplayable**, **X-cost** (consumes all energy; effect scales via `{f:'energySpent'}`).
-- Upgrades: every non-curse card has exactly one upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Upgrading is permanent for the run.
+- Upgrades: every non-curse card has exactly one authored upgrade (`name+`), a partial override object on the card def (numbers, cost, keywords — a present `keywords` list replaces the base list, so upgrades can remove Exhaust). Ordinary cards retain a permanent per-copy run upgrade. Equipment-sourced basic cards instead resolve that authored upgrade from their source armament's run-owned Smithing tier, so every current and future copy from the same armament changes together.
+- Smithing: a run owns `smithingStones`, an `armamentLevels` map, and idempotent reward claims. The shipped tier cap is 1 and promoting an armament to tier 1 costs 1 Smithing Stone. Elite and boss victories award 1 Stone; normal and treasure reward pools award 0. Legacy equipment-card upgrade flags migrate to the corresponding source armament tier without granting Stones.
 - Empty draw pile + draw needed → discard pile is shuffled (stream `shuffle`) into draw first.
 
 ### 4.4 Status effects
@@ -589,10 +783,18 @@ The preset is an editor opening position, not a lock: players may redistribute t
 total within the mode's data-authored bounds. Starting derived values come only from the
 formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
 
+Choosing **Assign Points** always begins a fresh allocation at that mode's baseline for every
+attribute, with its complete bonus pool unspent. Reopening Assign Points refunds the current
+allocation the same way; class presets and earlier edits do not consume points before the
+player assigns them.
+
 **Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
 level by one and grants exactly 1 configurable attribute point by default. Price purchase
-`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 800` and `costStep = 200`.
-Therefore five purchases cost `800 + 1000 + 1200 + 1400 + 1600 = 6000` and produce level 6.
+`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 20` and `costStep = 4`
+(retuned from 800 / 200 in #522: the fleet simulator measured the shipped ladder at under one
+level-up per full run against the owner's 10–20 per run; 20 / 4 measures 14.8 — see
+`docs/asks/asks-ledger.md` E13 and `tools/runsim.mjs --level-cost`).
+Therefore five purchases cost `20 + 24 + 28 + 32 + 36 = 140` and produce level 6.
 The starting level, first cost, step, points per level and any maximum are content data; the
 worked level-6 result is a curve receipt, not a second hard-coded total or an implied cap.
 
@@ -648,7 +850,7 @@ Colorless/curse/status M1 minimum: **Wound** (status, unplayable), **Dazed** (st
 
 ### 5.3 Enemy roster — Act 1 (M1)
 
-Basics (encounters roll from the weighted table in `content/encounters/act1.js`):
+Basics (encounters roll from the weighted table in `content/encounters/weald.js` — the seat the act-1 rows became, SPEC §13.2):
 
 | Enemy | HP | Poise | Moves (weight) | Notes |
 |---|---|---|---|---|
@@ -697,6 +899,12 @@ The Crimson/Azure charge pool's shared capacity is 4 (`balance.flaskCapacity`). 
 potions remain separate inventory entries sized by `balance.flaskSlots`; increasing one does
 not silently increase the other. Utility potions are found from combats, shops and events,
 while Crimson/Azure charges refill at every grace (§5.5.1).
+
+Crimson and Azure are displayed in the same potion tray as utility potions, but remain permanent
+charge vessels: they are always present, do not consume utility-potion slots, and are never dropped.
+A persisted Gameplay setting may allow those restorative charges to be used between combats;
+it is off by default. An out-of-combat use applies the same authored healing or Mana effect and
+spends one charge, exactly as combat does.
 
 **Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
 
@@ -767,6 +975,15 @@ Unknown nodes roll on stream `events`: 55% event, 25% normal fight, 12% shrine, 
 
 Event definition = data object: `{ id, name, art, text, choices: [{ label, requires?, effects, resultText }] }` where `effects` are run-level opcodes from the one effect DSL (§3.4).
 
+**Quest chains (E12, #257).** Every committed choice is a run-history fact (`model/quests.js recordEventChoice`: `{ eventId, choiceId, actNumber, floor, mapNodeId }`, no wall clock). Two gates read those facts, both authored as sidecar data beside the events (`content/events.js`) so the validated event schema stays closed:
+
+- **Choice-level** — `eventChoiceHistoryRequirements[eventId][index]` = `{ all?, any?, none? }` of `{ eventId, choiceId }` refs; `availableEventChoices` hides a choice whose requirement is unmet without reindexing the rest. Leave stays requirement-free so a branch can never trap.
+- **Event-level (quest steps)** — `eventHistoryRequirements[eventId]`, the same grammar; `engine/encounters.js resolveUnknownNode` admits a gated event to an Unknown node's pool only once the run's history satisfies it, and never as a repeat fallback. `buildActMap` carries `run.history` to map birth, so an act answers the acts before it; an ungated event behaves exactly as before.
+
+The first chain shipped: **Grave of the Nameless** (step one, ungated) → **The Keeper of the Nameless** (gated on any grave choice but Leave; the digger may repay or fight, the mourner is thanked) → **The Nameless at Rest** (gated on any keeper choice; the vigil, the rest, or a second looting answer the branch taken). `tools/quest-choice-contract.mjs` proves the gates, the ids and the engine door. A quest's named relic reward is authored `pool: 'quest'` (`RELIC_POOLS`, `model/schemas.js`): no generic pool — elite or boss drop, shop stock, an event's random relic — may hand it over first, so the choice that promises it always delivers, and validation refuses a quest-pool relic no event choice grants.
+
+**Quest completion and dialogue (plan phase 10a, proposal §7.5).** A committed choice goes through one door, `engine/quests.js commitEventChoice`: the run effects, then the history row, then the completion check. A chain is a third sidecar, `questChains = { [questId]: { steps: [eventId], completes: [{ eventId, choiceId }] } }`; Grave of the Nameless ships as `nameless`, completed by any answer at the second cairn but Leave. Completion is `completeQuest`: it appends `{ kind: 'questCompleted', questId, source }` to the existing `run.history` at most once per quest per run (no `RUN_SHAPE` change) and emits the `questCompleted` event, which nothing else emits. An atlas quest's claimed reward completes through the same door with `source: 'atlas'`. Every chain step opens in the dialogue screen (W4c, WGQ0–WGQ8): the event text divides into beats on blank lines, the speaker named in `eventSpeakers` (a `content/source/speakers.csv` row: `id,name,portraitKey`; a missing portrait shows the name plate) stands right and the player left, and the event's choices are the responses on the last beat. Back, Continue, Skip speech and speech ending move only the beat; only a response commits, and binding responses keep the hold. Validation refuses by name a chain step or completion ref that does not resolve, a chain step without a speaker, an unknown speaker, and a Leave that completes a quest. One-off events keep the Event screen.
+
 ---
 
 ## 6. Map generation
@@ -775,7 +992,7 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
 
 - Per act: **`floors` × `columns`** grid (shipped: 12 × 7). The **top floor is always a single Shrine** row and the Boss sits above it — typed by the generator before any rule runs, so the floors a rule can reach are **1..`floors`-1**. That band is called the **rollable band** and it is the denominator for every fraction below.
 - Generate **6 paths** bottom-to-top: each starts at a random column on floor 1 (first 2 paths must start at distinct columns); each step moves to column −1/0/+1 on the next floor; edges may merge but must not cross (swap targets when a crossing would occur — StS's rule).
-- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` gates **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
+- **Every floor a rule names is an ANCHOR, never an index.** An absolute floor number is a constant whose *meaning* moves when `floors` changes while the constant does not — measured: `9: 'treasure'` deletes the treasure rank entirely below 10 floors (**4.00 → 0.00 nodes per act, 24 seeds**), `noEliteOrShrineBefore: 6` (the single gate these two replaced) gated **36 % of a 15-floor act and 56 % of a 10-floor one**, and `15: 'shrine'` **never fired at any shipped act length** because floor 15 is not rollable. The closed set of anchor kinds lives in `model/floorplan.js` and a new kind is an engine change (Law 1):
 
   | anchor | resolves to |
   |---|---|
@@ -785,7 +1002,8 @@ Faithful to StS's published algorithm, simplified where invisible to the player.
   | `{ at: 'fraction', of: f }` | `round(f × rollable)`, `f` ∈ (0, 1] |
 
   `resolveFloorPlan()` is the **only** place an anchor becomes a floor; the generator, the boot validator and `tools/mapplan.mjs` all read that one resolution, so they cannot disagree about what a rule meant. An anchor that will not resolve is a **boot error naming the entry** (Law 1 clause 5) and `mapgen` throws rather than generating an unauthored map.
-- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Elite/Shrine before `noEliteOrShrineBefore` (`{ at: 'fraction', of: 0.43 }` → floor 5), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 11), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
+- **Node typing** (StS proportions): fixed ranks — Monster at `{ at: 'first' }`, Treasure at `{ at: 'fraction', of: 0.64 }` (floor 7 of 11 at the shipped shape). Remaining nodes rolled: Monster 45 %, Event(?) 22 %, Elite 8 %, Shrine 12 %, Merchant 5 %, remainder Monster; with constraints: no Shrine before `noShrineBefore` (`{ at: 'fraction', of: 0.27 }` → floor 3), no Elite before `noEliteBefore` (`{ at: 'fraction', of: 0.43 }` → floor 5), no Shrine on `noShrineOn` (`{ at: 'last' }` → floor 11), no two identical non-Monster types adjacent along an edge, **`minElites` ≥ 2 and `minMerchants` ≥ 1 per act** (regenerate typing if violated, map RNG stream, bounded retries → relax weakest constraint).
+- **`restBeforeElite`: a map that holds an Elite holds a Shrine on some EARLIER floor.** E13 — Constantine asked for a rest "so eletes, maybe shop, and definitely before a boss"; before-a-boss the top-floor Shrine always kept, before-elites nothing did (**124 of 180 maps over the canonical seed stream carried an Elite with no Shrine below it**; 0 of 180 now). It is why the gate is TWO anchors and not one: a single `noEliteOrShrineBefore` opened rests and Elites on the same floor, so a rest could never sit below the first Elite, and the schema now REJECTS that key rather than reading it as both. Kept the way the counts are kept — the roll is barred, and a final step on **every** exit path opens the rest when the finished graph holds an Elite without one, on a floor `resolveFloorPlan` certified at boot. Enforcing it only where the generator relaxes was not enough: a **fixed Elite rank** bypasses every gate (`typeOnce` assigns fixed ranks before any rule runs) and can satisfy `minElites` on its own, so the relax path never ran — 10 of 40 maps broke the promise that way. Two arrangements are boot errors instead, because the generator cannot fix them for itself: a fixed Elite with no floor beneath it able to hold a rest, and an act whose gates and fixed ranks leave no rest floor at all. A **fixed Shrine** below the Elite gate is itself the rest and needs no floor held free. Two things it does not claim: it is a fact about the GRAPH, not a path — a walker may still route past the rest to an Elite, and `tools/mapplan.mjs` measures how often rather than this line promising otherwise — and it moved the shortest act these rules describe from 4 floors to 7, which narrows the debug run-shape cap.
 - **`minElites` counts nodes in the graph; it is not a reachability promise.** It was called `minReachableElites` and never measured reachability — a measurable fraction of starts can reach no Elite at the shipped shape, and the fraction **grows as the act shortens**. The numbers are deliberately not restated here: a sample restated in prose drifts (three homes carried three different samples within a day of each other). **`node tools/mapplan.mjs` measures and prints them on every run**; nothing gates on them, and making the generator honour it is an open design call.
 - **What a `?` node resolves to is `mapConfigs[act].unknownWeights`** — beside the geometry it describes, per act. It was `balance.unknownNode`, a flat global that could not vary per act while the map it belongs to does.
 - **Any claim about generated maps is a distribution, never a seed.** Node count's mean and range are **deliberately not restated here** — the previous edition of this sentence carried 59.2 over 50–69, which the 12-floor act made false the moment it landed, which is this rule proving itself two bullets after it was written. `tools/mapplan.mjs` prints them at the current shape on every run. Stops per run is exactly **`floors` + 1** at every shape measured — that one is a formula, not a sample, and a formula does not drift. A tool that generates one map and reports a number has said nothing — the same green a tool gives when it checked nothing. `tools/mapplan.mjs` prints mean and range for every figure and refuses to report at all if its own seeds did not vary.
@@ -801,13 +1019,22 @@ Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + car
 ### 7.1 Screens & flow
 
 ```
-Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
-  │                                        ▲              │
-  └── Continue (if save exists)            └──────────────┘ (reward screens between)
+Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
+                              │                                        ▲              │
+                              └── Continue (if save exists)            └──────────────┘ (reward screens between)
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
 Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1); the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+
+Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
+Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
+stamp. Click/tap, Enter, Space, controller A/Cross, and controller Start/Menu are consumed by the
+gate and reveal Title exactly once; that physical press cannot activate a Title control. Prompt
+copy follows the most recent pointer, touch, keyboard, or controller family. Profile quarantine
+and recovery notices outrank the gate. After reveal, focus lands on Title's first available save
+slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
+keeps the same state and focus contract without meaningful animation.
 
 ### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
@@ -837,14 +1064,91 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
   screen-specific markup. The shared composition is `shared-run-hud`, containing
-  `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
+  `run-header-strip`, `primary-hud-row`, `inventory-belt`, and `hud-quick-settings`.
+  Its reusable children are
   `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
   `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
-  `armoury-control`, `quick-menu-control`, `crimson-flask-control`, `azure-flask-control`,
+  `armoury-control`, `quick-menu-control`, `fullscreen-control`, `music-control`,
+  `crimson-flask-control`, `azure-flask-control`,
   `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.
+  `act-route-strip` is a Map-only sibling below `shared-run-hud`, never one of its children and
+  never mounted by Combat. On narrow Map layouts it occupies about 80% of the viewport while
+  reserving the HUD utility-control gutter on the right.
+  `hud-quick-settings` is shared by Title, Map, and Combat. It anchors beneath the top-right
+  HUD edge as a vertical pair, exposes live positive-state Fullscreen and Music controls,
+  persists Music through the profile settings service, and reads Fullscreen from the browser
+  instead of storing a duplicate flag. On narrow screens it keeps the same composition but
+  presents 44px square glyph controls so enemy intent remains unobscured. Browsers without a
+  fullscreen API expose the Fullscreen control as unavailable rather than drawing a dead switch.
+- **Startup Gate Component Model.** `startup-gate` is a boot-scoped presentation component, not a
+  variant of the Title screen. Its immutable model supplies wordmark copy, input-family prompts,
+  deterministic decorative-particle records, accessibility metadata, and the named reveal
+  behavior. Its renderer owns layout and temporary event binding, consumes the one first-input
+  owner supplied by the composition root, and uses the shared build-stamp renderer. It never
+  imports simulation state, persists dismissal, or mounts Title controls behind itself.
+  The gate composes `startup-ash-field` → `startup-ash-particle` and `startup-mark` →
+  `startup-wordmark`, `startup-subtitle`, `startup-divider`, and `startup-prompt`. The mark's
+  phone backing is transparent; the content remains centered and opaque.
+- **Title Menu components.** The revealed Title composes `title-brand-lockup` from
+  `title-wordmark`, `title-subtitle`, and `title-divider`; `title-menu` from six
+  `title-menu-item` controls, each with a `title-menu-gem`; and the independent
+  `title-tagline`. Load and New reuse one `title-menu-modal`, composed from
+  `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`,
+  `title-save-slot-list`, and `title-modal-actions`. Each `title-save-slot` supplies
+  `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when
+  occupied; the action group supplies `title-modal-back-control` and
+  `title-modal-continue-control`. The DOM-free `saveSlotSelectionModel` projects Load and New
+  from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
+  the selected-focus restoration target, primary-action availability, and the load/create
+  command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
+  than being owned by these presentation components. Every modal close control paints a square
+  at 75% of its shared icon-button box while retaining the full authored tap target for pointer,
+  touch, keyboard, and controller input.
+- **Character Creation components.** The reusable creation family is `character-disclosure`,
+  `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
+  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
+  `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
+  `equipment-choice-card`, and `relic-choice-card`. Hand selectors include an Empty Hand
+  card for the existing unequipped state. The focused choice drives the detail panel and
+  a compact two-column grid of its starting combat cards, with quantities derived from
+  the current loadout. Choosing updates existing cards in place; the focused card lifts
+  and enlarges over 180 ms (less movement on phones; no movement with reduced motion).
+  Only the focused candidate exposes Choose/Selected and Information controls. Two
+  columns of equipment choices sit beside the details and combat-card preview, with
+  Continue at the bottom-right; phones stack these areas. Title strips fit their text.
+  Continue names the next equipment section. Automatic advancement remains optional and
+  defaults off. Flavor occupies one line with an ellipsis on overflow, and its complete
+  text remains available through inspection. These are presentation rules; starting-deck
+  composition and unarmed fallback mechanics remain as defined above. `class-preview-pane` composes
+  `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
+  choices. A new character defaults to the Animated sprite style while preserving any explicit
+  style stored on an existing character or LAN player. `primary-stat-card` is one shared
+  attribute model and disclosure renderer across
+  Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
+  short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
+  authored description plus benefits derived from stat rules and equipment gates. Art and copy
+  arrive through content/asset inputs, while screens own mutable selection state and callbacks.
+  In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the
+  attribute face, current value, decrement/increment controls, and a reveal that spans the whole
+  row instead of inheriting the face column width. Opening or reopening Assign Points is a refund
+  boundary: every authored attribute returns to the mode baseline before the modal opens, making
+  the full bonus pool available instead of resuming an earlier allocation. Shared setting rows
+  keep one equal positive inset on all four sides; a surface does not remove individual sides.
+- **Shrine components.** `shrine-option-card` is the shared folded option footprint for Rest,
+  Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
+  `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
+  Smith opens the dedicated `smith-upgrade-modal`, composed from
+  `smith-candidate-card` and `smith-upgrade-preview`. Each candidate is one distinct owned
+  armament below the run's tier cap, never an individual deck copy. Choosing a candidate is a
+  presentation-only operation that shows its current and next tier, cost, Stone purse,
+  shortfall, and every grouped sourced-basic-card delta. `Back to Shrine` and Escape close the
+  modal without changing the run; only an affordable enabled `Confirm` spends the shown cost,
+  promotes the selected armament, updates all of its sourced basic cards, and leaves the Shrine.
+  The DOM-free `SmithSelectionModel` owns the choose/review state and player-facing consequence
+  copy.
 - **Combatant Component Model.** `combatant-frame` may compose `component-background`,
   `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
   `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar`, and
@@ -854,24 +1158,116 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   components; the catalog may expand other components later without declaring them leaves.
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
-  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, and `menu-panel`. The equipment
+  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
+  the footer composes `save-game-control` and `save-quit-control`. Potentially destructive
+  Load and Quit Without Saving commands enter one shared `confirmation-modal`, whose
+  `confirmation-action` is the only commit door. It is an `alertdialog` for danger variants,
+  focuses the neutral `confirmation-cancel-control` Back action first, traps Tab, and lets Escape, Back, or the scrim cancel
+  without mutation and restore the invoking control. When it is stacked over the in-run menu,
+  one Escape removes only the top confirmation. After a commit, the service retains an empty
+  top-layer input shield for the bounded navigation activation window (600 ms by default) so a
+  physical second click cannot activate a newly rendered Title control or combatant beneath the
+  removed action; the shield releases after the destination paint settles. Danger borders retain
+  the blood/ember palette, while confirmation action and eyebrow text use the authored parchment
+  token and must measure at least 4.5:1 against their computed backgrounds. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
   `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, and
-  `armoury-region-header`. Inventory, Cards, and Stats are content models mounted inside the
-  shared `folding-tray` → `tray-header` + expanded-only `tray-resize-handle` + `tray-content` composition. The `trayModel` factory owns edge,
-  expanded state, count semantics, and optional sort intent; `renderTray` owns the uniform
-  DOM and accessibility grammar. Closed arrows point inward and open arrows point back to the
-  anchored edge, including the open Right Tray form `> TRAY NAME`. Expanded Top/Bottom trays resize
-  vertically and Left/Right trays resize horizontally through a 44px mouse, touch-hold, and keyboard
-  surface. Size is remembered by stable tray id and edge; folding always returns to the standard bar
-  or rail, and reopening restores the last expanded size. Before the first resize, unfolded trays fit
-  their header and visible content rather than claiming a fixed panel fraction. Bottom trays remain
-  bottom-anchored and grow upward. These ids describe the existing data-driven Quick Menu and Armoury
-  structures; they do not create a parallel menu or equipment implementation. Menu records are
-  constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records are
-  constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind
+  `armoury-region-header`. These public Component Model ids remain stable; Armaments is a
+  configured `folding-tray` instance, not a second public primitive or a parallel equipment
+  implementation. The persisted view ids also remain `grid`, `rack`, and `hybrid` for save and
+  content compatibility, while their player-facing labels are respectively **Character**,
+  **Inventory**, and **Hybrid**. The equipment subject retains the compatibility region id
+  `slots`; the visible tray instance is `armaments`.
+
+  The three Armoury views are projections of the same loadout, not separate stores or screens:
+
+  - **Character** (`grid`) is character-only and fills the available body width. It uses two
+    columns: identity, class/level text, and the responsive character sprite on the left; Combat
+    Power, Attributes, and Relics on the right. It does not mount an Armaments, Inventory, or
+    Stats tray.
+  - **Inventory** (`rack`) is the full-width equipment workspace. Armaments occupies the left
+    pane and exactly one shared Inventory occupies the right pane; their resizable divider uses
+    the authored ratios and snap stops. Stats is available as a context tray. There is never a
+    second, hand-specific Inventory below Armaments.
+  - **Hybrid** (`hybrid`) uses the authored compact Character/Armaments split, with its own
+    resizable and snapping divider. Inventory and Cards remain available as compact context
+    trays below; the separate Stats tray is not part of this view.
+
+  Armaments, Inventory, Cards, and Stats all use the shared `folding-tray` → `tray-header` +
+  optional expanded-only `tray-resize-handle` + `tray-content` grammar. Their stable tray instance
+  ids are `armaments`, `inventory`, `cards`, and `stats`. The `trayModel` factory owns the edge,
+  expanded state, count/summary semantics, resize capability, and optional list/grid sort intent;
+  `renderTray` owns the uniform DOM and accessibility grammar. Sort controls appear only while
+  their tray is expanded. Closed arrows point inward and open arrows point back to the anchored
+  edge, including the open Right Tray form `> TRAY NAME`. A tray that declares the optional resize
+  capability exposes a 44px mouse, touch-hold, and keyboard surface: Top/Bottom resize vertically
+  and Left/Right resize horizontally. Size is remembered in memory by stable tray id and edge for
+  the current play session only; folding always returns to the standard bar or rail, reopening
+  restores the last expanded size, and starting/resuming a run or returning to Title resets the
+  authored default. Armoury supporting trays open at 45vh, retain at least 30vh when another tray
+  is expanded, and snap at every 10vh stop from 30vh through 90vh. The generic component may hug
+  content before its first resize, while Armoury supporting trays intentionally apply the
+  configured default ratio immediately. Armaments
+  is non-resizable, and Inventory disables height resizing while it fills the Inventory-view pane.
+  Bottom trays remain bottom-anchored and grow upward.
+
+  Equipment positions are procedural content. `content/source/equipSlots.csv` supplies each slot
+  id, label, position label/code, accepted kinds, physical hand/socket, set capacity, swap rule,
+  storage behavior, and order; `content/source/unlocks.csv` supplies any additional position rungs;
+  and `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the
+  set of slots. The Armoury iterates every authored position in vertical list or configured grid
+  form and renders its locked, empty, or occupied state. Empty positions follow the occupied and
+  locked positions automatically; in Grid form each empty position spans the full group width so
+  the available drop target reads as a bottom row rather than a missing item tile. Adding an authored position or slot group
+  must not require a branch in the screen. Item kind determines eligibility only: the selected
+  hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
+  position renders it in the right hand and placing a sword in a left-hand position renders it in
+  the left hand. The current figure composer supports armour/body plus authored left/right-hand
+  layers; a future foot, back, or other visible attachment also requires an explicit asset-composer
+  and configuration extension rather than an inferred screen coordinate.
+
+  Inventory owns one logical item-card action surface in both folded and expanded forms. The
+  `armouryUi.layout.cardClasses.inventoryItem.holdAction` class capability opts action-capable
+  `inventory-item-card` and `inventory-detail-card` models into the shared `equipInventory`
+  action. When the universal hold-confirm setting has a positive duration, the whole folded face
+  and whole expanded reveal use the same `armHold` timing, progress fill, keyboard/gamepad path,
+  and mutation callback; an early release aborts, and pointer movement beyond
+  `HOLD_POINTER_SLOP` aborts the hold so scrolling or dragging can take ownership. A completed
+  hold commits once. When hold-confirm is off, ordinary immediate-action and disclosure behavior
+  remains. Selecting an equipment position opens this same Inventory, filters it to compatible
+  items, exposes the contextual Equip/Move/Unequip action, and accepts either that selection or a
+  drag to the selected position; a successful replacement clears the selection and folds the
+  Inventory back to its default state.
+
+  Equipment comparison is information, not confirmation. The data-owned
+  `armouryUi.layout.comparison.presentation` is `tooltip` or `inline`. Tooltip mode presents the
+  full comparison after the configured `holdPreviewDelayMs` on a sustained pointer, keyboard, or
+  gamepad press, above its card when space permits, using `tooltipWidthRem` and
+  `tooltipMaxHeightRatio` to remain readable and viewport-safe; pointer hover and focus alone do
+  not reveal it. Inline mode embeds the same information in the expanded card. When the card also
+  owns a timed Equip/Move/Unequip action, the comparison preview observes that same hold lifecycle
+  and closes on release, cancellation, or commit without adding a competing gesture. When global
+  hold-confirm is off, the explicit action button owns the immediate change and the card retains a
+  read-only hold-to-compare gesture. The primary combat-power term shown to players is
+  **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
+  **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
+
+  Equipment receipts are read models, never re-derived in a screen: the equipment receipt panel
+  (`.armoury-equipment-receipts`, mounted in the Character view's Equipment cards card and in the
+  Stats tray) renders the exact equipment card packages, the equip requirements, the Poise
+  threshold (`.player-poise-receipt`) and the **Equip load** (`.player-load-receipt`,
+  `model/statProjection.playerLoadReceipt`): load / capacity, percent, and the Weight Class word
+  decided by the framework Weight Class service (`registries.framework.weightClass`, capacity from
+  Constitution and Strength plus `mechanics.weight.capacityBase`). Load counts each equipped
+  armament's authored `weight`; armour weighs its `poiseThreshold` (`ARMOUR_WEIGHT_RULE`), and the
+  item card's Weight label reads the same `pieceWeight` rule, so item and total agree by
+  construction.
+
+  These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
+  records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records
+  are constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind
   commands and lifecycle callbacks, while presentation models remain immutable, serializable,
   and DOM-free.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
@@ -887,7 +1283,7 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
   HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
-  then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
+  then HP/Mana flasks. Its visible tiles are 18 px inside at least 44 px accessible hit areas.
   The two panels have equal outer height and the flask row aligns with the bottom of SP within
   one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
@@ -917,9 +1313,58 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 
 ### 7.3 Input
 
-- **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
+- **Card selection and information stay separate from play.** Preserve the current
+  focused card, selection glow, revealed information button and legal-target
+  highlights. Information opens details without playing. Existing tap, hold,
+  keyboard, controller and direct-target drag confirmation remain available.
+- **Card flick to play.** An upward or upward-diagonal primary-pointer flick from a
+  playable hand card can play on release without reaching a combatant. A profile
+  setting enables it (default on); Card flick distance accepts 32–160 CSS pixels
+  (default 64), with synchronized slider, numeric entry, reset and a harmless
+  practice area. This distance is net upward displacement in viewport CSS pixels,
+  independent of artwork/UI scale and of the existing 12-pixel drag-start slop.
+  Flick recognition also requires upward-dominant movement and at least 300 CSS
+  pixels/second recent upward velocity, authored separately from the player setting.
+  Touch, mouse, trackpad dragging and pen use the same recognizer and settings;
+  the practice area accepts exactly the same inputs as combat. Existing saved
+  `touchFlickPlay` and `touchFlickDistance` values retain their meaning.
+  The preview selects the nearest legal target to the pointer; release uses that
+  same resolver and revalidates playability. Self cards select the player and
+  all-enemy cards select their legal group. Equal-distance ties are deterministic.
+  Returning below threshold, downward release, an information-button gesture,
+  pointer cancellation, capture loss, blur or a blocking modal cannot flick-play.
+  No qualifying gesture can commit twice. Disabling flicks preserves direct drops.
+- **Card rewards:** one touch, mouse, pen, or Confirm activation selects without collecting and enables the footer Confirm. Back preserves selection. Confirmation persists once; refused or throwing saves restore the pending card choice and allow retry.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
-- Every interactive element has a tooltip within 150 ms of hover: cards (with nested keyword tooltips), statuses (name, current math), intents (exact damage after modifiers), relics, flasks, map nodes.
+- **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
+  ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
+  `controls-key-rebind-control` from Press… to Key with focus intact, performs
+  no binding mutation, and suppresses the same event before the covered menu can
+  close. With no capture armed, Escape retains its ordinary one-layer Back
+  behavior. A later re-arm accepts a free key; occupied-key conflict resolution
+  is a separate policy and is not implied by this contract. The containing
+  `controls-rebind-capture` is the stable Controls component surface.
+- Ordinary interactive elements expose their concise tooltip after one second
+  of continuous hover (the `tooltipDelay` setting; `1s` by default): statuses
+  (name, current math), intents (exact damage after modifiers), relics, flasks,
+  and map nodes. Leaving early cancels opening. Every new target and nested
+  keyword waits the full delay. Keep the tooltip visible over its owner or
+  panel; dismiss 500 ms after leaving both, cancelling dismissal on re-entry.
+  Touch does not synthesize hover. A click or tap on a detail that is not itself
+  a control selects it (a visible highlight) and opens nothing; a second click
+  or tap on the same detail explains it at once. The selection ends on a press
+  elsewhere, Escape, or the detail leaving the screen. Keyboard and gamepad
+  focus explains after 500 ms regardless of the hover delay, and Enter or
+  Space on a selectable detail explains at once. Cards carry no hover or tap
+  tooltip: selecting a card reveals its Information button, and that opens the
+  card inspection (with nested keyword tooltips). Card inspections show
+  complete effect text and decision-relevant values or requirements. General classifications appear as explained tags beneath the
+  card; keywords disclose definitions. Do not repeat artwork descriptions,
+  generic instructions, flavor explanations, or identical effect text.
+  Deliberate reading surfaces may require a validated sustained hold instead;
+  the Armoury equipment-comparison tooltip uses
+  `armouryUi.layout.comparison.holdPreviewDelayMs` (`160` ms) and does not open
+  from hover or focus alone.
 
 ### 7.4 Feedback & animation rules
 
@@ -1059,3 +1504,213 @@ Build: fx pass (floating numbers, shake, transitions), run-history screen, keybo
 Still non-goals: accounts, monetization, localization (strings live in content files, so l10n is possible later), a mod loader, Steam-style achievements, and bundled audio asset files (the score and SFX are synthesized at runtime — §7.4; the manifests accept real files).
 
 Three things this list once excluded have since shipped and are no longer non-goals: **multiplayer** (Forsaken Together LAN co-op — `docs/MULTIPLAYER.md`, `src/net/lan.js`, served by the launcher's own Node server; the feature hides itself when no launcher is behind the page, so a `file://`-opened dist stays single-player), a **narrow/mobile layout** (`data-layout`, `balance.ui.uiScale`), and **audio** (§7.4).
+
+## 12. Planned game expansion — proposed mechanics and acceptance
+
+**Status: planned, not shipped.** This section defines the proposed expansion requested in September 2026. It does not assert that the interfaces, content, migrations, or checks below already exist. Existing mechanics remain authoritative until their implementation is delivered and verified. Each implementation PR must identify the requirements it completes and any remaining limitations.
+
+### 12.1 Dodge and action feedback
+
+Preserve the existing player Dodge Roll rule: roll the framework die on the deterministic `misc` stream; compare Dexterity and Weight Class against the framework difficulty; on success grant the framework's temporary guard through ordinary Block. Dodge is not guaranteed avoidance, invulnerability, or cancellation of an enemy's next attack. Pure Dodge retains the live Weight Class action and stamina costs; compound cards retain their authored cost rules.
+
+Every resolved `dodgeRolled` receipt must visibly and accessibly report success or failure, the check and difficulty, and the resulting guard. A failed roll must not look like an ignored input. Cost previews, disabled reasons, tooltips, and playback must agree with the engine. Verify Light, Medium, and Heavy costs; sufficient and insufficient resources; success and failure; repeated plays; and ordinary Block/status interactions without introducing a second damage rule.
+
+### 12.2 Trader armaments, weapon arts, and transactions
+
+**Default assumption for the ambiguous purchase request:** weapon arts are purchased from traders, while the bottom combat HUD exposes owned, currently available arts. Combat does not gain a new purchasing economy. A later owner decision to allow purchases during combat requires an explicit mechanics amendment.
+
+Trader stock includes data-priced armaments and eligible weapon-art cards. Roll stock deterministically once per visit and persist it; reloading must not reroll shelves or restore sold stock. Bought armaments enter the existing run inventory and discovery path only after successful collection. Reject an armament already carried or equipped, a full inventory, insufficient cinders, and stale stock. Prices and sale fractions belong to balance data rather than screen literals.
+
+Purchased weapon arts use the existing loose-card and compatible item-mount model. They do not create a parallel unlock inventory, install themselves automatically, or bypass extraction/seating rules. The combat HUD uses the existing card identity, availability, targeting, and payment rules: opening an art preview is not a play, and a card outside its playable state cannot be activated through the HUD.
+
+Armament sales are limited to stored, unequipped armaments. Equipped items explain that they must first be unequipped; selling never silently changes an active or inactive equipment set. Permanent profile discovery survives a sale. Smithing tiers and installed mount records remain bound to the same armament identity in the run ledger; they are neither deleted nor converted into extra loose cards, and grant no usable cards while that armament is no longer owned. Reacquiring that identity restores its recorded package through existing reconciliation. The sale preview discloses the tier, attached cards, and value before commitment. Buying and selling must not duplicate upgrades, mounts, cards, or ownership, or produce a profitable immediate buy/sell loop.
+
+A transaction validates current stock, ownership, capacity, and funds at commitment, then applies the complete change once. Refusal leaves cinders, stock, inventory, card mounts, and discovery unchanged. Verify repeated/stale activation, full inventory, equipped duplicates, upgraded/mounted armaments, save/reload, and reacquisition. Older shop saves without the new shelves load as empty new shelves for that already-open visit; migration does not consume randomness or reroll existing stock.
+
+### 12.3 Combat HUD, piles, and potions
+
+Replace separate discard and exhaust buttons with one entry showing both counts and a shared modal with separately labelled Discard and Exhausted views. This is a presentation change only: cards retain their original zones, exhaustion rules, and reshuffle eligibility. Preserve keyboard/touch access, focus return, empty states, and draw-pile order concealment.
+
+Place the potion collection entry in the far-right bottom combat HUD slot. Its menu exposes health charges, mana charges, stamina potions, and other carried utility potions through the existing action plan. Selection and inspection are inert; only an explicit enabled Use action spends a charge or starts targeting. Cancellation spends nothing. Show quantity, effect, resource capacity, and the reason an action is unavailable.
+
+Health/mana refillable charges and utility-potion inventory remain separate state domains with their existing capacities and refill rules. The shared menu must not turn stamina potions into a third refillable charge pool or silently expand inventory. Preserve existing resource shortcuts and prevent a newly opened modal from accidentally consuming a potion with its opening key. Verify zero quantities, full resources under existing use rules, targeted-potion cancellation, action playback, turn restrictions, and save/resume.
+
+### 12.4 Branching destinations and roster
+
+New maps support multiple terminal boss destinations within an act, with distinct legal routes through locations, fights, events, rewards, and traders. Node identity determines its authored destination and boss encounter; entering a terminal does not substitute a single global boss for every route. Completing the chosen terminal advances or completes the run once under the existing act rules; a player need not clear every alternative terminal.
+
+Every offered path must reach a valid destination without unintended dead ends, unreachable rewards, or repeatable completion rewards. Preserve an accessible pre-boss rest on every terminal route. Persist generated topology, destination identity, and encounter selection. Legacy saves keep their existing topology and chosen boss behavior: an unentered legacy boss node without a stored boss identity maps explicitly to the original boss for that saved act, with no RNG draw during loading or migration. Loading must not regenerate a map, move the player, consume new RNG draws, or reinterpret an in-progress encounter; existing combat snapshots remain unchanged. Validate connectivity, pre-boss rest access, and deterministic reloads over a seed corpus and play through distinct terminal routes.
+
+The release target is **20 unique regular enemies and 10 unique bosses**. Elites do not count toward either total. Existing qualifying enemies may count; recolors and numerical variants alone do not. Each counted enemy has a stable ID, distinct identity and tactical role, authored card moveset, readable intents and counterplay, recognizable sprite, and appropriate animations. Each boss additionally has a signature encounter mechanic; phases are optional where they improve that mechanic.
+
+Enemy card movesets are a limited presentation and authoring extension over the existing seeded weighted move selector. Preserve repeat history, current intent, phase transitions, repeat limits, and delayed-action state. Issues #239/#241 describe related proposed action planning and persistence work, not an already shipped plan cursor. A later switch to ordered plans requires its own verified mechanics change. Do not introduce a separate parallel move picker or reroll an intent when rendering a card or loading a save.
+
+All counted entries must be reachable through normal progression and distributed across suitable locations and difficulty. Maintain a roster checklist covering identity, location, encounter, moveset, sprite, animations, rewards, and verification. Test every moveset and boss encounter, including relevant Dodge, status, potion, weapon-art, victory/defeat, and save/resume interactions. Demonstrate shared foundations with two regular enemies and one boss before expanding the full roster.
+
+### 12.5 Shared presentation and animation rules
+
+Use shared components for armament/card faces, enemy frames, related modals, tabs, counts, costs, and tooltips. Uniform layout does not erase card categories or enemy silhouettes. Folded character-information cards share one full-width header geometry; only one opens at a time, siblings close without duplicate toggle work, and focus/reveal keep the selected header visible without unnecessary scroll jumps.
+
+Player combat animations use three presentation groups: attack-type cards attack; Powers play three silhouette-glow phases over combat idle; skills with guard/block tags defend; other skills cast using combat idle. With a physical shield equipped, Shield Bash, shield-profile attacks and shield-tagged attacks use shield bash. Shield-tagged defensive cards and the shieldGuard equipment profile use shield guard, or parry when a Parrying Dagger is equipped. Guard skills and Powers replace the visual resting stance until that character's next turn begins. Temporary attacks, casts and hit reactions return to the resting stance; skipping and reduced motion preserve the same result. During every action frame, paid stamina, mana and HP use green, blue and red silhouette auras respectively (combined payments retain each color). Guarded resting stances use a faded blue outline. Keep this visual state separate from mechanical stances and outside rebuilt DOM nodes. These player rules were approved by the owner after the Reaver/Starseer animation study. Enemy animation selection retains this precedence: explicit actor-and-action override, then the first matching tag in the ordered table, then authored intent, then neutral fallback. Multi-tag cards and enemy moves select one primary action animation deterministically; additional effect cues may accompany it without replaying the action. Families include slash, thrust, strike, projectile, spell, guard, and dodge, with character-specific sprites where authored. Missing assets fall back safely rather than blocking resolution.
+
+Animate draw, selection, targeting, play, resolution, discard, exhaust, idle, attack, hit, and defeat as appropriate. Engine outcomes remain authoritative; skipping, interrupting, or disabling animations cannot alter state or strand input. Reduced-motion mode replaces travel/shake/repeated motion with brief static or opacity feedback while retaining outcome information. Provide readable non-color cues, focus-visible controls, viewport-contained tooltips, and desktop/phone mouse, keyboard, and touch behavior. Validate timing, event-handler cleanup, and multi-enemy performance in actual browser playtests.
+
+### Approved poker equipment cards (#784)
+Equipment selection and inspection use the approved `item-cards-preview.html` design:
+a single 350 by 490 canvas scales uniformly at 5:7. Painted armament art is keyed by
+item id; armor uses its painted menu pose. `equipmentCardModel` reads canonical base
+facts, tags, requirements and modifier vocabulary. Live comparison, upgrades and
+Equip/Move/Unequip remain separate existing receipts/actions. Inspection provides
+hover and keyboard explanations plus a normal full-text disclosure for touch and
+long content. Overfull regions explicitly direct the reader to details instead of
+clipping text. Player Poise is described as display-only, without changing mechanics.
+
+The all-armament gallery at `weapon-cards-preview.html` renders every registered
+weapon, shield and staff through the same equipment inspection component, with
+search, type filtering and enlarged inspection. Merchant offers and buy/sell
+inspection also use that component; prices, smithing tiers, mounted cards and
+transaction rules remain live receipts outside the base-value card (#799).
+
+Item card presentation: weapon, potion and relic inventory faces share a 5:7 canvas. Standard listing cards use a 280px track (20% smaller than 350px), arranged in a responsive grid with no last-row stretching. Hold progress overlays the face; the existing hold duration and commit/cancel rules are unchanged. Potion and relic cards display authored effects, with full-text inspection.
+Combat presentation: the solo hand uses a 150–180 viewport-pixel card width range, preserving its 5:7 aspect ratio. More cards overlap or scroll rather than becoming smaller. Combatants expand within their available cells and stand close to the hand without overlapping its cards or the HUD. Three enemies fit without horizontal scrolling; four or more may scroll. Short-height combat may scroll vertically to preserve readable element sizes. Inspection must not play a card.
+
+Mobile combat art: at widths up to 640px, figures render at 90% of their fitted size (157.5px reference minimum instead of 175px). Neighboring enemy artwork may overlap slightly; names, meters and intents retain their existing layout and size.
+
+Combat card actions: selection reveals a circular Information button centered above the highlighted card. The information modal places the card beside readable details and exposes a green Play card action, or a disabled gray action with a visible reason. Stationary holds show shared progress and use the card on completion; early release cancels, and targeted cards enter the existing targeting flow. The floating information button replaces hold-to-zoom inspection for the solo combat hand.
+
+Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
+
+## 13. Seats — regions bound to content, order seeded
+
+*Phase 0 of [docs/proposal-seat-adventure.md](docs/proposal-seat-adventure.md); the world it serves is [docs/LORE.md](docs/LORE.md) §1 and §6. This section is the mechanics contract for the 0.7 line. Everything below is stated so a command can falsify it.*
+
+### 13.1 What a seat is
+
+A **seat** is a region with its content: enemies, encounters, boss pool, combat scenery, and (later phases) its city and tower. Three seats ship, and the closed set has one home, `SEATS` in `src/content/seats.js`:
+
+| seat id | region id (`content/environments.js`) | display name | authored baseline tier |
+|---|---|---|---|
+| `weald` | `hollow-weald` | The Hollow Weald | 1 |
+| `marches` | `pale-marches` | The Pale Marches | 2 |
+| `reach` | `cinder-reach` | The Cinder Reach | 3 |
+
+A seat row is `{ id, regionId, name, baseTier }`. `validateContent` refuses a seat whose `regionId` is not an `ENVIRONMENTS` id, a duplicate id, or a set that is not exactly the three above until a fourth seat is authored with its own content (Law 1: a new seat is content, not an engine change, but the three-seat run shape is a rule until §13.4 says otherwise).
+
+**An act is a seat at a tier.** `run.actNumber` (1–3, and looping under Endless as today) is the **tier**; the seat climbed at that tier is `run.seatOrder[contentAct - 1]`. Nothing else derives one from the other. Difficulty is the tier's; place, roster, boss and scenery are the seat's.
+
+*Falsify:* `node -e "import('./src/content/seats.js').then(m=>console.log(m.SEATS.map(s=>s.id)))"` → `[ 'weald', 'marches', 'reach' ]`.
+
+### 13.2 Content binds to the seat, never to the act number
+
+- **Encounters** carry `seat: ref('seats')` (schema `encounter.seat`, required). The `act` field is **retired**: the schema refuses it, and the three encounter files are re-homed as `content/encounters/{weald,marches,reach}.js` with their rows unchanged except for `act: n` → `seat: '<id>'` (act 1 → `weald`, 2 → `marches`, 3 → `reach`). `floorBand` and `targetBand` keep their meaning (floors within the act) and are unchanged.
+- **`rollEncounter(registries, rng, { pool, seat, exclude })`** filters by `seat`; an `act` argument is a thrown error, not a default. `buildActMap(registries, rng, seat, tier, mapShape, { history })` takes the seat for its boss pool and the tier for `mapConfigs[tier]` (geometry stays per tier, exactly the three identical `ACT_SHAPE`s it is today). `resolveUnknownNode` takes `tier` for `unknownWeights` and `seat` for nothing yet (events are seat-agnostic until Phase 3).
+- **Enemies** need no new field: an enemy is reachable only through its encounters. The Blighted Valkyrie's encounter (`a3_bossRotValkyrie`) is the one exception to the pool rule and is stated in §13.5.
+- **Boss destinations** (§12.4) are unchanged in mechanism: the pool is `encounters where pool === 'boss' && seat === run seat`, chosen at act birth on the `map` stream exactly as today. `LEGACY_ACT_BOSSES` stays keyed by act number and is consulted only for a legacy graph, whose run is migrated to the default order (§13.4), so act n still maps to the boss it always did.
+- **Combat scenery**: `regionForRun(run)` returns the seat's region — no seed hash, no rotation. `combatEnvironment` is otherwise unchanged (road / city / dungeon settings, saved scene selection). The `ashen-crown` region is **not** a seat: under this section it is the scenery of the **boss node of the tier-3 act**, whichever seat holds it (LORE §1: the Ashen Crown is the Spire's summit, reached by the causeway that opens from the last relit tower). `drowned-coast` stays a World Journey region only.
+- **HUD and map**: the act header and the map's act title read `Act <tier> · <seat name>` (`runHud.js`, `map.js`) from `SEATS`, not from a per-act string.
+
+*Falsify:* `grep -rn "act:" src/content/encounters/` → 0 hits; `grep -rn "\.act\b\|act = 1" src/engine/encounters.js src/engine/actmap.js` → 0 hits; `node -e "import('./src/content/index.js').then(m=>console.log(m.registries.encounters.all().every(e=>['weald','marches','reach'].includes(e.seat))))"` → `true`.
+
+### 13.3 Tier scaling — the seat's numbers are authored at its baseline
+
+Every enemy's HP and every encounter's bands were authored assuming the seat's `baseTier` (the act it used to be). Climbing a seat at a different tier scales the roll, not the definition:
+
+- `balance.seatTiers = { 1: 1.0, 2: <m2>, 3: <m3> }` — one multiplier per tier, data. `hpMult` for a fight is `seatTiers[tier] / seatTiers[seat.baseTier]`, composed with the Custom Climb and Endless multipliers exactly where they compose today (`main.js` fight modifiers → `createCombat` `hpMult`), applied **after** the `enemyHP` roll, so the same seed rolls the same base.
+- **A seat climbed at its baseline tier scales by exactly 1** — `seatTiers[n] / seatTiers[n]` — which is the byte-identity claim of §13.6.
+- Strength scaling per tier is **not** introduced here; Endless already owns per-loop Strength and a second knob on the same status is a balance decision for the tuning pass, not this contract. `<m2>` and `<m3>` are set in the delivering PR from the measured HP ratio of the shipped rosters (`tools/runsim.mjs` at 300 seeds prints per-tier win rate before and after) and are stated in `docs/BALANCE.md`.
+
+*Falsify:* `node tools/runsim.mjs --seeds 300` win rate per tier within the tolerance BALANCE.md states; `node -e "..."` computing `hpMult` for `(seat: 'reach', tier: 3)` → `1`.
+
+### 13.4 The run carries its order; the order is seeded
+
+- **Run schemaVersion 6.** `run.seatOrder` is a persisted array of the three seat ids, each exactly once (`RUN_SHAPE` row `{ key: 'seatOrder', type: 'array' }`; `validateRunShape` refuses a missing, short, long, duplicated or unknown id). `run.seatId` is **not stored** — it is `seatOrder[contentAct - 1]`, derived where `contentAct()` already is.
+- **Migration** (`migrateRunSchema`): a run at schemaVersion ≤ 5 gains `seatOrder: ['weald', 'marches', 'reach']` — the order every existing save was already climbing — and nothing else moves. No RNG draw during migration (§12.4's rule, kept).
+- **Creation**: `createRunState` draws the order **once** on the `seats` stream: `rng.shuffle('seats', SEATS.map(s => s.id))`. The stream is new, so every existing stream's counters and draws are unchanged for every existing seed (§13.6).
+- **Custom Run** gains `firstSeat: <id> | null` on `run.custom`. When set, the drawn order is **rotated** until that seat is first (one draw either way, so pinning does not change what any later stream rolls). The Custom Run screen offers the three seats by display name; the setting rides on `run.custom` and is saved like the rest of it.
+- **Endless** loops the order: loop `k` climbs `seatOrder[(contentAct - 1) % 3]` at the tier `endlessActInfo` already computes; the Valkyrie rule in §13.5 applies to every third act.
+
+*Falsify:* a fixture save at schemaVersion 5 loads with `seatOrder` `['weald','marches','reach']` and `streamCounters` unchanged; `validateRunShape({ ...run, seatOrder: ['weald','weald','reach'] })` names `seatOrder`; two runs with the same seed and different `firstSeat` pins have identical `streamCounters` after creation.
+
+### 13.5 The last seat opens the causeway to the Ashen Spire
+
+The Blighted Valkyrie (`a3_bossRotValkyrie`) is **not** in any seat's boss pool. She is the boss of the **tier-3 act, whatever seat it is**: `buildActMap` at tier 3 draws the seat's pool as usual **and** appends the Valkyrie's encounter as one more destination, so the final act always offers her beside the seat's own bosses and `restBeforeElite`/pre-boss-rest rules apply to her terminal like any other. Her encounter row carries `seat: null` — the one row the schema admits `null` for, by name, so the rule is visible in the data and a second null is a validation error. Which terminal ends the run is the player's route, as §12.4 already states.
+
+*Falsify:* `node -e "..."` building tier-3 maps for each of the three seats first → every graph's `bossIds` includes the Valkyrie's node and at least one node from the seat's own pool; building a tier-1 or tier-2 map → none includes her.
+
+### 13.6 What does not change — the byte-identity claims
+
+For every seed and every save written before this section:
+
+1. **Every act map is byte-identical** to the one the same seed generated before, for the same content act, because geometry is per tier (`mapConfigs[tier]` = today's `mapConfigs[act]`), unknown weights are per tier, and no draw on `map`, `events`, `enemyHP`, `shuffle` or any other pre-existing stream is added, removed or reordered. The only new draw is on the new `seats` stream.
+2. **A migrated save climbs the seats in the order it always did** and fights the boss its graph already names.
+3. **A fight in a seat at its baseline tier rolls the same HP** it rolled before (§13.3 multiplier is 1).
+4. **World Journey is untouched**: it never called `rollEncounter` or `buildActMap` (`journeyEncounter`, `journeyGraph`), and it keeps `drowned-coast`.
+
+What does change for a **new** run on an existing seed: which seat the run opens in. That is the feature, and it is the one thing this section is allowed to change about a seed's replay. `tools/runsim.mjs` and `tests/branchingBosses.test.mjs` pin claims 1–3; `tests/world-atlas.test.mjs` pins 4.
+
+### 13.7 Version and delivery
+
+- This section: **Version: no bump** (a SPEC change ships nothing).
+- The delivering PR is the first of the `0.7` line and **proposes `0.7.1`** (`contentBundle.version`, `src/content/index.js`): a new run-order system live for players with its save-schema migration is a MINOR under `docs/versioning.md` rule 2, and the third component is the first candidate of that line. The owner's release cut is what makes it `0.7.0`.
+- Delivered as one feature PR into `dev` after this section merges, with: `content/seats.js`; encounter files re-homed; schema and validation; `engine/encounters.js`, `engine/actmap.js`, `main.js`, `tools/runsim.mjs`, `tools/session.mjs` callers; `model/state.js` v6 and migration; `model/environmentArt.js`; Custom Run pin; HUD/map labels; `balance.seatTiers` with BALANCE.md numbers; tests named above plus `tests/seats.test.mjs`; a CHANGELOG receipt.
+
+## World Journey: authored atlas and seeded routes
+
+World Journey is a selectable run mode alongside the existing Classic Climb.
+It uses a fixed square world painting spanning five biomes. Geography and landmark
+positions are authored content; a seed selects an active connected route through
+that geography. The initial content revision has 200 candidate world nodes and a
+profile targeting 20 active nodes. Local points do not consume the world budget.
+
+Every valid journey includes three ordered anchor roles: starting city, major
+city, and final legacy dungeon. Profiles pin IDs or filter eligible candidates.
+Only the selected anchors are guaranteed. Other landmarks and regions vary per
+run; visiting every region is optional. The main route and alternatives have
+separate configurable limits. Alternatives reconnect toward the final dungeon.
+A generator must reject impossible profiles with an actionable reason; it cannot
+silently remove anchors, ignore exclusions, or change the budget. Cross-region
+junctions are authored edges. Generation is deterministic by seed, profile version,
+and content revision. Saved manifests retain chosen node and edge IDs, encounter
+outcomes and content revision, rather than regenerating when resumed.
+
+World nodes use stable IDs. Inspecting a node never travels. Travel requires a
+currently available connection and any authored conditions. Completion, discovery,
+service claims and quest state belong to the run, not the content tables. World
+terrain starts as indistinct parchment and reveals around discovered nodes.
+Undiscovered nodes do not expose names, local maps, services or boss identities.
+Inactive content remains unavailable for that run. Completed encounters cannot be
+farmed by revisiting; eligible services retain stock and one-time claims.
+
+Major landmarks render as separate illustrated overlays with hover and keyboard
+focus enlargement. Selecting one opens a single location dialog, with an interior
+map and a detail pane for the selected fixed local point. On narrow screens the
+pane follows the map. Cities have fixed service and quest sites; dungeons have
+fixed entrance, junction, objective and boss sites. Availability can vary without
+moving a site. Travel/Enter and service actions are explicit, separate from
+inspection. Escape closes the dialog and restores focus. Touch does not require
+hover. Region, location and node bindings select appropriate combat scenery.
+
+Encounter resolution is explicit node encounter, then node enemy-pool override,
+then region default. A final dungeon requires an explicit boss encounter and never
+falls back to a random ordinary enemy. Encounters reference the existing enemy
+registry by enemy ID. Service and quest handlers use validated named operations.
+Gate conditions reference obtainable objectives; mandatory routes must remain
+solvable. The final selected dungeon boss ends World Journey in victory, without
+creating a second procedural act. Classic runs retain their existing progression.
+
+Authoritative content is in third normal form. Maps, regions, nodes, placements,
+edges, assets, enemies, encounters, pools, services, quests and profiles have stable
+primary keys. Many-to-many relationships use junction tables. Local region IDs
+are derived through their owning world location; node rows do not copy map or
+region labels. Handler bindings belong to service types, not repeated placements.
+CSV and JSON imports use the same relational table contract as the database and
+reject duplicate keys, invalid references and unsupported rules atomically.
+Runtime indexes, joined view models and immutable run manifests are derived read
+models; they are not competing authoring sources. Content revisions identify the
+exact rules used by a run. A revision mismatch must be explained instead of
+silently regenerating the route.
+
+The shared generator and manifest contract are suitable for host-authoritative
+co-op. A client must never independently reroll a party route or gain travel
+permission by opening a location dialog. Classic co-op remains supported while
+World Journey uses only explicitly implemented host actions.

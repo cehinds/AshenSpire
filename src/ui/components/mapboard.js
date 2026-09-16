@@ -1,3 +1,5 @@
+import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
+import { mountMapDetail } from './mapDetail.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
 //
 // WHY THIS FILE EXISTS, and it is a collapse and not a repair.
@@ -56,8 +58,11 @@
 // is the board, not the screen.
 
 import { attachTooltip } from './tooltip.js';
-import { assetUrl } from '../assetmap.js';
-import { nodeIcon, actTitle, parchmentAsset, parchmentClass } from '../uiContent.js';
+import { html, iconButton } from '../kit/index.js';
+import { worldMapForRun } from '../../model/environmentArt.js';
+import { mapTerrainHtml } from './environmentArt.js';
+import { mapNodeInk } from './mapNodeInk.js';
+import { actTitle, parchmentClass } from '../uiContent.js';
 import { trackGesture } from '../gesture.js';
 import {
   mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane,
@@ -157,7 +162,8 @@ function indexNodes(nodes) {
  *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
  *   `classes`   (node) → extra classes. `my-vote` lives here.
  *   `tooltip`   (node, reading) → html.
- *   `onPick`    (id) → void, fired only for reachable nodes.
+ *   `onPick`    (id, { shownType, revealed }) → void, fired only for reachable
+ *               nodes; the reading is what this board drew for the node.
  *
  * `chromeHtml` is emitted BETWEEN the scrollport and the tap note, and the
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
@@ -203,7 +209,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const reachable = viewer.reachable instanceof Set ? viewer.reachable : new Set(viewer.reachable || []);
   const traveled = viewer.traveled instanceof Set ? viewer.traveled : new Set(viewer.path || []);
   const current = viewer.current || null;
-  const map = { nodes: byId, startIds: act.startIds || [], bossId: act.bossId };
+  const map = { nodes: byId, startIds: act.startIds || [], bossId: act.bossId, bossIds: act.bossIds };
   const run = { mapNodeId: current, path: viewer.path || [] };
   const app = host;
   const reveal = !!viewer.reveal;
@@ -214,7 +220,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const mode = viewer.mode || (viewer.meta ? resolveMapMode(viewer.meta) : MAP_MODE_DEFAULT);
   const fog = mode === 'fog';
   const know = mapKnowledge({
-    graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId },
+    graph: map,
     run: { path: viewer.path || [], mapNodeId: current },
     mode,
     reveal,
@@ -240,7 +246,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     ? !!viewer.shrineGlow
     : resolveShrineGlow(viewer.meta);
   const lane = glowOn
-    ? shrineLane({ graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId }, run })
+    ? shrineLane({ graph: map, run })
     : [];
   const laneNodes = new Set(lane.filter(isDrawn));
   const laneEdge = new Set();
@@ -264,20 +270,18 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
       const isLane = laneEdge.has(`${n.id}>${toId}`);
-      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      edgeSvg += `<line class="map-route-outline" vector-effect="non-scaling-stroke" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>` ;
+      edgeSvg += `<line vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
   }
 
-  // ---- the undiscovered ground -------------------------------------------
-  //
-  // THE PLATE IS NOT IN THIS MARKUP, AND THAT IS A BUG FIX, NOT A STYLE. With
-  // the three plates absent — the state this ships in — headless Chromium
-  // painted its own missing-image graphic across the whole canvas and the map
-  // was drawn on top of it. Every check still passed. So the plate is ATTACHED
-  // ON A SUCCESSFUL LOAD and never before (`attachParchment`).
-  const groundSvg = fog
-    ? `<g class="map-fog-ground" aria-hidden="true"><rect x="0" y="0" width="${width}" height="${height}"/></g>`
-    : '';
+  // Terrain uses the same discovered nodes as the navigation layer. The saved
+  // path makes the reveal persistent, including previously visible branches.
+  const world = worldMapForRun(act);
+  const groundSvg = mapTerrainHtml({
+    world, width, height, fog,
+    points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: x(n.col), y: y(n.floor) })),
+  });
 
   // The per-act parchment tone rides the SCROLLPORT, not the <g> inside the SVG:
   // a custom property inherits DOWN, and both the ground rect and the
@@ -296,7 +300,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       <div class="map-canvas">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
           ${groundSvg}
-          <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(act.actNumber)}</text>
+          <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(act.actNumber, act.seatName)}</text>
           ${edgeSvg}
           <!-- BOTH AN ID AND A CLASS, and the id is not decoration: two
                instruments key on the ids map-nodes, zoom-in, zoom-out and
@@ -323,7 +327,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          proposal: "a line that says the same thing every time you open the
          screen is not a warning, it is decoration with a worried face."
          Every number in it is READ, never typed. -->
-    <p class="map-tapnote" hidden></p>
+    <p class="as-status map-tapnote" hidden></p>
     <!-- THE OFF-SCREEN CHOICE, SAID WHERE THE PLAYER IS — the tap note's
          sibling, same discipline: SILENT whenever the promise is kept. It
          exists because the camera owns the horizontal axis now (sizeSvg): a
@@ -335,7 +339,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          nothing but a line of edge ink to say so. report() drives it from
          the same overflow the confession reads, so the note and data-framing
          cannot disagree. Still no backticks. -->
-    <p class="map-clipnote" hidden></p>
+    <p class="as-status map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
          The zoom controls used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
@@ -344,11 +348,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          see and could not tap. A sibling is laid out in the flow beside the
          scrollport, so the scrollport is smaller by exactly the bar and there is
          no offset left for a node to be trapped at. Still no backticks. -->
-    <div class="map-zoom">
-      <button class="zbtn zoom-out" id="zoom-out" title="Zoom out">−</button>
-      <button class="zbtn zoom-reset" id="zoom-reset" title="Reset / center">⊙</button>
-      <button class="zbtn zoom-in" id="zoom-in" title="Zoom in">+</button>
-      ${showLegendControl ? '<button class="zbtn map-legend-btn" id="map-legend" title="Map legend" aria-label="Map legend">?</button>' : ''}
+    <div class="map-zoom as-band foot as-band-row end">
+      ${html(iconButton({ glyph: '−', label: 'Zoom out', id: 'zoom-out', className: 'zbtn zoom-out' }))}
+      ${html(iconButton({ glyph: '⊙', label: 'Reset / center', id: 'zoom-reset', className: 'zbtn zoom-reset' }))}
+      ${html(iconButton({ glyph: '+', label: 'Zoom in', id: 'zoom-in', className: 'zbtn zoom-in' }))}
+      ${showLegendControl ? html(iconButton({ glyph: '?', label: 'Map legend', id: 'map-legend', className: 'zbtn map-legend-btn' })) : ''}
     </div>`);
 
   const scroll = host.querySelector('.map-scroll');
@@ -391,17 +395,22 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // a fogged player must not have: only DRAWN nodes get an element, and the id
     // is a floor and a column, never a type.
     el.dataset.node = n.id;
+    if (shownType === 'boss' && n.destinationLabel) {
+      el.setAttribute('aria-label', `Boss: ${n.destinationLabel}`);
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = n.destinationLabel;
+      el.appendChild(title);
+    }
     // THE RADIUS IS SOLVED FROM THE TAP FLOOR (model/mapview.js), and it is the
     // node's own in every mode and on every screen: fog changes WHICH nodes are
     // drawn and never HOW BIG one is, and neither does having a partner.
     const r = nodeRadius(n.type);
-    const halo = isReachable ? `<circle class="node-halo" cx="${x(n.col)}" cy="${y(n.floor)}" r="${r + 6}"/>` : '';
     // The per-viewer mark rides LAST so it draws over the node, and it is given
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
     const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.innerHTML = `${halo}<circle cx="${x(n.col)}" cy="${y(n.floor)}" r="${r}"/><text x="${x(n.col)}" y="${y(n.floor)}">${nodeIcon(shownType)}</text>${mark || ''}`;
-    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
+    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: x(n.col), y: y(n.floor), radius: r, reachable: isReachable })}${mark || ''}`);
+    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
   }
@@ -409,7 +418,12 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // THE SCREEN SAYS WHAT IT DREW — a fog that cannot report its own census
   // cannot be caught covering the wrong thing. The count is the DOM's, counted
   // while appending, never re-derived from the ladder it is meant to check.
-  if (fog) attachParchment(scroll.querySelector('.map-fog-ground'), assetUrl(parchmentAsset(act.actNumber)), width, height);
+  scroll.dataset.world = world.id;
+  scroll.dataset.mapPlate = 'loading';
+  mountMapDetail(scroll, scroll.querySelector('.map-detail-surface'), world.map);
+  const terrain = scroll.querySelector('.terrain-detail');
+  terrain.addEventListener('load', () => { scroll.dataset.mapPlate = 'ok'; });
+  terrain.addEventListener('error', () => { scroll.dataset.mapPlate = 'missing'; });
   scroll.dataset.nodesDrawn = String(drawnCount);
   scroll.dataset.nodesTotal = String(nodes.length);
   scroll.dataset.nodesHidden = String(know.counts.hidden);
@@ -717,10 +731,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // The far end of the climb, and only if it is PAINTED — `isDrawn` is the same
     // predicate the node loop, the edges and the look-ahead use, so the camera
     // can never frame a node nobody drew.
-    const end = nodes.find((n) => n.type === 'boss' && isDrawn(n.id));
-    if (!end) return { aim: doors, end: null };
-    const endBox = framingBox([end], height);
-    const ends = framingBox([...doorNodes, end], height);
+    const terminals = nodes.filter((n) => n.type === 'boss' && isDrawn(n.id));
+    if (!terminals.length) return { aim: doors, end: null };
+    const endBox = framingBox(terminals, height);
+    const ends = framingBox([...doorNodes, ...terminals], height);
     const fits = (b) => b.w * zoom <= scroll.clientWidth && b.h * zoom <= scroll.clientHeight;
     // THE MARGIN IS WHAT THE HALO PAINTS, NOT WHAT IT MEASURES, and my first
     // draft got that wrong in a way only a machine caught: I padded by HALO_PAD
@@ -830,7 +844,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       // the decision box, so the zoom that fits it fits the decision as well.
       const zDecision = fitZoom(framingBox(fs, height), scroll.clientWidth, scroll.clientHeight);
       const zContext = fitZoom(framingBox(contextNodes(), height), scroll.clientWidth, scroll.clientHeight);
-      const z = clampZoom(Math.min(zDecision, zContext));
+      const z = clampZoom(Math.min(zDecision, zContext, MAP_CLOSE_NODE_SCALE));
       if (Math.abs(z - zoom) > 0.0005) zoom = z;
     }
     const box = framingBox(fs, height);
@@ -1115,6 +1129,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // a reachable node before this debounce fires; reading it in the callback
     // would mislabel the detached board's old camera as belonging to that node.
     pendingViewCommit = viewSnapshot();
+    // Keep the in-memory run camera current synchronously. Save & Quit may
+    // arrive before this debounce fires; the non-committing handoff updates
+    // the run without adding a durable write. The timer remains the sole
+    // settled-board commit.
+    emitViewState(false, pendingViewCommit);
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
       const snapshot = pendingViewCommit;

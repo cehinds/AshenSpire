@@ -1,0 +1,26 @@
+  artifact       : dist\AshenSpire.html sha256 145c2f1f869f (47876580 bytes)
+  provenance     : UNCOMMITTED at HEAD 6025ef49 — these bytes are in no commit; nothing below is reproducible from a ref.
+  artifact       : AshenSpire.html sha256 145c2f1f869f (47876580 bytes)
+  provenance     : UNCOMMITTED at HEAD 6025ef49 — these bytes are in no commit; nothing below is reproducible from a ref.
+verify-shipped: checking the file a player is handed.
+
+  PASS  [NO_ART] build/AshenSpire.html: ASSET_MAP present, 979 entries (floor 64), 985 inlined images
+  PASS  [NO_ART] dist/AshenSpire.html: ASSET_MAP present, 979 entries (floor 64), 985 inlined images
+  PASS  [DRIFT] dist/AshenSpire.html is byte-identical to build/AshenSpire.html (47876580 bytes)
+  PASS  [NO_ART] AshenSpire.html: ASSET_MAP present, 979 entries (floor 64), 985 inlined images
+  PASS  [DRIFT] AshenSpire.html is byte-identical to build/AshenSpire.html (47876580 bytes)
+  PASS  [STAMPED_TWIN] dist/ tracks only the allowlist [AshenSpire.html, README.md] — no twin, stamped or otherwise
+  note        untracked in dist/ (expected, launcher output): AshenSpire-0.5.5.102.html, AshenSpire-0.5.5.103.html, AshenSpire-0.5.5.79.html, AshenSpire-0.5.5.95.html
+
+BOUNDARY — what a green from this tool does NOT mean:
+  · nothing rendered it. ASSET_MAP present and 101 data: URIs is not "the art appears"
+    — that needs a browser and a seeing seat, and this tool has neither
+  · nothing played it. This says the shipped file IS this source, never that this
+    source is a good game, balanced, or even winnable
+  · no statement about the tutorial lockout either way. This tool compares bytes, so
+    it cannot tell a bundle whose coach marks are reachable from one whose are not —
+    that is tools/tutorial-reach.mjs, and it needs a browser at a real --ui-zoom
+  · reproducibility across machines is not checked here — that is the git-diff step
+    in .github/workflows/ci.yml running on three runners
+
+verify-shipped: OK — 6 checks passed.

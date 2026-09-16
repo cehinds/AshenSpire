@@ -1,0 +1,76 @@
+{
+  "menu": "Preserve every previously shown pose as an artwork library. Standing and detail poses may face the viewer. One matching close-up portrait per outfit.",
+  "combat": "Seven states per outfit: idle, guard, attack1, attack2, attack3, attack4, hit. Attacks face screen right. Reaver idle is the owner-selected upright sword-rest pose and retains its presentation angle.",
+  "outfits": [
+    {
+      "id": "rogue",
+      "name": "Rogue · Base"
+    },
+    {
+      "id": "rogue-nightveil",
+      "name": "Nightveil Coat"
+    },
+    {
+      "id": "rogue-duelist",
+      "name": "Duelist Jerkin"
+    },
+    {
+      "id": "rogue-shadow",
+      "name": "Shadow Mantle"
+    },
+    {
+      "id": "reaver",
+      "name": "Reaver · Base"
+    },
+    {
+      "id": "reaver-vigil",
+      "name": "Ashen Vigil"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "name": "Gilded Oathsworn"
+    },
+    {
+      "id": "reaver-warden",
+      "name": "Warden Mail"
+    },
+    {
+      "id": "starseer",
+      "name": "Starseer · Base"
+    },
+    {
+      "id": "starseer-eclipse",
+      "name": "Eclipse Habit"
+    },
+    {
+      "id": "starseer-starlit",
+      "name": "Starlit Silks"
+    },
+    {
+      "id": "starseer-astral",
+      "name": "Astral Vestment"
+    },
+    {
+      "id": "herald",
+      "name": "Herald · Base"
+    },
+    {
+      "id": "herald-ossuary",
+      "name": "Ossuary Weave"
+    },
+    {
+      "id": "herald-emberhabit",
+      "name": "Emberlight Habit"
+    },
+    {
+      "id": "herald-pilgrim",
+      "name": "Pilgrim Wrap"
+    }
+  ],
+  "approvedPoseRefs": [
+    "Nightveil and Shadow 3x3 sheets",
+    "Reaver sword-rest, overhead, lunge, thrust and downward cleave"
+  ],
+  "status": "Asset preview prepared and inspected; not installed in game",
+  "reaverOverride": "All four Reaver outfits: attack1 low advancing rush with blade trailing low; attack2 overhead windup; attack3 downward cleave. Existing sword-rest drawings supply combat idle: menu stand for Base, Vigil and Warden; first expanded-sheet cell for Oathsworn. Guard, attack4 recovery, hit and portrait selections retained."
+}

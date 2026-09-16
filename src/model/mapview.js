@@ -56,7 +56,7 @@ export const COL_X = 75;
  * four, which was a second copy of the ladder missing two of its six steps), and
  * the refusal below reads its floor.
  */
-export const ZOOM_STEPS = Object.freeze([1, 1.15, 1.3, 1.5, 1.75, 2]);
+export const ZOOM_STEPS = Object.freeze([1, 1.15, 1.3, 1.5, 1.75, 2, 2.5]);
 export const ZOOM_MIN = ZOOM_STEPS[0];
 export const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
 

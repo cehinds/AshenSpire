@@ -2,6 +2,8 @@
 //
 // Code never embeds a balance number; a balance change is a one-file diff here.
 
+import { tooltipHelp } from './tooltipHelp.js';
+
 export const balance = {
   // Arcane Exposure host resolution: visible name plus the explicit school
   // mapping actions.js consumes. No buildup is inferred from card tags.
@@ -10,6 +12,16 @@ export const balance = {
     // Explicit carrier schools. Physical/holy/fire are currently unmapped and
     // therefore add zero even if a malformed card tries to author buildup.
     schoolBuildupMultipliers: { magic: 1, arcane: 1 }, // PROVISIONAL
+  },
+  // Focus properties (docs/proposal-progression-and-property-system.md §7.2,
+  // §10): what an Arcane Break, or a hit, is worth to the caster whose focus
+  // holds the property. content/source/propertyRuleEffects.json reads these
+  // through `{ "balance": "exposure.…" }`; no number is typed in that file.
+  exposure: {
+    siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
+    siphonRefundMastered: 2, // PROVISIONAL — the same, once the focus skill reaches siphonMasteryLevel
+    siphonMasteryLevel: 7, // PROVISIONAL — focus skill level; the ledger arrives in plan phase 4
+    overchargeBuildupMult: 1.5, // PROVISIONAL — buildup per hit × (wand `overcharge`)
   },
   energy: 3,
   draw: 5,
@@ -42,7 +54,13 @@ export const balance = {
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,
-    cinders: { normal: [15, 25], elite: [35, 50], boss: [75, 90] },
+    // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
+    // base") — cinders are granted on arrival at the reward door now, so the
+    // faucet is the whole economy lever. The ladder and the shop were left
+    // reading against the OLD faucet for a week; both are re-tuned against
+    // this one now (2026-09-11) — the shop by this same ×3, the level ladder
+    // by measurement, each explained where it lives.
+    cinders: { normal: [45, 75], elite: [105, 150], boss: [225, 270] },
     rarityWeights: {
       normal: { common: 60, uncommon: 35, rare: 5 },
       elite: { common: 45, uncommon: 40, rare: 15 },
@@ -57,11 +75,25 @@ export const balance = {
     cardStock: 5,
     relicStock: 2,
     flaskStock: 2,
-    cardCost: { common: [45, 55], uncommon: [68, 82], rare: [135, 160] },
-    relicCost: { common: [140, 160], uncommon: [200, 230], rare: [270, 300] },
-    flaskCost: [50, 80],
-    removeBase: 75,
-    removeStep: 25,
+    armamentStock: 3,
+    weaponArtStock: 2,
+    // ×3 WITH THE FAUCET (2026-09-11). Every price here was tuned against the
+    // pre-2026-09-04 faucet and was left reading against it when `rewards.
+    // cinders` tripled, so the merchant quietly became a third of his price:
+    // a common card cost two-and-a-half normal fights before, and one fight
+    // after. These are linear in cinders — you pay the number or you do not —
+    // so the factor that restores a price is the faucet's own, and ×3 here
+    // puts every shelf back at the fights-per-purchase it was tuned to. (The
+    // level ladder is quadratic and takes a different, measured factor; see
+    // levelUp below.) `sellFraction` is a fraction OF this table and needs no
+    // scaling — it moved with these numbers by construction.
+    armamentCost: { common: [240, 300], uncommon: [360, 450], rare: [600, 720] },
+    weaponArtCost: [270, 360],
+    cardCost: { common: [135, 165], uncommon: [204, 246], rare: [405, 480] },
+    relicCost: { common: [420, 480], uncommon: [600, 690], rare: [810, 900] },
+    flaskCost: [150, 240],
+    removeBase: 225,
+    removeStep: 75,
     // E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
     // same cost table his own stock rolls from (relicCost[rarity][0] /
     // flaskCost[0]) — so a possession is always worth less than the cheapest
@@ -73,6 +105,57 @@ export const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // Smithing promotes the owned armament, not one card copy. The model owns
+  // the transaction; balance owns the tier ceiling, price, and reward faucet.
+  smithing: {
+    // Item/tier costs, card changes, and requirement changes are authored in
+    // itemUpgradeChanges.csv. Balance owns only the reward faucet.
+    rewardByPool: { normal: 0, elite: 1, boss: 1, treasure: 0 },
+
+    // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
+    // A smith does three things: upgrade an item (the tier promotion above),
+    // EXTRACT a card from one of an item's mounts so it becomes the run's own,
+    // and INSTALL a run-owned card into an emptied or open mount. Which node
+    // kinds offer which services is this table — a merchant rolls `chance`
+    // once per visit on its own RNG stream, so adding the roll cannot shift
+    // what any later reward draws in an existing seed. 100 means always, no
+    // roll consumed; 0 means never.
+    services: {
+      offeredAt: {
+        shrine: { chance: 100, services: ['upgrade', 'extract', 'install'] },
+        merchant: { chance: 25, services: ['upgrade', 'extract', 'install'] },
+      },
+      // Priced in Smithing Stones, the same purse as an upgrade. Free by the
+      // owner's word, configurable because he said so in the same breath.
+      extract: { cost: 0 },
+      install: { cost: 0 },
+    },
+  },
+
+  // ---- canonical hidden level semantics (#237) ---------------------------
+  //
+  // Player level begins at one authored value and advances once per shrine
+  // purchase (`run.levelUps`). `run.levelPoints` is deliberately absent from
+  // this rule: it records how many attribute points those purchases granted,
+  // and the configurable points-per-level dial means it is not a level count.
+  //
+  // Enemy bounds and act/floor target bands are authored by #238. The pure
+  // resolver in model/levels.js accepts those rows without activating them in
+  // encounter creation, saves, co-op, or the UI.
+  levels: {
+    playerStartingLevel: 1,
+    // Inert #238 content. The pure level planner consumes these coefficients
+    // only when a later activation story supplies a resolved enemy level.
+    // Every row states its rounding and hard result caps; hits, statuses,
+    // delays, phases, and move order are deliberately absent.
+    enemyScaling: {
+      hp: { perLevel: 2, rounding: 'round', min: 1, max: 9999 },
+      damage: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
+      block: { perLevel: 0.5, rounding: 'round', min: 0, max: 999 },
+      poise: { perLevel: 1, rounding: 'round', min: 0, max: 999 },
+    },
+  },
 
   // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
   //
@@ -134,8 +217,43 @@ export const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    // THE LADDER, MEASURED (E13, #258; tools/runsim.mjs --level-cost). His
+    // acceptance test is "10-20 level-ups a run, scalable". The bot spends
+    // every cinder on levels and nothing at merchants, so its number is the
+    // CEILING a real climb approaches; the ladder is chosen to put that
+    // ceiling mid-range, which leaves a merchant-spending player inside the
+    // band rather than under it. Two numbers, one home, and the sweep flag
+    // reruns the measurement for any other pair.
+    //
+    // FIRST SWEEP, at the original faucet, 40 greedy-bot runs per ladder,
+    // level-ups per FULL (victorious) run: 800+200 → 0.5; 60+10 → 7.2;
+    // 40+8 → 9.1; 30+5 → 11.8; 20+4 → 14.8. 20+4 shipped.
+    //
+    // THEN THE FAUCET TRIPLED (2026-09-04, `rewards.cinders` above) and this
+    // ladder was left reading against the old one — the comment up there said
+    // as much and nothing re-measured it. At ×3 the same 20+4 buys 26.7
+    // level-ups a run: a third again past the top of his range, and the
+    // acceptance test had quietly stopped being met. SECOND SWEEP, same tool,
+    // same 40 runs per ladder, at the ×3 faucet — level-ups per victorious
+    // run, and the fleet's own win count beside it, because the ladder is a
+    // difficulty dial as much as an economy one:
+    //
+    //   20+4   26.7   32/40 wins   (shipped; above the range)
+    //   30+8   18.6   29/40        top edge
+    //   50+10  15.4   29/40        ← this one
+    //   60+12  13.8   23/40        the faucet's own ×3; costs ~6 wins
+    //   70+14  12.4   20/40        low edge, and ~12 wins
+    //
+    // 50+10 IS THE PICK, and not the tidy ×3, for a measured reason: it lands
+    // the ceiling at 15.4, within half a level of the 14.8 that E13 accepted,
+    // and it holds the win rate that 30+8 holds. Scaling the ladder by the
+    // faucet's own factor sounds right and is not: a ladder's cost is
+    // QUADRATIC in levels bought (f·n + s·n(n−1)/2), so tripling its two
+    // numbers overshoots — 60+12 buys 13.8, and the fleet drops six runs for
+    // the privilege. Shop prices ARE linear in cinders and do take the ×3
+    // (`shop` above); the two are different arithmetic, measured separately.
+    firstCost: 50,
+    costStep: 10,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -205,6 +323,16 @@ export const balance = {
     strPerLoop: 1, // +Strength per completed cycle
     actsPerCycle: 3, // acts before the spire loops (also the act count)
   },
+  // ---- Seats (SPEC §13.3) ------------------------------------------------------
+  // One multiplier per TIER. A seat's rosters were authored at its baseTier
+  // (content/seats.js), so a fight in seat S at tier T scales enemy HP by
+  // seatTiers[T] / seatTiers[S.baseTier] — exactly 1 at the baseline, which is
+  // what keeps every existing seed's fights byte-identical (§13.6). The values
+  // are the measured HP ratio of the shipped rosters (docs/BALANCE.md §2):
+  // act-2 rows average ≈1.5× act-1, act-3 rows ≈1.9× (normals, elites and
+  // bosses weighted together). Tier 1 is 1 by definition and the validator
+  // holds it there.
+  seatTiers: { 1: 1, 2: 1.5, 3: 1.9 },
   customMods: {
     toughElitesHpMult: 1.3, // Tough Elites: elites & bosses ×HP
     bigBossesHpMult: 1.5, // Dread Bosses: act bosses ×HP
@@ -220,6 +348,29 @@ export const balance = {
   // slider can't drift apart — they previously lived in two files and silently
   // disagreed.
   ui: {
+    // How every rendered <img> is handed to the browser. Both of these are
+    // decode-path settings, not network settings, and that distinction is the
+    // whole reason this block exists rather than sixteen literal attributes
+    // scattered through the render sites.
+    //
+    // The shipped build inlines its art as data: URIs (see ui/assetmap.js), so
+    // there is no request to defer — the cost that remains is DECODE, and on a
+    // phone decoding a 350x490 WebP synchronously on the main thread is a
+    // dropped frame every time a card mounts. `decoding: 'async'` is the fix
+    // and it is safe everywhere, because the only thing it gives up is the
+    // guarantee that the image is painted in the same frame as its parent.
+    //
+    // `lazy` is NOT safe everywhere, and it is off by default for that reason.
+    // A `loading="lazy"` image inside a container that is display:none, or
+    // translated off-screen, or opacity:0 may never load at all — which is
+    // exactly the shape of every combat effect overlay in this codebase. It is
+    // opted into per call site, and only for images that sit in a scrollable
+    // list where being below the fold is the normal case.
+    imageHints: {
+      decoding: 'async',
+      lazy: true,
+    },
+    touchFlick: { enabled: true, distance: { min: 32, max: 160, def: 64 }, minVelocity: 300, velocityWindowMs: 120 },
     // HUD resource bars, per surface (content/resources.js holds the rows).
     //
     // `scaleByMax` is HIS RULE — "the size of that bar should scale depending on
@@ -263,16 +414,143 @@ export const balance = {
       // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
       // legacy badge; the primary row, control grid, and vital rows each own
       // their own gap so responsive layouts do not hide a second copy.
-      portraitScale: 0.7,
-      primaryRowGapPx: 8,
-      controlGapPx: 2,
-      resourceRowGapPx: 2,
+      portraitScale: 0.58,
+      primaryRowGapPx: 4,
+      controlGapPx: 0,
+      resourceRowGapPx: 3,
+      panelPadPx: 0,
+      mobilePanelPadPx: 0,
+      mobileControlGapPx: 1,
+      mobileOuterPadPx: 4,
+      mobileRowGapPx: 3,
       // Header columns negotiate inside one grid: the center Cinders track and
       // right metadata trail each cap at 30% of the viewport. Act/Floor show
       // their current values by default; totals remain an opt-in.
       cindersMaxWidthPct: 30,
       metadataMaxWidthPct: 30,
       metadataShowTotals: false,
+    },
+    // The two always-nearby comfort controls are one shared component on the
+    // title, map, and combat surfaces. Places and spacing are authored here so
+    // a future surface or denser theme does not require another renderer.
+    hudQuickSettings: {
+      places: ['title', 'map', 'combat'],
+      edgeGapPx: 4,
+      stackGapPx: 0,
+      // One visual card on every device. The 40px face sits inside the shared
+      // tap floor, while its 28px icon occupies 70% of the authored face.
+      cardSizePx: 40,
+      glyphSizePx: 28,
+      stateDotPx: 6,
+      activeTintPct: 14,
+      showCardBackground: true,
+      showLabels: false,
+    },
+    // BattlefieldStageModel owns the protected vertical corridor between the
+    // shared run HUD and the hand. Percentages are viewport-height shares on
+    // the glass; intentGapPx is the visible device-pixel attachment distance.
+    combatantStage: {
+      hudClearanceViewportPct: 3,
+      actionClearanceViewportPct: 3,
+      intentGapPx: 6,
+      centerPct: 50,
+    },
+    // Contextual explanations point back toward the readable centre instead of
+    // blindly choosing the first side with room. Combatants add a persistent,
+    // foldable edge inspector while the shared floating tooltip remains the
+    // short-lived hover/tap explanation.
+    // THE EQUIPMENT CARD FACE, SIZED BY WHAT THE INFORMATION IS WORTH.
+    //
+    // The face used to be seven hard-coded pixel rows. Whatever did not fit was
+    // cut wherever the row happened to end, and because flavour and the footer
+    // sat in rows of their own, the thing that got cut was the MECHANICS: a
+    // player could read "Grey wood, warm at the grip." in full while
+    // "Class power: +1 Potency" was sliced through the middle.
+    //
+    // Rows are now declared with a PRIORITY and a floor. Every region states
+    // what it must never shrink below and how willingly it gives space up:
+    // higher `priority` keeps its room longer, and `grow` says who absorbs the
+    // slack when there is any. Nothing here is a magic constant in a
+    // stylesheet — the numbers are data, and the face is composed from them.
+    //
+    // The ordering is the claim, and it is deliberate: what the item DOES
+    // (bonuses) outranks what it IS (type, tags), which outranks what it is
+    // LIKE (flavour). Flavour is lore and says so in its own tooltip; it is the
+    // first thing to give up room and the first thing to ellipsis.
+    equipmentCard: {
+      // Face geometry. The frame lays out at this size and is then scaled to
+      // whatever box it is dropped into, so these are design pixels, not
+      // device pixels.
+      frameWidthPx: 350,
+      frameHeightPx: 490,
+      paddingPx: 19,
+      gapPx: 3,
+      // Regions, in visual order. `minPx` is the floor; `priority` breaks ties
+      // when there is not enough room; `grow` shares out anything left over.
+      regions: {
+        art:     { minPx: 270, priority: 7, grow: 0 },
+        type:    { minPx: 22,  priority: 5, grow: 0 },
+        facts:   { minPx: 40,  priority: 6, grow: 0 },
+        tags:    { minPx: 18,  priority: 4, grow: 0 },
+        effects: { minPx: 54,  priority: 7, grow: 2 },
+        flavor:  { minPx: 18,  priority: 1, grow: 0 },
+        footer:  { minPx: 16,  priority: 2, grow: 0 },
+      },
+      // Text sizing. Every face value is a clamp: it may shrink to `minPx` so a
+      // long line stays on the card, and never grows past `maxPx` so a short
+      // one does not shout. `idealCh` is the width the size is derived from, so
+      // the type scales with the card rather than with the viewport.
+      // `floorPx` is a PHYSICAL floor, and it is the one that matters on a
+      // phone. The frame lays out at frameWidthPx and is then transform-scaled
+      // into whatever box holds it, so a 13px line inside a face scaled to 0.6
+      // reaches the glass at 7.8px. The floor is divided by that scale — the
+      // same compensation the rest of the kit applies against `--ui-zoom` — so
+      // authored type shrinks with the card only until it would stop being
+      // readable, and then stops shrinking. The priority solver above is what
+      // affords this: the regions that hold text now have room to take it.
+      text: {
+        name:    { minPx: 13, idealCh: 5.2, maxPx: 20, floorPx: 15 },
+        type:    { minPx: 9,  idealCh: 2.9, maxPx: 11, floorPx: 10 },
+        fact:    { minPx: 9,  idealCh: 2.7, maxPx: 10, floorPx: 10 },
+        factValue: { minPx: 13, idealCh: 4.2, maxPx: 16, floorPx: 15 },
+        tag:     { minPx: 9,  idealCh: 2.6, maxPx: 10, floorPx: 10 },
+        heading: { minPx: 9,  idealCh: 2.6, maxPx: 10, floorPx: 10 },
+        bonus:   { minPx: 11, idealCh: 3.4, maxPx: 13, floorPx: 13 },
+        flavor:  { minPx: 10, idealCh: 3.1, maxPx: 12, floorPx: 11 },
+        footer:  { minPx: 9,  idealCh: 2.6, maxPx: 10, floorPx: 10 },
+      },
+      // How many lines a single bonus may wrap to before it ellipsises. One
+      // line was the old behaviour and it truncated real numbers mid-word.
+      bonusMaxLines: 2,
+      // The information button. It appears on the FIRST press of a card, not
+      // the second: a control nobody can find is a control nobody uses. The
+      // fade keeps it from snapping into place under the thumb. Its reveal
+      // delay (wireframeUi.selection) and size (wireframeUi.inspect) are the
+      // shared WCF3/WCB1 ones every card and combatant uses.
+      info: { fadeMs: 120, insetPx: 6 },
+    },
+    tooltipPlacement: {
+      hoverDelayMs: tooltipHelp.delays[tooltipHelp.settings.find(row => row.key === 'tooltipDelay').def],
+      autoFadeMs: 5000,
+      topBandViewportPct: 25,
+      sideBandViewportPct: 30,
+    },
+    combatantInspector: {
+      widthRem: 20,
+      mobileWidthViewportPct: 62,
+    },
+    // Shrine options default to one vertical list. `grid` preserves the
+    // horizontal wide-screen composition as an authored alternative; narrow
+    // screens still collapse it to a list for touch and readable labels.
+    shrinePresentation: {
+      optionLayout: 'list', // list | grid
+      // The four option faces share one folded footprint. Percentages own the
+      // responsive size; the bounds preserve the 44 px interaction floor and
+      // keep a wide monitor from turning a choice into a banner.
+      foldedCardWidthViewportPct: 88,
+      foldedCardMaxWidthRem: 44,
+      foldedCardHeightViewportPct: 10,
+      foldedCardMaxHeightRem: 7,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -303,20 +581,13 @@ export const balance = {
       // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
       // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
       //
-      // narrowMax is the width, in LOCAL px, at or below which the narrow
-      // layout is used. It lives HERE and nowhere else.
+      // narrowMax is the viewport width, in visual px, at or below which the
+      // narrow layout is used. Height may change the zoom, never this mode.
       //
-      // It used to live in styles/combat.css instead, as `@container app
-      // (max-width: 520px)`, because a container query condition cannot read a
-      // custom property. That was a correct single-home argument and Vira
-      // verified it — and it was not the point. The stylesheet asking the
-      // question at all made TWO deciders out of one decision: the zoom judged
-      // innerWidth/innerHeight against 430x780, the layout judged the
-      // container's local width against 520, and nothing made them agree. On a
-      // tablet they disagreed and the fight became unadvanceable (#24).
-      // main.js now decides once and writes `data-layout` on <html>; the
-      // stylesheets follow it and measure nothing. One decider, one home, and
-      // CSS needs no copy of this number.
+      // It used to live in styles/combat.css as a container query. main.js now
+      // owns the width decision and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. Height can change the zoom,
+      // but cannot make a browser-chrome or keyboard resize flip the mode.
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
@@ -479,8 +750,9 @@ export const balance = {
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
     },
-    // Text size → root font-size %. It scales readable type and line metrics;
-    // component and sprite geometry is owned separately (styles/base.css).
+    // Text size → root font-size %. Auto owns the browser stylesheet baseline;
+    // M remains a legacy data alias for old saves and geometry tools. It scales
+    // readable type and line metrics; component and sprite geometry is separate.
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
     //
@@ -524,11 +796,10 @@ export const balance = {
     // and on this screen the neighbour is "permanent curse", with no confirm
     // and no undo. Constantine, asked: "yes press and hold".
     //
-    // WHY A HOLD AND NOT A MODAL, because that choice is the whole design and
-    // it is not a preference: the held control FILLS, so the player watches the
-    // wrong words filling under their finger and lets go IN TIME. A modal asks
-    // "are you sure?" AFTER the commit, when the eye has already moved on. The
-    // hold puts the question in the same moment as the mistake.
+    // WHY BOTH FORMS SHIP. A short activation opens the shared review modal so
+    // the player sees the exact result and optional cost. A deliberate hold
+    // fills on the original control and commits without the modal for players
+    // who already know the result. Releasing the hold early remains an abort.
     //
     // `steps` IS THE CLOSED SET, in dial order, and `off` is first because it
     // is the A/B — the same "let me try each and decide" he asked for on the
@@ -537,14 +808,58 @@ export const balance = {
     // ELSE. That is the falsifier for Law 0 on this control, and it is the same
     // sentence tapSize above already ships.
     //
-    // The durations: 600 ms is the default because a long-press people already
-    // know is ~400-500 ms (Android's own threshold) and a CONFIRM wants to sit
-    // just past reflex without becoming a chore. `short` is for players who
-    // find the wait irritating, `long` for hands that need the room. `off` is
-    // 0 and means the pre-hold behaviour, byte for byte: one tap commits.
+    // `normal` is the default: state-changing option controls now use a short
+    // press to review and a deliberate hold to approve without the modal.
+    // 600 ms sits just past the familiar ~400-500 ms long-press threshold
+    // ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
+    // without becoming a chore. `short` is for players who find the wait
+    // irritating, `long` for hands that need the room. `off` is 0 and disables
+    // only the shortcut; the short activation still opens the review modal.
+    // THE VICTORY BEAT (Constantine's review, 2026-09-11): when the last enemy
+    // falls, the fight's title stands over the battlefield for this long
+    // before the spoils door opens — a breath between the blow and the loot.
+    // Reduced motion skips it entirely (ui/components/victoryBeat.js).
+    victoryBeat: { ms: 600 },
     holdConfirm: {
       def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
+      // THE SETTLE WINDOW — A PRESS IS NOT A HOLD UNTIL IT HAS STAYED PUT.
+      //
+      // The fill used to arm on `pointerdown` and only cancel once the finger
+      // passed the slop. On any surface that also drags — the map camera, the
+      // Armoury tray, an inventory card you can drag — that meant every drag
+      // began with a hold animation flashing and dying under the thumb. The
+      // gesture was correct and the feedback was a lie.
+      //
+      // Nothing is dressed, painted or announced until the pointer has held
+      // still inside the slop for `settleMs`. Move first and this press is a
+      // drag: the hold never existed, so it has nothing to take back.
+      //
+      // `settleMs` is time BEFORE the hold, and the hold's own duration starts
+      // when the settle ends — a `long` hold on a dragging surface is
+      // 1000 + 1000. That ordering is deliberate: the fill should represent the
+      // whole of the commitment, not resume a bar that already crept while the
+      // player was deciding whether to scroll. Setting `settleMs: 0` restores
+      // the old immediate arm exactly, and a surface may override it per call.
+      //
+      // WHY IT IS NOT ON EVERY CONTROL. A control with no drag beneath it has
+      // nothing to disambiguate, and a safety beat that waits a second before
+      // it even begins to look like it is working reads as a broken button.
+      // `settleMs` is opt-in per call site; `dragSettleMs` is the value those
+      // sites use so the delay is authored once rather than eleven times.
+      dragSettleMs: 1000,
+      // How far the finger may drift during the settle and still be judged
+      // still. Kept apart from the hold's own slop so "did they mean to drag"
+      // and "did they wander off mid-hold" can be tuned independently.
+      settleSlopPx: 8,
+    },
+    // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
+    // not the irreversible-action safety dial above: a short activation still
+    // selects/reviews the save, while a stationary hold loads it directly.
+    // Keeping the duration here lets the interaction be tuned without changing
+    // the title screen's event wiring.
+    titleLoadHold: {
+      ms: 600,
     },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
@@ -598,8 +913,8 @@ export const balance = {
     //
     // WHY THIS IS NOT holdConfirm's DIAL, though both are a stationary press
     // with a timer. Two different jobs (Law 4's shape, applied to time): the
-    // confirm hold is a SAFETY step before an irreversible act — its length is
-    // a protection preference, and `off` means "one tap commits". The inspect
+    // confirm hold is a SHORTCUT around the review modal — its length is a
+    // protection preference, and `off` means "review only". The inspect
     // hold is how a player READS a card — turning the safety dial off must not
     // take reading away, and a hand that needs a longer confirm does not
     // thereby need slower reading. One dial answering both would break the
@@ -707,7 +1022,7 @@ export const balance = {
     // The beds carry their own gain staging on top of this bus (music.js,
     // gains 0.34–0.6), so 50 is clearly audible from first boot without
     // crowding the feedback layer.
-    audio: { musicVolume: 50, sfxVolume: 75 },
+    audio: { musicEnabled: true, musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------
@@ -725,6 +1040,74 @@ export const balance = {
       receiptLimit: 64,
     },
     roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+
+    // ---- Composed starting deck (togglable) ---------------------------------
+    // `roleCopies` above is a FIXED distribution that must sum to
+    // startingDeckSize by hand: grant a class one more card and the sum breaks.
+    // This block derives the same deck instead. Named cards ("grants") are
+    // dealt first — the weapon's technique, the class signature, anything
+    // global — and whatever budget remains is FILLER, split between the attack
+    // and guard roles. Filler still resolves through equipped profiles, so a
+    // sword-wielder's filler attacks are Slashing Strikes, not generic ones.
+    //
+    // With the defaults below the composed path reproduces 4/4/1/1 exactly
+    // (grants = technique 1 + signature 1; filler 8 at bias 0.5 → 4/4), which
+    // is what makes it safe to ship enabled. Set `enabled: false` to fall back
+    // to roleCopies verbatim.
+    startingDeck: {
+      enabled: true,
+
+      // `growToFit` and `minFiller` lived here. Both decided who yields when
+      // grants got greedy — the deck size, or the content author. Under the cap
+      // rule (SPEC, "The starting deck") nobody yields: the cap governs how many
+      // BASE strikes and defends are minted, bound cards are never capped or
+      // dropped, and a floor of basic cards is simply what the cap leaves over.
+
+      // Card ids every class starts with, whatever it wears. Cards named here
+      // must exist in the card registry; each is granted exactly one copy.
+      global: { grants: [] },
+
+      // The order bound cards are DEALT in at creation. Was `dropOrder`, which
+      // named a behaviour that no longer exists — nothing is ever dropped. Each
+      // entry is a tag id in the `grantSource` domain, so adding a source is a
+      // row in tags.csv rather than an edit to loadout.js.
+      sourceOrder: ['from:global', 'from:relic', 'from:armor', 'from:weapon', 'from:class'],
+
+      // WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's
+      // order; this is the binding between that vocabulary and the four places
+      // in loadout.js that actually mint a bound card. It exists because the
+      // ids used to be typed at those seams: renaming `from:weapon` here and in
+      // `sourceOrder` validated clean and then silently dealt the weapon's
+      // cards last, because the minting site still stamped the old id. Now the
+      // seam READS its id from this map, so a rename is a data edit and an
+      // unbound or misspelt role is refused by name.
+      //
+      // The KEYS are the engine's seams, not content vocabulary — there is a
+      // weapon seam whatever an author calls its source. `from:relic` has no
+      // key because nothing mints it yet; it is declared vocabulary waiting for
+      // a minter, and ranking it early costs nothing until one exists.
+      sources: {
+        global: 'from:global',
+        armor: 'from:armor',
+        weapon: 'from:weapon',
+        class: 'from:class',
+      },
+
+      // Which role wins the remainder when the cap leaves an odd number of base
+      // cards. Authored rather than assumed — it used to be a rounding rule
+      // buried in the arithmetic.
+      oddFillerGoesTo: 'attack',
+
+      // Per-class filler split. `strikeBias` is the share of base cards that go
+      // to attacks; the rest are guards. Classes absent here use
+      // `defaultStrikeBias`.
+      defaultStrikeBias: 0.5,
+      classes: {
+        reaver: { strikeBias: 0.5 },
+        starseer: { strikeBias: 0.5 },
+      },
+    },
+
     rarityBonuses: {
       common: { attack: 0, guard: 0 },
       uncommon: { attack: 1, guard: 1 },
@@ -733,12 +1116,33 @@ export const balance = {
     roleSources: {
       attack: [{ slot: 'rightHand' }],
       guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
-      technique: [{ slot: 'rightHand' }],
+      technique: [{ slot: 'rightHand' }, { slot: 'leftHand' }],
     },
     unarmedProfiles: {
       attack: 'unarmedAttack',
       guard: 'unarmedGuard',
       technique: 'unarmedTechnique',
+    },
+
+    // CARD MOUNTS (owner ruling, 2026-09-03). Every card an item lends sits in
+    // a MOUNT on that item; a smith can extract it (it becomes the run's own,
+    // the mount empties) or refill the mount with another card. What is
+    // extractable is a TAG on the card — strikes and defends do not carry it
+    // today, and the day the game changes its mind that is a spreadsheet
+    // edit. What an emptied mount shows is a FALLBACK per mount kind: a
+    // weapon-art mount falls back to the unarmed technique (the Dodge Roll),
+    // read from `unarmedProfiles` above rather than typed here, and any item
+    // may override that under `fallbackByItem`. `extraMounts` is the seam a
+    // later rune feature opens: mounts beyond the authored ones, per item,
+    // behind a flag that is off.
+    cardMounts: {
+      extractableTag: 'extractable',
+      kinds: {
+        weaponArt: { accepts: ['extractable'], fallback: { unarmedProfile: 'technique' } },
+        granted: { accepts: ['extractable'], fallback: null },
+      },
+      fallbackByItem: {},
+      extraMounts: { enabled: false, perItem: 1, kind: 'granted' },
     },
     enabled: true,
 
@@ -822,6 +1226,10 @@ export const balance = {
     swapCost: 2,
     swapAllowancePerTurn: 1, // only consulted when swapCostKind === 'allowance'
     swapEndsTurn: false,
+    // The Armoury remains actionable during the player's combat turn. Replacing,
+    // moving, or unequipping a carried item uses the same priced combat action
+    // as switching a prepared weapon set; the engine, never the panel, commits it.
+    allowChangesInCombat: true,
 
     // ---- WHAT A SWAP COSTS: three prices he can try, one chain ------------
     // Constantine, 2026-08-08: *"switching sets should cost actions. perhaps
@@ -923,7 +1331,8 @@ export const balance = {
     views: [
       { id: 'grid', figure: true, slots: 'flank' },
       { id: 'rack', figure: false, slots: 'list' },
-      { id: 'hybrid', figure: true, slots: 'list' },
+      { id: 'hybrid', figure: false, slots: 'list' },
+      { id: 'cards', figure: false, slots: 'list' },
     ],
     // WHICH PANE IS THE SUBJECT. One field, and it is the whole of "collapsible"
     // (#90). Constantine: *"I still want the armoury card list to be collapsable

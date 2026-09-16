@@ -2,6 +2,8 @@
 // headless target rules live below UI in model/friendlyTargets.js so the
 // authoritative engine never depends on DOM-facing modules.
 
+import { liteRendering } from '../performance.js';
+
 export const TARGET_COLORS = Object.freeze({
   enemy: '#e0463c',
   self: '#4d94e0',
@@ -9,7 +11,7 @@ export const TARGET_COLORS = Object.freeze({
 });
 
 function tintedClone(spriteWrap, color) {
-  const src = spriteWrap && spriteWrap.firstElementChild;
+  const src = spriteWrap && [...spriteWrap.children].find(child => !child.classList.contains('aim-silho'));
   if (!src) return null;
   const clone = src.cloneNode(true);
   const svg = clone.matches && clone.matches('svg') ? clone : clone.querySelector && clone.querySelector('svg');
@@ -21,8 +23,9 @@ function tintedClone(spriteWrap, color) {
       if (stroke && stroke !== 'none') node.setAttribute('stroke', color);
     });
   } else if (clone.style) {
-    clone.style.background = color;
-    clone.style.borderColor = color;
+    const artwork = clone.matches?.('img,canvas') || clone.querySelector?.('img,canvas,.painted-stage');
+    clone.style.background = artwork ? 'transparent' : color;
+    clone.style.borderColor = artwork ? 'transparent' : color;
     clone.style.color = 'transparent';
     clone.style.boxShadow = 'none';
     // Rendered class art is an <img> inside a wrapper. Recolor the wrapper's
@@ -50,13 +53,15 @@ export function renderTargetSilhouette(combatantEl, relationship) {
   const color = TARGET_COLORS[relationship];
   const spriteWrap = combatantEl && combatantEl.querySelector('.sprite');
   if (!color || !spriteWrap) return false;
-  const clone = tintedClone(spriteWrap, color);
-  if (!clone) return false;
+  const light = liteRendering();
+  const clone = light ? null : tintedClone(spriteWrap, color);
+  if (!light && !clone) return false;
   const holder = document.createElement('div');
   holder.className = 'aim-silho';
   holder.dataset.targetRelationship = relationship;
   holder.style.setProperty('--target-color', color);
-  holder.appendChild(clone);
+  if (clone) holder.appendChild(clone);
+  else holder.classList.add('aim-outline');
   spriteWrap.insertBefore(holder, spriteWrap.firstChild);
   combatantEl.classList.add('aiming', `aim-${relationship}`);
   return true;

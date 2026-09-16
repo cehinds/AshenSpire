@@ -1,0 +1,384 @@
+# pages-builds — publish EVERY branch's builds to GitHub Pages, each at its own address.
+#
+#   /                      the build index across dev, test, release and main
+#   /<branch>/             that branch's builds, newest first
+#   /<branch>/<ordinal>/   that exact build, playable (byte-identical to the commit's AshenSpire.html)
+#   /<branch>/latest/      alias for the branch's newest build
+#
+# Everything the site served before (/AshenSpire.html, /docs/…) is still served:
+# the whole `main` tree is the base of the artifact and the only replaced file is
+# the root index.html (main's own is kept at /index-game.html).
+#
+# PUBLICATION IS SPLIT BY BRANCH (owner's ruling, 2026-09-05). A push to dev
+# ASSEMBLES, proves and then PUBLISHES the site. A push to test, release or main
+# assembles and proves it and stops: those are published only by the owner's own
+# dispatch whose `publish` input spells PUBLISH (github.actor AND
+# github.triggering_actor are both checked against github.repository_owner, so
+# neither a write collaborator's dispatch nor their re-run of the owner's dispatch
+# deploys). The automatic path is `dev` alone.
+#
+# WHY `dev` ALONE, WHEN THE RULING SAID DEV, TEST AND RELEASE. Because the other two
+# CANNOT publish, and asking them to was turning finished work red. The `github-pages`
+# environment carries a deployment-branch rule and it admits `dev` and `main` only. A
+# workflow cannot read that rule, so the guard listed all three development branches
+# and every test/release run walked into the gate and failed there in about two
+# seconds with no steps and no log. The annotation is GitHub's, not ours:
+#
+#   Branch "release" is not allowed to deploy to github-pages due to environment
+#   protection rules.
+#
+# Measured 2026-09-07 on release `fb299d90` (run 209, the release PR #795): assemble
+# green in 97s, deploy red at the gate, the release PR carrying a red check with
+# nothing wrong with the release. The day's deployment statuses say the same for
+# every branch — dev and main reach `success`, test and release go `waiting` →
+# `failure`.
+#
+# NOTHING IS LOST BY NOT TRYING. The site is reassembled from git history on every
+# run and `tools/pages-site.mjs` walks dev, test, release and main whatever branch
+# the run is on, so a dev publication already carries the test and release sections
+# at their newest commits. What those two lose is only the ability to TRIGGER a
+# publication — not their place in the published site.
+#
+# TO GIVE THEM THAT BACK, THE ENVIRONMENT HAS TO ADMIT THEM FIRST: Settings →
+# Environments → github-pages → Deployment branches, add `test` and `release`, THEN
+# add them back to the deploy guard and to PUBLISH_REQUESTED below. Adding them here
+# alone reinstates exactly the failure above. The owner's dispatch still publishes
+# any branch the environment admits, main included.
+#
+# The assemble job still holds no Pages WRITE or OIDC credential (contents: read and
+# pages: read only — configure-pages needs to read the site's configuration); the
+# write and the token live on the `deploy` job alone, on the `github-pages`
+# environment, which can additionally carry required reviewers. What changed is which
+# events may REACH that job, not which job holds the credential.
+#
+# The cost is named rather than discovered: publishing on a push to `dev` is a
+# standing delegation to every future push on it. It was accepted because the
+# alternative was measured — the site sat three days and 52 green assemble runs
+# behind the game while every one skipped the deploy job.
+# ONE-TIME OWNER ACTION before the first deploy: Settings → Pages → Build and
+# deployment → Source: "GitHub Actions"; until then the deploy step fails with GitHub's
+# own message and the legacy `main:/` source keeps serving.
+#
+# COST: one assemble run per push to any of the four branches. A run that has
+# STARTED is never cancelled — see the concurrency block for why a guess about
+# who publishes cost a publication — so a burst of pushes serialises rather than
+# killing whatever is mid-flight. A newer arrival does still supersede an older
+# QUEUED run, which costs nothing: the site is rebuilt from git history each
+# time (deterministic; nothing accumulates), so the newest assembly already
+# carries every build a superseded one would have published.
+name: pages-builds
+
+on:
+  push:
+    branches: [dev, test, release, main]
+  workflow_dispatch:
+    inputs:
+      keep:
+        description: newest builds to publish per branch
+        default: '10'
+      publish:
+        description: "type PUBLISH to deploy the assembled site to Pages (owner-exclusive: only the repository owner's dispatch deploys; a push never does)"
+        default: ''
+
+concurrency:
+  group: pages-builds
+  # NO RUN CANCELS ANOTHER, BECAUSE "WILL THIS RUN PUBLISH?" CANNOT BE ANSWERED HERE.
+  #
+  # One group keeps publications serialised, which is right — two deploys to the
+  # same Pages environment must not race. Cancellation is the part that kept
+  # losing them.
+  #
+  # The first version cancelled every run, so a push to main — which assembles
+  # and stops by design — killed in-flight dev/test/release runs, including ones
+  # already inside `actions/deploy-pages`. The fix for that made the flag ask the
+  # same question as the deploy guard: will THIS run publish? A publishing run
+  # could still cancel its predecessor, on the reasoning that the newer
+  # publication supersedes the older one anyway.
+  #
+  # That reasoning holds only if the canceller really does publish, and the
+  # expression could only GUESS: it read "a push to dev, test or release
+  # publishes" off the deploy guard. Measured on 2026-09-07, that premise was
+  # false for two of the three. Deployments from `test` and `release` are
+  # refused by the `github-pages` environment's branch rule, so their runs die
+  # at the environment gate in one second with no steps and no log — 8 of 8,
+  # against 9 of 9 successes from `dev`. They were nonetheless counted as
+  # publishers and allowed to cancel, and they did: run 213 (test, which cannot
+  # publish) cancelled run 212 (dev `c71fdecb`, which would have published
+  # 0.5.5.125), leaving the site at 0.5.5.119 — six builds behind. Exactly the
+  # rule at the top of this comment, broken by a guess about who publishes.
+  #
+  # A workflow cannot read the environment's branch rule, so it cannot answer
+  # that question correctly — and a guess costs a silent lost publication, which
+  # is the one failure this group exists to prevent. So nothing cancels.
+  #
+  # WHAT `false` ACTUALLY BUYS, measured on the first burst after it landed
+  # (23:21–23:23 UTC, 2026-09-07): a run that has STARTED is never killed. Run
+  # 215 was mid-flight while three later arrivals came in — 216 (#783's merge),
+  # 217 (a publish dispatch) and 218 (#788's merge) — and it kept running.
+  # Under the old flag any one of them would have ended it, possibly inside
+  # `actions/deploy-pages`.
+  #
+  # WHAT IT DOES NOT BUY, and the earlier wording here claimed otherwise: it is
+  # NOT "every run publishes in turn". A concurrency group holds ONE queued run,
+  # so a newer arrival still supersedes an older PENDING one — 216 and 217 were
+  # both cancelled while queued, and only 218 waited for 215. That costs nothing
+  # here, because the site is reassembled from git history on every run: the
+  # newest assembly already carries every build the superseded ones would have
+  # published. The guarantee is "the newest publication always lands and no
+  # in-flight one is lost", not "each one lands".
+  #
+  # The cost is named rather than discovered: a burst of pushes serialises
+  # instead of collapsing, so the last one waits out the one ahead of it.
+  # Wall-clock, not correctness.
+  cancel-in-progress: false
+
+# The workflow as a whole holds nothing but read: the Pages and OIDC grants are the
+# deploy job's alone (below), never the push-triggered assemble job's.
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    # pages: read is what actions/configure-pages needs to read the site's
+    # configuration; it deploys nothing. The write and the OIDC token stay on
+    # the deploy job alone.
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
+      # test release main` is atomic: `fatal: couldn't find remote ref test`
+      # aborts the whole command with exit 128, so when `test` was deleted on
+      # 2026-09-04 (GitHub auto-deletes a merged PR's head branch, and the
+      # test → release promotion uses `test` AS the head) this job went red on
+      # dev, on release and on main — none of which had lost anything.
+      #
+      # Fetched one at a time, a branch that is gone costs its own line and
+      # nothing else. It is NOT swallowed: the missing ones are named here and
+      # named again in the assembled summary, because a publish that quietly
+      # drops a branch is the failure this whole job exists to prevent.
+      - name: Fetch the published branches so their history is readable
+        run: |
+          set -uo pipefail
+          missing=""
+          for b in dev test release main; do
+            if git fetch --no-tags origin "$b" 2>/dev/null; then
+              echo "  fetched $b"
+            else
+              echo "  MISSING $b — no such branch on origin"
+              missing="$missing $b"
+            fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
+      # runs on pushes to dev, test, release AND main, and it assembles a site
+      # out of all four branches' histories — series deliberately mixed, which
+      # is why `tools/release-series.mjs` opens by saying archived downloads
+      # keep their original versions. Asserting one series in this job asserts
+      # it against every branch the job runs on: measured 2026-09-08, test,
+      # release and main all read `Expected release 0.6.x, received 0.5.5` and
+      # exit 1, which would have taken the ASSEMBLE step down on three of the
+      # four — the step that produces the artifact a publication needs. The
+      # gate belongs where current builds are made: dev-preview runs it on
+      # every push to dev and every PR into dev, and ci.yml on dispatch.
+      - name: Assemble the site from git history — every listed build proven byte-identical
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
+      - name: The generator's own drift plant is still caught
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      # SAY THAT THE SITE IS BEHIND, BECAUSE NOBODY WAS BEING TOLD.
+      #
+      # #553: after #543 correctly took the deploy credential off the push path,
+      # nothing republished — and nothing SAID nothing had republished, so /dev
+      # /test /release served stale builds for hours with every run green.
+      #
+      # A first attempt at this fixed it by publishing automatically behind a
+      # repository-variable switch. That was rejected: publishing the site is an
+      # owner action, taken deliberately each time, and a standing switch is a
+      # delegation to every future push. So this step reports; it does not
+      # publish, and nothing here should ever grow the ability to.
+      # SAY WHAT THIS RUN DID, BECAUSE NOBODY WAS BEING TOLD.
+      #
+      # #553: after #543 correctly took the deploy credential off the push path,
+      # nothing republished — and nothing SAID nothing had republished, so /dev
+      # /test /release served stale builds for hours with every run green.
+      #
+      # A first attempt fixed that by publishing automatically behind a repository
+      # variable. That was rejected: publishing the site is an owner action, taken
+      # deliberately each time, and a standing switch is a delegation to every
+      # future push. So this step reports; it does not publish, and nothing here
+      # should ever grow the ability to.
+      - name: Report what this run did with the site
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # The owner's dispatch is the only run whose `deploy` job will follow, so
+          # it is the only run that must NOT be summarised as unpublished — that
+          # summary would still be sitting there, contradicting it, after the
+          # publication succeeded.
+          # MUST MIRROR THE deploy JOB'S `if`. This flag is the only thing that
+          # decides whether the summary says "published" or "not published", so a
+          # flag narrower than the guard prints "not published" on a run that
+          # publishes — the exact silence (#553) this step was added to end.
+          # `dev` alone on the push path, because the github-pages environment admits
+          # `dev` and `main` only and a run that cannot publish must not claim it
+          # will — see the header.
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'push' && github.ref_name == 'dev') || (github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH') }}
+        run: |
+          set -u
+          {
+            if [ "$PUBLISH_REQUESTED" = "true" ]; then
+              echo "### Assembled — publication requested"
+              echo
+              echo "Nothing is published until the \`deploy\` job succeeds; that job reports the result."
+            else
+              echo "### Assembled — not published"
+            fi
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Branch | \`$GITHUB_REF_NAME\` |"
+            echo "| Commit | \`$GITHUB_SHA\` |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Best effort — and BOTH ways it can fail are reported rather than
+          # swallowed. The first cut matched `"created_at":"` with no space, which
+          # the real response does not have, so the request would succeed and the
+          # line would print EMPTY: a blank where a staleness warning belongs looks
+          # exactly like a current site, which is this bug's own failure mode
+          # reintroduced one level down. jq parses it; a missing field still says
+          # UNKNOWN.
+          if last=$(curl -sf -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/pages/builds/latest"); then
+            # WHICH TIMESTAMP, AND WHY IT IS NOT created_at. GitHub defines
+            # created_at as when the build was CREATED — queued — and updated_at
+            # as when it reached its final status. A build that sat queued or ran
+            # for minutes therefore published LATER than its created_at says, so
+            # dating the site by it backdates the publication and understates
+            # staleness by exactly the interval an incident makes longest. The
+            # completion time is the one that answers "how old is what I am
+            # looking at".
+            finished=$(printf '%s' "$last" | jq -r '.updated_at // empty')
+            # THE STATUS DECIDES, NOT THE TIMESTAMP. builds/latest returns the
+            # newest ATTEMPT whatever became of it, so a build that errored, was
+            # cancelled, or is still running comes back carrying timestamps.
+            # Printing one as "Last publication" would date the site to a
+            # publication that never happened — the same misleading state this
+            # summary exists to prevent. Only `built` is a publication.
+            state=$(printf '%s' "$last" | jq -r '.status // empty')
+            if [ "$state" = "built" ] && [ -n "$finished" ]; then
+              echo "Last publication: **$finished** (build completed)" >> "$GITHUB_STEP_SUMMARY"
+            elif [ -n "$state" ]; then
+              echo "Last publication: **UNKNOWN** — the newest Pages build reports status \`$state\`, not \`built\`, so it did not publish. Treat the site as behind." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "Last publication: **the response carried no \`status\`**, so whether the site is current is UNKNOWN — treat it as behind." >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "Last publication: **could not be read** (needs \`pages: read\`), so whether the site is current is UNKNOWN — treat it as behind." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          if [ "$PUBLISH_REQUESTED" != "true" ]; then
+            {
+              echo
+              echo "This branch does not publish on a push — only \`dev\` does. To publish this"
+              echo "assembly, the repository owner dispatches this workflow with"
+              echo "\`publish\` = \`PUBLISH\`; a collaborator's dispatch does not, and no standing"
+              echo "setting may stand in for that decision."
+              echo
+              echo "Nothing is stale because of this. The site is reassembled from git history"
+              echo "every run, across dev, test, release and main, so this commit is already in"
+              echo "the next publication from \`dev\` whether or not this run publishes."
+              if [ "$GITHUB_REF_NAME" = "test" ] || [ "$GITHUB_REF_NAME" = "release" ]; then
+                echo
+                echo "\`$GITHUB_REF_NAME\` additionally **cannot** deploy: the \`github-pages\`"
+                echo "environment's deployment-branch rule admits \`dev\` and \`main\` only, so a"
+                echo "dispatch from here would be refused at the environment gate. See the"
+                echo "header of \`.github/workflows/pages-builds.yml\` for what to change first."
+              fi
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  deploy:
+    needs: assemble
+    # TWO WAYS TO PUBLISH, AND ONLY `dev` HAS THE FIRST.
+    #
+    # Owner's ruling, 2026-09-05: the development branches republish on their own;
+    # main needs the owner's say-so. This reverses the earlier refusal to
+    # automate publication at all — that refusal was paid for on 2026-09-02..05,
+    # when the site sat three days and 52 green assemble runs behind the game
+    # while every one of them skipped this job. Automatic publication on `dev` is
+    # the deliberate cost of that.
+    #
+    # 1. A PUSH to dev publishes. This IS a standing delegation to every future
+    #    push on that branch: whoever can push it can reach this job's Pages
+    #    credential. That is accepted for the branch that only ever serves
+    #    development builds, and refused for main.
+    #
+    #    `test` and `release` were on this line until 2026-09-07 and could never
+    #    honour it: the github-pages environment's deployment-branch rule admits
+    #    `dev` and `main` only, so their runs died AT THIS JOB'S ENVIRONMENT GATE
+    #    in about two seconds — no steps, no log, a red check on work that was
+    #    fine (release `fb299d90`, run 209, PR #795). A guard cannot read that
+    #    rule, so it has to agree with it by hand; the header says what to change,
+    #    and in which order, to put them back.
+    #
+    # 2. THE OWNER'S OWN DISPATCH publishes any branch, main included. Never a
+    #    write collaborator's dispatch (anyone with write may run a workflow, so
+    #    the typed PUBLISH alone is not authority; the actor is), and a RE-RUN of
+    #    the owner's dispatch by a collaborator keeps the owner as github.actor,
+    #    so the actor who triggered THIS attempt must be the owner as well.
+    #
+    # WHAT THIS DOES NOT PROMISE. Pages serves one site per repository and this
+    # one is assembled with main's tree as its base, so any publication carries
+    # whatever main holds at that moment. A push to main never publishes itself —
+    # that is the guarantee — but main's content does reach the site on the next
+    # dev publication after it lands. Closing that would mean
+    # pinning the site's main section to the last approved publication, which is
+    # a change to how the site is assembled rather than to who may publish it.
+    # Merging to main is already owner-only, so what reaches main is the owner's
+    # decision before this job ever runs.
+    if: >-
+      (
+        github.event_name == 'push'
+        && github.ref_name == 'dev'
+      ) || (
+        github.event_name == 'workflow_dispatch' && inputs.publish == 'PUBLISH'
+        && github.actor == github.repository_owner
+        && github.triggering_actor == github.repository_owner
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+      # The publication's own receipt, so the run that published says so rather
+      # than leaving the assemble job's summary as the last word on it.
+      - name: Record the publication
+        run: |
+          {
+            echo "### Published"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| URL | ${{ steps.deployment.outputs.page_url }} |"
+            echo "| Commit | \`$GITHUB_SHA\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

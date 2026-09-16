@@ -53,9 +53,17 @@ CLOTH_DARK = make_mat("clothDark", srgb(0x2A, 0x22, 0x16))
 LEATHER = make_mat("leather", srgb(0x3A, 0x32, 0x26))
 ARMOR = make_mat("armor", srgb(0x4A, 0x40, 0x34), metallic=0.35, rough=0.55)
 STEEL = make_mat("steel", srgb(0xB8, 0xB0, 0xA0), metallic=0.75, rough=0.35)
-ROBE_BLUE = make_mat("robeBlue", srgb(0x2B, 0x25, 0x47))
-ROBE_BLUE_LT = make_mat("robeBlueLt", srgb(0x3A, 0x33, 0x58))
-ROBE_RED = make_mat("robeRed", srgb(0x2E, 0x1F, 0x1F))
+# The starseer's robe was blue (0x2B2547 / 0x3A3358, hue ~251°) and that was its
+# largest miss by far: 13.0% warm-earth hue against the approved reference's
+# 78.1%. Not a brightness problem — a different palette. Renamed as well as
+# recoloured, because a material called ROBE_BLUE that renders umber is a trap
+# for whoever reads this next. equipment-blender.py's CLASS_BODY_MATS names
+# these as strings and is updated to match.
+ROBE_UMBER = make_mat("robeUmber", srgb(0x42, 0x38, 0x24))     # h 40.0° v 0.259
+ROBE_UMBER_LT = make_mat("robeUmberLt", srgb(0x54, 0x48, 0x30))  # h 40.0° v 0.329
+# Herald's robe was 0x2E1F1F — hue 0°, outside the 20-80° warm earth band. Same
+# value, shifted into the band and given the chroma the approved look carries.
+ROBE_RED = make_mat("robeRed", srgb(0x2E, 0x23, 0x18))         # h 30.0° v 0.180
 HOOD_DARK = make_mat("hoodDark", srgb(0x24, 0x14, 0x13))
 NEAR_BLACK = make_mat("nearBlack", srgb(0x0E, 0x0A, 0x08))
 WOOD = make_mat("wood", srgb(0x6B, 0x5D, 0x45))
@@ -68,13 +76,56 @@ SKIN = make_mat("skin", srgb(0x46, 0x3C, 0x2E))
 # the classes carry a large ACCENT_CLOTH surface (cape / tabard / mantle) in the
 # player's chosen tint. Enemies keep the cold, desaturated iron and get no
 # accent rim, so the silhouette that glows is always yours.
-HERO_PLATE = make_mat("heroPlate", srgb(0x7E, 0x71, 0x5D), metallic=0.45, rough=0.42)
-HERO_PLATE_LT = make_mat("heroPlateLt", srgb(0x9C, 0x8D, 0x73), metallic=0.50, rough=0.36)
+# Darkened and enriched 2026-09-02 to the approved look (owner ruling: only the
+# rogue was right; the other three match it). Measured, these two were the whole
+# of the reaver's miss — it failed brightness and saturation and nothing else.
+# Was 0x7E715D v0.494 s0.262 and 0x9C8D73 v0.612 s0.263, against the reference's
+# v0.153 s0.565. Hue is unchanged at ~36°: the reaver's warm earth family was
+# already right, so this is a value and chroma correction, not a repaint.
+#
+# TENSION, recorded not resolved: the note above says the hero body is
+# deliberately LIGHTER than enemy iron so you never read as just another
+# soldier. These are now close to the old enemy iron in value (0.302 against
+# 0.290), though warmer and markedly more saturated (s 0.403 against 0.297).
+# The hero marker now leans on ACCENT_CLOTH and the accent rim rather than on
+# body lightness. If the player figure stops reading as yours on a crowded
+# board, this is the change to revisit first.
+HERO_PLATE = make_mat("heroPlate", srgb(0x4D, 0x41, 0x2E), metallic=0.45, rough=0.42)
+HERO_PLATE_LT = make_mat("heroPlateLt", srgb(0x61, 0x52, 0x3C), metallic=0.50, rough=0.36)
 HERO_LEATHER = make_mat("heroLeather", srgb(0x4B, 0x35, 0x22))
 HERO_UNDER = make_mat("heroUnder", srgb(0x33, 0x2A, 0x1E))
 # Large accent surfaces: cloth, so barely emissive — ACCENT stays for the small
 # metal highlights. Both are re-tinted together before each render.
 ACCENT_CLOTH = make_mat("accentCloth", srgb(*TINTS["gold"]), metallic=0.0, rough=0.72, emit=0.10)
+
+# ---- rogue palette ----------------------------------------------------------
+# The rogue had no builder at all: equipment-blender.py mapped it to build_reaver,
+# which is the silhouette defect the class facelift failed on. Its palette is
+# derived from the one look the owner approved on 2026-09-02 — see
+# assets/classes/LOOK-REFERENCE-ROGUE.md: high chroma held at LOW value, warm
+# earth hues, gold as a single clasp rather than a costume.
+#
+# The 60-80 degree olive band is 10.2% of the approved reference and 2.8% of the
+# reaver — the difference between leather and all-steel. These stay dark on
+# purpose: brightening them to read "green" breaks conformance even though the
+# hue would be right.
+ROGUE_SCALE = make_mat("rogueScale", srgb(0x3B, 0x42, 0x2A))       # h 77.5° v 0.259
+ROGUE_SCALE_LT = make_mat("rogueScaleLt", srgb(0x4A, 0x53, 0x36))  # h 78.6° v 0.325
+# Rogue-specific rather than borrowed from the reaver. CLASS_BODY_MATS in
+# equipment-blender.py may only list materials unique to one class, so sharing
+# HERO_LEATHER / HERO_UNDER would leave two of rogue's four armour columns
+# unpaintable.
+ROGUE_LEATHER = make_mat("rogueLeather", srgb(0x3A, 0x2A, 0x1C))   # h 28.0° v 0.227
+ROGUE_UNDER = make_mat("rogueUnder", srgb(0x24, 0x1E, 0x14))       # h 37.5° v 0.141
+# The hood and mantle are rogue's own too, and for a subtler reason than the
+# four above: build_rogue first borrowed HOOD_DARK and CLOTH_DARK from the
+# herald, which herald's CLASS_BODY_MATS repaints. equipment-blender renders
+# herald before rogue, so every rogue equipment body would have inherited the
+# LAST herald armour set's colours on its cowl — a leak that shows up only in
+# the generated art, never at import. Materials a builder relies on must be
+# private to it unless no other class repaints them.
+ROGUE_HOOD = make_mat("rogueHood", srgb(0x24, 0x1A, 0x12))         # h 26.7° v 0.141
+ROGUE_MANTLE = make_mat("rogueMantle", srgb(0x2E, 0x24, 0x18))     # h 32.7° v 0.180
 
 _parts = []
 
@@ -161,19 +212,19 @@ def build_starseer():
     # mantle behind the robe — the accent surface that marks a player figure
     part(cone, ACCENT_CLOTH, loc=(0, 0.15, 0.80), vertices=7, radius1=0.50, radius2=0.20, depth=1.10)
     # layered robe: outer, lighter overlay, and a front panel with trim
-    part(cone, ROBE_BLUE, loc=(0, 0, 0.65), vertices=10, radius1=0.46, radius2=0.15, depth=1.32)
-    part(cone, ROBE_BLUE_LT, loc=(0, -0.02, 1.16), vertices=10, radius1=0.28, radius2=0.14, depth=0.42)
-    part(cube, ROBE_BLUE_LT, loc=(0, -0.235, 0.62), scale=(0.115, 0.02, 0.30))
+    part(cone, ROBE_UMBER, loc=(0, 0, 0.65), vertices=10, radius1=0.46, radius2=0.15, depth=1.32)
+    part(cone, ROBE_UMBER_LT, loc=(0, -0.02, 1.16), vertices=10, radius1=0.28, radius2=0.14, depth=0.42)
+    part(cube, ROBE_UMBER_LT, loc=(0, -0.235, 0.62), scale=(0.115, 0.02, 0.30))
     part(cube, ACCENT_CLOTH, loc=(0, -0.250, 0.62), scale=(0.030, 0.02, 0.30))
     # shoulders + hanging sleeves (silhouette weight, not just spheres)
     for side in (-1, 1):
-        part(ico, ROBE_BLUE_LT, loc=(side * 0.24, 0, 1.30), subdivisions=2, radius=0.125)
-        part(cone, ROBE_BLUE, loc=(side * 0.28, 0.02, 1.02), vertices=8, radius1=0.115, radius2=0.055, depth=0.38)
+        part(ico, ROBE_UMBER_LT, loc=(side * 0.24, 0, 1.30), subdivisions=2, radius=0.125)
+        part(cone, ROBE_UMBER, loc=(side * 0.28, 0.02, 1.02), vertices=8, radius1=0.115, radius2=0.055, depth=0.38)
     # head, collar, wide-brim hat with accent band and a star at the tip
     part(uv, SKIN, loc=(0, 0, 1.44), segments=14, ring_count=10, radius=0.15)
-    part(cyl, ROBE_BLUE_LT, loc=(0, 0, 1.33), blight=(90, 0, 0), vertices=12, radius=0.165, depth=0.06)
-    part(cone, ROBE_BLUE, loc=(0, 0, 1.58), vertices=14, radius1=0.52, radius2=0.30, depth=0.10)
-    part(cone, ROBE_BLUE, loc=(0, 0.03, 1.80), blight=(-7, 0, 0), vertices=10, radius1=0.24, radius2=0.015, depth=0.44)
+    part(cyl, ROBE_UMBER_LT, loc=(0, 0, 1.33), blight=(90, 0, 0), vertices=12, radius=0.165, depth=0.06)
+    part(cone, ROBE_UMBER, loc=(0, 0, 1.58), vertices=14, radius1=0.52, radius2=0.30, depth=0.10)
+    part(cone, ROBE_UMBER, loc=(0, 0.03, 1.80), blight=(-7, 0, 0), vertices=10, radius1=0.24, radius2=0.015, depth=0.44)
     part(torus, ACCENT, loc=(0, 0.005, 1.645), major_radius=0.245, minor_radius=0.026)
     part(ico, ACCENT, loc=(0, 0.085, 2.00), subdivisions=1, radius=0.045)
     # star-topped staff: shaft, binding, orb, and orbiting motes
@@ -206,17 +257,70 @@ def build_herald():
     # two faint eyes in the dark of the hood
     for side in (-1, 1):
         part(ico, ACCENT, loc=(side * 0.048, -0.185, 1.44), subdivisions=1, radius=0.020)
-    # halo behind the hood + a smaller inner ring
-    part(torus, ACCENT, loc=(0, 0.16, 1.57), blight=(90, 0, 0), major_radius=0.32, minor_radius=0.022)
-    part(torus, ACCENT, loc=(0, 0.17, 1.57), blight=(90, 0, 0), major_radius=0.22, minor_radius=0.010)
-    # prayer beads arced across the waist
-    for x in (-0.20, -0.10, 0.0, 0.10, 0.20):
+    # Halo: ONE thin ring, and smaller. Herald measured gold at 3.7% against the
+    # approved reference's 0.6% — six times over — and this was the largest gold
+    # surface on the figure. The inner ring is gone. Gold is an accent in the
+    # approved look, not a costume; the halo still reads, it just stops shouting.
+    part(torus, ACCENT, loc=(0, 0.16, 1.57), blight=(90, 0, 0), major_radius=0.26, minor_radius=0.012)
+    # prayer beads arced across the waist — three, smaller, for the same reason
+    for x in (-0.14, 0.0, 0.14):
         dz = 0.035 * (1 - abs(x) / 0.22)
-        part(ico, ACCENT, loc=(x, -0.315, 0.80 - dz), subdivisions=1, radius=0.032)
+        part(ico, ACCENT, loc=(x, -0.315, 0.80 - dz), subdivisions=1, radius=0.022)
     # censer swinging from one hand
     if WITH_WEAPON:
         part(cyl, WOOD, loc=(0.40, -0.06, 1.16), vertices=6, radius=0.008, depth=0.34)
-        part(ico, ACCENT, loc=(0.40, -0.06, 0.96), subdivisions=2, radius=0.070)
+        part(ico, ACCENT, loc=(0.40, -0.06, 0.96), subdivisions=2, radius=0.045)
+
+
+def build_rogue():
+    # Restrained accent. Every other class carries a broad ACCENT_CLOTH sweep,
+    # but the approved look measures gold at 0.6% — six times less than herald.
+    # The player marker survives as a narrow mantle edge and the throat clasp
+    # rather than a cape. Widening this cone restores the usual hero-accent
+    # surface at the cost of the gold trait in check-look-conformance.mjs.
+    part(cone, ACCENT_CLOTH, loc=(0, 0.17, 0.74), vertices=7, radius1=0.40, radius2=0.16, depth=1.04)
+    # coat: long scaled skirt, then a shorter overlay so the hem reads layered
+    part(cone, ROGUE_SCALE, loc=(0, 0, 0.60), vertices=9, radius1=0.45, radius2=0.17, depth=1.24)
+    part(cone, ROGUE_SCALE_LT, loc=(0, -0.02, 1.02), vertices=9, radius1=0.32, radius2=0.20, depth=0.40)
+    # legs under the coat: dark, barely lit — they carry the deep-shadow share
+    for side in (-1, 1):
+        part(cyl, ROGUE_UNDER, loc=(side * 0.14, 0, 0.36), vertices=8, radius=0.095, depth=0.52)
+        part(cube, NEAR_BLACK, loc=(side * 0.15, -0.03, 0.06), scale=(0.09, 0.13, 0.06))
+    # torso: scaled cuirass with the chevron running down the front
+    part(cube, ROGUE_SCALE, loc=(0, 0, 1.06), scale=(0.28, 0.19, 0.23))
+    part(cube, ROGUE_SCALE_LT, loc=(0, -0.185, 1.10), scale=(0.055, 0.02, 0.20))
+    for side in (-1, 1):
+        part(cube, ROGUE_SCALE_LT, loc=(side * 0.085, -0.190, 1.00), blight=(0, side * 34, 0),
+             scale=(0.030, 0.02, 0.13))
+    # belt and cross-strap — leather, not metal; no buckle highlight
+    part(cube, ROGUE_LEATHER, loc=(0, -0.02, 0.84), scale=(0.29, 0.19, 0.045))
+    part(cube, ROGUE_LEATHER, loc=(0, -0.195, 1.06), blight=(0, 26, 0), scale=(0.035, 0.02, 0.26))
+    # THE MANTLE: layered shoulder cowl falling to mid-arm. This is the shape
+    # that reads as rogue at a glance and the reason its content box is the
+    # widest of the four (252 px against 169-201).
+    part(cone, ROGUE_HOOD, loc=(0, 0.01, 1.16), vertices=10, radius1=0.42, radius2=0.24, depth=0.34)
+    part(cone, ROGUE_MANTLE, loc=(0, 0.01, 1.28), vertices=10, radius1=0.34, radius2=0.22, depth=0.22)
+    for side in (-1, 1):
+        part(ico, ROGUE_HOOD, loc=(side * 0.33, 0, 1.20), subdivisions=2, radius=0.155)
+        part(cone, ROGUE_SCALE, loc=(side * 0.35, 0.01, 0.96), vertices=8, radius1=0.105, radius2=0.058, depth=0.34)
+        part(cyl, ROGUE_LEATHER, loc=(side * 0.36, -0.02, 0.80), blight=(0, side * 6, 0), vertices=8,
+             radius=0.062, depth=0.22)
+    # hood: outer shell, brow ridge, and a void where the face would be.
+    # Unlike herald there are NO eyes — the reference reads as an empty dark.
+    part(uv, ROGUE_HOOD, loc=(0, 0.02, 1.46), segments=14, ring_count=10, radius=0.215)
+    part(cyl, ROGUE_HOOD, loc=(0, -0.10, 1.48), blight=(90, 0, 0), vertices=12, radius=0.180, depth=0.05)
+    part(uv, NEAR_BLACK, loc=(0, -0.085, 1.43), segments=10, ring_count=6, radius=0.145)
+    part(cone, ROGUE_HOOD, loc=(0, 0.11, 1.63), blight=(20, 0, 0), vertices=8, radius1=0.17, radius2=0.03, depth=0.28)
+    # the one gold surface: a single clasp at the throat holding the mantle shut
+    part(cone, ACCENT, loc=(0, -0.215, 1.24), blight=(90, 0, 0), vertices=3, radius1=0.055, radius2=0.0, depth=0.03)
+    # paired daggers, held low — reverse grip, so the blades run down past the hip
+    if WITH_WEAPON:
+        for side in (-1, 1):
+            x = side * 0.50
+            part(cube, STEEL, loc=(x, 0, 0.66), scale=(0.026, 0.012, 0.20))
+            part(cone, STEEL, loc=(x, 0, 0.44), blight=(180, 0, 0), vertices=4, radius1=0.026, radius2=0.0, depth=0.10)
+            part(cube, ACCENT, loc=(x, 0, 0.88), scale=(0.058, 0.020, 0.018))
+            part(cyl, ROGUE_LEATHER, loc=(x, 0, 0.99), vertices=8, radius=0.022, depth=0.18)
 
 
 # ---- stage: camera, lights, film -------------------------------------------
@@ -444,7 +548,8 @@ ENEMIES = {
 # ---- render every class x tint, then every enemy -----------------------------
 accent_bsdf = ACCENT.node_tree.nodes["Principled BSDF"]
 cloth_bsdf = ACCENT_CLOTH.node_tree.nodes["Principled BSDF"]
-builders = {"reaver": build_reaver, "starseer": build_starseer, "herald": build_herald}
+builders = {"reaver": build_reaver, "starseer": build_starseer,
+            "herald": build_herald, "rogue": build_rogue}
 count = 0
 
 # Classes render at 3x their 150x190 display size (enemies stay 2x) — the player

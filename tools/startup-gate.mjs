@@ -1,0 +1,1085 @@
+#!/usr/bin/env node
+// Issue #229 — the cold boot belongs to the startup gate until one complete
+// physical press releases. Source is served by tools/serve.mjs and driven in
+// real Chromium through tools/browser.mjs. No DOM click substitutes are used
+// for the input-family claims.
+//
+// Usage: node tools/startup-gate.mjs
+//        node tools/startup-gate.mjs --selftest
+// Exit: 0 all contracts green · 1 product finding · 2 unavailable/tool failure
+
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { launchBrowser } from './browser.mjs';
+import { padOrdinal, readOrdinal, release, sourceDigest } from './buildversion.mjs';
+import { serve } from './serve.mjs';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(HERE, '..');
+const args = process.argv.slice(2);
+const ONLY = (() => { const i = args.indexOf('--only'); return i >= 0 ? args[i + 1] : ''; })();
+const SELFTEST_LANE = ONLY === 'selftest';
+const CAPTURE_SHOTS = args.includes('--screenshots');
+const SHOT_DIR = resolve(ROOT, 'docs', 'preview');
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+
+const browserPath = [
+  process.env.CHROME,
+  '/opt/pw-browsers/chromium',
+  '/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  'C:/Program Files/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+  'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
+  'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
+].find((candidate) => candidate && existsSync(candidate));
+
+function connectCdp(wsUrl) {
+  const socket = new WebSocket(wsUrl);
+  let nextId = 0;
+  const pending = new Map();
+  socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+    if (message.id == null || !pending.has(message.id)) return;
+    const { yes, no } = pending.get(message.id);
+    pending.delete(message.id);
+    message.error ? no(new Error(message.error.message)) : yes(message.result);
+  };
+  return {
+    ready: new Promise((yes, no) => { socket.onopen = yes; socket.onerror = no; }),
+    send(method, params = {}, sessionId) {
+      const id = ++nextId;
+      socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      return new Promise((yes, no) => pending.set(id, { yes, no }));
+    },
+    close() { socket.close(); },
+  };
+}
+
+if (args.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  const code = await doorSelftest({
+    tool: 'startup-gate.mjs',
+    args: ['--only', 'selftest'],
+    timeoutMs: 180000,
+    plants: [
+      {
+        name: 'title controls are mounted behind the cold-boot surface',
+        file: 'src/ui/components/startupGate.js',
+        find: '    <section class="screen startup-gate"',
+        replace: '    <div class="title-screen"><button class="slot-new">PLANT</button></div>\n    <section class="screen startup-gate"',
+        expectRed: /RED A1\.COLD-ONLY/,
+      },
+      {
+        name: 'startup uses a non-startup build-stamp placement',
+        file: 'src/ui/components/startupGate.js',
+        find: "${buildStampHtml('startup')}",
+        replace: "${buildStampHtml('title')}",
+        expectRed: /RED A2\.STARTUP-STAMP/,
+      },
+      {
+        name: 'last-input family stops changing the visible prompt',
+        file: 'src/ui/components/startupGate.js',
+        find: 'prompt.textContent = properties.prompts[next];',
+        replace: "prompt.textContent = properties.prompts.keyboard; // startup-gate selftest plant",
+        expectRed: /RED A3\.PROMPT-FAMILY/,
+      },
+      {
+        name: 'analog-stick activity bypasses the startup input-family owner',
+        file: 'src/ui/input.js',
+        find: "      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });",
+        replace: "      false; // startup-gate selftest plant",
+        expectRed: /RED A3\.PROMPT-ANALOG/,
+      },
+      {
+        name: 'Space is no longer an activation key',
+        file: 'src/ui/components/startupGate.js',
+        find: "if (input.family === 'keyboard') return input.key === 'Enter' || input.key === ' ';",
+        replace: "if (input.family === 'keyboard') return input.key === 'Enter'; // startup-gate selftest plant",
+        expectRed: /RED A5\.SPACE\.REVEAL-ONCE/,
+      },
+      {
+        name: 'controller reveals on button-down instead of release',
+        file: 'src/ui/components/startupGate.js',
+        find: '      if (!input.repeat) armed = identity;',
+        replace: "      if (input.family === 'controller') finish(input.family);\n      if (!input.repeat) armed = identity;",
+        expectRed: /RED A7\.GAMEPAD-RELEASE/,
+      },
+      {
+        name: 'Start or Menu button 9 is no longer an activation button',
+        file: 'src/ui/components/startupGate.js',
+        find: "  if (input.family === 'controller') {",
+        replace: "  if (input.family === 'controller' && input.button !== 9 && input.action !== 'menu') {",
+        expectRed: /RED A7\.GAMEPAD-REVEAL/,
+      },
+      {
+        name: 'returning to title re-opens the startup gate',
+        file: 'src/main.js',
+        find: 'startupGatePending = false;',
+        replace: 'startupGatePending = true; // startup-gate selftest plant',
+        expectRed: /RED A8\.RETURN-BYPASS/,
+      },
+      {
+        name: 'load slot presses read a missing data attribute',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: '        onTap: () => activateSlot(slot),',
+        replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
+        // A tap opens the decision door for the slot it read; a NaN slot opens
+        // the wrong door (no save → "empty"), which is the review check's red.
+        expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
+      },
+      {
+        name: 'second activation no longer opens the load review',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: '    loadReviewSlot = slot;\n    render();',
+        replace: '    loadReviewSlot = null; // startup-gate selftest plant\n    render();',
+        expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
+      },
+      {
+        name: 'Escape closes the whole load flow instead of returning to saves',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: '      if (loadReviewSlot != null) {',
+        replace: '      if (loadReviewSlot != null) { close(); // startup-gate selftest plant',
+        expectRed: /RED A8\.LOAD-SLOT-REVIEW-ESCAPE/,
+      },
+      {
+        name: 'completed save-slot hold selects instead of loading',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: "            requestLoad(slot, 'hold');",
+        replace: '            activateSlot(slot); // startup-gate selftest plant',
+        expectRed: /RED A8\.LOAD-SLOT-HOLD/,
+      },
+      {
+        name: 'quick-load hold captures keyboard and controller presses',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: '        pointerOnly: true,',
+        replace: '        pointerOnly: false, // startup-gate selftest plant',
+        expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
+      },
+      {
+        // THE BOX LIVES IN THE KIT (styles/kit.css) and is one length on both
+        // axes, floor included: a plant that shrinks the length AND the floor
+        // is the only plant that reaches RED A8.LOAD-SLOT-TARGETS.
+        name: 'title modal Close drops below the authored tap floor',
+        file: 'styles/kit.css',
+        find: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: var(--iconbtn-size); height: var(--iconbtn-size); flex: 0 0 auto;\n  min-width: var(--iconbtn-size); min-height: var(--iconbtn-size);',
+        replace: '.as-iconbtn, .modal-iconbtn, .modal-close {\n  display: inline-flex; align-items: center; justify-content: center;\n  width: 3rem; height: 3rem; flex: 0 0 auto;\n  min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
+        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
+      },
+      {
+        // Delete is an IconButton now — the same box as Close, sized by ONE
+        // token (base.css --iconbtn-size). Planting the token under the floor
+        // is what shrinks it; nothing else can.
+        name: 'occupied-slot Delete loses its tap-floor height',
+        file: 'styles/base.css',
+        find: '  --iconbtn-size: var(--tap-floor);',
+        replace: '  --iconbtn-size: 3rem; /* startup-gate selftest plant */',
+        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
+      },
+      {
+        name: 'startup outranks the corrupt-profile crisis notice',
+        file: 'src/main.js',
+        find: '  if (showProfileNoticeIfNeeded()) return;',
+        replace: '  if (false && showProfileNoticeIfNeeded()) return; // startup-gate selftest plant',
+        expectRed: /RED A9\.CRISIS-PRECEDENCE/,
+      },
+      {
+        name: 'interrupted startup presses stay armed',
+        file: 'src/ui/components/startupGate.js',
+        find: "      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;",
+        replace: '      armed = armed; // startup-gate selftest plant',
+        expectRed: /RED A7\.INTERRUPT-CANCEL/,
+      },
+      {
+        name: 'window blur leaves a held controller activation armed',
+        file: 'src/ui/input.js',
+        find: '    cancelInputGate();',
+        replace: "    cancelInputGate('keyboard'); // startup-gate selftest plant",
+        expectRed: /RED A7\.GAMEPAD-BLUR-CANCEL/,
+      },
+      {
+        name: 'a controller button held before the first poll becomes a rising edge',
+        file: 'src/ui/input.js',
+        find: '      padPrev[pad.index] = pressed;',
+        replace: '      padPrev[pad.index] = pressed.map(() => false); // startup-gate selftest plant',
+        expectRed: /RED A7\.HELD-AT-BOOT/,
+      },
+      {
+        name: 'a disconnected controller keeps its stale button sample',
+        file: 'src/ui/input.js',
+        find: '    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];',
+        replace: '    if (Number.isInteger(disconnectedIndex)) void disconnectedIndex; // startup-gate selftest plant',
+        expectRed: /RED A7\.HELD-AT-RECONNECT/,
+      },
+      {
+        name: 'one controller can complete another controller\'s activation',
+        file: 'src/ui/components/startupGate.js',
+        find: "      : `${input.family}:${input.padIndex}:${input.button}`;",
+        replace: "      : `${input.family}:${input.button}`; // startup-gate selftest plant",
+        expectRed: /RED A7\.MULTIPAD-OWNERSHIP/,
+      },
+      {
+        name: 'startup activation is removed from the accessibility tree',
+        file: 'src/ui/models/StartupGateModels.js',
+        find: "      role: 'button',",
+        replace: "      role: 'region', // startup-gate selftest plant",
+        expectRed: /RED A1\.ACTION-SEMANTICS/,
+      },
+      {
+        name: 'pointer reveal publishes the persistent gamepad cursor',
+        file: 'src/main.js',
+        find: "        focusCursor: family === 'keyboard' || family === 'controller',",
+        replace: '        focusCursor: true, // startup-gate selftest plant',
+        expectRed: /RED A6\.POINTER-CURSOR/,
+      },
+      {
+        name: 'reveal transition skips its deterministic cleanup deadline',
+        file: 'src/ui/components/startupGate.js',
+        find: "    const delay = reducedMotion ? 140 : lightUpMs + holdMs + fadeMs;",
+        replace: "    const delay = reducedMotion ? 900 : lightUpMs + holdMs + fadeMs; // startup-gate selftest plant",
+        expectRed: /RED A10\.REVEAL-CLEANUP/,
+      },
+      {
+        name: 'reduced-motion setting no longer reaches the rendered page',
+        file: 'src/main.js',
+        find: "document.body.classList.toggle('reduced-motion', settings.reducedMotion === true);",
+        replace: "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
+        expectRed: /RED A10\.REDUCED-MOTION/,
+      },
+      {
+        // Escape is bound by the shared chrome now, and the plant severs it
+        // FOR THIS DOOR rather than in modalShell.js — a mutation there would
+        // take Escape off all four modals at once, which is a wider defect than
+        // the one A8 is asserting about.
+        // Settings opens through the shell now (openModal binds dismissal for
+        // every door, and Escape closes the TOPMOST aria-modal element), so the
+        // plant parks a bare aria-modal element above this one door: Settings
+        // is no longer topmost, and Escape leaves it up over the title. Still
+        // one door, still this defect only — the nested plant A8 appends later
+        // still lands on top and still closes on its own Escape.
+        name: 'Settings stops owning Escape above the expanded title',
+        file: 'src/ui/screens/settings.js',
+        find: "  done.addEventListener('click', door.close);",
+        replace: "  done.addEventListener('click', door.close);\n  document.body.appendChild(document.createElement('div')).setAttribute('aria-modal', 'true'); // startup-gate selftest plant",
+        expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
+      },
+    ],
+  });
+  if (code === 0) console.log('startup-gate-selftest: OK — 26 plants, 26 caught');
+  process.exit(code);
+}
+
+if (!browserPath) {
+  console.error('startup-gate: UNKNOWN — no Chrome/Chromium/Edge found; set CHROME.');
+  console.error('UNKNOWN BLOCKS: no browser acceptance work ran.');
+  process.exit(2);
+}
+
+let server;
+let serverPort;
+let browser;
+let dropBrowser = async () => {};
+let cdp;
+let checks = 0;
+let failures = 0;
+function servedStamp(root) {
+  const digest = sourceDigest(root).digest;
+  let version = release(root);
+  try {
+    const recorded = readOrdinal(root);
+    if (recorded.digest === digest) version += `.${padOrdinal(recorded.ordinal)}`;
+  } catch { /* serve.mjs truthfully omits an unavailable or stale ordinal */ }
+  return `BUILD ${version} · src ${digest}`;
+}
+const expectedStamp = servedStamp(ROOT);
+
+function verdict(condition, code, detail) {
+  checks += 1;
+  if (condition) console.log(`  OK  ${code} — ${detail}`);
+  else { failures += 1; console.error(`  RED ${code} — ${detail}`); }
+}
+
+async function page({
+  query = '', width = 1200, height = 730, mobile = false,
+  pad = false, heldButton = null, secondHeldButton = null, corruptProfile = false, reduced = false,
+} = {}) {
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  await cdp.send('Page.enable', {}, sessionId);
+  await cdp.send('Runtime.enable', {}, sessionId);
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width, height, deviceScaleFactor: 1, mobile,
+  }, sessionId);
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: mobile, maxTouchPoints: mobile ? 5 : 1 }, sessionId);
+  await cdp.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: reduced ? 'reduce' : 'no-preference' }],
+  }, sessionId);
+  const bootstrap = `(() => {
+    localStorage.clear();
+    ${corruptProfile ? "localStorage.setItem('sote_meta_v1', '{torn'); localStorage.removeItem('sote_meta_backup_v1');" : ''}
+    const state = { connected: ${pad}, buttons: Array.from({length: 16}, () => ({pressed:false,value:0})) };
+    ${Number.isInteger(heldButton) ? `state.buttons[${heldButton}]={pressed:true,value:1};` : ''}
+    const gamepad = { id:'startup-gate-test-pad', index:0, connected:true, mapping:'standard',
+      timestamp:0, axes:[0,0,0,0], buttons:state.buttons };
+    const secondButtons = Array.from({length: 16}, () => ({pressed:false,value:0}));
+    ${Number.isInteger(secondHeldButton) ? `secondButtons[${secondHeldButton}]={pressed:true,value:1};` : ''}
+    const secondGamepad = { id:'startup-gate-test-pad-2', index:1, connected:true, mapping:'standard',
+      timestamp:0, axes:[0,0,0,0], buttons:secondButtons };
+    const secondConnected = ${Number.isInteger(secondHeldButton)};
+    Object.defineProperty(navigator, 'getGamepads', { configurable:true, value:() => state.connected ? [gamepad, secondConnected ? secondGamepad : null] : [] });
+    window.__startupPad = {
+      connect() {
+        state.connected=true;
+        const event=new Event('gamepadconnected');
+        Object.defineProperty(event,'gamepad',{value:gamepad});
+        dispatchEvent(event);
+      },
+      disconnect() {
+        state.connected=false;
+        const event=new Event('gamepaddisconnected');
+        Object.defineProperty(event,'gamepad',{value:gamepad});
+        dispatchEvent(event);
+      },
+      set(index, pressed) { state.buttons[index]={pressed,value:pressed?1:0}; gamepad.timestamp += 1; },
+      setSecond(index, pressed) { secondButtons[index]={pressed,value:pressed?1:0}; secondGamepad.timestamp += 1; },
+      setAxis(index, value) { gamepad.axes[index]=value; gamepad.timestamp += 1; }
+    };
+  })();`;
+  await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: bootstrap }, sessionId);
+  const ev = async (expression) => {
+    const result = await cdp.send('Runtime.evaluate', {
+      expression, awaitPromise: true, returnByValue: true,
+    }, sessionId);
+    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'evaluation failed');
+    return result.result.value;
+  };
+  const until = async (expression, label, timeout = 15000) => {
+    const started = Date.now();
+    while (Date.now() - started < timeout) {
+      if (await ev(expression).catch(() => false)) return;
+      await wait(60);
+    }
+    throw new Error(`timeout waiting for ${label}`);
+  };
+  const url = `http://127.0.0.1:${serverPort}/${query}`;
+  await cdp.send('Page.navigate', { url }, sessionId);
+  await until(`location.href === ${JSON.stringify(url)} && document.readyState !== 'loading'`, url);
+  // CI Chrome can throttle a newly attached background target. Wait through
+  // several poll intervals so the production poller has seeded the connected
+  // pad before this harness introduces the first deliberate edge.
+  if (pad) {
+    await until(`!!document.querySelector('.startup-gate')`, 'startup before gamepad edge');
+    await wait(250);
+  }
+  return {
+    targetId, sessionId, ev, until,
+    async key(key) {
+      const vk = key === 'Enter' ? 13 : key === ' ' ? 32 : key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0;
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key === ' ' ? 'Space' : key, windowsVirtualKeyCode: vk }, sessionId);
+      await wait(60);
+      return async () => {
+        await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code: key === ' ' ? 'Space' : key, windowsVirtualKeyCode: vk }, sessionId);
+        await wait(100);
+      };
+    },
+    async mouse(type = 'click') {
+      const point = await ev(`(() => { const r=document.querySelector('.startup-gate').getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      if (type === 'move') {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y }, sessionId);
+      } else {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      }
+      await wait(100);
+    },
+    async click(selector) {
+      const point = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      if (!point) throw new Error(`missing ${selector}`);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      await wait(120);
+    },
+    async hold(selector, durationMs, { touch = mobile } = {}) {
+      const point = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      if (!point) throw new Error(`missing ${selector}`);
+      if (touch) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchStart', touchPoints: [{ x: point.x, y: point.y, id: 1, radiusX: 8, radiusY: 8, force: 1 }],
+        }, sessionId);
+        await wait(durationMs);
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, sessionId);
+      } else {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+        await wait(durationMs);
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      }
+      await wait(160);
+    },
+    async screenshot(name) {
+      mkdirSync(SHOT_DIR, { recursive: true });
+      const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+      const path = resolve(SHOT_DIR, name);
+      writeFileSync(path, Buffer.from(data, 'base64'));
+      return path;
+    },
+    async close() { await cdp.send('Target.closeTarget', { targetId }); },
+  };
+}
+
+async function startupFacts(p) {
+  return p.ev(`(() => {
+    const gate=document.querySelector('.startup-gate');
+    const stamp=document.querySelector('[data-role="build-version"]');
+    const focusables=[...document.querySelectorAll('button,a[href],input,select,textarea,[tabindex]')]
+      .filter(e => e.tabIndex >= 0 && !e.hidden && getComputedStyle(e).display !== 'none');
+    return { gate:!!gate, title:!!document.querySelector('.title-screen'), titleControls:document.querySelectorAll('.title-menu button').length,
+       focusables:focusables.map(e=>e.outerHTML.slice(0,80)), active:document.activeElement?.className||document.activeElement?.tagName,
+       role:gate?.getAttribute('role')||'', label:gate?.getAttribute('aria-label')||'',
+      prompt:document.querySelector('.startup-prompt')?.textContent.trim()||'', family:gate?.dataset.inputFamily||'',
+      stamp:stamp?.textContent.trim()||'', place:stamp?.dataset.place||'' };
+  })()`);
+}
+
+async function assertColdAndStamp() {
+  const p = await page();
+  await p.until(`!!document.querySelector('.startup-gate,.title-screen,.profile-notice')`, 'cold boot surface');
+  let f = await startupFacts(p);
+  verdict(f.gate && !f.title && f.titleControls === 0, 'A1.COLD-ONLY', `startup=${f.gate}, title=${f.title}, title controls=${f.titleControls}`);
+  verdict(f.focusables.length === 1 && f.focusables[0].includes('startup-gate'), 'A1.TAB-EXPOSURE', `Tab ring exposes only the startup action (${f.focusables.join(', ') || 'none'})`);
+  verdict(f.role === 'button' && /continue/i.test(f.label), 'A1.ACTION-SEMANTICS', `role=${f.role || 'none'}, label=${JSON.stringify(f.label)}`);
+  const releaseTab = await p.key('Tab'); await releaseTab();
+  f = await startupFacts(p);
+  verdict(!f.title && f.titleControls === 0, 'A1.TAB-CONSUMPTION', 'Tab cannot reach or activate a title control behind startup');
+  verdict(f.place === 'startup' && f.stamp === expectedStamp, 'A2.STARTUP-STAMP', `place=${f.place}, text="${f.stamp}", expected="${expectedStamp}"`);
+  await p.close();
+}
+
+async function assertPromptFamilies() {
+  const p = await page();
+  await p.until(`!!document.querySelector('.startup-prompt')`, 'startup prompt');
+  await p.mouse('move');
+  let f = await startupFacts(p);
+  verdict(f.family === 'pointer' && f.prompt === 'CLICK TO CONTINUE', 'A3.PROMPT-FAMILY', `mouse -> ${f.family}: ${f.prompt}`);
+  await p.ev(`window.__startupPad.connect()`); await wait(250);
+  await p.ev(`window.__startupPad.set(12,true)`); await wait(80);
+  f = await startupFacts(p);
+  verdict(f.gate && f.family === 'controller' && /A \/ CROSS/.test(f.prompt), 'A3.PROMPT-CONTROLLER', `D-pad -> ${f.family}: ${f.prompt}`);
+  await p.ev(`window.__startupPad.set(12,false)`); await wait(50);
+  await p.mouse('move');
+  await p.ev(`window.__startupPad.setAxis(0,1)`); await wait(100);
+  f = await startupFacts(p);
+  verdict(f.gate && f.family === 'controller' && /A \/ CROSS/.test(f.prompt), 'A3.PROMPT-ANALOG', `left stick -> ${f.family}: ${f.prompt}`);
+  await p.ev(`window.__startupPad.setAxis(0,0)`); await wait(50);
+  await p.close();
+}
+
+// #949 gives the tower an entrance: on the completing edge the gate keeps
+// standing with `.is-revealing` through light-up + lit-city hold + fade before
+// the title mounts. The longest configurable hold is 2 s, so ~3.4 s is the
+// honest end of a reveal; the ceiling below is the 'never reveals' verdict.
+// GATE_STANDING is stricter than "no title yet": a gate that has begun its
+// exit is already a reveal, and the negative claims must say so.
+const TITLE_REVEALED = `!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`;
+const GATE_STANDING = `!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`;
+const REVEAL_CEILING_MS = 6000;
+const awaitReveal = (p, label) => p.until(TITLE_REVEALED, label, REVEAL_CEILING_MS).catch(() => { /* the verdict below reads the truth */ });
+
+async function assertKeyboard(key, code) {
+  const p = await page();
+  await p.until(`!!document.querySelector('.startup-gate')`, `${key} startup`);
+  const release = await p.key(key);
+  verdict(await p.ev(GATE_STANDING), `${code}.DOWN-CONSUMED`, `${JSON.stringify(key)} down is consumed and does not reveal`);
+  await release();
+  await awaitReveal(p, `${key} reveal`);
+  const receipt = await p.ev(`({startup:!!document.querySelector('.startup-gate'), title:!!document.querySelector('.title-screen'), customize:!!document.querySelector('.customize'), active:document.activeElement?.className||''})`);
+  verdict(!receipt.startup && receipt.title && !receipt.customize, `${code}.REVEAL-ONCE`, `${JSON.stringify(key)} release reveals title without activating it (${JSON.stringify(receipt)})`);
+  verdict(/title-menu-item/.test(receipt.active), `${code}.TITLE-FOCUS`, `default title control owns DOM focus (${receipt.active || 'none'})`);
+  await p.close();
+}
+
+async function assertPointerCursor() {
+  const mouse = await page();
+  await mouse.until(`!!document.querySelector('.startup-gate')`, 'pointer startup');
+  await mouse.mouse();
+  await mouse.until(`!!document.querySelector('.title-screen')`, 'pointer reveal');
+  verdict(await mouse.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen') && !!document.activeElement?.matches('.title-menu-item')`), 'A6.POINTER', 'real mouse press reveals once and focuses the title default');
+  verdict(await mouse.ev(`!!document.activeElement?.matches('.title-menu-item') && !document.activeElement.classList.contains('gp-focus')`), 'A6.POINTER-CURSOR', 'pointer reveal keeps DOM focus without publishing the persistent gamepad cursor');
+  await mouse.close();
+}
+
+async function assertTouch() {
+  const touch = await page({ width: 390, height: 844, mobile: true });
+  await touch.until(`!!document.querySelector('.startup-gate')`, 'touch startup');
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 422, radiusX: 2, radiusY: 2, force: 1, id: 1 }] }, touch.sessionId);
+  await wait(80);
+  const down = await startupFacts(touch);
+  verdict(down.gate && down.family === 'touch' && down.prompt === 'TAP TO CONTINUE', 'A6.TOUCH-DOWN', `touch down updates prompt but leaves gate standing (${down.family}: ${down.prompt})`);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, touch.sessionId);
+  await touch.until(`!!document.querySelector('.title-screen')`, 'touch reveal');
+  verdict(await touch.ev(`!document.querySelector('.startup-gate') && !!document.activeElement?.matches('.title-menu-item')`), 'A6.TOUCH-UP', 'real touch completion reveals once and focuses the title default');
+  verdict(await touch.ev(`!!document.activeElement?.matches('.title-menu-item') && !document.activeElement.classList.contains('gp-focus')`), 'A6.TOUCH-CURSOR', 'touch reveal keeps DOM focus without publishing the persistent gamepad cursor');
+  await touch.close();
+}
+
+async function assertGamepad(button) {
+  const p = await page({ pad: true });
+  await p.until(`!!document.querySelector('.startup-gate')`, `gamepad ${button} startup`);
+  await p.ev(`window.__startupPad.set(${button},true)`); await wait(100);
+  verdict(await p.ev(GATE_STANDING), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed without beginning reveal`);
+  await p.ev(`window.__startupPad.set(${button},false)`);
+  await awaitReveal(p, `gamepad ${button} reveal`);
+  const r = await p.ev(`({title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),customize:!!document.querySelector('.customize'),veil:!!document.querySelector('.modal-veil'),active:document.activeElement?.className||''})`);
+  verdict(r.title && !r.startup, 'A7.GAMEPAD-REVEAL', `button ${button} release reveals the title (${JSON.stringify(r)})`);
+  verdict(r.title && !r.startup && !r.customize && !r.veil && /title-menu-item/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
+  await p.close();
+}
+
+async function assertInterruptedPresses() {
+  const keyboard = await page();
+  await keyboard.until(`!!document.querySelector('.startup-gate')`, 'keyboard interrupt startup');
+  const release = await keyboard.key('Enter');
+  await keyboard.ev(`dispatchEvent(new Event('blur'))`);
+  await release();
+  await wait(220);
+  verdict(await keyboard.ev(GATE_STANDING), 'A7.INTERRUPT-CANCEL', 'blur cancels the armed keyboard press; its orphaned keyup cannot reveal title');
+  const freshRelease = await keyboard.key('Enter'); await freshRelease();
+  await keyboard.until(`!!document.querySelector('.title-screen')`, 'fresh keyboard press after blur');
+  await keyboard.close();
+
+  const pad = await page({ pad: true });
+  await pad.until(`!!document.querySelector('.startup-gate')`, 'gamepad interrupt startup');
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false); window.__startupPad.connect()`); await wait(140);
+  verdict(await pad.ev(GATE_STANDING), 'A7.INTERRUPT-CANCEL', 'disconnect cancels an armed controller press; reconnecting unpressed cannot synthesize a reveal');
+  await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,true); window.__startupPad.connect()`); await wait(140);
+  await pad.ev(`window.__startupPad.set(0,false)`); await wait(240);
+  verdict(await pad.ev(GATE_STANDING), 'A7.HELD-AT-RECONNECT', 'a button pressed while disconnected and held through reconnect is seeded, not invented as a new press');
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(pad, 'reconnect recovery reveal');
+  verdict(await pad.ev(TITLE_REVEALED), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
+  await pad.close();
+
+  const blurredPad = await page({ pad: true });
+  await blurredPad.until(`!!document.querySelector('.startup-gate')`, 'gamepad blur startup');
+  await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await blurredPad.ev(`dispatchEvent(new Event('blur'))`);
+  await blurredPad.ev(`window.__startupPad.set(0,false)`); await wait(240);
+  verdict(await blurredPad.ev(GATE_STANDING), 'A7.GAMEPAD-BLUR-CANCEL', 'window blur cancels controller ownership; the orphaned release cannot reveal title');
+  await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await blurredPad.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(blurredPad, 'blur recovery reveal');
+  verdict(await blurredPad.ev(TITLE_REVEALED), 'A7.GAMEPAD-BLUR-RECOVERY', 'a fresh complete controller press still reveals after focus returns');
+  await blurredPad.close();
+
+  const held = await page({ pad: true, heldButton: 0 });
+  await held.until(`!!document.querySelector('.startup-gate')`, 'held-at-boot startup');
+  await wait(120);
+  await held.ev(`window.__startupPad.set(0,false)`); await wait(240);
+  verdict(await held.ev(GATE_STANDING), 'A7.HELD-AT-BOOT', 'a button already held when polling begins is seeded, not invented as a fresh activation');
+  await held.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await held.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(held, 'held-at-boot recovery reveal');
+  verdict(await held.ev(TITLE_REVEALED), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
+  await held.close();
+
+  const multiple = await page({ pad: true, secondHeldButton: 0 });
+  await multiple.until(`!!document.querySelector('.startup-gate')`, 'multiple gamepads startup');
+  await multiple.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await multiple.ev(`window.__startupPad.setSecond(0,false)`); await wait(240);
+  verdict(await multiple.ev(GATE_STANDING), 'A7.MULTIPAD-OWNERSHIP', 'releasing a seeded hold on pad 1 cannot complete the activation begun by pad 0');
+  await multiple.ev(`window.__startupPad.set(0,false)`);
+  await awaitReveal(multiple, 'multipad recovery reveal');
+  verdict(await multiple.ev(TITLE_REVEALED), 'A7.MULTIPAD-RECOVERY', 'releasing the same pad that began the activation reveals normally');
+  await multiple.close();
+}
+
+async function assertReturnBypass() {
+  const p = await page();
+  await p.until(`!!document.querySelector('.startup-gate')`, 'return startup');
+  const release = await p.key('Enter'); await release();
+  await p.until(`!!document.querySelector('[data-title-action="new"]')`, 'title before return route');
+  await p.click('[data-title-action="new"]');
+  await p.until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-game slot selection');
+  await p.click('.title-menu-modal [data-title-action="modal-continue"]');
+  // Continue opens the decision door ("Start in slot n?"); its primary starts.
+  await p.until(`!!document.querySelector('[data-title-action="review-new"]')`, 'new-game decision door');
+  await p.click('[data-title-action="review-new"]');
+  await p.until(`!!document.querySelector('#cz-back')`, 'character creation');
+  await p.click('#cz-back');
+  await p.until(`!!document.querySelector('.title-screen,.startup-gate')`, 'returned title route');
+  verdict(await p.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A8.RETURN-BYPASS', 'Back to title does not create a second startup gate');
+  await p.close();
+}
+
+async function assertContextualTitleBack() {
+  const keyboard = await page({ query: '?shot=title' });
+  await keyboard.until(`!!document.querySelector('.title-screen')`, 'expanded title for keyboard Back');
+  const releaseEscape = await keyboard.key('Escape'); await releaseEscape();
+  await keyboard.until(`!!document.querySelector('.startup-gate')`, 'collapsed title after keyboard Back');
+  verdict(await keyboard.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`),
+    'A8.TITLE-BACK-COLLAPSE', 'Escape folds the expanded title back to the startup threshold');
+  await keyboard.close();
+
+  const modal = await page({ query: '?shot=title' });
+  await modal.until(`!!document.querySelector('[data-title-action="new"]')`, 'expanded title for modal precedence');
+  await modal.click('[data-title-action="new"]');
+  await modal.until(`!!document.querySelector('.title-menu-modal')`, 'title modal before Back');
+  const releaseModalEscape = await modal.key('Escape'); await releaseModalEscape();
+  verdict(await modal.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.title-screen') && !document.querySelector('.startup-gate')`),
+    'A8.TITLE-MODAL-PRECEDENCE', 'Escape closes the title modal without also folding the title');
+  await modal.close();
+
+  const pad = await page({ pad: true });
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  await pad.until(`!!document.querySelector('.title-screen')`, 'expanded title for controller Back');
+  await pad.ev(`window.__startupPad.set(1,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(1,false)`); await wait(260);
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`),
+    'A8.TITLE-CANCEL-COLLAPSE', 'controller Cancel folds the expanded title back to the startup threshold');
+  await pad.close();
+
+  const quit = await page({ query: '?shot=map' });
+  await quit.until(`!!document.querySelector('.mapscreen')`, 'map before Save and Quit');
+  const releaseMenu = await quit.key('m'); await releaseMenu();
+  await quit.until(`!!document.querySelector('#ov-quit')`, 'run menu before Save and Quit');
+  await quit.click('#ov-quit');
+  await quit.until(`!!document.querySelector('.startup-gate')`, 'collapsed title after Save and Quit');
+  verdict(await quit.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen,.mapscreen')`),
+    'A8.QUIT-COLLAPSE', 'Save and Quit leaves the run at the folded title threshold');
+  await quit.close();
+}
+
+async function assertSettingsModalStack() {
+  const p = await page({ query: '?shot=title' });
+  await p.until("!!document.querySelector('[data-title-action=\"settings\"]')", 'expanded title before Settings');
+  await p.click('[data-title-action="settings"]');
+  await p.until("!!document.querySelector('.settings-modal')", 'Settings modal');
+
+  const semantics = await p.ev("(() => { const modal=document.querySelector('.settings-modal'); return {role:modal?.getAttribute('role')||'',ariaModal:modal?.getAttribute('aria-modal')||'',labelledBy:modal?.getAttribute('aria-labelledby')||'',activeInside:modal?.contains(document.activeElement)===true}; })()");
+  verdict(semantics.role === 'dialog' && semantics.ariaModal === 'true'
+    && semantics.labelledBy === 'settings-modal-title' && semantics.activeInside,
+  'A8.SETTINGS-MODAL-SEMANTICS',
+  'Settings identifies the active modal layer and moves focus inside it (' + JSON.stringify(semantics) + ')');
+
+  await p.ev("(() => { const nested=document.createElement('div'); nested.id='settings-nested-modal-plant'; nested.setAttribute('role','dialog'); nested.setAttribute('aria-modal','true'); document.body.appendChild(nested); const onNestedEscape=(event) => { if (event.key !== 'Escape') return; event.preventDefault(); event.stopImmediatePropagation(); nested.remove(); window.removeEventListener('keydown', onNestedEscape, true); }; window.addEventListener('keydown', onNestedEscape, true); })()");
+  const releaseNestedEscape = await p.key('Escape'); await releaseNestedEscape();
+  const stacked = await p.ev("({nested:!!document.querySelector('#settings-nested-modal-plant'),settings:!!document.querySelector('.settings-modal'),title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate')})");
+  verdict(!stacked.nested && stacked.settings && stacked.title && !stacked.startup,
+    'A8.SETTINGS-STACK-PRECEDENCE',
+    'the first Escape closes only the nested modal and leaves Settings over the expanded title (' + JSON.stringify(stacked) + ')');
+
+  const releaseSettingsEscape = await p.key('Escape'); await releaseSettingsEscape();
+  const closed = await p.ev("({settings:!!document.querySelector('.settings-modal'),title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),active:document.activeElement?.dataset?.titleAction||''})");
+  verdict(!closed.settings && closed.title && !closed.startup,
+    'A8.SETTINGS-ESCAPE-PRECEDENCE',
+    'the next Escape closes Settings without folding the title (' + JSON.stringify(closed) + ')');
+  verdict(closed.active === 'settings',
+    'A8.SETTINGS-FOCUS-RESTORE',
+    'Settings returns focus to its connected title-menu opener (' + JSON.stringify(closed) + ')');
+  await p.close();
+}
+
+async function assertLoadSlotSelection() {
+  const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
+    const rect = (selector) => {
+      const element=document.querySelector(selector);
+      if (!element) return null;
+      const box=element.getBoundingClientRect();
+      return {width:Math.round(box.width*10)/10,height:Math.round(box.height*10)/10};
+    };
+    return {
+      close:rect('[data-component="title-modal-close-control"]'),
+      delete:rect('[data-component="title-save-slot-delete"]')
+    };
+  })()`);
+  const clearsTapFloor = (targets) => ['close', 'delete'].every((key) => targets[key]
+    && targets[key].width >= 44 && targets[key].height >= 44);
+
+  const p = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
+  await p.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title with an occupied save');
+  await p.click('[data-title-action="load"]');
+  await p.until(`!!document.querySelector('.title-menu-modal')`, 'mobile Load Game slot picker');
+
+  const initial = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
+      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
+  })()`);
+  verdict(initial.selected === '1' && initial.focused === '1' && initial.continueEnabled,
+    'A8.LOAD-SLOT-INITIAL', `Load visibly focuses its selected occupied slot and enables Continue (${JSON.stringify(initial)})`);
+  const mobileTargets = await titleTargetRects(p);
+  verdict(clearsTapFloor(mobileTargets), 'A8.LOAD-SLOT-TARGETS-MOBILE',
+    `390x844 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(mobileTargets)})`);
+  if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-list-mobile-390x844.png');
+
+  await p.click('[data-slot-pick="1"]');
+  const reselected = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
+      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
+  })()`);
+  verdict(reselected.selected === '1' && reselected.focused === '1' && reselected.continueEnabled,
+    'A8.LOAD-SLOT-RESELECT', `the first press highlights the slot and leaves Continue enabled (${JSON.stringify(reselected)})`);
+
+  // Two taps (Constantine, 2026-09-04): the second press on the highlighted
+  // slot opens its decision door; Back and Escape return with it highlighted.
+  await p.click('[data-slot-pick="1"]');
+  const review = await p.ev(`(() => ({
+    review:document.querySelector('.title-load-review')?.dataset.variant||'',
+    heading:document.querySelector('.title-load-review h2')?.textContent.trim()||'',
+    load:document.querySelector('[data-title-action="review-load"]')?.textContent.trim()||'',
+    back:document.querySelector('[data-title-action="review-back"]')?.textContent.trim()||''
+  }))()`);
+  // Case-insensitive: the kit's head sets the case in the stylesheet, so the
+  // words are the acceptance, not their shouting.
+  verdict(review.review === 'load-review' && /^load slot 1\?$/i.test(review.heading) && /^load save$/i.test(review.load) && /^back to saves$/i.test(review.back),
+    'A8.LOAD-SLOT-REVIEW', `the second press opens the selected save's decision door with explicit Load and Back actions (${JSON.stringify(review)})`);
+  if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-review-mobile-390x844.png');
+
+  await p.click('[data-title-action="review-back"]');
+  const returned = await p.ev(`(() => ({
+    picker:!!document.querySelector('.title-slot-list'),
+    selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
+    focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
+  }))()`);
+  verdict(returned.picker && returned.selected === '1' && returned.focused === '1',
+    'A8.LOAD-SLOT-REVIEW-BACK', `Back returns to Load Game with selection and focus preserved (${JSON.stringify(returned)})`);
+
+  await p.click('[data-slot-pick="1"]');
+  await p.until(`!!document.querySelector('[data-title-action="review-load"]')`, 'load review before Escape');
+  const escapeRelease = await p.key('Escape'); await escapeRelease();
+  const escaped = await p.ev(`(() => ({
+    picker:!!document.querySelector('.title-slot-list'),
+    selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
+    focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
+  }))()`);
+  verdict(escaped.picker && escaped.selected === '1' && escaped.focused === '1',
+    'A8.LOAD-SLOT-REVIEW-ESCAPE', `Escape returns to Load Game with selection and focus preserved (${JSON.stringify(escaped)})`);
+
+  await p.click('[data-slot-pick="1"]');
+  await p.until(`!!document.querySelector('[data-title-action="review-load"]')`, 'load review after Back');
+  await p.click('[data-title-action="review-load"]');
+  await p.until(`!!document.querySelector('.mapscreen')`, 'review-confirmed save load');
+  verdict(await p.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
+    'A8.LOAD-SLOT-REVIEW-COMMIT', 'Load Save leaves the title and opens the selected run');
+  await p.close();
+
+  const held = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
+  await held.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title for hold-to-load');
+  await held.click('[data-title-action="load"]');
+  await held.until(`!!document.querySelector('[data-slot-pick="1"][data-hold-ms="600"]')`, 'data-driven held save slot');
+  const hint = await held.ev(`(() => {
+    const e=document.querySelector('[data-slot-pick="1"]');
+    return {title:e?.title||'', aria:e?.getAttribute('aria-label')||'', hold:e?.dataset.holdMs||'', word:e?.querySelector('.hold-hint')?.textContent||''};
+  })()`);
+  verdict(hint.hold === '600' && hint.word === 'HOLD' && /hold to load/i.test(`${hint.title} ${hint.aria}`),
+    'A8.LOAD-SLOT-HOLD-HINT', `slot exposes the authored hold duration and visible/accessible instruction (${JSON.stringify(hint)})`);
+  await held.hold('[data-slot-pick="1"]', 720, { touch: true });
+  verdict(await held.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
+    'A8.LOAD-SLOT-HOLD', 'a completed mobile touch hold loads the save directly without opening review');
+  await held.close();
+
+  const keyed = await page({ query: '?shot=title' });
+  await keyed.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for keyboard review');
+  await keyed.click('[data-title-action="load"]');
+  const desktopTargets = await titleTargetRects(keyed);
+  verdict(clearsTapFloor(desktopTargets), 'A8.LOAD-SLOT-TARGETS-DESKTOP',
+    `1200x730 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(desktopTargets)})`);
+  const firstKeyRelease = await keyed.key('Enter'); await firstKeyRelease();
+  // A tap asks (2026-09-04): one activation opens the decision door — no
+  // timed hold, no bypass. Escape returns to the list with the slot kept, and
+  // the next activation opens the same door pointer input opens.
+  const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
+  verdict(!keyedFirst.review && keyedFirst.selected === '1', 'A8.LOAD-SLOT-KEY-FIRST',
+    `keyboard activation highlights without bypassing the decision door (${JSON.stringify(keyedFirst)})`);
+  const secondKeyRelease = await keyed.key('Enter'); await secondKeyRelease();
+  verdict(await keyed.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
+    'A8.LOAD-SLOT-KEY-REVIEW', 'a second keyboard activation opens the same review used by pointer input');
+  if (CAPTURE_SHOTS) await keyed.screenshot('qa-load-slot-review-wide-1200x730.png');
+  await keyed.close();
+
+  const padded = await page({ query: '?shot=title' });
+  await padded.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for controller review');
+  await padded.ev(`window.__startupPad.connect()`); await wait(250);
+  await padded.click('[data-title-action="load"]');
+  await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
+  const padFirst = await padded.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
+  verdict(!padFirst.review && padFirst.selected === '1', 'A8.LOAD-SLOT-PAD-FIRST',
+    `controller activation highlights without becoming a timed hold (${JSON.stringify(padFirst)})`);
+  await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
+  verdict(await padded.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
+    'A8.LOAD-SLOT-PAD-REVIEW', 'a second controller activation deterministically opens the same review');
+  await padded.close();
+}
+
+async function assertCrisisPrecedence() {
+  const p = await page({ corruptProfile: true });
+  await p.until(`!!document.querySelector('.profile-notice, .startup-gate')`, 'crisis or startup');
+  const first = await p.ev(`({notice:!!document.querySelector('.profile-notice'),startup:!!document.querySelector('.startup-gate')})`);
+  verdict(first.notice && !first.startup, 'A9.CRISIS-PRECEDENCE', `corrupt-profile notice is first (${JSON.stringify(first)})`);
+  if (first.notice) {
+    await p.click('.profile-notice .notnow');
+    await p.until(`!!document.querySelector('.startup-gate')`, 'startup after non-destructive crisis exit');
+    verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A9.CRISIS-THEN-STARTUP', 'leaving the notice non-destructively resumes the pending cold-start gate');
+  } else {
+    verdict(false, 'A9.CRISIS-THEN-STARTUP', 'precedence failed, so the continuation edge was unavailable');
+  }
+  await p.close();
+}
+
+async function motionSignature() {
+  const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${encodeURIComponent(JSON.stringify({ reducedMotion: true }))}`, reduced: true });
+  await p.until(`!!document.querySelector('.startup-ash')`, 'reduced-motion startup');
+  const fact = await p.ev(`(() => ({ reduced:document.body.classList.contains('reduced-motion'), particles:[...document.querySelectorAll('.startup-ash')].map(e=>({p:e.dataset.particle,style:e.getAttribute('style'),duration:getComputedStyle(e).animationDuration})), transition:getComputedStyle(document.querySelector('.startup-wordmark')).transitionDuration }))()`);
+  await p.close();
+  return fact;
+}
+
+async function assertReducedMotion() {
+  const a = await motionSignature();
+  const b = await motionSignature();
+  const short = a.particles.every(({ duration }) => duration.split(',').every((d) => d.endsWith('ms') ? parseFloat(d) <= 20 : parseFloat(d) <= 0.02));
+  verdict(a.reduced && short, 'A10.REDUCED-MOTION', `class=${a.reduced}, particle durations=${[...new Set(a.particles.map(x=>x.duration))].join('/')}`);
+  verdict(JSON.stringify(a.particles.map(({ p, style }) => [p, style])) === JSON.stringify(b.particles.map(({ p, style }) => [p, style])), 'A10.DETERMINISTIC-ASH', `${a.particles.length} authored particle records are byte-stable across fresh boots`);
+
+  const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${encodeURIComponent(JSON.stringify({ reducedMotion: true }))}`, reduced: true });
+  await p.until(`!!document.querySelector('.startup-gate')`, 'reduced-motion reveal startup');
+  const started = Date.now();
+  const release = await p.key('Enter'); await release();
+  const during = await p.ev(`({revealing:document.querySelector('.startup-gate')?.classList.contains('is-revealing')===true,busy:document.querySelector('.startup-gate')?.getAttribute('aria-busy')})`);
+  await wait(180);
+  const after = await p.ev(`({startup:!!document.querySelector('.startup-gate'),title:!!document.querySelector('.title-screen'),ash:document.querySelectorAll('.startup-ash').length})`);
+  const elapsed = Date.now() - started;
+  verdict(during.revealing && during.busy === 'true', 'A10.READABLE-EXIT', `reduced-motion reveal retains a short marked exit state (${JSON.stringify(during)})`);
+  verdict(!after.startup && after.title && after.ash === 0 && elapsed < 600, 'A10.REVEAL-CLEANUP', `startup unmounted by deterministic deadline (${elapsed}ms, ${JSON.stringify(after)})`);
+  await p.close();
+}
+
+// Device pixels per CSS pixel for the ink sweep. At 1 an antialiased glyph
+// edge lands above or below the luminance threshold depending on where the
+// text falls in the pixel grid, moving the measured midpoint by half a pixel:
+// the same 48px wordmark read -1, -1.5 and -2.5 at three widths where the
+// type was byte-identical. 3 resolves the edge instead of guessing at it, and
+// changes only the raster — layout and CSS geometry do not depend on it.
+const INK_SCALE = 3;
+
+// TWO BUDGETS, BECAUSE THERE ARE NOW TWO INSTRUMENTS.
+//
+// The prompt and the build stamp are still measured as boxes and still land on
+// 0 exactly, so they keep the 1px budget this check has always used.
+//
+// The wordmark is measured as INK, and ink cannot be driven exactly to 0 here.
+// With half the track (the trailing advance letter-spacing adds after the
+// final glyph) and nothing else, it measured:
+//
+//     390 M -1.00   844 M -0.83   1200 M -1.17   2550 M -2.17
+//     390 XL -1.17  844 XL -1.00  1200 XL -1.50  2550 XL -2.67   <- RED
+//
+// That residual WAS a font metric, which this comment once said it was not.
+// Ink is narrower than the advances by the end glyphs' side bearings (Cinzel
+// 700: A 0.008em on the left, E 0.045em on the right), leaving the ink
+// 0.0185em left of centre. The 2550 column read largest because `body { zoom }`
+// is 1.7 there, not because the type differed. styles/kit.css now adds that
+// 0.0185em as `--ink-bias`, and every shape measures:
+//
+//     390 M -0.33   844 M -0.17   1200 M -0.33   2550 M -0.50
+//     390 XL -0.33  844 XL -0.33  1200 XL -0.33  2550 XL -0.67
+//
+// What remains (about a third of a pixel, varying with width) is raster
+// placement and the luminance threshold, not geometry.
+//
+// 2.5px keeps its teeth: A11.CENTERING-DETECTOR strips the compensation and
+// reads -6.33, 2.5x this budget, so the defect #910 shipped would still be
+// caught with room to spare. If a future change makes the residual approach
+// this number — as the uncompensated side bearings did under 1.7x zoom — that
+// is a real regression to look at rather than a budget to raise.
+const INK_BUDGET = 2.5;
+const BOX_BUDGET = 1;
+
+async function assertShape(shape, textSize) {
+  const settings = encodeURIComponent(JSON.stringify({ textSize }));
+  const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${settings}`, width: shape.w, height: shape.h, mobile: shape.w <= 390 });
+  await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
+  // CENTRING IS JUDGED FROM PAINTED PIXELS, NOT FROM A BOX.
+  //
+  // Two box models were tried here and both were wrong, in opposite
+  // directions, which is why this now scans the screenshot instead.
+  //
+  //   The raw Range over the wordmark INCLUDES the trailing letter-spacing
+  //   after the final glyph. That made a wordmark with NO tracking
+  //   compensation read as perfectly centred — the missing compensation and
+  //   the phantom trailing advance are the same half-track, cancelling. A
+  //   real defect shipped green under that measurement, and #910 deleted a
+  //   correct rule on the strength of it.
+  //
+  //   Subtracting the trailing advance fixed most of that and was still not
+  //   ink: it carries the first and last glyphs' SIDE BEARINGS, which do not
+  //   cancel in a display face. At 2550x1305 Text XL it read +1.6px while the
+  //   glyphs sat -2.5px the other way. Tuning the stylesheet to satisfy it
+  //   would have pushed the wordmark further off centre while turning the
+  //   check green.
+  //
+  // A screenshot has no box model to be wrong about. The capture below is
+  // taken anyway for the `capture=` assertion, so scanning it costs one more
+  // decode: the wordmark's row band is swept for the leftmost and rightmost
+  // lit column and that midpoint is compared to the viewport centre. The
+  // threshold sits above the ember of the drifting ash (luminance ~103) and
+  // below parchment glyph ink, so only type counts.
+  //
+  // The prompt and the build stamp keep box geometry: they carry little
+  // tracking, they measure 0 either way, and their text is dim enough that a
+  // luminance sweep would be the less reliable instrument for them.
+  const measure = `(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
+    const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
+    const boxes=critical.map(x=>{let b=x.getBoundingClientRect();let name=x.className||x.dataset.place;
+      if(x.matches('.startup-wordmark')){const range=document.createRange();range.selectNodeContents(x);const advance=range.getBoundingClientRect();
+        const trailing=parseFloat(getComputedStyle(x).letterSpacing)||0;
+        b={left:advance.left,top:advance.top,right:advance.right-trailing,bottom:advance.bottom};name+=' text';}
+      return [name,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
+    const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
+    const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`;
+
+  // Returns the wordmark ink's offset from the viewport centre, or null when
+  // no lit column was found — null is never treated as centred.
+  //
+  // `clip` carries the band's CSS-pixel origin, so a lit column at image x maps
+  // back to clip.x + x/INK_SCALE in CSS pixels.
+  const inkDelta = (b64, clip) => `(async () => {
+    const img=new Image();
+    await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src='data:image/png;base64,'+${JSON.stringify(b64)};});
+    const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+    const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);
+    const d=g.getImageData(0,0,img.width,img.height).data;
+    let min=Infinity,max=-Infinity;
+    for(let y=0;y<img.height;y++)for(let x=0;x<img.width;x++){const i=(y*img.width+x)*4;
+      const lum=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2];
+      if(lum>150){if(x<min)min=x;if(x>max)max=x;}}
+    if(min===Infinity) return null;
+    const mid=${clip.x} + ((min+max)/2 + 0.5)/${INK_SCALE};
+    return Math.round((mid-innerWidth/2)*100)/100;
+  })()`;
+
+  // A box has no opacity; ink does. `.startup-gate > .as-titlemenu` fades in
+  // over 520ms (startupMarkIn), so a capture taken before that settles finds
+  // no lit column and the sweep returns null. Wait for the reveal to finish
+  // first — and only for THAT, because the prompt's pulse is infinite and
+  // awaiting every animation on the subtree would hang forever.
+  const settled = `(async () => {
+    const el=document.querySelector('.startup-gate > .as-titlemenu'); if(!el) return false;
+    const t0=performance.now();
+    while(performance.now()-t0 < 3000){
+      if(parseFloat(getComputedStyle(el).opacity) > 0.99) return true;
+      await new Promise(r=>requestAnimationFrame(r));
+    }
+    return false; })()`;
+
+  // One reading: box facts, the capture, then the ink sweep over that capture.
+  //
+  // THE CAPTURE IS TAKEN AT 3x, AND THAT IS NOT A DETAIL. At deviceScaleFactor
+  // 1 a glyph's antialiased edge column lands above or below the luminance
+  // threshold depending on where the text falls in the pixel grid, which moves
+  // the measured extent by a whole pixel and the midpoint by half of one. That
+  // noise was large enough to matter: the same 48px wordmark read -1, -1.5 and
+  // -2.5 at three viewport widths where the type was byte-identical. Rastering
+  // at 3x makes each device pixel a third of a CSS pixel, so the sweep resolves
+  // the edge instead of guessing at it. It changes only the raster: layout,
+  // fonts and CSS pixel geometry are untouched by deviceScaleFactor, and the
+  // override is restored immediately after.
+  const read = async () => {
+    const fact = await p.ev(measure);
+    await p.ev(settled);
+    const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
+    // The ink sweep gets its own CLIPPED capture at INK_SCALE. Rastering the
+    // whole 2550x1305 viewport at 3x produced a 7650x3915 PNG whose base64 had
+    // to cross Runtime.evaluate eight times, and the gate stopped finishing
+    // inside ten minutes. Only the wordmark's band is ever scanned, so only
+    // the band is captured; the full-page shot above still backs the
+    // `capture=` assertion at the normal scale.
+    const band = await p.ev(`(() => { const el=document.querySelector('.startup-wordmark'); if(!el) return null;
+      const r=el.getBoundingClientRect();
+      return {x:0, y:Math.max(0,Math.floor(r.top)), width:innerWidth, height:Math.max(1,Math.ceil(r.bottom)-Math.floor(r.top))}; })()`);
+    let ink = null;
+    if (band) {
+      const inkShot = await cdp.send('Page.captureScreenshot',
+        { format: 'png', fromSurface: true, clip: { ...band, scale: INK_SCALE } }, p.sessionId);
+      ink = await p.ev(inkDelta(inkShot.data, band));
+    }
+    const deltas = fact.centerDeltas.map(([name, delta]) =>
+      (name.includes('startup-wordmark') ? [name + ' ink', ink] : [name, delta]));
+    const centered = ink !== null
+      && Math.abs(ink) <= INK_BUDGET
+      && deltas.every(([name, delta]) => delta !== null
+        && (name.endsWith(' ink') || Math.abs(delta) <= BOX_BUDGET));
+    return { ...fact, centerDeltas: deltas, centered, capture: shot.data.length };
+  };
+
+  const fact = await read();
+  const expectedFont = textSize === 'M' ? '10px' : '12px';
+  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && fact.capture > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${fact.capture}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  if (shape.w === 2550 && textSize === 'XL') {
+    await p.ev(`document.querySelector('.startup-wordmark').style.setProperty('transform','none','important')`);
+    const uncentered = await read();
+    verdict(!uncentered.centered, 'A11.CENTERING-DETECTOR', `removing tracking compensation is detected: ${JSON.stringify(uncentered.centerDeltas)}`);
+  }
+  await p.close();
+}
+
+async function main() {
+  console.log(`startup-gate: issue #229 browser acceptance${SELFTEST_LANE ? ' (compact same-door lane)' : ''}`);
+  console.log(`  source: ${ROOT}`);
+  console.log(`  browser: ${browserPath}`);
+  console.log(`  expected shared stamp: ${expectedStamp}`);
+  ({ server, port: serverPort } = await serve({ root: ROOT, port: 8249, open: false }));
+  const launched = await launchBrowser({ prefix: 'startup-gate-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
+  browser = launched.child; dropBrowser = launched.close;
+  cdp = connectCdp(launched.wsUrl); await cdp.ready;
+
+  await assertColdAndStamp();
+  await assertPromptFamilies();
+  await assertKeyboard('Enter', 'A4.ENTER');
+  await assertKeyboard(' ', 'A5.SPACE');
+  await assertPointerCursor();
+  if (!SELFTEST_LANE) await assertTouch();
+  await assertGamepad(0);
+  await assertGamepad(9);
+  await assertInterruptedPresses();
+  await assertReturnBypass();
+  await assertContextualTitleBack();
+  await assertSettingsModalStack();
+  await assertLoadSlotSelection();
+  await assertCrisisPrecedence();
+  await assertReducedMotion();
+  if (!SELFTEST_LANE) {
+    const shapes = [{ tag:'390x844', w:390, h:844 }, { tag:'844x344', w:844, h:344 }, { tag:'1200x730', w:1200, h:730 }, { tag:'2550x1305', w:2550, h:1305 }];
+    for (const textSize of ['M', 'XL']) for (const shape of shapes) await assertShape(shape, textSize);
+  }
+
+  if (!checks) { console.error('startup-gate: UNKNOWN — NOTHING RAN.'); process.exitCode = 2; return; }
+  if (failures) console.error(`\nstartup-gate: RED — ${checks - failures}/${checks} checks passed; ${failures} failed.`);
+  else console.log(`\nstartup-gate: OK — ${checks} checks passed`);
+  console.log('BOUNDARY: source tree, one spawned Chromium, cold/local profile storage, keyboard, real CDP mouse/touch, and a standard-mapping gamepad shim read by the production poller.');
+  process.exitCode = failures ? 1 : 0;
+}
+
+try {
+  await main();
+} catch (error) {
+  console.error(`startup-gate: UNKNOWN — ${error.stack || error.message}`);
+  process.exitCode = 2;
+} finally {
+  const intendedExit = process.exitCode;
+  try { cdp?.close(); } catch { /* already closed */ }
+  try { await dropBrowser(); } catch { /* already closed */ }
+  try { server?.close(); } catch { /* already closed */ }
+  process.exit(intendedExit ?? 0);
+}

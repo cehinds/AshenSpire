@@ -38,7 +38,7 @@
 //      release IS. (It is NOT silent about what run.sh opens; see above.)
 //   2. Five player-facing surfaces have NO ?shot= state and therefore cannot
 //      appear in it at all — the Armoury, the menu tabs, Settings,
-//      Settings → Profile, and the profile crisis notice (#66/#67, the newest
+//      Title → Profile, and the profile crisis notice (#66/#67, the newest
 //      surface in the release). A capture set that silently omits the newest
 //      screens is a green that means nothing.
 // So this drives the built artifact over CDP: ?shot= where one exists, real
@@ -144,14 +144,34 @@ function appShotStates() {
 // of whatever happened to be on screen — including a blank page.
 // `state:` ties an entry to the app state it covers (the derivation above).
 const SCREENS = [
-  { name: 'title', query: '', landmark: '.title-screen' },
+  { name: 'startup', query: '?shot=startup', landmark: '.startup-gate', state: 'startup' },
+  { name: 'title', query: '?shot=title', landmark: '.title-screen', state: 'title' },
   { name: 'map', query: '?shot=map', landmark: '.mapscreen', state: 'map' },
   { name: 'map-atmospheric', query: '?shot=map&shotSettings=' + encodeURIComponent('{"highContrast":false}'), landmark: '.mapscreen' },
   { name: 'combat', query: '?shot=combat', landmark: '.combat', state: 'combat' },
   { name: 'combat-procs', query: '?shot=fx', landmark: '.combat', state: 'fx', poseWait: 1900 },
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
+  { name: 'victory', query: '?shot=victory', landmark: '.stats-table', state: 'victory' },
+  { name: 'history', query: '?shot=history', landmark: '.history .as-row', state: 'history' },
+  { name: 'lobby', query: '?shot=lobby', landmark: '#lb-name', state: 'lobby' },
+  { name: 'about', query: '?shot=about', landmark: '.settings-modal .about-ai', state: 'about' },
+  // The Custom Climb — a SCREENS entry and NOT an EXCLUDED_STATES line, for the
+  // reason written below about the Shrine and the event. `?shot=customrun` is
+  // the screen's ONLY door: title.js voids `onCustom` today, so nothing a player
+  // can click reaches it and a photograph is the only way anyone sees it. It
+  // rode into the release promotion (PR #795) with no line here and the
+  // preflight refused the entire tool — "1 app shot state neither photographed
+  // nor excluded: customrun", exit 1 before the browser ever launched. That
+  // refusal is the derivation working; the fix is to account for the state, not
+  // to quiet the check.
+  //
+  // `#cr-classes` and not `.customrun`: the landmark has to prove the screen's
+  // own controls rendered. The root div draws whether or not the registries
+  // resolved; the class picker is built from them.
+  { name: 'custom-climb', query: '?shot=customrun', landmark: '#cr-classes', state: 'customrun' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
+  { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {
     name: 'customize-stats', query: '?shot=customize', landmark: '#cz-stat-projection',
     drive: `document.querySelector('.cz-stats').open = true`,
@@ -164,6 +184,9 @@ const SCREENS = [
   // be photographed, then excluded from the photographs, is a state that earns
   // nothing.
   { name: 'shrine', query: '?shot=rest', landmark: '#smith-opt', state: 'rest' },
+  // The Smith with its upgrade transaction open — a state since 2026-09-11, so
+  // the review sheet stops photographing the title for it.
+  { name: 'smith', query: '?shot=smith', landmark: '.smith-candidate-region', state: 'smith' },
   // The event screen. Rune added `?shot=event` in the tap-size work (#104) and
   // did not register it here, so THIS TOOL REFUSED TO RUN at `52e0bc1` —
   // "1 app shot state neither photographed nor excluded: event" — and
@@ -192,7 +215,18 @@ const SCREENS = [
   // so excluding it here would put back the condition the gap lived in). The
   // landmarks are the controls the states were added FOR: the occupied slot's
   // ✕, the drawer's Restore, the crisis screen's fresh-profile button.
-  { name: 'title-slots', query: '?shot=title', landmark: '.slot.occupied .slot-delete', state: 'title' },
+  {
+    // THE ✕ MOVED BEHIND LOAD (title.js → saveSlotSelector.js): the title menu
+    // is five verbs and the slot rows with their delete control are the LOAD
+    // selector's, so the landmark this state was added FOR is not on the first
+    // paint any more. `.slot.occupied .slot-delete` matched nothing for as long
+    // as the menu has existed — a MISS on the release stamp, filed against the
+    // screen. The drive walks the player's door (LOAD) and the landmark is the
+    // ✕ inside the selector's own list.
+    name: 'title-slots', query: '?shot=title', state: 'title',
+    drive: `(()=>{const l=document.querySelector('[data-title-action="load"]');if(!l)return 'LOAD missing on the title menu';l.click();return true})()`,
+    landmark: '.title-slot-list .title-slot-delete',
+  },
   {
     name: 'profile-drawer',
     // THIS ENTRY MISSED FOR AS LONG AS IT HAS EXISTED, AND THE DOOR IS WHY
@@ -238,20 +272,14 @@ const SCREENS = [
     // parameter is deleted rather than kept as decoration; it claimed a door
     // that does not open on this state.
     query: '?shot=profile',
-    landmark: '.prof-restore', state: 'profile',
-    drive: `(() => {
-      const t = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Profile');
-      if (!t) return 'no Profile tab in the settings screen';
-      t.click();
-      return true;
-    })()`,
+    landmark: '.profile-archive-modal .prof-restore', state: 'profile',
   },
   { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
-    // AND THE GRID OPEN, driven, because the closed Shrine FITS. A baseline of
-    // the screen in the state that never overflowed could not have caught the
-    // defect it was created for — it would have gone green through the whole
-    // bug. The overflow only exists once the Smith grid is on screen.
+    // AND THE ARMAMENT REVIEW OPEN, driven, because the closed Shrine FITS. A
+    // baseline of the screen in the state that never overflowed could not have
+    // caught the defect it was created for — it would have gone green through
+    // the whole bug. The overflow only exists once the Smith modal is open.
     //
     // `#smith-grid .card`, and the first version of this line said
     // `.deck-strip .mini` — WHICH NOTHING ON THIS SCREEN EMITS. renderCard()
@@ -269,8 +297,8 @@ const SCREENS = [
     // whose landmark never resolved is Bjorn's animated-title finding pointed
     // the other way, and the instrument that catches it has to assert the
     // landmark RESOLVED before it is allowed to hash anything.
-    name: 'shrine-smith', query: '?shot=rest', landmark: '#smith-grid .card',
-    drive: `document.querySelector('#smith-opt').click()`,
+    name: 'shrine-smith', query: '?shot=rest&shotSmithingStones=1', landmark: '.smith-preview-card',
+    drive: `(()=>{const smith=document.querySelector('#smith-opt');if(!smith)return 'Smith option missing';smith.click();const card=document.querySelector('.smith-candidate-card');if(!card)return 'Smith armament candidate missing';card.click();return true})()`,
   },
   // THE COMPENDIUM — photographed in the act that creates it (Marina's condition
   // carried from #78's first commit), and at BOTH EDGES, because this screen's
@@ -309,7 +337,7 @@ const SCREENS = [
   },
   {
     // The quicknav experiment defaults to 'off' (quicknav.js `let mode = 'off'`),
-    // so #combat-menu opens the TABS OVERLAY directly (onMenu('deck') →
+    // so #combat-menu opens the TABS OVERLAY directly (onMenu('settings') →
     // showOverlay, components/overlay.js `.overlay-tabs`). My first two
     // landmarks here were both wrong — `.menu-tabs` and then `.qn-panel`,
     // neither of which the shipped default path ever renders. Measured, not
@@ -318,13 +346,11 @@ const SCREENS = [
     drive: `document.querySelector('#combat-menu').click()`,
   },
   {
-    name: 'settings', query: '', landmark: '.settings, .set-body',
+    name: 'settings', query: '?shot=title', landmark: '.settings, .set-body',
     drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
   },
-  // (the hand-written `settings-profile` entry lived here and is DELETED: the
-  //  settings categories are now generated from settingsCategories(), so Profile
-  //  is `settings-Profile` below and no longer a name anyone types. Collapsing a
-  //  duplicate that leaves nothing deletable is a patch, not a collapse.)
+  // Profile is a title-screen route and is covered by `profile-drawer` above;
+  // it is deliberately absent from the generated Settings categories below.
   // The crisis notice: seeded storage, never a patched bundle. Corrupt bytes
   // (truncated JSON) is the 'corrupt' state; a future schemaVersion is 'newer'.
   {
@@ -452,7 +478,7 @@ const SUB_SURFACE_GROUPS = [
     home: 'src/ui/screens/settings.js — settingsCategories(), derived from the filed rows',
     ids: () => settingsCategories().slice(),
     reach: (id) => ({
-      query: '',
+      query: '?shot=title',
       landmark: '.set-body',
       // #90: the categories are a TAB STRIP now, not six headings down one
       // column, so the drive CLICKS instead of scrolling. This is the harness

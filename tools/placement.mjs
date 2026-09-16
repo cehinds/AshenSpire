@@ -175,7 +175,7 @@ import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -215,7 +215,10 @@ if (process.argv.includes('--selftest')) {
         // plant is why P1 is not redundant.
         name: 'the gap has NO home — #tooltip stops declaring --place-gap',
         file: 'styles/ui.css',
-        find: '  --place-gap: 14px;\n',
+        // Match the declaration itself, not its line ending. The repository is
+        // checked out with CRLF on Windows and LF on Linux; the defect is the
+        // missing declaration in either byte shape.
+        find: '  --place-gap: 14px;',
         replace: '',
         expectRed: /P1 /,
       },
@@ -256,10 +259,10 @@ if (process.argv.includes('--selftest')) {
         // assumed. Either way it is nowhere near its slot, which is the whole
         // point: no search for placement code can find a surface whose defect is
         // that it places nothing, so the check has to be aimed at the ABSENCE.
-        name: 'the flask menu goes back to being UNPLACED — flask.js stops calling place()',
+        name: 'the flask menu goes back to being UNPLACED — its place callback returns before placing',
         file: 'src/ui/components/flask.js',
-        find: '.appendChild(root);\n  place();',
-        replace: '.appendChild(root);\n  /* planted: the menu is never placed */',
+        find: '  const place = () => {',
+        replace: '  const place = () => { return; // planted: the menu is never placed',
         expectRed: /P5 .*NOT under its slot/,
       },
       {
@@ -275,14 +278,17 @@ if (process.argv.includes('--selftest')) {
       },
       {
         // The gap loses its home on THIS surface. A second site for the P1
-        // assertion, and the find-string carries the end of the comment above it
-        // because `  --place-gap: 6px;` alone also matches `.qn-panel` — a plant
-        // aimed at a neighbourhood instead of a defect is the drift Sten was
-        // bitten by on quicknav-reach's R1 the same night.
-        name: 'the flask menu\'s gap has NO home — .flask-action-menu stops declaring --place-gap',
-        file: 'styles/ui.css',
-        find: 'invented to remove. */\n  --place-gap: 6px;\n',
-        replace: 'invented to remove. */\n',
+        // assertion. Target the unique selector and force the computed value to
+        // zero so the plant is line-ending independent and cannot accidentally
+        // edit `.qn-panel`, which declares the same numeric gap.
+        name: 'the flask menu\'s gap has NO home — .flask-action-menu resolves --place-gap to zero',
+        // The menu is the kit's Popover with a surface ask of its own, so its
+        // `--place-gap` declaration moved from ui.css to kit.css § FLASK. Still
+        // the unique selector, so the plant still cannot reach `.qn-panel`,
+        // which declares the same number for its own placed panel.
+        file: 'styles/kit.css',
+        find: '.as-pop.flask-action-menu {',
+        replace: '.as-pop.flask-action-menu {\n  --place-gap: 0 !important; /* planted: no declared placement gap */',
         expectRed: /P1 .*flask menu/,
       },
     ],
@@ -463,7 +469,9 @@ function gapChecks(where, surface, r) {
 // browser.mjs's header, and watched as a plant either side of the pin (P7).
 
 async function main() {
-  const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
+  // Dynamic import requires a URL on Windows; a raw resolved path is parsed as
+  // the unsupported `c:` scheme before any placement check can run.
+  const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')).href);
   const s = await serve({ root: ROOT, port: 8294, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`placement — ${base} (root ${ROOT})`);
@@ -511,7 +519,7 @@ async function main() {
       await ev(`(() => { const c = document.querySelectorAll('.hand .card')[${i}];
         c.scrollIntoView({ inline: 'center', block: 'nearest' });
         c.dispatchEvent(new PointerEvent('pointerenter', { bubbles: false })); return true; })()`);
-      await wait(260);
+      await wait(700); // the kit's open delay is 500ms (tooltip.js TOOLTIP_TIMING)
       const cov = await ev(COVER);
       if (!cov.shown) { bad('P3', shape, `card #${i}: hovering it showed no tooltip — nothing measured`); continue; }
       const others = cov.hit.filter((h) => h.i !== i);
@@ -544,7 +552,10 @@ async function main() {
         // TWO STATES, because Inspect grows the panel INSIDE itself and
         // placement is a one-shot. The second reading is the one that catches a
         // menu re-placed as if it were still collapsed.
-        for (const state of ['as it opens', 'with Inspect expanded']) {
+        // Inspect no longer expands the menu: it opens body B (the flask's detail
+        // door) through the shell and the menu leaves — measured below, after
+        // the opening state. (Kit §07 ActionMenu; Constantine, 2026-09-03.)
+        for (const state of ['as it opens']) {
           if (state !== 'as it opens') {
             const clicked = await ev(`(() => { const b = [...document.querySelectorAll('.flask-action')]
               .find((x) => /Inspect/i.test(x.textContent)); if (!b) return false; b.click(); return true; })()`);
@@ -566,6 +577,17 @@ async function main() {
           const softest = c.soft.length ? ` (over the field: ${c.soft.map((p) => `${p}% of a combatant`).join(', ')} — reported, not asserted)` : '';
           if (!c.hits.length) ok('P5', shape, `${at}: touches none of ${FURNITURE.length} combat controls${softest}`);
           else bad('P5', shape, `${at}: sits on ${c.hits.map((h) => `${h.sel} ${h.pct}%`).join(', ')}. A flask menu may not cover a control the player still has to tap${softest}`);
+        }
+        const inspected = await ev(`(() => { const b = [...document.querySelectorAll('.flask-action')]
+          .find((x) => /Inspect/i.test(x.textContent)); if (!b) return false; b.click(); return true; })()`);
+        if (!inspected) bad('P5', shape, 'the menu has no Inspect row — the detail door was not measured');
+        else {
+          await wait(300);
+          const door = await ev(`(() => { const m = document.querySelector('.modal .flask-inspect-body'); const menu = document.querySelector('.flask-action-menu');
+            return { door: !!m, menuGone: !menu, size: m?.closest('.modal')?.dataset.size || '' }; })()`);
+          if (door.door && door.menuGone) ok('P5', shape, `Inspect opens the detail door (body B, ${door.size} rung) and the menu leaves`);
+          else bad('P5', shape, `Inspect: door ${door.door ? 'open' : 'MISSING'}, menu ${door.menuGone ? 'gone' : 'STILL UP'} — the action menu's Inspect must hand over to body B`);
+          await ev(`document.querySelector('.modal-veil .modal-close')?.click(); true`);
         }
         await ev(`document.querySelector('.flask-action-menu')?.remove(); true`);
       }

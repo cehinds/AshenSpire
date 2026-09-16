@@ -8,6 +8,13 @@
 4. **Content is data.** A new card, relic, **status**, enemy, or event is a data object in one `src/content/` file, validated against its schema (spec §3.14). If you find yourself writing imperative per-entity code, extend the effect/formula/trigger DSL instead (spec §3.4–3.7) — or, as a last resort, use the budgeted `scripts.js` escape hatch (<5% of content, justified in a comment).
 5. **Tests green before merge.** Open `tests/index.html` — all assertions pass, zero console errors. New mechanics ship with new assertions.
 
+## Coordination and release boundary
+
+How work is branched, reviewed, and merged is the [Branch model](#branch-model)
+below.
+Review or approval may permit integration to `dev`; only the owner merges to
+`main`, creates a release tag, or publishes a release.
+
 ## Branch model
 
 ```

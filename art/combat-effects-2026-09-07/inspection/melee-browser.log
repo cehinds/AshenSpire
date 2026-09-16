@@ -1,0 +1,10 @@
+{
+  result: {
+    decoded: 48,
+    playback: 'passed',
+    cancellation: 'passed',
+    reducedMotion: 'passed'
+  },
+  gameplay: { seen: [ 'starbolt', 'impact' ], melee: [ 'slash' ], remaining: 0 },
+  errors: []
+}

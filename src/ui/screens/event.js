@@ -1,16 +1,34 @@
 // src/ui/screens/event.js — Unknown-node events (SPEC §5.6, §7.1)
 //
-// Choices run through executeRunEffects (the same DSL as everything else).
-// A startCombat effect sets run.combatEntered; the orchestrator (main.js)
+// Choices commit through the quest door (engine/quests.js commitEventChoice):
+// run effects, then the history row, then the quest completion check. A
+// startCombat effect sets run.combatEntered; the orchestrator (main.js)
 // launches it after the result text.
+//
+// A quest chain's step is spoken instead (proposal §7.5): mountEvent hands it
+// to the dialogue screen, and only one-off events keep this W1u choice body.
 
-import { executeRunEffects } from '../../engine/actions.js';
+import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
+import { mountDialogue } from './dialogue.js';
+import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
-import { isBindingChoice } from '../../model/consequence.js';
-import { beatArmer } from '../components/holdconfirm.js';
+// The fail-closed level rule goes through the framework's adopted door
+// (owner ruling; the derivation itself still lives in model/consequence.js).
+import { isBindingChoice } from '../../framework/confirmationRule.js';
+import { availableEventChoices, questChainForEvent } from '../../model/quests.js';
+import { beatArmer } from '../../framework/optionDecision.js';
+import { el, modalFooter, artWell, prose, options, optionCard, button } from '../kit/index.js';
+import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
+import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
+import { t } from '../strings.js';
 
-export function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
+export function mountEvent(app, options) {
+  const { registries, run, meta, rng, eventId, onDone, hud = null } = options;
+  // Every quest exchange is spoken: a chain step opens in the dialogue screen
+  // with its speaker, and its responses commit through the same door below.
+  if (questChainForEvent(registries.questChains, eventId)) return mountDialogue(app, options);
   const def = registries.events.get(eventId);
   // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
   // says, or which choices deserve one — it names the action and hands over the
@@ -19,12 +37,6 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
   // line, which is how "same with ending turn" was lost.
   const arm = beatArmer(meta, registries);
   const disarmers = [];
-
-  function meets(requires) {
-    if (!requires) return true;
-    if (typeof requires.cinders === 'number' && run.cinders < requires.cinders) return false;
-    return true;
-  }
 
   // `min(420px, 100%)`, NOT `420px` — Sten, 2026-08-14, on Marina's axisfit
   // ruling (event rows 15-18px, DEFECT, dated 2026-08-16). The bare 420 was a
@@ -37,30 +49,53 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
   // bound is what the fix adds (Law 2: named container, proven inside it).
   // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
   // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
-  app.innerHTML = `
-    <div class="screen" style="gap:20px">
-      <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
-      <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
-      <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
-      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,100%)"></div>
-    </div>`;
+  //
+  // W1u — THE EVENT IS A CHOICE BODY ON THE PAGE. The head names it and says
+  // where the decision stands ({Status}); the body is the authored narrative
+  // beside the responses (side by side wide, stacked narrow); the foot holds
+  // Continue, which is allowed once a response is taken. It stands on the page
+  // rather than over one, and it has no close control: a decision has no way
+  // out but a response.
+  const status = (s) => (s.phase === 'resolved' ? t('event.status.resolved')
+    : s.phase === 'limited' ? t('event.status.limited', { available: s.available, total: s.total })
+    : t('event.status.choose'));
+  const cont = button({ label: t('event.continue'), weight: 'primary', id: 'event-continue', disabled: true });
+  app.innerHTML = '';
+  if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
+  const screen = el('div', { class: 'screen event-screen room-screen' });
+  app.appendChild(screen);
+  const door = mountChoiceBody(screen, {
+    className: 'event-door',
+    eyebrow: 'Event',
+    title: def.name,
+    choices: el('div', { class: 'choice-body-narrative event-narrative' }, [
+      artWell({ glyph: def.art || '❖' }),
+      prose(def.text),
+    ]),
+    consequences: el('div', { class: 'choice-body-responses event-responses' },
+      options([], { id: 'choices', class: 'ev-choices' })),
+    foot: modalFooter({ primary: cont, size: 'fill', className: 'choice-foot' }),
+  });
+  if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => mountEvent(app, { registries, run, meta, rng, eventId, onDone, hud }) });
 
   const box = app.querySelector('#choices');
-  def.choices.forEach((choice, i) => {
-    const btn = document.createElement('button');
-    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
-    // on this screen and the floor belongs to THEM, not to every subtle button
-    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
-    // be the blanket conversion the law tells nobody to attempt.
-    btn.className = 'subtle ev-choice';
+  const visibleChoices = availableEventChoices(eventChoicesWithHistory(def), run);
+  // What each response is (priced, binding) and whether it can be taken now —
+  // the facts the head's {Status} projects. Collected while the bars are built,
+  // from the same predicates that build them.
+  const responses = [];
+  visibleChoices.forEach(({ choice, index: i }, visibleIndex) => {
+    // Each choice is the kit's OptionCard: its label is the title; a price
+    // or a binding consequence rides as data the instruments read.
+    // No chevron: the hold hint the beat draws IS this card's affordance.
+    const btn = optionCard({ name: choice.label, className: 'ev-choice', arrow: false });
     // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
     // a px label does NOT answer the Text size control, while `.subtle`'s
     // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
     // that will. The size now lives in the stylesheet in rem, where the one
     // question it answers is "how big is a letter".
     btn.dataset.choice = String(i);
-    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
-    btn.textContent = choice.label;
+    btn.style.animationDelay = `${visibleIndex * 70}ms`; // staggered entrance
     // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
     // player can pay today. Vira's finding, and it is my own sentence back at
     // me — latent is not fixed.
@@ -106,13 +141,18 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     // a curse in it and the hold is already there.
     const binding = isBindingChoice(choice, registries);
     if (binding) btn.dataset.binding = '1';
+    const affordable = choiceAffordable(choice, run);
+    responses.push({ index: i, affordable, priced: !!choice.requires, binding });
 
-    if (!meets(choice.requires)) {
+    if (!affordable) {
       btn.disabled = true;
-      btn.textContent += ' (cannot afford)';
+      btn.querySelector('.ob').appendChild(el('span', { class: 'om', text: 'Cannot afford' }));
     } else {
+      // THE EVENT DOOR (engine/quests.js): effects, then the history row, then
+      // the quest completion check — one writer for all three, shared with the
+      // dialogue screen.
       const commit = () => {
-        executeRunEffects({ run, registries, rng }, choice.effects);
+        commitEventChoice({ run, registries, rng }, { eventId: def.id, choiceId: choice.id });
         showResult(choice.resultText);
       };
       // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
@@ -122,10 +162,20 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
       // position all moved into the machinery with it — a bar that cannot be
       // pressed still never gets armed, because this branch is the affordable
       // one and always was.
-      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
+      disarmers.push(arm(btn, 'eventChoice', {
+        ctx: { binding },
+        question: `Choose ${choice.label || choice.text || 'this event option'}?`,
+        detailHtml: choice.resultText ? `<p>${esc(choice.resultText)}</p>` : '',
+        confirmLabel: 'CHOOSE',
+        onConfirm: commit,
+      }));
     }
     box.appendChild(btn);
   });
+  setChoiceStatus(door, status(eventResponseStatus(responses)));
+  // Continue is in the foot from the start and allowed only once a response
+  // is taken; until then it is disabled, never a way out.
+  cont.addEventListener('click', () => { if (!cont.disabled) onDone(); });
 
   // Smart default (keyboard/gamepad): land on the first available choice.
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
@@ -137,14 +187,12 @@ export function mountEvent(app, { registries, run, meta, rng, eventId, onDone })
     // about — one screen's worth is nothing, thirteen floors of it is not.
     while (disarmers.length) disarmers.pop()();
     box.innerHTML = '';
-    const p = document.createElement('p');
-    p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
-    p.textContent = text;
-    const cont = document.createElement('button');
-    cont.textContent = run.combatEntered ? 'STEEL YOURSELF' : 'CONTINUE';
-    cont.addEventListener('click', onDone);
-    box.appendChild(p);
-    box.appendChild(cont);
-    if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+    // The result reads as the decision's own sentence, in the responses slot;
+    // the way on is the foot's primary, now allowed.
+    box.appendChild(prose(text, { class: 'as-flavor event-result' }));
+    setChoiceStatus(door, status(eventResponseStatus(responses, { resolved: true })));
+    cont.textContent = run.combatEntered ? t('event.continue.combat') : t('event.continue');
+    cont.disabled = false;
+    if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }

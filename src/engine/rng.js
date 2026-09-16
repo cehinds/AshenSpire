@@ -21,6 +21,17 @@ export const STREAM_NAMES = Object.freeze([
   'events',
   'shop',
   'misc',
+  // The smith's own stream: a merchant rolls once per visit for whether it
+  // keeps a smith, and that roll must not shift what the shop stocks or any
+  // later reward draws in an existing seed (the same reason `armaments` is
+  // its own stream). A save written before the stream existed starts it at 0.
+  'smith',
+  'combatProcs',
+  // The seat order (SPEC §13.4): drawn exactly once, at run creation, on a
+  // stream of its own — so seeding the order moves no draw on any stream
+  // above, and every existing seed's maps and rolls stay byte-identical
+  // (§13.6). A save written before the stream existed starts it at 0.
+  'seats',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;
@@ -120,6 +131,12 @@ export function createRng(seed, counters = {}) {
     },
     chance(stream, pct) {
       return rng.float(stream) * 100 < pct;
+    },
+    restoreCounters(counters) {
+      for (const name of STREAM_NAMES) {
+        if (!Number.isInteger(counters[name]) || counters[name] < 0) throw new Error('Invalid RNG counter: ' + name);
+      }
+      for (const name of STREAM_NAMES) state[name] = counters[name] >>> 0;
     },
     getCounters() {
       const out = {};

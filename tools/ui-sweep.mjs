@@ -1,0 +1,240 @@
+#!/usr/bin/env node
+// tools/ui-sweep.mjs — THE CONTACT SHEET, AND THE FACTS IT WAS TAKEN FOR.
+//
+// Constantine, 2026-09-11: "clean up the ui and ux experience. not very great
+// right now. do a review". The review was thirty photographs — fifteen states
+// at a desk width and a phone width — and every finding in it was a thing a
+// photograph showed that no instrument had asserted: a merchant with no purse
+// on screen, an event choice cut mid-consequence, a phone's End Turn three
+// lines tall, a map camera that landed on bare parchment. This tool is that
+// sheet turned into a predicate: it photographs the same states at the same
+// widths (--out DIR keeps the PNGs) and asserts the facts the fixes stand on,
+// so the next sweep starts from a green rather than from scratch.
+//
+// WHAT IT CHECKS, per shape (1280x800 desk, 390x844 phone; combat also 390x650):
+//   R1 EVENT     every choice label wraps — computed white-space is `normal`
+//                and no label is wider than its box (the kit's ellipsis rule
+//                outranked the wrap fix at (0,4,1) until 2026-09-11).
+//   R2 ROOMS     the merchant, the Shrine, the Smith and an event carry the
+//                shared run band: a Cinders chip with height, the resource
+//                bars, the Armoury and Menu controls (components/runHud.js).
+//   R3 COMBAT    on a phone the End Turn control is at least 80 px wide, shows
+//                no keycap, and the reserved status tray answers no hit
+//                (pointer-events none) — the covered-nameplate finding.
+//   R4 MAP       the entrance camera reports `data-framing="fit"` UNDER
+//                REDUCED MOTION at both shapes (the transition-duration trick
+//                made the first landing read stale geometry).
+//   R5 CREATION  stacked (phone), the class list sits above the preview pane;
+//                at the desk the selected armour's information badge stands
+//                ABOVE its card — whole inside the choices scrollport, which
+//                clips at its padding box, and clear of the section header it
+//                used to straddle (#994). Until then this row looked for the
+//                badge INSIDE the card, on a chip that has never carried one.
+//                The desk row runs TWICE: once under this file's reduced-motion
+//                fixture, and once through ?shotSettings at normal motion and UI
+//                size S — the case the shared fixture cannot see, because
+//                reduced motion drops the focus lift the head room must clear.
+//                A third term raises --inspect-size and --inspect-gap the way
+//                main.js does and asserts the reserved room grows with the badge
+//                rather than staying at today's numbers.
+//   R6 ARMOURY   on a phone the views are the W1 [Category ▾] selector above
+//                the pane, and it opens every view as a vertical list inside
+//                the rail's width with no sideways scroll (W1e, rule 11; the
+//                views are no longer head tabs beside the close).
+//   R7 SMITH     `?shot=smith` opens the Shrine with the upgrade modal up.
+//
+// Usage:
+//   node tools/ui-sweep.mjs                      every state, both shapes
+//   node tools/ui-sweep.mjs --only event,map     a subset (comma-separated)
+//   node tools/ui-sweep.mjs --out docs/sweep     keep the photographs
+//   node tools/ui-sweep.mjs --selftest           plant three known-bads
+//
+// Exit 0 = every fact held; 1 = a finding; 2 = no browser / bad arguments.
+//
+// BOUNDARY. Headless Chromium, emulated shapes, `?shot=` fixtures with
+// reducedMotion on — except where a row says otherwise and re-navigates through
+// ?shotSettings for itself (R5's second desk pass). It asserts geometry and DOM
+// facts, not legibility or taste; the review that produced it is docs work, not
+// this file's.
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { launchBrowser } from './browser.mjs';
+import { serve } from './serve.mjs';
+
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const args = process.argv.slice(2);
+const argOf = (flag) => { const at = args.indexOf(flag); return at >= 0 ? args[at + 1] : null; };
+const only = (argOf('--only') || '').split(',').map((s) => s.trim()).filter(Boolean);
+const outDir = argOf('--out');
+
+if (args.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  const plants = [
+    {
+      name: 'the event wrap rule drops back under the OptionCard ellipsis rule',
+      file: 'styles/kit.css',
+      find: '.event-door .ev-choices .as-option .on .as-label-text { white-space: normal;',
+      replace: '.event-door .as-option .on .as-label-text { white-space: normal;',
+      expectRed: /FAIL R1 event/,
+    },
+    {
+      name: 'reduced motion goes back to a 0.01ms transition on every property',
+      file: 'styles/base.css',
+      find: '.reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {\n  animation-duration: 0.01ms !important;\n  animation-iteration-count: 1 !important;\n  transition: none !important;',
+      replace: '.reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {\n  animation-duration: 0.01ms !important;\n  animation-iteration-count: 1 !important;\n  transition-duration: 0.01ms !important;',
+      expectRed: /FAIL R4 map/,
+    },
+    {
+      // The status row is the shared icon tray since 2026-09-14: the row that
+      // passes the press through is the kit's `.as-pips.icon-tray` rule.
+      name: 'the reserved status tray answers hits again',
+      file: 'styles/kit.css',
+      find: '  pointer-events: none;\n}\n.icon-tray > * { pointer-events: auto; }',
+      replace: '  pointer-events: auto;\n}\n.icon-tray > * { pointer-events: auto; }',
+      expectRed: /FAIL R3 combat .*status tray/,
+    },
+  ];
+  process.exit(await doorSelftest({ tool: 'ui-sweep.mjs', plants, args: ['--only', 'event,map,combat'], timeoutMs: 400000 }));
+}
+
+const SHAPES = [
+  { w: 1280, h: 800, tag: 'desk', mobile: false },
+  { w: 390, h: 844, tag: 'phone', mobile: true },
+];
+const STATES = [
+  { name: 'event', q: 'event', ready: `!!document.querySelector('#choices button')` },
+  { name: 'shop', q: 'shop', ready: `!!document.querySelector('#leave-shop')` },
+  { name: 'rest', q: 'rest', ready: `!!document.querySelector('#rest-opt')` },
+  { name: 'smith', q: 'smith', ready: `!!document.querySelector('.smith-candidate-region')` },
+  { name: 'map', q: 'map', ready: `!!document.querySelector('.map-node') && document.querySelector('.map-scroll').dataset.framing` },
+  { name: 'combat', q: 'combat', ready: `!!document.querySelector('.combat .hand .card')`, extraShapes: [{ w: 390, h: 650, tag: 'safari', mobile: true }] },
+  { name: 'customize', q: 'customize', ready: `!!document.querySelector('.cz-portrait')` },
+  { name: 'armoury', q: 'map', ready: `!!document.querySelector('.map-node')`, then: 'armoury' },
+];
+const wanted = STATES.filter((s) => !only.length || only.includes(s.name));
+if (!wanted.length) { console.error(`ui-sweep: --only ${only.join(',')} matches no state. States: ${STATES.map((s) => s.name).join(', ')}`); process.exit(2); }
+
+const served = await serve({ root: ROOT, port: Number(process.env.UI_SWEEP_PORT) || 8531, open: false });
+let launched;
+try { launched = await launchBrowser({ prefix: 'ui-sweep-', browser: process.env.CHROME, timeoutMs: 20000 }); }
+catch (e) { console.error(`ui-sweep: no Chrome/Edge found (${e.message}); set CHROME`); served.close?.(); process.exit(2); }
+const socket = new WebSocket(launched.wsUrl);
+let id = 0; const pending = new Map();
+socket.addEventListener('message', (e) => { const p = JSON.parse(e.data); const w = pending.get(p.id); if (!w) return; pending.delete(p.id); p.error ? w.no(new Error(p.error.message)) : w.ok(p.result); });
+const send = (m, params = {}, s) => new Promise((ok, no) => { const i = ++id; pending.set(i, { ok, no }); socket.send(JSON.stringify({ id: i, method: m, params, ...(s ? { sessionId: s } : {}) })); });
+await new Promise((r) => socket.addEventListener('open', r));
+const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
+await send('Runtime.enable', {}, sessionId); await send('Page.enable', {}, sessionId);
+const ev = async (expr) => { const r = await send('Runtime.evaluate', { expression: expr, returnByValue: true, awaitPromise: true }, sessionId); if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result?.value; };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const until = async (expr, ms = 15000) => { const t = Date.now(); while (Date.now() - t < ms) { if (await ev(expr).catch(() => false)) return true; await wait(120); } return false; };
+const click = async (sel, i = 0) => { const pt = await ev(`(()=>{const e=document.querySelectorAll(${JSON.stringify(sel)})[${i}]; if(!e) return null; e.scrollIntoView({block:'center'}); const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2};})()`); if (!pt) return false; await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, sessionId); await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt.x, y: pt.y, button: 'left', clickCount: 1 }, sessionId); await wait(400); return true; };
+const settings = encodeURIComponent(JSON.stringify({ reducedMotion: true }));
+
+if (outDir) mkdirSync(resolve(ROOT, outDir), { recursive: true });
+let findings = 0; let cells = 0;
+const check = (ok, label, detail = '') => { cells++; console.log(`    ${ok ? 'ok  ' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`); if (!ok) findings++; };
+
+for (const state of wanted) {
+  for (const shape of [...SHAPES, ...(state.extraShapes || [])]) {
+    await send('Emulation.setDeviceMetricsOverride', { width: shape.w, height: shape.h, deviceScaleFactor: 1, mobile: shape.mobile }, sessionId);
+    await send('Page.navigate', { url: `${served.url}?shot=${state.q}&shotSettings=${settings}` }, sessionId);
+    // The first mount of the unbundled module route can pass 15 s on a
+    // loaded machine (the merchant measured 21.4 s, 2026-09-14): a minute.
+    const ready = await until(state.ready, 60000);
+    await wait(700);
+    const cell = `${state.name} ${shape.w}x${shape.h}`;
+    console.log(`\n  ${cell}`);
+    if (!ready) { check(false, `${state.name} rendered`, 'landmark never appeared'); continue; }
+    if (state.then === 'armoury') {
+      await click('#open-armoury');
+      // W1e: the views are the category rail now, not head tabs.
+      const up = await until(`!!document.querySelector('.armoury [data-surface="armouryView"] [data-member]')`);
+      await wait(500);
+      if (!up) { check(false, 'armoury opened from the map band'); continue; }
+    }
+    if (outDir) {
+      const png = await send('Page.captureScreenshot', { format: 'png' }, sessionId);
+      writeFileSync(resolve(ROOT, outDir, `${shape.tag}-${state.name}.png`), Buffer.from(png.data, 'base64'));
+    }
+
+    if (state.name === 'event') {
+      const labels = await ev(`[...document.querySelectorAll('#choices .ev-choice .as-label-text')].map(e=>({t:e.textContent.slice(0,40),ws:getComputedStyle(e).whiteSpace,over:e.scrollWidth>e.clientWidth+1}))`);
+      check(labels.length >= 2 && labels.every((l) => l.ws === 'normal' && !l.over), `R1 ${cell}: every choice label wraps and none is clipped`, JSON.stringify(labels));
+    }
+    if (['shop', 'rest', 'smith', 'event'].includes(state.name)) {
+      const band = await ev(`(()=>{const hud=document.querySelector('.shared-hud');if(!hud)return null;const c=hud.querySelector('.hud-cinders .cv');const r=c&&c.getBoundingClientRect();return {cinders:c&&c.textContent.trim(),h:r&&Math.round(r.height),bars:hud.querySelectorAll('.resbars-host .as-meter').length,armoury:!!hud.querySelector('#open-armoury'),menu:!!hud.querySelector('#open-menu'),under:(()=>{const s=document.querySelector('.screen.room-screen');const b=hud.querySelector('.hud-bottom');if(!s||!b)return null;const first=[...s.children].find(e=>e.getBoundingClientRect().height>0);return first?Math.round(first.getBoundingClientRect().top-b.getBoundingClientRect().bottom):null})()}})()`);
+      check(!!band && band.h > 0 && /\d/.test(band.cinders) && band.bars >= 3 && band.armoury && band.menu,
+        `R2 ${cell}: the room carries the run band with a visible purse, bars, Armoury and Menu`, JSON.stringify(band));
+      if (band && band.under != null && state.name !== 'smith') check(band.under >= 0, `R2 ${cell}: the room's first content starts under the belt`, `gap ${band.under}px`);
+    }
+    if (state.name === 'combat' && shape.mobile) {
+      const row = await ev(`(()=>{const et=document.querySelector('.combat-action-row .end-turn');const key=et.querySelector('.et-key');const tray=document.querySelector('.combatant .statuses');return {endW:Math.round(et.getBoundingClientRect().width),keyShown:!!key&&getComputedStyle(key).display!=='none',trayPE:tray&&getComputedStyle(tray).pointerEvents,orb:Math.round(document.querySelector('.combat-action-row .energy-orb').getBoundingClientRect().width)}})()`);
+      check(row.endW >= 80 && !row.keyShown && row.orb <= 60, `R3 ${cell}: End Turn is at least 80 px wide with no keycap beside 56 px orbs`, JSON.stringify(row));
+      check(row.trayPE === 'none', `R3 ${cell}: the reserved status tray answers no hit`, JSON.stringify(row));
+    }
+    if (state.name === 'map') {
+      const d = await ev(`(()=>{const s=document.querySelector('.map-scroll').dataset;return {framing:s.framing,miss:s.framingMiss,restore:s.cameraRestore}})()`);
+      check(d.framing === 'fit', `R4 ${cell}: the entrance camera lands on the decision under reduced motion`, JSON.stringify(d));
+    }
+    if (state.name === 'customize') {
+      if (shape.mobile) {
+        const order = await ev(`(()=>({classes:Math.round(document.querySelector('#cz-classes').getBoundingClientRect().top),preview:Math.round(document.querySelector('.cc-class-preview-host').getBoundingClientRect().top)}))()`);
+        check(order.classes < order.preview, `R5 ${cell}: the class list stands above the preview pane`, JSON.stringify(order));
+      } else {
+        // THE BADGE IS ABOVE THE CARD, and the three facts that makes true are
+        // separate: it hangs clear of the face, it is WHOLE inside the scrollport
+        // (which clips at its padding box, so the head room is what is really
+        // asserted here), and it does not cross the section header it used to
+        // straddle. The old form read `.equip-chip.on .card-info-button` — a
+        // selector for a chip that carries no badge, so the check answered null
+        // and had been RED on dev rather than guarding anything (#994).
+        // TWICE, BECAUSE THE SWEEP'S OWN FIXTURE HIDES A CASE: this file asks
+        // for reduced motion, which drops the focus lift, and the head room has
+        // to clear the lift too. The second pass goes back through ?shotSettings
+        // — the real door — for normal motion at UI size S, the smallest named
+        // size and so the largest zoom-compensated badge. That pass is what
+        // caught the 0.8 px the first one could not see (#994).
+        for (const pass of [{ tag: 'reduced motion, Auto size', settings: null }, { tag: 'normal motion, UI size S', settings: { uiScale: 's' } }]) {
+          if (pass.settings) {
+            await send('Page.navigate', { url: `${served.url}?shot=${state.q}&shotSettings=${encodeURIComponent(JSON.stringify(pass.settings))}` }, sessionId);
+            if (!await until(state.ready)) { check(false, `R5 ${cell} (${pass.tag}): creation rendered`, 'landmark never appeared'); continue; }
+            await wait(700);
+          }
+          await click('[data-face="equipment"]'); await click('[data-face="armour"]'); await wait(300);
+          await click('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');
+          const info = await ev(`(()=>{const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');if(!card)return null;const b=card.querySelector('.card-info-button');if(!b)return {found:false};const cs=getComputedStyle(b);const shown=cs.visibility==='visible'&&cs.opacity!=='0';const r=b.getBoundingClientRect();const c=card.getBoundingClientRect();const port=card.closest('.cc-card-selectors');const ps=port&&getComputedStyle(port);const pr=port&&port.getBoundingClientRect();const clip=pr?pr.top+parseFloat(ps.borderTopWidth):null;const fold=card.closest('details');const face=fold&&fold.querySelector('summary.disc-face');const f=face&&face.getBoundingClientRect();return {found:true,shown,lift:getComputedStyle(card).transform,zoom:getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom').trim(),above:r.bottom<=c.top+1,whole:clip==null||r.top>=clip-0.5,clearsFace:!!f&&r.top>=f.bottom-0.5,face:face?face.textContent.trim().slice(0,16):null,slack:clip==null?null:Math.round((r.top-clip)*10)/10,top:Math.round(r.top),cardTop:Math.round(c.top),faceBottom:f?Math.round(f.bottom):null}})()`);
+          check(!!info && info.found && info.shown && info.above && info.whole && info.clearsFace,
+            `R5 ${cell} (${pass.tag}): the selected armour's information badge stands above its card, whole inside the scrollport and clear of the section face`, JSON.stringify(info));
+        }
+        // AND THE ROOM IS THE BADGE'S OWN, not a copy of today's numbers. The
+        // head and row gap read --inspect-size and --inspect-gap, which main.js
+        // writes from wireframeUi.inspect; typing those defaults into the rule
+        // instead let a bigger badge outgrow its room (at sizeRem 4 / gapPx 20 it
+        // clipped 17.3 px). This raises both tokens the way main.js does and
+        // asserts the room moved with them (#994).
+        const grown = await ev(`(()=>{const r=document.documentElement;const keep=[r.style.getPropertyValue('--inspect-size'),r.style.getPropertyValue('--inspect-gap')];r.style.setProperty('--inspect-size','calc(4 * max(16px / var(--ui-zoom, 1), 1rem))');r.style.setProperty('--inspect-gap','calc(20px / var(--ui-zoom, 1))');const card=document.querySelector('[data-equipment-section="armour"] .poker-equipment-choice .equipment-poker-card');const b=card&&card.querySelector('.card-info-button');const port=card&&card.closest('.cc-card-selectors');let out={found:!!b};if(b&&port){const ps=getComputedStyle(port);const clip=port.getBoundingClientRect().top+parseFloat(ps.borderTopWidth);const rr=b.getBoundingClientRect();out={found:true,badge:Math.round(rr.height),head:ps.paddingTop,rowGap:ps.rowGap,slack:Math.round((rr.top-clip)*10)/10,whole:rr.top>=clip-0.5};}keep[0]?r.style.setProperty('--inspect-size',keep[0]):r.style.removeProperty('--inspect-size');keep[1]?r.style.setProperty('--inspect-gap',keep[1]):r.style.removeProperty('--inspect-gap');return out})()`);
+        check(!!grown && grown.found && grown.whole,
+          `R5 ${cell}: a bigger shared badge takes the room with it — the head and row gap follow --inspect-size and --inspect-gap`, JSON.stringify(grown));
+      }
+    }
+    if (state.name === 'armoury' && shape.mobile) {
+      // W1e (FRONTEND-WIREFRAMES rule 11): a compact host draws the kit's one
+      // [Category ▾] selector above the pane (kit/categoryNav.js), and it
+      // opens the same rail as a vertical list — never a strip, never a grid
+      // of cells. R6 opens it, reads the list, and closes it again.
+      const rail = await ev(`(()=>{const host=document.querySelector('.armoury .as-railed[data-cat-nav]');const toggle=host&&host.querySelector(':scope > .as-catnav-toggle');const r=document.querySelector('.armoury [data-surface="armouryView"]');const pane=document.querySelector('.armoury-pane');if(!host||!toggle||!r)return {host:!!host,toggle:!!toggle};const tr=toggle.getBoundingClientRect();const above=Math.round(tr.bottom)<=Math.round(pane.getBoundingClientRect().top)+1;toggle.click();const rr=r.getBoundingClientRect();const items=[...r.querySelectorAll('[data-member]')].map(t=>t.getBoundingClientRect());const out={mode:host.dataset.catNav,items:items.length,selector:Math.round(tr.height)>=44,above,vertical:items.every((b,i)=>i===0||b.top>=items[i-1].bottom-1),inside:items.every(b=>b.left>=rr.left-1&&b.right<=rr.right+1),sideways:r.scrollWidth>r.clientWidth+1};toggle.click();return out;})()`);
+      check(rail.mode === 'selector' && rail.items >= 3 && rail.selector && rail.above && rail.vertical && rail.inside && !rail.sideways, `R6 ${cell}: the Armoury categories are one [Category ▾] selector above the pane that opens them as a vertical list with no sideways scroll`, JSON.stringify(rail));
+    }
+    if (state.name === 'smith') {
+      const smith = await ev(`(()=>({modal:!!document.querySelector('.smith-candidate-region'),shrine:!!document.querySelector('#rest-opt')}))()`);
+      check(smith.modal && smith.shrine, `R7 ${cell}: the Shrine stands behind the open Smith`, JSON.stringify(smith));
+    }
+  }
+}
+
+socket.close(); await launched.close(); served.close?.();
+console.log(`\nui-sweep: ${findings ? `FAIL — ${findings} finding(s)` : 'PASS'} across ${cells} checks${outDir ? ` · photographs in ${outDir}` : ''}`);
+process.exit(findings ? 1 : 0);

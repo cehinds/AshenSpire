@@ -1,0 +1,12 @@
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { runPrototypeMatrix } from '../src/engine/combatPrototype.js';
+const seeds = Number(process.argv.find((a) => a.startsWith('--seeds='))?.split('=')[1] || 100);
+if (!Number.isInteger(seeds) || seeds < 1 || seeds > 10000) throw new Error('seeds must be 1..10000');
+const pressure = Number(process.argv.find((a) => a.startsWith('--pressure='))?.split('=')[1] || 1);
+const report = runPrototypeMatrix(seeds, (build, scenario) => console.log(`Completed ${build} / ${scenario}`), pressure);
+mkdirSync('artifacts/combat-foundations', { recursive: true });
+const path = resolve(`artifacts/combat-foundations/balance-${pressure}.json`);
+writeFileSync(path, `${JSON.stringify(report, null, 2)}\n`);
+console.table(report.summary);
+console.log(`Report: ${path}`);

@@ -28,10 +28,20 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createLoadout, normalizeArmamentLocations, stampDeck } from '../model/loadout.js';
+import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
+// Every composition step — plan, apply, restamp — through the ONE framework
+// door (owner ruling), so the save/load path cannot split across the boundary.
+import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
+import { combatSnapshotReferenceProblems } from '../model/combatSnapshot.js';
+import { assertSavedBossReferences } from '../model/mapReferences.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.js';
+import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
+import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
+import { activeMods, endlessActInfo } from '../content/customMods.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -60,6 +70,131 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
 function runKey(slot = 1) {
   return slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`;
+}
+
+const COMBAT_SNAPSHOT_PILE_ORDER = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
+
+/**
+ * A new authored profile is additive content, not grounds to discard an older
+ * run. Adopt only missing profile rows from the current table; existing saved
+ * rows remain authoritative and unknown saved rows still fail in the ordinary
+ * snapshot validator.
+ */
+function hydrateMissingEquipmentProfiles(registries, snapshot) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)
+      || !snapshot.profiles || typeof snapshot.profiles !== 'object' || Array.isArray(snapshot.profiles)) return [];
+  const live = createEquipmentProfileRuleSnapshot(registries);
+  const added = [];
+  for (const [profileId, rule] of Object.entries(live.profiles)) {
+    if (Object.hasOwn(snapshot.profiles, profileId)) continue;
+    snapshot.profiles[profileId] = structuredClone(rule);
+    added.push(profileId);
+  }
+  return added;
+}
+
+function pendingRewardReferenceProblems(pending, registries) {
+  if (!pending) return [];
+  const rewards = pending.rewards || {};
+  const problems = [];
+  for (const cardId of rewards.cardIds || []) {
+    if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
+  if (rewards.armamentId
+      && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {
+    problems.push(`armament '${rewards.armamentId}' is unknown`);
+  }
+  return problems;
+}
+
+/**
+ * Migrate one exact active-combat snapshot through the same weapon-package
+ * composer as an ordinary run. The snapshot loadout is authoritative while a
+ * combat is active; the top-level run loadout is only its persisted projection.
+ * Work on a clone so a refused plan cannot leave a partially rebound snapshot.
+ */
+function migrateCombatSnapshotWeaponCards(registries, run) {
+  const stored = run.combatEntered?.snapshot;
+  if (!stored) return;
+  const snapshot = structuredClone(stored);
+  const hadSnapshotLevels = snapshot.itemUpgradeLevels !== undefined || snapshot.armamentLevels !== undefined;
+  const snapshotLevels = { ...(snapshot.itemUpgradeLevels || {}) };
+  for (const [id, level] of Object.entries(snapshot.armamentLevels || {})) {
+    const itemRef = `armament/${id}`;
+    if (Object.hasOwn(snapshotLevels, itemRef) && snapshotLevels[itemRef] !== level) {
+      throw new Error(`combat snapshot Smithing level conflict for '${itemRef}'`);
+    }
+    snapshotLevels[itemRef] = level;
+  }
+  const runLevels = run.itemUpgradeLevels || {};
+  if (!hadSnapshotLevels) Object.assign(snapshotLevels, runLevels);
+  for (const itemRef of new Set([...Object.keys(snapshotLevels), ...Object.keys(runLevels)])) {
+    if ((snapshotLevels[itemRef] || 0) !== (runLevels[itemRef] || 0)) {
+      throw new Error(`combat snapshot item upgrade level '${itemRef}' disagrees with the run`);
+    }
+  }
+  const attacks = COMBAT_SNAPSHOT_PILE_ORDER
+    .flatMap((pile) => snapshot.piles[pile])
+    .filter((card) => card.equipmentRole === 'attack');
+
+  if (snapshot.loadout === null) {
+    if (attacks.length) throw new Error('combat snapshot has generated attack slots but no authoritative loadout');
+    return;
+  }
+
+  const classId = snapshot.player?.classId || run.class;
+  // Reconcile granted/weaponArt instances BEFORE flattening for the stamp:
+  // the pile stamp below is a subset call, and a package whose grants or arts
+  // changed between save and load must sweep stale instances out of the
+  // resumed fight and land newly-granted ones in the discard pile — stamped
+  // by the same pass as every other card. The same door a live mid-combat
+  // swap goes through.
+  // The mounts travel too, or an extracted art comes back at this door: the
+  // snapshot's own record wins, a fight saved before mounts existed reads the
+  // run's, and neither is written back — a load must not rewrite a snapshot
+  // it understands (tools/weapon-card-packages.mjs holds that line).
+  const itemMounts = snapshot.itemMounts !== undefined ? snapshot.itemMounts : run.itemMounts;
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts }, snapshot.piles);
+  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
+  // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
+  // combat snapshot is only half the job: this door builds its own plan and
+  // hands stampDeck its own synthetic run, so without it a fight saved after a
+  // grant-bearing swap replans from the CURRENT loadout and the load is
+  // rejected — the run archived for a mismatch it did not have when saved. The
+  // snapshot's own number wins; a fight saved before the field existed falls
+  // back to the run's, and a run older than both replans as it always did.
+  const bornWith = Number.isFinite(snapshot.equipmentAttackSlotCount)
+    ? snapshot.equipmentAttackSlotCount
+    : (Number.isFinite(run.equipmentAttackSlotCount) ? run.equipmentAttackSlotCount : undefined);
+  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId, { attackSlotCount: bornWith, removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds });
+  // Full-pile order is the one legacy assignment door: draw, hand, discard,
+  // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
+  // even when zero attacks were recognized keeps the authored count fail closed.
+  WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
+  stampDeck(registries, {
+    class: classId,
+    loadout: snapshot.loadout,
+    attributes: snapshot.attributes || run.attributes,
+    itemUpgradeLevels: runLevels,
+    equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
+    equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
+    equipmentAttackSlotCount: bornWith,
+    removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds,
+    itemMounts,
+    deck: cards,
+  }, cards, {
+    adoptEquipmentBonuses: false,
+    reconcileEquipmentPools: false,
+  });
+  snapshot.itemUpgradeLevels = structuredClone(runLevels);
+  delete snapshot.armamentLevels;
+
+  // Commit only after validation and every pile rebind succeed. Resume then
+  // observes the exact same loadout in run state and restored combat state.
+  run.combatEntered.snapshot = snapshot;
+  run.loadout = structuredClone(snapshot.loadout);
 }
 
 /**
@@ -101,8 +236,8 @@ export function createSaveManager(storage) {
   }
 
   // THE DRAWER'S PROMISE (Saga's gate). The calm screen tells every player
-  // "They are never deleted to make room for anything else" and the crisis
-  // dialog says they can come back "any time". Both were false: this function
+  // "profiles are never deleted to make room" and the crisis dialog says a
+  // profile can come back "any time". The older blanket promise was false:
   // pruned by age and then by count, and the count prune was KIND-BLIND —
   // `splice(0, len - 12)` drops the oldest entries whether they are a corrupt
   // run or somebody's two thousand evenings. Twelve is not a freak number: a
@@ -324,7 +459,7 @@ export function createSaveManager(storage) {
   // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
   // for every caller (freshMeta) and writes nothing, so a player who cleared
   // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
-  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
+  // `sote_meta_v1` — a run with no player behind it — and Title → Profile
   // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
   // 2026-08-08). Two states for one concept: the profile that exists because
   // every read gets an object, and the profile that exists on disk.
@@ -381,6 +516,31 @@ export function createSaveManager(storage) {
       let run;
       try {
         run = deserializeRun(json);
+        // SPEC §13.4: a save from before seats climbs the order it was already
+        // climbing — the default — and nothing else about it moves, no draw.
+        // A save that HAS an order must name every seat once, or it is a
+        // dangling id and refused like any other (§3.12).
+        if (!Array.isArray(run.seatOrder)) run.seatOrder = defaultSeatOrder(registries);
+        const seatProblems = seatOrderProblems(run.seatOrder, registries);
+        if (seatProblems.length) throw new Error(`Malformed run save: ${seatProblems.join('; ')}`);
+        const mapAct = run.custom && activeMods(run.custom).endless ? endlessActInfo(run.actNumber).contentAct : run.actNumber;
+        if (run.journey) {
+          // deserializeRun validated the pinned manifest. Its graph is a derived
+          // projection, and its dungeon may belong to a different classic act.
+          for (const id of Object.keys(run.journey.outcomes)) journeyEncounter(run.journey, id, registries);
+          run.mapGraph = journeyGraph(run.journey);
+        } else {
+          assertSavedBossReferences(registries, run.mapGraph, { seat: seatAtTier(run.seatOrder, mapAct), tier: mapAct });
+          run.mapGraph = refreshBossDestinationLabels(registries, run.mapGraph, mapAct);
+        }
+        const snapshotReferenceProblems = combatSnapshotReferenceProblems(run.combatEntered?.snapshot, registries);
+        if (snapshotReferenceProblems.length) {
+          throw new Error(`Malformed combat snapshot references: ${snapshotReferenceProblems.join('; ')}`);
+        }
+        const pendingReferenceProblems = pendingRewardReferenceProblems(run.pendingReward, registries);
+        if (pendingReferenceProblems.length) {
+          throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
+        }
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema
@@ -429,8 +589,6 @@ export function createSaveManager(storage) {
       }
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
-      const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
-      const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
         // ONE OF THE THREE UNGATED HEALS. tests/engine.test.js 28 deletes
@@ -462,9 +620,71 @@ export function createSaveManager(storage) {
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
+        // Recover legacy per-copy equipment upgrade intent before stampDeck
+        // clears redundant flags and before an active-combat snapshot is
+        // rebound. The snapshot restamp must consume the promoted tier; doing
+        // this afterward would leave the resumed piles at tier zero.
+        // THE BIRTH QUOTA, RECOVERED FOR A RUN SAVED BEFORE IT EXISTED. A
+        // legacy save has no `equipmentAttackSlotCount`, and every reader that
+        // falls back to counting a deck only ever did so into a LOCAL — the run
+        // stayed undefined, so createCombat carried undefined onto the
+        // synthetic run and the first mid-fight swap replanned from the current
+        // loadout. Content that lowered strikeBias since the save then threw on
+        // a slot the replan had dropped.
+        //
+        // The run's own deck IS the record of what it was born with, and this
+        // is the migration door, so the number is recovered ONCE here rather
+        // than re-derived at each combat — a second derivation is what four
+        // earlier rounds were about. Runs saved with the field keep theirs.
+        if (!Number.isFinite(run.equipmentAttackSlotCount) && Array.isArray(run.deck)) {
+          const recovered = run.deck.filter((card) => card && card.equipmentRole === 'attack').length;
+          run.equipmentAttackSlotCount = recovered;
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:recoverEquipmentAttackSlotCount',
+            field: 'equipmentAttackSlotCount',
+            was: undefined,
+            now: recovered,
+            why: 'run saved before the birth attack quota was recorded; its own deck is the record of what it was born with',
+          });
+        }
+        const smithingReceipt = initializeRunSmithing(registries, run);
+        const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
+        const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);
+        if (hydratedRunProfiles.length || hydratedCombatProfiles.length) {
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:hydrateMissingEquipmentProfiles',
+            field: 'equipmentProfileRuleSnapshot.profiles',
+            was: { runMissing: hydratedRunProfiles, combatMissing: hydratedCombatProfiles },
+            now: { runProfiles: Object.keys(run.equipmentProfileRuleSnapshot?.profiles || {}), combatProfiles: Object.keys(run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot?.profiles || {}) },
+            why: 'new authored equipment profiles were added after this run was saved; existing saved profile rows remain authoritative',
+          });
+        }
+        migrateCombatSnapshotWeaponCards(registries, run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
-        if (needsEquipmentStamp || needsCarrierStamp) {
-          stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false });
+        // Every load crosses the same deterministic composition door. This is
+        // also the one-time migration for legacy role-only attack instances:
+        // deck order binds them to attack:0..N-1; no instance is appended.
+        stampDeck(registries, run, undefined, {
+          adoptEquipmentBonuses: false,
+          reconcileEquipmentPools: false,
+        });
+        if (smithingReceipt.initialized || smithingReceipt.promotedArmaments.length) {
+          note(run, {
+            kind: 'heal',
+            site: 'smithing.js:initializeRunSmithing',
+            field: 'smithingStones/itemUpgradeLevels/smithingRewardClaims',
+            was: undefined,
+            now: {
+              smithingStones: run.smithingStones,
+              itemUpgradeLevels: run.itemUpgradeLevels,
+              smithingRewardClaims: run.smithingRewardClaims,
+            },
+            why: smithingReceipt.promotedArmaments.length
+              ? 'legacy equipment-card upgrade intent was promoted once to its source armament'
+              : 'pre-Smithing save received an empty purse, level map, and reward-claim ledger',
+          });
         }
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;

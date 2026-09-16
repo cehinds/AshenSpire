@@ -1,0 +1,82 @@
+TAP version 13
+# (node:23992) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/suprbludude/.codex/worktrees/2eb2/AshenSpire/src/model/actionAnimation.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\suprbludude\\package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: override beats tags, tags beat intent, and tag order is authored
+ok 1 - override beats tags, tags beat intent, and tag order is authored
+  ---
+  duration_ms: 3.6284
+  ...
+# Subtest: unknown content and inherited object keys fall back safely
+ok 2 - unknown content and inherited object keys fall back safely
+  ---
+  duration_ms: 0.4572
+  ...
+# Subtest: live classes and named enemies have authored distinct profiles and valid overrides
+ok 3 - live classes and named enemies have authored distinct profiles and valid overrides
+  ---
+  duration_ms: 0.4674
+  ...
+# Subtest: authored tags exist and requested class poses are shipped
+ok 4 - authored tags exist and requested class poses are shipped
+  ---
+  duration_ms: 0.5747
+  ...
+# Subtest: resolution is immutable, deterministic, and does not mutate inputs
+ok 5 - resolution is immutable, deterministic, and does not mutate inputs
+  ---
+  duration_ms: 0.2502
+  ...
+# Subtest: every authored enemy override names a real move and a valid family
+ok 6 - every authored enemy override names a real move and a valid family
+  ---
+  duration_ms: 1.2023
+  ...
+# (node:60384) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/suprbludude/.codex/worktrees/2eb2/AshenSpire/src/model/combatAnimation.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\suprbludude\\package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: real shield equipment selects bash; dagger and lighting tools do not
+ok 7 - real shield equipment selects bash; dagger and lighting tools do not
+  ---
+  duration_ms: 4.389
+  ...
+# Subtest: attack and Power type precede guard tags; untagged skill casts
+ok 8 - attack and Power type precede guard tags; untagged skill casts
+  ---
+  duration_ms: 0.3542
+  ...
+# Subtest: rest reducer is owner-relative and paced/flush reduction agree
+ok 9 - rest reducer is owner-relative and paced/flush reduction agree
+  ---
+  duration_ms: 0.3618
+  ...
+# Subtest: authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets
+ok 10 - authoritative co-op digest carries accepted actor and equipment profile, plus owner turn resets
+  ---
+  duration_ms: 52.1804
+  ...
+# (node:63640) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/suprbludude/.codex/worktrees/2eb2/AshenSpire/src/ui/combatAura.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\suprbludude\\package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual payments override nominal resource costs and keep mixed colors
+ok 11 - actual payments override nominal resource costs and keep mixed colors
+  ---
+  duration_ms: 3.3158
+  ...
+# Subtest: Power phases are distinct silhouette filters; guard fades and idle clears
+ok 12 - Power phases are distinct silhouette filters; guard fades and idle clears
+  ---
+  duration_ms: 1.3012
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 12
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 643.3616

@@ -1,4 +1,10 @@
 // src/content/enemies/act1.js — Act 1 roster (SPEC §5.3, exact numbers)
+//
+// Creature tags (beast / humanoid / undead / construct / spirit) are NOT a field
+// here any more. They are rows in content/source/tagging.csv, family `enemy`,
+// against the one tag registry, and model/registries.js stamps them onto the
+// def at boot — so `enemy.tags` still reads the same at runtime, and the proc
+// resistance gate is unchanged. Retagging a creature is a spreadsheet row.
 
 export const act1Enemies = [
   {
@@ -7,6 +13,7 @@ export const act1Enemies = [
     name: 'Wandering Soldier',
     hp: [22, 26],
     poiseMax: 10,
+    levelProfile: { min: 1, max: 4 },
     arcaneExposure: {
       mode: 'configured',
       threshold: 8, // PROVISIONAL
@@ -16,7 +23,6 @@ export const act1Enemies = [
       lockPolicy: 'whileMagicVulnerable',
       onBreak: { status: 'magicVulnerable', value: 25, duration: 2 }, // PROVISIONAL
     },
-    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
     art: '⚔',
     moves: {
       slash: { intent: 'attack', damage: 7, weight: 45, maxConsecutive: 2 },
@@ -34,8 +40,12 @@ export const act1Enemies = [
     name: 'Blight Hound',
     hp: [12, 15],
     poiseMax: 6,
-    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 1, max: 3 },
     art: '🐕',
+    // Drawn in profile looking LEFT, which is where an enemy looks: the player's
+    // zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored
+    // and ships as painted. Read off the sprite, not assumed.
+    artFaces: 'left',
     moves: {
       bite: { intent: 'attack', damage: 6, weight: 60 },
       lunge: { intent: 'attack', damage: 3, hits: 2, weight: 40 },
@@ -47,7 +57,7 @@ export const act1Enemies = [
     name: 'Husk Brute',
     hp: [30, 34],
     poiseMax: 16,
-    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 2, max: 5 },
     art: '🪨',
     moves: {
       club: { intent: 'attack', damage: 9, weight: 50 },
@@ -65,7 +75,7 @@ export const act1Enemies = [
     name: 'Grave Wisp',
     hp: [10, 12],
     poiseMax: 4,
-    tags: ['spirit'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 1, max: 4 },
     art: '👻',
     moves: {
       curse: {
@@ -87,7 +97,7 @@ export const act1Enemies = [
     name: 'Wyrm Aspirant',
     hp: [68, 72],
     poiseMax: 24,
-    tags: ['beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 4, max: 6 },
     art: '🐲',
     firstMove: 'consecrate',
     moves: {
@@ -115,7 +125,7 @@ export const act1Enemies = [
     name: 'The Fell Warden',
     hp: [120, 120],
     poiseMax: 30,
-    tags: ['humanoid', 'undead'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 5, max: 7 },
     art: '👁',
     firstMove: 'caneStrike',
     moves: {
@@ -143,5 +153,274 @@ export const act1Enemies = [
         unlockMoves: ['twinDaggers'],
       },
     ],
+  },
+
+  // Expanded destinations: authored weighted moves use the existing phase and delay engine.
+  {
+    "id": "lanternMoth",
+    "name": "Lantern Moth",
+    "size": "small",
+    "hp": [
+      14,
+      17
+    ],
+    "poiseMax": 5,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "lanternDust": {
+        "intent": "debuff",
+        "weight": 35,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      "wingSparks": {
+        "intent": "attack",
+        "damage": 2,
+        "weight": 65,
+        "hits": 3
+      }
+    }
+  },
+  {
+    "id": "briarHermit",
+    "name": "Briar Hermit",
+    "size": "medium",
+    "hp": [
+      24,
+      28
+    ],
+    "poiseMax": 9,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "rootShelter": {
+        "intent": "block",
+        "block": 7,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "briarCast": {
+        "intent": "attack",
+        "damage": 5,
+        "weight": 45,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ]
+      },
+      "sapMend": {
+        "intent": "buff",
+        "weight": 25,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 4
+          }
+        ]
+      }
+    },
+    "firstMove": "rootShelter"
+  },
+  {
+    "id": "chainScavenger",
+    "name": "Chain Scavenger",
+    "size": "medium",
+    "hp": [
+      20,
+      24
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 2,
+      "max": 5
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "hookCast": {
+        "intent": "attack",
+        "damage": 6,
+        "weight": 60
+      },
+      "chainSnare": {
+        "intent": "debuff",
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "frail",
+            "stacks": 1
+          }
+        ]
+      },
+      "draggingBlow": {
+        "intent": "attack",
+        "damage": 12,
+        "weight": 20,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 3
+          }
+        }
+      }
+    }
+  },
+  {
+    "id": "bellKeeper",
+    "name": "The Bell Keeper",
+    "size": "large",
+    "hp": [
+      116,
+      116
+    ],
+    "poiseMax": 25,
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "bronzeToll": {
+        "intent": "attack",
+        "damage": 19,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 6
+          }
+        }
+      },
+      "clapperSwing": {
+        "intent": "attack",
+        "damage": 9,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "muffledPrayer": {
+        "intent": "block",
+        "block": 9,
+        "weight": 20,
+        "maxConsecutive": 1
+      },
+      "crackedPeal": {
+        "intent": "attack",
+        "damage": 6,
+        "weight": 25,
+        "hits": 3,
+        "locked": true,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "bronzeToll",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 45,
+        "do": [],
+        "unlockMoves": [
+          "crackedPeal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "thornMatriarch",
+    "name": "The Thorn Matriarch",
+    "size": "large",
+    "hp": [
+      110,
+      110
+    ],
+    "poiseMax": 22,
+    "levelProfile": {
+      "min": 5,
+      "max": 7
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "rootCrown": {
+        "intent": "block",
+        "block": 8,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "thornNeedles": {
+        "intent": "attack",
+        "damage": 4,
+        "weight": 45,
+        "hits": 3,
+        "maxConsecutive": 2
+      },
+      "entwiningRoots": {
+        "intent": "attack",
+        "damage": 15,
+        "weight": 30,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 4
+          }
+        },
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 2
+          }
+        ]
+      }
+    },
+    "firstMove": "rootCrown",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 40,
+        "do": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 12
+          },
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 2
+          }
+        ]
+      }
+    ]
   },
 ];

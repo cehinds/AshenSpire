@@ -84,6 +84,14 @@
      A quietly-correct-looking 44 is the failure Law 0 clause 5 names; a
      missing floor is not quiet. */
   --tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));
+  /* THE ICON-BUTTON HIT BOX. Close and ☰ reserve the same tap-safe square on
+     every component. The close control paints a smaller face inside that box,
+     but its pointer, touch, and focus target remains this shared length:
+     a floor lets a tall row or a big title stretch the control, and then the
+     shape a player learned on one door is a different shape on the next.
+     Width AND height read this; nothing else sizes them. It is the tap floor
+     by value, so it still clears the floor at every UI size and zoom. */
+  --iconbtn-size: var(--tap-floor);
   /* THE FLOOR, FROZEN AT THE DEFAULT — for the one control that is exempt from
      the floor it sets. Marina's ruling: Minimum tap size is the only control in
      the game whose resizing happens WHILE IT IS BEING PRESSED, so its own four
@@ -98,6 +106,79 @@
      for the reason --tap-floor is: an exempt control a small phone shrinks
      anyway is an exemption in name only. */
   --tap-floor-default: calc(var(--tap-floor-default-target) / var(--ui-zoom, 1));
+  /* THE CORNER SCALE, AND WHY IT IS A CLOSED SET.
+     Measured 2026-09-02 by driving 78 surfaces (every ?shot= state, every
+     settings category, the quick menu, all three Armoury views) at 1440x900 and
+     390x844 and reading computed style off every rendered button: TWENTY
+     distinct border-radius values on one control layer — 0, 1.8, 2, 3, 4, 5.83,
+     6, 6.5, 7.78, 8, 9, 10, 11, 12, 13, 14, 14.44, 50%, 999px and a
+     two-corner pair. A player cannot read twenty roundnesses as meaning
+     anything, so they mean nothing, and every new rule had twenty precedents to
+     copy. This is the set instead. Snapping is BOUNDED: no declaration moved
+     more than 2px, which is why the sweep could be mechanical and reviewed as a
+     diff rather than re-judged surface by surface.
+
+     FOUR STEPS, NAMED BY WHAT WEARS THEM, not by size — a rule should be able to
+     ask "what am I?" rather than "how round?":
+       --r-1  tags, keycaps, inline pills — the small stuff inside a row
+       --r-2  small controls — segmented chips, inputs, icon buttons
+       --r-3  buttons, cards, list rows, tiles — the things a finger presses
+       --r-4  panels and modal shells — the things that hold the above
+
+     THE ROLES ARE READ OFF THE TREE, NOT IMPOSED ON IT. Every step is a value
+     the app already used most often for that job, which is what let the sweep
+     stay inside 2px; a scale that argued with the design would have cost a
+     re-judgement of all 168 declarations instead of a diff.
+
+     REM RADII WERE A BUG THIS SET RETIRES, and it is the same defect Law 4
+     already names in the Text size block below: a radius written in rem grows
+     when the player raises Text size, so the title modal's corners were a
+     function of the font. Non-text geometry is px here for that reason.
+
+     THE `-glass` VARIANTS ARE NOT A FIFTH STEP. `zoom: var(--ui-zoom)` on
+     <body> scales every length below it, so a control that must hold the SAME
+     roundness on the screen at every UI size divides by the zoom — the same
+     conversion --tap-floor makes above, for the same reason. Combat's HUD
+     already did this by hand in five places; these are those five, named.
+
+     NOT IN THE SET, deliberately: `45% 45% 55% 55%` on the refusal blob, which
+     is a drawn shape rather than a corner, and `border-radius: 0`, which is a
+     rule saying "square on purpose" and stays legible as a literal. */
+  --r-1: 3px;
+  --r-2: 6px;
+  --r-3: 8px;
+  --r-4: 12px;
+  --r-pill: 999px;
+  --r-round: 50%;
+  --r-1-glass: calc(var(--r-1) / var(--ui-zoom, 1));
+  --r-2-glass: calc(var(--r-2) / var(--ui-zoom, 1));
+  --r-3-glass: calc(var(--r-3) / var(--ui-zoom, 1));
+  --r-4-glass: calc(var(--r-4) / var(--ui-zoom, 1));
+  /* CONTROL TYPE — FOUR STEPS, AND AN HONEST BOUNDARY ON HOW FAR THEY REACH.
+     The same census that found twenty corner values found TWENTY-ONE font
+     size/family pairs on buttons: Cinzel at 5.8, 7, 9, 10, 10.5, 11.5, 12, 13,
+     13.5, 14, 15, 16, 17, 18 and 20px, and Inter at 9, 11, 12, 14 and 15 —
+     across ONE control layer, with two typefaces sharing it. Some of those are
+     one rule read at two UI zooms (16.67 and 20 are the title menu; 13.33 and
+     13.5 are BACK/CONTINUE), which is honest scaling. The rest is drift.
+
+     THESE FOUR ARE THE SCALE. `button` and `button.subtle` — the two rules every
+     other control inherits from — now name a step instead of a number, and so
+     do the modal action buttons, whose 1.35rem was an arbitrary point between
+     two steps that already existed.
+
+     WHAT IS NOT DONE, SAID HERE RATHER THAN DISCOVERED LATER: the ~40 component
+     rules that override button type for their own geometry are UNSWEPT. A
+     corner can be snapped mechanically because it changes nothing else; a font
+     size reflows the box it is in, and those rules are entangled with grid
+     templates and min-heights that were tuned around the current values. Each
+     is a judgement against its own surface, not a find-and-replace, and doing
+     them blind is how a type scale ships a regression. The scale is here so
+     that work has somewhere to land. */
+  --t-1: 1rem;
+  --t-2: 1.2rem;
+  --t-3: 1.5rem;
+  --t-4: 1.8rem;
   --font-display: 'Cinzel', Georgia, 'Times New Roman', serif;
   --font-body: Inter, 'Segoe UI', system-ui, sans-serif;
 }
@@ -129,6 +210,7 @@ body.cb-safe {
   --frost: #56b4e9;
   --grace: #56b4e9;
   --rot: #e69f00;
+  --danger: #d55e00; /* danger buttons track the same vermillion as --blood */
   /* Okabe-Ito reddish-purple — the SAME VALUE this palette already shipped,
      moved out of a selector and into the token block where a palette decision
      belongs. It now reaches card text wherever card text is drawn, which is
@@ -149,7 +231,7 @@ body.readable-ui { --font-display: var(--font-body); }
 /* Root text anchor: 62.5% makes 1rem = 10px at Text M. The Text-size setting
    overrides this value for type and line metrics; component geometry must not
    derive from this calibration. */
-html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
+html { height: var(--visible-height, 100dvh); overflow: hidden; font-size: 62.5%; }
 /* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
    both edges x3. The straight line from the leftmost card to the far-right
    enemy runs at 38 deg, under the ~45-47 deg boundary where Chromium claims a
@@ -217,12 +299,9 @@ body {
    written by main.js's resolveLayout() in the same call that chooses --ui-zoom.
    The stylesheets measure nothing.
 
-   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
-   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
-   (it sees the unzoomed 390) while a container query on #app does not (the app
-   has 629 local px). A media breakpoint here is a length evaluated in the
-   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
-   answer was never a media query.
+   The threshold is evaluated in the unzoomed viewport room. It intentionally
+   remains independent of the height-aware --ui-zoom so browser chrome and the
+   on-screen keyboard cannot flip the composition while a player is reading it.
 
    The answer turned out not to be a container query either. Asking the question
    in CSS at all made two deciders out of one decision — the zoom judging
@@ -246,21 +325,60 @@ button {
   background: var(--panel);
   color: var(--gold);
   border: 2px solid var(--gold);
-  border-radius: 10px;
+  border-radius: var(--r-3);
   padding: 1rem 2.6rem;
-  font-size: 1.5rem;
+  font-size: var(--t-3);
   cursor: pointer;
   transition: background 120ms, transform 120ms;
 }
 button:hover { background: #2e2517; }
 button:disabled { border-color: var(--line); color: var(--muted); cursor: default; }
-button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: 1.2rem; padding: 0.6rem 1.4rem; }
+button.subtle { border-color: var(--line-soft); color: var(--parchment); font-size: var(--t-2); padding: 0.6rem 1.4rem; }
+
+/* THE THREE EMPHASES, AND THE ONE THAT WAS MISSING.
+   Measured with the corner census above: the tree had `button` (gold outline),
+   `.subtle` (quiet outline) and `.danger` (red outline) — three ways to say
+   "not the main thing" and NO way to say "this one". So a modal footer said it
+   by accident instead: Load Game leaves BACK and CONTINUE the same size and
+   weight and asks the border colour to carry the difference, and the in-run
+   Settings footer paints Save and Quit in DANGER RED for an act that saves.
+   `.primary` is the missing word. Red is now spent only on loss.
+
+   ONE PER SURFACE is the rule this enables and does not enforce: nothing here
+   can count the buttons in a footer. What it can do is make the emphasis a
+   NAME a reviewer can see in the markup rather than a set of overrides they
+   have to compare pixel by pixel. */
+button.primary {
+  background: color-mix(in srgb, var(--gold) 22%, var(--panel));
+  border-color: var(--gold);
+  color: var(--parchment);
+}
+button.primary:hover { background: color-mix(in srgb, var(--gold) 32%, var(--panel)); }
+button.primary:disabled { background: var(--panel); border-color: var(--line); color: var(--muted); }
+
+/* THE FOCUS RING, ONCE, IN THE HOUSE COLOUR.
+   There was no app-wide rule, so anything without its own `:focus-visible`
+   wore CHROME'S DEFAULT — a thick white double outline on a gold-on-brown
+   panel. It is not hypothetical: settings.js:1591 focuses `.set-tab.on` on
+   open, so opening Settings on a phone PAINTS it every time, and the census
+   caught it on the 390x844 capture.
+
+   `:where()` on purpose — specificity ZERO, so a component that must move the
+   ring INWARD (a control inside a card, a tab) can set its own offset without
+   out-ranking anything. The ink is never restated: `--focus-ring` (kit.css)
+   is the one token, and the pad's cursor (`.gp-focus`, ui.css) wears the same
+   ring. Since 2026-09-11 this is not a floor under fourteen rings — it IS the
+   ring; the per-component box-shadow halos, 3px outlines and pale inks went. */
+:where(a, button, input, select, summary, textarea, [role='button'], [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
 
 .bar {
   position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--r-2);
   overflow: hidden;
 }
 .bar > .fill { position: absolute; inset: 0; right: auto; transition: width 200ms; }
@@ -276,12 +394,23 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   to { opacity: 1; transform: none; }
 }
 
-/* Accessibility: honor reduced-motion for ALL animation (GDD §6). */
+/* Accessibility: honor reduced-motion for ALL animation (GDD §6).
+   TRANSITIONS ARE OFF, NOT SHORT. The usual snippet sets
+   `transition-duration: 0.01ms` on `*`, and that is a transition on EVERY
+   property — `transition-property` defaults to `all`, so a style write is
+   followed by a one-frame transition from the old value, and a synchronous
+   read straight after the write still sees the old value. The map camera
+   does exactly that (mapboard.js `sizeSvg` sets the SVG's height, then reads
+   the scroller's scrollHeight to clamp its landing): under reduced motion it
+   read 1136 px against a 2515 px canvas and clamped the entrance frame 1120
+   px short of the door, at every width, only for players with the setting
+   on (measured 2026-09-11; without the setting the same code lands). Nothing
+   in the app waits on `transitionend`, so `none` is the honest value. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition: none !important;
   }
 }
 
@@ -289,5 +418,5 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .reduced-motion, .reduced-motion *, .reduced-motion *::before, .reduced-motion *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+  transition: none !important;
 }

@@ -1,0 +1,22 @@
+{
+  "seen": [
+    "bloodAura",
+    "bloodLoss",
+    "frostAura",
+    "frostbite",
+    "poisoned",
+    "insanity",
+    "crimsonBlight",
+    "weak",
+    "vulnerable",
+    "frail",
+    "strength",
+    "dexterity",
+    "staggerBreak",
+    "dodge",
+    "resist",
+    "barrierHit",
+    "barrierBreak"
+  ],
+  "remaining": 0
+}

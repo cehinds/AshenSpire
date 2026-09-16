@@ -84,13 +84,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL\s+S5 chooser: an unseen card wears a visible NEW badge/,
       },
       {
-        name: 'production armament collector returns success before the run is durable',
-        file: 'src/main.js',
-        find: '  // The reward row may say Taken only after both ownership homes and the\n  // resumable run agree. This is the production collector\'s commit boundary.\n  persist();\n  return true;',
-        replace: '  // planted: ownership changed, but the resumable run did not\n  return true;',
-        expectRed: /FAIL\s+S1 reload-before-Continue keeps the armament in saved run storage/,
-      },
-      {
         // The b6b7df0 P1's UI face alone: the full-bag derivation gone — the
         // ninth piece renders takeable at the cap. The collector's own gate
         // stays, so the tap stores nothing and writes nothing; what breaks is
@@ -141,25 +134,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL\s+S7 tapping claims nothing at the cap/,
       },
       {
-        name: 'cinders become Taken without a durable run snapshot',
+        // #498: four plants each removed a per-site persistence call, and all
+        // four died when persistence was centralised — apply() mutates, take()
+        // marks the row Taken, and ONE persistProgress() at the save door makes
+        // both durable together (saving inside the collector would open an
+        // interruption window; main.js says so at collectArmament). Four
+        // checks, one commit boundary — so this is one plant at that boundary,
+        // and its expectation is every red the door was holding shut, in the
+        // order the tool emits them. A regex matching only the first would
+        // prove one check of five.
+        name: 'a row becomes Taken without the one durable snapshot the save door writes',
         file: 'src/ui/screens/reward.js',
-        find: '      run.cinders += row.amount;\n      if (onPersist) onPersist();\n      return true;',
-        replace: '      run.cinders += row.amount;\n      /* planted: no durable run snapshot */\n      return true;',
-        expectRed: /FAIL\s+S10 reload-before-Continue keeps cinders/,
-      },
-      {
-        name: 'a flask becomes Taken without a durable run snapshot',
-        file: 'src/ui/screens/reward.js',
-        find: "      recordSeen('flask', [row.flaskId]);\n      if (onPersist) onPersist();\n      return true;",
-        replace: "      recordSeen('flask', [row.flaskId]);\n      /* planted: meta advances but the run is not durable */\n      return true;",
-        expectRed: /FAIL\s+S10 reload-before-Continue keeps the flask/,
-      },
-      {
-        name: 'a relic becomes Taken without a durable run snapshot',
-        file: 'src/ui/screens/reward.js',
-        find: "      recordSeen('relic', [row.relicId]);\n      if (onPersist) onPersist();\n      return true;",
-        replace: "      recordSeen('relic', [row.relicId]);\n      /* planted: meta advances but the run is not durable */\n      return true;",
-        expectRed: /FAIL\s+S10 reload-before-Continue keeps the relic/,
+        find: '    try {\n      persistProgress();\n    } catch (error) {',
+        replace: '    try {\n      /* planted: the save door does not save */\n    } catch (error) {',
+        expectRed: /FAIL\s+S10 reload-before-Continue keeps cinders[\s\S]*FAIL\s+S10 reload-before-Continue keeps the flask[\s\S]*FAIL\s+S10 reload-before-Continue keeps the relic[\s\S]*FAIL\s+S10 reload-before-Continue keeps the armament[\s\S]*FAIL\s+S1 reload-before-Continue keeps the armament in saved run storage/,
       },
     ],
   }));
@@ -235,7 +223,9 @@ const durableKinds = await ev(`(async()=>{
   const cases = [
     { kind:'cinders', rewards:{ cinders:17 }, take:(root)=>root.querySelector('[data-kind="cinders"]').click(), kept:(r)=>r.cinders===17 },
     { kind:'flask', rewards:{ flaskId:'crimsonFlask' }, take:(root)=>{root.querySelector('[data-kind="flask"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.flasks.some(x=>x.flaskId==='crimsonFlask') },
-    { kind:'relic', rewards:{ relicId:'forsakenMedallion' }, take:(root)=>root.querySelector('[data-kind="relic"]').click(), kept:(r)=>r.relics.includes('forsakenMedallion') },
+    // Relics are inspect-before-collect like flasks and armaments (reward.js):
+    // the row opens the detail door and Take collects.
+    { kind:'relic', rewards:{ relicId:'forsakenMedallion' }, take:(root)=>{root.querySelector('[data-kind="relic"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.relics.includes('forsakenMedallion') },
     { kind:'armament', rewards:{ armamentId:'greatsword' }, take:(root)=>{root.querySelector('[data-kind="armament"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.loadout.storage.includes('greatsword') },
   ];
   const out = {};
@@ -246,7 +236,12 @@ const durableKinds = await ev(`(async()=>{
     const persist=()=>{ snapshot=JSON.stringify(run); };
     mountRewards(root, { registries, run, rewards:row.rewards, onDone(){}, onPersist:persist,
       saves:{loadMeta:()=>meta,saveMeta:(next)=>{meta=next;}},
-      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};persist();return true;},
+      // main.js's collectArmament writes META only and defers the run snapshot:
+      // "The reward screen persists this mutation together with its Taken
+      // state." A fixture that persisted the run inside this callback modelled
+      // a collector production deliberately does not have, and made the
+      // armament S10 red unreachable when the save door was planted away.
+      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};return true;},
     });
     row.take(root);
     const restored=snapshot&&JSON.parse(snapshot);
@@ -305,9 +300,17 @@ async function bootTreasure({ settings = null, storage = null } = {}) {
   await waitFor(`!!document.querySelector('[data-node="${door.treasure}"]')`, 'the treasure node on the map');
   const clicked = await ev(clickSel(`[data-node="${door.treasure}"]`));
   if (!clicked) throw new Error('treasure node vanished before the click');
+  // SELECT, THEN ENTER (#1024). A pick on a lit node no longer travels — it
+  // selects, and a second pick travels once the selection has stood
+  // `wireframeUi.map.repeatPickDelayMs` (400ms), so a fast double tap cannot
+  // enter in one gesture. This drive picked once and then waited for a reward
+  // menu that was never going to arrive: "timed out waiting for the reward
+  // menu", which is a tool that had not been told, not a game that broke.
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  await ev(clickSel(`[data-node="${door.treasure}"]`));
   await waitFor(`!!document.querySelector('.reward-menu')`, 'the reward menu');
 }
-const title = () => ev(`(()=>{const h=document.querySelector('.screen h2');return h?h.textContent.trim():''})()`);
+const title = () => ev(`(()=>{const h=document.querySelector('.reward-door h2, .screen h2');return h?h.textContent.trim():''})()`);
 
 // ---- S1: auto mode, tap Take — pre-take ownership, NEW, exactly-once -------
 await bootTreasure();
@@ -411,7 +414,18 @@ check('S7 no discovery receipt was written (count 0 — structurally 0 in showca
 async function finishPosedCombat(expectedTitle) {
   await waitFor(`!!window.__combat && !!document.querySelector('.end-turn')`, `${expectedTitle} combat`);
   await sleep(1800); // let the production intro/timeline release combat's busy gate
-  await ev(`(()=>{for(const e of window.__combat.enemies){e.hp=0;e.alive=false;}document.querySelector('.end-turn').click();return true})()`);
+  await ev(`(()=>{for(const e of window.__combat.enemies){e.hp=0;e.alive=false;}return true})()`);
+  // THE BOSS SPLASH IS FROZEN IN THE ?shot=boss POSE (main.js showBossIntro
+  // { hold }: a photograph pose with no close wired — no press, no key, no
+  // timer lifts it), and a hold pressed through it lands on the splash, not
+  // on End Turn. The pose's freeze is lifted here by hand; the fight under it
+  // is the real one, and nothing about the reward is decided by the splash.
+  await ev(`document.querySelector('.boss-intro')?.remove(); true`);
+  // END TURN OWES A HOLD (secondbeat.js; a tap opens the review instead): the
+  // same deliberate press #reward-continue takes below, so the turn ends the
+  // way a player ends it, and the victory beat (balance.ui.victoryBeat.ms)
+  // stands before the door — the 12 s wait covers both.
+  await holdSel('.end-turn');
   await waitFor(`!!document.querySelector('.reward-menu')`, `${expectedTitle} rewards`, 12000);
   check(`${expectedTitle} real combat onEnd mounts the expected reward screen`, (await title()) === expectedTitle, `title '${await title()}'`);
   check(`${expectedTitle} route offers an armament through its production roll`, await ev(`!!document.querySelector('[data-kind="armament"]')`));
@@ -428,6 +442,9 @@ check('S8 an elite map door exists for the production route', !!eliteDoor, JSON.
 if (eliteDoor) {
   await nav(`${base}?shot=map&shotSeed=${SEED}&shotAt=${eliteDoor.parent}`);
   await waitFor(`!!document.querySelector('[data-node="${eliteDoor.elite}"]')`, 'the elite map node');
+  await ev(clickSel(`[data-node="${eliteDoor.elite}"]`));
+  // Select, then enter — the same second pick the treasure door needs above.
+  await new Promise((resolve) => setTimeout(resolve, 400));
   await ev(clickSel(`[data-node="${eliteDoor.elite}"]`));
   await finishPosedCombat('ELITE VANQUISHED');
 }

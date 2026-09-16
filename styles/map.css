@@ -13,39 +13,7 @@
    the flex-item clamp the scrollport needs to be allowed to shrink — without it
    a tall canvas pushes the zoom bar off the bottom. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
-.map-entrance-orientation { display: none; }
 
-/* The full real climb no longer fits on a phone once adjacent floors keep their
-   device-space pitch. This static orientation strip names the same endpoints;
-   it is text and a direction rail, never a second set of node-shaped choices.
-   The real map remains directly below it and owns every interaction. */
-@media (max-width: 700px) {
-  .map-entrance-orientation {
-    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
-    border-bottom: 1px solid var(--line); background: var(--bg-raise);
-    pointer-events: none; user-select: none; cursor: default;
-  }
-  .map-entrance-orientation strong {
-    text-align: center; color: var(--gold); font-family: Georgia, serif;
-    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
-  }
-  .map-orientation-progress {
-    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-    align-items: center; gap: 8px;
-  }
-  .map-orientation-progress small {
-    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
-  }
-  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
-  .map-orientation-rail {
-    height: 1px; position: relative; background: var(--map-structure);
-  }
-  .map-orientation-rail::after {
-    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
-    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
-    transform: translateY(-50%) rotate(45deg);
-  }
-}
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   /* The browser owns a finger or pen on the one axis the map can scroll.
@@ -70,37 +38,30 @@
 }
 .mapscreen .map-scroll.grabbing { cursor: grabbing; }
 .mapscreen .map-scroll::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
-.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
+.mapscreen .map-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: var(--r-2); border: 3px solid transparent; background-clip: padding-box; }
 .mapscreen .map-scroll::-webkit-scrollbar-thumb:hover { background: var(--gold); background-clip: padding-box; }
 /* Canvas centers the (possibly smaller-than-viewport) svg horizontally. */
 .mapscreen .map-canvas { display: flex; justify-content: center; min-width: min-content; min-height: min-content; }
 .mapscreen svg { display: block; }
 
-/* ---------- zoom controls: a bar BESIDE the map, never over it ----------
-   EldenSpire#28. This was `position: absolute; right/bottom` inside
-   .map-scroll — a floating stack over a pannable canvas — and two map nodes at
-   412x915 sat under it, visible and untappable, on dev and on every branch.
-   #24 tried to clear the corner with `padding-bottom` on .map-canvas: that pads
-   the CONTENT, while the buttons are pinned to the SCROLLPORT, so it only ever
-   helped at the scroll offset it was measured at. It is deleted here, not kept
-   alongside.
-
-   THERE IS NO RESERVED HEIGHT AND THAT IS THE POINT. The bar is a flex item of
-   .mapscreen, so the band is the buttons' own height, computed, and .map-scroll
-   (flex: 1) gets exactly the rest. A reserved length would be a second number
-   that has to agree with the button size — the drift this house keeps finding.
-   Constantine's law is bounded objects and no px unless necessary: the bound
-   here is the flow itself, and there is no number to put anywhere.
-
-   ONE RULE, EVERY LAYOUT — not a narrow special case. Whether a node is under
-   the buttons is a coincidence of shape x map zoom (the ladder these very
-   buttons drive, up to 2x) x pan offset x SEED, and every map measurement this
-   repo had ever taken was on one hardcoded seed. A fix aimed at the shapes
-   where the coincidence was observed is a fix for the anecdote. */
-.map-zoom {
-  flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center;
-  gap: 0.6rem; padding: 0.6rem 1.4rem; background: var(--panel); border-top: 1px solid var(--line);
+/* Cartography stays in graph coordinates while the camera moves above it.
+   Only the paper extends into the camera's margins. Nodes retain their own
+   opaque plates and hit targets over both light parchment and dark terrain. */
+.map-terrain .map-fog-ground .terrain-paper { fill: #c4af85; }
+.map-terrain .terrain-detail { opacity: 0.9; }
+.mapscreen .map-scroll:has(.map-terrain) { background: #c4af85; }
+.mapscreen svg:has(.map-terrain) .map-act-title {
+  fill: #392613; stroke: #d8c49a; stroke-width: 2; paint-order: stroke;
 }
+.mapscreen svg:has(.map-terrain) .map-edge {
+  stroke: #775125; stroke-opacity: 1; filter: drop-shadow(0 1px 1px #e2c994);
+}
+.mapscreen svg:has(.map-terrain) .map-edge.traveled { stroke: #b27c1f; }
+.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane { stroke: #dec46e; }
+.mapscreen.map-fog .map-frame:has(.map-terrain) .map-vignette {
+  background: radial-gradient(ellipse at center, transparent 65%, rgba(45, 30, 13, 0.2));
+}
+
 /* THE MAP'S HINT BAR JOINS THE FLOW, and only the map's.
    .hint-bar (styles/ui.css) is `position: fixed` to the bottom of the VIEWPORT
    and centred. That was invisible while the map's bottom edge belonged to a
@@ -116,31 +77,6 @@
   position: static; transform: none; align-self: center;
   margin: 0 auto 0.6rem; max-width: 96%;
 }
-/* THE MAP'S OWN CONTROLS WERE THE SMALLEST TAP TARGETS IN THE GAME, and they
-   were sized in the wrong unit besides. Measured at 390x844, --ui-zoom 0.90,
-   Text M: the + / (.) / - buttons render 27 DEVICE px tall against the 44 px
-   floor `--tap-floor` sets — 61% of it — and at 320x640 (--ui-zoom 0.74) they
-   are 22.2. Named twice on the family thread and taken by nobody; it is mine
-   both times, because a tap floor is legibility and Law 4 is my law.
-   TWO DEFECTS, ONE LINE. `width/height: 3.4rem` (3rem on a phone) is a BOX
-   sized as a multiple of the TEXT unit, which Law 4 clause 4 names exactly:
-   proportional scaling wearing a content-fit costume. It shrank at Text S and
-   ballooned at XL while answering the wrong control the whole time — the UI
-   size dial is what should move a button, and --tap-floor already carries
-   --ui-zoom inside it.
-   So: an ergonomic FLOOR that does not answer Text size, and a glyph that
-   still does (clause 5 — the +/- are typographic marks inside their box). The
-   box can only grow from here, never clip and never balloon. The bar sits
-   BELOW the map since #28, so the ~17 px it gains on a phone comes out of
-   chrome, not out of a node's hiding place. */
-.map-zoom .zbtn {
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
-  width: auto; height: auto; padding: 0 0.4rem;
-  border-radius: 8px; font-size: 1.8rem; line-height: 1;
-  background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-}
-.map-zoom .zbtn:hover { border-color: var(--gold); color: var(--gold); }
 
 .map-node { cursor: default; }
 .map-node circle { fill: var(--panel); stroke: var(--map-structure); stroke-width: 2; }
@@ -192,6 +128,28 @@
    PAINTS and this one paints 35% wider than its own radius eight times a
    second. One home, two readers (the keyframe below, and mountMap). */
 .mapscreen { --halo-peak: 1.35; }
+/* W4b: the scene, then the selected node's context, then Recenter / Enter. */
+/* A FIXED height: the scene must not shrink under the finger when a pick fills
+   the band, and a saved fit camera is checked against the scene's height. */
+.mapscreen > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw; border-top: 1px solid var(--line); background: var(--panel); }
+.mapscreen > .map-context > * { margin: 0; }
+.mapscreen .map-context-title { font: 600 1.5rem/1.2 var(--font-display); color: var(--parchment); }
+.mapscreen .map-context-line { color: var(--muted); }
+.mapscreen > .map-footer { flex: 0 0 auto; padding: .5rem 2.5vw calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)); background: var(--panel); }
+.mapscreen > .map-footer > .modal-btnrow { width: 100%; }
+.map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 4; }
+/* The pad cursor and hover both repaint the stroke; the glow keeps the
+   selection visible under either. */
+.map-node.selected { filter: drop-shadow(0 0 5px var(--parchment)); }
+/* The selection glow is a node's only selection mark (owner, 2026-09-13).
+   A press on a node also runs the tooltip's tap-to-select, which marks it
+   `.tooltip-selected`; kit.css outlines that in gold, and the box sat beside
+   the glow. An open tooltip's own quieter ring ([data-tip-open]) goes too.
+   Keyboard and pad users keep the cursor: `.gp-focus` (ui.css) still rings
+   the node and strokes its circle gold, and the reachable halo still pulses.
+   `g.` is load-bearing: kit.css's `.tooltip-selected:not(.overhead-control)`
+   is (0,2,0) and loads after this file, so an equal selector loses. */
+g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
@@ -236,14 +194,19 @@
   stroke: var(--gold);
   stroke-width: 3;
   stroke-opacity: 0.9;
+  filter: drop-shadow(0 0 5px var(--gold));
   animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
 }
 .map-node.shrine-lane > circle:not(.node-halo) {
+  filter: drop-shadow(0 0 5px var(--gold));
   animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
 }
+/* The glow is painted once at its mid radius and the PULSE is opacity: an
+   animated drop-shadow re-rasterised every lane and node on the board each
+   frame, for the life of the map screen. */
 @keyframes shrineLanePulse {
-  from { filter: drop-shadow(0 0 2px var(--gold)); }
-  to { filter: drop-shadow(0 0 7px var(--gold)); }
+  from { opacity: 0.72; }
+  to { opacity: 1; }
 }
 /* Same contract as every other pulse on this board: the cue survives, the
    motion does not. A player on Reduced motion still sees the lane. */
@@ -253,25 +216,9 @@
   filter: drop-shadow(0 0 5px var(--gold));
 }
 
-/* ---------------------------- fog of war (Settings → Display · Map reveal) ---
-   Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
-   byte-for-byte the screen that shipped.
-
-   NOTHING IN THIS BLOCK HIDES A NODE. A node the fog covers is never appended to
-   the DOM at all (src/ui/screens/map.js) — a `display:none` fog is one devtools
-   toggle away from being no fog, and the point of the mode is that the player
-   does not know what is out there.
-
-   THE GROUND IS A PLACEHOLDER, AND THIS IS WHERE THAT IS SAID.
-   Constantine asked for "vague map art similar to Elden Ring's undiscovered
-   map." What is below is NOT that: it is a flat parchment wash, one tone per
-   act, standing in until FREJA authors the three plates
-   (assets/map/parchment_act1..3.webp — the <image> above this layer binds them
-   by name, and resolves to nothing while they are absent). Generated art was
-   refused on Law 0: derived from the graph, it would move the day `floors` or
-   `columns` is turned to shorten a run.
-   `px` and not `rem` throughout: these are SVG-space geometry inside a canvas
-   that is scaled by the zoom ladder, not text (Law 2 rule 3, Law 4 clause 3). */
+/* Fog controls node knowledge; regional terrain uses the same discovered set.
+   These fallback washes also support the legacy parchment loader. SVG geometry
+   follows the board zoom, while detailed terrain remains anchored to the graph. */
 .map-fog-ground rect {
   fill: var(--fog-parchment, #17130d);
 }
@@ -314,70 +261,226 @@
    you are reading past — the fog map has far fewer of them, so they carry more. */
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
-/* ---------- map header — the shared three-row HUD shell --------------------- */
-/* `hudShellHtml` owns the same row structure on map and combat. This file only
-   adds map-specific progress tone, legend placement and Display toggles. */
-.map-header {
-  height: auto; min-height: 5.2rem; position: relative;
+
+/* World Journey: fixed geography with discovered roads and local inspection. */
+.world-atlas-screen { overflow:auto; background:#171612; color:#d5c5a4; min-height:100%; }
+.atlas-header { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 28px; border-bottom:1px solid #5b4a30; background:#171512; }
+.atlas-header h1 { font:32px Georgia,serif; letter-spacing:.035em; margin:5px 0 0; color:#eee0be; }
+.atlas-eyebrow { font:11px system-ui,sans-serif; letter-spacing:.18em; color:#b49a68; }
+.atlas-header-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
+.atlas-vitals { font-size:13px; margin-right:8px; }
+.atlas-layout { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:24px; padding:22px; width:min(1440px,100%); box-sizing:border-box; margin:0 auto; }
+.atlas-map-column { min-width:0; }
+.atlas-map-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; }
+.atlas-map-tools>div { display:flex; gap:5px; }
+.atlas-map-tools .as-btn { min-width:var(--tap-floor); min-height:var(--tap-floor); }
+.atlas-scrollport { width:100%; max-height:calc(100vh - 205px); min-height:320px; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
+.atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
+.atlas-terrain { display:block; position:absolute; inset:0; width:100%; height:100%; }
+.atlas-roads path { stroke:#322a1c; stroke-width:3.5; fill:none; stroke-dasharray:4 4; }
+.atlas-roads .traveled { stroke:#e9c477; stroke-width:4; stroke-dasharray:none; }
+.atlas-node { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; padding:0; background:none; border:0; cursor:pointer; display:grid; place-items:center; }
+.atlas-node:focus-visible { outline:var(--focus-ring); outline-offset:3px; border-radius:50%; }
+.atlas-landmark { position:absolute; width:110px; height:110px; bottom:19px; left:50%; transform:translateX(-50%); transform-origin:50% 95%; transition:transform 180ms ease; pointer-events:none; filter:drop-shadow(0 5px 5px #18100a99); }
+.atlas-landmark img,.atlas-landmark svg { width:100%; height:100%; object-fit:contain; }
+.atlas-landmark svg { mask-image:radial-gradient(ellipse,#000 30%,transparent 70%); }
+.atlas-core:hover,.atlas-core:focus-visible { z-index:8; }
+.atlas-core:hover .atlas-landmark,.atlas-core:focus-visible .atlas-landmark { transform:translateX(-50%) scale(1.28); }
+.atlas-node-label { position:absolute; top:38px; left:50%; transform:translateX(-50%); color:#f0e0b4; background:#211a12eb; padding:4px 9px; border:1px solid #80663b; white-space:nowrap; font:13px Georgia,serif; }
+.atlas-compass { position:absolute; top:5%; left:7%; font:32px Georgia,serif; line-height:1.2; text-align:center; color:#5c4b2e; pointer-events:none; }
+.atlas-map-caption { position:absolute; bottom:4%; width:100%; text-align:center; color:#554226; letter-spacing:.25em; font:18px Georgia,serif; pointer-events:none; }
+.atlas-map-caption small { font:11px Georgia,serif; letter-spacing:.04em; }
+.atlas-legend { display:flex; flex-wrap:wrap; gap:16px; font-size:11px; color:#b8a581; padding:13px 0; }
+.atlas-journal { padding:24px 18px; background:linear-gradient(#282218aa,#171612); border:1px solid #55452e; align-self:start; }
+.atlas-journal h2 { font:26px Georgia,serif; margin:12px 0 5px; }
+.atlas-journal h3 { font:18px Georgia,serif; margin:18px 0; color:#d6bc84; }
+.atlas-journal p { line-height:1.6; font-size:13px; }
+.atlas-journal .as-btn { white-space:normal; text-align:left; width:100%; min-height:var(--tap-floor); padding:9px 12px; line-height:1.4; }
+.atlas-journal-rule { height:1px; background:linear-gradient(90deg,#695437,transparent); margin:25px 0; }
+.atlas-objective { display:flex; flex-direction:column; gap:5px; padding:12px 0; font-size:13px; }
+.atlas-objective>span { font-size:10px; text-transform:uppercase; letter-spacing:.13em; color:#9b8664; }
+.atlas-road-list { display:grid; gap:8px; }
+.atlas-progress,.atlas-seed { color:#aa9774; }
+.atlas-dialog { position:fixed; inset:0; margin:auto; padding:0; width:min(1080px,calc(100vw - 32px)); max-width:none; max-height:calc(100dvh - 32px); border:1px solid #947548; color:#dbc9a4; background:#1b1813; box-shadow:0 30px 90px #000b; z-index:500; overflow:auto; }
+.atlas-dialog::backdrop { background:#080808bc; backdrop-filter:blur(4px); }
+.atlas-dialog-head,.atlas-dialog-foot { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:18px 24px; background:#211b14; }
+.atlas-dialog-head { border-bottom:1px solid #655034; }
+.atlas-dialog h2 { margin:7px 0 0; font:29px Georgia,serif; color:#f0dfb7; }
+.atlas-location-body { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(240px,1fr); }
+.atlas-local-wrap { min-width:0; padding:18px; background:#0f100f; }
+.atlas-local-map { position:relative; aspect-ratio:1; background:#9b805b; }
+.atlas-local-map>img { width:100%; height:100%; object-fit:cover; }
+.atlas-local-point { position:absolute; transform:translate(-50%,-50%); z-index:1; width:44px; height:44px; border:0; background:none; padding:0; display:grid; place-items:center; color:#f4ddb0; cursor:pointer; }
+.atlas-local-point>span { width:28px; height:28px; border:1px solid #d2ad62; border-radius:50%; background:#19150fec; display:grid; place-items:center; }
+.atlas-local-point small { position:absolute; top:37px; white-space:nowrap; font:11px Georgia,serif; background:#21190fe6; padding:3px 5px; }
+.atlas-local-point[aria-pressed=true]>span,.atlas-local-point:focus-visible>span { background:#d5ad62; color:#18120c; box-shadow:0 0 0 4px #f1d99a50; }
+.atlas-local-point[data-local-point*='/gate:'] small { display:none; }
+.atlas-local-point[data-local-point*='/gate:']:focus small,.atlas-local-point[data-local-point*='/gate:']:hover small { display:block; }
+.atlas-location-detail { padding:30px 26px; min-width:0; overflow-wrap:anywhere; }
+.atlas-location-detail h3 { font:28px Georgia,serif; color:#ead7a9; margin:10px 0 20px; }
+.atlas-location-detail p { font-size:15px; line-height:1.7; color:#bfae8b; }
+.atlas-location-detail .as-btn { display:block; width:100%; margin-top:14px; min-height:46px; white-space:normal; line-height:1.4; }
+.atlas-dialog-foot { border-top:1px solid #655034; font-size:13px; }
+.atlas-dialog-foot .as-btn { max-width:65%; white-space:normal; }
+.atlas-location-illustration { aspect-ratio:1; }
+.atlas-location-illustration svg { width:100%; height:100%; }
+@media(max-width:800px) {
+ .atlas-header { padding:15px; align-items:flex-start; flex-direction:column; gap:12px; }
+ .atlas-header h1 { font-size:26px; }
+ .atlas-header-actions { justify-content:flex-start; gap:6px; }
+ .atlas-vitals { width:100%; }
+ .atlas-layout { grid-template-columns:1fr; padding:12px; gap:16px; }
+ .atlas-scrollport { max-height:65vh; }
+ .atlas-journal { padding:20px; }
+ .atlas-journal .atlas-objective { display:inline-flex; min-width:30%; padding-right:10px; }
+ .atlas-dialog { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
+ .atlas-dialog-head,.atlas-dialog-foot { padding:14px; gap:10px; }
+ .atlas-dialog h2 { font-size:24px; }
+ .atlas-location-body { grid-template-columns:1fr; }
+ .atlas-local-wrap { padding:10px; }
+ .atlas-location-detail { padding:20px; }
+ .atlas-local-point small { font-size:10px; }
+ .atlas-dialog-foot { position:sticky; bottom:0; }
 }
-.map-header .hud-act,
-.map-header .hud-floor { color: var(--muted); letter-spacing: 0.04em; }
-.map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
-.map-legend-pop {
-  position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
-  background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
-  padding: 1rem 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 1.2rem;
-  color: var(--parchment); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+@media(prefers-reduced-motion:reduce) { .atlas-landmark { transition:none; } }
+/* Native dialogs own layout and focus; the shared veil class only marks input ownership. */
+dialog.atlas-dialog.modal-veil[open] { display:block; padding:0; background:#1b1813; }
+.atlas-node,.atlas-local-point { overflow:visible; }
+.atlas-node-label,.atlas-local-point small { pointer-events:none; }
+
+/* Local maps keep controls and information outside the gesture viewport. */
+dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex-direction:column; align-items:stretch; justify-content:flex-start; width:min(1080px,calc((100vw - 24px) / var(--ui-zoom,1))); height:min(860px,calc((100dvh - 24px) / var(--ui-zoom,1))); max-height:calc((100dvh - 24px) / var(--ui-zoom,1)); overflow:hidden; }
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { flex:none; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-body { flex:1; min-height:0; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { display:flex; flex-direction:column; gap:8px; min-height:0; }
+.atlas-local-tools,.atlas-local-zoom-tools,.atlas-local-pan-tools { display:flex; align-items:center; gap:5px; }
+.atlas-local-tools { justify-content:space-between; flex-wrap:wrap; }
+.atlas-local-tools .as-btn { min-width:max(36px,var(--tap-floor)); min-height:max(36px,var(--tap-floor)); padding:6px 10px; }
+.atlas-local-zoom-tools output { min-width:45px; text-align:center; font-size:13px; }
+.atlas-local-help { margin:0; font-size:12px; line-height:1.4; color:#c2b38e; }
+.atlas-local-port { position:relative; flex:1; min-height:170px; overflow:clip; background:#8b7d61; touch-action:none; overscroll-behavior:contain; cursor:grab; isolation:isolate; }
+.atlas-local-port:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
+.atlas-local-port[data-dragging] { cursor:grabbing; user-select:none; }
+.atlas-local-map { position:absolute; aspect-ratio:auto; }
+.atlas-local-map>svg { position:absolute; width:100%; height:100%; pointer-events:none; }
+.atlas-local-point { touch-action:none; width:max(44px,var(--tap-floor)); height:max(44px,var(--tap-floor)); }
+.atlas-local-point>span { width:34px; height:34px; box-shadow:0 2px 5px #000b; }
+.atlas-local-point small { max-width:115px; white-space:normal; width:max-content; text-align:center; font-size:12px; line-height:1.2; border:1px solid #8c7041; }
+.atlas-local-port[data-labels=selected] .atlas-local-point:not([aria-pressed=true]):not(:focus):not(:hover) small { display:none; }
+.atlas-local-point[aria-pressed=true] { z-index:3; }
+.atlas-local-point:hover,.atlas-local-point:focus-visible { z-index:4; }
+.atlas-local-picker-label { display:flex; align-items:center; gap:12px; font-size:13px; }
+.atlas-local-picker-label select { flex:1; min-width:0; min-height:max(44px,var(--tap-floor)); color:#f3dfb7; border:1px solid #947548; background:#211b14; padding:8px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail { overflow:auto; overscroll-behavior:contain; padding:22px; }
+.atlas-service-benefits h4 { margin:22px 0 10px; color:#f1d18b; }
+.atlas-service-benefits .atlas-service-benefit,.atlas-service-benefit { color:#f2dfb6; font-size:16px; }
+.atlas-service-benefits ul { padding-left:20px; font-size:14px; line-height:1.6; }
+.atlas-service-benefits li+li { margin-top:9px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail:has(.atlas-detail-scroll) { display:flex; flex-direction:column; overflow:hidden; }
+.atlas-detail-scroll { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; }
+.atlas-detail-actions { flex:none; padding-top:8px; }
+.atlas-detail-actions .as-btn { margin-top:0; background:#302514; }
+@media(max-width:700px) {
+  dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 16px) / var(--ui-zoom,1)); }
+  .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-rows:minmax(0,1.2fr) minmax(0,.8fr); }
+  .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:10px 12px; }
+  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:8px; gap:5px; }
+  .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { padding:12px 18px; border-top:1px solid #655034; }
+  .atlas-local-help { font-size:max(10px,calc(11px / var(--ui-zoom,1))); }
+  .atlas-local-tools { gap:3px; }
+  .atlas-local-tools .as-btn { padding:4px; }
+  .atlas-local-zoom-tools,.atlas-local-pan-tools { gap:2px; }
+  .atlas-local-zoom-tools output { min-width:38px; }
 }
-.map-legend-pop[hidden] { display: none; }
-.map-legend-pop .ic { display: inline-block; width: 2.2rem; }
-
-/* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
-body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
-body.map-compact .map-header .nm { display: none; }
-/* (compact drops the name; the bar track re-derives itself from the narrower
-   row with no rule of its own — the 12rem `.hpbar` override that used to sit
-   here was the second typed track and went with the first.) */
-body.map-compact .map-header .hud-run-meta { font-size: 1.1rem; }
-body.hide-header-seed .map-header .mh-seed { display: none; }
-body.hide-header-relics .map-header .hud-relics { display: none; }
-
-/* PROTOTYPE -> shipped (EldenSpire#23): the act map at a portrait phone's
-   width. The narrow design baseline gives the app 433 local px instead of 629,
-   and at that width the floating zoom stack landed on top of two map nodes —
-   measured, 2 controls COVERED at 390x844 where dev had none. The map is on the
-   critical path to combat, so a fix that makes the fight reachable and the map
-   not is not a fix.
-
-   WHAT THAT FIX GOT WRONG, kept here because the wrong answer is the lesson
-   (EldenSpire#28, my hand both times). It read as "clear the corner the buttons
-   occupy" and did it with `padding-bottom` on .map-canvas — the CONTENT — while
-   the buttons were pinned to the SCROLLPORT. The two only line up at the bottom
-   of the scroll, so the fix held at the shape and the offset it was measured at
-   and nowhere else: at 412x915 two nodes were still trapped at rest, and at
-   390x844 panning the map moved the trap onto different nodes rather than
-   clearing it. Both lines are gone — the padding, and the row/offset override —
-   because .map-zoom is no longer an overlay at any layout. What is left below
-   is the only thing this shape actually needed: smaller buttons on a phone. */
-  :root[data-layout='narrow'] .map-zoom { gap: 0.8rem; padding: 0.5rem 0.8rem; }
-  /* The phone override kept its smaller GLYPH and lost its smaller BOX: 3rem
-     was below the floor at every text size, and "smaller buttons on a phone"
-     is the one place a floor exists to refuse. */
-  :root[data-layout='narrow'] .map-zoom .zbtn { font-size: 1.6rem; }
-  /* Same as the combat bar: the seed is dev information, it is what wraps the
-     header on a phone, and it stays reachable at overlay.js:163 (Stats, from
-     the menu button in this bar) and gameover.js:17. */
-  :root[data-layout='narrow'] .map-header .mh-seed { display: none; }
-
-/* THE DELIVERED TAP SIZE, when the floor is not met (#107). It sits in the
-   bottom stack with the hint bar and the zoom bar — in the flow, never floating,
-   for the reason map.js's header gives about .map-zoom — and it is `hidden`
-   whenever the promise holds, so it costs no height on the shape it was solved
-   for. Law 4: this is TEXT, so it is the text unit and nothing else here is. */
-.mapscreen .map-tapnote,
-.mapscreen .map-clipnote {
-  margin: 0; text-align: center; color: var(--gold);
-  font-size: 1.1rem; line-height: 1.4; padding: 0.2rem 1rem;
+@media(max-height:500px) and (min-width:701px) {
+  .atlas-dialog:has(.atlas-local-port) .atlas-dialog-head,.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { padding:6px 12px; }
+  .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { padding:6px; gap:3px; }
+  .atlas-local-help { display:none; }
+  .atlas-local-port { min-height:80px; }
 }
-.mapscreen .map-tapnote[hidden],
-.mapscreen .map-clipnote[hidden] { display: none; }
+.world-atlas-screen .atlas-roads path { stroke:#775125; stroke-width:3; stroke-dasharray:none; filter:none; }
+.world-atlas-screen .atlas-roads .traveled { stroke:#b27c1f; stroke-width:4; }
+@media(min-width:1000px) { .atlas-layout { grid-template-columns:minmax(0,min(100%,calc(100vh - 240px))) 270px; justify-content:center; } }
+
+/* The relic rail shows on the map as on every screen (owner, 2026-09-14). It is
+   an icon tray, so only its icons take a press: the board under the empty rest
+   of the row stays live, which is what hiding the rail used to buy. */
+
+/* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
+.atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }
+@media (max-width:600px) {
+ .atlas-node-label { display:none; }
+ .atlas-scrollport { box-shadow:none; }
+ .atlas-world { min-width:0; }
+}
+
+/* All run modes use the traditional map's vector discs and close-up scale. */
+.atlas-scrollport { background:#c4af85; }
+.atlas-node { width:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); height:calc(var(--atlas-node-size) * var(--atlas-face-scale,1)); min-width:var(--tap-floor); min-height:var(--tap-floor); }
+.atlas-node-face { display:block; width:100%; height:100%; overflow:visible; pointer-events:none; }
+.atlas-node-label { top:calc(100% + 8px); }
+.atlas-world { min-width:0; }
+.atlas-roads path { stroke:#806b49; stroke-width:3; stroke-dasharray:none; }
+.atlas-roads .traveled { stroke:#b89030; stroke-width:4; }
+.atlas-compass,.atlas-map-caption { pointer-events:none; }
+
+/* Engraved fog and outlined vector roads stay readable at every detail tier. */
+.map-detail-surface, .map-detail-tiles { pointer-events:none; }
+.mapscreen .map-route-outline, .world-atlas-screen .atlas-roads .map-route-outline {
+  stroke:#29251a; stroke-width:var(--map-route-outline-width,6px); stroke-linecap:round; stroke-dasharray:none; fill:none; opacity:.95;
+}
+.mapscreen svg:has(.map-terrain) .map-edge, .world-atlas-screen .atlas-roads path:not(.map-route-outline) {
+  stroke:#c9b987; stroke-width:var(--map-route-width,3px); stroke-opacity:1; stroke-linecap:round;
+}
+.mapscreen svg:has(.map-terrain) .map-edge.traveled, .world-atlas-screen .atlas-roads .traveled { stroke:#ead090; }
+.mapscreen svg:has(.map-terrain) .map-edge.shrine-lane, .world-atlas-screen .atlas-roads .available { stroke:#ffe39a; stroke-width:3.5px; }
+.mapscreen .map-scroll:has(.map-terrain), .atlas-scrollport, .atlas-world { background:#8b7d61; }
+.map-terrain .terrain-detail { opacity:1; }
+
+/* Tall local-location shell: the same map and action layout for every city. */
+dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { height:calc((100dvh - 24px) / var(--ui-zoom,1)); max-height:calc((100dvh - 24px) / var(--ui-zoom,1)); }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-body { display:grid; grid-template-columns:minmax(0,1fr) auto; grid-template-rows:minmax(320px, 2fr) minmax(150px,1fr); overflow:auto; overscroll-behavior:contain; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1 / -1; min-height:280px; padding:12px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-port { min-height:220px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-width:0; min-height:150px; padding:16px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-tools { align-self:start; padding:16px 12px; flex-direction:column; }
+.atlas-dialog:has(.atlas-local-port) .atlas-local-help { order:2; }
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot { display:flex; flex-wrap:wrap; gap:10px; padding:12px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot > span { display:none; }
+.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions { margin-left:auto; padding:0; display:flex; flex-wrap:wrap; gap:8px; }
+.atlas-dialog:has(.atlas-local-port) .atlas-detail-actions .as-btn { margin:0; white-space:normal; }
+@media(max-width:700px) {
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,1.5fr) auto minmax(160px,1fr); }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; min-height:300px; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-row:2; flex-direction:row; padding:6px 10px; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { min-height:160px; }
+}
+@media(max-height:500px) and (min-width:701px) {
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-body { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); grid-template-rows:minmax(220px,1fr) auto; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-wrap { grid-column:1; grid-row:1 / 3; min-height:280px; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-location-detail { grid-column:2; grid-row:1; }
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { grid-column:2; grid-row:2; padding:6px; flex-direction:row; }
+}
+
+.atlas-dialog:has(.atlas-local-port) .atlas-dialog-foot .as-btn { width:auto; min-width:120px; max-width:100%; }
+.atlas-detail-scroll { scrollbar-gutter:stable; scrollbar-color:#947548 #211b14; }
+
+/* A spatial direction pad followed by one minus / Fit / plus row. */
+.atlas-dialog:has(.atlas-local-port) .atlas-local-tools { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:8px; padding:8px 12px; }
+.atlas-local-tools .atlas-local-pan-tools, .atlas-local-tools .atlas-local-zoom-tools { display:grid; grid-template-columns:repeat(3,max(40px,var(--tap-floor))); gap:4px; }
+.atlas-local-pan-tools [data-local-pan="up"] { grid-area:1 / 2; }
+.atlas-local-pan-tools [data-local-pan="left"] { grid-area:2 / 1; }
+.atlas-local-pan-tools [data-local-pan="right"] { grid-area:2 / 3; }
+.atlas-local-pan-tools [data-local-pan="down"] { grid-area:3 / 2; }
+.atlas-local-tools .as-btn { width:100%; min-width:0; padding:4px; }
+.atlas-local-pan-tools output { grid-area:2 / 2; align-self:center; text-align:center; font-size:12px; font-variant-numeric:tabular-nums; }
+@media(max-height:500px) and (min-width:701px) {
+ .atlas-dialog:has(.atlas-local-port) .atlas-local-tools { flex-direction:row; align-items:center; justify-content:space-evenly; flex-wrap:wrap; }
+}
+
+/* Ordinary road/encounter inspection uses scene art, never an enlarged map tile. */
+.atlas-dialog[data-local-map="false"] .atlas-location-illustration { aspect-ratio:3 / 2; max-width:calc(768px / var(--ui-zoom,1)); margin:auto; }
+.atlas-dialog[data-local-map="false"] .atlas-detail-actions:empty { display:none; }
+.atlas-dialog[data-local-map="false"] [data-atlas-travel] { margin-left:auto; }
+.atlas-dialog [data-atlas-travel][data-forward="true"]:enabled { background:color-mix(in srgb,var(--green) 22%,var(--panel)); border-color:var(--green); color:var(--parchment); font-weight:600; }
+.atlas-dialog [data-atlas-travel][data-forward="true"]:enabled:hover { background:color-mix(in srgb,var(--green) 34%,var(--panel)); }

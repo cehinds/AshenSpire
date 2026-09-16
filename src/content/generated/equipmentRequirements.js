@@ -3,6 +3,11 @@
 
 export const equipmentRequirements = [
   {
+    "itemId": "straightSword",
+    "attributeId": "strength",
+    "minimum": 10
+  },
+  {
     "itemId": "greatsword",
     "attributeId": "strength",
     "minimum": 12

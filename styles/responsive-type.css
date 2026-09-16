@@ -1,0 +1,58 @@
+/* Responsive type uses the available component width, with rem bounds that
+   follow Text size and physical-pixel floors that survive the app's UI zoom.
+   Compact labels keep ellipses as a last resort; detail prose still wraps. */
+:root {
+  --type-label-min: max(1.1rem, calc(12px / var(--ui-zoom, 1)));
+  --type-copy-min: max(1.15rem, calc(13px / var(--ui-zoom, 1)));
+  --type-heading-min: max(1.5rem, calc(16px / var(--ui-zoom, 1)));
+}
+/* These bodies already flex into a bounded row; only their inline size is
+   contained, leaving height free to grow with descriptions and larger text. */
+.as-option > .ob, .as-face > .ob {
+  container-type: inline-size;
+}
+.as-option > .ob > .on, .as-face > .ob > .on {
+  font-size: clamp(var(--type-label-min), calc(.95rem + 2.5cqi), max(var(--type-label-min), 1.65rem));
+  letter-spacing: .015em;
+  line-height: 1.25;
+}
+.as-option > .ob > .od, .as-face > .ob > .od {
+  font-size: clamp(var(--type-copy-min), calc(1rem + 1.5cqi), max(var(--type-copy-min), 1.35rem));
+  line-height: 1.4;
+}
+/* Modals already establish an inline-size query container. Keep headings
+   fully readable and let text wrap once the bounded scale reaches its floor. */
+.modal .modal-head-id h2, .modal .as-title-s, .modal .as-title-m,
+.modal .as-detailcard .dc-name {
+  font-size: clamp(var(--type-heading-min), calc(1.1rem + 1.5cqi), max(var(--type-heading-min), 2rem));
+  line-height: 1.3;
+}
+@container (max-width: 50rem) {
+  .modal .as-labelstack .ls-label, .modal .as-statrow .sr-name,
+  .modal .as-row > .r-label, .modal .modal-tab, .modal .as-tab,
+  .modal .as-railitem, .modal .modal-btnrow > button {
+    font-size: clamp(var(--type-label-min), calc(.85rem + 1.4cqi), max(var(--type-label-min), 1.4rem));
+    line-height: 1.25;
+  }
+  .modal .as-labelstack .ls-hint, .modal .as-subtitle, .modal .as-prose {
+    font-size: clamp(var(--type-copy-min), calc(.9rem + 1.2cqi), max(var(--type-copy-min), 1.4rem));
+    line-height: 1.4;
+  }
+  .modal .as-seg > button {
+    font-size: clamp(var(--type-label-min), calc(.8rem + 1.2cqi), max(var(--type-label-min), 1.23rem));
+  }
+}
+/* Allocation summaries are useful instructions, not disposable labels. At
+   the minimum size they may grow vertically beside the unchanged stepper. */
+.modal .as-row.setting.se-row .disc-summary {
+  font-size: clamp(var(--type-label-min), calc(.8rem + 1.2cqi), max(var(--type-label-min), 1.35rem));
+  white-space: normal; overflow: visible; text-overflow: clip;
+  overflow-wrap: anywhere; line-height: 1.3;
+}
+/* Equipment cards render on a 350px canvas. Budget the 284px title strip by
+   label length, compensating the minimum for the card's own transform too. */
+.equipment-poker-card .epc-frame > .epc-name {
+  --card-title-min: max(1.1rem, calc(12px / var(--ui-zoom, 1) / max(.1, var(--card-scale, 1))));
+  font-size: clamp(var(--card-title-min), calc(284px / var(--title-units, 14)), max(var(--card-title-min), 20px));
+  line-height: 1.1;
+}

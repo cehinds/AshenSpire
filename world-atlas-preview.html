@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>World Journey · Content Preview</title>
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/ui.css" />
+    <link rel="stylesheet" href="styles/map.css" />
+    <link rel="stylesheet" href="styles/kit.css" />
+    <style>
+      body {
+        overflow: auto;
+      }
+      .atlas-preview-controls {
+        padding: 18px;
+        background: #2d261b;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        border-bottom: 1px solid #ac8d53;
+      }
+      .atlas-preview-controls label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .atlas-preview-controls input,
+      .atlas-preview-controls select {
+        max-width: 240px;
+      }
+      .atlas-preview-notice {
+        padding: 12px 20px;
+        color: #c8b488;
+        background: #151310;
+      }
+      #preview {
+        min-height: 90vh;
+      }
+      #preview-error {
+        color: #ffb39d;
+        white-space: pre-wrap;
+      }
+      #preview-diagnostics {
+        padding: 18px;
+        white-space: pre-wrap;
+        color: #b9a583;
+      }
+      .world-atlas-screen {
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <form class="atlas-preview-controls" id="preview-controls">
+      <strong>AUTHORING PREVIEW</strong
+      ><label>Seed <input id="preview-seed" value="SHOWCASE" /></label
+      ><label
+        >Profile
+        <select id="preview-profile"></select></label
+      ><label
+        >View
+        <select id="preview-view">
+          <option value="route">Selected route · revealed</option>
+          <option value="fog">Player discovery</option>
+          <option value="catalog">All 200 authored nodes</option>
+        </select></label
+      ><button class="as-btn" type="submit">Generate</button
+      ><label
+        >Inspect ID
+        <select id="preview-location"></select
+      ></label>
+    </form>
+    <div class="atlas-preview-notice">
+      Read-only content preview. Revealed views show authoring data, including
+      places a player has not discovered. Gameplay, rewards and saves are
+      disabled here. <a href="index.html">Play the game</a>
+    </div>
+    <div id="preview-error" role="alert"></div>
+    <main id="preview"></main>
+    <pre id="preview-diagnostics"></pre>
+    <script type="module" src="src/dev/worldAtlasPreview.js"></script>
+  </body>
+</html>

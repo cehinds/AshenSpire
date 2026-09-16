@@ -1,0 +1,69 @@
+{
+  "starseer": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
+  },
+  "starseer-eclipse": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
+  },
+  "starseer-starlit": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
+  },
+  "starseer-astral": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright staff-in-hand stance for idle, matching the supplied standing-pose reference. Guard and attacks keep their combat poses."
+  },
+  "reaver": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    },
+    "portraitSource": "portrait-sources/reaver.png"
+  },
+  "reaver-vigil": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    },
+    "portraitSource": "portrait-sources/reaver-vigil.png"
+  },
+  "reaver-oathsworn": {
+    "mapping": {
+      "idle": "swordRest"
+    },
+    "note": "Use the hands-on-sword rest from the first cell of the retained expanded sheet for idle; the menu stand holds its sword to the side. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave.",
+    "menuMapping": {
+      "stand": "swordRest",
+      "detail": "swordRest"
+    },
+    "portraitSource": "portrait-sources/reaver-oathsworn.png"
+  },
+  "reaver-warden": {
+    "mapping": {
+      "idle": "stand"
+    },
+    "note": "Owner-selected upright sword-rest idle. Attack 1 low advance, attack 2 overhead windup, attack 3 downward cleave from selected strip.",
+    "menuMapping": {
+      "stand": "stand",
+      "detail": "stand"
+    }
+  }
+}

@@ -1,0 +1,275 @@
+{
+  "schema": "ashenspire/enemy-poses/v1",
+  "canvas": [
+    384,
+    384
+  ],
+  "ground": 364,
+  "facing": "left",
+  "entries": [
+    {
+      "id": "wanderingSoldier",
+      "name": "Wandering Soldier",
+      "legacy": false,
+      "idle": "wanderingSoldier_idle.png",
+      "attack": "wanderingSoldier_attack.png",
+      "source": "assets/enemies-unity/painted_wanderingSoldier.png"
+    },
+    {
+      "id": "blightHound",
+      "name": "Blight Hound",
+      "legacy": false,
+      "idle": "blightHound_idle.png",
+      "attack": "blightHound_attack.png",
+      "source": "assets/enemies-unity/painted_blightHound.png"
+    },
+    {
+      "id": "huskBrute",
+      "name": "Husk Brute",
+      "legacy": true,
+      "idle": "huskBrute_idle.png",
+      "attack": "huskBrute_attack.png",
+      "source": "assets/sprites/enemy_huskBrute.webp"
+    },
+    {
+      "id": "graveWisp",
+      "name": "Grave Wisp",
+      "legacy": false,
+      "idle": "graveWisp_idle.png",
+      "attack": "graveWisp_attack.png",
+      "source": "assets/enemies-unity/painted_graveWisp.png"
+    },
+    {
+      "id": "wyrmAspirant",
+      "name": "Wyrm Aspirant",
+      "legacy": false,
+      "idle": "wyrmAspirant_idle.png",
+      "attack": "wyrmAspirant_attack.png",
+      "source": "assets/enemies-unity/painted_wyrmAspirant.png"
+    },
+    {
+      "id": "fellWarden",
+      "name": "The Fell Warden",
+      "legacy": false,
+      "idle": "fellWarden_idle.png",
+      "attack": "fellWarden_attack.png",
+      "source": "assets/enemies-unity/painted_fellWarden.png"
+    },
+    {
+      "id": "lanternMoth",
+      "name": "Lantern Moth",
+      "legacy": false,
+      "idle": "lanternMoth_idle.png",
+      "attack": "lanternMoth_attack.png",
+      "source": "assets/enemies-expansion/lanternMoth.png"
+    },
+    {
+      "id": "briarHermit",
+      "name": "Briar Hermit",
+      "legacy": false,
+      "idle": "briarHermit_idle.png",
+      "attack": "briarHermit_attack.png",
+      "source": "assets/enemies-expansion/briarHermit.png"
+    },
+    {
+      "id": "chainScavenger",
+      "name": "Chain Scavenger",
+      "legacy": false,
+      "idle": "chainScavenger_idle.png",
+      "attack": "chainScavenger_attack.png",
+      "source": "assets/enemies-expansion/chainScavenger.png"
+    },
+    {
+      "id": "bellKeeper",
+      "name": "The Bell Keeper",
+      "legacy": false,
+      "idle": "bellKeeper_idle.png",
+      "attack": "bellKeeper_attack.png",
+      "source": "assets/enemies-expansion/bellKeeper.png"
+    },
+    {
+      "id": "thornMatriarch",
+      "name": "The Thorn Matriarch",
+      "legacy": false,
+      "idle": "thornMatriarch_idle.png",
+      "attack": "thornMatriarch_attack.png",
+      "source": "assets/enemies-expansion/thornMatriarch.png"
+    },
+    {
+      "id": "gildedKnight",
+      "name": "Gilded Knight",
+      "legacy": false,
+      "idle": "gildedKnight_idle.png",
+      "attack": "gildedKnight_attack.png",
+      "source": "assets/enemies-unity/painted_gildedKnight.png"
+    },
+    {
+      "id": "courtSurgeon",
+      "name": "Court Surgeon",
+      "legacy": false,
+      "idle": "courtSurgeon_idle.png",
+      "attack": "courtSurgeon_attack.png",
+      "source": "assets/enemies-unity/painted_courtSurgeon.png"
+    },
+    {
+      "id": "stitchedHound",
+      "name": "Stitched Hound",
+      "legacy": true,
+      "idle": "stitchedHound_idle.png",
+      "attack": "stitchedHound_attack.png",
+      "source": "assets/sprites/enemy_stitchedHound.webp"
+    },
+    {
+      "id": "courtMarionette",
+      "name": "Court Marionette",
+      "legacy": true,
+      "idle": "courtMarionette_idle.png",
+      "attack": "courtMarionette_attack.png",
+      "source": "assets/sprites/enemy_courtMarionette.webp"
+    },
+    {
+      "id": "livingArmor",
+      "name": "Living Armor",
+      "legacy": false,
+      "idle": "livingArmor_idle.png",
+      "attack": "livingArmor_attack.png",
+      "source": "assets/enemies-unity/painted_livingArmor.png"
+    },
+    {
+      "id": "courtDuelist",
+      "name": "Duelist of the Court",
+      "legacy": false,
+      "idle": "courtDuelist_idle.png",
+      "attack": "courtDuelist_attack.png",
+      "source": "assets/enemies-unity/painted_courtDuelist.png"
+    },
+    {
+      "id": "stitchedKing",
+      "name": "The Stitched King",
+      "legacy": false,
+      "idle": "stitchedKing_idle.png",
+      "attack": "stitchedKing_attack.png",
+      "source": "assets/enemies-unity/painted_stitchedKing.png"
+    },
+    {
+      "id": "mirrorScribe",
+      "name": "Mirror Scribe",
+      "legacy": false,
+      "idle": "mirrorScribe_idle.png",
+      "attack": "mirrorScribe_attack.png",
+      "source": "assets/enemies-expansion/mirrorScribe.png"
+    },
+    {
+      "id": "stitchCrab",
+      "name": "Stitch Crab",
+      "legacy": false,
+      "idle": "stitchCrab_idle.png",
+      "attack": "stitchCrab_attack.png",
+      "source": "assets/enemies-expansion/stitchCrab.png"
+    },
+    {
+      "id": "glassRegent",
+      "name": "The Glass Regent",
+      "legacy": false,
+      "idle": "glassRegent_idle.png",
+      "attack": "glassRegent_attack.png",
+      "source": "assets/enemies-expansion/glassRegent.png"
+    },
+    {
+      "id": "marrowOrganist",
+      "name": "The Marrow Organist",
+      "legacy": false,
+      "idle": "marrowOrganist_idle.png",
+      "attack": "marrowOrganist_attack.png",
+      "source": "assets/enemies-expansion/marrowOrganist.png"
+    },
+    {
+      "id": "ashRevenant",
+      "name": "Ash Revenant",
+      "legacy": true,
+      "idle": "ashRevenant_idle.png",
+      "attack": "ashRevenant_attack.png",
+      "source": "assets/sprites/enemy_ashRevenant.webp"
+    },
+    {
+      "id": "emberStarvedPilgrim",
+      "name": "Ember-Starved Pilgrim",
+      "legacy": true,
+      "idle": "emberStarvedPilgrim_idle.png",
+      "attack": "emberStarvedPilgrim_attack.png",
+      "source": "assets/sprites/enemy_emberStarvedPilgrim.webp"
+    },
+    {
+      "id": "valkyrieShade",
+      "name": "Valkyrie Shade",
+      "legacy": false,
+      "idle": "valkyrieShade_idle.png",
+      "attack": "valkyrieShade_attack.png",
+      "source": "assets/enemies-unity/painted_valkyrieShade.png"
+    },
+    {
+      "id": "charredColossus",
+      "name": "Charred Colossus",
+      "legacy": true,
+      "idle": "charredColossus_idle.png",
+      "attack": "charredColossus_attack.png",
+      "source": "assets/sprites/enemy_charredColossus.webp"
+    },
+    {
+      "id": "wyrmLord",
+      "name": "Wyrm Lord",
+      "legacy": false,
+      "idle": "wyrmLord_idle.png",
+      "attack": "wyrmLord_attack.png",
+      "source": "assets/enemies-unity/painted_wyrmLord.png"
+    },
+    {
+      "id": "blightedValkyrie",
+      "name": "The Blighted Valkyrie",
+      "legacy": true,
+      "idle": "blightedValkyrie_idle.png",
+      "attack": "blightedValkyrie_attack.png",
+      "source": "assets/sprites/enemy_blightedValkyrie.webp"
+    },
+    {
+      "id": "cinderMantis",
+      "name": "Cinder Mantis",
+      "legacy": false,
+      "idle": "cinderMantis_idle.png",
+      "attack": "cinderMantis_attack.png",
+      "source": "assets/enemies-expansion/cinderMantis.png"
+    },
+    {
+      "id": "eclipseCantor",
+      "name": "Eclipse Cantor",
+      "legacy": false,
+      "idle": "eclipseCantor_idle.png",
+      "attack": "eclipseCantor_attack.png",
+      "source": "assets/enemies-expansion/eclipseCantor.png"
+    },
+    {
+      "id": "furnaceSaint",
+      "name": "The Furnace Saint",
+      "legacy": false,
+      "idle": "furnaceSaint_idle.png",
+      "attack": "furnaceSaint_attack.png",
+      "source": "assets/enemies-expansion/furnaceSaint.png"
+    },
+    {
+      "id": "hollowAstronomer",
+      "name": "The Hollow Astronomer",
+      "legacy": false,
+      "idle": "hollowAstronomer_idle.png",
+      "attack": "hollowAstronomer_attack.png",
+      "source": "assets/enemies-expansion/hollowAstronomer.png"
+    },
+    {
+      "id": "ashheartDragon",
+      "name": "The Ashheart Dragon",
+      "legacy": false,
+      "idle": "ashheartDragon_idle.png",
+      "attack": "ashheartDragon_attack.png",
+      "source": "assets/enemies-expansion/ashheartDragon.png"
+    }
+  ]
+}

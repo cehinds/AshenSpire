@@ -94,8 +94,11 @@ def clear():
 
 
 # ---- armament archetypes -----------------------------------------------------
-# Each builds at the right hand (x=+0.62) or left (x=-0.52), matching where the
-# class bodies hold things in tools/sprites-blender.py.
+# These are type-default authoring sockets, not the weapon row's `hand` value.
+# `hand` is equip eligibility; the slot is the only authority for where a held
+# piece is.  Until a slot-neutral asset format is specified and re-rendered,
+# figureSpec() mirrors a layer from its type default (non-shields at RX, shields
+# at LX) onto the actual slot.  Do not collapse `hand=either` to one socket here.
 RX, LX = 0.62, -0.52
 
 
@@ -273,6 +276,14 @@ GEOM = {
     "staffFlame": st_flame, "staffBranch": st_branch, "staffHorn": st_horn,
 }
 
+# Geometry names describe shape, not the type-default authoring socket.  Most
+# shapes have one kind, but the parrying dagger is a shield that deliberately
+# reuses the dagger geometry.  Route that pair to the existing off-hand builder;
+# `hand=either` remains eligibility and never becomes a guessed fixed location.
+GEOM_BY_KIND = {
+    ("dagger", "shield"): s_dagger_off,
+}
+
 # ---- stage -------------------------------------------------------------------
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -350,7 +361,7 @@ def render_icon(path):
 #
 # Only render-relevant fields go in. A balance tweak to `mods` must not
 # invalidate art it cannot affect.
-RENDER_FIELDS = ("geom", "scale", "metal", "accent")
+RENDER_FIELDS = ("kind", "geom", "scale", "metal", "accent")
 manifest = {"armaments": {}, "armour": {}}
 
 count = 0
@@ -359,7 +370,7 @@ for w in rows("weapons.csv"):
     art_key = w.get("artKey") or w["id"]
     if art_key in rendered_armament_keys:
         continue
-    build = GEOM.get(w["geom"])
+    build = GEOM_BY_KIND.get((w["geom"], w["kind"])) or GEOM.get(w["geom"])
     if not build:
         print("SKIP (no geometry):", w["id"], w["geom"])
         continue
@@ -392,16 +403,17 @@ exec(compile(lib_src, lib_path, "exec"), lib)
 
 CLASS_BUILD = {
     "reaver": lib["build_reaver"], "starseer": lib["build_starseer"], "herald": lib["build_herald"],
-    # Rogue reuses the light reaver rig; its authored palettes and equipment
-    # layers keep the silhouette distinct without a second geometry vocabulary.
-    "rogue": lib["build_reaver"],
+    # Rogue used to reuse the reaver rig here. That was the silhouette defect the
+    # class facelift failed on: the equipment body was the reaver's, whatever the
+    # palette claimed. It has its own builder now.
+    "rogue": lib["build_rogue"],
 }
 
 # WHICH materials an armour set actually repaints, per class.
 #
 # This was the bug, and it shipped: repaint() named HERO_PLATE / HERO_PLATE_LT /
 # HERO_LEATHER / HERO_UNDER — materials that ONLY the reaver's builder uses. The
-# starseer's body is ROBE_BLUE, the herald's is ROBE_RED and HOOD_DARK, and
+# starseer's body is ROBE_UMBER, the herald's is ROBE_RED and HOOD_DARK, and
 # neither was ever touched. Eight of twelve armour sets rendered pixel-identical
 # to their class default (measured: dE 0.0, tools/palette-audit.py) while the CSV
 # declared four distinct palettes each and the Armoury offered them by name.
@@ -416,10 +428,13 @@ CLASS_BUILD = {
 CLASS_BODY_MATS = {
     "reaver": {"plate": "HERO_PLATE", "plateLt": "HERO_PLATE_LT",
                "leather": "HERO_LEATHER", "under": "HERO_UNDER"},
-    "starseer": {"plate": "ROBE_BLUE", "plateLt": "ROBE_BLUE_LT"},
+    "starseer": {"plate": "ROBE_UMBER", "plateLt": "ROBE_UMBER_LT"},
     "herald": {"plate": "ROBE_RED", "plateLt": "HOOD_DARK", "leather": "CLOTH_DARK"},
-    "rogue": {"plate": "HERO_PLATE", "plateLt": "HERO_PLATE_LT",
-              "leather": "HERO_LEATHER", "under": "HERO_UNDER"},
+    # Rogue's own four surfaces. These used to name the reaver's materials, which
+    # the rogue figure no longer owns — repainting them would have done nothing
+    # visible, which is exactly the bug described above.
+    "rogue": {"plate": "ROGUE_SCALE", "plateLt": "ROGUE_SCALE_LT",
+              "leather": "ROGUE_LEATHER", "under": "ROGUE_UNDER"},
 }
 
 

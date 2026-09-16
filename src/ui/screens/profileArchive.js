@@ -1,7 +1,7 @@
-// src/ui/screens/profileArchive.js — Settings → Profile (#67, Sunna's D8/D5).
+// src/ui/screens/profileArchive.js — title-screen Profile archive (#67, Sunna's D8/D5).
 //
 // WHY THIS FILE EXISTS. The crisis dialog told the player "You can come back to
-// it any time from Settings → Profile" and Settings had Display, Audio,
+// it any time from the title screen's Profile route and Settings had Display, Audio,
 // Accessibility, Advanced — no Profile. The word "archive" appeared on no
 // screen in the game, and profileNotice.js was the only file that had ever
 // called listArchives/getArchive/exportArchive/restoreProfile. Constantine's
@@ -23,10 +23,30 @@
 //     honest home is the crisis dialog behind its confirm.
 //   · A failed restore never consumes the archive, and says so.
 //
+// ON THE KIT, AS WIREFRAME W1g: a W1 workspace door through openModal (Eyebrow
+// "Player data", Title·S "Profile", the close IconButton in the corner, one
+// Back action in the foot). The body is a NavRail beside a Pane. The rail's
+// categories are the two kinds of entry the drawer holds — set-aside profiles
+// and set-aside runs (models/ProfileWorkspaceModel.js) — and on a compact host
+// it becomes one `[Kind ▾]` selector above the pane (components/w1Workspace.js).
+// The Pane is split into the current profile's identity (the state line, the
+// drawer policy, a muted DetailCard for a drawer notice) and the selected
+// category's records: one DetailCard per entry (Eyebrow = when, name = what,
+// line = why) with its ButtonRow and support Fold, a gold DetailCard for the
+// restore question, and the status line. The hooks the instruments read
+// (`.profile-archive-modal`, `.profile-archive-body`, `[data-profile-close]`,
+// `.prof-*`) ride on the kit's parts and draw nothing.
+//
 // PROSE IS DRAFT where Sunna has not written copy for this surface, and marked
 // so below; her replacements land verbatim as they did on the notice screen.
 
-import { esc } from '../components/tooltip.js';
+import {
+  el, pane, prose, detailCard, button, buttonRow, statusText, fold, openModal, flavour, options,
+  eyebrow, titleM, subtitle, railed, railItem, categoryNav,
+} from '../kit/index.js';
+import { t } from '../strings.js';
+import { PROFILE_CATEGORIES, profileWorkspaceView } from '../models/ProfileWorkspaceModel.js';
+import { workspaceFrame, markCurrent, land } from '../components/w1Workspace.js';
 
 // Human time, not a log line — same rule as the notice screen (Sunna).
 function humanTime(iso) {
@@ -72,8 +92,10 @@ function humanReason(raw) {
 
 /**
  * renderProfileSection(container, { saves, onRestored })
- * Fills `container` with the Profile section. Every fact comes from
- * saves.profileStatus() / listArchives() — nothing is re-derived here.
+ * Fills `container` with the Profile workspace body. Every fact comes from
+ * saves.profileStatus() / listArchives() — nothing is re-derived here. The
+ * selected category is kept on `container.dataset.profileCategory`, so the
+ * re-render after a restore opens on the same category.
  */
 export function renderProfileSection(container, { saves, onRestored }) {
   const status = saves.profileStatus();
@@ -100,31 +122,82 @@ export function renderProfileSection(container, { saves, onRestored }) {
     newer: 'Your profile is from a newer version. It has been left exactly as it is; update the game to open it.',
   }[status.state] || 'Your profile is fine.';
 
-  const rows = archives.length
-    ? archives.map((a) => {
-        const when = humanTime(a.at);
-        const size = humanSize(a.bytes);
-        const again = a.count > 1 && a.lastSeenAt
-          ? ` · seen ${a.count} times, most recently ${humanTime(a.lastSeenAt)}`
-          : '';
-        return `
-          <div class="prof-entry" data-id="${esc(a.id)}">
-            <div class="prof-entry-what">
-              <b>${esc(describe(a, saves))}</b>
-              <p class="set-note">${esc([when && `Set aside ${when}`, size].filter(Boolean).join(' · '))}${esc(again)}</p>
-              <p class="set-note prof-why">${esc(humanReason(a.reason))}</p>
-              ${a.reason ? `<details class="support"><summary>Details for support</summary><code>${esc(a.reason)}</code></details>` : ''}
-            </div>
-            <div class="prof-entry-actions">
-              <button class="prof-export" data-id="${esc(a.id)}">Save a copy to a file</button>
-              ${a.kind === 'meta' ? `<button class="prof-restore subtle" data-id="${esc(a.id)}">Restore this profile</button>` : ''}
-            </div>
-          </div>`;
-      }).join('')
-    // DRAFT COPY: the empty state must not read as a failure — an empty drawer
-    // is the good outcome, and this screen is most often opened by someone
-    // curious rather than someone hurt.
-    : '<p class="set-note prof-empty">Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.</p>';
+  const result = statusText('', { class: 'prof-result', role: 'status' });
+  const say = (msg) => { result.textContent = msg; };
+  const archiveOf = (id) => saves.listArchives().find((a) => a.id === id) || {};
+
+  const entryCard = (a) => {
+    const when = humanTime(a.at);
+    const size = humanSize(a.bytes);
+    const again = a.count > 1 && a.lastSeenAt
+      ? ` · seen ${a.count} times, most recently ${humanTime(a.lastSeenAt)}`
+      : '';
+    const exportBtn = button({ label: 'Save a copy to a file', className: 'prof-export', attrs: { dataset: { id: a.id } } });
+    const restoreBtn = a.kind === 'meta' ? button({ label: 'Restore this profile', className: 'prof-restore', attrs: { dataset: { id: a.id } } }) : null;
+    const card = detailCard({
+      eyebrow: [when && `Set aside ${when}`, size].filter(Boolean).join(' · ') + again,
+      name: describe(a, saves),
+      line: humanReason(a.reason),
+      muted: true,
+      attrs: { class: 'prof-entry', dataset: { id: a.id } },
+    });
+    card.appendChild(buttonRow({ size: 'long', buttons: [exportBtn, restoreBtn], className: 'prof-entry-actions' }));
+    if (a.reason) card.appendChild(fold({ label: 'Details for support', className: 'support', children: [el('code', { text: a.reason })] }));
+
+    exportBtn.addEventListener('click', () => {
+      const text = saves.exportArchive(a.id);
+      if (!text) { say('That copy is no longer available.'); return; }
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ashen-spire-${a.id}.json`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      say('Saved. Keep that file somewhere safe.');
+    });
+    if (restoreBtn) restoreBtn.addEventListener('click', () => {
+      // The risk is stated BEFORE the click does anything, in the entry's
+      // own confirmation — not after, and not in a tooltip nobody opens.
+      if (card.querySelector('.prof-confirm')) return;
+      // DRAFT COPY (Sunna's to replace).
+      // Sunna's copy, split exactly as she wrote it: the second sentence is
+      // FALSE for a readable archive and it lied to her about a perfectly good
+      // 2000-run profile, so it appears only when this copy was set aside
+      // because it couldn't be read.
+      const unreadable = /Couldn’t be read\./.test(humanReason(archiveOf(a.id).reason));
+      const cancel = button({ label: 'Not yet', className: 'prof-cancel' });
+      const go = button({ label: 'Restore it', weight: 'primary', className: 'prof-go' });
+      const box = el('div', { class: 'as-detailcard prof-confirm' }, [
+        el('span', { class: 'dc-eyebrow', text: 'Restore this profile?' }),
+        prose('The profile you’re using now is set aside here in its place — not deleted.'),
+        unreadable ? prose('This copy couldn’t be read when we set it aside, so restoring it may not work. Nothing is lost by trying.') : null,
+        buttonRow({ size: 'medium', buttons: [cancel, go], className: 'prof-entry-actions' }),
+      ]);
+      card.appendChild(box);
+      cancel.addEventListener('click', () => box.remove());
+      cancel.focus();
+      go.addEventListener('click', () => {
+        const res = saves.restoreProfile(a.id);
+        if (res.ok) {
+          // Re-render FIRST, then speak into the node that survives it. Saying
+          // it first wrote the message into an element the re-render replaced,
+          // so nothing visibly changed, the player pressed again — and with
+          // D12 open that ate a second profile (Sunna D13).
+          renderProfileSection(container, { saves, onRestored });
+          const node = container.querySelector('.prof-result');
+          if (node) node.textContent = 'Restored. This is your profile now — the one you were using is set aside below.';
+          if (onRestored) onRestored();
+          return;
+        }
+        // A failed restore NEVER consumes the archive, and says so — Sunna's
+        // must, and the same sentence the crisis screen uses.
+        box.remove();
+        say('That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.');
+      });
+    });
+    return card;
+  };
 
   // The player is TOLD when the drawer had to move a profile further aside —
   // that is the whole difference between a bounded drawer and a silent
@@ -142,83 +215,98 @@ export function renderProfileSection(container, { saves, onRestored }) {
     const subject = was ? `The profile set aside on ${was}` : 'A profile set aside earlier';
     return at ? `${subject} was moved out on ${at}.` : `${subject} was moved out.`;
   };
-  const notices = salvaged.length
-    ? `<div class="prof-notice">
-        <p>This drawer filled up, so ${many ? 'its oldest profiles were' : 'its oldest profile was'} moved out and kept ${many ? 'on their own' : 'on its own'}. Nothing was deleted, and the profile you’re playing now was never touched.</p>
-        ${salvaged.map((n) => `<p class="set-note">${esc(when(n))}</p>`).join('')}
-        <p class="set-note">${many ? 'They’re' : 'It’s'} still on this device, but ${many ? 'they’re' : 'it’s'} no longer in the list below.</p>
-      </div>`
-    : '';
+  const notice = salvaged.length
+    ? el('div', { class: 'as-detailcard prof-notice' }, [
+        el('span', { class: 'dc-eyebrow', text: 'Moved out of the drawer' }),
+        prose(`This drawer filled up, so ${many ? 'its oldest profiles were' : 'its oldest profile was'} moved out and kept ${many ? 'on their own' : 'on its own'}. Nothing was deleted, and the profile you’re playing now was never touched.`),
+        ...salvaged.map((n) => flavour(when(n))),
+        flavour(`${many ? 'They’re' : 'It’s'} still on this device, but ${many ? 'they’re' : 'it’s'} no longer in the list below.`),
+      ])
+    : null;
 
-  container.innerHTML = `
-    <div class="prof-archive">
-      <p class="prof-state">${esc(stateLine)}</p>
-      ${notices}
-      <p class="set-note">Set-aside profiles and runs are kept with this game’s data on this device. They are never deleted to make room for anything else.</p>
-      ${rows}
-      <p class="prof-result" role="status"></p>
-    </div>`;
+  // W1g: the current profile's identity, beside the selected category's records.
+  const identity = el('div', { class: 'prof-identity' }, [
+    eyebrow('Your profile'),
+    titleM(stateLine, { tag: 'h3', class: 'prof-state' }),
+    subtitle('Set-aside profiles are never deleted to make room. Set-aside runs stay in this device’s drawer for up to six months, with the newest 12 kept here.'),
+    notice,
+  ]);
+  const records = options([], { class: 'prof-entries' });
+  const recordsSlot = el('div', { class: 'prof-records', id: 'prof-records', role: 'tabpanel' }, [records, result]);
 
-  const archiveOf = (id) => saves.listArchives().find((a) => a.id === id) || {};
-  const say = (msg) => { const el = container.querySelector('.prof-result'); if (el) el.textContent = msg; };
-
-  container.querySelectorAll('.prof-export').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const text = saves.exportArchive(btn.dataset.id);
-      if (!text) { say('That copy is no longer available.'); return; }
-      const blob = new Blob([text], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ashen-spire-${btn.dataset.id}.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      say('Saved. Keep that file somewhere safe.');
-    });
+  const items = PROFILE_CATEGORIES.map((id) => railItem({
+    label: t(`profile.category.${id}`), member: id, id: `prof-kind-${id}`, className: 'with-status prof-kind',
+    attrs: { 'aria-controls': 'prof-records' },
+  }));
+  const counts = items.map((item) => item.appendChild(statusText('')));
+  const nav = categoryNav({
+    items, ariaLabel: t('profile.categories'),
+    choose: (id) => { container.dataset.profileCategory = id; paint(); },
   });
 
-  container.querySelectorAll('.prof-restore').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      // The risk is stated BEFORE the click does anything, in the button's own
-      // confirmation — not after, and not in a tooltip nobody opens.
-      const entry = btn.closest('.prof-entry');
-      if (entry.querySelector('.prof-confirm')) return;
-      const box = document.createElement('div');
-      box.className = 'prof-confirm';
-      // DRAFT COPY (Sunna's to replace).
-      // Sunna's copy, split exactly as she wrote it: the second sentence is
-      // FALSE for a readable archive and it lied to her about a perfectly good
-      // 2000-run profile, so it appears only when this copy was set aside
-      // because it couldn't be read.
-      const unreadable = /Couldn’t be read\./.test(humanReason(archiveOf(btn.dataset.id).reason));
-      box.innerHTML = `
-        <p>Restore this profile? The profile you’re using now is set aside here in its place — not deleted.</p>
-        ${unreadable ? '<p>This copy couldn’t be read when we set it aside, so restoring it may not work. Nothing is lost by trying.</p>' : ''}
-        <div class="prof-entry-actions">
-          <button class="prof-cancel">Not yet</button>
-          <button class="prof-go subtle">Restore it</button>
-        </div>`;
-      entry.appendChild(box);
-      box.querySelector('.prof-cancel').addEventListener('click', () => box.remove());
-      box.querySelector('.prof-cancel').focus();
-      box.querySelector('.prof-go').addEventListener('click', () => {
-        const res = saves.restoreProfile(btn.dataset.id);
-        if (res.ok) {
-          // Re-render FIRST, then speak into the node that survives it. Saying
-          // it first wrote the message into an element the re-render replaced,
-          // so nothing visibly changed, the player pressed again — and with
-          // D12 open that ate a second profile (Sunna D13).
-          renderProfileSection(container, { saves, onRestored });
-          const el = container.querySelector('.prof-result');
-          if (el) el.textContent = 'Restored. This is your profile now — the one you were using is set aside below.';
-          if (onRestored) onRestored();
-          return;
-        }
-        // A failed restore NEVER consumes the archive, and says so — Sunna's
-        // must, and the same sentence the crisis screen uses.
-        box.remove();
-        say(`That didn’t work — those bytes still can’t be read. Nothing was lost by trying: your copy is exactly where it was, and you can still save it to a file.`);
-      });
-    });
+  function paint() {
+    const view = profileWorkspaceView(archives, container.dataset.profileCategory || null);
+    container.dataset.profileCategory = view.current;
+    markCurrent(items, view.current);
+    view.categories.forEach((category, i) => { counts[i].textContent = String(category.count); });
+    // The selector's face ("Set-aside runs 2") follows the selection on its own.
+    recordsSlot.setAttribute('aria-labelledby', `prof-kind-${view.current}`);
+    // DRAFT COPY: the empty state must not read as a failure — an empty drawer
+    // is the good outcome, and this screen is most often opened by someone
+    // curious rather than someone hurt. A category that is empty while the
+    // other is not says only that.
+    records.replaceChildren(...(view.empty === 'drawer'
+      ? [flavour('Nothing has been set aside. That’s the good news — this fills when something couldn’t be read, and when you start a new profile and we keep the old one for you.', { class: 'prof-empty' })]
+      : view.empty === 'category'
+        ? [flavour(t(`profile.empty.${view.current}`), { class: 'prof-empty' })]
+        : view.entries.map(entryCard)));
+  }
+  paint();
+
+  container.replaceChildren(railed(nav, pane({
+    children: el('div', { class: 'w1-split' }, [identity, recordsSlot]),
+    attrs: { class: 'prof-archive' },
+  })));
+}
+
+/** Title-screen route to the profile and recovery drawer. */
+export function openProfileArchive({ saves, onRestored = null } = {}) {
+  if (!saves) return null;
+  const back = button({ label: t('common.back'), role: 'exit', className: 'prof-back' });
+  const door = openModal({
+    size: 'xl',
+    className: 'profile-archive-modal',
+    eyebrow: 'Player data',
+    title: 'Profile',
+    closeLabel: 'Close profile',
+    bodyClassName: 'profile-archive-body',
+    primary: back,
+    footSize: 'short',
   });
+  workspaceFrame(door.panel);
+  back.addEventListener('click', door.close);
+  door.head.querySelector('.modal-close').setAttribute('data-profile-close', '');
+  renderProfileSection(door.body, { saves, onRestored });
+  // The focus cursor cannot leave the door (the same trap the notice keeps).
+  const focusStops = () => [...door.panel.querySelectorAll(
+    'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+  )].filter((element) => element.getClientRects().length > 0);
+  door.veil.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab') return;
+    const stops = focusStops();
+    if (!stops.length) return;
+    const first = stops[0];
+    const last = stops[stops.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !door.panel.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (active === last || !door.panel.contains(active))) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+  // Opens on Close, with the pad's cursor on the same control.
+  land(door.head.querySelector('.modal-close'));
+  return door.veil;
 }

@@ -6,6 +6,11 @@ import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+// The caret is read off the one table (src/ui/components/foldGlyph.js): a
+// bottom tray opens upward and says so with ▴; this tool must not type a
+// second copy of that family (it did, as `v < ^ >`, and went red the day the
+// family changed under it).
+import { TRAY_FOLD_GLYPH } from '../src/ui/components/foldGlyph.js';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const SHOTS = process.argv.includes('--shots');
@@ -116,7 +121,7 @@ async function main() {
       const style = getComputedStyle(tray);
       return [edge, { text:fold.innerText.trim().replace(/\\s+/g, ' '), expanded:fold.getAttribute('aria-expanded'), controls:fold.getAttribute('aria-controls'), hidden:content.hidden, width:rect.width, height:rect.height, marginTop:parseFloat(style.marginTop), marginLeft:parseFloat(style.marginLeft), marginRight:parseFloat(style.marginRight) }];
     })))()`);
-    const closed = { top:'v', right:'<', bottom:'^', left:'>' };
+    const closed = Object.fromEntries(Object.entries(TRAY_FOLD_GLYPH).map(([edge, pair]) => [edge, pair.closed]));
     for (const edge of Object.keys(closed)) {
       check(before[edge].text.startsWith(closed[edge]), `${edge} closed arrow points inward (${closed[edge]})`);
       check(before[edge].expanded === 'false' && before[edge].hidden, `${edge} closed ARIA and hidden state agree`);
@@ -131,8 +136,8 @@ async function main() {
       const fold = tray.querySelector('.tray-fold');
       return [edge, { text:fold.innerText.trim().replace(/\\s+/g, ' '), expanded:fold.getAttribute('aria-expanded'), hidden:tray.querySelector('.tray-content').hidden, width:tray.getBoundingClientRect().width }];
     })))()`);
-    check(opened.right.text.startsWith('> RIGHT TRAY'), 'right open header is exactly “> RIGHT TRAY”');
-    check(opened.left.text.startsWith('< LEFT TRAY'), 'left open header is exactly “< LEFT TRAY”');
+    check(opened.right.text.startsWith(`${TRAY_FOLD_GLYPH.right.open} RIGHT TRAY`), `right open header is exactly “${TRAY_FOLD_GLYPH.right.open} RIGHT TRAY”`);
+    check(opened.left.text.startsWith(`${TRAY_FOLD_GLYPH.left.open} LEFT TRAY`), `left open header is exactly “${TRAY_FOLD_GLYPH.left.open} LEFT TRAY”`);
     check(opened.right.expanded === 'true' && !opened.right.hidden, 'right open ARIA and content state agree');
     check(opened.left.expanded === 'true' && !opened.left.hidden, 'left open ARIA and content state agree');
     check(opened.right.width > before.right.width * 2 && opened.left.width > before.left.width * 2, 'open side trays span their section width');
@@ -183,11 +188,15 @@ async function main() {
       const regions = ids.map((id) => ({ id, label:id, count:1, unit:'item', edge:'bottom', expanded:false }));
       return ids.map((subject) => {
         const panel = armouryPanelModel({ view:'grid', views:['grid'], layout:{ figure:true, slots:'flank' }, subject, regions });
+        const directIds = panel.children.slice(1).map((child) => child.component);
         return { subject, trays:panel.children.filter((child) => child.component === 'folding-tray').length,
-          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]) };
+          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]),
+          allRegions: ['armoury-body','armoury-inventory','armoury-card-strip','armoury-stats-panel']
+            .every((component) => directIds.includes(component)) };
       });
     })()`);
-    check(composition.every((row) => row.trays === 3 && row.direct), 'every configured Armoury subject remains direct while the other three become trays');
+    check(composition.every((row) => row.trays === 0 && row.direct && row.allRegions),
+      'the semantic panel model owns each region once while the screen alone composes shared trays');
     if (SHOTS) {
       mkdirSync(SHOT_DIR, { recursive: true });
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
@@ -206,7 +215,7 @@ async function main() {
     }))()`);
     check(gallery.cards === 8, 'gallery renders all eight folded/unfolded specimens');
     check(Object.values(gallery.edges).every((states) => states.join(',') === '0,1'), 'each edge has one folded and one unfolded specimen');
-    check(gallery.rightOpen.startsWith('> RIGHT TRAY'), 'gallery preserves the open Right Tray “>” contract');
+    check(gallery.rightOpen.startsWith(`${TRAY_FOLD_GLYPH.right.open} RIGHT TRAY`), `gallery preserves the open Right Tray “${TRAY_FOLD_GLYPH.right.open}” contract`);
     check(gallery.bottomOpen.aligned && gallery.bottomOpen.compact, 'unfolded Bottom Tray is compact and anchored to the bottom edge');
     check(gallery.sortSquares.length === 4 && gallery.sortSquares.every(({ width, height }) => Math.abs(width-height)<0.5 && width>=44 && width<=45), `every tray sort control is a 44px square (${JSON.stringify(gallery.sortSquares)})`);
     if (SHOTS) {
@@ -237,7 +246,7 @@ async function main() {
     await evaluate(`(() => { const select=document.querySelector('#sort'); select.value='id-desc'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
     check(await evaluate(`(() => { const ids=[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component); return ids.every((id,index)=>index===0||ids[index-1].localeCompare(id)>=0); })()`), 'sort control orders filtered components by descending ID');
     await evaluate(`document.querySelector('#clear-filters').click(); true`);
-    check(await evaluate(`document.querySelectorAll('#grid article').length===72 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
+    check(await evaluate(`document.querySelectorAll('#grid article').length===88 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
     await evaluate(`document.body.focus(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',bubbles:true,cancelable:true})); true`);
     check(await evaluate(`document.activeElement===document.querySelector('#search')`), 'slash keyboard shortcut focuses component search');
     await evaluate(`document.querySelector('#density-less').click(); true`);

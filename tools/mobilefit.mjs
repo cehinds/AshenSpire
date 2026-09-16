@@ -286,9 +286,11 @@ const FIT = `(() => {
   // was no attribute at all to catch the disagreement.
   const attr = de.getAttribute('data-layout');
   const nmax = ui && ui.narrowMax ? ui.narrowMax : null;
-  const impliedNarrow = nmax == null ? null : (innerWidth / z) <= nmax + 0.001;
+  // #39: composition mode is owned by viewport width. Zoom remains height-aware,
+  // so comparing local width here would reintroduce the transient height flip.
+  const impliedNarrow = nmax == null ? null : innerWidth <= nmax + 0.001;
   const property = {
-    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, nmax,
+    attr, impliedNarrow, rendered: narrowActive, localW: innerWidth / z, viewportW: innerWidth, nmax,
     agree: attr != null && impliedNarrow != null
       && (attr === 'narrow') === impliedNarrow
       && (attr === 'narrow') === narrowActive,
@@ -497,7 +499,7 @@ async function main() {
     console.log(`    narrow layout active: ${fit.narrowActive ? 'YES (.hand-area is a grid)' : 'no (wide layout)'}`);
     if (fit.property && fit.property.attr != null) {
       const P = fit.property;
-      ok(P.agree, `${name}: #24 PROPERTY — baseline and layout agree: data-layout=${P.attr} · arithmetic ${n2(P.localW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
+      ok(P.agree, `${name}: #24/#39 PROPERTY — width-owned layout agrees: data-layout=${P.attr} · viewport ${n2(P.viewportW)} <= ${P.nmax} is ${P.impliedNarrow} · rendered ${P.rendered ? 'narrow' : 'wide'}`);
     } else {
       ok(false, `${name}: #24 PROPERTY — <html data-layout> is absent, so nothing ties the zoom's baseline to the rendered layout`);
     }

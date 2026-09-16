@@ -3,11 +3,23 @@
 // Presents `rounds` rounds of `choices` cards from the class pool; the player
 // picks one each round to add to their starting deck. Deterministic on the
 // run's rng (stream 'cardRewards'), so a seed drafts the same offers.
+//
+// ON THE KIT: a page with the screen's banner (Eyebrow + Title·L), the round
+// as a Subtitle, the offer as the kit's Cards in a row, and the tally as a
+// StatPair.
 
 import { renderCard } from '../components/card.js';
 import { createCardInstance, createIdGen } from '../../model/state.js';
+import { el, eyebrow, titleL, subtitle, statPair } from '../kit/index.js';
+import { clearSelection } from '../components/cardSelection.js';
 
 export function mountDraft(app, { registries, classId, rng, rounds = 3, choices = 3, onDone }) {
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const pool = registries.classes.get(classId).cardPool.slice();
   const idGen = createIdGen('df');
   const picked = [];
@@ -23,18 +35,18 @@ export function mountDraft(app, { registries, classId, rng, rounds = 3, choices 
       offer.push(id);
     }
 
-    app.innerHTML = `
-      <div class="screen" style="gap:18px">
-        <h2 style="color:var(--gold);font-size:24px;letter-spacing:.15em">DRAFT YOUR DECK</h2>
-        <p class="subtitle">PICK ${round + 1} OF ${rounds} — CHOOSE A CARD TO ADD</p>
-        <div class="grid draft-grid" style="justify-content:center"></div>
-        <p class="set-note">Drafted so far: <b id="draft-count">${picked.length}</b></p>
-      </div>`;
+    const grid = el('div', { class: 'reward-row draft-grid' });
+    app.replaceChildren(el('div', { class: 'screen draft' }, [
+      eyebrow('Custom climb'),
+      titleL('Draft your deck'),
+      subtitle(`Pick ${round + 1} of ${rounds} — choose a card to add`),
+      grid,
+      statPair({ key: 'Drafted so far', value: String(picked.length), attrs: { id: 'draft-count' } }),
+    ]));
 
-    const grid = app.querySelector('.draft-grid');
     for (const id of offer) {
-      const el = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, {});
-      el.addEventListener('click', () => {
+      const card = renderCard(registries, { instanceId: `preview_${id}`, cardId: id, upgraded: false }, { owned: picked.filter((c) => c.cardId === id).length });
+      card.addEventListener('click', () => {
         picked.push(createCardInstance(id, false, idGen));
         // Remove one copy from the pool so later rounds skew fresh.
         const idx = pool.indexOf(id);
@@ -43,7 +55,7 @@ export function mountDraft(app, { registries, classId, rng, rounds = 3, choices 
         if (round >= rounds) onDone(picked);
         else renderRound();
       });
-      grid.appendChild(el);
+      grid.appendChild(card);
     }
   }
 

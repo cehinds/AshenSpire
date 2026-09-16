@@ -6,7 +6,10 @@
   <title>AshenSpire · Folding Tray Gallery</title>
   <link rel="stylesheet" href="../styles/base.css">
   <link rel="stylesheet" href="../styles/ui.css">
+  <link rel="stylesheet" href="../styles/kit.css">
   <style>
+    /* The game writes `--tap-target` from its settings (src/main.js); this page has no settings, so the default floor is stated here. */
+    :root { --tap-target: 44px; }
     body { min-height:100vh; margin:0; background:radial-gradient(circle at 50% -10%,#33261a 0,#100e0c 52rem); color:var(--parchment); overflow:auto; }
     .gallery { width:min(1380px,calc(100% - 32px)); margin:0 auto; padding:28px 0 56px; }
     .gallery-head { display:flex; justify-content:space-between; gap:20px; align-items:end; padding-bottom:18px; border-bottom:1px solid var(--line); }

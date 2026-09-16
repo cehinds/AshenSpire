@@ -60,6 +60,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { dirname, resolve, join, basename, extname, relative, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { configSourceErrors } from './config-build.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = join(ROOT, 'content', 'source');
@@ -239,16 +240,35 @@ function sweepAssets(assetsRoot, bundle) {
  */
 function sweepStraySources(contentRoot) {
   const errors = [];
+  // content/framework/ is the SECOND authored tree, owned by
+  // tools/framework-data-build.mjs (its --check drift gate runs in
+  // tools/framework-gate.mjs). The protection stays real here: a framework
+  // JSON is stray unless its generated mirror src/framework/data/<name>.js
+  // exists — an authored file that compiles to nothing still fails by name.
+  const frameworkDir = join(contentRoot, 'framework');
+  const frameworkGeneratedDir = join(contentRoot, '..', 'src', 'framework', 'data');
+  // content/config/ is the THIRD authored tree, owned by tools/config-build.mjs
+  // (its --check drift gate runs in tests/run-node.mjs). Its JSON is judged
+  // below by configSourceErrors: stray, by name, unless the generated module
+  // src/config/generated/ui.js was compiled from exactly that file's bytes.
+  const configDir = join(contentRoot, 'config');
   (function walk(dir) {
     if (!existsSync(dir)) return;
     for (const ent of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
       const abs = join(dir, ent.name);
       if (ent.isDirectory()) walk(abs);
-      else if (/\.(csv|json)$/i.test(ent.name) && dir !== join(contentRoot, 'source')) {
+      else if (/\.json$/i.test(ent.name) && abs.startsWith(configDir + sep)) continue;
+      else if (/\.json$/i.test(ent.name) && dir === frameworkDir) {
+        const mirror = join(frameworkGeneratedDir, ent.name.replace(/\.json$/i, '.js'));
+        if (!existsSync(mirror)) {
+          errors.push(`content/framework/${ent.name}: STRAY SOURCE FILE — no generated mirror at src/framework/data/; run node tools/framework-data-build.mjs`);
+        }
+      } else if (/\.(csv|json)$/i.test(ent.name) && dir !== join(contentRoot, 'source')) {
         errors.push(`content/${relative(contentRoot, abs).split(sep).join('/')}: STRAY SOURCE FILE — the compile reads only the top level of content/source/; this file compiles to nothing and ships nowhere. Move it to content/source/${ent.name}`);
       }
     }
   })(contentRoot);
+  errors.push(...configSourceErrors(contentRoot));
   return errors;
 }
 
@@ -421,14 +441,22 @@ async function loadGame() {
 
 const jclone = (v) => JSON.parse(JSON.stringify(v));
 
-// The eight doors validate.js leaves open (Vira's D1 on #43): a bundle missing
-// ANY of these keys validates GREEN — measured, all eight, node v22.22.2. The
-// old baseline held two (mapConfigs, sfx) and was silent on the other six;
-// balance-absent-green was the sharpest. This guard holds every door from
-// OUTSIDE the engine — nothing at boot does — and K15 keeps the door itself
-// measured, so it flips red the day validate.js closes one and the guard can
-// move inside.
-const BUNDLE_DOORS = ['version', 'balance', 'events', 'flasks', 'mapConfigs', 'sfx', 'equipment', 'unlocks'];
+// The eight bundle doors and their current fail-closed owners. validateContent
+// now owns balance and equipment; the other six still validate GREEN when
+// absent and therefore remain guarded here. K15 plants every missing key and
+// proves the expected owner causally, so a responsibility change is loud and
+// must update this matrix rather than silently weakening either layer.
+const BUNDLE_DOOR_MATRIX = [
+  { key: 'version', owner: 'content-build' },
+  { key: 'events', owner: 'content-build' },
+  { key: 'flasks', owner: 'content-build' },
+  { key: 'mapConfigs', owner: 'content-build' },
+  { key: 'sfx', owner: 'content-build' },
+  { key: 'unlocks', owner: 'content-build' },
+  { key: 'balance', owner: 'validateContent' },
+  { key: 'equipment', owner: 'validateContent' },
+];
+const BUNDLE_DOORS = BUNDLE_DOOR_MATRIX.map(({ key }) => key);
 const openDoors = (bundle) => BUNDLE_DOORS.filter((k) => bundle[k] == null);
 
 // The Add edge's two probe entries — table rows and one conventionally-named
@@ -442,6 +470,7 @@ const PROBE_CARD = {
 };
 const PROBE_ENEMY = {
   id: 'smokeProbeFoe', name: 'Smoke Probe Foe', hp: [10, 10], poiseMax: 5,
+  levelProfile: { min: 1, max: 4 }, // required since enemy level content landed
   moves: { wait: { intent: 'block', block: 1, weight: 100 } },
 };
 
@@ -458,12 +487,11 @@ BOUNDARY — what this green does NOT cover (SOP 3, CI expectation 4):
     and file CONTENTS are opaque — a corrupt webp binds and still won't render.
   - legal is not tuned: this proves entries load, validate and play, never that
     they are balanced — runsim owns that claim.
-  - validate.js accepts a bundle missing ANY of eight doored keys entirely
-    (version, balance, events, flasks, mapConfigs, sfx, equipment, unlocks —
-    measured GREEN when absent, every one, node v22.22.2). The baseline's
-    door guard and K15 hold those doors from OUTSIDE the engine; nothing at
-    boot does. K15 also keeps the balance door itself measured, so it flips
-    the day validate.js closes it.
+  - six bundle doors are held outside validate.js by this tool (version,
+    events, flasks, mapConfigs, sfx, unlocks); validate.js owns balance and
+    equipment. K15's eight-row matrix plants every missing key and proves its
+    expected fail-closed owner. A responsibility change must update the matrix;
+    neither layer is silently weakened.
   - not every syntax error names its file, and the shape is PLATFORM-SHAPED
     (re-measured for Vira's D3 — node v22.22.2, no package.json in this tree):
     a ',,' in mapconfig.js IS caught by name here, because .js under no
@@ -494,7 +522,8 @@ async function selftest() {
     console.log('baseline — the shipped tree:');
     const v0 = G.validateContent(b);
     ok(v0.ok, `real bundle validates clean (${v0.ok ? 0 : v0.errors.length} errors)`);
-    ok(openDoors(b).length === 0, `bundle carries all ${BUNDLE_DOORS.length} doored keys (${BUNDLE_DOORS.join(', ')}) — every one validates GREEN when absent, so this guard holds each door from outside (was: two of eight held — Vira's D1)`);
+    const cleanDoors = openDoors(b);
+    ok(cleanDoors.length === 0, `bundle-door clean control 1/1: all ${BUNDLE_DOORS.length} keys present (${BUNDLE_DOORS.join(', ')})`);
     let compiled = null;
     try { compiled = compileDir(SRC, OUT, { write: false }); } catch (e) { compiled = { err: e.message }; }
     ok(compiled && !compiled.err && compiled.stale === 0, `content/source compiles and generated files are current${compiled && compiled.err ? ` — ${compiled.err}` : ''}`);
@@ -634,15 +663,35 @@ async function selftest() {
       ok(pass, `K14 [S2 m5] stray source files — weapons.csv one level UP and source/sub/extra.json one level DEEP, each red by name, the legit file untouched\n      → ${pass ? up : `NOT CAUGHT BY NAME (${r.length} error(s): ${r.join(' | ') || 'none'})`}`);
     }
     {
-      // K15 — Vira's D1, the sharpest door: balance deleted from the bundle.
-      // validate.js stays GREEN (the open door, kept measured on purpose —
-      // this line flips red the day the door closes and the guard can move
-      // inside the engine); the door guard is what goes red, naming 'balance'.
-      const nb = { ...b }; delete nb.balance;
-      const v = G.validateContent(nb);
-      const doors = openDoors(nb);
-      const pass = v.ok && doors.length === 1 && doors[0] === 'balance';
-      ok(pass, `K15 [S1 doors] balance deleted from the bundle — validate.js green (door measured open), the guard red naming 'balance'${pass ? '' : ` (v.ok=${v.ok}, doors=[${doors.join(', ')}])`}`);
+      // K15 — eight causal missing-key plants. Six must pass through
+      // validateContent and be caught by this tool; balance/equipment must be
+      // rejected inside validateContent by a message naming the missing door.
+      const results = [];
+      for (const [index, row] of BUNDLE_DOOR_MATRIX.entries()) {
+        const nb = { ...b }; delete nb[row.key];
+        const v = G.validateContent(nb);
+        const doors = openDoors(nb);
+        const messages = (v.errors || []).map((e) => `${e.path}: ${e.msg}`);
+        const namedInside = messages.some((m) => m.startsWith(`${row.key}.`) || m.startsWith(`${row.key}:`));
+        const external = row.owner === 'content-build';
+        const pass = doors.length === 1 && doors[0] === row.key && (
+          external ? v.ok && !namedInside : !v.ok && namedInside
+        );
+        results.push({ ...row, pass });
+        const observed = v.ok
+          ? `content-build door guard (validateContent green; doors=[${doors.join(', ')}])`
+          : `validateContent (${messages.find((m) => m.startsWith(row.key)) || `${messages.length} error(s), door not named`})`;
+        ok(pass, `K15.${index + 1} [S1 door matrix] '${row.key}' missing — expected owner ${row.owner}; observed ${observed}`);
+      }
+      const external = results.filter((r) => r.owner === 'content-build');
+      const internal = results.filter((r) => r.owner === 'validateContent');
+      const passed = results.filter((r) => r.pass).length;
+      const externalPassed = external.filter((r) => r.pass).length;
+      const internalPassed = internal.filter((r) => r.pass).length;
+      ok(
+        passed === 8 && external.length === 6 && externalPassed === 6 && internal.length === 2 && internalPassed === 2 && cleanDoors.length === 0,
+        `K15 door-owner matrix totals: plants ${passed}/8; external ${externalPassed}/6; internal ${internalPassed}/2; clean ${cleanDoors.length === 0 ? 1 : 0}/1`,
+      );
     }
     {
       // K16 — Vira's D2: a real-named sprite NESTED inside sprites/ was
@@ -710,7 +759,7 @@ the matrix — 5 modes × 3 surfaces, every cell RUNS or says N/A BY NAME:
 
     printBoundary();
     if (bad) { console.error(`\ncontent-build --selftest: ${bad} check(s) failed.`); process.exit(1); }
-    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 20 known-bads red by name, 15/15 matrix cells accounted for.`);
+    console.log(`\ncontent-build --selftest: OK — baseline green, Add edge plays, 20 known-bad families red by name, K15 plants 8/8 + clean 1/1, 15/15 matrix cells accounted for.`);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -774,7 +823,7 @@ async function mutate() {
     }
     // M4 — a dangling id planted into a real encounter.
     {
-      const { contentBundle: mb } = await import(copyContent('m4', [['encounters/act1.js', "'wanderingSoldier'", "'wanderingSoldat'"]]));
+      const { contentBundle: mb } = await import(copyContent('m4', [['encounters/weald.js', "'wanderingSoldier'", "'wanderingSoldat'"]]));
       const r = G.validateContent(mb);
       const hit = (r.errors || []).map((e) => `${e.path}: ${e.msg}`).find((m) => m.includes('wanderingSoldat'));
       report(!r.ok && !!hit, 'M4', "encounter enemy id typo'd to 'wanderingSoldat' — must be named in the message", hit || 'validated clean');
@@ -826,6 +875,8 @@ if (SELFTEST) {
 } else if (MUTATE) {
   await mutate();
 } else {
+  const { checkAtlasBuild } = await import('./world-atlas-data.mjs');
+  await checkAtlasBuild();
   let r;
   try {
     r = compileDir(SRC, OUT, { write: !CHECK });

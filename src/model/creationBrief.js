@@ -5,8 +5,9 @@
 // selection , and then have the ability to expand by clicking, with tool tips.
 // for character creation I mean"
 //
-// THE FIX IS LESS PROSE, NOT BETTER PROSE. Every entry here has a FACE (name
-// and number, no sentence) and a REVEAL (the sentence, one tap down). The
+// THE FIX IS LAYERED PROSE, NOT A SECOND SET OF PROSE. Every entry here has a
+// FACE (name, the first authored sentence constrained to one line, and value)
+// and a REVEAL (the full sentence plus derived benefits, one tap down). The
 // vocabulary and the tier field are model/disclosure.js; this file is the one
 // place that composes them, so the creation screen and the F1 combat frame
 // cannot answer "what does a stat look like" two different ways.
@@ -50,23 +51,14 @@
 
 import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
-import { equipmentRequirementReceipt, equippedPieces, parseMod } from './loadout.js';
+import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
+import { orderedAttributes } from './attributes.js';
 
-/** `mods` → player-readable effect lines, through the modFields vocabulary. */
-function pieceEffects(registries, piece) {
-  const fields = (registries.equipment || {}).modFields || {};
-  return (piece.mods || []).map((raw) => {
-    const mod = parseMod(raw);
-    const spec = mod && fields[mod.field];
-    // A mod the vocabulary does not know is refused at the content door, so
-    // reaching here means the tables disagree — say the raw row rather than
-    // drop it silently. A visible oddity is a bug report; a dropped line is a
-    // screen that quietly under-describes a weapon.
-    if (!spec) return raw;
-    const sign = mod.mode === 'add' && mod.value >= 0 ? '+' : '';
-    return `${spec.label} ${sign}${mod.value}`;
-  });
-}
+/** `mods` → player-readable effect lines, through the modFields vocabulary.
+ *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
+ *  the two copies that made a third site print the raw row. The reasoning about
+ *  an unknown field, which was written here, moved with it. */
+const pieceEffects = (registries, piece) => modEffectLines(registries, piece);
 
 function requirementLines(registries, piece, attributes) {
   const receipt = equipmentRequirementReceipt(registries, piece, attributes);
@@ -139,36 +131,103 @@ function unlockLines(registries, attributeId) {
     .map((piece) => `${piece.name} asks ${piece.requirements.attributes[attributeId]}`);
 }
 
-function attributeEntries(registries, projection) {
+function foldedSummary(sense) {
+  const text = String(sense || '').trim();
+  const sentence = text.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim();
+  return sentence || text;
+}
+
+function equipmentScalingLines(registries, attributeId, profiles) {
+  const lines = new Set();
+  for (const [id, profile] of Object.entries(profiles || {})) {
+    if (!profile || profile.scalingStat !== attributeId) continue;
+    const source = (registries.equipment.basicCardProfiles || []).find((row) => row.id === id) || profile;
+    const role = source.role || profile.role;
+    const school = source.damageSchool || profile.damageSchool;
+    const label = role === 'guard'
+      ? 'Guard'
+      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}AR`;
+    lines.add(`${label} +${profile.gainPerTier} every ${profile.pointsPerTier} ${profile.pointsPerTier === 1 ? 'point' : 'points'}`);
+  }
+  return [...lines];
+}
+
+/**
+ * One attribute-card model for every authored attribute.
+ *
+ * `attributes` may be an in-progress allocation, so this door deliberately
+ * does not require a valid run. The optional projection only supplies a
+ * class-specific fallback for a rule whose gain is resolved at projection
+ * time; every authored label, sentence, rule and equipment gate still comes
+ * from its owning registry row.
+ */
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
-  return projection.attributes.map((def) => {
-    const feeds = Object.entries(rules)
+  const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  return orderedAttributes(registries).map((authored) => {
+    const def = { ...authored, value: attributes?.[authored.id] };
+    // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
+    // the fold's line and the face's summary are the same numbers — the rules
+    // are `registries.derivedStatRules`, the run's own derivation.
+    const feedFacts = Object.entries(rules)
       .filter(([, rule]) => rule.sourceStat === def.id)
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
         const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
         const points = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
-        const label = presentation[id].label;
         // A class-field gain (hp) is a different number per class, so it is
         // read off the projection's own receipt rather than restated here.
-        const perTier = gain == null
-          ? (projection.derived.find((row) => row.id === id) || {}).gainPerTier
-          : gain;
-        return `${label} +${perTier} every ${points} points`;
+        const perTier = gain == null ? projected.get(id)?.gainPerTier : gain;
+        return { label: presentation[id].label, perTier, points };
       });
     const unlocks = unlockLines(registries, def.id);
-    const lines = [...feeds, ...unlocks];
+    const scaling = equipmentScalingLines(registries, def.id, equipmentProfiles);
+    const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
+      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
+      : `${label} scales with ${def.label}`));
+    // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
+    // flavor text instead of useful information"). The flavour is still the
+    // fold's opening sentence — it is colour, and colour is not what a player
+    // choosing where to spend a level needs on the row itself.
+    // Each fact carries its OWN cadence, because they differ: HP every point
+    // and Stamina every five in the same row would read as one rate if the
+    // divisor sat at the end. `per N pts`, not `/N`, because a label may
+    // already hold a slash ("Actions / turn") and two would read as one rate.
+    const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
+    const faceFacts = feedFacts
+      .filter(({ perTier }) => Number.isFinite(perTier))
+      .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
+    // An attribute whose only reader is the equipment profile (Strength feeds
+    // attack scaling, not a derived stat) still has a fact to state — read from
+    // its own authored line rather than left to flavour.
+    // Two equipped profiles can scale off one attribute at DIFFERENT rates and
+    // carry the same label ("Physical AR" for a sword and a staff), so the
+    // face states each label once, at its most frequent gain — the fold below
+    // still lists every rate, which is where a player compares them.
+    const scalingFacts = faceFacts.length ? [] : [...scaling
+      .map((line) => line.match(/^(.*) \+(\d+) every (\d+) points?$/))
+      .filter(Boolean)
+      .reduce((best, [, label, gain, points]) => {
+        const seen = best.get(label);
+        if (!seen || Number(points) < seen.points) best.set(label, { gain: Number(gain), points: Number(points) });
+        return best;
+      }, new Map())]
+      .map(([label, { gain, points }]) => `+${gain} ${label} ${cadence(points)}`);
+    const stated = [...faceFacts, ...scalingFacts];
+    const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
+    const lines = [...feeds, ...scaling, ...unlocks];
     return {
       id: def.id,
       key: `attribute:${def.id}`,
       kind: 'attribute',
       disclosure: def.disclosure,
-      face: { label: def.shortLabel, value: def.value },
+      face: { label: def.shortLabel, summary: faceSummary, value: def.value },
       reveal: {
         title: def.label,
         sense: def.sense,
         lines: lines.length ? lines : ['Nothing reads it yet.'],
+        flavour: foldedSummary(def.sense),
         receipt: '',
       },
     };
@@ -202,7 +261,10 @@ function derivedEntries(projection) {
  */
 export function creationBrief(registries, run) {
   const projection = statProjection(registries, run);
-  const stats = [...attributeEntries(registries, projection), ...derivedEntries(projection)];
+  const stats = [...attributeCardModels(registries, run.attributes, {
+    projection,
+    equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+  }), ...derivedEntries(projection)];
   const relic = relicEntry(registries, run);
   const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : [])];
   const split = splitByDisclosure(stats);

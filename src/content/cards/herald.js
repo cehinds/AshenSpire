@@ -92,7 +92,7 @@ export const heraldCards = [
     // it. It belongs to this class and not to the Reaver or the Starseer for a
     // reason already in the data: insanityExposed raises `ritual`- and
     // `blight`-tagged damage, and those two tags are the Herald's
-    // (content/source/cardTagging.csv). A chant repeated until the mind gives
+    // (content/source/tagging.csv). A chant repeated until the mind gives
     // is the cheapest, slowest door in; 14 is deliberately the hardest
     // threshold to fill, so a common has to be able to start it.
     // Numbers PROVISIONAL, like the row's.

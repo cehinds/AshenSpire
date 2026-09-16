@@ -20,6 +20,15 @@ import { assetUrl } from './assetmap.js';
 // shared with ui/screens/settings.js.
 export const AUDIO_DEFAULTS = balance.ui.audio;
 
+/** Resolve the sparse music-only preference without deriving it from volume. */
+export function resolveMusicEnabled(settings = {}) {
+  return typeof settings.musicEnabled === 'boolean'
+    ? settings.musicEnabled
+    : typeof settings.muteMusic === 'boolean'
+      ? settings.muteMusic !== true
+    : AUDIO_DEFAULTS.musicEnabled !== false;
+}
+
 // Contexts that can be backed by external audio files. A manifest maps each to
 // a list of file paths (see configureMusic); missing/failed loads fall back to
 // the procedural bed above.
@@ -45,6 +54,7 @@ export function initAudio(settings = {}) {
     musicVol: clampVol(settings.musicVolume, AUDIO_DEFAULTS.musicVolume),
     sfxVol: clampVol(settings.sfxVolume, AUDIO_DEFAULTS.sfxVolume),
     muted: settings.muteAudio === true,
+    musicEnabled: resolveMusicEnabled(settings),
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
@@ -93,7 +103,16 @@ export function initAudio(settings = {}) {
   // title screen is tapped before any hold exists, so that window is normally
   // already closed — `?shot=` boots are where it is not.
   function resume() {
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state === 'running') return;
+    // Before the browser has counted a gesture, every resume() is refused and
+    // logged ("The AudioContext was not allowed to start") — and every cue on
+    // the title screen used to ask again. `userActivation` is the browser's
+    // own answer to "has a gesture been counted yet"; where it exists, ask
+    // only once it says yes. The lift-event listeners above guarantee the
+    // first counted gesture still reaches here.
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+    if (ctx.state === 'suspended' || ctx.state === 'interrupted') ctx.resume().catch(() => {});
+    if (state.mediaEl?.paused && state.musicEnabled && !state.muted) state.mediaEl.play()?.catch(() => {});
   }
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach((ev) =>
     addEventListener(ev, resume, { once: false, capture: true })
@@ -405,7 +424,7 @@ export function initAudio(settings = {}) {
   // the word a human typed in BEDS) | 'unknown' (a context with no bed — the
   // bug shape, warned loud) | 'muted' | 'unchanged'. Callers may ignore it.
   function music(context) {
-    if (state.context === context) return 'unchanged';
+    if (state.context === context && state.musicEnabled) return 'unchanged';
     state.context = context;
     stopMusic();
     const bed = own(BEDS, context);
@@ -416,6 +435,7 @@ export function initAudio(settings = {}) {
       console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
       return 'unknown';
     }
+    if (!state.musicEnabled) return 'disabled';
     if (state.muted) return 'muted';
     resume();
     // Prefer an external track for this context if the folder provided any —
@@ -435,6 +455,7 @@ export function initAudio(settings = {}) {
   // plays, the silence word stays quiet. Without this guard the word itself
   // would have been handed to playProcedural as if it were a bed object.
   function proceduralFallback(context) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.
     const bed = own(BEDS, context);
     if (bed && bed !== MUSIC_SILENCE_WORD) playProcedural(context, bed);
   }
@@ -449,6 +470,7 @@ export function initAudio(settings = {}) {
   // handed in rather than looked up again — the caller already resolved it,
   // and resolving it twice is how two readers of one number get born.
   function playExternal(context, urls, bed) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return;
     const url = pickRandom(urls);
     let el;
     try {
@@ -464,10 +486,10 @@ export function initAudio(settings = {}) {
       return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
-      if (state.context === context) playExternal(context, urls, bed);
+      if (state.musicEnabled && !state.muted && state.context === context) playExternal(context, urls, bed);
     });
     el.addEventListener('error', () => {
-      if (state.context === context) {
+      if (state.musicEnabled && !state.muted && state.context === context) {
         state.mediaEl = null;
         proceduralFallback(context);
       }
@@ -478,6 +500,7 @@ export function initAudio(settings = {}) {
   }
 
   function playProcedural(context, bed) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.
     const variant = pickRandom(bed.variants);
     // Every voice below carries its own RAW peak and meets the bed's level at
     // one shared stage — see bedGain().
@@ -576,7 +599,7 @@ export function initAudio(settings = {}) {
       }
     }
     // Re-trigger the current context so the new source is used immediately.
-    if (state.context && !state.muted) {
+    if (state.context && state.musicEnabled && !state.muted) {
       const c = state.context;
       state.context = null;
       music(c);
@@ -623,13 +646,19 @@ export function initAudio(settings = {}) {
   }
 
   // ---- settings applied live ----------------------------------------------
-  function setVolumes({ musicVolume, sfxVolume, muteAudio } = {}) {
+  function setVolumes({ musicEnabled, musicVolume, sfxVolume, muteAudio } = {}) {
+    const wasMusicEnabled = state.musicEnabled;
+    const wasMuted = state.muted;
+    if (musicEnabled != null) state.musicEnabled = typeof musicEnabled === 'boolean'
+      ? musicEnabled
+      : AUDIO_DEFAULTS.musicEnabled !== false;
     if (musicVolume != null) state.musicVol = clampVol(musicVolume, state.musicVol);
     if (sfxVolume != null) state.sfxVol = clampVol(sfxVolume, state.sfxVol);
     if (muteAudio != null) state.muted = !!muteAudio;
     applyGains();
-    if (state.muted) stopMusic(0.3);
-    else if (state.context) {
+    resume();
+    if (state.muted || !state.musicEnabled) stopMusic(0.3);
+    else if (state.context && (!wasMusicEnabled || wasMuted !== state.muted)) {
       const c = state.context;
       state.context = null;
       music(c);

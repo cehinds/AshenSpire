@@ -243,11 +243,18 @@ const READ = `(() => {
       + (parseFloat(frameStyle.borderTopWidth) || 0)
       + (parseFloat(frameStyle.borderBottomWidth) || 0) : 0;
     const frameBackground = frameStyle ? frameStyle.backgroundColor : '';
+    const frameTransparent = frameBackground === 'transparent' || frameBackground.endsWith(', 0)');
     const framePainted = !!frameStyle && frameBorder > 0
-      || !!frameStyle && !(/transparent|\/\s*0\)?$/.test(frameBackground));
+      || !!frameStyle && !frameTransparent;
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
+    const unitStyle = unitEl ? getComputedStyle(unitEl) : null;
+    const unitBorder = unitStyle ? (parseFloat(unitStyle.borderLeftWidth) || 0) + (parseFloat(unitStyle.borderRightWidth) || 0)
+      + (parseFloat(unitStyle.borderTopWidth) || 0) + (parseFloat(unitStyle.borderBottomWidth) || 0) : 0;
+    const unitBackground = unitStyle ? unitStyle.backgroundColor : '';
+    const unitPainted = !!unitStyle && (unitBorder > 0 || !(unitBackground === 'transparent' || unitBackground.endsWith(', 0)')));
     bars.push({
+      unitPainted, unitBorder: unitStyle ? unitStyle.border : '', unitBackground,
       id: el.dataset.res || null,
       cur: el.dataset.cur == null ? null : Number(el.dataset.cur),
       max: el.dataset.max == null ? null : Number(el.dataset.max),
@@ -278,7 +285,21 @@ const READ = `(() => {
       width: b.width, height: b.height, center: (b.left + b.right) / 2,
       cinders: el.querySelectorAll('.hud-cinders').length,
       floor: el.querySelectorAll('.hud-floor').length,
+      className: el.querySelectorAll('.hud-class').length,
     } : null;
+  };
+  const metadataField = (selector) => {
+    const host = document.querySelector('.topbar .hud-top .hud-run-meta');
+    const el = document.querySelector(selector);
+    if (!host || !el) return { present: false, visible: false };
+    const hb = host.getBoundingClientRect();
+    const b = el.getBoundingClientRect();
+    return {
+      present: true,
+      visible: getComputedStyle(el).display !== 'none' && b.width > 0 && b.height > 0
+        && b.left >= hb.left - 1 && b.right <= hb.right + 1 && b.left >= -1 && b.right <= innerWidth + 1,
+      left: b.left, right: b.right, hostLeft: hb.left, hostRight: hb.right,
+    };
   };
   return {
     bars,
@@ -294,11 +315,19 @@ const READ = `(() => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
     }),
+    identityMeta: receiptBox('.topbar .hud-top .hud-identity'),
     centerMeta: receiptBox('.topbar .hud-top .hud-center'),
     runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
+    runMetaFields: {
+      act: metadataField('.topbar .hud-top .hud-act'),
+      floor: metadataField('.topbar .hud-top .hud-floor'),
+      build: metadataField('.topbar .hud-top .build-number'),
+      source: metadataField('.topbar .hud-top .build-source'),
+    },
     receiptTotals: {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
+      className: document.querySelectorAll('.topbar .hud-top .hud-class').length,
     },
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
@@ -370,17 +399,23 @@ function p8ReceiptFindings(read) {
   const findings = [];
   const center = read.centerMeta;
   const right = read.runMeta;
-  const totals = read.receiptTotals || { cinders: 0, floor: 0 };
+  const left = read.identityMeta;
+  const totals = read.receiptTotals || { cinders: 0, floor: 0, className: 0 };
   if (totals.cinders !== 1) findings.push(`cinders-count=${totals.cinders}`);
-  else if (!center || center.cinders !== 1 || center.floor !== 0 || !right || right.cinders !== 0) {
+  else if (!center || center.cinders !== 1 || center.floor !== 0 || center.className !== 0
+      || !right || right.cinders !== 0 || !left || left.cinders !== 0) {
     findings.push(`cinders-placement center=${center ? `${center.cinders}/${center.floor}` : 'MISSING'} right=${right ? right.cinders : 'MISSING'}`);
   }
   if (center && Math.abs(center.center - read.vp.w / 2) > 1) {
     findings.push(`cinders-centre=${center.center.toFixed(2)} viewport=${(read.vp.w / 2).toFixed(2)}`);
   }
   if (totals.floor !== 1) findings.push(`floor-count=${totals.floor}`);
-  else if (!right || right.floor !== 1 || right.cinders !== 0 || !center || center.floor !== 0) {
-    findings.push(`floor-placement center=${center ? center.floor : 'MISSING'} right=${right ? `${right.floor}/${right.cinders}` : 'MISSING'}`);
+  else if (!right || right.floor !== 1 || center?.floor !== 0 || left?.floor !== 0) {
+    findings.push(`floor-placement left=${left?.floor ?? 'MISSING'} center=${center?.floor ?? 'MISSING'} right=${right?.floor ?? 'MISSING'}`);
+  }
+  if (totals.className !== 1) findings.push(`class-count=${totals.className}`);
+  else if (!left || left.className !== 1 || center?.className !== 0 || right?.className !== 0) {
+    findings.push(`class-placement left=${left?.className ?? 'MISSING'} center=${center?.className ?? 'MISSING'} right=${right?.className ?? 'MISSING'}`);
   }
   return findings;
 }
@@ -397,8 +432,8 @@ function judgeCell(cell, mapR, comR, refTable) {
     return;
   }
 
-  // P8 SHARED TOP-ROW COMPOSITION — Cinders alone owns the true centre; Floor
-  // owns the right metadata, and visible resource cards must not overlap it.
+  // P8 SHARED TOP-ROW COMPOSITION — Class left, Cinders in the true centre,
+  // Act/Floor right; visible resource cards must not overlap the centre.
   // Shared-shell width authority belongs to hud-potion-followup's config and
   // applied-geometry receipts; duplicating that verdict here made the gates
   // disagree after the approved 82-percent design replaced the old host cap.
@@ -406,9 +441,16 @@ function judgeCell(cell, mapR, comR, refTable) {
     const receiptFindings = p8ReceiptFindings(read);
     const centreMiss = read.centerMeta ? Math.abs(read.centerMeta.center - read.vp.w / 2) : Infinity;
     if (receiptFindings.length) {
-      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred and exactly one Floor receipt must live in right metadata.`);
+      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} left=${JSON.stringify(read.identityMeta)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Class must be left, Cinders centred, and Floor right.`);
     } else {
-      ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
+      ok(`P8/top-row ${cell} ${screen} — Class left, Cinders centred (miss ${centreMiss.toFixed(2)} px), Floor right`);
+    }
+    const fields = read.runMetaFields || {};
+    const visibleMeta = Object.entries(fields).filter(([, field]) => field?.visible).map(([name]) => name);
+    if (JSON.stringify(visibleMeta) !== JSON.stringify(['act', 'floor'])) {
+      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} visible=${JSON.stringify(visibleMeta)} — Act and Floor must be visible; Build and Source must remain absent.`);
+    } else {
+      ok(`P8/metadata-priority ${cell} ${screen} — Act and Floor visible; Build and Source absent`);
     }
     const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
@@ -553,18 +595,18 @@ function judgeCell(cell, mapR, comR, refTable) {
       }
     }
 
-    // P7 INVISIBLE REFERENCE FRAME — the reference frame may remain in the DOM
-    // for measurement, but the shared Vitals design does not paint a card around
-    // the longest resource. The trough and label remain the visible geometry.
+    // P7 NO PAINTED CARD — the shared Vitals design does not paint a card
+    // around the longest resource: the trough and label are the visible
+    // geometry. Since the kit sweep (2026-09-04) the unit is the kit Meter and
+    // carries no reference frame at all; a frame that IS present (an older
+    // renderer) must be invisible, and the unit itself must not paint a box.
     for (const [who, b] of [['map', m], ['combat', c]]) {
-      if (!b.frame) {
-        fail(`FINDING P7/card ${tag} ${who} — no .rescard-frame; the full reference track is still the visible bordered card.`);
-        continue;
-      }
-      if (b.frame.painted) {
+      if (b.unitPainted) {
+        fail(`FINDING P7/card ${tag} ${who} — the resource unit paints a card (${b.unitBorder} ${b.unitBackground}); the trough and label are the visible geometry.`);
+      } else if (b.frame && b.frame.painted) {
         fail(`FINDING P7/card ${tag} ${who} — .rescard-frame still paints ${b.frame.border} ${b.frame.background}; the Vitals reference frame must be invisible.`);
       } else {
-        ok(`P7/card ${tag} ${who} — reference frame retained for measurement but transparent and borderless`);
+        ok(`P7/card ${tag} ${who} — no painted card around the trough${b.frame ? ' (reference frame retained, transparent)' : ''}`);
       }
     }
     if (readable) ok(`P2B/readable ${tag} — both asks are plain percentages`);
@@ -733,7 +775,7 @@ async function main() {
 
       const ev = async (e) => {
         const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
-        if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
+        if (r.exceptionDetails) throw new Error(`${r.exceptionDetails.exception?.description || 'threw'} at ${r.exceptionDetails.lineNumber}:${r.exceptionDetails.columnNumber}`);
         return r.result.value;
       };
       // A HARD BOUND ON EVERY WAIT. A screen that never mounts is a finding, not
@@ -850,9 +892,10 @@ function closeServer(s) {
 function p8Selftest() {
   const clean = () => ({
     vp: { w: 1000, h: 700 },
-    centerMeta: { left: 480, right: 520, top: 10, bottom: 40, width: 40, height: 30, center: 500, cinders: 1, floor: 0 },
-    runMeta: { left: 760, right: 990, top: 10, bottom: 40, width: 230, height: 30, center: 875, cinders: 0, floor: 1 },
-    receiptTotals: { cinders: 1, floor: 1 },
+    identityMeta: { left: 10, right: 160, top: 10, bottom: 40, width: 150, height: 30, center: 85, cinders: 0, floor: 0, className: 1 },
+    centerMeta: { left: 480, right: 520, top: 10, bottom: 40, width: 40, height: 30, center: 500, cinders: 1, floor: 0, className: 0 },
+    runMeta: { left: 760, right: 990, top: 10, bottom: 40, width: 230, height: 30, center: 875, cinders: 0, floor: 1, className: 0 },
+    receiptTotals: { cinders: 1, floor: 1, className: 1 },
   });
   const plants = [
     ['missing Cinders', 'cinders-count=0', (r) => { r.centerMeta.cinders = 0; r.receiptTotals.cinders = 0; }],
@@ -861,6 +904,8 @@ function p8Selftest() {
     ['Cinders container moved off centre', 'cinders-centre', (r) => { r.centerMeta.center = 540; }],
     ['missing Floor', 'floor-count=0', (r) => { r.runMeta.floor = 0; r.receiptTotals.floor = 0; }],
     ['Floor moved into the centre', 'floor-placement', (r) => { r.runMeta.floor = 0; r.centerMeta.floor = 1; }],
+    ['missing Class', 'class-count=0', (r) => { r.identityMeta.className = 0; r.receiptTotals.className = 0; }],
+    ['Class moved into the centre', 'class-placement', (r) => { r.identityMeta.className = 0; r.centerMeta.className = 1; }],
   ];
   let failed = 0;
   const cleanFindings = p8ReceiptFindings(clean());
@@ -905,39 +950,80 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .*cinders-centre=/,
     },
     {
+      // #498: all five hudmeta plants died when the monolithic HUD template was
+      // split into component builders (cindersCounterHtml, buildMetadataTrailHtml).
+      // Same intents, re-pointed at the builders' own emit lines.
+      // AND ONE LAYER DOWN AGAIN, 2026-09: the builders now compose kit atoms, so
+      // there is no `<span class="hud-cinders">` string left to patch — there is a
+      // Chip-shaped el() call carrying that hook. Same five intents once more.
+      // Duplication is planted as a NESTED hook rather than a second sibling,
+      // because the tool counts with querySelectorAll over the top row: a second
+      // `.hud-cinders` inside the first is two receipts by exactly the measure the
+      // assertion uses, and it cannot desynchronise from the builder's arity.
       name: 'the shared HUD drops Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>',
-      replace: '          <!-- Cinders removed by plant -->',
+      find: "el('span', { class: 'as-chip hud-cinders' }",
+      replace: "el('span', { class: 'as-chip cinders-removed-by-plant' }",
       expectRed: /FINDING P8\/top-row .*cinders-count=0/,
     },
     {
       name: 'the shared HUD duplicates Cinders',
       file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>',
-      replace: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span><span class="hud-cinders">⛁ ${esc(cinders)}</span>',
+      find: "el(\'span\', { class: \'ck\', text: model.properties.label })",
+      replace: "el(\'span\', { class: \'as-chip hud-cinders\', text: model.properties.label })",
       expectRed: /FINDING P8\/top-row .*cinders-count=2/,
     },
     {
+      // The centre and the right metadata are separate builders, so this needs
+      // one edit in each: the centre loses the class, something in the trail
+      // gains it. Two edits and not one, because a single edit would leave
+      // `cinders-count=0` and fire the WRONG finding — the rule under test here
+      // is placement with the count intact.
+      //
       name: 'Cinders moves from the centre into right metadata',
-      file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>',
-      replace: '          <span>⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act hud-cinders">${esc(actText)}</span>',
+      edits: [{
+        file: 'src/ui/components/hudmeta.js',
+        find: "el('span', { class: 'as-chip hud-cinders' }",
+        replace: "el('span', { class: 'as-chip' }",
+      }, {
+        file: 'src/ui/components/hudmeta.js',
+        find: "class: 'hud-run-meta as-statstrip trail', 'aria-label': model.properties.label",
+        replace: "class: 'hud-run-meta as-statstrip trail hud-cinders', 'aria-label': model.properties.label",
+      }],
       expectRed: /FINDING P8\/top-row .*cinders-placement/,
     },
     {
-      name: 'the shared HUD drops Floor',
-      file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-floor">${esc(floorText)}</span>',
-      replace: '          <!-- Floor removed by plant -->',
-      expectRed: /FINDING P8\/top-row .*floor-count=0/,
+      name: 'the Floor receipt moves into the centred Cinders track',
+      edits: [{
+        file: 'src/ui/components/hudmeta.js',
+        find: 'class: `as-chip hud-${model.variant}`',
+        replace: 'class: `as-chip metadata-${model.variant}`',
+      }, {
+        file: 'src/ui/components/hudmeta.js',
+        find: "el('span', { class: 'ck', text: model.properties.label })",
+        replace: "el('span', { class: 'ck hud-floor', text: model.properties.label })",
+      }],
+      expectRed: /FINDING P8\/top-row .*floor-placement/,
     },
     {
-      name: 'Floor moves from right metadata into the centre',
+      name: 'the shared HUD drops Class',
       file: 'src/ui/components/hudmeta.js',
-      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>\n          <span class="hud-floor">${esc(floorText)}</span>',
-      replace: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n          <span class="hud-floor">${esc(floorText)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>',
-      expectRed: /FINDING P8\/top-row .*floor-placement/,
+      find: "class: 'as-chip hud-class'",
+      replace: "class: 'as-chip class-removed-by-plant'",
+      expectRed: /FINDING P8\/top-row .*class-count=0/,
+    },
+    {
+      name: 'Class moves from the left into the centred Cinders track',
+      edits: [{
+        file: 'src/ui/components/hudmeta.js',
+        find: "class: 'as-chip hud-class'",
+        replace: "class: 'as-chip'",
+      }, {
+        file: 'src/ui/components/hudmeta.js',
+        find: "el('span', { class: 'ck', text: model.properties.label })",
+        replace: "el('span', { class: 'ck hud-class', text: model.properties.label })",
+      }],
+      expectRed: /FINDING P8\/top-row .*class-placement/,
     },
     {
       // The centre can remain mathematically exact while visible resource ink
@@ -955,8 +1041,8 @@ async function selftest() {
       // hand-written health bar. The host now lives in hudmeta.js; map.js owns
       // the current seam where content is mounted into it.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
-      file: 'src/ui/screens/map.js',
-      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      file: 'src/ui/components/runHud.js',
+      find: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
       replace: "    resHost.innerHTML = '<div class=\"bar hpbar\"><div class=\"fill\" style=\"width:50%\"></div><div class=\"label\">HP</div></div>';",
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
     },
@@ -969,12 +1055,11 @@ async function selftest() {
       expectRed: /FINDING P1\/rows .*missing-from-map=\["poise"\]/,
     },
     {
-      // The reference track may remain full width only if it is invisible.
-      name: 'the visible card frame is removed, exposing the full reference track',
-      file: 'src/ui/components/resbars.js',
-      find: '  unit.appendChild(frame);',
-      replace: '  /* card frame removed by plant */',
-      expectRed: /FINDING P7\/card .*no \.rescard-frame/,
+      // The unit may not paint a card around the trough.
+      name: 'the resource unit paints a bordered card again',
+      file: 'styles/kit.css',
+      append: '.as-meter.resunit { background: #120f0c; border: 1px solid #4c3b1f; }',
+      expectRed: /FINDING P7\/card .*paints a card/,
     },
     {
       // MP and SP must not silently return to their former horizontal band.
@@ -996,9 +1081,9 @@ async function selftest() {
       // A SECOND COPY OF THE SHARED RENDERER. Membership-only comparison used
       // to print this literal doubled HUD inside its own green P1 line.
       name: 'the map mounts the shared resource HUD twice',
-      file: 'src/ui/screens/map.js',
-      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
-      replace: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));\n    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      file: 'src/ui/components/runHud.js',
+      find: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
+      replace: "    resHost.appendChild(resourceBars(plan, { surface: 'main' }));\n    resHost.appendChild(resourceBars(plan, { surface: 'main' }));",
       expectRed: /FINDING P1\/rows .*duplicates map=/,
     },
     {
@@ -1016,7 +1101,7 @@ async function selftest() {
       // THE DEFECT CLASS E9 EXISTS TO KILL and it is invisible to plant 1's
       // check: the map is using the shared component, and lying anyway.
       name: 'the map uses the shared renderer against its OWN ceiling (100 % everywhere)',
-      file: 'src/ui/screens/map.js',
+      file: 'src/ui/components/runHud.js',
       find: "resourceBarPlan(registries, 'main', run, run, resourceDomains(registries))",
       replace: "resourceBarPlan(registries, 'main', run, run, null)",
       expectRed: /FINDING P2\/same-ask .*trough map=/,
@@ -1045,9 +1130,16 @@ async function selftest() {
       // 5 — AN ABSOLUTE FLOOR OVERRIDES THE PERCENTAGE. This is the pre-decision
       // shape that collapsed several maxima to the same 16 px trough.
       name: 'an absolute minimum width overrides the requested percentage',
-      file: 'styles/combat.css',
-      find: '  min-width: 0;\n}\n.resbar > .fill',
-      replace: '  min-width: 16px;\n}\n.resbar > .fill',
+      // The trough is the kit Meter's track now (styles/kit.css § METER), wearing
+      // `.resbar` as the hook this tool reads, so the pre-decision shape is the
+      // same one line appended on the element P4 measures. Two wrong aims,
+      // both observed: `.m-fill` reds P5/ink and not P4 (the fill is not the
+      // trough), and `.resbar` alone stays GREEN — one class cannot out-specify
+      // the kit's own `.as-meter .m-track { min-width: 0 }`, so the plant never
+      // reached the cascade. It is written at the kit's own specificity, later
+      // in the same file, which is how a real regression would arrive.
+      file: 'styles/kit.css',
+      append: '\n.as-meter .m-track { min-width: 16px; }\n',
       expectRed: /FINDING P4\/percentage .*min-width=16px/,
     },
     {
@@ -1081,9 +1173,9 @@ async function selftest() {
       // no bars at all. A check that only hunts for mismatches finds none here
       // and reports green over a screen with no HUD on it.
       name: 'the map HUD host is never found, so the map draws no bars (the empty edge)',
-      file: 'src/ui/screens/map.js',
-      find: "const resHost = app.querySelector('.map-header .resbars-host');",
-      replace: "const resHost = app.querySelector('.map-header .resbars-host-gone');",
+      file: 'src/ui/components/runHud.js',
+      find: "const resHost = hud.querySelector('.resbars-host');",
+      replace: "const resHost = hud.querySelector('.resbars-host-gone');",
       expectRed: /FINDING P0\/population .*rendered NO main-HUD bars|FINDING P0\/population .*mapBars=0/,
     },
     {

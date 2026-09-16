@@ -4,6 +4,12 @@
 // Act II escalates: bigger numbers, self-healing, and the first enemies that
 // turn YOUR mechanics against you (Bleed and Blight applied to the player —
 // the status model is entity-agnostic, so player-side meters just work).
+//
+// Creature tags (beast / humanoid / undead / construct / spirit) are NOT a field
+// here any more. They are rows in content/source/tagging.csv, family `enemy`,
+// against the one tag registry, and model/registries.js stamps them onto the
+// def at boot — so `enemy.tags` still reads the same at runtime, and the proc
+// resistance gate is unchanged. Retagging a creature is a spreadsheet row.
 
 export const act2Enemies = [
   {
@@ -13,7 +19,7 @@ export const act2Enemies = [
     name: 'Gilded Knight',
     hp: [42, 46],
     poiseMax: 18,
-    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 6, max: 9 },
     art: '♞',
     moves: {
       thrust: { intent: 'attack', damage: 11, weight: 50, maxConsecutive: 2 },
@@ -31,7 +37,7 @@ export const act2Enemies = [
     name: 'Court Surgeon',
     hp: [30, 34],
     poiseMax: 10,
-    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 6, max: 9 },
     art: '⚕',
     moves: {
       scalpel: { intent: 'attack', damage: 7, weight: 40 },
@@ -55,8 +61,12 @@ export const act2Enemies = [
     name: 'Stitched Hound',
     hp: [24, 28],
     poiseMax: 8,
-    tags: ['undead', 'beast'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 6, max: 8 },
     art: '🐩',
+    // Drawn in profile looking LEFT, which is where an enemy looks: the player's
+    // zone is to its left (assets.js SIDE_FACES), so this one is NOT mirrored
+    // and ships as painted. Read off the sprite, not assumed.
+    artFaces: 'left',
     moves: {
       maul: { intent: 'attack', damage: 4, hits: 2, weight: 60 },
       rend: {
@@ -73,7 +83,7 @@ export const act2Enemies = [
     name: 'Court Marionette',
     hp: [16, 18],
     poiseMax: 6,
-    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 6, max: 9 },
     art: '🪆',
     moves: {
       dart: { intent: 'attack', damage: 4, hits: 2, weight: 50 },
@@ -90,7 +100,7 @@ export const act2Enemies = [
     name: 'Living Armor',
     hp: [36, 40],
     poiseMax: 22,
-    tags: ['construct'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 7, max: 10 },
     art: '🛡',
     moves: {
       slam: { intent: 'attack', damage: 10, weight: 30 },
@@ -118,7 +128,7 @@ export const act2Enemies = [
     name: 'Duelist of the Court',
     hp: [90, 96],
     poiseMax: 26,
-    tags: ['humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 10, max: 11 },
     art: '🤺',
     firstMove: 'enGarde',
     moves: {
@@ -140,7 +150,7 @@ export const act2Enemies = [
     name: 'The Stitched King',
     hp: [195, 195],
     poiseMax: 34,
-    tags: ['undead', 'humanoid'], // PROVISIONAL creature tags (#61) — gates proc resistance
+    levelProfile: { min: 11, max: 12 },
     art: '👑',
     firstMove: 'courtlyDecree',
     moves: {
@@ -163,5 +173,240 @@ export const act2Enemies = [
         unlockMoves: ['thousandHands'],
       },
     ],
+  },
+
+  // Expanded destinations: authored weighted moves use the existing phase and delay engine.
+  {
+    "id": "mirrorScribe",
+    "name": "Mirror Scribe",
+    "size": "medium",
+    "hp": [
+      28,
+      32
+    ],
+    "poiseMax": 8,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "silverScript": {
+        "intent": "debuff",
+        "weight": 30,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "addCard",
+            "card": "dazed",
+            "pile": "discard"
+          }
+        ]
+      },
+      "shardVolley": {
+        "intent": "attack",
+        "damage": 3,
+        "weight": 50,
+        "hits": 3
+      },
+      "polishedWard": {
+        "intent": "block",
+        "block": 6,
+        "weight": 20,
+        "maxConsecutive": 1
+      }
+    }
+  },
+  {
+    "id": "stitchCrab",
+    "name": "Stitch Crab",
+    "size": "small",
+    "hp": [
+      32,
+      36
+    ],
+    "poiseMax": 17,
+    "levelProfile": {
+      "min": 7,
+      "max": 10
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "shellFold": {
+        "intent": "block",
+        "block": 11,
+        "weight": 30,
+        "maxConsecutive": 1
+      },
+      "seamShears": {
+        "intent": "attack",
+        "damage": 4,
+        "weight": 45,
+        "hits": 2,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "bleed",
+            "stacks": 1
+          }
+        ]
+      },
+      "scuttleRush": {
+        "intent": "attack",
+        "damage": 13,
+        "weight": 25,
+        "maxConsecutive": 1
+      }
+    },
+    "firstMove": "shellFold"
+  },
+  {
+    "id": "glassRegent",
+    "name": "The Glass Regent",
+    "size": "large",
+    "hp": [
+      180,
+      180
+    ],
+    "poiseMax": 26,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "prismGuard": {
+        "intent": "block",
+        "block": 16,
+        "weight": 25,
+        "maxConsecutive": 1
+      },
+      "crystalRapier": {
+        "intent": "attack",
+        "damage": 15,
+        "weight": 45,
+        "maxConsecutive": 2
+      },
+      "splinterRain": {
+        "intent": "attack",
+        "damage": 6,
+        "weight": 30,
+        "hits": 3,
+        "maxConsecutive": 1
+      },
+      "shatteredCourt": {
+        "intent": "attack",
+        "damage": 7,
+        "weight": 35,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 0
+          }
+        },
+        "hits": 5,
+        "locked": true
+      }
+    },
+    "firstMove": "prismGuard",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 50,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 4
+          }
+        ],
+        "unlockMoves": [
+          "shatteredCourt"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "marrowOrganist",
+    "name": "The Marrow Organist",
+    "size": "large",
+    "hp": [
+      190,
+      190
+    ],
+    "poiseMax": 30,
+    "levelProfile": {
+      "min": 11,
+      "max": 12
+    },
+    "art": "◆",
+    "artFaces": "left",
+    "moves": {
+      "bonePrelude": {
+        "intent": "debuff",
+        "weight": 20,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "applyStatus",
+            "target": "player",
+            "status": "weak",
+            "stacks": 1
+          }
+        ]
+      },
+      "ivoryKeys": {
+        "intent": "attack",
+        "damage": 8,
+        "weight": 40,
+        "hits": 3,
+        "maxConsecutive": 2
+      },
+      "funeralChord": {
+        "intent": "attack",
+        "damage": 28,
+        "weight": 25,
+        "maxConsecutive": 1,
+        "delay": {
+          "turns": 1,
+          "whileCharging": {
+            "block": 5
+          }
+        }
+      },
+      "quietRefrain": {
+        "intent": "buff",
+        "weight": 15,
+        "maxConsecutive": 1,
+        "effects": [
+          {
+            "op": "heal",
+            "target": "self",
+            "amount": 7
+          }
+        ]
+      }
+    },
+    "firstMove": "bonePrelude",
+    "phases": [
+      {
+        "on": "hpBelowPct",
+        "pct": 35,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "self",
+            "status": "strength",
+            "stacks": 6
+          }
+        ]
+      }
+    ]
   },
 ];

@@ -83,8 +83,11 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the threshold-0 refusal is dropped — an empty vessel is stamped instead of absent',
         file: 'src/model/state.js',
-        find: 'poiseMax = 0 })',
-        replace: 'poiseMax = 1 })',
+        // #498: the find was the tail of the old signature, and the plant died
+        // when the signature gained damageBySchoolAdd after poiseMax. Anchored
+        // to the parameter pair now, which stays unique if the tail grows again.
+        find: 'poiseMax = 0, damageBySchoolAdd',
+        replace: 'poiseMax = 1, damageBySchoolAdd',
         expectRed: /FAIL\s+the player entity stamps a real-but-empty vessel/,
       },
     ],

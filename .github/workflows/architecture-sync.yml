@@ -1,0 +1,52 @@
+name: architecture-sync
+
+on:
+  push:
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: architecture-sync-dev
+  cancel-in-progress: true
+
+# The routine commits only the generated current-dev inventory. The core
+# architecture contracts are intentionally outside its write set.
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.ref_name == 'dev' && (github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[architecture-sync]'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the merged dev tree
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Refresh and verify the architecture inventory
+        env:
+          ARCHITECTURE_SOURCE_SHA: ${{ github.sha }}
+          ARCHITECTURE_SOURCE_REF: ${{ github.ref_name }}
+        run: node tools/update-architecture.mjs --verify
+
+      - name: Commit only the generated current-dev snapshot
+        shell: bash
+        run: |
+          if git diff --quiet -- docs/ARCHITECTURE-CURRENT-DEV.md; then
+            echo "Architecture snapshot already current."
+            exit 0
+          fi
+          if ! git diff --quiet -- docs/ARCHITECTURE-MAP.md docs/COMPONENT-MODEL-ARCHITECTURE.md; then
+            echo "Core architecture contracts changed during the refresh; refusing automatic update."
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/ARCHITECTURE-CURRENT-DEV.md
+          git diff --cached --name-only
+          git commit -m "docs: refresh current-dev architecture [architecture-sync]"
+          git push origin HEAD:dev

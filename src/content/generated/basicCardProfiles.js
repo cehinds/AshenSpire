@@ -16,8 +16,25 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "basic",
     "flavor": "A last resort, still yours.",
+    "mods": "",
+    "compatibility": "attack-v1"
+  },
+  {
+    "id": "shieldAttack",
+    "role": "attack",
+    "baseCardId": "strike",
+    "displayName": "Shield Strike",
+    "icon": "🛡",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0,
+    "baseValue": 2,
+    "scalingStat": "strength",
+    "pointsPerTier": 5,
+    "rounding": "floor",
+    "gainPerTier": 1,
+    "cap": "",
+    "flavor": "A short iron answer when no main-hand weapon is ready.",
     "mods": "",
     "compatibility": "attack-v1"
   },
@@ -35,7 +52,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "blade",
     "flavor": "Steel gives the motion its name.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -54,10 +70,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": [
-      "pierce",
-      "flourish"
-    ],
     "flavor": "Two precise openings in one breath.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -76,11 +88,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": [
-      "pierce",
-      "ranged",
-      "precision"
-    ],
     "flavor": "Distance is presentation; the point still lands.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -99,7 +106,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "starstone",
     "flavor": "Ash carries a small cold light.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -118,10 +124,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": [
-      "ritual",
-      "blight"
-    ],
     "flavor": "The sceptre answers in a darker tongue.",
     "mods": "",
     "compatibility": "attack-v1"
@@ -129,9 +131,9 @@ export const basicCardProfiles = [
   {
     "id": "unarmedGuard",
     "role": "guard",
-    "baseCardId": "defend",
-    "displayName": "Defend",
-    "icon": "🛡",
+    "baseCardId": "evasiveGuard",
+    "displayName": "Evasive Guard",
+    "icon": "🌀",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "baseValue": 1,
@@ -140,8 +142,7 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
-    "flavor": "Brace with what you have.",
+    "flavor": "Nothing in your hands but the ground under your feet.",
     "mods": "",
     "compatibility": "guard-v1"
   },
@@ -159,7 +160,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
     "flavor": "Turn the haft and weather the blow.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -178,7 +178,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "guard",
     "flavor": "Meet the blow on carried iron.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -197,7 +196,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "starstone",
     "flavor": "A thin ward drawn through the focus.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -216,7 +214,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 1,
     "cap": "",
-    "tags": "ritual",
     "flavor": "A ward held together by rite.",
     "mods": "",
     "compatibility": "guard-v1"
@@ -224,9 +221,9 @@ export const basicCardProfiles = [
   {
     "id": "unarmedTechnique",
     "role": "technique",
-    "baseCardId": "technique",
-    "displayName": "Footwork",
-    "icon": "✧",
+    "baseCardId": "dodgeRoll",
+    "displayName": "Dodge Roll",
+    "icon": "💨",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0,
     "baseValue": 0,
@@ -235,8 +232,7 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": "flourish",
-    "flavor": "Position is an armament too.",
+    "flavor": "The empty hand's art is not being there.",
     "mods": "",
     "compatibility": "technique-v1"
   },
@@ -254,10 +250,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": [
-      "blade",
-      "flourish"
-    ],
     "flavor": "Let the weapon teach the hand.",
     "mods": "",
     "compatibility": "technique-v1"
@@ -276,10 +268,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": [
-      "ranged",
-      "precision"
-    ],
     "flavor": "Set the hand before loosing.",
     "mods": "",
     "compatibility": "technique-v1"
@@ -298,7 +286,6 @@ export const basicCardProfiles = [
     "rounding": "floor",
     "gainPerTier": 0,
     "cap": "",
-    "tags": "ritual",
     "flavor": "Set the breath behind the focus.",
     "mods": "",
     "compatibility": "technique-v1"

@@ -1,26 +1,42 @@
+import { bindCardInspection, openCardInspection } from './cardInspection.js';
+import { cardActions } from '../../services/cardActions.js';
+import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js';
 // src/ui/components/card.js — DOM card renderer (mockup: card-anatomy.svg)
 //
 // All numbers shown come from the engine: in combat, previewCard tokens
 // (live math, SPEC §3.13); outside combat, the card's own literal values via
 // computeTokenBindings. No math happens here.
 
-import { resolveCard } from '../../model/registries.js';
-import { computeTokenBindings, relicTokens, tokenRe } from '../../model/validate.js';
+import { resolveCard, relicPropertyRules } from '../../model/registries.js';
+import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
+import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
-import { attachTooltip, esc } from './tooltip.js';
+import { esc } from './tooltip.js';
+import { statusTooltipText } from '../uiContent.js';
 import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
-import { tagsFor } from '../../content/tags.js';
+import { tagService } from '../../model/tagService.js';
+import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
+import { t } from '../strings.js';
 
-/** Static token values straight off the def (for reward/pile/deck views). */
-export function staticTokens(def) {
-  const tokens = {};
-  for (const b of computeTokenBindings(def.effects || [])) {
-    const v = (def.effects[b.index] || {})[b.field];
-    if (typeof v === 'number') tokens[b.token] = v;
-  }
-  return tokens;
+// WCI3: rarity at the start of the band, the owned count at the end, each only
+// when the surface can state it. No domain action ever belongs in this band.
+function metadataBand(rarity, owned) {
+  const band = metadataFooter({ rarity, owned });
+  const slot = (name, entry) => (entry
+    ? `<span data-meta-slot="${name}" data-meta-kind="${entry.kind}">${esc(entry.kind === 'owned' ? t('card.meta.owned', { count: entry.value }) : entry.value)}</span>`
+    : '');
+  return `<div class="card-metadata" data-identity-part="metadata">${slot('start', band.start)}${slot('end', band.end)}</div>`;
 }
+
+/**
+ * Static token values straight off the def (for reward/pile/deck views).
+ *
+ * The body moved to src/model/playingCard.js with the rest of the projection;
+ * this stays as the name five files already import, so the extraction costs
+ * no call site a rename that would prove nothing.
+ */
+export function staticTokens(def) { return staticCardTokens(def); }
 
 /**
  * relicText(def) → plain text with every {token} replaced by the number the
@@ -41,7 +57,11 @@ export function staticTokens(def) {
  */
 export function relicText(def, registries = null) {
   if (!def || !def.textTemplate) return '';
-  const tokens = relicTokens(def);
+  // The relic's own passives and its property rules' triggers are two homes for
+  // one sentence's numbers since plan phase 2, so both are handed to the token
+  // reader. Without registries only the passive half resolves, which is why
+  // every run-facing call site passes them.
+  const tokens = relicTokens(def, registries ? relicPropertyRules(registries, def) : []);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));
@@ -86,69 +106,216 @@ function fillTemplate(def, tokens, baseTokens) {
  *   ref  — { cardId, upgraded, instanceId? }
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
- *            small?      (scale for reward/pile grids) }
+ *            small?      (scale for reward/pile grids),
+ *            tooltip?    (false suppresses the shared hover/focus tooltip) }
  */
 export function renderCard(registries, ref, opts = {}) {
+  configureTooltipGlossary(registries);
   const def = resolveCard(registries, ref);
+  // ONE PROJECTION, READ ONCE. Everything this function used to derive on its
+  // way to innerHTML — the tag junction, the cost profile, the type row, the
+  // class tint — is `model` now (src/model/playingCard.js). Drawing is what is
+  // left. The output is byte-identical by construction: the model's bodies are
+  // the ones that stood here.
+  const model = playingCardModel(registries, ref, { preview: opts.preview || null });
   const el = document.createElement('div');
-  el.className = `card rarity-${def.rarity} cls-${def.class} type-${def.type}${ref.upgraded ? ' upgraded' : ''}`;
+  // THE FACE IS THE KIT'S CARD (§10): a fixed box, fixed landmarks (name, art,
+  // type band), and one shared row budget below the band that tags and text
+  // divide. `as-card` is the recipe; the old class names stay as the hooks
+  // every tool and screen reads.
+  el.className = playingCardClasses(model);
   // Type presentation is data (balance.ui.cardTypes): corner radii carry the
   // type (attack squarest → power roundest) and each type owns its banner
   // colour. Renaming a label here never touches engine logic.
-  const ty = balance.ui.cardTypes[def.type];
-  if (ty) {
-    el.style.setProperty('--card-type-color', ty.color);
-    el.style.setProperty('--card-radius', `${ty.radius}px`);
-    el.style.setProperty('--card-art-radius', `${ty.art}px`);
+  if (model.paint.typeColor) {
+    el.style.setProperty('--card-type-color', model.paint.typeColor);
+    el.style.setProperty('--card-radius', `${model.paint.radiusPx}px`);
+    el.style.setProperty('--card-art-radius', `${model.paint.artRadiusPx}px`);
   }
   // The class motif hue is DATA (class def cardTint), handed to CSS as a var so
   // adding a class brings its own card colour with no stylesheet edit. Colorless
   // cards have no owning class, so they fall back to the neutral frame.
-  const owner = registries.classes.has(def.class) ? registries.classes.get(def.class) : null;
-  if (owner && owner.cardTint) el.style.setProperty('--card-tint', owner.cardTint);
+  if (model.paint.tint) el.style.setProperty('--card-tint', model.paint.tint);
   if (opts.affordable === false) el.classList.add('unaffordable');
-  if (ref.instanceId) el.dataset.instanceId = ref.instanceId;
-  el.dataset.cardId = def.id;
+  if (model.instanceId) el.dataset.instanceId = model.instanceId;
+  el.dataset.cardId = model.id;
 
-  const tags = def.cardTags && def.cardTags.length
-    ? def.cardTags.map((id) => registries.tags.find((t) => t.id === id)).filter(Boolean)
-    : tagsFor(def.id);
-  const base = staticTokens(def);
-  const tokens = opts.preview ? { ...base, ...opts.preview.tokens } : base;
-  const cost = opts.preview ? (opts.preview.costIsX ? 'X' : opts.preview.cost) : def.cost;
-  const manaCost = opts.preview ? opts.preview.manaCost : (def.manaCost || 0);
+  // Equipment-generated cards carry their profile's tags on `cardTags`; authored
+  // cards resolve through the junction. BOTH read the ACTIVE registries — the
+  // authored branch used to call the module-global `tagsFor`, so a bundle that
+  // changed a card's tags changed what combat did with them and not what the
+  // card showed, which is the chip strip lying about the run being played.
+  const tags = model.tags;
+  el.dataset.tagRows = tags.length ? '1' : '0';
+  // The badge numbers come from the framework cost profile (a preview's
+  // numbers are the preview's own — it already resolved them); the badge
+  // words come from the TermRegistry, like the tooltip's cost line.
+  const cost = model.costs.variable ? 'X' : model.costs.action;
+  const manaCost = model.costs.mana;
+  const staminaCost = model.costs.stamina;
+  const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
+  // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
+  // The existing framework/preview remains the authority for all values.
+  const costRows = [
+    ['action', 'cost', '◆', cost],
+    ['stamina', 'stamina-cost', 'ϟ', staminaCost],
+    ['mana', 'mana-cost', '♦', manaCost],
+  ].filter(([, , , value]) => value != null && value !== 0);
+  el.dataset.wireframe = 'WC1';
   el.innerHTML =
-    `<div class="cost">${esc(cost)}</div>` +
-    (manaCost ? `<div class="mana-cost" title="Mana cost">◆ ${esc(manaCost)}</div>` : '') +
-    `<div class="cname">${esc(def.name)}</div>` +
-    `<div class="art">${esc(def.icon || '❖')}</div>` +
-    `<div class="ctype">${esc((ty && ty.label) || def.type.toUpperCase())}</div>` +
-    // Subtypes: authored in content/source/cardTagging.csv. Untagged cards
+    `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
+      `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
+    ).join('')}</div>` +
+
+    `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
+    `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+    // Subtypes: authored in content/source/tagging.csv. Untagged cards
     // render nothing here, so the layout is unchanged for them.
     (tags.length
-      ? `<div class="ctags">${tags
-          .map((t) => `<span class="ctag" style="--tag-color:#${esc(t.color)}" title="${esc(t.blurb)}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+      ? `<div class="ctags cd-tags">${tags
+          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
           .join('')}</div>`
-      : '') +
-    `<div class="ctext">${fillTemplate(def, tokens, base)}</div>`;
+      : '') + '</div>' +
+    `<div class="cd-body"><div class="ctype">${esc(model.type.label)}</div>` +
+    `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>` +
+    metadataBand(def.rarity, opts.owned);
+
+  // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
+  // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
+  // count or measure, so the renderer reports after the first paint.
+  scheduleCardFits([el]);
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
   // of set-intersection math. Non-matching cards get nothing (absence = no
   // bonus; never a "+0%" badge).
-  const boost = opts.preview && (opts.preview.values || []).find((v) => v.boostTint);
-  if (boost) {
+  if (model.paint.boostTint) {
     el.classList.add('tag-boost');
-    el.style.setProperty('--boost-tint', boost.boostTint);
+    el.style.setProperty('--boost-tint', model.paint.boostTint);
   }
 
-  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
-  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
-  if (opts.small) {
-    el.style.transform = 'scale(0.92)';
-  }
+  // NO HOVER TOOLTIP ON A CARD (owner, 2026-09-11: "all cards will use the
+  // (i) over on selection"). Selecting a card reveals its Information button
+  // (bindCardInspection below), and that opens the same reading the hover used
+  // to — `opts.tooltipFn` or cardTooltip — with the live costs. The cost badges
+  // say their number and explain it there too. `opts.tooltip: false` remains
+  // the callers' word for "no transient explanation" and now names the default.
+  if (opts.small) el.dataset.small = 'true';
+  if (opts.inspection !== false) bindCardInspection(el, { title: def.name, readOnly: opts.inspectReadOnly === true,
+    touchSelectionSafe: Boolean(opts.preview?.needsTarget),
+    actionOwnsTouch: opts.actionOwnsTouch === true,
+    open: opener => {
+      const details = document.createElement('div');
+      const liveCosts = model.hasPreview ? model.costs : null;
+      details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
+      decorateKeywords(details);
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
+      details.classList.add('playing-card-details');
+      // NO DEFAULT VERB. This line used to read
+      //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
+      // and that fallback was the defect: every surface but combat inherited
+      // combat's verb as a dead button, on the spoils screen most absurdly,
+      // where the player had opened the card in order to take it.
+      //
+      // A surface now says which one it is (`opts.surface`) and hands over the
+      // commits it owns (`opts.commands`); services/cardActions.js answers what
+      // that surface offers. A card with nothing to offer gets a reading door
+      // and no footer, which is the honest shape rather than an apology.
+      const surface = opts.surface || 'none';
+      return openCardInspection({ title: def.name, card: face, details, opener,
+        actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
+        commands: opts.commands || {} });
+    } });
   return el;
+}
+
+/**
+ * fitCardFace(el) — the three facts CSS cannot compute, reported as data
+ * attributes the stylesheet reads (kit §10):
+ *   data-name      long | verylong  — the name stepped its type down to stay one line
+ *   data-tag-rows  0 | 1 | 2        — rows the tags took; text gets the rest
+ *   data-tags-hidden n              — tags deferred past the second row (+n)
+ *   data-truncated true             — both were full; the face carries the chevron
+ */
+const pendingFits = new Set();
+let fitFrame = 0;
+
+export function scheduleCardFits(cards) {
+  for (const card of cards) pendingFits.add(card);
+  if (fitFrame) return;
+  fitFrame = requestAnimationFrame(() => {
+    fitFrame = 0;
+    const batch = [...pendingFits]; pendingFits.clear();
+    fitCardFaces(batch);
+  });
+}
+
+export function fitCardFace(el) { fitCardFaces([el]); }
+
+// Every phase reads the whole batch before the next phase writes. The number
+// of forced layouts is bounded by fitting stages, not by cards times tags.
+function fitCardFaces(cards) {
+  const rows = cards.filter(el => el?.isConnected).map(el => {
+    const name = el.querySelector('.cname'), tags = el.querySelector('.ctags');
+    return { el, name, tags, chips: [...(tags?.querySelectorAll('.ctag') || [])], more: null, hidden: 0, tagRows: 0 };
+  });
+  for (const row of rows) {
+    row.el.dataset.name = '';
+    row.tags?.querySelector('.as-tag.more')?.remove();
+    row.chips.forEach(chip => { chip.hidden = false; });
+  }
+  const long = rows.filter(({name}) => name && name.scrollWidth > name.clientWidth + 1);
+  long.forEach(row => { row.el.dataset.name = 'long'; });
+  const veryLong = long.filter(({name}) => name.scrollWidth > name.clientWidth + 1);
+  veryLong.forEach(row => { row.el.dataset.name = 'verylong'; });
+  for (const row of rows) {
+    const top = row.tags?.offsetTop || 0;
+    row.positions = row.chips.map(chip => Math.round((chip.offsetTop - top) / Math.max(1, chip.offsetHeight + 2)));
+  }
+  for (const row of rows) {
+    row.chips.forEach((chip, i) => {
+      if (row.positions[i] >= 2) { chip.hidden = true; row.hidden++; }
+      else row.tagRows = Math.max(row.tagRows, row.positions[i] + 1);
+    });
+    if (row.hidden) {
+      row.more = document.createElement('span'); row.more.className = 'as-tag more';
+      row.more.textContent = '+' + row.hidden;
+      row.tags.appendChild(row.more);
+    }
+  }
+  const overflow = rows.filter(({more,tags}) => more && Math.round((more.offsetTop - tags.offsetTop) / Math.max(1, more.offsetHeight + 2)) >= 2);
+  for (const row of overflow) {
+    const last = row.chips.filter(chip => !chip.hidden).pop();
+    if (last) { last.hidden = true; row.hidden++; row.more.textContent = '+' + row.hidden; }
+  }
+  for (const row of rows) {
+    if (row.more) {
+      row.more.dataset.tip = row.chips.filter(chip => chip.hidden).map(chip => chip.textContent.trim()).join(' · ');
+      row.el.dataset.tagsHidden = String(row.hidden);
+    } else delete row.el.dataset.tagsHidden;
+    row.el.dataset.tagRows = String(Math.min(2, row.tagRows));
+  }
+  const truncated = rows.map(({el}) => { const text = el.querySelector('.ctext'); return !!text && text.scrollHeight > text.clientHeight + 1; });
+  rows.forEach((row, i) => { row.el.dataset.truncated = String(truncated[i]); });
+}
+
+// GUARDED ON WHAT THE BLOCK ACTUALLY USES, WHICH IS BOTH. `window` alone was
+// the whole test, and both lines below reach for `document` — so a harness that
+// stands up a bare `window` (tools/webaudio-stub.mjs installs
+// `globalThis.window = { AudioContext }` and nothing else) walks straight into
+// `ReferenceError: document is not defined` at import time, before a single
+// check runs. That is what `node tools/verdict.mjs -- node
+// tools/music-toggle-parity.mjs` was doing on every runner: dying of an
+// unhandled exception, which verdict.mjs correctly reports as
+// "HARNESS COULD NOT RUN" rather than as a finding.
+//
+// It stayed invisible because ci.yml is `workflow_dispatch:`-only, so the step
+// that imports this module had not fired. The half-guard was wrong the day it
+// was written; nothing was asking.
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  window.addEventListener('resize', () => scheduleCardFits(document.querySelectorAll('.card')));
+  document.fonts?.ready.then(() => scheduleCardFits(document.querySelectorAll('.card')));
 }
 
 /**
@@ -157,46 +324,113 @@ export function renderCard(registries, ref, opts = {}) {
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
 export function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
-  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const base = resolveCard(registries, { ...ref, upgraded: false });
+  const upg = resolveCard(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  const baseText = fillTemplate(base, baseTokens, null);
+  const upgradedText = fillTemplate(upg, upgTokens, baseTokens);
   // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
   // are keyed to (ui.css). Without it the preview drew the number it had just
   // computed as changed in the same colour and weight as the word beside it.
   // `.ctext` carries the marks only; the card face's block layout stays on
   // `.card .ctext` and does not follow the text into the tooltip.
   let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${baseText}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  if (baseText === upgradedText && upg.cost === base.cost) {
+    html += '<div class="tt-kw">The authored upgrade has no visible numeric change in this preview.</div>';
+  }
   return html;
 }
 
-function cardTooltip(registries, def, tokens) {
-  let html = `<div class="tt-title">${esc(def.name)} — ${esc(def.type)}, cost ${esc(def.cost)} Energy${def.manaCost ? ` + ${esc(def.manaCost)} Mana` : ''}</div>`;
+/**
+ * ONE GLOSSARY ROW, WORDS AND NUMBERS BOTH. Returns `null` for an unknown id or
+ * a row that authored no tooltip — the two skips this loop always had.
+ *
+ * The registry lookup is optional on purpose: probe registries and minimal
+ * fixtures hand card.js a `registries` with the framework overlay but no
+ * `statuses`/`stances` map, and those callers must keep working. When the row
+ * is reachable we substitute against it; when it is not, we fall back to the
+ * words-only display, which is exactly the behavior this file had before.
+ */
+function glossaryEntry(registries, kind, id) {
+  const source = kind === 'status' ? registries.statuses : registries.stances;
+  const row = source?.get?.(id) || null;
+  const withWords = kind === 'status'
+    ? registries.frameworkTerms.withStatusWords
+    : registries.frameworkTerms.withStanceWords;
+  const display = row && typeof withWords === 'function'
+    ? withWords(row)
+    : (kind === 'status' ? registries.frameworkTerms.statusDisplay(id) : registries.frameworkTerms.stanceDisplay(id));
+  if (!display || !display.tooltip) return null;
+  return { name: display.name, tooltip: statusTooltipText(display) };
+}
+
+/** W1h: the read-only reading a pile viewer shows beside its collection —
+ *  the same body the card's own inspect door and tooltip use. */
+export function cardDetailHtml(registries, ref) {
+  const def = resolveCard(registries, ref);
+  return cardTooltip(registries, def, playingCardModel(registries, ref).tokens);
+}
+
+function cardTooltip(registries, def, tokens, liveCosts = null) {
+  // Cost numbers come from the framework profile (or the preview's already
+  // resolved live costs, when the card is in play) and the resource words from
+  // TermRegistry — same rendered string, one authority for both.
+  const pools = liveCosts || registries.framework.costProfile(def);
+  // Terms are data; escape them like every other field before innerHTML.
+  const word = (resource) => esc(registries.framework.resourceWord(resource));
+  const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
+    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
+    + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
+  // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
+  // meta line as the same tag and value atoms the card face uses.
+  let html = `<div class="tt-title">${esc(def.name)}</div>`
+    + `<div class="ti-meta"><span class="as-tag">${esc(def.type)}</span><span class="ti-cost">${costText}</span></div>`;
   // Card text here too — same function, same marks, same class. The in-play
   // card tooltip had the identical defect; it is one fix, not two.
   html += `<div class="ctext">${fillTemplate(def, tokens, null)}</div>`;
   // Nested keyword + status tooltips (SPEC §7.3).
   const lines = [];
   for (const kw of def.keywords || []) {
-    if (registries.keywords.has(kw)) {
-      const k = registries.keywords.get(kw);
-      lines.push(`<b>${esc(k.name)}</b> — ${esc(k.tooltip)}`);
-    }
+    // Words resolve through the framework TermRegistry (one vocabulary home);
+    // an id outside the keyword vocabulary is skipped, as before.
+    const k = registries.framework.keywordDisplay(kw);
+    if (k) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(k.tooltip)}">${esc(k.name)}</span>`);
   }
   for (const eff of def.effects || []) {
-    if (eff.op === 'applyStatus' && registries.statuses.has(eff.status)) {
-      const s = registries.statuses.get(eff.status);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    // Status/stance WORDS resolve through the per-bundle framework term
+    // overlay — verbatim text, framework authority. Unknown ids and
+    // tooltip-less entities keep their existing skip behavior.
+    //
+    // AND THE NUMBERS RESOLVE TOO, WHICH THEY DID NOT. `statusDisplay(id)`
+    // returns the WORDS only — `{ name, tooltip }` and nothing of the row's
+    // mechanics — so a status whose prose carries the row's own knobs printed
+    // them at the player: a Gorefire Slash tooltip read "At {proc.threshold},
+    // burst for {proc.burstPercent}% of max HP (min {proc.burstMin}, max
+    // {proc.burstMax}), plus {proc.poiseDamage} Poise damage" — five visible
+    // braces in one tooltip (screenshotted by Constantine 2026-09-03). The
+    // same prose reads correctly on the combat meter, which goes through
+    // statusTooltipText; nothing was reading it here.
+    //
+    // The seam already existed for exactly this: termOverlay.js's
+    // `withStatusWords(def)` takes the WHOLE row, replaces the words, and lets
+    // the mechanics ride through, "for a display site that needs the whole def
+    // (mechanics numbers for tooltip substitution)". This is that site.
+    if (eff.op === 'applyStatus') {
+      const s = glossaryEntry(registries, 'status', eff.status);
+      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
-    if (eff.op === 'enterStance' && registries.stances.has(eff.stance)) {
-      const s = registries.stances.get(eff.stance);
-      if (s.tooltip) lines.push(`<b>${esc(s.name)}</b> — ${esc(s.tooltip)}`);
+    if (eff.op === 'enterStance') {
+      const s = glossaryEntry(registries, 'stance', eff.stance);
+      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
   }
-  if (def.flavor) lines.push(`<i>${esc(def.flavor)}</i>`);
-  if (lines.length) html += `<div class="tt-kw">${lines.join('<br>')}</div>`;
+  const service = tagService(registries);
+  const tags = def.cardTags?.length ? service.resolve(def.cardTags) : service.tagsOf('card', def);
+  for (const tag of tags) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(tag.blurb)}">${esc(tag.label)}</span>`);
+  if (lines.length) html += `<div class="inspection-tags">${[...new Set(lines)].join('')}</div>`;
   return html;
 }

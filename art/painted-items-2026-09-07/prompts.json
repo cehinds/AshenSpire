@@ -1,0 +1,17 @@
+[
+  {
+    "id": "greatsword",
+    "tool": "built-in image_gen",
+    "prompt": "Create ONE finished inventory item illustration for the dark fantasy game AshenSpire. A single medieval two-handed greatsword, blade upright toward upper right, pommel lower left, broad long tapered steel blade with readable central fuller, straight antique gold crossguard, dark leather two-handed grip, small diamond pommel. Style: richly hand-painted dark fantasy equipment, brushed steel and weathered brass, subtly angular hammered surfaces matching ornate painted hooded knights, natural painted highlights, tactile leather, restrained detail readable as a small icon. High visual clarity. Isolated object fully visible centered inside a square canvas with generous 10% safe margins. Transparent background with genuine alpha, no floor shadow, no background, no text, no labels, no border, no characters, no hands, no extra objects. Upper-left warm light and cool steel edge highlights. This is artwork for an actual item card and enlarged armory detail. Avoid pixel art, primitive low-poly geometry, photorealism, excessive glow."
+  },
+  {
+    "id": "kite-shield",
+    "tool": "built-in image_gen",
+    "prompt": "Create ONE finished inventory item illustration for the dark fantasy game AshenSpire. A single medieval kite shield, frontal slight three-quarter view, elongated pointed bottom, blackened steel face, antique brass rim and restrained central raised sun-diamond boss, steel rivets, dark teal enamel inset. Style: richly hand-painted dark fantasy equipment, brushed steel and weathered brass, subtly angular hammered surfaces matching ornate painted hooded knights, natural painted highlights, tactile leather, restrained detail readable as a small icon. High visual clarity. Isolated object fully visible centered inside a square canvas with generous 10% safe margins. Transparent background with genuine alpha, no floor shadow, no background, no text, no labels, no border, no characters, no hands, no extra objects. Upper-left warm light and cool steel edge highlights. This is artwork for an actual item card and enlarged armory detail. Avoid pixel art, primitive low-poly geometry, photorealism, excessive glow."
+  },
+  {
+    "id": "parry-dagger",
+    "tool": "built-in image_gen",
+    "prompt": "Create ONE finished inventory item illustration for the dark fantasy game AshenSpire. A single medieval parrying dagger, blade upright toward upper right and pommel lower left, short narrow steel blade, broad swept protective crossguard and side ring, black leather grip, restrained antique brass fittings. Clearly a dagger with defensive hand protection, not a full sword. Style: richly hand-painted dark fantasy equipment, brushed steel and weathered brass, subtly angular hammered surfaces matching ornate painted hooded knights, natural painted highlights, tactile leather, restrained detail readable as a small icon. High visual clarity. Isolated object fully visible centered inside a square canvas with generous 10% safe margins. Transparent background with genuine alpha, no floor shadow, no background, no text, no labels, no border, no characters, no hands, no extra objects. Upper-left warm light and cool steel edge highlights. This is artwork for an actual item card and enlarged armory detail. Avoid pixel art, primitive low-poly geometry, photorealism, excessive glow."
+  }
+]
