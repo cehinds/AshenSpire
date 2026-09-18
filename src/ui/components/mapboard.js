@@ -463,6 +463,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const saved = restored ? clampZoom(restored.zoom) : savedZoom(viewer.meta);
   let framing = restored ? restored.framing : (saved == null ? 'fit' : 'saved');
   let zoom = saved == null ? ZOOM_MIN : saved;
+  // What a host's tray covers at the foot of the scene while it is open, in
+  // local px (screens/map.js). The content box grows by it at the bottom so a
+  // node near the foot can still be centred in the part left visible.
+  let insetBottom = 0;
+  let glideFrame = 0;
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
   // `scroll` and `svgEl` were scoped to this board above.
@@ -607,7 +612,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const w = scroll.clientWidth > 0 ? scroll.clientWidth / zoom : (inkBox.x1 - inkBox.x0);
     const x0 = aimX - w / 2;
     const y0 = inkBox.y0 - padY;
-    const h = (inkBox.y1 - inkBox.y0) + 2 * padY;
+    // PLUS WHAT A TRAY COVERS at the foot (insetBottom): the box grows at the
+    // bottom only, so y0 and everything above it are untouched and nothing
+    // shifts when a host opens or closes one.
+    const h = (inkBox.y1 - inkBox.y0) + 2 * padY + insetBottom / zoom;
     content = { x0, y0, w, h };
     svgEl.setAttribute('viewBox', `${x0} ${y0} ${w} ${h}`);
     svgEl.style.width = `${w * zoom}px`;
@@ -1039,12 +1047,72 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     applyZoom(keepCenter);
     emitViewState(true);
   }
+  // THE CAMERA GLIDES RATHER THAN JUMPS when a host asks for a new frame — the
+  // map tray opening and closing (screens/map.js). ONE tween drives both halves:
+  // the aim is an SVG coordinate the viewBox carries (sizeSvg) and the top is the
+  // scroller's, and moving them apart would read as two cameras. A glide of 0 ms
+  // lands immediately, which is what reduced motion asks for.
+  function glideTo(target, ms = 0, onDone = null) {
+    cancelAnimationFrame(glideFrame);
+    const land = () => {
+      aimX = target.aimX;
+      sizeSvg();
+      if (titleEl) titleEl.setAttribute('x', String(aimX));
+      scroll.scrollLeft = 0;
+      scroll.scrollTop = target.top;
+      if (onDone) onDone();
+    };
+    if (!(ms > 0) || typeof requestAnimationFrame === 'undefined') { land(); return; }
+    const from = { aimX, top: scroll.scrollTop };
+    const started = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - started) / ms);
+      if (k >= 1) { land(); return; }
+      const eased = 1 - Math.pow(1 - k, 3);
+      aimX = from.aimX + (target.aimX - from.aimX) * eased;
+      sizeSvg();
+      if (titleEl) titleEl.setAttribute('x', String(aimX));
+      scroll.scrollTop = from.top + (target.top - from.top) * eased;
+      glideFrame = requestAnimationFrame(step);
+    };
+    glideFrame = requestAnimationFrame(step);
+  }
+
+  // CENTRE ONE NODE IN WHAT IS LEFT VISIBLE — the map tray's open half. `inset`
+  // is what the host's tray covers at the foot of the scene, so the content box
+  // grows by it (apply) and a node on the bottom row still reaches the middle of
+  // the part the player can see. THE FRAMING IS NOT TOUCHED: this is a look, not
+  // a hand on the ladder, so ⊙, the zoom ladder and the saved camera still mean
+  // exactly what they meant before the tray opened.
+  function centerOnNode(id, { inset = 0, glideMs = 0 } = {}) {
+    const n = byId[id];
+    if (!n) return;
+    insetBottom = Math.max(0, inset);
+    sizeSvg();
+    const visible = Math.max(0, scroll.clientHeight - insetBottom);
+    const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
+    const top = Math.min(maxTop, Math.max(0, (y(n.floor) - content.y0) * zoom - visible / 2));
+    glideTo({ aimX: x(n.col), top }, glideMs, () => emitViewState(false));
+  }
+
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from
-  // wherever the ladder, the wheel or the saved setting left us.
-  function resetFraming() {
+  // wherever the ladder, the wheel, the saved setting or an open tray left us.
+  function resetFraming({ glideMs = 0 } = {}) {
+    insetBottom = 0;
     framing = 'fit';
+    if (!(glideMs > 0)) { centerOnCurrent(); emitViewState(true); return; }
+    // SOLVE THE FRAME FIRST, then glide to it from where we stand: the target is
+    // whatever centerOnCurrent lands on, so the glide cannot drift from the frame
+    // the instruments read.
+    const from = { aimX, top: scroll.scrollTop, zoom };
     centerOnCurrent();
-    emitViewState(true);
+    const target = { aimX, top: scroll.scrollTop };
+    // A zoom change is not a pan, and there is nothing honest to tween: land it.
+    if (Math.abs(zoom - from.zoom) > 0.0005) { emitViewState(true); return; }
+    aimX = from.aimX;
+    sizeSvg();
+    scroll.scrollTop = from.top;
+    glideTo(target, glideMs, () => emitViewState(true));
   }
   const stepZoom = (dir) => {
     const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
@@ -1189,6 +1257,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   }
 
   function teardown() {
+    cancelAnimationFrame(glideFrame);
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
@@ -1197,7 +1266,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
-    recenter, resetFraming, stepZoom, teardown,
+    recenter, resetFraming, centerOnNode, stepZoom, teardown,
     get zoom() { return zoom; },
   };
 }
