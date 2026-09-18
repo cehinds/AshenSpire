@@ -6745,5 +6745,2615 @@ export const tagging = [
     "scope": "",
     "objectId": "wrathCoil",
     "tagId": "wrathCoil"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "strike",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "defend",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "technique",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "evasiveGuard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dodgeRoll",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gorefireSlash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonCleave",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickstep",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardCounter",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironResolve",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedBlade",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterGorefire",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enterBulwark",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riposte",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rallyingStandard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warSurgeon",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hemorrhage",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldwall",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kickOff",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingLunge",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warcry",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreblood",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "unbreakable",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastStand",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "warriorsVow",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sanguinePactCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironVowCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rondelParry",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderplate",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstonePebble",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cometFragment",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starbladePhalanx",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crystalBarrier",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starShower",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scholarsInsight",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostVeil",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSlicer",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneWard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starlance",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinkling",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "frostNova",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneArc",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lucidity",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stargazerCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralArmorCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonrendCut",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorite",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "meteorSwarm",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gravityWell",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "azureCoilCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralCleave",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "radiantSpray",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "supernova",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "timeDilation",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starstoneKris",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "constellationCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starfallBeam",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starcaller",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "umbralWard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "waxingMoonCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shootingShard",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingStar",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starPath",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "moonlitShieldCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "celestialLance",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astromancerCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "starSpark",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "urgentHeal",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodPact",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightTouch",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flagellation",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "penance",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "litany",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "graveOffering",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletting",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "contagion",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cullTheWeak",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transfusion",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightward",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "martyrBlood",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightBloom",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sacredHarvest",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thornHaloCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "communionCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "gildedOath",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "plagueBearer",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "exsanguinate",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stigmataCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "scourge",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "reclamation",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "secondBloom",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "butterflyPlague",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lifeTitheCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "crimsonRite",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightNova",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastRites",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "zealotryCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodHarvest",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "painOffering",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "witheringTouch",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "desperateRite",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberTideCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodOfferingRite",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "harbingerOfBlightCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ambush",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rogueShiv",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokePellet",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickCut",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "feint",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "backstep",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinPrick",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pocketSand",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstringRogue",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "serratedShiv",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeVeil",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ricochet",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lowBlow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pilfer",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vanish",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cheapShot",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bladeDanceRogue",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "garrote",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fanOfKnives",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setupRogue",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "acrobaticsRogue",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "disorient",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "coupDeGrace",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sap",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shadowstep",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "afterimageCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodletterRogue",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "venomcoat",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "misdirect",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "assassinate",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "thousandCutsRogue",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deadlyTempoCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "opportunistCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "envenomCard",
+    "tagId": "classification.power"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "toxicVolley",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "smokeBomb",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executionWindow",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "perfectHeist",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "deathblow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "katanaDrawCut",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "greatswordSunderingHew",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "honedEdge",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironSkin",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "fieldDressing",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hex",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "transmute",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinFang",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blindingSand",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hamstring",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "masterOfStrategy",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bashingBlow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "quickGuard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sweepingBlow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "enfeeble",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "colossusSmash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wound",
+    "tagId": "classification.statusCard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "dazed",
+    "tagId": "classification.statusCard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "slimed",
+    "tagId": "classification.statusCard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guilt",
+    "tagId": "classification.curse"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rallyingBanner",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sharedFlame",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashOath",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldGuardian",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "guardianBulwark",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldBastion",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "spikedReprisal",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "reaver",
+    "tagId": "classification.class"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "starseer",
+    "tagId": "classification.class"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "rogue",
+    "tagId": "classification.class"
+  },
+  {
+    "family": "class",
+    "scope": "",
+    "objectId": "herald",
+    "tagId": "classification.class"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "forsakenMedallion",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "starstoneShard",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "cutpursesCoin",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldFigurine",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldenSprout",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "whetstoneFragment",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "kindlingCharm",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "cinderPouch",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "feralEye",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldleafCharm",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crackedLantern",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "sacrificialKnife",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "curedHide",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ivoryComb",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crackedTear",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "sealstoneKey",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "fellWardenBrand",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "bloodiedTalisman",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "emberFragment",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "twinnedArmor",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "blightTouchedIdol",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "warhorn",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "vowOfVengeance",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "pearlOfSagacity",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "blessedDew",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "azureSigil",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "bloodstainedChalice",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "goldboughSapling",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wyrmHeart",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ancestralHorn",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "titansCinder",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "radiantAegis",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "flayersCenser",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "vigilantHalo",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "carrionTalon",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "emberIdol",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crownOfStitches",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wardenHorn",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "ashOfRemembrance",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "cinderOfTheFallen",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "crimsonCovenant",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "travelersWhetstone",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "moonlitVial",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wardensLantern",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "saltedRelic",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "hollowedHorn",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "gildedTear",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "watchmansBadge",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "howlingStandard",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "emberwickCharm",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "carrionMorsel",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "gravetendersBell",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "sentinelsOath",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "forsakenWarflag",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wrathCoil",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "crimsonFlask",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "azureFlask",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "flaskOfFerocity",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "flaskOfStone",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "blightCoating",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "bloodUnction",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "flask",
+    "scope": "",
+    "objectId": "wondrousDraught",
+    "tagId": "classification.flask"
+  },
+  {
+    "family": "keepsake",
+    "scope": "",
+    "objectId": "none",
+    "tagId": "classification.keepsake"
+  },
+  {
+    "family": "keepsake",
+    "scope": "",
+    "objectId": "oldCinder",
+    "tagId": "classification.keepsake"
+  },
+  {
+    "family": "keepsake",
+    "scope": "",
+    "objectId": "travelersFlask",
+    "tagId": "classification.keepsake"
+  },
+  {
+    "family": "keepsake",
+    "scope": "",
+    "objectId": "whetstoneMemory",
+    "tagId": "classification.keepsake"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "goldboughAvatar",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "abandonedCart",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "weepingPilgrim",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "bloodstainedAltar",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "wanderingPhysician",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "goldenMoth",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "feralShrine",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "ancientRuneStone",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "graveOfTheNameless",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "sleepingSmith",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "wyrmTrial",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "discardedReliquary",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "omensAltar",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "rotPriestOffer",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "handspiderNest",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "fadedGrace",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "merchantsGhost",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "cinderbearDen",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "stakeOfTheMartyr",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "twoFingersRiddle",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "namelessKeeper",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "namelessRest",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "loneSoldier",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "patrol",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "packHunt",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "twinPatrol",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "bruiser",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "eliteWyrm",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "bossOmen",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "lanternFlight",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "briarRefuge",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "chainAmbush",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "bossBellKeeper",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "bossThornMatriarch",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_knight",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_surgery",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_kennel",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_procession",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_vault",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_eliteDuelist",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_bossStitchedKing",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_mirrorArchive",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_stitchDrain",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_bossGlassRegent",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a2_bossMarrowOrganist",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_revenant",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_pilgrims",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_shades",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_colossus",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_ashChoir",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_eliteWyrmLord",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_bossRotValkyrie",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_cinderNest",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_eclipseChapel",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_bossFurnaceSaint",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_bossHollowAstronomer",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "encounter",
+    "scope": "",
+    "objectId": "a3_bossAshheartDragon",
+    "tagId": "classification.encounter"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "wanderingSoldier",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "blightHound",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "huskBrute",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "graveWisp",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "wyrmAspirant",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "fellWarden",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "lanternMoth",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "briarHermit",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "chainScavenger",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "bellKeeper",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "thornMatriarch",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "gildedKnight",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "courtSurgeon",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "stitchedHound",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "courtMarionette",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "livingArmor",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "courtDuelist",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "stitchedKing",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "mirrorScribe",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "stitchCrab",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "glassRegent",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "marrowOrganist",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "ashRevenant",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "emberStarvedPilgrim",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "valkyrieShade",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "charredColossus",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "wyrmLord",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "blightedValkyrie",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "cinderMantis",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "eclipseCantor",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "furnaceSaint",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "hollowAstronomer",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "enemy",
+    "scope": "",
+    "objectId": "ashheartDragon",
+    "tagId": "classification.enemy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "straightSword",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "greatsword",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "dagger",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "katana",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "halberd",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "warhammer",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "twinblade",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "battleaxe",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "buckler",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "kiteShield",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "towerShield",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "roundShield",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "spikedShield",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "lantern",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "torch",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "parryDagger",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "ashStaff",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "starstoneStaff",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "boneSceptre",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "emberlightSceptre",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "goldboughBranch",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "blightRod",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "gorefireBrand",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "wyrmhornStaff",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "default",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "vigil",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "oathsworn",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "warden",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "default",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "eclipse",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "starlit",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "astral",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "default",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "ossuary",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "emberhabit",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "pilgrim",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "default",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "nightveil",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "duelist",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "shadow",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bladeAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "daggerPierceAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffMagicAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreArcaneAttack",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedGuard",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponGuard",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "shieldGuard",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffGuard",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "sceptreGuard",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "unarmedTechnique",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "weaponTechnique",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowTechnique",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "staffTechnique",
+    "tagId": "classification.basicCardProfile"
+  },
+  {
+    "family": "slot",
+    "scope": "",
+    "objectId": "rightHand",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "slot",
+    "scope": "",
+    "objectId": "leftHand",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "slot",
+    "scope": "",
+    "objectId": "armor",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "slot",
+    "scope": "",
+    "objectId": "talisman",
+    "tagId": "classification.slot"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "reaverBaseline",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "reaverGreatsword",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "starseerBaseline",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "starseerStarstone",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "heraldBaseline",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "heraldEmberlight",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "rogueBaseline",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "startingKit",
+    "scope": "",
+    "objectId": "rogueBow",
+    "tagId": "classification.startingKit"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "winAsReaver",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "winAsStarseer",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "beatStitchedKing",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "beatBlightedValkyrie",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "graveWardenUnlock",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "ashChildUnlock",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "reachAshenCrown",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "beatFellWarden",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "winTwice",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "beatKingAsHerald",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "reachStitchedCourt",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "rack2Right",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "rack3Right",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "rack2Left",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "rack3Left",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "winAsRogue",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "rogueBeatWarden",
+    "tagId": "classification.unlock"
+  },
+  {
+    "family": "unlock",
+    "scope": "",
+    "objectId": "rogueReachCrown",
+    "tagId": "classification.unlock"
   }
 ];

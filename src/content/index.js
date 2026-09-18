@@ -31,6 +31,13 @@ import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
 import { PROPERTY_RULES } from './propertyRules.js';
+import { nodes } from './generated/nodes.js';
+import { nodeRelations } from './generated/nodeRelations.js';
+import { familyNodes } from './generated/familyNodes.js';
+import { nodeTerms } from './generated/nodeTerms.js';
+import { nodeVariables } from './generated/nodeVariables.js';
+import { variableBindings } from './generated/variableBindings.js';
+import { nodeEffects } from './generated/nodeEffects.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
@@ -129,6 +136,19 @@ export const contentBundle = {
   tagging: TAGGING,
   // What each `property` tag confers — one rule per tag (content/propertyRules.js).
   propertyRules: PROPERTY_RULES,
+  // THE TREE the five tag tables and the property rules are views of
+  // (content/source/nodes.csv and its six companions; tools/content-build.mjs
+  // derives tags/tagDomains/tagFamilyDomains/propertyRules/propertyRuleEffects
+  // and the framework's properties/relations from these). They ride the bundle
+  // so validate.js can check the tree itself — parents, cycles, edges,
+  // variables against bindings, kinds against collections.
+  nodes,
+  nodeRelations,
+  familyNodes,
+  nodeTerms,
+  nodeVariables,
+  variableBindings,
+  nodeEffects,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting

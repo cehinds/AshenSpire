@@ -15,7 +15,7 @@
                 "p": "skillLevelAtLeast",
                 "skill": "focus",
                 "level": {
-                  "balance": "exposure.siphonMasteryLevel"
+                  "variable": "siphonMasteryLevel"
                 }
               }
             }
@@ -26,7 +26,7 @@
             "op": "restoreMana",
             "target": "self",
             "amount": {
-              "balance": "exposure.siphonRefund"
+              "variable": "restoreMana"
             }
           }
         ]
@@ -43,7 +43,7 @@
               "p": "skillLevelAtLeast",
               "skill": "focus",
               "level": {
-                "balance": "exposure.siphonMasteryLevel"
+                "variable": "siphonMasteryLevel"
               }
             }
           ]
@@ -53,7 +53,7 @@
             "op": "restoreMana",
             "target": "self",
             "amount": {
-              "balance": "exposure.siphonRefundMastered"
+              "variable": "restoreMana_2"
             }
           }
         ]
@@ -63,7 +63,7 @@
   "overcharge": {
     "passives": {
       "exposureBuildupMult": {
-        "balance": "exposure.overchargeBuildupMult"
+        "variable": "overchargeBuildupMult"
       }
     }
   },
@@ -86,7 +86,9 @@
         "do": [
           {
             "op": "poiseDamage",
-            "amount": 4
+            "amount": {
+              "variable": "poiseDamage"
+            }
           }
         ]
       }
@@ -104,13 +106,17 @@
             "stacks": {
               "f": "add",
               "args": [
-                1
+                {
+                  "variable": "starstoneCharge"
+                }
               ]
             }
           },
           {
             "op": "restoreMana",
-            "amount": 1
+            "amount": {
+              "variable": "restoreMana"
+            }
           }
         ]
       }
@@ -128,7 +134,9 @@
             "stacks": {
               "f": "add",
               "args": [
-                1
+                {
+                  "variable": "prepared"
+                }
               ]
             }
           }
@@ -152,7 +160,9 @@
           {
             "op": "applyStatus",
             "status": "venom",
-            "stacks": 2
+            "stacks": {
+              "variable": "venom"
+            }
           }
         ]
       }
@@ -169,7 +179,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 2
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -183,7 +195,9 @@
           {
             "op": "heal",
             "target": "owner",
-            "amount": 3
+            "amount": {
+              "variable": "heal"
+            }
           }
         ]
       }
@@ -208,7 +222,9 @@
         "do": [
           {
             "op": "damage",
-            "amount": 4
+            "amount": {
+              "variable": "damage"
+            }
           }
         ]
       }
@@ -221,7 +237,9 @@
         "do": [
           {
             "op": "draw",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ]
       }
@@ -236,7 +254,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 4
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -250,7 +270,9 @@
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       }
@@ -276,7 +298,9 @@
           {
             "op": "applyStatus",
             "status": "bleed",
-            "stacks": 2
+            "stacks": {
+              "variable": "bleed"
+            }
           }
         ]
       }
@@ -294,7 +318,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 5
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -306,12 +332,16 @@
         "on": "cardPlayed",
         "if": {
           "p": "everyNthCardThisCombat",
-          "n": 8
+          "n": {
+            "variable": "n"
+          }
         },
         "do": [
           {
             "op": "draw",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ]
       }
@@ -324,7 +354,9 @@
         "do": [
           {
             "op": "draw",
-            "amount": 2
+            "amount": {
+              "variable": "draw"
+            }
           }
         ]
       }
@@ -341,7 +373,9 @@
         "do": [
           {
             "op": "loseHp",
-            "amount": 5
+            "amount": {
+              "variable": "loseHp"
+            }
           }
         ]
       }
@@ -353,13 +387,17 @@
         "on": "cardPlayed",
         "if": {
           "p": "everyNthCardThisCombat",
-          "n": 10
+          "n": {
+            "variable": "n"
+          }
         },
         "do": [
           {
             "op": "block",
             "target": "owner",
-            "amount": 6
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -385,7 +423,9 @@
           {
             "op": "applyStatus",
             "status": "crimsonBlight",
-            "stacks": 3
+            "stacks": {
+              "variable": "crimsonBlight"
+            }
           }
         ]
       }
@@ -400,7 +440,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 1
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -415,7 +457,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 2
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -427,12 +471,16 @@
         "on": "cardPlayed",
         "if": {
           "p": "everyNthCardThisCombat",
-          "n": 6
+          "n": {
+            "variable": "n"
+          }
         },
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       }
@@ -446,7 +494,9 @@
           {
             "op": "heal",
             "target": "owner",
-            "amount": 2
+            "amount": {
+              "variable": "heal"
+            }
           }
         ]
       }
@@ -464,7 +514,9 @@
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       }
@@ -482,7 +534,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 2
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -503,7 +557,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 4
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -516,7 +572,9 @@
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       }
@@ -531,7 +589,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 1
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -549,7 +609,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 4
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -564,7 +626,9 @@
             "op": "applyStatus",
             "target": "allEnemies",
             "status": "crimsonBlight",
-            "stacks": 1
+            "stacks": {
+              "variable": "crimsonBlight"
+            }
           }
         ]
       }
@@ -578,7 +642,9 @@
           {
             "op": "heal",
             "target": "owner",
-            "amount": 6
+            "amount": {
+              "variable": "heal"
+            }
           }
         ]
       }
@@ -592,7 +658,9 @@
           {
             "op": "damage",
             "target": "randomEnemy",
-            "amount": 6
+            "amount": {
+              "variable": "damage"
+            }
           }
         ]
       }
@@ -606,7 +674,9 @@
           {
             "op": "damage",
             "target": "allEnemies",
-            "amount": 3
+            "amount": {
+              "variable": "damage"
+            }
           }
         ]
       }
@@ -621,7 +691,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 2
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       },
@@ -632,7 +704,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "frail",
-            "stacks": 1
+            "stacks": {
+              "variable": "frail"
+            }
           }
         ]
       }
@@ -645,7 +719,9 @@
         "do": [
           {
             "op": "draw",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ]
       },
@@ -655,7 +731,9 @@
           {
             "op": "loseHp",
             "target": "owner",
-            "amount": 2
+            "amount": {
+              "variable": "loseHp"
+            }
           }
         ]
       }
@@ -668,7 +746,9 @@
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       },
@@ -679,7 +759,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "madness",
-            "stacks": 1
+            "stacks": {
+              "variable": "madness"
+            }
           }
         ]
       }
@@ -694,7 +776,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "madness",
-            "stacks": 1
+            "stacks": {
+              "variable": "madness"
+            }
           }
         ]
       },
@@ -703,7 +787,9 @@
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       }
@@ -717,7 +803,9 @@
           {
             "op": "loseHp",
             "target": "owner",
-            "amount": 5
+            "amount": {
+              "variable": "loseHp"
+            }
           }
         ]
       },
@@ -738,7 +826,9 @@
           {
             "op": "applyStatus",
             "status": "bleed",
-            "stacks": 2
+            "stacks": {
+              "variable": "bleed"
+            }
           }
         ]
       }
@@ -753,7 +843,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 1
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -767,7 +859,9 @@
           {
             "op": "block",
             "target": "owner",
-            "amount": 3
+            "amount": {
+              "variable": "block"
+            }
           }
         ]
       }
@@ -784,7 +878,9 @@
         "do": [
           {
             "op": "draw",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ]
       }
@@ -799,7 +895,9 @@
             "op": "applyStatus",
             "target": "allEnemies",
             "status": "vulnerable",
-            "stacks": 1
+            "stacks": {
+              "variable": "vulnerable"
+            }
           }
         ]
       }
@@ -814,7 +912,9 @@
           {
             "op": "heal",
             "target": "owner",
-            "amount": 3
+            "amount": {
+              "variable": "heal"
+            }
           }
         ]
       }
@@ -837,7 +937,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 1
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -852,7 +954,9 @@
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 1
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -869,7 +973,9 @@
         "do": [
           {
             "op": "gainEnergy",
-            "amount": 1
+            "amount": {
+              "variable": "gainEnergy"
+            }
           }
         ]
       }
@@ -883,7 +989,9 @@
           {
             "op": "heal",
             "target": "owner",
-            "amount": 2
+            "amount": {
+              "variable": "heal"
+            }
           }
         ]
       }
@@ -896,7 +1004,9 @@
         "do": [
           {
             "op": "draw",
-            "amount": 1
+            "amount": {
+              "variable": "draw"
+            }
           }
         ]
       }
@@ -908,14 +1018,18 @@
         "on": "cardPlayed",
         "if": {
           "p": "everyNthCardThisCombat",
-          "n": 12
+          "n": {
+            "variable": "n"
+          }
         },
         "do": [
           {
             "op": "applyStatus",
             "target": "owner",
             "status": "strength",
-            "stacks": 1
+            "stacks": {
+              "variable": "strength"
+            }
           }
         ]
       }
@@ -930,7 +1044,9 @@
             "op": "applyStatus",
             "target": "allEnemies",
             "status": "weak",
-            "stacks": 1
+            "stacks": {
+              "variable": "weak"
+            }
           }
         ]
       }
@@ -947,7 +1063,9 @@
           {
             "op": "damage",
             "target": "randomEnemy",
-            "amount": 3
+            "amount": {
+              "variable": "damage"
+            }
           }
         ]
       }

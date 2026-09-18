@@ -205,28 +205,40 @@ function recordForm(file, table, index) {
 }
 
 async function renderRelations(own) {
-  const relationFile = await openFile('content/framework/relations.json'), propertyFile = await openFile('content/framework/properties.json');
+  // The tree: nodes.csv holds every property (and every other tag) and
+  // nodeRelations.csv holds the edges; content/framework/{properties,relations}.json
+  // are derived from them by tools/content-build.mjs and no longer exist as sources.
+  const relationFile = await openFile('content/source/nodeRelations.csv'), propertyFile = await openFile('content/source/nodes.csv');
   if (own !== revision) return;
-  const data = JSON.parse(relationFile.text), properties = JSON.parse(propertyFile.text).properties, ids = new Set(properties.map(p => p.id));
+  const relationTable = tableData(relationFile.path, relationFile.text);
+  const properties = tableData(propertyFile.path, propertyFile.text).rows, ids = new Set(properties.map(p => p.id));
+  // The view keeps the framework's field names; rows are mapped at the edge.
+  const toView = r => ({ sourcePropertyId: r.sourceId, relation: r.relation, targetPropertyId: r.targetId, precedence: Number(r.precedence) });
+  const toRow = r => ({ sourceId: r.sourcePropertyId, relation: r.relation, targetId: r.targetPropertyId, precedence: String(r.precedence) });
+  const data = { relations: relationTable.rows.map(toView) };
+  const stageRelations = () => { setTableRows(relationTable, data.relations.map(toRow)); stage(relationFile.path, snapshotTable(relationFile, relationTable)); };
   const issues = data.relations.filter(r => !ids.has(r.sourcePropertyId) || !ids.has(r.targetPropertyId));
   main.innerHTML = `${title('Relationships', 'Connect properties with the rules the game already understands.')}<div class="notice">${data.relations.length} relations · ${properties.length} properties · ${issues.length ? `<span class="error">${issues.length} broken references</span>` : 'All property references resolve'}. Drag a property into a source or target slot, or choose it from the list.</div><div class="toolbar"><input id="property-search" type="search" placeholder="Find a property…" aria-label="Search properties"></div><div class="property-tray" id="property-tray"></div><div class="toolbar"><label>Source<select id="relation-source" class="relation-target">${properties.map(p => `<option>${esc(p.id)}</option>`).join('')}</select></label><label>Connection<select id="relation-type">${['REQUIRES','PERMITS','INHERITS','REPLACES','SUPPRESSES','CONFLICTS_WITH'].map(t => `<option>${t}</option>`).join('')}</select></label><label>Target<select id="relation-target" class="relation-target">${properties.map(p => `<option>${esc(p.id)}</option>`).join('')}</select></label><label>Precedence<input id="precedence" type="number" value="10" min="0"></label><button id="relation-add" class="primary">Connect</button></div><div class="toolbar"><input type="search" id="relation-search" placeholder="Filter connections…" aria-label="Search relations"><button id="table-map">Map table columns</button></div><div class="graph" id="relation-graph"></div>`;
   function tray(filter = '') { $('#property-tray').innerHTML = properties.filter(p => p.id.includes(filter)).map(p => `<button draggable="true" data-property="${esc(p.id)}">${esc(p.id)}</button>`).join(''); document.querySelectorAll('[data-property]').forEach(b => { b.addEventListener('dragstart',e => e.dataTransfer.setData('text/plain', b.dataset.property)); b.addEventListener('click',() => { $('#relation-source').value = b.dataset.property; toast('Source selected. Choose a target and Connect.'); }); }); }
   tray(); on('#property-search','input',e => tray(e.target.value));
   for (const key of ['source','target']) drop($(`#relation-${key}`),e => { const value = e.dataTransfer.getData('text/plain'); if (!ids.has(value)) throw Error('Drop a property from the tray'); $(`#relation-${key}`).value = value; });
-  function graph(filter = '') { $('#relation-graph').innerHTML = data.relations.map((r,i) => ({r,i})).filter(({r}) => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase())).map(({r,i}) => `<div class="relation-row"><div class="node ${ids.has(r.sourcePropertyId) ? '' : 'error'}">${esc(r.sourcePropertyId)}</div><div class="edge">${esc(r.relation)} →<br><small>precedence ${esc(r.precedence)}</small></div><div class="node ${ids.has(r.targetPropertyId) ? '' : 'error'}">${esc(r.targetPropertyId)}</div><button data-remove-relation="${i}" aria-label="Remove relation ${i + 1}">×</button></div>`).join('') || '<p>No connections match.</p>'; document.querySelectorAll('[data-remove-relation]').forEach(button => button.addEventListener('click',() => { data.relations.splice(Number(button.dataset.removeRelation),1); stage(relationFile.path,JSON.stringify(data,null,2)+'\n'); graph(); toast('Relation removal staged. Ctrl+Z to undo.'); })); }
+  function graph(filter = '') { $('#relation-graph').innerHTML = data.relations.map((r,i) => ({r,i})).filter(({r}) => JSON.stringify(r).toLowerCase().includes(filter.toLowerCase())).map(({r,i}) => `<div class="relation-row"><div class="node ${ids.has(r.sourcePropertyId) ? '' : 'error'}">${esc(r.sourcePropertyId)}</div><div class="edge">${esc(r.relation)} →<br><small>precedence ${esc(r.precedence)}</small></div><div class="node ${ids.has(r.targetPropertyId) ? '' : 'error'}">${esc(r.targetPropertyId)}</div><button data-remove-relation="${i}" aria-label="Remove relation ${i + 1}">×</button></div>`).join('') || '<p>No connections match.</p>'; document.querySelectorAll('[data-remove-relation]').forEach(button => button.addEventListener('click',() => { data.relations.splice(Number(button.dataset.removeRelation),1); stageRelations(); graph(); toast('Relation removal staged. Ctrl+Z to undo.'); })); }
   graph(); on('#relation-search','input',e => graph(e.target.value));
   on('#relation-add','click',() => {
     const row = { sourcePropertyId:$('#relation-source').value, relation:$('#relation-type').value, targetPropertyId:$('#relation-target').value, precedence:Number($('#precedence').value) };
     if (row.sourcePropertyId === row.targetPropertyId) throw Error('Choose two different properties');
     if (!Number.isFinite(row.precedence) || row.precedence < 0) throw Error('Choose a nonnegative precedence');
     if (data.relations.some(r => r.sourcePropertyId === row.sourcePropertyId && r.targetPropertyId === row.targetPropertyId && r.relation === row.relation)) throw Error('This connection already exists');
-    data.relations.push(row); stage(relationFile.path,JSON.stringify(data,null,2)+'\n'); graph(); toast('Connection staged');
+    data.relations.push(row); stageRelations(); graph(); toast('Connection staged');
   }); on('#table-map','click',mapTables);
   const entityButton = document.createElement('button'); entityButton.textContent = 'Entity links'; $('#table-map').after(entityButton); entityButton.addEventListener('click',() => entityLinks().catch(report));
 }
 async function entityLinks() {
   const file = await openFile('content/framework/entities.json'), entityDocument = JSON.parse(file.text);
-  const properties = JSON.parse((await openFile('content/framework/properties.json')).text).properties;
+  // An entity links to framework properties: the nodes that carry a visibility
+  // (nodes.csv), which is exactly what content-build derives properties.js from.
+  const propertyFile = await openFile('content/source/nodes.csv');
+  const properties = tableData(propertyFile.path, propertyFile.text).rows.filter(p => p.visibility);
   const assets = JSON.parse((await openFile('content/framework/assets.json')).text).assets;
   modal(`<h2>Entity links</h2><p class="muted">Connect framework entities to artwork and properties. Existing property parameters are preserved.</p><label>Entity<select id="entity-choice">${entityDocument.entities.map(e => `<option>${esc(e.id)}</option>`).join('')}</select></label><div id="entity-fields"></div>`);
   function fields() {

@@ -172,7 +172,7 @@ export function tagContentProblems(bundle, keywordIds = []) {
       continue;
     }
     if (!domainById.has(domain)) {
-      err(path, `unknown domain '${domain}' — add it to content/source/tagDomains.csv (known: ${[...domainById.keys()].join(', ')})`);
+      err(path, `unknown domain '${domain}' — add it as a root in content/source/nodes.csv (known: ${[...domainById.keys()].join(', ')})`);
       continue;
     }
     const pairKey = `${family}${SEP}${domain}`;
@@ -187,13 +187,13 @@ export function tagContentProblems(bundle, keywordIds = []) {
   }
   for (const family of familyByName.keys()) {
     if (!domainsByFamily.has(family)) {
-      err(`tagFamilies.${family}`, 'this family is paired with no domain, so it may carry nothing — pair it in tagFamilyDomains.csv, or delete the row');
+      err(`tagFamilies.${family}`, 'this family is paired with no domain, so it may carry nothing — pair it in familyNodes.csv, or delete the row');
     }
   }
   const carriedDomains = new Set([...domainsByFamily.values()].flat());
   for (const id of domainById.keys()) {
     if (!carriedDomains.has(id)) {
-      err(`tagDomains.${id}`, 'no family may carry this domain — every tag naming it is unwearable; pair it in tagFamilyDomains.csv or delete the row');
+      err(`tagDomains.${id}`, 'no family may carry this domain — every tag naming it is unwearable; pair it in familyNodes.csv or delete the row');
     }
   }
 
@@ -211,11 +211,15 @@ export function tagContentProblems(bundle, keywordIds = []) {
       continue;
     }
     if (!domainById.has(row.domain)) {
-      err(`${path}.domain`, `unknown domain ${JSON.stringify(row.domain)} — every tag names a row in tagDomains.csv (known: ${[...domainById.keys()].join(', ')})`);
+      err(`${path}.domain`, `unknown domain ${JSON.stringify(row.domain)} — every tag's root is a node in nodes.csv (known: ${[...domainById.keys()].join(', ')})`);
     }
     if (!String(row.label || '').length) err(`${path}.label`, 'a tag needs a label — it is what the chip reads');
-    if (!String(row.glyph || '').length) err(`${path}.glyph`, 'a tag needs a glyph');
-    if (!/^[0-9A-Fa-f]{6}$/.test(String(row.color || ''))) {
+    // A node the framework shows (one carrying a visibility) reaches the
+    // player through its term rows, never as a chip, so it owes no colour or
+    // glyph. Every chip-rendered tag still must have both.
+    const framed = String(row.visibility || '').length > 0;
+    if (!framed && !String(row.glyph || '').length) err(`${path}.glyph`, 'a tag needs a glyph');
+    if (!framed && !/^[0-9A-Fa-f]{6}$/.test(String(row.color || ''))) {
       err(`${path}.color`, `colour must be a 6-digit hex with no '#', got ${JSON.stringify(row.color)}`);
     }
     // Tags are CONTENT; keywords are a frozen engine set. Overlapping names
@@ -266,7 +270,7 @@ export function tagContentProblems(bundle, keywordIds = []) {
     const tag = byId.get(tagId);
     const domains = domainsByFamily.get(family) || [];
     if (!tag) {
-      err(path, `unknown tag '${tagId}' — register it in content/source/tags.csv or fix the spelling`);
+      err(path, `unknown tag '${tagId}' — register it in content/source/nodes.csv or fix the spelling`);
     } else if (!domains.includes(tag.domain)) {
       const legal = [...byId.values()].filter((t) => domains.includes(t.domain)).map((t) => t.id);
       err(path, `tag '${tagId}' is a ${tag.domain} tag; ${family} carries ${domains.join('/')} tags only (legal: ${legal.join(', ')})`);
@@ -347,7 +351,7 @@ export function tagContentProblems(bundle, keywordIds = []) {
       continue;
     }
     // ONE LABEL PER TAG. An itemType tag is the only kind whose display name is
-    // written twice: once by the author in tags.csv, and once by the runtime,
+    // written twice: once by the author in nodes.csv, and once by the runtime,
     // which DERIVES it from the id when registries.js stamps `itemTypes` onto a
     // piece. Two writers, so they can disagree — `{ id: 'item:armor',
     // label: 'Plate' }` puts "Plate" in the tag registry and "Armor" on every
@@ -381,7 +385,7 @@ export function tagContentProblems(bundle, keywordIds = []) {
       if (!worn.some((row) => itemTypeIds.has(row.tagId))) {
         err(`${spec.source}.${entry.id || '?'}`, itemTypeIds.size
           ? `carries no item-type tag — every piece must declare at least one (legal: ${[...itemTypeIds].join(', ')}); add a tagging.csv row`
-          : `carries no item-type tag, and no itemType tag is registered at all — every piece must declare one, so register the vocabulary in tags.csv (domain '${'itemType'}') before this bundle can boot`);
+          : `carries no item-type tag, and no itemType tag is registered at all — every piece must declare one, so register the vocabulary in nodes.csv (under the '${'itemType'}' root) before this bundle can boot`);
       }
     }
   }
@@ -446,16 +450,37 @@ export function tagIdsInDomain(bundle, domain) {
  * whole parent key. model/registries.js walks it to put a `tags` array on every
  * object — the join resolved eagerly, exactly once, at boot.
  */
+/**
+ * asideDomainIds(bundle) → Set of the domains whose tags never appear in an
+ * object's tag LIST, read off the domain rows' `aside` flag (a root attribute
+ * in nodes.csv). Each such domain has a reader of its own — presentation is
+ * sprite selection (tagService.presentationIdsOf), classification is what the
+ * object IS (registries stamps it as `kinds`). A mechanic asking "what tags
+ * does this carry" is asking about gameplay identity, and neither is that.
+ * Data, not a constant, so a third such domain is a row and not an edit here.
+ */
+export function asideDomainIds(bundle) {
+  return new Set((Array.isArray(bundle && bundle.tagDomains) ? bundle.tagDomains : [])
+    .filter((d) => d && d.aside === true).map((d) => d.id));
+}
+
+/** The tag ids in the aside domains, for the readers that filter them. */
+export function asideTagIds(bundle) {
+  const domains = asideDomainIds(bundle);
+  return new Set((Array.isArray(bundle && bundle.tags) ? bundle.tags : [])
+    .filter((t) => t && domains.has(t.domain)).map((t) => t.id));
+}
+
 export function tagIndex(bundle) {
   const b = bundle || {};
   const families = new Map((Array.isArray(b.tagFamilies) ? b.tagFamilies : [])
     .filter((row) => row && row.family)
     .map((row) => [row.family, row]));
   const index = new Map();
-  const presentation=new Set((b.tags||[]).filter(tag=>tag.domain==='presentation').map(tag=>tag.id));
+  const aside = asideTagIds(b);
   for (const row of (Array.isArray(b.tagging) ? b.tagging : [])) {
     if (!row || !families.has(row.family)) continue;
-    if(presentation.has(row.tagId))continue;
+    if (aside.has(row.tagId)) continue;
     const k = rowKey(row.family, row.scope, row.objectId);
     const list = index.get(k);
     if (list) { if(!list.includes(row.tagId))list.push(row.tagId); }
@@ -480,7 +505,7 @@ export function tagIndex(bundle) {
  * domainIdsFor(bundle, family) -> [domainId]
  *
  * The domains a family may draw from, FROM THE BUNDLE'S OWN JOIN. The whole
- * point of tagFamilyDomains.csv is that this is data; a caller that hard-codes
+ * point of familyNodes.csv is that this is data; a caller that hard-codes
  * the answer makes the table decorative for that family, which is what had
  * happened to `effect` — its row said `card` and the validator said `card`
  * independently, so editing the row changed nothing.

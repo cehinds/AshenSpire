@@ -34,9 +34,11 @@ import {
   MUSIC_BED_SCHEMA,
   DAMAGE_SCHOOLS,
   RELIC_MODIFIER_TAGS,
-  PROPERTY_CARRIER_FAMILIES,
+  NODE_RELATIONS,
+  VARIABLE_SCOPES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
+import { treeProblems } from './tree.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
@@ -104,6 +106,15 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tagFamilyDomains', // family x domain — which words each family may carry
   'tagging', // family, scope, objectId, tagId — the only home a tag is written
   'propertyRules', // what each `property` tag confers (content/propertyRules.js)
+  // THE TREE the five tag tables and the property rules are views of
+  // (content/source/nodes.csv and companions; treeProblems checks it).
+  'nodes', // id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
+  'nodeRelations', // sourceId, relation, targetId, precedence
+  'familyNodes', // family × subtree root — who may carry what
+  'nodeTerms', // nodeId → playerTermId, tooltipTermId, template
+  'nodeVariables', // the variables a conferring node exposes
+  'variableBindings', // what each variable reads, per scope — balance paths, never numbers
+  'nodeEffects', // { [nodeId]: { passives?, triggers? } } naming variables
   'attributeRules',
   'derivedStatRules',
   'characterCreation',
@@ -487,7 +498,7 @@ function collectContentProblems(bundle, errors = []) {
     try {
       const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
       const tag = (b.tags || []).find((row) => row && row.id === rules.extractableTag);
-      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a row to tags.csv in the card domain`);
+      if (!tag) err('balance.equipment.cardMounts.extractableTag', `names unknown tag '${rules.extractableTag}' — add a node under the card root in nodes.csv`);
       else if (tag.domain !== 'card') err('balance.equipment.cardMounts.extractableTag', `'${rules.extractableTag}' is in the ${tag.domain} domain, not card — a card could never carry it`);
       for (const [kind, spec] of Object.entries(rules.kinds)) {
         for (const accepted of spec.accepts) {
@@ -528,7 +539,7 @@ function collectContentProblems(bundle, errors = []) {
   // nothing else, so the normalised constraint was not actually the constraint.
   const tagIds = new Set(tagIdsAllowedFor(b, 'effect'));
   // Creature identity is the creature domain of that same registry, so adding
-  // a kind is a row in tags.csv rather than an edit to a frozen array.
+  // a kind is a node in nodes.csv rather than an edit to a frozen array.
   const creatureTagIds = tagIdsInDomain(b, 'creature');
   const vctx = { ids, err, tagIds };
 
@@ -822,6 +833,10 @@ function collectContentProblems(bundle, errors = []) {
     });
   }
   propertyRuleProblems(b, vctx);
+  // The tree the tag tables and the property rules are derived from: parents,
+  // cycles, edges, families, variables against bindings, kinds against
+  // collections (model/tree.js says what each refusal is).
+  for (const p of treeProblems(b)) err(p.path, p.message);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
     const base = `enemies.${enemy && enemy.id || '?'}`;
     const cfg = enemy && enemy.arcaneExposure;
@@ -2148,14 +2163,16 @@ function balanceRefsIn(value, path, out = []) {
 /**
  * Every refusal here names its row: a property tag with no rule, or two; a rule
  * for a tag outside the property domain; requires/excludes that name no
- * property tag; a requires cycle; a sidecar number naming no balance row; and a
- * property paired with, or written on, a family that is not a carrier — a card
- * above all, because a card's behaviour is its own effect list.
+ * property tag; a requires cycle; and a sidecar number naming no balance row.
+ *
+ * WHAT IS NO LONGER REFUSED: the family. Property tags were restricted to four
+ * carriers, with the card named in the refusal. That gate is gone — a property
+ * tag is how the game is told what an object is and how it may be used, so
+ * every family carries them (schemas.js, where the list used to be).
  */
-/** The tagging rows that hand a property tag to a carrier. */
+/** The tagging rows that hand a property tag to a holder. Any family may. */
 function carriersOf(b, tag) {
-  return (Array.isArray(b.tagging) ? b.tagging : [])
-    .filter((row) => row && row.tagId === tag && PROPERTY_CARRIER_FAMILIES.includes(row.family));
+  return (Array.isArray(b.tagging) ? b.tagging : []).filter((row) => row && row.tagId === tag);
 }
 
 function propertyRuleProblems(b, vctx) {
@@ -2178,11 +2195,11 @@ function propertyRuleProblems(b, vctx) {
     }
     byTag.set(rule.tag, rule);
     if (!propertyTags.has(rule.tag)) {
-      err(path, `'${rule.tag}' is not a property tag — register it in content/source/tags.csv with domain 'property', or delete this rule`);
+      err(path, `'${rule.tag}' is not a property tag — register it as a node under the property root in content/source/nodes.csv, or delete this rule`);
     }
     for (const field of ['requires', 'excludes']) {
       for (const ref of Array.isArray(rule[field]) ? rule[field] : []) {
-        if (!propertyTags.has(ref)) err(`${path}.${field}`, `${field} '${ref}', which is not a property tag — every entry names a tags.csv row in the property domain`);
+        if (!propertyTags.has(ref)) err(`${path}.${field}`, `${field} '${ref}', which is not a property tag — every entry names a node under the property root`);
       }
     }
     const excludes = Array.isArray(rule.excludes) ? rule.excludes : [];
@@ -2211,7 +2228,7 @@ function propertyRuleProblems(b, vctx) {
     }
   });
   for (const tag of propertyTags) {
-    if (!byTag.has(tag)) err(`tags.${tag}`, `property tag '${tag}' has no rule — add exactly one row for it to content/source/propertyRules.csv`);
+    if (!byTag.has(tag)) err(`tags.${tag}`, `property tag '${tag}' has no rule — give it exactly one entry in content/source/nodeEffects.json (or a sentence in nodeTerms.csv)`);
   }
 
   // No requires cycles: a rule that (transitively) requires itself is a
@@ -2237,22 +2254,6 @@ function propertyRuleProblems(b, vctx) {
   };
   for (const tag of byTag.keys()) if (!state.has(tag)) visit(tag, []);
 
-  // Carriers only. The generic family×domain check already refuses a
-  // property tag on a family with no pairing; these name the rule itself, and
-  // refuse the pairing row that would otherwise turn the generic check off.
-  const carrierList = PROPERTY_CARRIER_FAMILIES.join(', ');
-  for (const row of Array.isArray(b.tagFamilyDomains) ? b.tagFamilyDomains : []) {
-    if (!row || row.domain !== 'property' || PROPERTY_CARRIER_FAMILIES.includes(row.family)) continue;
-    err(`tagFamilyDomains.${row.family}.property`, row.family === 'card'
-      ? `cards never carry properties — a card's behaviour is its own effect list; put the property on the equipment, relic or class that grants it (carriers: ${carrierList})`
-      : `'${row.family}' is not a property carrier — only ${carrierList} may carry property tags`);
-  }
-  for (const row of Array.isArray(b.tagging) ? b.tagging : []) {
-    if (!row || !propertyTags.has(row.tagId) || PROPERTY_CARRIER_FAMILIES.includes(row.family)) continue;
-    err(`tagging.${row.family}.${row.objectId}`, row.family === 'card'
-      ? `cards never carry properties — '${row.objectId}' is given the property tag '${row.tagId}'; a card's behaviour is its own effect list, so put the property on the equipment, relic or class that grants it`
-      : `'${row.family}' is not a property carrier, so '${row.objectId}' cannot hold '${row.tagId}' — only ${carrierList} may carry property tags`);
-  }
 }
 
 // ---------------------------------------------------------------------------
