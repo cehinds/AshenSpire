@@ -480,3 +480,40 @@ test('a narrow host shows the whole figure, filling the same band', () => {
   assert.ok(shown(narrow, 1) > shown(wide, 1 / 3), 'and it shows more of the speaker than the shrunken close-up did');
   assert.ok(FIGURES.player.width * narrow.scale <= lanes.left.width + 1e-6, 'while still inside its lane');
 });
+
+// HEIGHT FIRST, WIDTH YIELDS (#1132). A figure too wide for its lane leans over
+// the frame's OUTER edge before it shrinks — away from the other speaker, so the
+// head stays in frame — and never shrinks below its floor.
+test('a figure leans over the frame outer edge before it shrinks, and only outward', () => {
+  const wide = { top: 0, height: 300, width: 300, centerX: 150 };   // far wider than any lane
+  for (const host of HOSTS) {
+    const { revealLine, lanes, slots } = frameGeometry(host);
+    const frame = { width: host.width, height: host.height };
+    const left = closeUpPlacement(wide, slots.left, revealLine, W4C_LAYOUT, lanes.left, true, frame);
+    const right = closeUpPlacement(wide, slots.right, revealLine, W4C_LAYOUT, lanes.right, true, frame);
+    const leftBox = visibleBox(wide, left), rightBox = visibleBox(wide, right);
+    const allowance = host.width * (W4C_LAYOUT.positioning.portraits.maxOuterOverflowVw / 100) + 1e-6;
+    // The inner edges never cross into the other speaker's half.
+    assert.ok(leftBox.right <= lanes.left.left + lanes.left.width + 1e-6, `${host.label}: the left figure crossed into the gap`);
+    assert.ok(rightBox.left >= lanes.right.left - 1e-6, `${host.label}: the right figure crossed into the gap`);
+    // The lean is spent outward, within the allowance.
+    assert.ok(leftBox.left >= -allowance, `${host.label}: the left figure leans past its allowance`);
+    assert.ok(rightBox.right <= host.width + allowance, `${host.label}: the right figure leans past its allowance`);
+    // And each head is still inside the frame.
+    for (const box of [leftBox, rightBox]) {
+      const centre = (box.left + box.right) / 2;
+      assert.ok(centre >= 0 && centre <= host.width, `${host.label}: a head left the frame`);
+    }
+  }
+});
+
+test('a figure is never shrunk below its configured floor', () => {
+  const floorVh = W4C_LAYOUT.positioning.portraits.minVisibleHeightVh;
+  const veryWide = { top: 0, height: 200, width: 2000, centerX: 1000 };
+  for (const host of HOSTS) {
+    const { revealLine, lanes, slots } = frameGeometry(host);
+    const placed = closeUpPlacement(veryWide, slots.left, revealLine, W4C_LAYOUT, lanes.left, true, { width: host.width, height: host.height });
+    const shown = veryWide.height * placed.scale * 1; // a narrow host shows the whole figure
+    assert.ok(shown >= host.height * (floorVh / 100) - 1e-6, `${host.label}: shows ${shown.toFixed(0)}px, under the floor`);
+  }
+});

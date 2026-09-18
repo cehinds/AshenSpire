@@ -47,7 +47,7 @@ const positive = (value, name) => {
  * it then sinks so its top share still stands on the reveal line rather than
  * hovering above it. The centre is the slot's, clamped into the lane.
  */
-export function closeUpPlacement(art, slot, revealLine, layout, lane = null, compact = false) {
+export function closeUpPlacement(art, slot, revealLine, layout, lane = null, compact = false, frame = null) {
   if (!art || !slot) throw new Error('closeUpPlacement needs the art box and a slot');
   const top = finite(art.top, 'art.top');
   const height = positive(art.height, 'art.height');
@@ -75,6 +75,7 @@ export function closeUpPlacement(art, slot, revealLine, layout, lane = null, com
   const byHeight = span / (height * fraction);
   const artWidth = Number.isFinite(art.width) ? art.width : null;
   const portraits = layout?.positioning?.portraits ?? {};
+  const frameWidth = frame?.width, frameHeight = frame?.height;
   // TWO WAYS TO KEEP A FIGURE IN ITS LANE, and they trade different things.
   //   shrinkToLane  the figure is made smaller until it fits: nothing is cut,
   //                 and on a phone that costs about two thirds of its size,
@@ -87,9 +88,29 @@ export function closeUpPlacement(art, slot, revealLine, layout, lane = null, com
   const clips = portraits.fit === 'clipToLane' && lane != null;
   const shrinks = portraits.fit === 'shrinkToLane' && lane != null && artWidth != null;
   let scale = byHeight;
+  let overhang = 0;
   if (shrinks) {
     const laneWidth = positive(lane.width, 'lane.width');
-    if (artWidth * byHeight > laneWidth) scale = laneWidth / artWidth;
+    // HEIGHT FIRST, WIDTH YIELDS (owner, 2026-09-18). A figure too wide for its
+    // lane leans OUTWARD first — away from the other speaker, so the head and
+    // upper body stay in the frame and only the outer shoulder leaves it — and
+    // only shrinks when even that is not enough. The lean is bounded by
+    // positioning.portraits.maxOuterOverflowVw, in frame widths.
+    const overflowVw = portraits.maxOuterOverflowVw;
+    const allowance = Number.isFinite(overflowVw) && Number.isFinite(frameWidth)
+      ? Math.max(0, frameWidth * (overflowVw / 100))
+      : 0;
+    const room = laneWidth + allowance;
+    if (artWidth * byHeight > room) scale = room / artWidth;
+    const drawn = artWidth * scale;
+    overhang = Math.max(0, drawn - laneWidth);
+    // …but never below the floor the config puts under a figure.
+    const floorVh = portraits.minVisibleHeightVh;
+    if (Number.isFinite(floorVh) && Number.isFinite(frameHeight)) {
+      const floor = frameHeight * (floorVh / 100);
+      const shown = height * fraction * scale;
+      if (shown < floor) scale = floor / (height * fraction);
+    }
   }
   // Anchored on the reveal line: the visible top sits one visible fraction of
   // the scaled figure above it, so a figure that shrank still stands on the
@@ -104,10 +125,20 @@ export function closeUpPlacement(art, slot, revealLine, layout, lane = null, com
     const half = figureWidth / 2;
     // A lane narrower than the figure cannot hold it; clamp to the lane's own
     // centre rather than inverting the bounds.
-    const low = laneLeft + half, high = laneLeft + laneWidth - half;
-    // A figure wider than its lane is centred on the lane and cut by it; one
-    // that fits is nudged inside it.
-    centerTarget = low > high ? laneLeft + laneWidth / 2 : Math.min(Math.max(centerTarget, low), high);
+    // The overhang is spent on the OUTER side only: a left figure may cross
+    // the frame's left edge, a right figure its right edge, and neither may
+    // cross into the other's lane.
+    const outerLeft = lane.side === 'right' ? laneLeft : laneLeft - overhang;
+    const outerWidth = laneWidth + overhang;
+    const low = outerLeft + half, high = outerLeft + outerWidth - half;
+    if (low > high) {
+      // Wider than lane and lean together: pin the INNER edge to the lane's
+      // inner edge, so every extra pixel goes over the frame's outer edge and
+      // none of it into the space the other speaker stands in.
+      centerTarget = lane.side === 'right' ? laneLeft + half : laneLeft + laneWidth - half;
+    } else {
+      centerTarget = Math.min(Math.max(centerTarget, low), high);
+    }
   }
   return Object.freeze({
     scale,

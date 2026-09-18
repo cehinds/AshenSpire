@@ -41,6 +41,22 @@ const readFixture = (name) => JSON.parse(readFileSync(new URL(`./fixtures/${name
 const baseline = readFixture('config-migration-baseline.json');
 const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 
+// RE-POINTING A BASELINE VALUE, AND THE ONLY REASON THAT IS ALLOWED. These
+// fixtures pin what each module exported BEFORE its tables moved into
+// content/config, so a red here normally means the move changed behaviour and
+// the MODULE is wrong. There is one other case: an authored value legitimately
+// changes AFTER the baseline was captured, and then the FIXTURE is the stale
+// one. Re-point it by hand, one value, never by regenerating the file — a
+// regeneration would relabel every other drift as intended at the same time.
+//
+// Re-pointed so far:
+//   · CombatLayout.minimumHandHeight([]) 161.6 -> 145.6, for #1146, which gave
+//     the playing card one authored shape and moved its ratio from 5/8 to 5/7.
+//     The hand's floor is minWidthRem * rem / card.ratio + the inset, lift and
+//     arc, so a wider card needs less height: 80/0.625 + 33.6 = 161.6 became
+//     80/(5/7) + 33.6 = 145.6. #1146 and #1140 merged 74 seconds apart, so
+//     neither could see the other's effect and dev went red on the pair.
+
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {
   if (JSON.stringify(want) === JSON.stringify(got)) return [];
