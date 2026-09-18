@@ -35,8 +35,8 @@ import { resolveVariable, nodeTree, nodeTokens, cardKind, CARD_TYPE_KIND } from 
 import { relicTokens } from '../src/model/validate.js';
 import { relicPropertyRules } from '../src/model/registries.js';
 import { cardPropertyInstances } from '../src/framework/importer.js';
-import { NODE_RELATIONS } from '../src/model/schemas.js';
-import { RELATION_KINDS } from '../src/framework/schema.js';
+import { NODE_RELATIONS, NODE_VISIBILITIES, NODE_DOMAINS } from '../src/model/schemas.js';
+import { RELATION_KINDS, PROPERTY_VISIBILITIES, PROPERTY_DOMAINS } from '../src/framework/schema.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = (name) => JSON.parse(readFileSync(resolve(HERE, 'fixtures', name), 'utf8'));
@@ -137,6 +137,9 @@ test('the tree is one tree: paths derive from parents, roots are domains, and th
   assert.deepEqual(tree.childrenOf('lifecycle.recall').sort(), ['lifecycle.recall.afterCardPlay', 'lifecycle.recall.afterTurnDraw', 'lifecycle.recall.afterUse']);
   assert.ok(tree.isUnder('classification.strike', 'classification'));
   assert.deepEqual([...NODE_RELATIONS].sort(), [...RELATION_KINDS].sort(), 'model/schemas.js NODE_RELATIONS and framework/schema.js RELATION_KINDS are one list');
+  assert.deepEqual([...NODE_VISIBILITIES].sort(), [...PROPERTY_VISIBILITIES].sort(), 'NODE_VISIBILITIES and PROPERTY_VISIBILITIES are one list');
+  assert.deepEqual([...NODE_DOMAINS].sort(), [...PROPERTY_DOMAINS].sort(), 'NODE_DOMAINS and PROPERTY_DOMAINS are one list');
+  assert.equal(tree.pathOf('classification.strike'), 'classification.strike', 'a framework path is the labels down the parent chain — never the id split');
   const roots = contentBundle.nodes.filter((n) => !n.parentId).map((n) => n.id).sort();
   assert.deepEqual(roots, TAG_DOMAINS.map((d) => d.id).sort(), 'every root is a domain and every domain is a root');
 });

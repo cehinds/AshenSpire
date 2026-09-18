@@ -23,7 +23,7 @@
 # aside (ROOTS ONLY): true for a root whose tags never join an object's tag
 # LIST because they have a reader of their own — presentation is sprite
 # selection (tagService.presentationIdsOf), classification is what the object
-# IS (registries stamps it as `kinds`, read by objectKinds). A mechanic asking
+# IS (registries stamps it as `kindIds`, read by objectKinds). A mechanic asking
 # "what tags does this carry" is asking about gameplay identity, and neither of
 # those is that. Stated on the root, once, and read by every list reader.
 #

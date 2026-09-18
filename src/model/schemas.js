@@ -189,6 +189,28 @@ export const NODE_RELATIONS = Object.freeze([
   'REQUIRES', 'CONFLICTS_WITH', 'PERMITS', 'INHERITS', 'REPLACES', 'SUPPRESSES',
 ]);
 
+// The framework's visibility and domain words a node may carry (nodes.csv),
+// stated here for the same reason NODE_RELATIONS is: the tree is validated in
+// the model layer, which may not import the framework. tests/engine.test.js
+// pins them to framework/schema.js PROPERTY_VISIBILITIES / PROPERTY_DOMAINS.
+export const NODE_VISIBILITIES = Object.freeze(['PRIMARY', 'SECONDARY', 'CONTEXTUAL', 'INTERNAL', 'DEBUG']);
+export const NODE_DOMAINS = Object.freeze([
+  'CLASSIFICATION', 'DAMAGE', 'ACTION_ROLE', 'COST', 'TARGETING',
+  'LIFECYCLE', 'SCALING', 'EQUIPMENT', 'STATUS', 'PRESENTATION', 'INTERNAL',
+]);
+
+// The columns each tree table may carry — a mis-spelt column (`parentid`)
+// would otherwise make its node a silent root. validate.js's "Unknown field"
+// discipline, for the seven tables.
+export const TREE_COLUMNS = Object.freeze({
+  nodes: ['id', 'parentId', 'label', 'color', 'glyph', 'visibility', 'priority', 'domain', 'aside', 'blurb'],
+  nodeRelations: ['sourceId', 'relation', 'targetId', 'precedence'],
+  familyNodes: ['family', 'nodeId'],
+  nodeTerms: ['nodeId', 'playerTermId', 'tooltipTermId', 'template'],
+  nodeVariables: ['nodeId', 'variable', 'role'],
+  variableBindings: ['scope', 'scopeId', 'nodeId', 'variable', 'balancePath'],
+});
+
 // The scopes a variable binding may name (variableBindings.csv), in resolution
 // order — highest wins. `default` is the shipped tuning and the only scope with
 // rows today; the others are the shape per-copy tuning (a smithed relic, a

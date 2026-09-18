@@ -902,6 +902,19 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     console.log(`FAIL  generated UI config: ${error.stderr || error.stdout || error.message}`);
     zoomExtra++;
   }
+  // The tag tree's derived views — tags, domains, pairings, property rules and
+  // src/framework/data/{properties,relations}.js (which bakes the default
+  // balance bindings in) — are generated, and nothing at runtime checks them
+  // against the tree. This is the drift gate: an edit to nodes.csv or
+  // balance.js that was not rebuilt is red here.
+  try {
+    execFileSync(process.execPath, ['tools/content-build.mjs', '--check'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+    console.log('PASS  generated content is current with content/source, the tag tree\'s views included (content-build --check)');
+    zoomPassed++;
+  } catch (error) {
+    console.log(`FAIL  generated content: ${String(error.stderr || error.stdout || error.message).slice(0, 600)}`);
+    zoomExtra++;
+  }
 }
 try {
   const { runRewardConfirmTests } = await import('./reward-confirm.test.mjs');

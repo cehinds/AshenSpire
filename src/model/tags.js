@@ -455,7 +455,7 @@ export function tagIdsInDomain(bundle, domain) {
  * object's tag LIST, read off the domain rows' `aside` flag (a root attribute
  * in nodes.csv). Each such domain has a reader of its own — presentation is
  * sprite selection (tagService.presentationIdsOf), classification is what the
- * object IS (registries stamps it as `kinds`). A mechanic asking "what tags
+ * object IS (registries stamps it as `kindIds`). A mechanic asking "what tags
  * does this carry" is asking about gameplay identity, and neither is that.
  * Data, not a constant, so a third such domain is a row and not an edit here.
  */

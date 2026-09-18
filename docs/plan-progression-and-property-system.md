@@ -118,8 +118,8 @@ answer.
 | `nodeVariables.csv` + `variableBindings.csv` + `nodeEffects.json` — a node's effects name variables; a binding says which `balance.js` row a variable reads, per scope (`instance › upgrade › class › default`); a literal number in a binding is refused | 64 numeric leaves became 66 variables; the 48 relics' literals moved to `balance.powers` |
 | `nodeTerms.csv` — player-facing words: framework term ids, a conferring node's sentence | |
 | 435 classification rows — one per object, `classification.<type>` for cards, `classification.<family>` otherwise; stamped as `kindIds`, never `tags` | `tagging.csv`; `registries.js` `objectKinds` |
-| Derivations — `tags`, `tagDomains`, `tagFamilyDomains`, `propertyRules`, `propertyRuleEffects`, and `src/framework/data/{properties,relations}.js` are compiled from the tree | `tools/content-build.mjs`; seven old sources deleted |
-| Readers — `registries.tree` (`nodeTree`: parent, root, children, derived dotted path), `resolveVariable` ladder, `objectKinds` | `src/model/tree.js` |
+| Derivations — `tags`, `tagDomains`, `tagFamilyDomains`, `propertyRules`, `propertyRuleEffects`, and `src/framework/data/{properties,relations}.js` are compiled from the tree; `run-node.mjs` runs `content-build --check` as the drift gate, since the framework module bakes the default balance bindings in | `tools/content-build.mjs`; six old sources deleted, `propertyRuleEffects.json` renamed to `nodeEffects.json` |
+| Readers — `registries.tree` (`nodeTree`: parent, root, children, the dotted path from labels), `resolveVariable` ladder (live at runtime through `nodeTokens` for the relic sentences; only `default` rows ship, the other scopes are declared and validated), `cardKind` in `src/model/tree.js`; `objectKinds`/`objectIsKind` in `src/model/registries.js` | |
 | Validation — parents, cycles, edges, families, variables ⇔ effects ⇔ bindings, balance paths, kinds ⇔ collections ⇔ card types | `treeProblems`, hooked into `validateContent` |
 
 **Feel-neutrality, proved not claimed:** `tests/tree-equivalence.test.mjs`
@@ -145,6 +145,16 @@ rows, 24 pairings).
   importer's classification (`cardPropertyInstances`, from the junction's
   kind row) no longer touch `def.type`. A def with no kind row answers null,
   never quietly its type — so every fixture carries its kind rows too.
+
+**A trade-off stated, not hidden:** the 435 kind rows restate what the
+collection and `card.type` already say, and the validator calls that "one fact
+stated twice" and checks it. They are kept authored because the owner's rule
+is that the tag is the authority and the collection the check — a derived row
+would make the tree the copy again — at the cost that every fixture and
+prototype carries its rows (`withKindRows`, `combatBuilds.js`, the Add-edge
+probe). `classification.strike/guard/weaponArt` are kinds no object carries
+under the exactly-one rule; the importer derives them from the card's own kind
+and the framework's relations.
 
 **Not done here, deliberately:** the two `bound` nodes (`item/bound`,
 `equipment.bound`) and the `presentation` mirror of the card schools are not

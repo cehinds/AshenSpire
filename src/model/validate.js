@@ -174,8 +174,12 @@ const KNOWN_BUNDLE_KEYS = new Set([
  * cross-module mutable, and loadout.js was already resetting it defensively at
  * three call sites. Each caller gets its own.
  */
-export { TOKEN_PATTERN, tokenRe } from './tokens.js';
-import { TOKEN_PATTERN, tokenRe } from './tokens.js';
+// The grammar lives in model/tokens.js (a leaf, so tree.js can read it without
+// importing this file back); re-exported here as plain consts because
+// tools/bundle.mjs inlines `export const` and does not read `export … from`.
+import { TOKEN_PATTERN as TOKEN_PATTERN_, tokenRe as tokenRe_ } from './tokens.js';
+export const TOKEN_PATTERN = TOKEN_PATTERN_;
+export const tokenRe = tokenRe_;
 
 function relicModifierTokenBindings(def) {
   const counts = {};
@@ -2240,7 +2244,7 @@ function propertyRuleProblems(b, vctx) {
     }
   });
   for (const tag of propertyTags) {
-    if (!byTag.has(tag)) err(`tags.${tag}`, `property tag '${tag}' has no rule — give it exactly one entry in content/source/nodeEffects.json (or a sentence in nodeTerms.csv)`);
+    if (!byTag.has(tag)) err(`tags.${tag}`, `property tag '${tag}' has no rule — a property node's rule is derived from the tree by tools/content-build.mjs — put the node under the property root in nodes.csv and rebuild`);
   }
 
   // No requires cycles: a rule that (transitively) requires itself is a

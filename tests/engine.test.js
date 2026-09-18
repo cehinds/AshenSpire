@@ -8091,6 +8091,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     refuses({ ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'card' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.attack' } : r)) },
       /tagging\.card\.defend: holds 'classification\.skill', which is outside every subtree 'card' is paired with in familyNodes\.csv \(the family may carry only classification\.attack under that root\)/,
       'a tagging row outside the family\'s paired subtree is refused by name');
+    // 80.8e — a narrower classification pairing is LEGAL (the presence check
+    // asks whether the row's node is under classification, not the reverse).
+    const narrower = { ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'enemy' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.enemy' } : r)) };
+    assert(validateContent(narrower).ok, `enemy → classification.enemy validates — said ${JSON.stringify(said(narrower).slice(0, 240))}`);
+    // 80.8f — a mis-spelt column is refused, not a silent root; effects on a
+    // node outside property, a role that is not the field, a visibility outside
+    // the framework's words, and a dotted framework id its parents do not spell.
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? (({ parentId, ...rest }) => ({ ...rest, parentid: parentId }))(n) : n)) },
+      /nodes\[\d+\]\.parentid: Unknown column 'parentid'/, 'an unknown column is refused by name');
+    refuses({ ...contentBundle, nodeEffects: { ...contentBundle.nodeEffects, blade: { triggers: [] } } },
+      /nodeEffects\.blade: confers behaviour on a node outside the property subtree/, 'effects on a non-property node are refused by name');
+    refuses({ ...contentBundle, nodeVariables: contentBundle.nodeVariables.map((v) => (v.nodeId === 'forsakenMedallion' ? { ...v, role: 'stacks' } : v)) },
+      /nodeVariables\.forsakenMedallion\.poiseDamage\.role: says 'stacks' but the effect reads the variable as 'amount'/, 'a role that is not the field is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'lifecycle.innate' ? { ...n, visibility: 'LOUD' } : n)) },
+      /nodes\.lifecycle\.innate\.visibility: 'LOUD' is not a visibility/, 'a visibility outside the framework\'s words is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'lifecycle.recall.afterUse' ? { ...n, parentId: 'lifecycle' } : n)) },
+      /nodes\.lifecycle\.recall\.afterUse\.parentId: the id spells the path 'lifecycle\.recall\.afterUse' but its parents spell 'lifecycle\.afterUse'/, 'a dotted id its parents do not spell is refused by name');
     // 80.8c — the tree's own shape: a parent that is not a node, and a cycle.
     refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? { ...n, parentId: 'nowhere' } : n)) },
       /nodes\.fx:blade\.parentId: names 'nowhere', which is not a node/, 'a parent that is not a node is refused by name');

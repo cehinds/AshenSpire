@@ -15,6 +15,10 @@
 //               with no integer priority
 //   relations   an endpoint naming no node, a verb outside NODE_RELATIONS, a
 //               self-edge, a duplicate (source, relation, target)
+//   columns     an unknown column on any of the six CSV tables
+//   nodes       (also) a visibility or root domain outside the framework's
+//               words, and a framework node's dotted id that its parents do
+//               not spell
 //   familyNodes an unknown family, a nodeId naming no node, a duplicate pair,
 //               a collection-backed family with no row into classification,
 //               and a tagging row outside every subtree its family is paired
@@ -23,7 +27,9 @@
 //               of that node
 //   variables   a nodeId naming no node, a duplicate (node, variable), a
 //               variable no effect of the node reads, an effect reading a
-//               variable the node does not declare
+//               variable the node does not declare, a role that is not the
+//               key the effect reads the variable at, and an effects entry on
+//               a node outside the property subtree
 //   bindings    a scope outside VARIABLE_SCOPES, a scopeId given for `default`
 //               or missing for any other, a variable the node does not
 //               declare, a duplicate key, a balancePath that is not a finite
@@ -35,7 +41,7 @@
 //
 // Headless and pure: reads the bundle, allocates nothing on it.
 
-import { NODE_RELATIONS, VARIABLE_SCOPES } from './schemas.js';
+import { NODE_RELATIONS, VARIABLE_SCOPES, NODE_VISIBILITIES, NODE_DOMAINS, TREE_COLUMNS } from './schemas.js';
 import { TOKEN_PATTERN } from './tokens.js';
 
 /** The classification node a card's `type` names — the one place the map lives. */
@@ -164,6 +170,18 @@ export function treeProblems(bundle) {
   if (!effects) err('nodeEffects', 'Missing required nodeEffects object');
   if (!nodes || !relations || !familyNodes || !terms || !variables || !bindings || !effects) return problems;
 
+  // ---- columns: a mis-spelt column is a silent nothing, so it is refused -------
+  for (const [name, rows] of [['nodes', nodes], ['nodeRelations', relations], ['familyNodes', familyNodes],
+    ['nodeTerms', terms], ['nodeVariables', variables], ['variableBindings', bindings]]) {
+    const allowed = new Set(TREE_COLUMNS[name]);
+    rows.forEach((row, i) => {
+      if (!row || typeof row !== 'object') return;
+      for (const key of Object.keys(row)) {
+        if (!allowed.has(key)) err(`${name}[${i}].${key}`, `Unknown column '${key}' (columns: ${TREE_COLUMNS[name].join(', ')})`);
+      }
+    });
+  }
+
   // ---- nodes -----------------------------------------------------------------
   const byId = new Map();
   for (const row of nodes) {
@@ -180,6 +198,8 @@ export function treeProblems(bundle) {
     if (!isRoot && row.domain) err(`${path}.domain`, `is written on a non-root — a node's domain is its root's, stated once on the root`);
     if (!isRoot && (row.aside === true || row.aside === 'true')) err(`${path}.aside`, `is written on a non-root — aside is a root attribute`);
     if (row.visibility && !Number.isInteger(row.priority)) err(`${path}.priority`, `must be an integer on a node with a visibility, got ${JSON.stringify(row.priority)}`);
+    if (row.visibility && !NODE_VISIBILITIES.includes(row.visibility)) err(`${path}.visibility`, `'${row.visibility}' is not a visibility (legal: ${NODE_VISIBILITIES.join(', ')})`);
+    if (row.domain && !NODE_DOMAINS.includes(row.domain)) err(`${path}.domain`, `'${row.domain}' is not a framework domain (legal: ${NODE_DOMAINS.join(', ')})`);
   }
   // cycles: walk up from every node; a revisit within one walk is a cycle.
   const reported = new Set();
@@ -213,6 +233,23 @@ export function treeProblems(bundle) {
     return false;
   };
 
+  // A FRAMEWORK NODE'S DOTTED ID IS CHECKED AGAINST THE TREE, never read as the
+  // tree: the id `lifecycle.recall.afterUse` is an opaque key kept so no reader
+  // changed, and this is what keeps it honest — if its parentIds do not spell
+  // that path, the key is lying about where the node sits.
+  const labelPath = (id) => {
+    const parts = [];
+    let cur = byId.get(id);
+    const seen = new Set();
+    while (cur && !seen.has(cur.id)) { seen.add(cur.id); parts.unshift(String(cur.label || cur.id)); cur = cur.parentId ? byId.get(cur.parentId) : null; }
+    return parts.join('.');
+  };
+  for (const row of byId.values()) {
+    if (!row.visibility || !row.parentId) continue;
+    const spelled = labelPath(row.id);
+    if (spelled !== row.id) err(`nodes.${row.id}.parentId`, `the id spells the path '${row.id}' but its parents spell '${spelled}' — the parentId chain is the tree; make them agree`);
+  }
+
   // ---- relations -------------------------------------------------------------
   const seenEdge = new Set();
   relations.forEach((row, i) => {
@@ -224,7 +261,7 @@ export function treeProblems(bundle) {
     if (!NODE_RELATIONS.includes(row.relation)) err(`${path}.relation`, `'${row.relation}' is not a relation (legal: ${NODE_RELATIONS.join(', ')})`);
     if (row.sourceId === row.targetId) err(path, `'${row.sourceId}' relates to itself`);
     if (!Number.isInteger(row.precedence)) err(`${path}.precedence`, `must be an integer, got ${JSON.stringify(row.precedence)}`);
-    const key = `${row.sourceId} ${row.relation} ${row.targetId}`;
+    const key = `${row.sourceId}\u0000${row.relation}\u0000${row.targetId}`;
     if (seenEdge.has(key)) err(path, `duplicate edge ${row.sourceId} ${row.relation} ${row.targetId}`);
     seenEdge.add(key);
   });
@@ -238,7 +275,7 @@ export function treeProblems(bundle) {
     const path = `familyNodes.${family}.${(row && row.nodeId) || '?'}`;
     if (!families.has(family)) { err(path, `unknown family '${family}' — add it to content/source/tagFamilies.csv`); continue; }
     if (!row || !byId.has(row.nodeId)) { err(path, `names '${row && row.nodeId}', which is not a node`); continue; }
-    const key = `${family} ${row.nodeId}`;
+    const key = `${family}\u0000${row.nodeId}`;
     if (seenPair.has(key)) err(path, 'duplicate pair');
     seenPair.add(key);
     if (!subtreesOf.has(family)) subtreesOf.set(family, []);
@@ -247,7 +284,7 @@ export function treeProblems(bundle) {
   for (const spec of families.values()) {
     if (!spec.source || typeof spec.source !== 'string') continue;
     const roots = subtreesOf.get(spec.family) || [];
-    if (!roots.some((id) => isUnder('classification', id) || id === 'classification')) {
+    if (!roots.some((id) => id === 'classification' || isUnder(id, 'classification'))) {
       err(`familyNodes.${spec.family}`, `no row lets '${spec.family}' carry the classification subtree, so no object of the family could state its kind — add the row (family, classification)`);
     }
   }
@@ -269,6 +306,7 @@ export function treeProblems(bundle) {
 
   // ---- variables and effects ---------------------------------------------------
   const declared = new Map(); // nodeId → Set(variable)
+  const roleOf = new Map();
   for (const row of variables) {
     const nodeId = (row && row.nodeId) || '?';
     const path = `nodeVariables.${nodeId}.${(row && row.variable) || '?'}`;
@@ -278,16 +316,38 @@ export function treeProblems(bundle) {
     if (declared.get(nodeId).has(row.variable)) err(path, 'duplicate variable');
     declared.get(nodeId).add(row.variable);
     if (!String(row.role || '').length) err(`${path}.role`, 'a variable states the role it plays (amount, stacks, pct, hits, n, level, or a passive key)');
+    else roleOf.set(`${nodeId}\u0000${row.variable}`, String(row.role));
   }
   const read = new Map(); // nodeId → Set(variable) referenced by effects
+  const fieldOf = new Map(); // `${nodeId}\u0000${variable}` → the key the variable sits at
+  const walkFields = (v, nodeId, key) => {
+    if (Array.isArray(v)) { v.forEach((x) => walkFields(x, nodeId, key)); return; }
+    if (v && typeof v === 'object') {
+      if (Object.keys(v).length === 1 && typeof v.variable === 'string') { if (key) fieldOf.set(`${nodeId}\u0000${v.variable}`, key); return; }
+      for (const [k, x] of Object.entries(v)) walkFields(x, nodeId, Array.isArray(x) ? key : k);
+    }
+  };
   for (const [nodeId, tree] of Object.entries(effects)) {
     if (!byId.has(nodeId)) { err(`nodeEffects.${nodeId}`, `is not a node`); continue; }
+    if (!isUnder(nodeId, 'property')) err(`nodeEffects.${nodeId}`, `confers behaviour on a node outside the property subtree — only a property node is mounted; move the node under property or drop the entry`);
+    walkFields(tree, nodeId, '');
     const refs = new Set(variableRefs(tree));
     read.set(nodeId, refs);
     for (const v of refs) {
       if (!declared.has(nodeId) || !declared.get(nodeId).has(v)) {
         err(`nodeEffects.${nodeId}`, `reads variable '${v}', which nodeVariables.csv does not declare for it`);
       }
+    }
+  }
+  // THE ROLE IS THE KEY THE VARIABLE SITS AT — `amount` on a damage op, `stacks`
+  // on applyStatus, `n` on a predicate, a passive's own name — so the column is
+  // read, and a row that says `amount` for a variable an op reads as `stacks`
+  // is refused rather than decorating.
+  for (const [key, field] of fieldOf) {
+    const role = roleOf.get(key);
+    if (role && role !== field) {
+      const [nodeId, v] = key.split('\u0000');
+      err(`nodeVariables.${nodeId}.${v}.role`, `says '${role}' but the effect reads the variable as '${field}'`);
     }
   }
   for (const [nodeId, vars] of declared) {
@@ -303,6 +363,7 @@ export function treeProblems(bundle) {
   }
 
   // ---- bindings ----------------------------------------------------------------
+  const classIds = new Set((Array.isArray(b.classes) ? b.classes : []).map((c) => c && c.id).filter(Boolean));
   const seenBinding = new Set();
   const hasDefault = new Set();
   for (const row of bindings) {
@@ -313,9 +374,11 @@ export function treeProblems(bundle) {
     const scopeId = row.scopeId == null ? '' : String(row.scopeId);
     if (row.scope === 'default' && scopeId) err(`${path}.scopeId`, 'a default binding has no scopeId');
     if (row.scope !== 'default' && !scopeId) err(`${path}.scopeId`, `a '${row.scope}' binding names what it is scoped to`);
+    if (row.scope === 'class' && scopeId && !classIds.has(scopeId)) err(`${path}.scopeId`, `'${scopeId}' is not a class id`);
+    if (row.scope === 'upgrade' && scopeId && !/^\d+$/.test(scopeId)) err(`${path}.scopeId`, `an upgrade scope names a level, got '${scopeId}'`);
     if (!byId.has(nodeId)) { err(path, `names '${nodeId}', which is not a node`); continue; }
     if (!declared.has(nodeId) || !declared.get(nodeId).has(row.variable)) err(path, `binds '${row.variable}', which nodeVariables.csv does not declare for '${nodeId}'`);
-    const key = `${row.scope} ${scopeId} ${nodeId} ${row.variable}`;
+    const key = `${row.scope}\u0000${scopeId}\u0000${nodeId}\u0000${row.variable}`;
     if (seenBinding.has(key)) err(path, 'duplicate binding');
     seenBinding.add(key);
     if (typeof row.balancePath === 'number') {
@@ -324,10 +387,10 @@ export function treeProblems(bundle) {
       const value = atPath(b.balance, row.balancePath);
       if (!Number.isFinite(value)) err(`${path}.balancePath`, `'${row.balancePath}' is not a number in src/content/balance.js`);
     }
-    if (row.scope === 'default') hasDefault.add(`${nodeId} ${row.variable}`);
+    if (row.scope === 'default') hasDefault.add(`${nodeId}\u0000${row.variable}`);
   }
   for (const [nodeId, vars] of declared) {
-    for (const v of vars) if (!hasDefault.has(`${nodeId} ${v}`)) err(`nodeVariables.${nodeId}.${v}`, `has no default binding — every variable reads a balance row in the default scope`);
+    for (const v of vars) if (!hasDefault.has(`${nodeId}\u0000${v}`)) err(`nodeVariables.${nodeId}.${v}`, `has no default binding — every variable reads a balance row in the default scope`);
   }
 
   // ---- terms ---------------------------------------------------------------------
@@ -352,7 +415,7 @@ export function treeProblems(bundle) {
   const kindsOf = new Map();
   for (const row of (Array.isArray(b.tagging) ? b.tagging : [])) {
     if (!row || !kindIds.has(row.tagId)) continue;
-    const key = `${row.family} ${row.scope || ''} ${row.objectId}`;
+    const key = `${row.family}\u0000${row.scope || ''}\u0000${row.objectId}`;
     if (!kindsOf.has(key)) kindsOf.set(key, []);
     kindsOf.get(key).push(row.tagId);
     const named = row.tagId.startsWith('classification.') ? row.tagId.slice('classification.'.length) : '';
@@ -367,7 +430,7 @@ export function treeProblems(bundle) {
     for (const def of collection) {
       if (!def || typeof def.id !== 'string') continue;
       const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
-      const held = kindsOf.get(`${spec.family} ${scope} ${def.id}`) || [];
+      const held = kindsOf.get(`${spec.family}\u0000${scope}\u0000${def.id}`) || [];
       const path = `tagging.${spec.family}.${def.id}`;
       if (held.length === 0) { err(path, `states no kind — every object carries one tagging row into the classification subtree (${spec.family === 'card' ? 'the node its type names' : `classification.${spec.family}`})`); continue; }
       if (held.length > 1) err(path, `states ${held.length} kinds (${held.join(', ')}) — exactly one`);
@@ -406,7 +469,10 @@ export function nodeTree(registries) {
     ancestorsOf,
     childrenOf: (id) => [...(children.get(id) || [])],
     isUnder: (id, ancestorId) => id === ancestorId || ancestorsOf(id).includes(ancestorId),
-    pathOf: (id) => { const n = byId.get(id); if (!n) return null; const leaf = n.id.includes('.') ? n.id.split('.').pop() : n.id; return [...ancestorsOf(id).reverse().map((a) => { const r = byId.get(a); return r.id.includes('.') ? r.id.split('.').pop() : r.id; }), leaf].join('.'); },
+    // The framework's dotted spelling, from the LABELS down the parentId chain
+    // (a framework node's label is its leaf; treeProblems refuses a dotted id
+    // that disagrees with it). The id is never split — it is only a key.
+    pathOf: (id) => { const n = byId.get(id); if (!n) return null; return [...ancestorsOf(id).reverse(), id].map((a) => { const r = byId.get(a); return String(r.label || r.id); }).join('.'); },
   });
 }
 

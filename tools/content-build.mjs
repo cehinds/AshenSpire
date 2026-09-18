@@ -298,14 +298,20 @@ function deriveFromTree(parsed) {
     }
     return v;
   };
+  // A rule for EVERY node under the property root — the ones with effects and
+  // the ones with only a sentence (or nothing yet) — so a property node always
+  // has its one rule and the old "property tag with no rule" refusal cannot
+  // fire on tree content. Effects on a node outside property are refused by
+  // name (model/tree.js); here they are simply not a rule.
+  const propertyNodes = nodes.filter((n) => n.parentId && rootOf(byId, n.id)?.id === 'property').map((n) => n.id);
   const propertyRules = [];
   const propertyRuleEffects = {};
-  for (const nodeId of Object.keys(effects)) {
+  for (const nodeId of [...new Set([...propertyNodes, ...Object.keys(effects).filter((id) => byId.has(id) && rootOf(byId, id)?.id === 'property')])]) {
     if (!byId.has(nodeId)) bthrow(`nodeEffects.json: '${nodeId}' is not a node`);
     const requires = relations.filter((r) => r.sourceId === nodeId && r.relation === 'REQUIRES').map((r) => r.targetId);
     const excludes = relations.filter((r) => r.sourceId === nodeId && r.relation === 'CONFLICTS_WITH').map((r) => r.targetId);
     propertyRules.push({ tag: nodeId, requires: requires.length ? requires : '', excludes: excludes.length ? excludes : '', textTemplate: templateOf.get(nodeId) || '' });
-    propertyRuleEffects[nodeId] = substitute(nodeId, effects[nodeId]);
+    if (effects[nodeId]) propertyRuleEffects[nodeId] = substitute(nodeId, effects[nodeId]);
   }
   return [
     ['tagDomains', tagDomains, 'nodes.csv'],
@@ -876,7 +882,8 @@ async function selftest() {
         // a missing `events` under the family row that needs it
         // (`tagFamilies.event.source: source 'events' is not a collection…`),
         // which is the right locus and still says which door.
-        const namedInside = messages.some((m) => m.startsWith(`${row.key}.`) || m.startsWith(`${row.key}:`) || m.includes(`'${row.key}'`));
+        const namedInside = messages.some((m) => m.startsWith(`${row.key}.`) || m.startsWith(`${row.key}:`)
+          || (m.startsWith('tagFamilies.') && m.includes(`source '${row.key}' is not a collection`)));
         const external = row.owner === 'content-build';
         const pass = doors.length === 1 && doors[0] === row.key && (
           external ? v.ok && !namedInside : !v.ok && namedInside
@@ -884,7 +891,7 @@ async function selftest() {
         results.push({ ...row, pass });
         const observed = v.ok
           ? `content-build door guard (validateContent green; doors=[${doors.join(', ')}])`
-          : `validateContent (${messages.find((m) => m.startsWith(row.key) || m.includes(`'${row.key}'`)) || `${messages.length} error(s), door not named`})`;
+          : `validateContent (${messages.find((m) => m.startsWith(row.key) || (m.startsWith('tagFamilies.') && m.includes(`source '${row.key}' is not a collection`))) || `${messages.length} error(s), door not named`})`;
         ok(pass, `K15.${index + 1} [S1 door matrix] '${row.key}' missing — expected owner ${row.owner}; observed ${observed}`);
       }
       const external = results.filter((r) => r.owner === 'content-build');
