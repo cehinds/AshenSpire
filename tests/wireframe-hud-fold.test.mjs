@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { balance } from '../src/content/balance.js';
 
 // THE FOLD IS ONE RULE SET, NOT ONE PER HOST (styles/kit.css § BAND FOLD).
 //
@@ -104,6 +105,12 @@ test('the wireframe states the phone band, and states it as the published gate',
     assert.equal(hudConfig.layers[key], true, `${key} stays on, so the merge draws it`);
   }
   assert.match(phone.gate, /data-layout='narrow'/, 'the gate is the composition main.js publishes, not a second measurement');
+  // `maxWidthPx` RECORDS where balance draws that line; it never decides. A
+  // recorded number with nothing holding it to its source is a second home
+  // waiting to drift (Copilot, #1150), so the two are compared here — the only
+  // place that can notice, since nothing at runtime reads the doc's copy.
+  assert.equal(phone.maxWidthPx, balance.ui.uiScale.narrowMax,
+    'the wireframe records balance.ui.uiScale.narrowMax, and drifting from it is the defect');
   const wgh7 = /\['WGH7',[\s\S]*?\n\];/.exec(hudReference) || /\['WGH7',[\s\S]*/.exec(hudReference);
   assert.match(wgh7[0], /ONLY CINDERS REMAINS/, 'WGH7 says what the phone band carries');
 });
