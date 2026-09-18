@@ -42,7 +42,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
 
   // Each figure's host sits at the layer's origin; its placement is a
   // translate-then-scale about that origin, in the frame's local px.
-  function placeFigures(rootRect, zoom, revealLine, lanes) {
+  function placeFigures(rootRect, zoom, revealLine, lanes, rootWidth, compact) {
     for (const portrait of root.querySelectorAll('.dialogue-portrait')) {
       const host = portrait.querySelector(':scope > .dialogue-portrait-art > *');
       const slotEl = portrait.querySelector(':scope > .dialogue-portrait-slot');
@@ -90,8 +90,12 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
       // Each side keeps to its own lane, so the two figures cannot overlap
       // however narrow the host is (DialogueModel.dialogueLanes).
       const lane = portrait.dataset.side === 'right' ? lanes.right : lanes.left;
-      const placement = closeUpPlacement(measured, slot, revealLine, layout, lane);
+      const placement = closeUpPlacement(measured, slot, revealLine, layout, lane, compact);
       host.style.transform = `translate(${placement.x}px, ${placement.y}px) scale(${placement.scale})`;
+      // The lane cuts the figure's sides, as the context band cuts its legs.
+      portrait.style.clipPath = placement.clipTo
+        ? `inset(0 ${Math.max(0, rootWidth - (placement.clipTo.left + placement.clipTo.width))}px 0 ${Math.max(0, placement.clipTo.left)}px)`
+        : '';
       portrait.dataset.figureFit = 'fitted';
       if (artBox) delete portrait.dataset.figurePending;
       portrait.dataset.figureScale = String(placement.scale);
@@ -157,7 +161,8 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     const rem = Math.max(16 / zoom, parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
     const width = root.clientWidth, height = root.clientHeight;
     if (!(width > 0) || !(height > 0)) return;
-    const bands = dialogueBands({ width, height, zoom, rem }, layout, parent);
+    const compactHud = dialogueHudCompact({ width: window.innerWidth, height: window.innerHeight }, layout, parent);
+    const bands = dialogueBands({ width, height, zoom, rem }, layout, parent, compactHud);
     root.style.setProperty('--w4-vw', `${width / 100}px`);
     root.style.setProperty('--w4-vh', `${height / 100}px`);
     root.style.setProperty('--w4-band-hud', `${bands.hud}px`);
@@ -168,7 +173,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     root.dataset.dialogueCompact = String(dialogueCompactHost(window.innerWidth, parent));
     // A short host draws the HUD's one-row compact form. The band itself never
     // gives way: it is always drawn (owner, 2026-09-15).
-    root.dataset.hudCompact = String(dialogueHudCompact({ width: window.innerWidth, height: window.innerHeight }, layout, parent));
+    root.dataset.hudCompact = String(compactHud);
     const revealLine = bands.hud + bands.scene;
     root.style.setProperty('--dialogue-reveal-line', `${revealLine}px`);
     // The plate is fitted to the scene window and drawn over the whole frame;
@@ -182,7 +187,12 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     }
     root.style.setProperty('--dialogue-floor-line', `${floorLine}px`);
     root.dataset.floorLine = String(floorLine);
-    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout));
+    // THE FIGURES ASK ABOUT WIDTH, THE BAND ASKS ABOUT BOTH. A narrow frame
+    // cannot carry the close-up zoom beside a second speaker, so a phone shows
+    // the whole figure instead; a wide-but-short window still can, and keeps
+    // the close-up it had (844x390, where the whole-figure rule made both
+    // speakers small and distant).
+    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(window.innerWidth, parent));
     fitResponses();
   }
 
