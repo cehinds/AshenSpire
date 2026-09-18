@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1163",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Every word the game tags things with lives in one tree, and no rule carries a number of its own",
+    "detail": "Nothing you see changes. The game had three separate lists of the words it uses to say what a thing is — one for cards' kinds and costs, one for everything else, and one for the powers a relic or a sceptre grants — and they have been folded into a single tree, where each word has one place and one parent. Every one of the 435 things in the game now states what it is in that tree. And the numbers those powers use — how much Mana a sceptre gives back, how much Poise a medallion's first blow adds — no longer sit inside the power: each power names a variable, and the variable reads the game's one tuning table, which is where a number is meant to be changed. Every card, relic and weapon reads, plays and costs exactly as it did, and a test compares all of it against a record made before the change.",
+    "build": "0.7.1.106",
+    "pullRequest": 1163,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1163"
+  },
+  {
     "id": "pr-1161",
     "date": "2026-09-18",
     "group": "2026-09-18",
