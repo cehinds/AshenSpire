@@ -192,15 +192,6 @@ export function cardLevelCssProperties(config) {
 }
 
 /**
- * The width below which the reading door must stop being two columns.
- *
- * A media query cannot read a custom property, so a stylesheet that wants this
- * threshold has to be TOLD it — an earlier attempt wrote the inspect width out
- * again as `calc(20rem + 24rem)` and called that derived, which it was not: it
- * would not have moved when card.json did. Both terms are authored, so the
- * config stays the one home and `cardInspectionLayout()` only has to compare.
- */
-/**
  * The readable measure a door's details column needs beside the card.
  *
  * Exported in its own right because the threshold is no longer a fixed sum: the
@@ -216,16 +207,25 @@ export function doorReadableMinPx(config = uiConfig.components.card.sizing) {
   return readable;
 }
 
+/**
+ * The width below which the reading door must stop being two columns.
+ *
+ * A media query cannot read a custom property, so a stylesheet that wants this
+ * threshold has to be TOLD it — an earlier attempt wrote the inspect width out
+ * again as `calc(20rem + 24rem)` and called that derived, which it was not: it
+ * would not have moved when card.json did. Both terms are authored, so the
+ * config stays the one home and `cardInspectionLayout()` only has to compare.
+ *
+ * The readable term comes from `doorReadableMinPx` rather than being re-read
+ * here: it had two readers in this one file, which is the shape this file
+ * exists to argue against.
+ */
 export function cardDoorStackBelowPx(config = uiConfig.components.card.sizing) {
   const inspect = Number(config?.levels?.inspect?.widthPx);
-  const readable = Number(config?.doorReadableMinPx);
   if (!Number.isFinite(inspect) || inspect <= 0) {
     throw new Error(`card sizing.levels.inspect.widthPx must be a positive number, got ${JSON.stringify(config?.levels?.inspect?.widthPx)}`);
   }
-  if (!Number.isFinite(readable) || readable <= 0) {
-    throw new Error(`card sizing.doorReadableMinPx must be a positive number, got ${JSON.stringify(config?.doorReadableMinPx)}`);
-  }
-  return inspect + readable;
+  return inspect + doorReadableMinPx(config);
 }
 
 /**

@@ -86,27 +86,67 @@ function doorStackBelowPx() {
 // the DOM there is nothing to measure, so the viewport still answers the first
 // call and the observer corrects it on the first frame it has a box.
 let doorObserver = null;
-function decideCardDoorShape(widthPx) {
-  const stacked = widthPx < doorStackBelowPx();
+
+// THE GAP IS PART OF WHAT TWO COLUMNS COST. The layout reserves `column-gap: 2%`
+// between the card and the details, and the threshold counted only the two
+// tracks. Measured with the content box forced to 710px and the authored 320px
+// card: 710 > 704, so `beside` — and the details track came out 375.8px, eight
+// pixels under the authored 384 minimum. The sum has to include everything the
+// two-column layout spends, not just the parts with names.
+//
+// `column-gap` computes as the authored token, so `2%` arrives as "2%" rather
+// than resolved pixels; a percentage gap is a percentage of the content box, so
+// it is resolved against the width being judged.
+function columnGapPx(layout, widthPx) {
+  if (!layout) return 0;
+  const raw = getComputedStyle(layout).columnGap.trim();
+  if (raw.endsWith('%')) {
+    const pct = Number.parseFloat(raw);
+    return Number.isFinite(pct) ? (widthPx * pct) / 100 : 0;
+  }
+  const px = PX.exec(raw);
+  return px ? Number(px[1]) : 0;
+}
+
+function decideCardDoorShape(widthPx, layout = document.querySelector('.card-inspection-layout')) {
+  const stacked = (widthPx - columnGapPx(layout, widthPx)) < doorStackBelowPx();
   const next = stacked ? 'stacked' : 'beside';
   if (document.documentElement.dataset.cardDoor !== next) {
     document.documentElement.dataset.cardDoor = next;
   }
 }
 function applyCardDoorShape() {
-  const layout = document.querySelector('.card-inspection-layout');
-  const width = layout ? layout.getBoundingClientRect().width : 0;
-  decideCardDoorShape(width > 0 ? width : window.innerWidth);
+  const node = narrowestDoorWidth();
+  if (node) decideCardDoorShape(node.clientWidth, node);
+  else decideCardDoorShape(window.innerWidth, null);
+}
+// A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
+// THE WRONG ONE. `disconnect()` before `observe()` meant only the most recently
+// built layout was measured, while `applyCardDoorShape`'s `querySelector` read
+// the FIRST in the document — two different elements. Measured on the weapon
+// preview: two `.card-inspection-layout` nodes, both inside the modal; forcing
+// the first to a 700px content box left `data-card-door` at `beside`, because
+// the observer was watching the second and never saw the change.
+//
+// So every layout is observed, and the decision is taken from the NARROWEST one
+// still connected: if any layout in the door cannot hold two columns, the door
+// stacks. Detached nodes are skipped rather than held — a layout from a closed
+// door must not vote, and must not be kept alive by being watched.
+function narrowestDoorWidth() {
+  const layouts = [...document.querySelectorAll('.card-inspection-layout')]
+    .filter((node) => node.isConnected && node.clientWidth > 0);
+  if (!layouts.length) return null;
+  return layouts.reduce((slimmest, node) =>
+    (slimmest === null || node.clientWidth < slimmest.clientWidth ? node : slimmest), null);
 }
 function observeDoorWidth(layout) {
   if (typeof ResizeObserver !== 'function') return;
   if (!doorObserver) {
-    doorObserver = new ResizeObserver((entries) => {
-      const box = entries[entries.length - 1]?.contentRect;
-      if (box && box.width > 0) decideCardDoorShape(box.width);
+    doorObserver = new ResizeObserver(() => {
+      const node = narrowestDoorWidth();
+      if (node) decideCardDoorShape(node.clientWidth, node);
     });
   }
-  doorObserver.disconnect();
   doorObserver.observe(layout);
 }
 function watchCardDoorShape() {
