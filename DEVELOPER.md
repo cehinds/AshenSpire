@@ -201,6 +201,53 @@ question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
 enforces that by refusing bare specifiers); the refusal is what makes the gap
 loud in the meantime.
 
+## Plants and the same door (`tools/doorplant.mjs`)
+
+Every `--selftest` corpus in `tools/` is one mechanic: a known-bad is written as
+FILE BYTES into a copy of this checkout, the tool is run whole from that copy,
+and the run must fail *by the red that plant names*. `doorplant.mjs` is the only
+home of that mechanic; the tools supply the plants and the reds.
+
+```bash
+node tools/doorplant.mjs --selftest   # the harness's own door — seconds, no browser, no port
+node tools/plantsites.mjs --check     # every plant's find-string still resolves — under a second
+```
+
+Both run on every pull request in `dev-preview.yml`, because a corpus that has
+stopped being able to arm is green for the wrong reason and nothing else notices.
+
+**Plants are authored with `\n`, and line endings belong to the CHECKOUT, not to
+the plant.** The committed blobs are LF and Linux CI checks out LF, but a Windows
+checkout under `core.autocrlf=true` — the Git-for-Windows system default — has a
+CRLF working tree. An exact byte match on a **multi-line** find-string can never
+succeed there. Until 2026-09-17 that made `node tools/startup-gate.mjs
+--selftest` print `SELFTEST RED — 2 plant(s)/edge(s) failed` on Windows and green
+in CI, and both failures read `PLANT SITE DRIFTED` — the same words real drift
+produces, about two sites that had not moved. Single-line plants were unaffected,
+which is what made it look arbitrary. `doorplant` now re-expresses each plant in
+the target file's own line ending before matching and writes the replacement back
+in that ending; `plantsites.mjs` already compared LF-normalised views, so this is
+the same rule at the stage that edits bytes.
+
+**So do not "repair" a drifted plant by spelling `\r\n` into its find-string** —
+that is a plant which only arms on Windows, and it will read as drifted the next
+time anyone runs the corpus on Linux. Author `\n` and let the harness translate.
+
+`PLANT SITE DRIFTED` still means exactly one thing: the site is absent in the
+file's own ending **and** exactly as authored, so the plant never armed and the
+corpus is proving less than it claims. It is a hard red, never a skip. The known
+backlog of genuinely drifted sites is pinned in `tools/plantsites-baseline.json`,
+and `--check` fails in both directions — a site that starts resolving again must
+be recorded in the same change, or the freed slack hides the next regression.
+
+**Verifying a line-ending claim: count bytes, not lines.** Git Bash's
+`grep -c $'\r$'` reports every line of an LF file as matching, so it cannot tell
+the two apart. Ask Node instead:
+
+```bash
+node -e "const b=require('fs').readFileSync(process.argv[1]);let cr=0,lf=0;for(const c of b){if(c===13)cr++;if(c===10)lf++}console.log('CR',cr,'LF',lf)" styles/kit.css
+```
+
 ## Receipts: nothing is promoted without one (`tools/receipts.mjs`)
 
 Every merged pull request must be named by an entry in
