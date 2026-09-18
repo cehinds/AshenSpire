@@ -4,6 +4,15 @@ export const hudConfig = {
   vitality: { referenceMaximum: { health: 200, mana: 20, stamina: 20 }, maximumWidthPercent: 100, scaleByMaximum: true },
   potions: { placement: 'footerOnly', componentId: 'WGC11', contentsComponentId: 'WGH8', openIntent: 'openPotions', combineChargeFlasks: true, combineCarriedPotions: true },
   experience: { contexts: ['combat'], color: '#398bd1', heightRem: 0.35, animationMs: 650, awardPreview: 15 },
+  // THE PHONE BAND (owner, 2026-09-18): "just vertically stacked vitality
+  // block, cinders, armament and menu button. should be uniform in every view.
+  // act and floor should show up in wide screen but on mobile, that's how it
+  // should be." So at or below `maxWidthPx` the band carries FOUR things in
+  // every context — map, room, fight, conversation — and the wide-screen facts
+  // are ABSENT, not truncated. `gate` is the composition main.js already
+  // publishes on <html> (balance.ui.uiScale.narrowMax); nothing re-measures it.
+  phone: { gate: "data-layout='narrow'", maxWidthPx: 520, meters: 'stacked',
+    layers: { header: true, class: false, cinders: true, position: false, route: false } },
   diagram: { columns: { wide: 62, compact: 48, portraitSE: 40, portraitS24: 42 }, trackColumns: 20, labelColumns: 8 },
   layout: { gapRem: 0.35, insetRem: 0.5, meterHeightRem: 1.15, actionHeightRem: 2.75, radiusRem: 0.25 },
   colors: { background: '#211a12', gold: '#d5af68', text: '#eee2ca', health: '#668c46', mana: '#478dbc', stamina: '#bf9949' },
@@ -26,7 +35,13 @@ const behavior = `INPUT snapshot, context, config, commandRegistry
 model = ProjectKnownHudFields(snapshot, config.sample)
 visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
-ComposeHeader(visible.class, visible.cinders, visible.position)
+IF ViewportUnder(config.phone.maxWidthPx)            // the published gate, never a second measurement
+  // One band in every context: stacked meters, Cinders, Armoury, Menu.
+  visible = FilterConfiguredActiveLayers(model, config.phone.layers)
+  ComposeHeader(visible.cinders)
+  ComposeStackedMeters(visible.vitality); ComposeActions(visible.armoury, visible.menu)
+ELSE
+  ComposeHeader(visible.class, visible.cinders, visible.position)
 ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
@@ -70,7 +85,7 @@ ON authoritativeCombatSettlement(event)
 // Announce progress through accessible meter label; level thresholds come from domain.
 // Ignore duplicate settlement IDs; reduced-motion uses immediate final projection.`],
 ['WGH6','Relic rail','WCF2','[Relic: Ash seal] [Relic: Ember charm]','WGH4; separate source inventoryBelt model','below primary row; relics left; no potion controls','100% usable HUD width','content-fit','// Filter layers and preserve stable entity IDs. Relics use shared cards. Potions are exclusively footer-owned: WGC11 opens WGH8 contents combining HP/MP charge providers and carried consumables. Never render any potion control in this top-HUD rail, regardless of preset. Resource meters remain distinct information components.'],
-['WGH7','Run header strip','WCF2','Class: Warden           Cinders: 120           Act 1 · Floor 4','WGH4; map/combat run header','top baseline; left / center / right','100% usable HUD width','content-fit','// Project class, Cinders, Act and Floor from run snapshot. Filter config layers before arranging tracks. Use localization and semantic fields, not parsed text.']
+['WGH7','Run header strip','WCF2','Class: Warden           Cinders: 120           Act 1 · Floor 4\nphone: Cinders: 120 (centred; class, act and floor are wide-screen facts)','WGH4; map/combat run header','top baseline; left / center / right','100% usable HUD width','content-fit','// Project class, Cinders, Act and Floor from run snapshot. Filter config layers before arranging tracks. Use localization and semantic fields, not parsed text.\n// UNDER config.phone.gate ONLY CINDERS REMAINS, and it keeps the middle track so it stays centred with its neighbours gone. Class, Act and Floor are not ellipsized there, they are absent — a phone is not a narrow desktop. Every context folds the same way, so the band a player reads on the map is the band they read in a fight.']
 ];
 
 // All resource numbers and proportions originate in the same defaults as the
@@ -100,7 +115,10 @@ function framedDiagram(lines,width) {
 export function buildHudDiagram(id,mode='wide',config=hudConfig) {
   const width=config.diagram.columns[mode];
   const meters=resourceDiagramRows(config);
-  const header=config.sample.className+' · Cinders '+config.sample.cinders+' · Act '+config.sample.act+' Floor '+config.sample.floor;
+  const phone=mode==='portraitSE'||mode==='portraitS24';
+  // A phone's band is the owner's four things; the wide facts are absent.
+  const header=phone?'Cinders '+config.sample.cinders
+    :config.sample.className+' · Cinders '+config.sample.cinders+' · Act '+config.sample.act+' Floor '+config.sample.floor;
   const relics=config.sample.relics.map(name=>'['+name+']').join(' ');
   if(id==='WGH1')return meters.join('\n');
   if(id==='WGH7')return header;
