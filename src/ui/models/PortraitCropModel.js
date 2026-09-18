@@ -33,6 +33,8 @@ const positive = (value, name) => {
  * revealLine: the context band's top edge, in layer px, below the slot top.
  * layout:     a W4 scene config with positioning.portraits.visibleFraction and,
  *             for the lane rule, fit/anchor.
+ * compact:    a compact host, which shows positioning.portraits
+ *             .visibleFractionCompact of the figure instead of visibleFraction.
  * lane:       { left, width } — the half of the frame this figure may occupy
  *             (dialogueLanes). Optional: without it the figure is placed as
  *             before, centred on the slot and scaled by height alone.
@@ -45,7 +47,7 @@ const positive = (value, name) => {
  * it then sinks so its top share still stands on the reveal line rather than
  * hovering above it. The centre is the slot's, clamped into the lane.
  */
-export function closeUpPlacement(art, slot, revealLine, layout, lane = null) {
+export function closeUpPlacement(art, slot, revealLine, layout, lane = null, compact = false) {
   if (!art || !slot) throw new Error('closeUpPlacement needs the art box and a slot');
   const top = finite(art.top, 'art.top');
   const height = positive(art.height, 'art.height');
@@ -56,13 +58,33 @@ export function closeUpPlacement(art, slot, revealLine, layout, lane = null) {
   const span = finite(revealLine, 'revealLine') - slotTop;
   if (!(span > 0)) throw new Error(`closeUpPlacement: the reveal line (${revealLine}) must lie below the slot top (${slotTop})`);
   // uiConfig resolves the fraction at build time, so it arrives as a number.
-  const fraction = layout?.positioning?.portraits?.visibleFraction;
+  // HOW MUCH OF THE FIGURE THE BAND SHOWS, and a phone answers differently.
+  // A third of the figure filling slot-top-to-reveal-line is a close-up on a
+  // desktop, where the frame is wide enough to carry it. Half a 433px frame is
+  // not: the same zoom is three times wider than its lane, so shrinking it to
+  // fit left both speakers a third of the height the spec asks for (owner, a
+  // real phone, 2026-09-18). A compact host shows the WHOLE figure, filling
+  // the same band — large, entire, and still inside its lane.
+  const portraitsConfig = layout?.positioning?.portraits ?? {};
+  const fraction = compact && Number.isFinite(portraitsConfig.visibleFractionCompact)
+    ? portraitsConfig.visibleFractionCompact
+    : portraitsConfig.visibleFraction;
   if (!Number.isFinite(fraction) || !(fraction > 0) || fraction > 1) {
     throw new Error(`closeUpPlacement: visibleFraction must satisfy 0 < f ≤ 1 (got ${fraction})`);
   }
   const byHeight = span / (height * fraction);
   const artWidth = Number.isFinite(art.width) ? art.width : null;
   const portraits = layout?.positioning?.portraits ?? {};
+  // TWO WAYS TO KEEP A FIGURE IN ITS LANE, and they trade different things.
+  //   shrinkToLane  the figure is made smaller until it fits: nothing is cut,
+  //                 and on a phone that costs about two thirds of its size,
+  //                 because the zoom the spec asks for is three times wider
+  //                 than half a 433px frame.
+  //   clipToLane    the figure keeps the spec's zoom — its top third fills the
+  //                 slot top to the reveal line — and the lane cuts its sides,
+  //                 the way the context band and the frame already cut it.
+  // The config chooses; the geometry below is the same either way.
+  const clips = portraits.fit === 'clipToLane' && lane != null;
   const shrinks = portraits.fit === 'shrinkToLane' && lane != null && artWidth != null;
   let scale = byHeight;
   if (shrinks) {
@@ -72,17 +94,19 @@ export function closeUpPlacement(art, slot, revealLine, layout, lane = null) {
   // Anchored on the reveal line: the visible top sits one visible fraction of
   // the scaled figure above it, so a figure that shrank still stands on the
   // line instead of floating. Unshrunk, that is the slot top it always used.
-  const anchored = shrinks && portraits.anchor === 'revealLine';
+  const anchored = (shrinks || clips) && portraits.anchor === 'revealLine';
   const visibleTop = anchored ? revealLine - height * fraction * scale : slotTop;
   const figureWidth = artWidth == null ? null : artWidth * scale;
   let centerTarget = left + width / 2;
-  if (shrinks) {
+  if (shrinks || clips) {
     const laneLeft = finite(lane.left, 'lane.left');
     const laneWidth = positive(lane.width, 'lane.width');
     const half = figureWidth / 2;
     // A lane narrower than the figure cannot hold it; clamp to the lane's own
     // centre rather than inverting the bounds.
     const low = laneLeft + half, high = laneLeft + laneWidth - half;
+    // A figure wider than its lane is centred on the lane and cut by it; one
+    // that fits is nudged inside it.
     centerTarget = low > high ? laneLeft + laneWidth / 2 : Math.min(Math.max(centerTarget, low), high);
   }
   return Object.freeze({
@@ -90,5 +114,10 @@ export function closeUpPlacement(art, slot, revealLine, layout, lane = null) {
     x: centerTarget - centerX * scale,
     y: visibleTop - top * scale,
     width: figureWidth,
+    // The lane the figure must be cut to, when the config cuts rather than
+    // shrinks. Null means nothing is cut and the whole figure is drawn.
+    clipTo: clips && figureWidth != null && lane != null && figureWidth > lane.width
+      ? Object.freeze({ left: lane.left, width: lane.width })
+      : null,
   });
 }

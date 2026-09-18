@@ -316,7 +316,14 @@ export function mountCustomize(app, {
       // design exists to make impossible. `renderEquipment` rebuilds each
       // container with the current view on it, so the old sweep is not a
       // second place that has to agree.
-      renderEquipment();
+      //
+      // THE OPEN SECTION IS CARRIED ACROSS THE REDRAW. A rebuild mounts a fresh
+      // disclosure, and a fresh one starts closed: switching view while Main
+      // Hand was open would fold the whole picker away and leave a 0x0 box
+      // where the choices had been. `renderEquipment` already takes the section
+      // to reopen, so the view toggle hands it the one that was open rather
+      // than teaching the fold to survive a remount.
+      renderEquipment(equipmentFold?.openKey || null);
       renderViewToggles();
     }, 'Starting equipment choice view'));
   }
@@ -945,7 +952,9 @@ export function mountCustomize(app, {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
-    const inert = { interactive: false, inspection: false };
+    // The summary is a row of slots you SCAN to check your loadout, not one you
+    // read — same level, and therefore same size, as the picker you chose from.
+    const inert = { interactive: false, inspection: false, level: 'glance' };
     const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
     const slots = [
       { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },
@@ -1165,15 +1174,22 @@ export function mountCustomize(app, {
       autoAdvanceSpecimen = next;
     };
     setCatalogAutoAdvance(true);
-    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
+    // Both branches of the view toggle are catalogued: they are two authored
+    // layouts of one component, and until this change only one of them existed.
+    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'grid' } });
+    const armourListSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
     const specimenArmours = armourChoices().slice(0, 2);
     let specimenArmourId = specimenArmours[0].id;
-    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
-      const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
-      chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
-      return chipButton;
-    }));
+    const drawArmourChoices = () => {
+      for (const host of [armourSpecimen, armourListSpecimen]) {
+        host.replaceChildren(...specimenArmours.map((piece) => {
+          const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
+          markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
+          chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
+          return chipButton;
+        }));
+      }
+    };
     drawArmourChoices();
     // THE THREE PRESENTATION LEVELS, side by side, on one item. The catalogue's
     // job is to show what a component's model can be asked for, and "how much
@@ -1234,7 +1250,8 @@ export function mountCustomize(app, {
       { key: 'keepsake-choice', label: 'Keepsake card', node: choiceSpecimen(
         'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
       ) },
-      { key: 'equipment-choice-card', label: 'Equipment choice card', node: armourSpecimen },
+      { key: 'equipment-choice-card', label: 'Equipment choice card (grid view)', node: armourSpecimen },
+      { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
       { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
     ];

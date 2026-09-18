@@ -569,7 +569,30 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   await open('equipment');
   assert(await noOverflow(), `${width}x${height}: Starting Equip has no horizontal overflow`);
-  assert((await evaluate(`document.querySelector('#cz-equipment-view-toggle [data-view-mode="list"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: Starting Equip defaults to configured list view`);
+  assert((await evaluate(`document.querySelector('#cz-equipment-view-toggle [data-view-mode="grid"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: Starting Equip defaults to the configured grid view`);
+  // THE TOGGLE MUST CHANGE SOMETHING. The assertion above is the one this file
+  // carried while the toggle was completely inert: the picker was styled by
+  // `:has(.poker-equipment-choice)`, which outranks `[data-view]`, and no
+  // `[data-view="list"]` rule existed at all — so both modes drew the same grid
+  // and a check on `aria-pressed` alone stayed green throughout. Press the other
+  // mode and read the LAYOUT, which is the fact that was wrong.
+  {
+    const box = `document.querySelector('.cc-equip-group[data-equipment-section] .cc-card-selectors')`;
+    const layout = async () => JSON.parse(await evaluate(
+      `JSON.stringify((() => { const b = ${box}; const s = getComputedStyle(b);
+        const c = b.querySelector('.poker-equipment-choice');
+        return { view: b.dataset.view, display: s.display, width: c ? Math.round(c.getBoundingClientRect().width) : 0 }; })())`));
+    const asGrid = await layout();
+    assert(asGrid.view === 'grid' && asGrid.display === 'grid',
+      `${width}x${height}: the grid view lays the choices out as a grid (${JSON.stringify(asGrid)})`);
+    await click('#cz-equipment-view-toggle [data-view-mode="list"]');
+    await until(`${box}.dataset.view === 'list'`, 'equipment selectors switch to list');
+    const asList = await layout();
+    assert(asList.display === 'flex' && asList.width > asGrid.width,
+      `${width}x${height}: switching to List actually changes the layout, and its rows are wider than the grid's cells (${JSON.stringify(asList)} vs ${JSON.stringify(asGrid)})`);
+    await click('#cz-equipment-view-toggle [data-view-mode="grid"]');
+    await until(`${box}.dataset.view === 'grid'`, 'equipment selectors switch back to grid');
+  }
   await click('#cz-equipment-view-toggle [data-view-mode="grid"]');
   const equipmentGrid = await evaluate(`(() => {
     const host = document.querySelector('#cz-armours');
@@ -818,7 +841,7 @@ async function checkCatalog(width, height, screenshotName) {
       overflow: root.scrollWidth > root.clientWidth + 1,
     };
   })()`);
-  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,class-preview-pane,class-resource-grid,class-choice-card,view-mode-toggle,boolean-setting-toggle,selection-section-face,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice,equipment-choice-card,card-presentation-levels,relic-choice-card', `${width}x${height}: component catalog shows live sections plus all reusable creation components`);
+  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,class-preview-pane,class-resource-grid,class-choice-card,view-mode-toggle,boolean-setting-toggle,selection-section-face,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice,equipment-choice-card,equipment-choice-card-list,card-presentation-levels,relic-choice-card', `${width}x${height}: component catalog shows live sections plus all reusable creation components`);
   assert(receipt.controls.classes >= 2 && receipt.controls.stats >= 5 && receipt.controls.keepsakes >= 2
     && receipt.controls.armour >= 2 && receipt.controls.left >= 2 && receipt.controls.right >= 2
     && receipt.controls.relics >= 2 && receipt.controls.seed === 1 && !receipt.overflow,

@@ -5,6 +5,7 @@ import { litCard } from './cardSelection.js';
 import { equipmentCardArt } from '../assets.js';
 import { imageHintAttrs } from '../imageHints.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { cardLevelWidthPx } from '../models/CardSizeModel.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { metadataFooter } from '../models/IdentityModel.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
@@ -95,6 +96,13 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   const card = canvasElement(tokens.frameWidthPx);
   applyCardTokens(card, tokens);
   card.className = 'equipment-poker-card';
+  // ONE `level` ARGUMENT, NOT TWO. `glance | focus | inspect` says both how big
+  // this card is (CardSizeModel, below) and which of its fields it shows; a
+  // second parameter would let the two drift and put a focus-sized face on an
+  // inspect-sized card. The width travels with the card as a custom property so
+  // no surface has to write a `max-width` of its own ever again.
+  card.dataset.cardLevel = level;
+  card.style.setProperty('--epc-level-w', `${cardLevelWidthPx(level)}px`);
   card.dataset.item = model.id;
   // WC2a1–WC2c3: which rows each region carries, from the item's own data
   // (hand, card package, modifiers, relic modes, potion effects). A bespoke
@@ -261,8 +269,15 @@ export function equipmentDetails(explanations) {
   return decorateKeywords(details);
 }
 
+// THE READING DOOR'S LEVEL IS NOT THE CALLER'S TO SET. `level` sat BEFORE the
+// spread, so any caller passing one through `options` overrode it — and
+// `collectibleCard.js` forwards `{ ...options }` verbatim, so a glance or focus
+// level reached this door by simply being handed down. That reintroduces the
+// exact defect this work closes: a card inspected at browsing size, its text
+// cut. The level is pinned after the spread; everything else a caller sends
+// still gets through. (Copilot review, #1127.)
 export function renderEquipmentInspection(registries, piece, options = {}) {
-  const { card, explanations } = renderEquipmentCard(registries, piece, { ...options, inspection: false });
+  const { card, explanations } = renderEquipmentCard(registries, piece, { ...options, level: 'inspect', inspection: false });
   const wrap = cardInspectionLayout(card, equipmentDetails(explanations));
   wrap.classList.add('equipment-poker-inspection');
   return wrap;

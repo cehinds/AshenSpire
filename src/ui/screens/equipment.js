@@ -531,8 +531,8 @@ function inventoryFace(registries, row, {
     // type band earns its row before anything else does
     // (content/config/ui/components/card.json, behavior.fields.surfaces).
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
-      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
-      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, surface: 'armoury' })).card);
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, level: 'focus', surface: 'armoury' })
+      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, level: 'focus', surface: 'armoury' })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }
