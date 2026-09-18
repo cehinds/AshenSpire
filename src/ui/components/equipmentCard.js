@@ -158,8 +158,15 @@ export function equipmentDetails(explanations) {
   return decorateKeywords(details);
 }
 
+// THE READING DOOR'S LEVEL IS NOT THE CALLER'S TO SET. `level` sat BEFORE the
+// spread, so any caller passing one through `options` overrode it — and
+// `collectibleCard.js` forwards `{ ...options }` verbatim, so a glance or focus
+// level reached this door by simply being handed down. That reintroduces the
+// exact defect this work closes: a card inspected at browsing size, its text
+// cut. The level is pinned after the spread; everything else a caller sends
+// still gets through. (Copilot review, #1127.)
 export function renderEquipmentInspection(registries, piece, options = {}) {
-  const { card, explanations } = renderEquipmentCard(registries, piece, { level: 'inspect', ...options, inspection: false });
+  const { card, explanations } = renderEquipmentCard(registries, piece, { ...options, level: 'inspect', inspection: false });
   const wrap = cardInspectionLayout(card, equipmentDetails(explanations));
   wrap.classList.add('equipment-poker-inspection');
   return wrap;
