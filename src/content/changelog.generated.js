@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1149",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The change that gave the Windows repair its mention now has one of its own",
+    "detail": "Nothing you see changes in play. The repair to the checks that broke on Windows landed without a line in this list, so the changelog you can read in the game did not mention it; a following change added that line, and landed without a line of its own. This is that line, with the build it shipped in.",
+    "build": "0.7.1.87",
+    "pullRequest": 1149,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1149"
+  },
+  {
     "id": "pr-1134",
     "date": "2026-09-18",
     "group": "2026-09-18",
