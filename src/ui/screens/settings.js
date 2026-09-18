@@ -1472,13 +1472,26 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
       const text = cardSizingExport(levels);
+      // A CLIPBOARD THAT NEVER ANSWERS IS NOT THE SAME AS ONE THAT REFUSES, AND
+      // ONLY THE SECOND WAS HANDLED. `catch` covers a rejection; it does not
+      // cover a promise that simply never settles, which is what
+      // `navigator.clipboard.writeText` does here — measured in headless
+      // Chromium on a secure context with the API present: still `pending`
+      // after 1.5s, never resolved, never rejected. The `await` then never
+      // returned, so nothing below it ran: no notice, no console fallback, and
+      // the button sat on "Copy" for ever. The export had no failure path at
+      // all on such a browser, only the appearance of one.
+      //
+      // So the wait is bounded, and a clipboard that has not answered in time
+      // is treated exactly like one that said no.
+      const CLIPBOARD_WAIT_MS = 1200;
       let copied = false;
       try {
-        await navigator.clipboard.writeText(text);
-        copied = true;
+        copied = await Promise.race([
+          Promise.resolve(navigator.clipboard?.writeText(text)).then(() => true, () => false),
+          new Promise((settle) => setTimeout(() => settle(false), CLIPBOARD_WAIT_MS)),
+        ]);
       } catch {
-        // A clipboard a browser refuses is not a failure to export: the block
-        // is still the answer, so it goes where it can be read and selected.
         copied = false;
       }
       btn.textContent = copied ? 'Copied' : 'See log';
@@ -1491,9 +1504,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // AUTHORED numbers while the controls still show the rejected ones —
       // silently, until now. Copying the wrong sizes and passing them on as a
       // new default is the one outcome this feature must not produce quietly.
-      const what = refused
-        ? `the AUTHORED sizes, not the ones shown: ${refused}`
-        : `the tuned sizes — ${cardSizingExportPath}`;
+      // THE WAIT IS A WINDOW, AND THE SIZES CAN MOVE INSIDE IT. Bounding the
+      // clipboard wait made this visible: the notice is posted up to
+      // CLIPBOARD_WAIT_MS after the click, and a slider moved in between left it
+      // announcing "the AUTHORED sizes are in use" while the tuned ones were
+      // live — the same lie as the stale refusal, arriving late instead of
+      // staying behind. So the ladder is re-asked at the moment of speaking, and
+      // when it has changed the notice says the text is stale rather than
+      // describing a state that has passed.
+      const settledRefusal = cardLevelsWithOverrides(settings).refused;
+      const moved = settledRefusal !== refused;
+      const what = moved
+        ? 'sizes that have since changed — copy again'
+        : refused
+          ? `the AUTHORED sizes, not the ones shown: ${refused}`
+          : `the tuned sizes — ${cardSizingExportPath}`;
       if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
       // TAGGED WHEN IT SPEAKS ABOUT A REFUSAL, because an untagged notice cannot
       // be withdrawn by the one that posted it. Exporting under a broken ladder
@@ -1504,7 +1529,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       showSettingsNotice(copied
         ? `Copied ${what}.`
         : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
-      refused ? 'card-size' : '');
+      settledRefusal ? 'card-size' : '');
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });
   });
