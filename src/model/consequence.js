@@ -51,6 +51,8 @@
  *
  * A word not in this set is BINDING. That is the whole design.
  */
+import { cardKind } from './tree.js';
+
 export const SAFE_OPS = Object.freeze({
   // Gains. Permanent, and the player reached for them.
   addRelic: 'a relic is a gain, and permanence is the point of it',
@@ -191,7 +193,8 @@ export function bindingReasons(choice, registries) {
       // something it did not check.
       if (eff.random || eff.card == null) { out.push('addCardToDeck:unnamed'); continue; }
       const def = registries && registries.cards && registries.cards.get ? registries.cards.get(eff.card) : null;
-      const type = def ? def.type : null;
+      // The card's kind tag, not its type field (model/tree.js cardKind).
+      const type = def ? cardKind(def) : null;
       if (type == null || BINDING_CARD_TYPES.includes(type)) out.push(`addCardToDeck:${type || 'unknown'}`);
       continue;
     }

@@ -17,6 +17,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
+import { cardKind } from '../../model/tree.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
@@ -560,7 +561,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     player?.classList.toggle('armed', !!selfArm);
     if (player) { player.tabIndex = selfArm ? 0 : -1; player.setAttribute('aria-label', selfArm ? 'Play selected card on yourself' : 'Player information'); }
     const def = active && resolveCard(registries, findInst(active));
-    player?.classList.toggle('skill-selected', def?.type === 'skill');
+    player?.classList.toggle('skill-selected', cardKind(def) === 'skill');
     applyTargetLayer();
     setHintMode(active ? 'targeting' : null);
     hideTooltip();

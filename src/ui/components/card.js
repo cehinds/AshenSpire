@@ -64,7 +64,7 @@ export function relicText(def, registries = null) {
   // one sentence's numbers since plan phase 2, so both are handed to the token
   // reader. Without registries only the passive half resolves, which is why
   // every run-facing call site passes them.
-  const tokens = relicTokens(def, registries ? relicPropertyRules(registries, def) : []);
+  const tokens = relicTokens(def, registries ? relicPropertyRules(registries, def) : [], registries);
   const base = def.textTemplate.replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m
   ));

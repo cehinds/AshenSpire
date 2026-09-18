@@ -170,13 +170,16 @@ const TEST_TAGGING = [
 ];
 
 function testBundle() {
-  return {
+  // withKindRows: every fixture card and enemy states its kind, as shipped
+  // content must (model/tree.js) — the engine reads a card's kind tag, never
+  // its `type`, so a fixture without the row would be no kind at all.
+  return withKindRows({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     cards: [...contentBundle.cards, ...TEST_CARDS],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
-  };
+  });
 }
 
 const REG = createRegistries(testBundle());
@@ -254,6 +257,33 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
     player: { classId: 'reaver', maxHp, hp, mana, maxMana, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
+}
+
+/**
+ * withKindRows(bundle) → the same bundle with a classification tagging row for
+ * every collection object that lacks one. Every object states its kind
+ * (model/tree.js refuses one that does not), so a fixture that adds a synthetic
+ * event or card owes it a kind row exactly as shipped content does; this writes
+ * the one the object's collection and type name, which is the only row the
+ * validator would accept anyway.
+ */
+function withKindRows(bundle) {
+  const TYPE_KIND = { attack: 'classification.attack', skill: 'classification.skill', power: 'classification.power', curse: 'classification.curse', status: 'classification.statusCard' };
+  const rows = [...(bundle.tagging || [])];
+  const has = new Set(rows.filter((r) => String(r.tagId).startsWith('classification.')).map((r) => `${r.family}\u0000${r.scope || ''}\u0000${r.objectId}`));
+  for (const spec of bundle.tagFamilies || []) {
+    if (!spec.source || typeof spec.source !== 'string') continue;
+    let node = bundle;
+    for (const part of spec.source.split('.')) node = node && node[part];
+    for (const def of Array.isArray(node) ? node : []) {
+      if (!def || typeof def.id !== 'string') continue;
+      const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
+      if (has.has(`${spec.family}\u0000${scope}\u0000${def.id}`)) continue;
+      const tagId = spec.family === 'card' ? TYPE_KIND[def.type] : `classification.${spec.family}`;
+      if (tagId) rows.push({ family: spec.family, scope, objectId: def.id, tagId });
+    }
+  }
+  return { ...bundle, tagging: rows };
 }
 
 function playFromHand(combat, cardId, targetId = 'e1') {
@@ -1487,10 +1517,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
   test('19. keepsakes: effect lists validate and apply as run effects', () => {
     // Every keepsake's effects must pass the same closed-set validation as events.
-    const probe = { ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
+    const probe = withKindRows({ ...contentBundle, events: [...contentBundle.events, ...KEEPSAKES.map((k) => ({
       id: `ks_${k.id}`, name: k.name, text: 'probe',
       choices: [{ label: 'x', effects: k.effects, resultText: 'x' }],
-    }))] };
+    }))] });
     const v = validateContent(probe);
     assert(v.ok, `keepsake effects invalid: ${v.errors.map((e) => e.path + ': ' + e.msg).join(' | ')}`);
 
@@ -1917,6 +1947,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tagIds.length, new Set(tagIds).size, 'tag ids are unique');
     eq(domainIds.length, new Set(domainIds).size, 'domain ids are unique');
     for (const t of TAGS) {
+      // A node the framework shows (one carrying a visibility) reaches the
+      // player through its term rows, never as a chip, so it has no colour.
+      if (t.visibility) continue;
       assert(/^[0-9A-Fa-f]{6}$/.test(t.color), `tag '${t.id}' colour is a 6-digit hex`);
       assert(String(t.label).length > 0 && String(t.glyph).length > 0, `tag '${t.id}' has a label + glyph`);
       assert(domainIds.includes(t.domain), `tag '${t.id}' names a registered domain ('${t.domain}')`);
@@ -2061,8 +2094,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Vocabulary questions.
     eq(svc.inDomain('creature').map((t) => t.id).join('|'), 'beast|humanoid|undead|construct|spirit',
       'inDomain lists one domain');
-    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme|property', 'armaments allow categorized combat tags alongside legacy tags');
-    assert(svc.allowedFor('enemy').every((t) => t.domain === 'creature'), 'allowedFor is domain-filtered');
+    eq(svc.domainsFor('armament').join('|'), 'card|item|itemType|attackSource|delivery|damageType|technique|theme|property|classification', 'armaments allow categorized combat tags alongside legacy tags, and state their kind');
+    // Domain-filtered: an enemy may carry creature kinds, the kind every object
+    // states, and property tags (every family may) — never a card school.
+    assert(svc.allowedFor('enemy').some((t) => t.domain === 'creature') && !svc.allowedFor('enemy').some((t) => t.domain === 'card'), 'allowedFor is domain-filtered');
     assert(svc.allowedFor('enemy').length > 0, 'allowedFor is non-empty for a live family');
     eq(svc.tag('blade').label, 'Blade', 'tag() resolves one row');
     eq(svc.tag('nope'), null, 'tag() on an unknown id is null');
@@ -8019,17 +8054,65 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     refuses(withRules(['fxA', 'fxB'], [rule('fxA', { requires: ['fxB'] }), rule('fxB', { requires: ['fxA'] })]), /requires cycle fxA → fxB → fxA/,
       'a two-rule requires cycle is refused by name');
     refuses(withRules(['fxLoop'], [rule('fxLoop', { requires: ['fxLoop'] })]), /requires cycle fxLoop → fxLoop/, 'a rule requiring itself is refused by name');
-    // 80.7 — a card never carries a property, whether by tagging row …
-    refuses(withRules(['fxSiphon'], [siphonLike], {
+    // 80.7 — EVERY FAMILY CARRIES PROPERTY TAGS. The four-carrier gate is gone
+    // (schemas.js says why): a card holding one validates like anything else,
+    // is stamped with it, and still never shows it as a chip.
+    const onStrike = withRules(['fxSiphon'], [siphonLike], {
       tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'fxSiphon' }],
-    }), /tagging\.card\.strike: cards never carry properties — 'strike' is given the property tag 'fxSiphon'/, 'a card-family property tagging row is refused by name');
-    // 80.8 — … or by a pairing row that would switch the generic domain check off.
-    refuses(withRules(['fxSiphon'], [siphonLike], {
-      tagFamilyDomains: [...contentBundle.tagFamilyDomains, { family: 'card', domain: 'property' }],
-    }), /tagFamilyDomains\.card\.property: cards never carry properties/, 'pairing the card family with the property domain is refused by name');
-    refuses(withRules(['fxSiphon'], [siphonLike], {
-      tagFamilyDomains: [...contentBundle.tagFamilyDomains, { family: 'enemy', domain: 'property' }],
-    }), /'enemy' is not a property carrier/, 'pairing any non-carrier family with the property domain is refused by name');
+    });
+    assert(validateContent(onStrike).ok, `a card may hold a property tag — said ${JSON.stringify(said(onStrike).slice(0, 240))}`);
+    const strikeDef = createRegistries(onStrike).cards.get('strike');
+    assert(strikeDef.propertyTags.includes('fxSiphon') && !strikeDef.tags.includes('fxSiphon'), 'the card is stamped with its property tag, and a property tag never joins the displayed `tags`');
+    // 80.8 — THE TREE KEEPS THE KINDS HONEST instead. A kind on the wrong
+    // family, a second kind, and a card whose kind is not its type are each
+    // refused by name (model/tree.js).
+    refuses({ ...contentBundle, tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'classification.relic' }] },
+      /tagging\.card\.strike: holds 'classification\.relic', the kind of the 'relic' family, on a row of the 'card' family/, 'a kind on the wrong family is refused by name');
+    refuses({ ...contentBundle, tagging: [...contentBundle.tagging, { family: 'card', scope: '', objectId: 'strike', tagId: 'classification.skill' }] },
+      /tagging\.card\.strike: states 2 kinds/, 'a second kind is refused by name');
+    refuses({ ...contentBundle, tagging: contentBundle.tagging.map((r) => (r.family === 'card' && r.objectId === 'strike' && r.tagId === 'classification.attack' ? { ...r, tagId: 'classification.skill' } : r)) },
+      /tagging\.card\.strike: states 'classification\.skill' but is a attack, whose kind is 'classification\.attack'/, 'a card whose kind is not its type is refused by name');
+    refuses({ ...contentBundle, tagging: contentBundle.tagging.filter((r) => !(r.family === 'relic' && r.objectId === 'forsakenMedallion' && r.tagId === 'classification.relic')) },
+      /tagging\.relic\.forsakenMedallion: states no kind/, 'an object with no kind is refused by name');
+    // 80.8b — a node carries no numbers: a binding that is a literal, or a
+    // path to nothing, is refused; so is an effect reading an undeclared
+    // variable, and a variable nothing reads.
+    refuses({ ...contentBundle, variableBindings: contentBundle.variableBindings.map((r) => (r.nodeId === 'siphon' && r.variable === 'restoreMana' ? { ...r, balancePath: 3 } : r)) },
+      /variableBindings\.default\.\.siphon\.restoreMana\.balancePath: is the number 3 — numbers live in src\/content\/balance\.js/, 'a literal number in a binding is refused by name');
+    refuses({ ...contentBundle, variableBindings: contentBundle.variableBindings.map((r) => (r.nodeId === 'siphon' && r.variable === 'restoreMana' ? { ...r, balancePath: 'exposure.nowhere' } : r)) },
+      /'exposure\.nowhere' is not a number in src\/content\/balance\.js/, 'a binding to no balance row is refused by name');
+    refuses({ ...contentBundle, nodeVariables: [...contentBundle.nodeVariables, { nodeId: 'siphon', variable: 'idle', role: 'amount' }] },
+      /nodeVariables\.siphon\.idle: is declared but no effect of 'siphon' reads it/, 'a variable nothing reads is refused by name');
+    refuses({ ...contentBundle, nodeEffects: { ...contentBundle.nodeEffects, siphon: { triggers: [{ on: 'arcaneBreak', do: [{ op: 'restoreMana', target: 'self', amount: { variable: 'ghost' } }] }] } } },
+      /nodeEffects\.siphon: reads variable 'ghost', which nodeVariables\.csv does not declare/, 'an effect reading an undeclared variable is refused by name');
+    // 80.8d — a branch-scoped pairing is enforced as the branch, not lifted to
+    // its root: cards paired with classification.attack alone may not carry a
+    // skill kind, even though the derived tagFamilyDomains says `card,classification`.
+    refuses({ ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'card' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.attack' } : r)) },
+      /tagging\.card\.defend: holds 'classification\.skill', which is outside every subtree 'card' is paired with in familyNodes\.csv \(the family may carry only classification\.attack under that root\)/,
+      'a tagging row outside the family\'s paired subtree is refused by name');
+    // 80.8e — a narrower classification pairing is LEGAL (the presence check
+    // asks whether the row's node is under classification, not the reverse).
+    const narrower = { ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'enemy' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.enemy' } : r)) };
+    assert(validateContent(narrower).ok, `enemy → classification.enemy validates — said ${JSON.stringify(said(narrower).slice(0, 240))}`);
+    // 80.8f — a mis-spelt column is refused, not a silent root; effects on a
+    // node outside property, a role that is not the field, a visibility outside
+    // the framework's words, and a dotted framework id its parents do not spell.
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? (({ parentId, ...rest }) => ({ ...rest, parentid: parentId }))(n) : n)) },
+      /nodes\[\d+\]\.parentid: Unknown column 'parentid'/, 'an unknown column is refused by name');
+    refuses({ ...contentBundle, nodeEffects: { ...contentBundle.nodeEffects, blade: { triggers: [] } } },
+      /nodeEffects\.blade: confers behaviour on a node outside the property subtree/, 'effects on a non-property node are refused by name');
+    refuses({ ...contentBundle, nodeVariables: contentBundle.nodeVariables.map((v) => (v.nodeId === 'forsakenMedallion' ? { ...v, role: 'stacks' } : v)) },
+      /nodeVariables\.forsakenMedallion\.poiseDamage\.role: says 'stacks' but the effect reads the variable as 'amount'/, 'a role that is not the field is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'lifecycle.innate' ? { ...n, visibility: 'LOUD' } : n)) },
+      /nodes\.lifecycle\.innate\.visibility: 'LOUD' is not a visibility/, 'a visibility outside the framework\'s words is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'lifecycle.recall.afterUse' ? { ...n, parentId: 'lifecycle' } : n)) },
+      /nodes\.lifecycle\.recall\.afterUse\.parentId: the id spells the path 'lifecycle\.recall\.afterUse' but its parents spell 'lifecycle\.afterUse'/, 'a dotted id its parents do not spell is refused by name');
+    // 80.8c — the tree's own shape: a parent that is not a node, and a cycle.
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? { ...n, parentId: 'nowhere' } : n)) },
+      /nodes\.fx:blade\.parentId: names 'nowhere', which is not a node/, 'a parent that is not a node is refused by name');
+    refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'presentation' ? { ...n, parentId: 'fx:blade' } : n)) },
+      /parent cycle through/, 'a parent cycle is refused by name');
     // 80.9 — passives come from the one PASSIVE_TYPES home the relic schema uses.
     refuses(withRules(['fxOdd'], [rule('fxOdd', { passives: { notAPassive: 1 } })]), /propertyRules\.fxOdd\.passives\.notAPassive: Unknown field 'notAPassive'/,
       'an unknown passive key on a rule is refused by the shared schema');

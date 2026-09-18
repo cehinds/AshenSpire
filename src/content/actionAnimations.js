@@ -1,4 +1,4 @@
-// Presentation only. Tag IDs are the live vocabulary in content/source/tags.csv.
+// Presentation only. Tag IDs are the live vocabulary in content/source/nodes.csv.
 // First matching row wins regardless of the incoming tag order. Bookkeeping
 // tags (basic, extractable) deliberately do not imply an animation.
 //

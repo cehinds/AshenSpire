@@ -5,7 +5,7 @@
 // set, and it is still here, because a relic's passives are upgraded PER COPY
 // at the smith (model/itemUpgrades.js resolveUpgradedRelic) and a property rule
 // is one global row with nowhere to record a tier. Its COMBAT behaviour is not:
-// the triggers left for content/source/propertyRuleEffects.json, keyed by a
+// the triggers left for content/source/nodeEffects.json, keyed by a
 // property tag that shares the relic's id, and the relic mounts them through
 // the same door equipment does (engine/properties.js). A relic that authors
 // `triggers` here again is refused by name, with the file to move them to.

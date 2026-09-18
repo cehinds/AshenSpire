@@ -1449,7 +1449,7 @@ function startingDeckFindings(registries) {
     } else {
       for (const source of cfg.sourceOrder) {
         if (!legal.includes(source)) {
-          problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+          problems.push(`startingDeck.sourceOrder names unknown grant source '${source}' (legal: ${legal.join(', ') || 'none registered — add nodes under the grantSource root in nodes.csv'})`);
         }
       }
     }
@@ -1471,7 +1471,7 @@ function startingDeckFindings(registries) {
         if (typeof bound !== 'string' || !bound) {
           problems.push(`startingDeck.sources.${role} must name a grant-source tag (got ${JSON.stringify(bound)}) — the '${role}' seam mints cards and would stamp nothing, sorting them last in silence`);
         } else if (!legal.includes(bound)) {
-          problems.push(`startingDeck.sources.${role} names unknown grant source '${bound}' (legal: ${legal.join(', ') || 'none registered — add rows to tags.csv in the grantSource domain'})`);
+          problems.push(`startingDeck.sources.${role} names unknown grant source '${bound}' (legal: ${legal.join(', ') || 'none registered — add nodes under the grantSource root in nodes.csv'})`);
         } else if (Array.isArray(cfg.sourceOrder) && !cfg.sourceOrder.includes(bound)) {
           // Legal — an unranked source is dealt last by contract — but almost
           // never what an author meant, so it is SEEN rather than refused.

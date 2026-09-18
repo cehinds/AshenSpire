@@ -1,0 +1,251 @@
+# content/source/nodes.csv — THE tag tree (Ashen Spire)
+#
+# One tree for the whole vocabulary. Every tag any object carries — a card's
+# school, a weapon's type, a creature's kind, what a relic confers, what a card
+# IS — is a node here, and a node's place in the tree is its parentId and
+# nothing else. Roots are what used to be called domains (tagDomains.csv) and
+# the framework's family roots (content/framework/properties.json); both files
+# are gone, this is their one home.
+#
+# THIRD NORMAL FORM, and the three things that means here:
+#   parentId is the ONLY home of the parent. Some ids carry a dotted spelling
+#     (lifecycle.recall.afterUse) from the framework era; that is an opaque key
+#     kept so no reader had to change, not structure — the validator reads the
+#     tree from parentId and never from the id.
+#   domain is written on ROOTS ONLY. A child's domain is its root's, so writing
+#     it on every row would repeat a fact the tree already states.
+#   requires/excludes are not columns. They are rows in nodeRelations.csv.
+#
+# color/glyph are the chip the tag renders as; framework-era nodes have none and
+# render no chip. visibility/priority are the framework's (INTERNAL nodes are
+# never player-facing); a node with neither is one the framework never reads.
+#
+# aside (ROOTS ONLY): true for a root whose tags never join an object's tag
+# LIST because they have a reader of their own — presentation is sprite
+# selection (tagService.presentationIdsOf), classification is what the object
+# IS (registries stamps it as `kindIds`, read by objectKinds). A mechanic asking
+# "what tags does this carry" is asking about gameplay identity, and neither of
+# those is that. Stated on the root, once, and read by every list reader.
+#
+# columns: id, parentId, label, color, glyph, visibility, priority, domain, aside, blurb
+id,parentId,label,color,glyph,visibility,priority,domain,aside,blurb
+card,,Card,,,,,,,"What a card IS — its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
+creature,,Creature,,,,,,,"What a creature IS. Gates proc resistance, and the one domain the engine reads at runtime."
+item,,Item,,,,,,,"What a piece of gear DOES beyond its numbers, and what a run pickup is."
+run,,Run,,,,,,,"Run structure — what an event, an encounter or an unlock is about."
+itemType,,Item type,,,,,,,"What a piece of equipment IS, as the Armoury and the smith name it. Distinct from the card domain: a Blade item type and a Blade card school are different facts about the same sword."
+grantSource,,Grant source,,,,,,,"Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
+presentation,,Combat presentation,,,INTERNAL,0,PRESENTATION,true,Sprite selection only; never damage or resistance identity.
+attackSource,,Attack source,,,,,,,Source profile supplying an attack; separate from damage type.
+delivery,,Delivery,,,,,,,How a direct attack reaches its targets.
+damageType,,Damage type,,,,,,,Identity of a typed HP damage component.
+technique,,Technique,,,,,,,Conditions for explicit technique bonuses.
+theme,,Theme,,,,,,,Build synergies; tags alone grant no effects.
+property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
+blade,card,Blade,C9502E,⚔,,,,,Steel and edge — direct weapon work.
+guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
+blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
+gorefire,card,Gorefire,C9502E,🔥,,,,,The blood-and-flame stance.
+starstone,card,Starstone,7FA8C9,✦,,,,,Astral sorcery — charges and combos.
+ritual,card,Ritual,C9A227,◈,,,,,"Rites, offerings, and faith work."
+blight,card,Blight,B5541C,☣,,,,,Creeping decay.
+oath,card,Oath,C9A227,✚,,,,,"Binding, lasting commitments."
+flourish,card,Flourish,9FC3E8,✧,,,,,Finesse — footwork and multi-hit.
+ash,card,Ash,7A6F5A,•,,,,,"Spent once, then gone to ash."
+heavy,card,Heavy,C9A227,◆,,,,,"Slow, committed, and hard to stop."
+basic,card,Basic,7A6F5A,○,,,,,Everybody's — on the shelf without being found.
+pierce,card,Pierce,9FC3E8,†,,,,,A precise physical form; presentation only.
+ranged,card,Ranged,7FA8C9,➶,,,,,Authored ranged presentation; no position system.
+precision,card,Precision,C9A227,◎,,,,,Deliberate aim and finesse; presentation only.
+guile,card,Guile,647B73,◇,,,,,"Preparation, misdirection, and stolen openings."
+venom,card,Venom,7FAF63,☠,,,,,Poisons that punish enemies over time.
+extractable,card,Extractable,C9A227,⚙,,,,,"A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
+bound,item,Bound,C9A227,⛓,,,,,Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv.
+beast,creature,Beast,7A6F5A,🐾,,,,,"Animal, unreasoning, driven by hunger."
+humanoid,creature,Humanoid,B8B0A0,👤,,,,,"Two arms, two legs, and a reason for being here."
+undead,creature,Undead,647B73,💀,,,,,Died once and did not stay down.
+construct,creature,Construct,9FC3E8,⚙,,,,,"Built, not born — no blood to let."
+spirit,creature,Spirit,7FA8C9,👻,,,,,Untethered from the body it used to wear.
+item:blade,itemType,Blade,C9502E,⚔,,,,,What this piece IS: the Armoury and the smith name it Blade.
+item:shield,itemType,Shield,7FA8C9,🛡,,,,,What this piece IS: the Armoury and the smith name it Shield.
+item:magic-focus,itemType,Magic Focus,9FC3E8,✦,,,,,What this piece IS: the Armoury and the smith name it Magic Focus.
+item:armor,itemType,Armor,B8B0A0,▣,,,,,What this piece IS: the Armoury and the smith name it Armor.
+from:global,grantSource,Global,B8B0A0,🌐,,,,,Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants.
+from:relic,grantSource,Relic,C9A227,◈,,,,,Carried in by the starting relic.
+from:armor,grantSource,Armor,7FA8C9,▣,,,,,Bound to the outfit the run begins wearing.
+from:weapon,grantSource,Weapon,C9502E,⚔,,,,,Bound to an armament in hand at creation.
+from:class,grantSource,Class,9FC3E8,✦,,,,,The class signature card.
+fx:blade,presentation,blade,9FC3E8,✧,,,,,blade visual identity; no combat modifier.
+fx:guard,presentation,guard,9FC3E8,✧,,,,,guard visual identity; no combat modifier.
+fx:blood,presentation,blood,9FC3E8,✧,,,,,blood visual identity; no combat modifier.
+fx:gorefire,presentation,gorefire,9FC3E8,✧,,,,,gorefire visual identity; no combat modifier.
+fx:starstone,presentation,starstone,9FC3E8,✧,,,,,starstone visual identity; no combat modifier.
+fx:ritual,presentation,ritual,9FC3E8,✧,,,,,ritual visual identity; no combat modifier.
+fx:blight,presentation,blight,9FC3E8,✧,,,,,blight visual identity; no combat modifier.
+fx:oath,presentation,oath,9FC3E8,✧,,,,,oath visual identity; no combat modifier.
+fx:flourish,presentation,flourish,9FC3E8,✧,,,,,flourish visual identity; no combat modifier.
+fx:ash,presentation,ash,9FC3E8,✧,,,,,ash visual identity; no combat modifier.
+fx:heavy,presentation,heavy,9FC3E8,✧,,,,,heavy visual identity; no combat modifier.
+fx:pierce,presentation,pierce,9FC3E8,✧,,,,,pierce visual identity; no combat modifier.
+fx:ranged,presentation,ranged,9FC3E8,✧,,,,,ranged visual identity; no combat modifier.
+fx:precision,presentation,precision,9FC3E8,✧,,,,,precision visual identity; no combat modifier.
+fx:guile,presentation,guile,9FC3E8,✧,,,,,guile visual identity; no combat modifier.
+fx:venom,presentation,venom,9FC3E8,✧,,,,,venom visual identity; no combat modifier.
+fx:shield,presentation,shield,9FC3E8,✧,,,,,shield visual identity; no combat modifier.
+fx:barrier,presentation,barrier,9FC3E8,✧,,,,,barrier visual identity; no combat modifier.
+fx:ward,presentation,ward,9FC3E8,✧,,,,,ward visual identity; no combat modifier.
+fx:magic,presentation,magic,9FC3E8,✧,,,,,magic visual identity; no combat modifier.
+fx:arcane,presentation,arcane,9FC3E8,✧,,,,,arcane visual identity; no combat modifier.
+fx:dodge,presentation,dodge,9FC3E8,✧,,,,,dodge visual identity; no combat modifier.
+fx:riposte,presentation,riposte,9FC3E8,✧,,,,,riposte visual identity; no combat modifier.
+fx:heal,presentation,heal,9FC3E8,✧,,,,,heal visual identity; no combat modifier.
+fx:cleanse,presentation,cleanse,9FC3E8,✧,,,,,cleanse visual identity; no combat modifier.
+fx:bind,presentation,bind,9FC3E8,✧,,,,,bind visual identity; no combat modifier.
+fx:frost,presentation,frost,9FC3E8,✧,,,,,frost visual identity; no combat modifier.
+fx:bulwark,presentation,bulwark,9FC3E8,✧,,,,,bulwark visual identity; no combat modifier.
+fx:utility,presentation,utility,9FC3E8,✧,,,,,utility visual identity; no combat modifier.
+source:weapon,attackSource,Weapon,9FC3E8,◇,,,,,Categorized Weapon identity; effects are authored separately.
+source:spell,attackSource,Spell,9FC3E8,◇,,,,,Categorized Spell identity; effects are authored separately.
+source:unarmed,attackSource,Unarmed,9FC3E8,◇,,,,,Categorized Unarmed identity; effects are authored separately.
+delivery:melee,delivery,Melee,9FC3E8,◇,,,,,Categorized Melee identity; effects are authored separately.
+delivery:projectile,delivery,Projectile,9FC3E8,◇,,,,,Categorized Projectile identity; effects are authored separately.
+delivery:area,delivery,Area,9FC3E8,◇,,,,,Categorized Area identity; effects are authored separately.
+damage:slashing,damageType,Slashing,9FC3E8,◇,,,,,Categorized Slashing identity; effects are authored separately.
+damage:piercing,damageType,Piercing,9FC3E8,◇,,,,,Categorized Piercing identity; effects are authored separately.
+damage:blunt,damageType,Blunt,9FC3E8,◇,,,,,Categorized Blunt identity; effects are authored separately.
+damage:fire,damageType,Fire,9FC3E8,◇,,,,,Categorized Fire identity; effects are authored separately.
+damage:frost,damageType,Frost,9FC3E8,◇,,,,,Categorized Frost identity; effects are authored separately.
+damage:lightning,damageType,Lightning,9FC3E8,◇,,,,,Categorized Lightning identity; effects are authored separately.
+damage:arcane,damageType,Arcane,9FC3E8,◇,,,,,Categorized Arcane identity; effects are authored separately.
+damage:sacred,damageType,Sacred,9FC3E8,◇,,,,,Categorized Sacred identity; effects are authored separately.
+damage:decay,damageType,Decay,9FC3E8,◇,,,,,Categorized Decay identity; effects are authored separately.
+technique:heavy,technique,Heavy,9FC3E8,◇,,,,,Categorized Heavy identity; effects are authored separately.
+technique:precision,technique,Precision,9FC3E8,◇,,,,,Categorized Precision identity; effects are authored separately.
+technique:cleave,technique,Cleave,9FC3E8,◇,,,,,Categorized Cleave identity; effects are authored separately.
+technique:counter,technique,Counter,9FC3E8,◇,,,,,Categorized Counter identity; effects are authored separately.
+technique:flourish,technique,Flourish,9FC3E8,◇,,,,,Categorized Flourish identity; effects are authored separately.
+theme:blood,theme,Blood,9FC3E8,◇,,,,,Categorized Blood identity; effects are authored separately.
+theme:blight,theme,Blight,9FC3E8,◇,,,,,Categorized Blight identity; effects are authored separately.
+theme:astral,theme,Astral,9FC3E8,◇,,,,,Categorized Astral identity; effects are authored separately.
+theme:oath,theme,Oath,9FC3E8,◇,,,,,Categorized Oath identity; effects are authored separately.
+theme:stance,theme,Stance,9FC3E8,◇,,,,,Categorized Stance identity; effects are authored separately.
+siphon,property,Siphon,7FA8C9,◈,,,,,A focus that drinks back: breaking a foe's Arcane Exposure restores Mana.
+overcharge,property,Overcharge,9FC3E8,✧,,,,,A focus that pushes harder: each hit builds more Arcane Exposure.
+forsakenMedallion,property,Forsaken Medallion,8C7A5B,🏅,,,,,What Forsaken Medallion does when the fight gives it its moment.
+starstoneShard,property,Starstone Shard,8C7A5B,💠,,,,,What Starstone Shard does when the fight gives it its moment.
+cutpursesCoin,property,Cutpurse's Coin,8C7A5B,🪙,,,,,What Cutpurse's Coin does when the fight gives it its moment.
+goldFigurine,property,Gold Figurine,8C7A5B,🗿,,,,,What Gold Figurine does when the fight gives it its moment.
+goldenSprout,property,Golden Sprout,9A9A9A,🌰,,,,,What Golden Sprout does when the fight gives it its moment.
+whetstoneFragment,property,Whetstone Fragment,9A9A9A,🪨,,,,,What Whetstone Fragment does when the fight gives it its moment.
+kindlingCharm,property,Kindling Charm,9A9A9A,🕯,,,,,What Kindling Charm does when the fight gives it its moment.
+goldleafCharm,property,Goldleaf Charm,9A9A9A,🍂,,,,,What Goldleaf Charm does when the fight gives it its moment.
+crackedLantern,property,Cracked Lantern,9A9A9A,🏮,,,,,What Cracked Lantern does when the fight gives it its moment.
+sacrificialKnife,property,Sacrificial Knife,9A9A9A,🔪,,,,,What Sacrificial Knife does when the fight gives it its moment.
+curedHide,property,Cured Hide,9A9A9A,🛡,,,,,What Cured Hide does when the fight gives it its moment.
+ivoryComb,property,Ivory Comb,9A9A9A,🪮,,,,,What Ivory Comb does when the fight gives it its moment.
+fellWardenBrand,property,Fell Warden Brand,6E9C6E,🔱,,,,,What Fell Warden Brand does when the fight gives it its moment.
+bloodiedTalisman,property,Bloodied Talisman,6E9C6E,🩸,,,,,What Bloodied Talisman does when the fight gives it its moment.
+twinnedArmor,property,Twinned Armor,6E9C6E,👥,,,,,What Twinned Armor does when the fight gives it its moment.
+blightTouchedIdol,property,Blight-Touched Idol,6E9C6E,☣,,,,,What Blight-Touched Idol does when the fight gives it its moment.
+warhorn,property,Warhorn,6E9C6E,📣,,,,,What Warhorn does when the fight gives it its moment.
+vowOfVengeance,property,Vow of Vengeance,6E9C6E,⚔,,,,,What Vow of Vengeance does when the fight gives it its moment.
+pearlOfSagacity,property,Pearl of Sagacity,6E9C6E,🔮,,,,,What Pearl of Sagacity does when the fight gives it its moment.
+blessedDew,property,Blessed Dew,6E9C6E,💧,,,,,What Blessed Dew does when the fight gives it its moment.
+azureSigil,property,Azure Sigil,6E9C6E,🔵,,,,,What Azure Sigil does when the fight gives it its moment.
+bloodstainedChalice,property,Bloodstained Chalice,6E9C6E,🍷,,,,,What Bloodstained Chalice does when the fight gives it its moment.
+goldboughSapling,property,Goldbough Sapling,B08CC9,🌱,,,,,What Goldbough Sapling does when the fight gives it its moment.
+wyrmHeart,property,Wyrm Heart,B08CC9,🫀,,,,,What Wyrm Heart does when the fight gives it its moment.
+titansCinder,property,Titan's Cinder,B08CC9,🌟,,,,,What Titan's Cinder does when the fight gives it its moment.
+radiantAegis,property,Radiant Aegis,B08CC9,🛡,,,,,What Radiant Aegis does when the fight gives it its moment.
+flayersCenser,property,Flayer's Censer,B08CC9,🔥,,,,,What Flayer's Censer does when the fight gives it its moment.
+vigilantHalo,property,Vigilant Halo,B08CC9,🌸,,,,,What Vigilant Halo does when the fight gives it its moment.
+carrionTalon,property,Carrion Talon,B08CC9,🦅,,,,,What Carrion Talon does when the fight gives it its moment.
+emberIdol,property,Ember Idol,B08CC9,🌋,,,,,What Ember Idol does when the fight gives it its moment.
+crownOfStitches,property,Crown of Stitches,C9A227,👑,,,,,What Crown of Stitches does when the fight gives it its moment.
+wardenHorn,property,Warden Horn,C9A227,📯,,,,,What Warden Horn does when the fight gives it its moment.
+ashOfRemembrance,property,Ash of Remembrance,C9A227,⚱,,,,,What Ash of Remembrance does when the fight gives it its moment.
+cinderOfTheFallen,property,Cinder of the Fallen,C9A227,☠,,,,,What Cinder of the Fallen does when the fight gives it its moment.
+crimsonCovenant,property,Crimson Covenant,C9A227,🩸,,,,,What Crimson Covenant does when the fight gives it its moment.
+travelersWhetstone,property,Traveler's Whetstone,9A9A9A,🔪,,,,,What Traveler's Whetstone does when the fight gives it its moment.
+moonlitVial,property,Moonlit Vial,9A9A9A,🧪,,,,,What Moonlit Vial does when the fight gives it its moment.
+wardensLantern,property,Warden's Lantern,9A9A9A,🏮,,,,,What Warden's Lantern does when the fight gives it its moment.
+hollowedHorn,property,Hollowed Horn,6E9C6E,📯,,,,,What Hollowed Horn does when the fight gives it its moment.
+gildedTear,property,Gilded Tear,6E9C6E,💛,,,,,What Gilded Tear does when the fight gives it its moment.
+watchmansBadge,property,Watchman's Badge,B08CC9,🎖,,,,,What Watchman's Badge does when the fight gives it its moment.
+howlingStandard,property,Howling Standard,B08CC9,🚩,,,,,What Howling Standard does when the fight gives it its moment.
+emberwickCharm,property,Emberwick Charm,9A9A9A,🕯,,,,,What Emberwick Charm does when the fight gives it its moment.
+carrionMorsel,property,Carrion Morsel,9A9A9A,🍖,,,,,What Carrion Morsel does when the fight gives it its moment.
+gravetendersBell,property,Gravetender's Bell,6E9C6E,🔔,,,,,What Gravetender's Bell does when the fight gives it its moment.
+sentinelsOath,property,Sentinel's Oath,6E9C6E,🛡,,,,,What Sentinel's Oath does when the fight gives it its moment.
+forsakenWarflag,property,Forsaken Warflag,B08CC9,🏴,,,,,What Forsaken Warflag does when the fight gives it its moment.
+wrathCoil,property,Wrath Coil,B08CC9,⚡,,,,,What Wrath Coil does when the fight gives it its moment.
+classification,,classification,,,INTERNAL,0,CLASSIFICATION,true,
+classification.attack,classification,attack,,,PRIMARY,10,,,
+classification.strike,classification,strike,,,PRIMARY,11,,,
+classification.guard,classification,guard,,,PRIMARY,12,,,
+classification.weaponArt,classification,weaponArt,,,PRIMARY,13,,,
+classification.skill,classification,skill,,,PRIMARY,14,,,
+classification.power,classification,power,,,PRIMARY,15,,,
+classification.curse,classification,curse,,,PRIMARY,16,,,
+classification.statusCard,classification,statusCard,,,PRIMARY,17,,,
+damage,,damage,,,INTERNAL,0,DAMAGE,,
+damage.physical,damage,physical,,,SECONDARY,10,,,
+damage.magic,damage,magic,,,SECONDARY,11,,,
+damage.arcane,damage,arcane,,,SECONDARY,12,,,
+damage.blade,damage,blade,,,SECONDARY,13,,,
+damage.blunt,damage,blunt,,,SECONDARY,14,,,
+damage.piercing,damage,piercing,,,SECONDARY,15,,,
+scaling,,scaling,,,INTERNAL,0,SCALING,,
+scaling.strength,scaling,strength,,,SECONDARY,10,,,
+scaling.dexterity,scaling,dexterity,,,SECONDARY,11,,,
+scaling.constitution,scaling,constitution,,,SECONDARY,12,,,
+scaling.intelligence,scaling,intelligence,,,SECONDARY,13,,,
+scaling.wisdom,scaling,wisdom,,,SECONDARY,14,,,
+cost,,cost,,,INTERNAL,0,COST,,
+cost.action,cost,action,,,PRIMARY,10,,,
+cost.stamina,cost,stamina,,,PRIMARY,11,,,
+cost.mana,cost,mana,,,PRIMARY,12,,,
+cost.alternative,cost,alternative,,,PRIMARY,13,,,
+lifecycle,,lifecycle,,,INTERNAL,0,LIFECYCLE,,
+lifecycle.innate,lifecycle,innate,,,PRIMARY,10,,,
+lifecycle.retain,lifecycle,retain,,,PRIMARY,11,,,
+lifecycle.recall,lifecycle,recall,,,SECONDARY,12,,,
+lifecycle.recall.afterUse,lifecycle.recall,afterUse,,,PRIMARY,13,,,
+lifecycle.recall.afterTurnDraw,lifecycle.recall,afterTurnDraw,,,PRIMARY,14,,,
+lifecycle.recall.afterCardPlay,lifecycle.recall,afterCardPlay,,,PRIMARY,15,,,
+lifecycle.exhaust,lifecycle,exhaust,,,PRIMARY,16,,,
+lifecycle.seal,lifecycle,seal,,,PRIMARY,17,,,
+lifecycle.ethereal,lifecycle,ethereal,,,PRIMARY,18,,,
+equipment,,equipment,,,INTERNAL,0,EQUIPMENT,,
+equipment.bound,equipment,bound,,,PRIMARY,10,,,
+equipment.mainHand,equipment,mainHand,,,SECONDARY,11,,,
+equipment.offHand,equipment,offHand,,,SECONDARY,12,,,
+equipment.twoHanded,equipment,twoHanded,,,SECONDARY,13,,,
+equipment.shield,equipment,shield,,,SECONDARY,14,,,
+equipment.parryTool,equipment,parryTool,,,SECONDARY,15,,,
+utility,,utility,,,INTERNAL,0,ACTION_ROLE,,
+utility.evasion,utility,evasion,,,SECONDARY,10,,,
+utility.conduit,utility,conduit,,,SECONDARY,11,,,
+utility.manaCharge,utility,manaCharge,,,SECONDARY,12,,,
+targeting,,targeting,,,INTERNAL,0,TARGETING,,
+targeting.self,targeting,self,,,CONTEXTUAL,10,,,
+targeting.enemy,targeting,enemy,,,CONTEXTUAL,11,,,
+targeting.allEnemies,targeting,allEnemies,,,CONTEXTUAL,12,,,
+targeting.randomEnemy,targeting,randomEnemy,,,CONTEXTUAL,13,,,
+targeting.ally,targeting,ally,,,CONTEXTUAL,14,,,
+internal,,internal,,,INTERNAL,0,INTERNAL,,
+internal.unplayable,internal,unplayable,,,SECONDARY,10,,,
+internal.upgraded,internal,upgraded,,,DEBUG,11,,,
+classification.class,classification,class,,,INTERNAL,30,,,"What a class is. Every object in the class collection carries this, and nothing outside it may."
+classification.relic,classification,relic,,,INTERNAL,30,,,"What a relic is. Every object in the relic collection carries this, and nothing outside it may."
+classification.flask,classification,flask,,,INTERNAL,30,,,"What a flask is. Every object in the flask collection carries this, and nothing outside it may."
+classification.keepsake,classification,keepsake,,,INTERNAL,30,,,"What a keepsake is. Every object in the keepsake collection carries this, and nothing outside it may."
+classification.event,classification,event,,,INTERNAL,30,,,"What a event is. Every object in the event collection carries this, and nothing outside it may."
+classification.encounter,classification,encounter,,,INTERNAL,30,,,"What a encounter is. Every object in the encounter collection carries this, and nothing outside it may."
+classification.enemy,classification,enemy,,,INTERNAL,30,,,"What a enemy is. Every object in the enemy collection carries this, and nothing outside it may."
+classification.armament,classification,armament,,,INTERNAL,30,,,"What a armament is. Every object in the armament collection carries this, and nothing outside it may."
+classification.armour,classification,armour,,,INTERNAL,30,,,"What a armour is. Every object in the armour collection carries this, and nothing outside it may."
+classification.basicCardProfile,classification,basicCardProfile,,,INTERNAL,30,,,"What a basicCardProfile is. Every object in the basicCardProfile collection carries this, and nothing outside it may."
+classification.slot,classification,slot,,,INTERNAL,30,,,"What a slot is. Every object in the slot collection carries this, and nothing outside it may."
+classification.startingKit,classification,startingKit,,,INTERNAL,30,,,"What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may."
+classification.unlock,classification,unlock,,,INTERNAL,30,,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may."

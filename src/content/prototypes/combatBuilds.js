@@ -2,6 +2,7 @@
 import { contentBundle } from '../index.js';
 import { combatRules } from '../combatRules.js';
 import { createRegistries } from '../../model/registries.js';
+import { CARD_TYPE_KIND } from '../../model/tree.js';
 import { createCombat } from '../../engine/combat.js';
 import { createRng } from '../../engine/rng.js';
 import { prototypeEquipment } from './combatEquipment.js';
@@ -69,6 +70,12 @@ export function prototypeBundle(pressure = 1) {
     equipment: { ...contentBundle.equipment, cardExposure: [...contentBundle.equipment.cardExposure,
       ...prototypeCards.filter((c) => c.damageSchool).map((c) => ({ cardId: c.id, damageSchool: c.damageSchool, exposureBuildupPerHit: c.exposureBuildupPerHit }))] },
     enemies: [...contentBundle.enemies, ...Object.entries(prototypeScenarios).map(([id, s]) => enemy(id, s))],
+    // Every object states its kind (model/tree.js): a prototype card carries
+    // the node its type names and a prototype enemy carries the enemy kind,
+    // exactly as shipped content does — the prototype validates like content.
+    tagging: [...contentBundle.tagging,
+      ...prototypeCards.map((c) => ({ family: 'card', scope: '', objectId: c.id, tagId: CARD_TYPE_KIND[c.type] })),
+      ...Object.keys(prototypeScenarios).map((id) => ({ family: 'enemy', scope: '', objectId: `prototype_${id}`, tagId: 'classification.enemy' }))],
     statuses: [...contentBundle.statuses, { id: 'prototypeClotted', name: 'Bleed Resistance', stackMode: 'unique', decay: { duration: 99 }, resists: { status: 'bleed', percent: 50 } }],
     stances: [...contentBundle.stances,
       { id: 'prototypeGuardStance', name: 'Measured Guard', tooltip: 'Gain {onEnter.0.amount} Block when entering. Gain {hooks.0.do.0.amount} Block at the start of each of your turns.', onEnter: [{ op: 'block', target: 'self', amount: 3 }], hooks: [{ on: 'ownerTurnStart', do: [{ op: 'block', target: 'self', amount: 2 }] }] },

@@ -8,6 +8,7 @@
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
+import { nodeTree } from './tree.js';
 import { itemTypeLabel } from '../content/equipment.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
@@ -141,15 +142,19 @@ const TYPE_SINGULAR = {
 const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
 
 function stampTags(bundle) {
-  const { families, index, keyOf } = tagIndex(bundle);
+  const { families, index, kinds: kindsOf, keyOf } = tagIndex(bundle);
   // PROPERTY TAGS NEVER JOIN `tags`. They are the one domain that confers
-  // behaviour (content/source/tagDomains.csv), and their one reader is the
+  // behaviour (the property root in content/source/nodes.csv), and their one reader is the
   // mount path (engine/properties.js). Stamped onto `propertyTags` instead —
   // and only when an object holds any — so every existing reader of `tags`
   // (chips, the card/weapon fit check, the class leaning the starting deck
   // reads) sees exactly what it saw before the domain existed.
   const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
     .filter((t) => t && t.domain === 'property').map((t) => t.id));
+  // WHAT THE OBJECT IS is stamped as `kindIds` (not `kinds`: a slot row already
+  // owns that word for the piece kinds it takes). tagIndex keeps the kind rows
+  // apart from the list — every list reader must never see a kind, and this is
+  // the one reader that must (model/tree.js cardKind reads the stamp).
   const stamped = new Map();
   for (const spec of families.values()) {
     // A non-string source is refused BY NAME in model/tags.js. Skipping it here
@@ -165,7 +170,8 @@ function stampTags(bundle) {
       const authored = index.get(keyOf(spec.family, scope, def.id)) || [];
       const entityTags = authored.filter((tag) => !propertyIds.has(tag));
       const propertyTags = authored.filter((tag) => propertyIds.has(tag));
-      const conferred = propertyTags.length ? { propertyTags } : {};
+      const kinds = kindsOf.get(keyOf(spec.family, scope, def.id)) || [];
+      const conferred = { ...(propertyTags.length ? { propertyTags } : {}), ...(kinds.length ? { kindIds: kinds } : {}) };
       // Equipment splits its stamped tags four ways, exactly as content's
       // normPiece used to before the tags moved into tagging.csv: the complete
       // authored vocabulary, the item-type half the Armoury and the smith name
@@ -204,6 +210,16 @@ export function createRegistries(contentBundle) {
   // Read only by the mount path; a getter throws on an unknown tag like every
   // other registry, and validate.js has already refused a tag with no rule.
   registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
+
+  // The tree itself, and its companions, for the readers that ask it directly
+  // (model/tree.js nodeTree, resolveVariable). The tag tables and the property
+  // rules above are views of these; both are on the registries so a reader can
+  // take whichever shape its question is in.
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings']) {
+    registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
+  }
+  registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
+  registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   // Quest steps (E12): which events an Unknown node may roll only once the
@@ -405,6 +421,23 @@ export function carrierRules(registries, tagIds) {
     rules.push(rule);
   }
   return rules;
+}
+
+/**
+ * objectKinds(registries, def) → the classification nodes the object carries,
+ * as stamped `kindIds` — what it IS, read off the tags rather than off the
+ * collection it sits in. Every shipped object carries exactly one family kind
+ * (validate.js refuses one that does not) and a card's is the node its type
+ * names, so `objectKinds(REG, strike)` is ['classification.attack'].
+ */
+export function objectKinds(registries, def) {
+  return def && Array.isArray(def.kindIds) ? [...def.kindIds] : [];
+}
+
+/** Whether an object carries a kind, by node id or by its leaf name. */
+export function objectIsKind(registries, def, kind) {
+  const want = String(kind).includes('.') ? String(kind) : `classification.${kind}`;
+  return objectKinds(registries, def).includes(want);
 }
 
 /** The property rules a relic definition confers — empty for a passives-only relic. */
