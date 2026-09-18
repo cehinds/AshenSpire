@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import { allocateCombatBands, allocateSceneBands } from '../src/ui/models/CombatLayout.js';
 import { closeUpPlacement } from '../src/ui/models/PortraitCropModel.js';
 import {
-  dialogueBands, dialogueCompactHost, dialogueFooterPlan, dialogueLayers, dialogueStack, dialogueEntrance,
-  dialogueSceneConfig, dialogueFrameVars, dialogueResponsePlan,
+  dialogueBands, dialogueCompactHost, dialogueCompactBand, dialogueHudCompact, dialogueLanes, dialogueFooterPlan, dialogueLayers,
+  dialogueStack, dialogueEntrance, dialogueSceneConfig, dialogueFrameVars, dialogueResponsePlan,
 } from '../src/ui/models/DialogueModel.js';
 import { sceneLayers, sceneWindowLayers } from '../src/ui/models/SceneLayerModel.js';
 import { ENVIRONMENTS } from '../src/content/environments.js';
@@ -199,7 +199,10 @@ test('closeUpPlacement zooms the whole figure so its visible fraction spans slot
   assert.ok(near(placed.y + (art.top + art.height / 3) * placed.scale, revealLine), 'the top third ends on the reveal line');
   assert.ok(near(placed.x + art.centerX * placed.scale, slot.left + slot.width / 2), 'centred on the slot');
   assert.ok(placed.y + (art.top + art.height) * placed.scale > revealLine, 'the lower two thirds run on under the context band');
-  assert.deepEqual(Object.keys(placed).sort(), ['scale', 'x', 'y']);
+  // The placement also reports the figure's own width: the lane rule needs it,
+  // and so does any instrument checking that two figures do not overlap.
+  assert.deepEqual(Object.keys(placed).sort(), ['scale', 'width', 'x', 'y']);
+  assert.ok(near(placed.width, art.width * placed.scale), 'the reported width is the scaled art width');
   assert.ok(Object.isFrozen(placed));
 });
 
@@ -244,4 +247,135 @@ test('the screen\'s scene config has the fixture\'s shape and draws', () => {
   assert.ok(parent.sizing.minimums && parent.sizing.compactBelowPx > 0);
   assert.doesNotThrow(() => dialogueFrameVars(layout, parent));
   assert.deepEqual([...dialogueStack(layout).order], LAYER_IDS);
+});
+
+// ---------------------------------------------------------------------------
+// THE LANE RULE (#1117). Both speakers stay wholly visible at every size.
+// ---------------------------------------------------------------------------
+
+// The four hosts the owner named, and the geometry the stylesheet gives a slot:
+// the slot is inset from its own edge, is compactWidthVw wide on a compact host
+// and widthVw otherwise, starts topOffsetVh below the HUD, and runs to the
+// reveal line (the context band's top edge).
+const HOSTS = [
+  { label: '390x844', width: 390, height: 844 },
+  { label: '740x372', width: 740, height: 372 },
+  { label: '844x390', width: 844, height: 390 },
+  { label: '1280x800', width: 1280, height: 800 },
+];
+
+// Two standing figures in the proportions the game's art has (about two fifths
+// as wide as it is tall). At 1280x800 the height zoom leaves both inside their
+// lanes; at 390x844 it does not, so the lane rule has to fire. A test whose
+// figures never shrink, or always shrink, would prove nothing.
+const FIGURES = {
+  player: { top: 12, height: 300, width: 120, centerX: 60 },
+  npc: { top: 8, height: 280, width: 132, centerX: 66 },
+};
+
+function frameGeometry({ width, height }, layout = W4C_LAYOUT, parent = W4_PARENT) {
+  const bands = dialogueBands({ width, height, zoom: 1, rem: 16 }, layout, parent);
+  const compact = dialogueCompactHost(width, parent);
+  const slotWidth = width * ((compact ? layout.sizing.portraitSlot.compactWidthVw : layout.sizing.portraitSlot.widthVw) / 100);
+  const inset = width * (layout.positioning.portraitSlot.insetVw / 100);
+  const slotTop = bands.hud + height * (layout.positioning.portraitSlot.topOffsetVh / 100);
+  return {
+    bands,
+    revealLine: bands.hud + bands.scene,
+    lanes: dialogueLanes(width, layout),
+    slots: {
+      left: { left: inset, top: slotTop, width: slotWidth },
+      right: { left: width - inset - slotWidth, top: slotTop, width: slotWidth },
+    },
+  };
+}
+
+// The figure's visible box in frame px, which is what a player sees and what a
+// screenshot measures: the placement's own transform applied to the art box.
+function visibleBox(art, placement) {
+  return {
+    left: placement.x + art.centerX * placement.scale - (art.width * placement.scale) / 2,
+    right: placement.x + art.centerX * placement.scale + (art.width * placement.scale) / 2,
+    top: placement.y + art.top * placement.scale,
+    bottom: placement.y + (art.top + art.height) * placement.scale,
+  };
+}
+
+test('at every host the two figures never share a pixel, and each stands in its own lane', () => {
+  for (const host of HOSTS) {
+    const { revealLine, lanes, slots } = frameGeometry(host);
+    const placed = {
+      left: closeUpPlacement(FIGURES.player, slots.left, revealLine, W4C_LAYOUT, lanes.left),
+      right: closeUpPlacement(FIGURES.npc, slots.right, revealLine, W4C_LAYOUT, lanes.right),
+    };
+    const boxes = {
+      left: visibleBox(FIGURES.player, placed.left),
+      right: visibleBox(FIGURES.npc, placed.right),
+    };
+    const where = `${host.label}: `;
+    assert.ok(boxes.left.right <= boxes.right.left + 1e-6, `${where}the two figures overlap`);
+    for (const side of ['left', 'right']) {
+      const box = boxes[side], lane = lanes[side];
+      assert.ok(box.left >= lane.left - 1e-6, `${where}the ${side} figure starts before its lane`);
+      assert.ok(box.right <= lane.left + lane.width + 1e-6, `${where}the ${side} figure runs past its lane`);
+      assert.ok(box.left >= 0 && box.right <= host.width + 1e-6, `${where}the ${side} figure leaves the frame`);
+      assert.ok(box.top >= 0, `${where}the ${side} figure starts above the frame`);
+      // Its top share stands ON the reveal line: visible above the band, and
+      // never hovering clear of it.
+      const visibleTopShare = box.top + (box.bottom - box.top) / 3;
+      assert.ok(near(visibleTopShare, revealLine, 1e-6), `${where}the ${side} figure does not stand on the reveal line`);
+    }
+  }
+});
+
+test('a lane is half the frame less the insets and the configured gap, and the two never meet', () => {
+  const lanes = dialogueLanes(1000, W4C_LAYOUT);
+  const inset = 1000 * (W4C_LAYOUT.positioning.portraitSlot.insetVw / 100);
+  const gap = 1000 * (W4C_LAYOUT.positioning.portraits.minGapVw / 100);
+  assert.ok(near(lanes.left.width, (1000 - inset * 2 - gap) / 2));
+  assert.ok(near(lanes.left.left, inset));
+  assert.ok(near(lanes.right.left + lanes.right.width, 1000 - inset));
+  assert.ok(near(lanes.right.left - (lanes.left.left + lanes.left.width), gap), 'the gap between the lanes is minGapVw');
+  assert.throws(() => dialogueLanes(0, W4C_LAYOUT), /positive frame width/);
+  assert.throws(
+    () => dialogueLanes(100, edited(W4C_LAYOUT, (d) => { d.positioning.portraits.minGapVw = 96; })),
+    /leave no lane/,
+  );
+});
+
+test('a wide host keeps the height zoom; only a figure wider than its lane shrinks', () => {
+  const wide = frameGeometry(HOSTS[3]);
+  const narrow = frameGeometry(HOSTS[0]);
+  const byHeight = (geometry, art) => (geometry.revealLine - geometry.slots.left.top) / (art.height / 3);
+  const wideScale = closeUpPlacement(FIGURES.player, wide.slots.left, wide.revealLine, W4C_LAYOUT, wide.lanes.left).scale;
+  assert.ok(near(wideScale, byHeight(wide, FIGURES.player)), '1280x800 is unchanged: the height rule still sets the zoom');
+  const narrowScale = closeUpPlacement(FIGURES.player, narrow.slots.left, narrow.revealLine, W4C_LAYOUT, narrow.lanes.left).scale;
+  assert.ok(narrowScale < byHeight(narrow, FIGURES.player), '390x844 shrinks the figure to its lane');
+  assert.ok(near(narrowScale, narrow.lanes.left.width / FIGURES.player.width), 'shrunk exactly to the lane width');
+});
+
+test('the HUD folds to one line when the screen is short OR narrow, and always draws', () => {
+  const compact = (width, height) => dialogueHudCompact({ width, height }, W4C_LAYOUT, W4_PARENT);
+  assert.equal(compact(740, 372), true, '740x372: short');
+  assert.equal(compact(390, 844), true, '390x844: narrow — two rows do not fit 94px of band');
+  assert.equal(compact(844, 390), true, '844x390: short');
+  assert.equal(compact(1280, 800), false, '1280x800: the band holds the HUD as it is');
+});
+
+test('the HUD draws its compact form on a short host and always draws', () => {
+  // The screen's own height, not the zoomed frame's: a 740x372 screen draws a
+  // 1194x600 frame, and asking the frame would call that short screen roomy.
+  assert.equal(dialogueCompactBand(372, W4C_LAYOUT), true, '740x372 is short: one row');
+  assert.equal(dialogueCompactBand(390, W4C_LAYOUT), true);
+  assert.equal(dialogueCompactBand(800, W4C_LAYOUT), false);
+  assert.equal(dialogueCompactBand(844, W4C_LAYOUT), false);
+  assert.throws(
+    () => dialogueCompactBand(400, edited(W4C_LAYOUT, (d) => { d.sizing.hud.compactBelowHeightPx = 0; })),
+    /compactBelowHeightPx must be > 0/,
+  );
+  // The band is a share of the host and is never dropped, however short it is.
+  for (const host of HOSTS) {
+    const { bands } = frameGeometry(host);
+    assert.ok(bands.hud > 0, `${host.label}: the HUD band must always have height`);
+  }
 });

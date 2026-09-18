@@ -24,11 +24,14 @@ import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
 
-export function mountEvent(app, options) {
-  const { registries, run, meta, rng, eventId, onDone, hud = null } = options;
+export function mountEvent(app, opts) {
+  // `opts`, not `options`: the kit's `options()` list helper is imported above,
+  // and a parameter named `options` shadowed it — the mount threw
+  // "options is not a function" at the responses slot below.
+  const { registries, run, meta, rng, eventId, onDone, hud = null } = opts;
   // Every quest exchange is spoken: a chain step opens in the dialogue screen
   // with its speaker, and its responses commit through the same door below.
-  if (questChainForEvent(registries.questChains, eventId)) return mountDialogue(app, options);
+  if (questChainForEvent(registries.questChains, eventId)) return mountDialogue(app, opts);
   const def = registries.events.get(eventId);
   // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
   // says, or which choices deserve one — it names the action and hands over the
