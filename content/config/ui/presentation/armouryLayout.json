@@ -130,5 +130,13 @@
         }
       }
     }
+  },
+  "behavior": {
+    "limits": {
+      "ratioEpsilon": 0.0001,
+      "maxGridColumns": 8,
+      "combatPowerCardCount": 3,
+      "maxHoldPreviewDelayMs": 600000
+    }
   }
 }

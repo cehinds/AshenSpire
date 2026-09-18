@@ -1,0 +1,27 @@
+{
+  "vars": {
+    "effectMs": 260,
+    "castMs": 110,
+    "impactLeadMs": 96
+  },
+  "sizing": {
+    "poseCanvas": 640,
+    "defaultEffectSize": 140,
+    "planEffectSize": 160
+  },
+  "motion": {
+    "defaultDurationMs": "$effectMs",
+    "layerDurationMs": "$effectMs",
+    "layerFrameCount": 6,
+    "minimumFrameMs": 16,
+    "minimumWrappedMs": "$impactLeadMs",
+    "castDelayMs": 65,
+    "castDurationMs": "$castMs",
+    "projectileDelayFraction": 0.3,
+    "targetLocalDelayFraction": 0.25,
+    "impactDelayFraction": 0.55,
+    "impactDurationMs": 170,
+    "impactSize": 160,
+    "impactCastMs": "$castMs"
+  }
+}

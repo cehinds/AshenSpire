@@ -73,7 +73,15 @@ export function stripCommentsAndStrings(src) {
 }
 
 // A number that is not part of an identifier or a property name.
-const NUMBER = /(?<![A-Za-z0-9_$.])(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+//
+// The second alternative catches a decimal written WITHOUT its leading zero —
+// `.3`, `.55`, `.7` — which JavaScript allows and this codebase uses freely.
+// The first alternative cannot see those: the character before the digits is a
+// `.`, which is exactly what the lookbehind excludes so that the fractional
+// half of `1.5` is not reported a second time. A guard blind to half the ways a
+// fraction can be spelled is not a guard, and it fails silently — it reports
+// nothing and reads as a pass.
+const NUMBER = /(?<![A-Za-z0-9_$.])(\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|\.\d+(?:[eE][+-]?\d+)?)/g;
 
 /**
  * numericLiterals(source, { allow }) → [{ line, value, text }]

@@ -17,11 +17,12 @@
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json e0cd44e04fa02f5b
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
-// source content/config/ui/presentation/armouryLayout.json 0bc9278cfe9cf33f
+// source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
 // source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
+// source content/config/ui/presentation/combatEffectPlayback.json a32509cccf40092b
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
 // source content/config/ui/presentation/combatFormationModel.json 0a2ac2f627fcaaa6
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
@@ -29,8 +30,9 @@
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
+// source content/config/ui/presentation/poseAnimator.json 2eab31f7017c356c
 // source content/config/ui/presentation/presentationSequence.json 9ce98d8fece297df
-// source content/config/ui/presentation/reaverAttack.json b1062ab030ccd896
+// source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
 // source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
 // source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
@@ -1187,6 +1189,14 @@ export const uiConfig = deepFreeze({
               "armamentGridColumns": 2
             }
           }
+        }
+      },
+      "behavior": {
+        "limits": {
+          "ratioEpsilon": 0.0001,
+          "maxGridColumns": 8,
+          "combatPowerCardCount": 3,
+          "maxHoldPreviewDelayMs": 600000
         }
       }
     },
@@ -2379,6 +2389,28 @@ export const uiConfig = deepFreeze({
         "mirrorBeyondDeg": 90
       }
     },
+    "combatEffectPlayback": {
+      "sizing": {
+        "poseCanvas": 640,
+        "defaultEffectSize": 140,
+        "planEffectSize": 160
+      },
+      "motion": {
+        "defaultDurationMs": 260,
+        "layerDurationMs": 260,
+        "layerFrameCount": 6,
+        "minimumFrameMs": 16,
+        "minimumWrappedMs": 96,
+        "castDelayMs": 65,
+        "castDurationMs": 110,
+        "projectileDelayFraction": 0.3,
+        "targetLocalDelayFraction": 0.25,
+        "impactDelayFraction": 0.55,
+        "impactDurationMs": 170,
+        "impactSize": 160,
+        "impactCastMs": 110
+      }
+    },
     "combatEffectPresentation": {
       "behavior": {
         "subtleEffects": [
@@ -2965,6 +2997,12 @@ export const uiConfig = deepFreeze({
         }
       }
     },
+    "poseAnimator": {
+      "motion": {
+        "defaultPlayMs": 260,
+        "minimumPlayMs": 60
+      }
+    },
     "presentationSequence": {
       "behavior": {
         "schemaVersion": 1,
@@ -3186,7 +3224,8 @@ export const uiConfig = deepFreeze({
         }
       },
       "motion": {
-        "normalLungeMs": 260
+        "normalLungeMs": 260,
+        "minimumSpeedScale": 0.1
       }
     },
     "startupGate": {

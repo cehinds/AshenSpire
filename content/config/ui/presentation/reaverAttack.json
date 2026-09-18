@@ -91,6 +91,7 @@
     }
   },
   "motion": {
-    "normalLungeMs": 260
+    "normalLungeMs": 260,
+    "minimumSpeedScale": 0.1
   }
 }

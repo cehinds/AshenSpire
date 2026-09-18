@@ -30,7 +30,7 @@ export function startupGateModel({
   subtitle = 'A ROGUELIKE DECKBUILDER',
   overline = '',
   prompts = DEFAULT_PROMPTS,
-  particleCount = 7,
+  particleCount = GATE.motion.particles.defaultCount,
   settings = {},
 } = {}) {
   const family = Object.hasOwn(prompts, inputFamily) ? inputFamily : 'keyboard';

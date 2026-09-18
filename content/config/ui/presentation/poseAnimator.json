@@ -1,0 +1,6 @@
+{
+  "motion": {
+    "defaultPlayMs": 260,
+    "minimumPlayMs": 60
+  }
+}

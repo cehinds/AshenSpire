@@ -68,7 +68,7 @@ export function isReaverAttackEligible({ classId, figure, customization, sprites
 }
 
 export function reaverAttackTiming(speed) {
-  const scale = Math.max(0.1, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
+  const scale = Math.max(uiConfig.presentation.reaverAttack.motion.minimumSpeedScale, Number(speed?.lungeMs || NORMAL_LUNGE_MS) / NORMAL_LUNGE_MS);
   const frameMs = Math.max(1, Math.round(REAVER_ATTACK.frameMs * scale));
   return Object.freeze({
     frameMs,
