@@ -44,6 +44,9 @@
         "gapRem": 0.25,
         "maxLines": 2
       },
+      "hud": {
+        "compactBelowHeightPx": 500
+      },
       "footer": {
         "heightVh": 6
       }
@@ -55,7 +58,15 @@
       },
       "portraits": {
         "visibleFraction": 0.3333333333333333,
-        "mirrorNpc": true
+        "mirrorNpc": true,
+        "minGapVw": 1.5,
+        "fit": "shrinkToLane",
+        "anchor": "revealLine",
+        "listener": {
+          "minOpacity": 0.62,
+          "brightness": 0.8,
+          "saturation": 0.55
+        }
       },
       "context": {
         "insetVw": 2.5,
@@ -148,6 +159,7 @@
     },
     "behavior": {
       "maxVisibleResponses": 4,
+      "responseHints": "tooltip",
       "responseLayouts": [
         {
           "columns": 1,
