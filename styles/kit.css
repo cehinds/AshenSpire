@@ -2263,6 +2263,61 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 /* Three tracks: identity, a centred receipt, the trail — the run header's shape. */
 .as-band-row.thirds { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
 .as-band-row.thirds > :last-child { justify-self: end; }
+
+/* ═══ BAND FOLD — ONE FACT LINE AND ONE METER LINE ════════════════════
+   A HOST that gives the shared band less room than its two full-width rows
+   need FOLDS it, and the fold is one rule set here, not one per host. Two ask
+   for it and they asked differently, which is the defect this block closes:
+   the map's W4b header (§ MAP HEADER, `data-hud-layout="map-compact"`) carried
+   these rules alone, and when W4c's dialogue band took the same fold
+   (§ DIALOGUE, `data-hud-compact='true'`, 2026-09-17) it took the GRID and
+   left the yielding behind — so at 430 wide the three fact tracks and the
+   stacked meters overflowed their half-width columns and printed on top of
+   each other. A fold that is copied is a fold that is copied wrong.
+
+   WHAT YIELDS, in the text law's order. The row keeps its three tracks at
+   every width, because the centred receipt is centred at every width and that
+   is the whole point of the middle track. What gives is DETAIL: a chip may
+   shrink, and the class name and the act's seat name ellipsize inside their
+   own track rather than running over Cinders. Keys and numbers never do.
+   The meters stop stacking and sit side by side on one line. */
+.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+.dialogue-screen[data-hud-compact='true'] .shared-hud { --band-fold-gap: calc(8px / var(--ui-zoom, 1)); }
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row > .as-statstrip {
+  min-width: 0; margin: 0; flex-wrap: nowrap;
+}
+/* The trail FILLS its track and packs right, rather than the kit's
+   `justify-self: end` (above), which sizes it to its max-content and lets it
+   run left over Cinders on a phone instead of yielding. */
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row .hud-run-meta {
+  justify-self: stretch; justify-content: flex-end; gap: 0 var(--band-fold-gap);
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row .as-chip {
+  display: flex; flex: 0 0 auto; min-width: 0; white-space: nowrap;
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row :is(.hud-class, .hud-act) { flex: 0 1 auto; }
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row .as-chip > .ck { flex: 0 0 auto; }
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .hud-info-row :is(.hud-class, .hud-act) > .cv {
+  display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* One meter line: HP, MP and SP side by side instead of stacked. */
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+  column-gap: calc(10px / var(--ui-zoom, 1)); row-gap: 0;
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars > .resline {
+  min-width: 0; gap: calc(6px / var(--ui-zoom, 1));
+}
+:is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
+    .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
 /* On a phone the three tracks stay three — the centred receipt is centred at
    every width, which is the whole point of the middle track — and what yields
    is DETAIL: a trail keeps the first part of each compound fact and drops the
@@ -2587,28 +2642,7 @@ body.pad-mode .as-keycap.float { display: none; }
 .shared-hud[data-hud-layout="map-compact"] .hud-info-row { grid-area: info; min-width: 0; gap: calc(8px / var(--ui-zoom, 1)); }
 .shared-hud[data-hud-layout="map-compact"] .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
 .shared-hud[data-hud-layout="map-compact"] .hud-control-grid { grid-area: actions; align-self: center; }
-/* One fact line, still three tracks so Cinders stays centred. Each outer track
-   holds its own facts: a chip may shrink, and the class name and the act's
-   seat name ellipsize inside their track instead of running into Cinders
-   (the route strip carries the act's full name). Keys and numbers never do. */
-.shared-hud[data-hud-layout="map-compact"] .hud-info-row > .as-statstrip { min-width: 0; margin: 0; flex-wrap: nowrap; }
-/* The trail FILLS its track and packs right, rather than the kit's
-   `justify-self: end` (§ BAND thirds), which sizes it to its max-content and
-   lets it run left over Cinders on a phone instead of yielding. */
-.shared-hud[data-hud-layout="map-compact"] .hud-info-row .hud-run-meta { justify-self: stretch; justify-content: flex-end; gap: 0 calc(8px / var(--ui-zoom, 1)); }
-.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip { display: flex; flex: 0 0 auto; min-width: 0; white-space: nowrap; }
-.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) { flex: 0 1 auto; }
-.shared-hud[data-hud-layout="map-compact"] .hud-info-row .as-chip > .ck { flex: 0 0 auto; }
-.shared-hud[data-hud-layout="map-compact"] .hud-info-row :is(.hud-class, .hud-act) > .cv {
-  display: block; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* One meter line: HP, MP and SP side by side instead of stacked. */
-.shared-hud[data-hud-layout="map-compact"] .resbars {
-  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
-  column-gap: calc(10px / var(--ui-zoom, 1)); row-gap: 0;
-}
-.shared-hud[data-hud-layout="map-compact"] .resbars > .resline { min-width: 0; gap: calc(6px / var(--ui-zoom, 1)); }
-.shared-hud[data-hud-layout="map-compact"] .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
+/* The fold's yield rules are § BAND FOLD, shared with W4c's folded band. */
 /* THE ROUTE STRIP is a receipt — no pointer, nothing to tap: the act's name as
    a Title·S beside (narrow) or over (wide) a StatStrip whose two ends are
    Eyebrows with a rail between them. */
@@ -4422,17 +4456,35 @@ button[data-button-size] {
    one line and the band contains them. The relic and potion belt still hangs
    beneath the band's edge, exactly as it does in combat (.shared-hud
    .hud-bottom); that is the band's own design, not an overflow. */
+/* THE SAME COMPOSITION THE MAP'S W4b HEADER FOLDS TO, minus its route strip:
+   the facts over the meters, the Armoury/Menu pair beside both. The first
+   version of this fold put the two ROWS SIDE BY SIDE in half-width columns,
+   which is where it broke — four facts and three meters cannot share one line
+   at 430 wide, so they printed over each other. Folded rows do not mean one
+   row: what makes the two rows FIT is the meters taking one line (§ BAND
+   FOLD), not the rows changing places. */
 .dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "info actions" "meters actions";
   align-items: center;
-  column-gap: 1.2rem;
+  /* The kit's 1.2rem band gap is a WIDE-ROW gap. Held here it cost the meters
+     their keys at 390 wide — HP, MP and SP clipped to nothing while the map's
+     header at the same width still printed all three — and a meter whose name
+     is gone is a number with no subject. The fold's own gap keeps them. */
+  column-gap: max(var(--band-fold-gap), 0.6rem);
   row-gap: 0;
 }
 .dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row, .hud-resource-row) {
   min-width: 0;
   margin: 0;
 }
+/* The resource row dissolves into the grid so the meters and the controls are
+   cells of it, exactly as they are on the map (§ MAP HEADER). */
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-resource-row { display: contents; }
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-info-row { grid-area: info; gap: var(--band-fold-gap); }
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-vitals-panel { grid-area: meters; min-width: 0; align-self: center; }
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-control-grid { grid-area: actions; align-self: center; }
 /* The identity truncates rather than wrapping, the way the map's compact
    header already does: a HUD that changes height moves every control below it. */
 .dialogue-screen[data-hud-compact='true'] > .topbar .hud-identity > .as-eyebrow,
