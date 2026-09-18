@@ -26,11 +26,15 @@ export const W4C_LAYOUT = freeze({
       titleRem: 0.95, titleLineHeight: 1.2, textRem: 0.9, paddingRem: 0.35, gapRem: 0.25,
     },
     responses: { fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2 },
+    hud: { compactBelowHeightPx: 500 },
     footer: { heightVh: 6 },
   },
   positioning: {
     portraitSlot: { insetVw: 2.5, topOffsetVh: 2 },
-    portraits: { visibleFraction: 1 / 3, mirrorNpc: true },
+    portraits: {
+      visibleFraction: 1 / 3, mirrorNpc: true, minGapVw: 1.5, fit: 'shrinkToLane', anchor: 'revealLine',
+      listener: { minOpacity: 0.62, brightness: 0.8, saturation: 0.55 },
+    },
     context: { insetVw: 2.5, insetVh: 1 },
     footer: { sideInsetVw: 2.5, gapVw: 1.5 },
   },
@@ -56,6 +60,7 @@ export const W4C_LAYOUT = freeze({
   components: { footer: { actions: ['back', 'skipSpeech', 'continue'] } },
   behavior: {
     maxVisibleResponses: 4,
+    responseHints: 'tooltip',
     responseLayouts: [
       { columns: 1, placement: 'below' },
       { columns: 2, placement: 'below' },
