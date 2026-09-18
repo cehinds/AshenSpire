@@ -494,6 +494,12 @@ dist/AshenSpire-*.html
 # Personal Claude Code settings (per-user, not committed)
 .claude/settings.local.json
 
+# Agent worktrees: throwaway checkouts of this repo created inside it so
+# parallel work stays isolated. They are working copies, not content — each
+# already tracks its own branch, and committing one would nest a second copy
+# of the tree in the first.
+.claude/worktrees/
+
 # assembled GitHub Pages site (tools/pages-site.mjs); published by the pages-builds workflow, never committed
 _site/
 

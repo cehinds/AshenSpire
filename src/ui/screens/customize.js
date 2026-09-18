@@ -1149,15 +1149,22 @@ export function mountCustomize(app, {
       autoAdvanceSpecimen = next;
     };
     setCatalogAutoAdvance(true);
-    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
+    // Both branches of the view toggle are catalogued: they are two authored
+    // layouts of one component, and until this change only one of them existed.
+    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'grid' } });
+    const armourListSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
     const specimenArmours = armourChoices().slice(0, 2);
     let specimenArmourId = specimenArmours[0].id;
-    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
-      const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
-      chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
-      return chipButton;
-    }));
+    const drawArmourChoices = () => {
+      for (const host of [armourSpecimen, armourListSpecimen]) {
+        host.replaceChildren(...specimenArmours.map((piece) => {
+          const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
+          markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
+          chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
+          return chipButton;
+        }));
+      }
+    };
     drawArmourChoices();
     const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
     const relicSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen' });
@@ -1196,7 +1203,8 @@ export function mountCustomize(app, {
       { key: 'keepsake-choice', label: 'Keepsake card', node: choiceSpecimen(
         'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
       ) },
-      { key: 'equipment-choice-card', label: 'Equipment choice card', node: armourSpecimen },
+      { key: 'equipment-choice-card', label: 'Equipment choice card (grid view)', node: armourSpecimen },
+      { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
