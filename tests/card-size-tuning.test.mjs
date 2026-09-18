@@ -1,15 +1,20 @@
 // tests/card-size-tuning.test.mjs — the tunable card-size table, and the three
 // promises it makes to the person tuning it.
 //
-// WHY THIS FILE EXISTS, STATED PLAINLY. The card-size feature took SIXTEEN
-// review findings before it worked, and not one of them came from a gate. Every
-// one was found by a human or a review bot reading the diff. Four of the last
-// six were defects introduced while fixing the previous defect — the ladder
-// guard that skipped its own variants, the clamp that disagreed with the control
-// it was meant to agree with, the threshold that measured the window instead of
-// the door, the rounding that showed 200 and drew 201. Each was a pure function
-// with no DOM in it, reachable in a millisecond from Node, and each survived
-// because nothing here asked it a question.
+// WHY THIS FILE EXISTS, STATED PLAINLY. The card-size feature took TWENTY-NINE
+// review findings, and not one of them came from a gate. Every one was found by
+// a human or a review bot reading the diff. Several came in runs where the fix
+// for one defect introduced the next — the ladder guard that skipped its own
+// variants, the clamp that disagreed with the control it was meant to agree
+// with, the threshold that measured the window instead of the door, the
+// rounding that showed 200 and drew 201. Each was a pure function with no DOM
+// in it, reachable in a millisecond from Node, and each survived because
+// nothing here asked it a question.
+//
+// (This file was written at sixteen and the count kept climbing after it. The
+// number is updated rather than left as a smaller, kinder one, because a stale
+// figure in a comment is exactly the sort of thing this PR kept having to
+// correct elsewhere.)
 //
 // So these are the questions. They are not a claim that the feature works —
 // geometry is measured in a browser by tools/card-one-shape.mjs and
