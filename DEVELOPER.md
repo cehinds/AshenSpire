@@ -103,8 +103,9 @@ npx serve .            # then http://localhost:3000
 
 # build the authored trees (launch.mjs runs the first two for you)
 node tools/config-build.mjs            # content/config/**.json → src/config/generated/ui.js
-node tools/content-build.mjs           # content/source/* → src/content/generated/
-node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/
+node tools/content-build.mjs           # content/source/* → src/content/generated/ (+ the tag tree's views: tags, domains,
+                                       #   pairings, property rules, and src/framework/data/{properties,relations}.js)
+node tools/framework-data-build.mjs    # content/framework/*.json → src/framework/data/ (entities, terms, assets, …)
 node tools/config-build.mjs --check    # drift gate: the generated UI config is current
 
 # tests (22 assertions, SPEC §8)

@@ -40,7 +40,7 @@ const REG = createRegistries(contentBundle);
 // no relic trigger feeds it, so it is unaffected by the move and carrying it
 // here would test flaskGrowthClause instead of this.
 function sentence(def) {
-  const tokens = relicTokens(def, relicPropertyRules(REG, def));
+  const tokens = relicTokens(def, relicPropertyRules(REG, def), REG);
   return (def.textTemplate || '').replace(tokenRe(), (m, tok) => (
     typeof tokens[tok] === 'number' ? String(tokens[tok]) : m));
 }

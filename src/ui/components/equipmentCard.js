@@ -74,22 +74,35 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = 'glance', surface = 'none', identity: identityOverride = null } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = null, surface = 'none', identity: identityOverride = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
-  // An inert face — one rendered with no inspection door — is standing IN FOR
-  // the door rather than beside it: the modal's own face, the shop's detail
-  // pane, the Smith's preview, the creation summary slots. Those say
-  // everything, which is what `inspect` means, and it is also how the face
-  // itself comes to show tags instead of a second element beside it doing so.
-  const floor = inspection === false ? 'inspect' : level;
+  // `inspection: false` MEANS "no door on this face", NOT "this face says
+  // everything". The two got conflated, and the second reading won: a caller
+  // that made an inert face and bound the door to its WRAPPER — the shop's
+  // armament shelf does exactly that — had its resting tile drawn at `inspect`,
+  // 320px, when the tile is something you are browsing past. customize.js's
+  // summary slots were already asking for `glance` explicitly and being
+  // overridden by this line.
+  //
+  // An explicit level now wins. With none, an inert face still defaults to
+  // `inspect` (the modal's own face stands IN FOR the door rather than beside
+  // it) and a live one to `glance`.
+  const floor = level || (inspection === false ? 'inspect' : 'glance');
   // `card.dataset.item` is the identity bindCardInspection lights this card
   // by; asking the store with the same key is what keeps the two facts one.
   // An explicit identity feeds BOTH the lit-card comparison below and the
   // selection binding, so a caller that renames a card cannot leave the two
   // disagreeing about which card is lit. Only the catalogue passes one.
   const identity = identityOverride || model.id;
-  const levelNow = () => resolveCardLevel({ floor, lit: litCard() === identity, inspecting: inspection === false });
+  // `inspecting` means THIS FACE IS THE ONE IN THE READING DOOR, and it was
+  // being fed `inspection === false`, which means something else entirely: that
+  // no door is bound to this face. Every inert face on every shelf therefore
+  // resolved to `inspect` no matter what floor it asked for — the same
+  // conflation as above, one level down, and the reason fixing `floor` alone
+  // did not move the shop's tiles. The door's own faces pass `level: 'inspect'`
+  // explicitly, so the floor already carries that and nothing is lost.
+  const levelNow = () => resolveCardLevel({ floor, lit: litCard() === identity });
   let drawn = levelNow();
   const tokensFor = (at) => equipmentCardTokens(undefined, {
     collapse: model.tags.length ? [] : ['tags'],

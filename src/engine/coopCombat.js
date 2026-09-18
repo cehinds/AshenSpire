@@ -38,6 +38,7 @@ import { playerWeightClass } from './combat.js';
 import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { cardKind } from '../model/tree.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
 
 const QUEUE_GUARD = 10000;
@@ -408,9 +409,11 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     if (!target) throw new Error('No living enemy to target');
   }
 
+  // The kind tag, not def.type (model/tree.js cardKind) — as solo combat reads it.
+  const kind = cardKind(def);
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -435,11 +438,11 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
   };
-  if (def.type === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
+  if (kind === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
   C.emit('cardPlayed', {
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
-    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: def.type,
+    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });

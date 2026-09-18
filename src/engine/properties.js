@@ -9,7 +9,10 @@
 // are the only things that read the map.
 //
 // A carrier is { kind, id, instanceId, ownerKey, tagIds }:
-//   kind        one of PROPERTY_CARRIER_FAMILIES (armament, armour, relic, class)
+//   kind        one of MOUNTABLE_KINDS below — the holders this path has a hold
+//               window for. An engine vocabulary, not a content gate: every
+//               family may carry property tags (schemas.js says why the gate
+//               went), and this names which holders the MOUNT knows how to hold.
 //   id          the content id (boneSceptre)
 //   instanceId  what identifies THIS copy — for equipment, the namespaced item
 //               ref (armament/boneSceptre), which an item keeps wherever it sits
@@ -29,7 +32,6 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { PROPERTY_CARRIER_FAMILIES } from '../model/schemas.js';
 import { carrierRules } from '../model/registries.js';
 import { equippedPieces, pieceItemRef } from '../model/loadout.js';
 import { triggerOwnerKey } from './triggers.js';
@@ -37,6 +39,12 @@ import { triggerOwnerKey } from './triggers.js';
 // The carrier kinds the loadout owns. syncLoadoutProperties manages these and
 // never touches another kind's mounts (a relic or class carrier, later phases).
 const LOADOUT_KINDS = new Set(['armament', 'armour']);
+
+// The holders this path can mount, and why the list is short: a mount needs a
+// WINDOW — the span over which the holder is held — and these four are the
+// holders whose window the engine knows (worn, worn, owned, chosen). A kind
+// gains a mount by gaining a window here, never by a content row.
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {
@@ -46,8 +54,8 @@ export function propertySourceKey(carrier) {
 function assertCarrier(carrier) {
   const c = carrier || {};
   const problems = [];
-  if (!PROPERTY_CARRIER_FAMILIES.includes(c.kind)) {
-    problems.push(`kind '${c.kind}' is not a property carrier (carriers: ${PROPERTY_CARRIER_FAMILIES.join(', ')})`);
+  if (!MOUNTABLE_KINDS.includes(c.kind)) {
+    problems.push(`kind '${c.kind}' has no mount window (mountable: ${MOUNTABLE_KINDS.join(', ')})`);
   }
   if (typeof c.id !== 'string' || !c.id) problems.push('id must be a non-empty string');
   if (c.instanceId != null && (typeof c.instanceId !== 'string' || !c.instanceId)) problems.push('instanceId, when present, must be a non-empty string');

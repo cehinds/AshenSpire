@@ -9,7 +9,8 @@
       },
       "focus": { "widthPx": 280 },
       "inspect": { "widthPx": 320 }
-    }
+    },
+    "doorReadableMinPx": 384
   },
   "behavior": {
     "fields": {

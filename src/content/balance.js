@@ -15,7 +15,7 @@ export const balance = {
   },
   // Focus properties (docs/proposal-progression-and-property-system.md §7.2,
   // §10): what an Arcane Break, or a hit, is worth to the caster whose focus
-  // holds the property. content/source/propertyRuleEffects.json reads these
+  // holds the property. content/source/nodeEffects.json reads these, through variableBindings.csv,
   // through `{ "balance": "exposure.…" }`; no number is typed in that file.
   exposure: {
     siphonRefund: 1, // PROVISIONAL — Mana back on YOUR arcane break (scepter `siphon`)
@@ -1032,6 +1032,66 @@ export const balance = {
   // what a mod is ALLOWED to say lives in equipMods.csv. Everything here is
   // the rules of the system, kept in one place so it can be tuned or switched
   // off without touching the model.
+  // What the relic-carried powers are tuned to. Every number a power used to
+  // carry as a literal in its own rule lives here now, one row per variable,
+  // and the rule names the variable (content/source/nodeEffects.json) while
+  // content/source/variableBindings.csv says which row the variable reads.
+  // Retuning a relic is editing this block; the rule never changes.
+  // The framework's default cost amounts: what a card pays when it carries a
+  // cost node (content/source/nodes.csv cost.action/stamina/mana) with no
+  // amount of its own. Bound in variableBindings.csv; read into the generated
+  // framework data at build.
+  costs: { action: 1, stamina: 1, mana: 1 },
+  powers: {
+    forsakenMedallion: { poiseDamage: 4 },
+    starstoneShard: { starstoneCharge: 1, restoreMana: 1 },
+    cutpursesCoin: { prepared: 1, venom: 2 },
+    goldFigurine: { block: 2 },
+    goldenSprout: { heal: 3 },
+    whetstoneFragment: { damage: 4 },
+    kindlingCharm: { draw: 1 },
+    goldleafCharm: { block: 4 },
+    crackedLantern: { gainEnergy: 1 },
+    sacrificialKnife: { bleed: 2 },
+    curedHide: { block: 5 },
+    ivoryComb: { draw: 1, n: 8 },
+    fellWardenBrand: { draw: 2 },
+    bloodiedTalisman: { loseHp: 5 },
+    twinnedArmor: { block: 6, n: 10 },
+    blightTouchedIdol: { crimsonBlight: 3 },
+    warhorn: { strength: 1 },
+    vowOfVengeance: { strength: 2 },
+    pearlOfSagacity: { gainEnergy: 1, n: 6 },
+    blessedDew: { heal: 2 },
+    azureSigil: { gainEnergy: 1 },
+    bloodstainedChalice: { block: 2 },
+    goldboughSapling: { block: 4 },
+    wyrmHeart: { gainEnergy: 1 },
+    titansCinder: { strength: 1 },
+    radiantAegis: { block: 4 },
+    flayersCenser: { crimsonBlight: 1 },
+    vigilantHalo: { heal: 6 },
+    carrionTalon: { damage: 6 },
+    emberIdol: { damage: 3 },
+    crownOfStitches: { strength: 2, frail: 1 },
+    wardenHorn: { draw: 1, loseHp: 2 },
+    ashOfRemembrance: { gainEnergy: 1, madness: 1 },
+    cinderOfTheFallen: { madness: 1, gainEnergy: 1 },
+    crimsonCovenant: { loseHp: 5, bleed: 2 },
+    travelersWhetstone: { strength: 1 },
+    moonlitVial: { block: 3 },
+    wardensLantern: { draw: 1 },
+    hollowedHorn: { vulnerable: 1 },
+    gildedTear: { heal: 3 },
+    watchmansBadge: { strength: 1 },
+    howlingStandard: { strength: 1 },
+    emberwickCharm: { gainEnergy: 1 },
+    carrionMorsel: { heal: 2 },
+    gravetendersBell: { draw: 1 },
+    sentinelsOath: { strength: 1, n: 12 },
+    forsakenWarflag: { weak: 1 },
+    wrathCoil: { damage: 3 },
+  },
   equipment: {
     startingKitDiscovery: {
       // Undiscovered alternates render no row at all: no name, numbers, cards,
@@ -1070,7 +1130,7 @@ export const balance = {
       // The order bound cards are DEALT in at creation. Was `dropOrder`, which
       // named a behaviour that no longer exists — nothing is ever dropped. Each
       // entry is a tag id in the `grantSource` domain, so adding a source is a
-      // row in tags.csv rather than an edit to loadout.js.
+      // node in nodes.csv rather than an edit to loadout.js.
       sourceOrder: ['from:global', 'from:relic', 'from:armor', 'from:weapon', 'from:class'],
 
       // WHICH TAG EACH MINTING SEAM STAMPS. `sourceOrder` is the vocabulary's

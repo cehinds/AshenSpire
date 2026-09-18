@@ -3,7 +3,7 @@
 // Every value is already resolved: variables substituted, fractions divided.
 //
 // source content/config/ui/components/buttons.json f03ef73d87040802
-// source content/config/ui/components/card.json e6726f51c41c8d79
+// source content/config/ui/components/card.json b51c01ee7f2512e7
 // source content/config/ui/components/categoryNav.json 631202269af56449
 // source content/config/ui/components/choiceBody.json a94c731dc8075f80
 // source content/config/ui/components/dialogueFrame.json e924351f29b485fa
@@ -517,7 +517,8 @@ export const uiConfig = deepFreeze({
           "inspect": {
             "widthPx": 320
           }
-        }
+        },
+        "doorReadableMinPx": 384
       },
       "behavior": {
         "fields": {
