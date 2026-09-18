@@ -186,6 +186,9 @@ export function cardDoorStackBelowPx(config = uiConfig.components.card.sizing) {
     throw new Error(`card sizing.doorReadableMinPx must be a positive number, got ${JSON.stringify(config?.doorReadableMinPx)}`);
   }
   return inspect + readable;
+}
+
+/**
  * THE AUTHORED TABLE, WITH A PLAYER'S OVERRIDES LAID OVER IT.
  *
  * The numbers in card.json remain the default and the only thing that ships;
