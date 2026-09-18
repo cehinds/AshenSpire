@@ -21,6 +21,12 @@
         "context": 35,
         "footer": 15
       },
+      "bandsCompact": {
+        "hud": 12,
+        "scene": 40,
+        "context": 33,
+        "footer": 15
+      },
       "floorPercent": 60,
       "portraitSlot": {
         "widthVw": 20,
@@ -31,9 +37,9 @@
         "captionLines": 3,
         "captionLineHeight": 1.45,
         "titleRem": 0.95,
-        "titleLineHeight": 1.2,
+        "titleLineHeight": 1.45,
         "textRem": 0.9,
-        "paddingRem": 0.35,
+        "paddingRem": 0.5,
         "gapRem": 0.25
       },
       "responses": {
@@ -58,8 +64,10 @@
       },
       "portraits": {
         "visibleFraction": 0.3333333333333333,
+        "visibleFractionCompact": 1,
         "mirrorNpc": true,
         "minGapVw": 1.5,
+        "minGapPx": 24,
         "fit": "shrinkToLane",
         "anchor": "revealLine",
         "listener": {

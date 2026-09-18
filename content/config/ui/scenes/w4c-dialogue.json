@@ -1,10 +1,13 @@
 {
   "vars": {
     "compactLineHeight": 1.2,
-    "bandGapRem": 0.25
+    "titleLineHeight": 1.45,
+    "bandGapRem": 0.25,
+    "portraitGapPx": 24
   },
   "sizing": {
     "bands": { "hud": 10, "scene": 40, "context": 35, "footer": 15 },
+    "bandsCompact": { "hud": 12, "scene": 40, "context": 33, "footer": 15 },
     "floorPercent": 60,
     "portraitSlot": { "widthVw": 20, "compactWidthVw": 30 },
     "context": {
@@ -12,9 +15,9 @@
       "captionLines": 3,
       "captionLineHeight": 1.45,
       "titleRem": 0.95,
-      "titleLineHeight": "$compactLineHeight",
+      "titleLineHeight": "$titleLineHeight",
       "textRem": 0.9,
-      "paddingRem": 0.35,
+      "paddingRem": 0.5,
       "gapRem": "$bandGapRem"
     },
     "responses": {
@@ -32,8 +35,10 @@
     "portraitSlot": { "insetVw": "$gutterVw", "topOffsetVh": "$insetVh" },
     "portraits": {
       "visibleFraction": { "numerator": 1, "denominator": 3 },
+      "visibleFractionCompact": 1,
       "mirrorNpc": true,
       "minGapVw": "$gapVw",
+      "minGapPx": "$portraitGapPx",
       "fit": "shrinkToLane",
       "anchor": "revealLine",
       "listener": { "minOpacity": 0.62, "brightness": 0.8, "saturation": 0.55 }

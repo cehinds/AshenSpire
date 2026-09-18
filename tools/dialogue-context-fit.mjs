@@ -26,6 +26,8 @@ import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const { uiConfig } = await import(new URL('../src/config/generated/ui.js', import.meta.url));
+const MIN_GAP_PX = uiConfig.scenes.w4c.positioning.portraits.minGapPx;
 const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const OUT = oi >= 0 && args[oi + 1] ? resolve(args[oi + 1]) : null;
@@ -102,11 +104,52 @@ const mountProbe = (count) => `(async () => {
     const r = b.getBoundingClientRect();
     return { top: r.top, bottom: r.bottom, height: r.height, left: r.left, right: r.right };
   });
+  // THE TITLE'S OWN LINE BOX, against the panel's padding box. A display face
+  // has taller ascenders than a line of 1.2 leaves room for, and the panel
+  // clips what overflows (its ellipsis needs overflow: hidden) — so the quest's
+  // name lost its top edge on a phone (owner, 2026-09-18).
+  const titleEl = region.querySelector('.dialogue-title');
+  const titleStyle = titleEl && getComputedStyle(titleEl);
+  const regionStyle = getComputedStyle(region);
+  // Rects come back in PAINTED px and computed padding in CSS px, and the app
+  // scales the whole frame by --ui-zoom: comparing the two directly made the
+  // title look 5.5px out of its own padding box when it sat exactly on it.
+  const paint = band.width / region.clientWidth || 1;
+  const pad = {
+    top: band.top + (parseFloat(regionStyle.paddingTop) + parseFloat(regionStyle.borderTopWidth)) * paint,
+    bottom: band.bottom - (parseFloat(regionStyle.paddingBottom) + parseFloat(regionStyle.borderBottomWidth)) * paint,
+  };
+  let title = null;
+  if (titleEl) {
+    const r = titleEl.getBoundingClientRect();
+    const size = parseFloat(titleStyle.fontSize);
+    const canvas = document.createElement('canvas').getContext('2d');
+    canvas.font = titleStyle.fontWeight + ' ' + size + 'px ' + titleStyle.fontFamily;
+    const m = canvas.measureText(titleEl.textContent || '');
+    // The face's own box, which is what the browser paints inside the line box.
+    const needs = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+    title = {
+      top: r.top, bottom: r.bottom, height: r.height,
+      lineHeight: parseFloat(titleStyle.lineHeight), fontSize: size, faceNeeds: needs,
+      inkAscent: m.actualBoundingBoxAscent, inkDescent: m.actualBoundingBoxDescent,
+      displayFontLoaded: document.fonts ? document.fonts.check(titleStyle.fontWeight + ' ' + titleStyle.fontSize + ' Cinzel') : null,
+      family: titleStyle.fontFamily.slice(0, 20),
+      text: (titleEl.textContent || '').slice(0, 40),
+    };
+  }
+  // The two figures' visible boxes, as the stage publishes them.
+  const figures = [...host.querySelectorAll('.dialogue-portrait')].map((el) => ({
+    side: el.dataset.side, fit: el.dataset.figureFit,
+    box: (el.dataset.figureBox || '').split(',').map(Number),
+  }));
   return {
     count: ${count}, zoom, layout: region.dataset.responseLayout, fits: region.dataset.responseFits,
     scrollHeight: region.scrollHeight, clientHeight: region.clientHeight,
     band: { top: band.top, bottom: band.bottom, height: band.height, width: band.width },
     buttons, bandCss: getComputedStyle(host.querySelector('.dialogue-context')).height,
+    pad, title, figures, frameWidth: host.clientWidth,
+    scrollTop: region.scrollTop, regionPadTop: parseFloat(regionStyle.paddingTop), regionBorderTop: parseFloat(regionStyle.borderTopWidth),
+    titleMarginTop: titleStyle ? parseFloat(titleStyle.marginTop) : null, regionAlign: regionStyle.alignContent,
   };
 })()`;
 
@@ -153,13 +196,30 @@ try {
       const short = facts.buttons.filter((b) => b.height < TOUCH_TARGET_PX - 0.5);
       const outside = facts.buttons.slice(0, 4).filter((b) => b.top < facts.band.top - 0.5 || b.bottom > facts.band.bottom + 0.5);
       const problems = [];
+      // The quest's name is drawn whole, inside the panel's padding box.
+      const title = facts.title;
+      const titleFits = title
+        && title.top >= facts.pad.top - 0.5
+        && title.bottom <= facts.pad.bottom + 0.5
+        && title.lineHeight >= title.faceNeeds - 0.01;
+      if (!title) problems.push('no quest title drawn');
+      else if (!titleFits) {
+        problems.push(title.lineHeight < title.faceNeeds - 0.01
+          ? `the title's line (${title.lineHeight.toFixed(1)}px) is shorter than its face needs (${title.faceNeeds.toFixed(1)}px)`
+          : `the title is outside the panel's padding box (top ${(title.top - facts.pad.top).toFixed(1)}px; fromRegionTop ${(title.top - facts.band.top).toFixed(1)}, pad ${facts.regionPadTop}, border ${facts.regionBorderTop}, scrollTop ${facts.scrollTop}, align ${facts.regionAlign}, marginTop ${facts.titleMarginTop})`);
+      }
+      // Two figures, never closer than the configured floor.
+      const boxes = facts.figures.filter((f) => f.box.length === 4);
+      const gap = boxes.length === 2 ? boxes[1].box[0] - boxes[0].box[2] : null;
+      if (boxes.length !== 2) problems.push(`${boxes.length} figure(s) placed, expected 2`);
+      else if (!(gap >= MIN_GAP_PX - 0.5)) problems.push(`the figures are ${gap.toFixed(1)}px apart, under the ${MIN_GAP_PX}px floor`);
       if (count <= 4 && scrolls) problems.push(`scrolls (${facts.scrollHeight} > ${facts.clientHeight})`);
       if (count <= 4 && outside.length) problems.push(`${outside.length} response(s) outside the band`);
       const lost = facts.buttons.filter((b) => b.top < facts.band.top - 0.5 || b.bottom > facts.band.bottom + 0.5);
       if (count > 4 && !scrolls && lost.length) problems.push(`${lost.length} response(s) outside a band that does not scroll`);
       if (short.length) problems.push(`${short.length} response(s) under the ${TOUCH_TARGET_PX}px target`);
       const verdict = problems.length ? 'FAIL' : 'PASS';
-      console.log(`  ${verdict}  ${tag} · ${count} responses · layout ${facts.layout} · ${scrolls ? 'scrolls' : 'no scroll'} · band ${facts.clientHeight}/${facts.scrollHeight}px · buttons ${facts.buttons.map((b) => Math.round(b.height)).join('/')}px${problems.length ? ` — ${problems.join('; ')}` : ''}`);
+      console.log(`  ${verdict}  ${tag} · ${count} responses · layout ${facts.layout} · ${scrolls ? 'scrolls' : 'no scroll'} · band ${facts.clientHeight}/${facts.scrollHeight}px · title ${title ? title.lineHeight.toFixed(1) + '/' + title.faceNeeds.toFixed(1) + 'px ink' + title.inkAscent.toFixed(1) + ' font:' + (title.displayFontLoaded ? 'loaded' : 'FALLBACK') : 'none'} · gap ${gap == null ? 'n/a' : gap.toFixed(1) + 'px'} · buttons ${facts.buttons.map((b) => Math.round(b.height)).join('/')}px${problems.length ? ` — ${problems.join('; ')}` : ''}`);
       if (problems.length) failures.push(`${tag} ${count}: ${problems.join('; ')}`);
       if (OUT) {
         const shot = await send('Page.captureScreenshot', { format: 'png' });

@@ -61,11 +61,12 @@ test('the fold is what makes the meters one line, and it is not written twice', 
 test('the folded dialogue band stacks its rows; it never seats them side by side', () => {
   const rule = /\.dialogue-screen\[data-hud-compact='true'\] > \.topbar > \.hud-top \{([^}]*)\}/.exec(css);
   assert.ok(rule, 'the dialogue band composes its folded HUD');
-  const body = rule[1];
-  assert.match(body, /grid-template-areas:\s*"info actions" "meters actions"/,
-    'facts over meters, the Armoury/Menu pair beside both — the map header’s shape');
-  assert.doesNotMatch(body, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
+  // The defect: four facts and three meters cannot share one line at phone
+  // width. Whatever the band does with its two rows, it never halves them.
+  assert.doesNotMatch(rule[1], /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
     'two half-width columns cannot hold four facts and three meters at phone width');
+  assert.doesNotMatch(rule[1], /grid-template-areas:[^;]*"[^"]*\binfo\b[^"]*\bmeters\b/,
+    'facts and meters never share a grid row');
 });
 
 

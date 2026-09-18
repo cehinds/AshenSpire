@@ -3,7 +3,7 @@
 // Every value is already resolved: variables substituted, fractions divided.
 //
 // source content/config/ui/components/buttons.json f03ef73d87040802
-// source content/config/ui/components/card.json fc5977d1de19bd7e
+// source content/config/ui/components/card.json 64730a735fd83caa
 // source content/config/ui/components/categoryNav.json 631202269af56449
 // source content/config/ui/components/choiceBody.json a94c731dc8075f80
 // source content/config/ui/components/dialogueFrame.json e924351f29b485fa
@@ -29,7 +29,7 @@
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
-// source content/config/ui/scenes/w4c-dialogue.json 9136780826a283d6
+// source content/config/ui/scenes/w4c-dialogue.json 2e77d4eb2a49419a
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
@@ -282,6 +282,12 @@ export const uiConfig = deepFreeze({
           "context": 35,
           "footer": 15
         },
+        "bandsCompact": {
+          "hud": 12,
+          "scene": 40,
+          "context": 33,
+          "footer": 15
+        },
         "floorPercent": 60,
         "portraitSlot": {
           "widthVw": 20,
@@ -292,9 +298,9 @@ export const uiConfig = deepFreeze({
           "captionLines": 3,
           "captionLineHeight": 1.45,
           "titleRem": 0.95,
-          "titleLineHeight": 1.2,
+          "titleLineHeight": 1.45,
           "textRem": 0.9,
-          "paddingRem": 0.35,
+          "paddingRem": 0.5,
           "gapRem": 0.25
         },
         "responses": {
@@ -319,8 +325,10 @@ export const uiConfig = deepFreeze({
         },
         "portraits": {
           "visibleFraction": 0.3333333333333333,
+          "visibleFractionCompact": 1,
           "mirrorNpc": true,
           "minGapVw": 1.5,
+          "minGapPx": 24,
           "fit": "shrinkToLane",
           "anchor": "revealLine",
           "listener": {
@@ -479,7 +487,71 @@ export const uiConfig = deepFreeze({
           4,
           4,
           1
-        ]
+        ],
+        "levels": {
+          "glance": {
+            "widthPx": 152,
+            "variants": {
+              "compact": 108
+            }
+          },
+          "focus": {
+            "widthPx": 280
+          },
+          "inspect": {
+            "widthPx": 320
+          }
+        }
+      },
+      "behavior": {
+        "fields": {
+          "levels": {
+            "glance": [
+              "art",
+              "facts",
+              "effects"
+            ],
+            "focus": [
+              "art",
+              "type",
+              "facts",
+              "effects",
+              "footer"
+            ],
+            "inspect": [
+              "art",
+              "type",
+              "facts",
+              "tags",
+              "effects",
+              "flavor",
+              "footer"
+            ]
+          },
+          "surfaces": {
+            "creation": {
+              "glance": {
+                "add": [
+                  "footer"
+                ]
+              }
+            },
+            "armoury": {
+              "glance": {
+                "add": [
+                  "type"
+                ]
+              }
+            },
+            "combat": {
+              "focus": {
+                "drop": [
+                  "footer"
+                ]
+              }
+            }
+          }
+        }
       }
     },
     "categoryNav": {

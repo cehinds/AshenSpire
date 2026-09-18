@@ -9,6 +9,8 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
 import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
+import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
+import { litCard } from './cardSelection.js';
 import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
 import { esc } from './tooltip.js';
@@ -146,7 +148,10 @@ export function renderCard(registries, ref, opts = {}) {
   // changed a card's tags changed what combat did with them and not what the
   // card showed, which is the chip strip lying about the run being played.
   const tags = model.tags;
-  el.dataset.tagRows = tags.length ? '1' : '0';
+  // `data-tag-rows` is set by `paint` below, because whether the chips are on
+  // the face is now a question the presentation level answers as well as the
+  // card's own data — and a second assignment here would be the older of two
+  // answers winning on some paths.
   // The badge numbers come from the framework cost profile (a preview's
   // numbers are the preview's own — it already resolved them); the badge
   // words come from the TermRegistry, like the tooltip's cost line.
@@ -169,28 +174,78 @@ export function renderCard(registries, ref, opts = {}) {
     ['mana', 'mana-cost', '♦', manaCost, false],
   ].filter(([, , , value, keepZero]) => value != null && (keepZero || value !== 0));
   el.dataset.wireframe = 'WC1';
-  el.innerHTML =
-    `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
-      `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
-    ).join('')}</div>` +
+  // THE SAME THREE LEVELS THE EQUIPMENT FACE USES, and deliberately the same
+  // vocabulary rather than a second one shaped like it. dev unified these two
+  // renderers behind models (src/model/playingCard.js) specifically so they
+  // could share this; giving the playing card its own field table would re-fork
+  // them the day after they were joined.
+  //
+  // The regions are `balance.ui.equipmentCard.regions` — the one vocabulary —
+  // mapped onto this face's own landmarks:
+  //
+  //   art      the artwork well            facts   the cost rail
+  //   type     the type band               tags    the subtype chips
+  //   effects  the rule text               footer  the rarity/owned band
+  //
+  // `flavor` has no landmark here: a playing card authors none, so the level
+  // that would show it simply has nothing to show. That is the same absence
+  // the equipment solver already handles for a card with no tag badges, not a
+  // special case.
+  //
+  // `cname` is not a region, for the same reason `.epc-name` is not: the title
+  // is what tells one card from another and shows at every level.
+  const identity = model.instanceId || model.id;
+  const floor = opts.inspection === false ? 'inspect' : (opts.level || 'glance');
+  const levelNow = () => resolveCardLevel({
+    floor, lit: litCard() === identity, inspecting: opts.inspection === false,
+  });
+  let drawn = levelNow();
+  const paint = (at) => {
+    const visible = new Set(cardFields(at, { surface: opts.surface || 'none' }).visible);
+    const region = (key, html) => (visible.has(key) ? html : '');
+    // HIDE BY NOT RENDERING. A region left in the markup and hidden in CSS
+    // still takes its share of the face's row budget, so the card would be the
+    // same card with holes rather than a larger-typed one — and a screen
+    // reader would announce a field the player cannot see.
+    const body = region('type', `<div class="ctype">${esc(model.type.label)}</div>`)
+      + region('effects', `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div>`);
+    // The information button and the chevron are children of the card that
+    // `bindCardInspection` appended with their own listeners; a repaint must
+    // hand them back rather than take them away.
+    // Guarded, because this renderer is also exercised against the minimal DOM
+    // the wireframe tests build, which has no `querySelectorAll`. There is
+    // nothing to keep on a first paint in any case — the door has not run yet.
+    const kept = typeof el.querySelectorAll === 'function'
+      ? [...el.querySelectorAll(':scope > .card-info-button, :scope > .card-more-button')]
+      : [];
+    el.innerHTML =
+      region('facts', `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
+        `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
+      ).join('')}</div>`) +
 
-    `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
-    `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
-    // Subtypes: authored in content/source/tagging.csv. Untagged cards
-    // render nothing here, so the layout is unchanged for them.
-    (tags.length
-      ? `<div class="ctags cd-tags">${tags
-          .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
-          .join('')}</div>`
-      : '') + '</div>' +
-    `<div class="cd-body"><div class="ctype">${esc(model.type.label)}</div>` +
-    `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div></div>` +
-    metadataBand(def.rarity, opts.owned);
-
-  // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
-  // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
-  // count or measure, so the renderer reports after the first paint.
-  scheduleCardFits([el]);
+      `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
+      region('art', `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+      // Subtypes: authored in content/source/tagging.csv. Untagged cards
+      // render nothing here, so the layout is unchanged for them.
+      (tags.length && visible.has('tags')
+        ? `<div class="ctags cd-tags">${tags
+            .map((t) => `<span class="ctag as-tag" style="--tag-color:#${esc(t.color)}" data-tip="${esc(t.blurb + (t.inheritedFrom.length ? ` Granted by ${t.inheritedFrom.join(', ')}.` : ''))}">${esc(t.glyph)} ${esc(t.label)}</span>`)
+            .join('')}</div>`
+        : '') + '</div>') +
+      (body ? `<div class="cd-body">${body}</div>` : '') +
+      region('footer', metadataBand(def.rarity, opts.owned));
+    for (const node of kept) el.append(node);
+    el.dataset.level = at;
+    // `data-tag-rows` is what the stylesheet and every tool read to know the
+    // text's share of the budget. At a level that withholds the chips there
+    // are no tag rows, whatever the card's own data says.
+    el.dataset.tagRows = tags.length && visible.has('tags') ? '1' : '0';
+    // MEASURED, NOT GUESSED: the name shrinks to one line, tags past the second
+    // row defer to `+N`, and the text takes what the budget leaves. CSS cannot
+    // count or measure, so the renderer reports after the first paint.
+    scheduleCardFits([el]);
+  };
+  paint(drawn);
 
   // #61 M5: a matched tag-scoped vulnerability lights the card's boosted
   // number in the status row's own tint — "these cards just lit up" instead
@@ -233,6 +288,26 @@ export function renderCard(registries, ref, opts = {}) {
         actions: () => cardActions(surface, ref, { availability: opts.availability, only: opts.only }),
         commands: opts.commands || {} });
     } });
+  // EXACTLY THE TWO CARDS WHOSE LEVEL CHANGED. A selection lights one card and
+  // douses one card, and cardInspection.js fires both events on the card they
+  // concern, so each face repaints itself. Nothing sweeps the document —
+  // `document.querySelectorAll` is what dev deliberately deleted when the
+  // selection store was extracted (see the header of cardSelection.js), and a
+  // sweep is also how a card removed from the DOM kept being reconciled.
+  //
+  // The guard matters as much as the listener: `select()` runs on every tap,
+  // including on a card that is already lit, and rebuilding the face under a
+  // thumb mid-gesture would be a new defect wearing this feature's clothes.
+  if (opts.inspection !== false) {
+    const restate = () => {
+      const next = levelNow();
+      if (next === drawn) return;
+      drawn = next;
+      paint(drawn);
+    };
+    el.addEventListener('cardinspectionselect', restate);
+    el.addEventListener('cardinspectiondouse', restate);
+  }
   return el;
 }
 
