@@ -1,6 +1,6 @@
 {
   "sizing": {
-    "ratio": { "numerator": 5, "denominator": 8 },
+    "ratio": { "numerator": 5, "denominator": 7 },
     "bands": [1, 4, 4, 1],
     "levels": {
       "glance": {

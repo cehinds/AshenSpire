@@ -566,6 +566,35 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   let restorePending = !!restored;
   let viewCommitTimer = null;
   let pendingViewCommit = null;
+  // THE VIEWPORT THE CAMERA WAS LAST SOLVED AGAINST — the promise a `fit`
+  // makes, and the only thing `fitViewportMatches` above has to check it with.
+  // It is written where the camera is COMPUTED from viewport geometry
+  // (centerOnCurrent), inherited from a restored view, and never re-read at
+  // emit time. Reading it live was the bug: a viewport change fires a `scroll`
+  // event — the browser clamps scrollTop to the new extent — and the debounce
+  // below snapshots the camera, so the snapshot stamped the NEW measurements
+  // onto a fit solved for the OLD ones. The map screen does re-fit a live board
+  // on `resize` (map.js), but that is two animation frames away and lands on
+  // whatever layout stage it catches; the clamp's scroll event does not wait
+  // for it. So a desktop fit could reach the next mount wearing the phone's
+  // measurements, match, and be restored as though it had been solved there.
+  // Measured at 1200x730 -> 390x844 before this: the phone resumed that camera
+  // at scrollTop 1756.7, where the phone's own fit stands at 1953.3.
+  //
+  // AND THE BOARD SAYS WHICH SHAPE IT SOLVED FOR, the same discipline as the
+  // fog census and the shrine lane one field over: a promise that cannot report
+  // itself cannot be caught being broken. `data-camera-restore` says which
+  // DOOR the camera came through, which on a live resize is a race — that
+  // two-frame re-fit can leave the run holding a phone-solved fit, and
+  // `restored` is then the right answer. `data-camera-viewport` says the one
+  // thing the door cannot: the shape the camera in force was measured against.
+  let solvedViewport = null;
+  function solveViewport(width, height) {
+    if (!(Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0)) return;
+    solvedViewport = { width, height };
+    scroll.dataset.cameraViewport = `${Math.round(width)}x${Math.round(height)}`;
+  }
+  if (restored) solveViewport(restored.viewportWidth, restored.viewportHeight);
 
   scroll.dataset.cameraRestore = restored ? 'restored' : (candidate ? 'recomputed' : 'new');
 
@@ -579,8 +608,8 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       scrollLeft: scroll.scrollLeft,
       scrollTop: scroll.scrollTop,
       aimX,
-      viewportWidth: scroll.clientWidth,
-      viewportHeight: scroll.clientHeight,
+      viewportWidth: solvedViewport ? solvedViewport.width : scroll.clientWidth,
+      viewportHeight: solvedViewport ? solvedViewport.height : scroll.clientHeight,
     };
   }
 
@@ -846,6 +875,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   function centerOnCurrent() {
     const fs = framingNodes();
     if (!fs.length) { report(null, null); return; }
+    // THIS is where the camera becomes a function of the viewport — both axes,
+    // in every framing mode — so this is where a fit's promise is dated. A zero
+    // measurement is not a viewport and must not be recorded as one.
+    solveViewport(scroll.clientWidth, scroll.clientHeight);
     if (framing === 'fit' && scroll.clientWidth > 0 && scroll.clientHeight > 0) {
       // The decision must fit; the look-ahead is fitted too when it costs
       // nothing, and `min` is what makes that safe — the context box contains

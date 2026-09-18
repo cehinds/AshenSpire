@@ -124,6 +124,16 @@
       "animationMs": 650,
       "awardPreview": 15
     },
+    "phone": {
+      "gate": "data-layout='narrow'",
+      "maxWidthPx": 520,
+      "meters": "stacked",
+      "layerOverrides": {
+        "class": false,
+        "position": false,
+        "route": false
+      }
+    },
     "diagram": {
       "columns": {
         "wide": 62,

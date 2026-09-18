@@ -3815,8 +3815,14 @@ INPUT snapshot, context, config, commandRegistry
 model = ProjectKnownHudFields(snapshot, config.sample)
 visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
-ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+IF HostComposition() MATCHES config.phone.gate        // the published state, never a second measurement
+  // One band in every context: stacked meters, Cinders, Armoury, Menu.
+  visible = FilterConfiguredActiveLayers(model, Merge(config.layers, config.phone.layerOverrides))
+  ComposeHeader(visible.cinders)
+  ComposeStackedMeters(visible.vitality); ComposeActions(visible.armoury, visible.menu)
+ELSE
+  ComposeHeader(visible.class, visible.cinders, visible.position)
+  ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
 ComposeDetachedRail(visible.relics)
@@ -4082,7 +4088,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 ┌────────────────────────────────────────┐
-│Warden · Cinders 120 · Act 1 Floor 4    │
+│Cinders 120                             │
 │HP      [███░]                32 / 40   │
 │MP      [██████░░░░]          6 / 10    │
 │Stamina [████████░░]          8 / 10    │
@@ -4104,7 +4110,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 ┌────────────────────────────────────────┐
-│Warden · Cinders 120 · Act 1 Floor 4    │
+│Cinders 120                             │
 │HP      [███░]                32 / 40   │
 │MP      [██████░░░░]          6 / 10    │
 │Stamina [████████░░]          8 / 10    │
@@ -4127,8 +4133,14 @@ INPUT snapshot, context, config, commandRegistry
 model = ProjectKnownHudFields(snapshot, config.sample)
 visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
-ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+IF HostComposition() MATCHES config.phone.gate        // the published state, never a second measurement
+  // One band in every context: stacked meters, Cinders, Armoury, Menu.
+  visible = FilterConfiguredActiveLayers(model, Merge(config.layers, config.phone.layerOverrides))
+  ComposeHeader(visible.cinders)
+  ComposeStackedMeters(visible.vitality); ComposeActions(visible.armoury, visible.menu)
+ELSE
+  ComposeHeader(visible.class, visible.cinders, visible.position)
+  ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
 ComposeDetachedRail(visible.relics)
@@ -4308,7 +4320,7 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Warden · Cinders 120 · Act 1 Floor 4
+Cinders 120
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4322,7 +4334,7 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 
 ```text
-Warden · Cinders 120 · Act 1 Floor 4
+Cinders 120
 ```
 
 | Component | Width | Height | Relative to | Anchor | Alignment | Positioning | Offset | Rule |
@@ -4334,6 +4346,7 @@ Warden · Cinders 120 · Act 1 Floor 4
 ```text
 INPUT: immutable component model, owner state, context, layout tokens
 // Project class, Cinders, Act and Floor from run snapshot. Filter config layers before arranging tracks. Use localization and semantic fields, not parsed text.
+// UNDER config.phone.gate ONLY CINDERS REMAINS, and it keeps the middle track so it stays centred with its neighbours gone. Class, Act and Floor are not ellipsized there, they are absent — a phone is not a narrow desktop. Every context folds the same way, so the band a player reads on the map is the band they read in a fight.
 On model change: reproject registered values; preserve stable identity
 On dispose: release timers, observers and events
 ```
@@ -4882,12 +4895,6 @@ On dispose: release timers, observers and events
 ```
 
 ## Wireframe WGM6: Recenter button
-
-> SUPERSEDED on the act map (owner, 2026-09-14). The map's footer is now a tray
-> and carries no Recenter: it ran the same `resetFraming` as the zoom bar's ⊙,
-> which is the only one left. The drawing below stands for the component
-> itself; `docs/implementation/approved-wireframes.md` § *Map tray* is what the
-> map ships.
 
 **Parent: WCB4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
 
