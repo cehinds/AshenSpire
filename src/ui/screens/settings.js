@@ -26,8 +26,13 @@ import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } f
 import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
+import { cardLevels, cardLevelsWithOverrides, cardSizingExport } from '../models/CardSizeModel.js';
 
 const UI_DEFAULTS = balance.ui;
+// The card's authored sizes, so the rows below state a DEFAULT they read
+// rather than a number typed twice. content/config/ui/components/card.json is
+// the one home; these rows lay a tuning override over it.
+const CARD_LEVELS = cardLevels();
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -439,6 +444,30 @@ const ROWS = [
   // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
   // `derivedStatRules.defaults` — its one home, one import away, so this row
   // cannot drift from the rule it turns.
+  // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
+  // content/config/ui/components/card.json and ship as the default; these rows
+  // lay an override over that table so a size can be tried against real cards
+  // without a rebuild, and `cardSizingExport` hands back the exact JSON block
+  // to paste into the file when a number is worth keeping.
+  //
+  // The ladder is the contract: a card you opened to read is never smaller
+  // than one you were browsing past. A set of numbers that breaks it is
+  // REFUSED and the authored table stands — see cardLevelsWithOverrides.
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance', type: 'number',
+    def: CARD_LEVELS.glance.widthPx, min: 64, max: 640, slider: true, label: 'Resting card width',
+    note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance_compact', type: 'number',
+    def: CARD_LEVELS.glance.variants.compact, min: 64, max: 640, slider: true, label: 'Resting width, list view',
+    note: 'The narrower resting width used where a card sits beside its own text, as in the starting-equipment list.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_focus', type: 'number',
+    def: CARD_LEVELS.focus.widthPx, min: 64, max: 640, slider: true, label: 'Selected card width',
+    note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_inspect', type: 'number',
+    def: CARD_LEVELS.inspect.widthPx, min: 64, max: 640, slider: true, label: 'Reading card width',
+    note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
+    label: 'Export card sizes',
+    note: 'Copies the current sizes as the JSON block from content/config/ui/components/card.json, ready to paste back in as the new default.' },
   { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
@@ -1411,6 +1440,30 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
+  });
+
+  // EXPORT WHAT THE FILE EXPECTS. The block this copies is the shape
+  // content/config/ui/components/card.json already uses, so a size worth
+  // keeping is pasted in rather than transcribed — transcription is where a
+  // number would get changed on the way home.
+  container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { levels, refused } = cardLevelsWithOverrides(settings);
+      const text = cardSizingExport(levels);
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(text);
+        copied = true;
+      } catch {
+        // A clipboard a browser refuses is not a failure to export: the block
+        // is still the answer, so it goes where it can be read and selected.
+        copied = false;
+      }
+      btn.textContent = copied ? 'Copied' : 'See log';
+      if (!copied) console.log(text);
+      if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
   });
 
   container.querySelectorAll('.choice').forEach((btn) => {

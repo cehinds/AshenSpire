@@ -166,3 +166,71 @@ export function cardLevelCssProperties(config) {
   }
   return Object.freeze(out);
 }
+
+/**
+ * THE AUTHORED TABLE, WITH A PLAYER'S OVERRIDES LAID OVER IT.
+ *
+ * The numbers in card.json remain the default and the only thing that ships;
+ * this is a TUNING layer on top, so a size can be tried in the running game
+ * without a rebuild, and the result exported back into the file it came from.
+ *
+ * An override that would break the ladder is REFUSED rather than clamped: the
+ * whole point of `glance < focus < inspect` is that a card you opened to read
+ * is never smaller than one you were browsing past, and silently repairing a
+ * bad number would hide exactly the mistake the tuner is trying to see. A
+ * refused table falls back to the authored one and says which key was wrong.
+ */
+export function cardLevelsWithOverrides(settings = {}, config = uiConfig.components.card.sizing.levels) {
+  const authored = cardLevels(config);
+  const px = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+  };
+  const merged = {};
+  for (const [level, row] of Object.entries(authored)) {
+    const variants = { ...row.variants };
+    for (const name of Object.keys(variants)) {
+      const override = px(settings[`cardWidth_${level}_${name}`]);
+      if (override !== null) variants[name] = override;
+    }
+    merged[level] = { widthPx: px(settings[`cardWidth_${level}`]) ?? row.widthPx, variants };
+  }
+  const order = ['glance', 'focus', 'inspect'];
+  for (let i = 1; i < order.length; i += 1) {
+    if (!(merged[order[i - 1]].widthPx < merged[order[i]].widthPx)) {
+      return { levels: authored, refused: `${order[i - 1]} (${merged[order[i - 1]].widthPx}px) must be smaller than ${order[i]} (${merged[order[i]].widthPx}px)` };
+    }
+  }
+  return { levels: merged, refused: null };
+}
+
+/** The same CSS properties, from an override-aware table. */
+export function cardLevelCssPropertiesFor(levels) {
+  const out = {};
+  for (const [name, row] of Object.entries(levels)) {
+    out[`--card-w-${name}`] = `${row.widthPx}px`;
+    for (const [variant, px] of Object.entries(row.variants)) out[`--card-w-${name}-${variant}`] = `${px}px`;
+  }
+  return out;
+}
+
+/**
+ * The tuned table as the JSON it came from, ready to paste back into
+ * content/config/ui/components/card.json. Exporting a DIFFERENT shape from the
+ * one the file uses would mean translating by hand on the way in, which is
+ * where a transcription error would live.
+ */
+export function cardSizingExport(levels) {
+  const out = {};
+  for (const [name, row] of Object.entries(levels)) {
+    out[name] = Object.keys(row.variants).length
+      ? { widthPx: row.widthPx, variants: { ...row.variants } }
+      : { widthPx: row.widthPx };
+  }
+  // ONLY THE BLOCK BEING TUNED. An earlier draft also emitted `ratio` and
+  // `bands` for completeness and would have been wrong to paste: the generated
+  // config resolves `ratio` to a NUMBER (0.714286) while card.json authors it
+  // as `{ numerator, denominator }`, so a round trip through this export would
+  // have quietly rewritten the shape into a form the file does not use.
+  return JSON.stringify({ levels: out }, null, 2);
+}

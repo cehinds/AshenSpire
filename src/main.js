@@ -76,7 +76,7 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties, cardShapeCssProperties } from './ui/models/CardSizeModel.js';
+import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor } from './ui/models/CardSizeModel.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -624,7 +624,24 @@ if (typeof window !== 'undefined') {
   setTimeout(reflexAutoScale, 300);
 }
 
+// CARD SIZE IS TUNABLE WHILE YOU LOOK AT A CARD. The authored table in
+// content/config/ui/components/card.json is the default and the only thing
+// that ships; Settings > Advanced > Card size lays an override over it, and
+// re-projecting the same custom properties here means a slider moves every
+// card on screen rather than waiting for a reload. A set of numbers that
+// breaks `glance < focus < inspect` is refused by the model and the authored
+// table stands — the console says which key was wrong rather than the cards
+// silently going back to normal.
+function applyCardSizeSettings(settings) {
+  const { levels, refused } = cardLevelsWithOverrides(settings);
+  for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
+    document.documentElement.style.setProperty(name, value);
+  }
+  if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+}
+
 function applyDisplaySettings(settings) {
+  applyCardSizeSettings(settings);
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
