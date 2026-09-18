@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1134",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The bar along the top reads the same on a phone in every screen",
+    "detail": "Walking into an event or a conversation on a phone, the bar along the top printed its words on top of each other — your class over the act, the floor over both — and the health, mana and stamina bars were cut off by its bottom edge. On a phone that bar now carries four things and nothing else: your health, mana and stamina stacked one under the other, your cinders centred above them, and the two buttons for your armament and the menu. Your class, the act and the floor are still there on a wider screen, where they fit. The map, a fight, a shrine and a conversation all draw that same bar now, so it no longer changes shape as you walk through a door.",
+    "build": "0.7.1.82",
+    "pullRequest": 1134,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1134"
+  },
+  {
     "id": "pr-1124",
     "date": "2026-09-18",
     "group": "2026-09-18",

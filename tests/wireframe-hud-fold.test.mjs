@@ -12,6 +12,12 @@ import { readFileSync } from 'node:fs';
 // what is checked here is that the rules name BOTH hosts and that the
 // dialogue band stacks its two rows rather than seating them side by side.
 const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
+// The wireframe is READ, not imported: tools/linkcheck.mjs --selftest copies the
+// tree without docs/, and an import of a doc module reads as a broken one there.
+// tests/wireframe-button-sizes.test.mjs reads button-widths.json the same way.
+const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
+const hudConfig = JSON.parse(read('docs/architecture-handoff/hud-config.json'));
+const hudReference = read('docs/architecture-handoff/hud-reference.mjs');
 
 const MAP_HOST = '.shared-hud[data-hud-layout="map-compact"]';
 const DIALOGUE_HOST = ".dialogue-screen[data-hud-compact='true'] .shared-hud";
@@ -60,4 +66,56 @@ test('the folded dialogue band stacks its rows; it never seats them side by side
     'facts over meters, the Armoury/Menu pair beside both — the map header’s shape');
   assert.doesNotMatch(body, /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
     'two half-width columns cannot hold four facts and three meters at phone width');
+});
+
+
+// THE PHONE BAND (owner, 2026-09-18): "just vertically stacked vitality block,
+// cinders, armament and menu button. should be uniform in every view. act and
+// floor should show up in wide screen but on mobile, that's how it should be."
+const PHONE_GATE = ":root[data-layout='narrow']";
+
+/** The § BAND ON A PHONE block: from its banner to the next banner comment. */
+function phoneBlock() {
+  const start = css.indexOf('BAND ON A PHONE');
+  assert.ok(start > 0, 'styles/kit.css has a § BAND ON A PHONE block');
+  const after = css.indexOf('*/', start);
+  const ends = [css.indexOf('/* \u2550\u2550\u2550', after), css.indexOf('@media', after)].filter((i) => i > 0);
+  return css.slice(start, ends.length ? Math.min(...ends) : css.length);
+}
+const phoneRules = () => phoneBlock().split('\n').filter((line) => line.startsWith(PHONE_GATE));
+
+test('the wireframe states the phone band, and states it as the published gate', () => {
+  const phone = hudConfig.phone;
+  assert.ok(phone, 'hudConfig carries the phone band');
+  assert.equal(phone.meters, 'stacked');
+  assert.deepEqual(
+    { class: phone.layers.class, position: phone.layers.position, route: phone.layers.route, cinders: phone.layers.cinders },
+    { class: false, position: false, route: false, cinders: true },
+    'four things: stacked meters, Cinders, Armoury, Menu — the wide facts are absent');
+  assert.match(phone.gate, /data-layout='narrow'/, 'the gate is the composition main.js publishes, not a second measurement');
+  const wgh7 = /\['WGH7',[\s\S]*?\n\];/.exec(hudReference) || /\['WGH7',[\s\S]*/.exec(hudReference);
+  assert.match(wgh7[0], /ONLY CINDERS REMAINS/, 'WGH7 says what the phone band carries');
+});
+
+test('the stylesheet gates the phone band on that same attribute, for every host', () => {
+  const lines = phoneRules();
+  const rule = (needle) => lines.find((line) => line.includes(needle));
+  assert.ok(rule('.hud-identity'), 'the class name leaves the band on a phone');
+  assert.ok(rule('.hud-run-meta'), 'act and floor leave the band on a phone');
+  assert.ok(rule('.act-route-strip'), 'the map’s route receipt leaves it too — one band in every view');
+  const meters = rule('.resbars {') || lines.find((line) => line.includes('.resbars'));
+  assert.ok(meters, 'the meters are addressed on a phone');
+  // Every one of them addresses `.shared-hud`, not one screen's own selector:
+  // uniform in every view is the rule, so no host may opt out.
+  for (const line of lines) assert.ok(line.includes('.shared-hud'), `phone rule is the shared band’s: ${line.trim()}`);
+  // …and it must outrank § BAND FOLD's one meter line, which is a wide answer.
+  assert.ok(css.indexOf('BAND ON A PHONE') > css.indexOf('BAND FOLD'), 'the phone block follows the fold it overrides');
+});
+
+test('the phone band drops the wide facts rather than shrinking them', () => {
+  const lines = phoneRules();
+  const dropped = lines.filter((line) => /\.hud-identity|\.hud-run-meta|\.act-route-strip/.test(line));
+  for (const line of dropped) {
+    assert.match(line, /display: none/, `absent, not ellipsized: ${line.trim()}`);
+  }
 });

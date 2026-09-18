@@ -2318,6 +2318,46 @@ body.pad-mode .as-slot > .as-keycap { border-radius: var(--r-pill); }
 }
 :is(.as-band-fold, .shared-hud[data-hud-layout="map-compact"],
     .dialogue-screen[data-hud-compact='true'] .shared-hud) .resbars .resunit { gap: calc(5px / var(--ui-zoom, 1)); }
+/* ═══ BAND ON A PHONE — THE SAME BAND IN EVERY VIEW ══════════════════
+   THE OWNER'S RULE (2026-09-18): "just vertically stacked vitality block,
+   cinders, armament and menu button. should be uniform in every view. act and
+   floor should show up in wide screen but on mobile, that's how it should be."
+
+   So on a phone the band carries FOUR THINGS and nothing else: the three
+   meters STACKED, the Cinders receipt, Armoury, Menu. The class name, the act
+   and the floor are WIDE-SCREEN FACTS — they are not truncated on a phone,
+   they are not there. A phone reads the same band on the map, in a room, in a
+   fight and in a conversation, which is what "uniform in every view" means and
+   what neither the fold nor the map header gave it before: the fold's one
+   meter line and its ellipsized act chip are a WIDE answer to a narrow band,
+   and they stop at this gate.
+
+   THE GATE IS THE PUBLISHED ONE. `data-layout="narrow"` is written on <html>
+   by main.js's applyUiScale from balance.ui.uiScale.narrowMax (520 visual px),
+   by the same call that chose the zoom. This block re-measures nothing. */
+:root[data-layout='narrow'] .shared-hud .hud-info-row > :is(.hud-identity, .hud-run-meta) { display: none; }
+/* The receipt keeps the middle track of § BAND thirds, so it stays centred
+   with its neighbours gone rather than sliding to an edge. */
+:root[data-layout='narrow'] .shared-hud .hud-info-row > .hud-center { grid-column: 2; justify-self: center; }
+/* STACKED, in every host. This outranks § BAND FOLD's one meter line on
+   purpose: the fold is what a band does when it is too short for its rows, and
+   a phone answers that by dropping the wide facts instead. */
+:root[data-layout='narrow'] .shared-hud .resbars {
+  display: flex; flex-direction: column; align-items: stretch; row-gap: calc(4px / var(--ui-zoom, 1));
+}
+:root[data-layout='narrow'] .shared-hud .resbars > .resline { min-width: 0; }
+/* "JUST" IS FOUR THINGS, so the map's route receipt goes with the act chip it
+   restates — the same act name, one line lower. A phone's band is the band,
+   not the band plus this host's extra. The map still carries the route on
+   every wider screen, where it sits beside the facts rather than under them. */
+:root[data-layout='narrow'] .shared-hud .act-route-strip { display: none; }
+/* The band takes the height its four things need. W4b's 10 vh and W4c's band
+   are WIDE-SCREEN heights, and a height that holds one folded line cannot hold
+   three meters — honoured as a floor here, never as a ceiling. */
+:root[data-layout='narrow'] .shared-hud[data-hud-layout="map-compact"] {
+  height: auto; min-height: calc(var(--map-header-height-px, 80) * 1px / var(--ui-zoom, 1));
+}
+
 /* On a phone the three tracks stay three — the centred receipt is centred at
    every width, which is the whole point of the middle track — and what yields
    is DETAIL: a trail keeps the first part of each compound fact and drops the
