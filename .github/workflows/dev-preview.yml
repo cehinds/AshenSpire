@@ -50,6 +50,15 @@ jobs:
       - name: No plant site has drifted beyond the recorded baseline
         run: node tools/plantsites.mjs --check
 
+      # The harness that decides, for every corpus above and in the dispatch-only
+      # lane, whether a known-bad was armed at all. It read plants as exact bytes,
+      # so on a CRLF checkout every MULTI-LINE plant reported PLANT SITE DRIFTED —
+      # a false red on Windows, invisible on this runner because Linux checks out
+      # LF. That is the shape of defect this lane exists to catch, and the harness
+      # was the one tool with no door of its own. Seconds, no browser, no port.
+      - name: The plant harness can still arm a plant (doorplant's own door)
+        run: node tools/doorplant.mjs --selftest
+
       # THE ARTIFACT-IDENTITY GATES, AND WHY THEY BELONG HERE RATHER THAN IN
       # THE DISPATCH-ONLY LANE.
       #
