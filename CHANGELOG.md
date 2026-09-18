@@ -32,7 +32,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-18
 
+- **A change that landed without a receipt now has one** ([#1113](https://github.com/cehinds/AshenSpire/pull/1113), `0.7.1.73`). Nothing you see changes in play, apart from this list growing by one entry. One change merged without an entry here, so the changelog you can read in the game did not mention it either: the one that stores the instructions for working on this game in the repository. It is written up below, citing the build it actually landed in.
 - **The list of changes under Settings, About fills in seven gaps** ([#1115](https://github.com/cehinds/AshenSpire/pull/1115), `0.7.1.72`). Nothing you see changes in play. Seven changes that had already landed were missing from this list, so the changelog you can read in the game did not mention them: one that puts your relics, potions and status effects in a single row of icons, and six that only touched the project's own writing and checking tools. Each now has its line, with the build it shipped in.
+- **The owner's instructions for working on this game live in the repository** ([#1114](https://github.com/cehinds/AshenSpire/pull/1114), `0.7.1.71`). Nothing you see changes in play. The instructions that say how this game is worked on — which assistant handles which kind of task, and the rules and boundaries they work under — used to exist only as files passed around in chat. They are now kept with the game's own documents, marked as advice: where they disagree with the specification or the contributing rules, those still decide.
 
 ## 2026-09-15
 

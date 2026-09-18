@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1113",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A change that landed without a receipt now has one",
+    "detail": "Nothing you see changes in play, apart from this list growing by one entry. One change merged without an entry here, so the changelog you can read in the game did not mention it either: the one that stores the instructions for working on this game in the repository. It is written up below, citing the build it actually landed in.",
+    "build": "0.7.1.73",
+    "pullRequest": 1113,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1113"
+  },
+  {
     "id": "pr-1115",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -11,6 +21,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.72",
     "pullRequest": 1115,
     "url": "https://github.com/cehinds/AshenSpire/pull/1115"
+  },
+  {
+    "id": "pr-1114",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The owner's instructions for working on this game live in the repository",
+    "detail": "Nothing you see changes in play. The instructions that say how this game is worked on — which assistant handles which kind of task, and the rules and boundaries they work under — used to exist only as files passed around in chat. They are now kept with the game's own documents, marked as advice: where they disagree with the specification or the contributing rules, those still decide.",
+    "build": "0.7.1.71",
+    "pullRequest": 1114,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1114"
   },
   {
     "id": "pr-1107",
