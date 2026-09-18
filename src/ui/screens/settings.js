@@ -26,7 +26,7 @@ import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } f
 import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
-import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds } from '../models/CardSizeModel.js';
+import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -930,11 +930,11 @@ function graceRefillAppliedHtml(settings, r) {
  */
 export function resolveNumberRow(settings, row) {
   if (!row) throw new Error('resolveNumberRow: no row');
-  const def = Number(row.def);
   const raw = (settings || {})[row.key];
-  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
-  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
-  return Math.min(row.max, Math.max(row.min, Math.floor(n)));
+  // The rule itself lives in CardSizeModel so the card-size model and this row
+  // cannot disagree about what a stored number means — they did, by a floor
+  // against a round.
+  return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
 }
 
 /**
@@ -1465,7 +1465,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // boot path did, so the two cannot disagree.
   {
     const { refused } = cardLevelsWithOverrides(settings);
-    if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`);
+    if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
+    else clearSettingsNotice('card-size');
   }
   container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -1676,7 +1677,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
  * a refused write can answer instead of being a silent no-op (#67); no-op when
  * Settings is not open.
  */
-export function showSettingsNotice(msg) {
+export function showSettingsNotice(msg, tag = '') {
   // BOTH doors. This used to look only for the modal's own body, so on the
   // in-run overlay it would have been a silent no-op — the very defect it
   // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
@@ -1691,6 +1692,25 @@ export function showSettingsNotice(msg) {
     host.prepend(el);
   }
   el.textContent = msg;
+  if (tag) el.dataset.noticeTag = tag; else delete el.dataset.noticeTag;
+}
+
+/**
+ * Withdraw a notice this caller put up, and only that one.
+ *
+ * A refusal that has since been resolved must stop being announced — a slider
+ * moved back into a valid ladder left "the authored sizes are in use" standing
+ * while the tuned sizes were in force. Clearing unconditionally would wipe
+ * whatever else had spoken last, so a notice carries its owner's tag and only
+ * its owner can take it down.
+ */
+export function clearSettingsNotice(tag) {
+  const host = document.querySelector('[data-settings-host]');
+  const el = host?.querySelector('.set-notice');
+  if (el && el.dataset.noticeTag === tag) {
+    el.textContent = '';
+    delete el.dataset.noticeTag;
+  }
 }
 
 export function openSettings({ meta, onChange, saves = null, onOffline = null }) {

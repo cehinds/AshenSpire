@@ -63,7 +63,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -654,7 +654,12 @@ function applyCardSizeSettings(settings) {
   // right shape for a refusal resolved at boot rather than at a slider.
   if (refused) {
     console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
-    showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`);
+    showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
+  } else {
+    // A refusal that has been resolved must stop being announced: moving a
+    // slider back into a valid ladder left the old notice standing while the
+    // tuned sizes were actually in force.
+    clearSettingsNotice('card-size');
   }
 }
 

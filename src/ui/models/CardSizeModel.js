@@ -259,6 +259,25 @@ export function cardWidthBounds(config = uiConfig.components.card.sizing) {
   return { min, max };
 }
 
+/**
+ * ONE NORMALISATION FOR A TUNED NUMBER, because there were two and they differed.
+ *
+ * `resolveNumberRow` in the settings screen FLOORS and clamps into the row's
+ * range, falling back to the row's default when the value is not a finite
+ * number. This model ROUNDED and fell back to the authored width on anything
+ * non-positive. So `200.9` was shown as 200 and applied as 201, and a negative
+ * width showed as the 64px minimum while drawing at the authored size — the
+ * control and the layout disagreeing about the same stored value, twice over.
+ *
+ * The rule lives here and `resolveNumberRow` calls it, so a change to either
+ * moves both.
+ */
+export function normalizeTunedNumber(raw, { min, max, def }) {
+  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
+  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
+  return Math.min(max, Math.max(min, Math.floor(n)));
+}
+
 export function cardLevelsWithOverrides(settings = {}, config = uiConfig.components.card.sizing.levels) {
   const authored = cardLevels(config);
   // CLAMPED TO THE SAME RANGE THE CONTROL SHOWS. A stored 1000 rendered as 640
@@ -266,11 +285,11 @@ export function cardLevelsWithOverrides(settings = {}, config = uiConfig.compone
   // the layout were different facts. Clamping rather than refusing, because the
   // control itself clamps: agreeing with what the tuner can see is the point.
   const { min, max } = cardWidthBounds();
-  const px = (value) => {
-    const n = Number(value);
-    if (!Number.isFinite(n) || n <= 0) return null;
-    return Math.round(Math.min(max, Math.max(min, n)));
-  };
+  // `null` means "no override here", so the authored width stands. Anything the
+  // control would show is normalised the control's way.
+  const px = (value) => (value === '' || value === null || value === undefined
+    ? null
+    : normalizeTunedNumber(value, { min, max, def: null }));
   const merged = {};
   for (const [level, row] of Object.entries(authored)) {
     const variants = { ...row.variants };
