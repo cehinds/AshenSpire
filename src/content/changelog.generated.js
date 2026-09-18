@@ -6,9 +6,9 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1133",
     "date": "2026-09-18",
     "group": "2026-09-18",
-    "summary": "Two changes that landed without a mention now have one",
-    "detail": "Nothing you see changes in play. Two changes had already landed without a line in this list, so the changelog you can read in the game did not mention them: a separate editing tool for the people who build the game, and a clear-out of twenty-one written notes nothing referred to any more. Each now has its line, with the build it shipped in.",
-    "build": "0.7.1.80",
+    "summary": "Three changes that landed without a mention now have one",
+    "detail": "Nothing you see changes in play. Three changes had already landed without a line in this list, so the changelog you can read in the game did not mention them: a separate editing tool for the people who build the game, a clear-out of twenty-one written notes nothing referred to any more, and an addition to the written plan for quest conversations. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.81",
     "pullRequest": 1133,
     "url": "https://github.com/cehinds/AshenSpire/pull/1133"
   },
@@ -81,6 +81,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.77",
     "pullRequest": 1122,
     "url": "https://github.com/cehinds/AshenSpire/pull/1122"
+  },
+  {
+    "id": "pr-1129",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The written plan for quest conversations keeps the two speakers a set distance apart",
+    "detail": "Nothing you see changes yet. The written plan for face-to-face quest conversations already said that you and the person you are speaking to are both visible at every screen size. It now also fixes the least space allowed between the two of you, as a set number of pixels rather than a share of the screen, so the pair cannot be squeezed together on a narrow screen. The quest’s name above the words is written down as always clearing the line of text beneath it.",
+    "build": "0.7.1.77",
+    "pullRequest": 1129,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1129"
   },
   {
     "id": "pr-1113",
