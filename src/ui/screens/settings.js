@@ -1512,8 +1512,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // staying behind. So the ladder is re-asked at the moment of speaking, and
       // when it has changed the notice says the text is stale rather than
       // describing a state that has passed.
-      const settledRefusal = cardLevelsWithOverrides(settings).refused;
-      const moved = settledRefusal !== refused;
+      const settled = cardLevelsWithOverrides(settings);
+      const settledRefusal = settled.refused;
+      // COMPARE THE THING, NOT A PROXY FOR IT. The first version of this asked
+      // whether the REFUSAL MESSAGE had changed, which cannot see one valid
+      // ladder replaced by another — both are `null`, so a slider moved from
+      // 300 to 320 inside the wait left the notice claiming the tuned sizes
+      // were copied while `text` still held the old ones. The question is
+      // whether the block that was serialised is still the block the settings
+      // would produce, so that is what is asked.
+      const moved = cardSizingExport(settled.levels) !== text;
       const what = moved
         ? 'sizes that have since changed — copy again'
         : refused
