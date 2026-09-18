@@ -1,0 +1,97 @@
+{
+  "vars": {
+    "frameMs": 56
+  },
+  "components": {
+    "attack": {
+      "id": "reaver-attack-v1",
+      "facing": "right",
+      "frameRoot": "assets/animations/reaver/default-greatsword/right",
+      "frameExtension": ".webp",
+      "runs": [
+        [
+          "F03",
+          3
+        ],
+        [
+          "F04",
+          3
+        ],
+        [
+          "F05",
+          3
+        ],
+        [
+          "F06",
+          3
+        ],
+        [
+          "F03",
+          3
+        ],
+        [
+          "F08",
+          4
+        ],
+        [
+          "F10",
+          3
+        ],
+        [
+          "F09",
+          6
+        ],
+        [
+          "F12",
+          1
+        ],
+        [
+          "F11",
+          1
+        ],
+        [
+          "F13",
+          1
+        ],
+        [
+          "F14",
+          7
+        ],
+        [
+          "F15",
+          4
+        ],
+        [
+          "F17",
+          3
+        ],
+        [
+          "F16",
+          2
+        ],
+        [
+          "F18",
+          4
+        ],
+        [
+          "F02",
+          3
+        ],
+        [
+          "F03",
+          6
+        ]
+      ],
+      "frameMs": "$frameMs",
+      "impactFrameIndex": 31,
+      "anchor": {
+        "x": 0.5,
+        "y": 1
+      }
+    }
+  },
+  "motion": {
+    "normalLungeMs": 260,
+    "minimumSpeedScale": 0.1
+  }
+}

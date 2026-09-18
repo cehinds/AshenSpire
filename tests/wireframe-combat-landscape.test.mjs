@@ -84,7 +84,15 @@ test('portrait and desktop plan exactly as before', () => {
 
 test('hosts that still cannot fit are reported, not squeezed', () => {
   // Too short even for rails: the hand would have to drop below one card.
-  const short = plan(844, 330, 0.62);
+  // WHERE THAT BOUNDARY SITS IS A FUNCTION OF THE CARD'S AUTHORED SHAPE — a
+  // shorter card needs a shorter hand band, so a host that could not fit a 5:8
+  // card fits a 5:7 one. The height used to be typed here as 330, which was
+  // really "the number that was too short at one ratio". Walk down until the
+  // model itself refuses, and assert the behaviour at that boundary instead.
+  let tooShort = 390;
+  while (tooShort > 200 && plan(844, tooShort, 0.62).supported) tooShort -= 5;
+  const short = plan(844, tooShort, 0.62);
+  assert.ok(tooShort > 200, 'the model refuses some short host');
   assert.equal(short.arrangement, 'rails');
   assert.equal(short.supported, false);
   assert.ok(short.hand >= minimumHandHeight(16 / 0.62) - 1e-6, 'the hand is not shrunk to fake a fit');

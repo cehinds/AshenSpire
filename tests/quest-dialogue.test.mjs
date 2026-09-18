@@ -371,7 +371,15 @@ test('the dialogue frame resolves a W4c scene config to W4 frame custom properti
   assert.equal(vars['--dialogue-foot-gap'], `calc(1.5 * ${vw})`);
   assert.equal(vars['--dialogue-action-h'], `max(calc(6 * ${vh}), calc(44px / var(--ui-zoom, 1)))`);
   assert.equal(vars['--dialogue-caption-min'], `calc(3.645 * ${ref})`);
-  assert.equal(vars['--dialogue-response-min-h'], 'calc(44px / var(--ui-zoom, 1))', 'responses keep the touch target');
+  // A response row is the taller of its configured minimum and the tap floor,
+  // so growing rows into the band (#1132's follow-up) can never shrink one
+  // below the target a thumb needs.
+  assert.equal(
+    vars['--dialogue-response-min-h'],
+    `max(calc(2.75 * ${ref}), calc(44px / var(--ui-zoom, 1)))`,
+    'responses keep the touch target, and their own minimum',
+  );
+  assert.equal(vars['--dialogue-response-max-h'], `calc(5.5 * ${ref})`, 'and stop at the configured maximum');
   assert.equal(vars['--dialogue-response-lines'], '2');
   assert.equal(vars['--dialogue-title-size'], `calc(0.95 * ${ref})`);
   assert.deepEqual(
