@@ -43,11 +43,17 @@ const CARD_WIDTH_BOUNDS = cardWidthBounds();
 // order, which is the one thing the guard exists to prevent. It belongs to the
 // clipboard operation's lifetime, so it sits here.
 //
-// It carries the block it is holding and the settings bag that produced it.
-// There is ONE bag — `meta.settings`, which both `openSettings` and
-// `openOverlay` resolve to and every render writes through — so comparing
-// against it later is exact rather than a guess about which panel is open.
-let exportWrite = null;
+// IT CARRIES NOTHING ELSE, AND THE REASON IS A CLAIM I GOT WRONG. It held the
+// block and the settings bag that produced it, so a late landing could say
+// whether that block was still the one on the sliders. I justified that with
+// "there is ONE bag" — and there is not: `persistSettingsChange`
+// (`src/main.js`) reassigns `activeSettings` from a fresh `saves.loadMeta()`
+// on every change, and `loadMeta` returns a NEW object each call. A render
+// therefore holds the bag it opened with, not the one in force later, so the
+// comparison could report the opposite of the truth. A notice that cannot be
+// made reliable should not be made at all, so the late landing now states only
+// what is always true: the block on the clipboard is the one from that copy.
+let exportWritePending = false;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -1518,13 +1524,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       //     start another, and says why.
       const CLIPBOARD_WAIT_MS = 1200;
       let copied = false;
-      if (exportWrite) {
+      if (exportWritePending) {
         showSettingsNotice('A copy is still with the clipboard — waiting for it rather than starting a second one that could land out of order.', 'card-size');
         return;
       }
       if (typeof navigator.clipboard?.writeText === 'function') {
         const write = navigator.clipboard.writeText(text).then(() => true, () => false);
-        exportWrite = { text, settings };
+        exportWritePending = true;
         // ASK THE TIMER, NOT THE RESULT, WHETHER THIS WAS LATE. Keying the
         // announcement on `copied` was wrong by one microtask: this handler is
         // subscribed to `write` BEFORE `Promise.race` is, so on an ordinary
@@ -1533,19 +1539,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // runs before the race resolves, so its own flag is the honest witness.
         let timedOut = false;
         const timeout = new Promise((settle) => setTimeout(() => { timedOut = true; settle(false); }, CLIPBOARD_WAIT_MS));
-        // Whenever it settles — before or long after the timeout — the pending
-        // record is released, and a landing the user was told had failed is
-        // announced. By then the panel may have been closed and reopened and
-        // the sliders moved, so the notice says WHICH block arrived rather than
-        // letting it be read as the numbers now on screen.
+        // Whenever it settles — before or long after the timeout — the flag is
+        // released, and a landing the user was told had failed is announced. By
+        // then the panel may have been closed and reopened and the sliders
+        // moved, and this callback CANNOT TELL: the bag it could compare
+        // against is the one its own render opened with. So it names what it
+        // knows — the block is the one from that copy, not a fresh read of the
+        // sliders — and leaves the reader to look at them.
         write.then((landed) => {
-          const pending = exportWrite;
-          exportWrite = null;
+          exportWritePending = false;
           if (!landed || !timedOut) return;
-          const stale = cardSizingExport(cardLevelsWithOverrides(pending.settings).levels) !== pending.text;
-          showSettingsNotice(stale
-            ? 'The clipboard answered late, and it holds the earlier copy — not the sizes shown now. Copy again to replace it.'
-            : 'The clipboard answered late: the block you were told had not copied is on it now.', 'card-size');
+          showSettingsNotice('The clipboard answered late: it now holds the block from that copy, not a fresh read of the sliders.', 'card-size');
         });
         try {
           copied = await Promise.race([write, timeout]);
