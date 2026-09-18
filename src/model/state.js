@@ -35,7 +35,14 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-export const RUN_SCHEMA_VERSION = 6;
+// 7 (plan phase 3a): `zones` and `collection` ride the save. They are a
+// PROJECTION of the fields that own the truth today — `class`, `loadout`,
+// `relics`, `deck` — written at every door (createRunState, serializeRun,
+// migrateRunSchema) by syncZones and shape-checked by validateRunShape. The
+// legacy fields stay authoritative until phase 3b flips the readers and
+// writers; until then a save whose zones disagree with its legacy fields is
+// re-projected at the load door with a ledger note, never refused.
+export const RUN_SCHEMA_VERSION = 7;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -220,6 +227,9 @@ export function createRunState({
   // The growth chain binds from birth: a starting relic carrying a
   // balance.flaskGrowth row grows the maximum before the first node.
   syncFlaskGrowth(registries, run);
+  // The projection, LAST: stampDeck and orderStartingDeck have just composed
+  // the opening deck, and the collection is a copy of that deck.
+  syncZones(run);
   closeLedger(run);
   return run;
 }
@@ -578,6 +588,10 @@ export const RUN_SHAPE = [
   // Optional so a run saved before equipment existed still loads; save.js
   // heals it with a fresh loadout rather than refusing the save.
   { key: 'loadout', type: 'object', optional: true },
+  // Plan phase 3a. Required at schema 7; a preZones save (≤ 6) is filled at
+  // the migration door from the four legacy fields, no registries needed.
+  { key: 'zones', type: 'object' },
+  { key: 'collection', type: 'array' },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
@@ -588,6 +602,110 @@ export const RUN_SHAPE = [
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
 
+// ---------------------------------------------------------------------------
+// Zones (plan phase 3a) — the character as cards in zones, projected
+// ---------------------------------------------------------------------------
+
+/** The worn slots a zone map has, in order. `talisman` is the slot the slot
+ * table already declares (content/source/equipmentSlots) and the plan's four
+ * are the ones phase 3b splits armour into; all five are present so a save's
+ * shape does not change again when the rows arrive. */
+export const WORN_ZONE_SLOTS = Object.freeze(['body', 'head', 'hands', 'feet', 'talisman']);
+
+const idOrNull = (v) => (typeof v === 'string' && v ? v : null);
+
+/** The item a loadout slot has ACTIVE, or null. */
+function activeIn(loadout, slotId) {
+  const sets = loadout && loadout.sets && loadout.sets[slotId];
+  if (!Array.isArray(sets)) return null;
+  const index = loadout.active && Number.isInteger(loadout.active[slotId]) ? loadout.active[slotId] : 0;
+  return idOrNull(sets[index]);
+}
+
+/**
+ * projectZones(run) → { zones, collection }
+ *
+ * The character's cards, by zone, READ OFF THE FIELDS THAT OWN THEM TODAY:
+ *   core     the class (phase 5 gives the class card content; the id is the
+ *            class id, as the plan states)
+ *   worn     body ← the active armour; head/hands/feet ← null until phase 3b
+ *            authors the rows; talisman ← the active talisman
+ *   hands    main ← the active right-hand piece, off ← the active left-hand
+ *   passive  the relics, in the order held
+ *   collection  every card instance the run owns — today exactly the deck,
+ *            because nothing yet lets a card be owned and not decked
+ *
+ * Pure, and registry-free: a migration must be able to call it on a save
+ * with no content in hand (DEVELOPER.md rule 1). It never reads `zones`.
+ */
+export function projectZones(run) {
+  const loadout = run && run.loadout;
+  return {
+    zones: {
+      core: idOrNull(run && run.class),
+      worn: {
+        body: activeIn(loadout, 'armor'),
+        head: null,
+        hands: null,
+        feet: null,
+        talisman: activeIn(loadout, 'talisman'),
+      },
+      hands: {
+        main: activeIn(loadout, 'rightHand'),
+        off: activeIn(loadout, 'leftHand'),
+      },
+      passive: Array.isArray(run && run.relics) ? run.relics.filter((id) => typeof id === 'string' && id) : [],
+    },
+    collection: Array.isArray(run && run.deck) ? run.deck.filter(Boolean).map((card) => structuredClone(card)) : [],
+  };
+}
+
+/**
+ * syncZones(run) → true if the projection changed what the run carried.
+ *
+ * The ONE writer of `zones` and `collection`. Called at createRunState, in
+ * serializeRun (so what is written is what the legacy fields say at that
+ * moment, whatever a writer did between), at the migration door, at the end
+ * of the two load doors that heal and re-stamp after the migration
+ * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
+ * session's serialize, which emits member runs without serializeRun. Until
+ * phase 3b, nothing else may write these two fields.
+ */
+export function syncZones(run) {
+  const next = projectZones(run);
+  const changed = JSON.stringify({ z: run.zones, c: run.collection }) !== JSON.stringify({ z: next.zones, c: next.collection });
+  // Write only on change: a save whose projection is current serializes the
+  // very object it was handed, byte for byte (tests hold JSON.stringify(run)
+  // equal across a save — the projection may not move a key or a reference).
+  if (changed) {
+    run.zones = next.zones;
+    run.collection = next.collection;
+  }
+  return changed;
+}
+
+/** The shape of a zone map, refused row by row. */
+export function zonesProblems(zones) {
+  const problems = [];
+  if (!typeOk(zones, 'object')) return ['zones must be an object'];
+  const idOrNullOk = (v) => v === null || (typeof v === 'string' && v.length > 0);
+  if (!idOrNullOk(zones.core)) problems.push('zones.core must be an id or null');
+  if (!typeOk(zones.worn, 'object')) problems.push('zones.worn must be an object');
+  else {
+    for (const slot of WORN_ZONE_SLOTS) if (!idOrNullOk(zones.worn[slot])) problems.push(`zones.worn.${slot} must be an id or null`);
+    for (const key of Object.keys(zones.worn)) if (!WORN_ZONE_SLOTS.includes(key)) problems.push(`zones.worn.${key} is not a worn slot (slots: ${WORN_ZONE_SLOTS.join(', ')})`);
+  }
+  if (!typeOk(zones.hands, 'object')) problems.push('zones.hands must be an object');
+  else {
+    for (const hand of ['main', 'off']) if (!idOrNullOk(zones.hands[hand])) problems.push(`zones.hands.${hand} must be an id or null`);
+    for (const key of Object.keys(zones.hands)) if (!['main', 'off'].includes(key)) problems.push(`zones.hands.${key} is not a hand (main, off)`);
+  }
+  if (!Array.isArray(zones.passive)) problems.push('zones.passive must be an array of relic ids');
+  else zones.passive.forEach((id, i) => { if (typeof id !== 'string' || !id) problems.push(`zones.passive[${i}] must be a relic id`); });
+  for (const key of Object.keys(zones)) if (!['core', 'worn', 'hands', 'passive'].includes(key)) problems.push(`zones.${key} is not a zone (core, worn, hands, passive)`);
+  return problems;
+}
+
 function typeOk(value, type) {
   if (type === 'array') return Array.isArray(value);
   if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -597,7 +715,7 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false } = {}) {
   const problems = [];
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
@@ -606,6 +724,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
     if (preEquipmentPools && (f.key === 'equipmentPoolBonuses' || f.key === 'equipmentPoolDeficits')) continue;
     if (preSeats && f.key === 'seatOrder') continue;
+    if (preZones && (f.key === 'zones' || f.key === 'collection')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -622,6 +741,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
+  if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
+  if (Array.isArray(run.collection)) {
+    run.collection.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`collection[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+  }
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
@@ -845,6 +972,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
 }
 
 export function serializeRun(run) {
+  // What is written is what the legacy fields say NOW — a writer between two
+  // saves touches `relics` or the loadout, never `zones` (syncZones's contract).
+  syncZones(run);
   return JSON.stringify(run);
 }
 
@@ -931,11 +1061,22 @@ export function migrateRunSchema(run) {
   // v5 and older: no seatOrder. Admitted here; FILLED at the load door
   // (save.js), which has the registries this file does not (SPEC §13.4).
   const preSeats = [1, 2, 3, 4, 5].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, ${RUN_SCHEMA_VERSION})`);
+  // v6 and older: no zones. Filled HERE, not at the load door, because the
+  // projection reads only the run's own fields (projectZones is registry-free).
+  const preZones = [1, 2, 3, 4, 5, 6].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
+  // The projection is re-derived at every load. A schema-7 save that carried
+  // zones disagreeing with its legacy fields (an edit by hand; serializeRun
+  // cannot write one) is brought back to what the authoritative fields say,
+  // and the disagreement is left on the run for the load door's ledger to
+  // note — this file has no open ledger. Never a refusal: the truth is the
+  // legacy fields, and they are intact.
+  const carried = preZones ? undefined : { zones: run.zones, collection: run.collection };
+  if (syncZones(run) && carried) run.reprojectedZones = carried;
   if (originalVersion !== RUN_SCHEMA_VERSION) {
     run.migratedFromRunSchemaVersion = originalVersion;
     run.schemaVersion = RUN_SCHEMA_VERSION;

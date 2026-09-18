@@ -142,7 +142,7 @@ test('13.4 validateRunShape names a bad seatOrder; the load door fills a pre-§1
   const old = JSON.parse(serializeRun(run));
   delete old.seatOrder; old.schemaVersion = 5;
   const back = deserializeRun(JSON.stringify(old));
-  assert.equal(back.schemaVersion, 6);
+  assert.equal(back.schemaVersion, RUN_SCHEMA_VERSION);
   assert.equal(back.migratedFromRunSchemaVersion, 5);
   assert.equal(back.seatOrder, undefined, 'the model leaves the order to the load door');
   const store = createMemoryStorage();
@@ -196,6 +196,14 @@ test('13.4 a co-op session draws, carries and restores the party\'s order', () =
   assert.ok(saved.members.every((m) => JSON.stringify(m.run.seatOrder) === JSON.stringify(saved.seatOrder)));
   const back = restoreSession(REG, structuredClone(saved));
   assert.deepEqual(back.serialize().seatOrder, saved.seatOrder);
+  // Plan phase 3a: a member record is emitted as it is, not through
+  // serializeRun, so the session draws the projection itself — a stale one
+  // in the file is re-drawn on restore and again on the next serialize.
+  const stale = structuredClone(saved); stale.members[0].run.collection = []; stale.members[0].run.zones.passive = ['warhorn'];
+  const emitted = restoreSession(REG, stale).serialize().members[0].run;
+  assert.deepEqual(emitted.zones.passive, emitted.relics, 'the emitted passive zone is the member\'s relics');
+  assert.deepEqual(emitted.collection, emitted.deck, 'and the emitted collection is the member\'s deck');
+  assert.equal(emitted.reprojectedZones, undefined, 'no marker rides a member record');
   const legacySave = structuredClone(saved); delete legacySave.seatOrder; legacySave.actNumber = 1;
   legacySave.mapGraph = buildActMap(REG, createRng(9), ORDER[0], 1); legacySave.cursorId = null; legacySave.reachableIds = legacySave.mapGraph.startIds.slice();
   assert.deepEqual(restoreSession(REG, legacySave).serialize().seatOrder, ORDER, 'a pre-seat party save climbs the default order');

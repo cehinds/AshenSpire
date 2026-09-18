@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1166",
+    "id": "pr-1165",
     "date": "2026-09-18",
     "group": "2026-09-18",
-    "summary": "You can try card sizes out yourself, and hand me back the numbers you settled on",
-    "detail": "Under Advanced there are now four sliders for how big an item card is drawn: the size it rests at while you browse, that same size on a phone, the size it grows to when you pick it up, and the size it opens to when you read it. Move one and every weapon, armour, relic and flask card on the screen follows immediately — nothing to rebuild and nothing to reload. The playing cards you fight with do not follow yet; their size is still written into the stylesheets rather than read from the settings, and that is being fixed separately. A button copies the sizes you arrived at in the exact form the game's own settings file wants, so you can paste them back or send them on without anyone retyping a number. Nothing moves until you move it: the game ships at the sizes it always had, on a phone as well as a desktop. And a set of sizes that would make a card you opened to read smaller than one you were browsing past is refused outright, naming the one that is wrong, rather than being quietly corrected into something you did not ask for.",
-    "build": "0.7.1.131",
-    "pullRequest": 1166,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1166"
+    "summary": "The save now carries your character as a picture of what is worn, held and carried",
+    "detail": "Nothing you see changes. Beside the fields the game has always kept — your class, your armament sets, your relics and your deck — a run now also writes a single picture of the same facts: what sits at your core, what is worn on the body and at the neck, what is in each hand, what passive things ride along, and every card you own. That picture is drawn from the fields that own the truth every time the run is saved, so the two can never disagree; an older save is given its picture the moment it loads, and a save whose picture was edited by hand has it redrawn and a line written in the load record saying so. It is the groundwork for the equipment and cards becoming one collection later, and it changes nothing about how a run plays.",
+    "build": "0.7.1.115",
+    "pullRequest": 1165,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1165"
   },
   {
     "id": "pr-1162",
