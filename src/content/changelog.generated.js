@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1140",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The rest of the game’s look-and-timing settings move out of the code",
+    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
+    "build": "0.7.1.92",
+    "pullRequest": 1140,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
+  },
+  {
     "id": "pr-1134",
     "date": "2026-09-18",
     "group": "2026-09-18",

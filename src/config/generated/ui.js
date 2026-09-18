@@ -17,14 +17,25 @@
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json e0cd44e04fa02f5b
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
+// source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
 // source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
+// source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
+// source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
+// source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
+// source content/config/ui/presentation/combatFormationModel.json 81e83684b1160d5d
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
+// source content/config/ui/presentation/poseAnimator.json d24e65c7e8f3721d
+// source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
+// source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
+// source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
+// source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
+// source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
@@ -1048,6 +1059,148 @@ export const uiConfig = deepFreeze({
         }
       }
     },
+    "armouryLayout": {
+      "sizing": {
+        "defaults": {
+          "shell": {
+            "characterRatio": 0.4,
+            "equipmentRatio": 0.6,
+            "gapRem": 1.6
+          },
+          "character": {
+            "spriteRatio": 0.38,
+            "statsRatio": 0.62,
+            "statsPaneRatio": 0.6,
+            "minWidth": "0"
+          },
+          "equipment": {
+            "groupLabel": "Armaments",
+            "outerBorder": false,
+            "slotOrder": [
+              "armor",
+              "rightHand",
+              "leftHand"
+            ],
+            "defaultView": "list",
+            "gridColumns": 3
+          },
+          "inventorySplit": {
+            "defaultArmamentsRatio": 0.6,
+            "minimumArmamentsRatio": 0.3,
+            "maximumArmamentsRatio": 0.8,
+            "snapRatios": [
+              0.4,
+              0.5,
+              0.6,
+              0.7
+            ],
+            "snapTolerance": 0.035,
+            "compactItemsBelowPx": 520,
+            "foldSubcardsBelowPx": 420,
+            "foldGroupsBelowPx": 260
+          },
+          "trays": {
+            "defaultHeightRatio": 0.45,
+            "minimumHeightRatio": 0.3,
+            "maximumHeightRatio": 0.9,
+            "multipleExpandedMinimumRatio": 0.3,
+            "snapRatios": [
+              0.3,
+              0.4,
+              0.5,
+              0.6,
+              0.7,
+              0.8,
+              0.9
+            ],
+            "snapTolerance": 0.035,
+            "contentGapRem": 0.35
+          },
+          "combatPower": {
+            "groupLabel": "Combat Power",
+            "cards": [
+              {
+                "id": "strike",
+                "role": "attack",
+                "label": "Strike",
+                "fullLabel": "Strike Power"
+              },
+              {
+                "id": "potency",
+                "role": "technique",
+                "label": "Magic",
+                "fullLabel": "Magic Power"
+              },
+              {
+                "id": "defense",
+                "role": "guard",
+                "label": "Defense",
+                "fullLabel": "Guard / Defense"
+              }
+            ]
+          },
+          "cards": {
+            "defaultView": "list",
+            "gridColumns": 4
+          },
+          "comparison": {
+            "presentation": "tooltip",
+            "holdPreviewDelayMs": 160,
+            "tooltipWidthRem": 52,
+            "tooltipMaxHeightRatio": 0.8
+          },
+          "cardClasses": {
+            "inventoryItem": {
+              "holdAction": false
+            }
+          },
+          "viewModes": {
+            "grid": {
+              "label": "Character",
+              "pane": "character",
+              "character": "expanded",
+              "armaments": "folded",
+              "inventory": "folded",
+              "cards": "expanded"
+            },
+            "rack": {
+              "label": "Inventory",
+              "pane": "inventory",
+              "character": "folded",
+              "armaments": "expanded",
+              "inventory": "expanded",
+              "cards": "folded"
+            },
+            "hybrid": {
+              "label": "Hybrid",
+              "pane": "both",
+              "character": "folded",
+              "armaments": "folded",
+              "inventory": "folded",
+              "cards": "folded"
+            }
+          },
+          "responsive": {
+            "breakpoint": 760,
+            "phone": {
+              "minWidth": "0",
+              "characterRatio": 0.4,
+              "equipmentRatio": 0.6,
+              "cardsGridColumns": 2,
+              "armamentGridColumns": 2
+            }
+          }
+        }
+      },
+      "behavior": {
+        "limits": {
+          "ratioEpsilon": 0.0001,
+          "maxGridColumns": 8,
+          "combatPowerCardCount": 3,
+          "maxHoldPreviewDelayMs": 600000
+        }
+      }
+    },
     "classArtAnchors": {
       "positioning": {
         "medallionPct": {
@@ -1128,6 +1281,1146 @@ export const uiConfig = deepFreeze({
         }
       }
     },
+    "combatEffectAnchors": {
+      "positioning": {
+        "anchors": {
+          "reaver": {
+            "weapon": [
+              [
+                335,
+                470,
+                90
+              ],
+              [
+                290,
+                535,
+                150
+              ],
+              [
+                275,
+                265,
+                -165
+              ],
+              [
+                425,
+                550,
+                35
+              ],
+              [
+                480,
+                390,
+                -25
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                420
+              ],
+              [
+                385,
+                480
+              ],
+              [
+                360,
+                280
+              ],
+              [
+                390,
+                485
+              ],
+              [
+                420,
+                415
+              ]
+            ],
+            "shield": [
+              [
+                375,
+                385
+              ],
+              [
+                520,
+                375
+              ],
+              [
+                400,
+                410
+              ]
+            ]
+          },
+          "reaver-vigil": {
+            "weapon": [
+              [
+                335,
+                480,
+                90
+              ],
+              [
+                245,
+                545,
+                155
+              ],
+              [
+                245,
+                385,
+                130
+              ],
+              [
+                420,
+                550,
+                35
+              ],
+              [
+                430,
+                510,
+                35
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                425
+              ],
+              [
+                380,
+                475
+              ],
+              [
+                320,
+                335
+              ],
+              [
+                355,
+                485
+              ],
+              [
+                380,
+                480
+              ]
+            ],
+            "shield": [
+              [
+                385,
+                410
+              ],
+              [
+                520,
+                405
+              ],
+              [
+                430,
+                420
+              ]
+            ]
+          },
+          "reaver-oathsworn": {
+            "weapon": [
+              [
+                335,
+                465,
+                90
+              ],
+              [
+                260,
+                545,
+                150
+              ],
+              [
+                255,
+                350,
+                135
+              ],
+              [
+                410,
+                550,
+                40
+              ],
+              [
+                410,
+                520,
+                40
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                420
+              ],
+              [
+                380,
+                475
+              ],
+              [
+                320,
+                305
+              ],
+              [
+                355,
+                490
+              ],
+              [
+                365,
+                480
+              ]
+            ],
+            "shield": [
+              [
+                370,
+                400
+              ],
+              [
+                505,
+                390
+              ],
+              [
+                405,
+                420
+              ]
+            ]
+          },
+          "reaver-warden": {
+            "weapon": [
+              [
+                335,
+                465,
+                90
+              ],
+              [
+                250,
+                545,
+                150
+              ],
+              [
+                255,
+                380,
+                135
+              ],
+              [
+                405,
+                550,
+                45
+              ],
+              [
+                245,
+                555,
+                130
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                420
+              ],
+              [
+                380,
+                475
+              ],
+              [
+                320,
+                325
+              ],
+              [
+                355,
+                485
+              ],
+              [
+                285,
+                510
+              ]
+            ],
+            "shield": [
+              [
+                365,
+                385
+              ],
+              [
+                495,
+                400
+              ],
+              [
+                430,
+                415
+              ]
+            ]
+          },
+          "rogue": {
+            "weapon": [
+              [
+                385,
+                440,
+                45
+              ],
+              [
+                285,
+                345,
+                -150
+              ],
+              [
+                570,
+                450,
+                5
+              ],
+              [
+                395,
+                420,
+                30
+              ],
+              [
+                525,
+                500,
+                10
+              ]
+            ],
+            "cast": [
+              [
+                360,
+                415
+              ],
+              [
+                330,
+                365
+              ],
+              [
+                520,
+                445
+              ],
+              [
+                365,
+                400
+              ],
+              [
+                480,
+                490
+              ]
+            ],
+            "shield": [
+              [
+                320,
+                400
+              ],
+              [
+                470,
+                400
+              ],
+              [
+                395,
+                425
+              ]
+            ]
+          },
+          "rogue-nightveil": {
+            "weapon": [
+              [
+                250,
+                420,
+                35
+              ],
+              [
+                470,
+                525,
+                65
+              ],
+              [
+                580,
+                415,
+                5
+              ],
+              [
+                380,
+                470,
+                45
+              ],
+              [
+                420,
+                520,
+                45
+              ]
+            ],
+            "cast": [
+              [
+                250,
+                400
+              ],
+              [
+                465,
+                500
+              ],
+              [
+                540,
+                410
+              ],
+              [
+                340,
+                425
+              ],
+              [
+                400,
+                485
+              ]
+            ],
+            "shield": [
+              [
+                405,
+                400
+              ],
+              [
+                515,
+                395
+              ],
+              [
+                410,
+                425
+              ]
+            ]
+          },
+          "rogue-duelist": {
+            "weapon": [
+              [
+                460,
+                440,
+                65
+              ],
+              [
+                565,
+                430,
+                5
+              ],
+              [
+                570,
+                400,
+                0
+              ],
+              [
+                490,
+                425,
+                25
+              ],
+              [
+                470,
+                490,
+                45
+              ]
+            ],
+            "cast": [
+              [
+                430,
+                405
+              ],
+              [
+                525,
+                425
+              ],
+              [
+                530,
+                400
+              ],
+              [
+                445,
+                405
+              ],
+              [
+                430,
+                455
+              ]
+            ],
+            "shield": [
+              [
+                370,
+                390
+              ],
+              [
+                505,
+                380
+              ],
+              [
+                430,
+                405
+              ]
+            ]
+          },
+          "rogue-shadow": {
+            "weapon": [
+              [
+                390,
+                340,
+                -70
+              ],
+              [
+                475,
+                455,
+                25
+              ],
+              [
+                455,
+                465,
+                25
+              ],
+              [
+                450,
+                465,
+                30
+              ],
+              [
+                455,
+                480,
+                45
+              ]
+            ],
+            "cast": [
+              [
+                385,
+                385
+              ],
+              [
+                460,
+                445
+              ],
+              [
+                445,
+                455
+              ],
+              [
+                410,
+                440
+              ],
+              [
+                430,
+                450
+              ]
+            ],
+            "shield": [
+              [
+                350,
+                400
+              ],
+              [
+                510,
+                390
+              ],
+              [
+                395,
+                410
+              ]
+            ]
+          },
+          "starseer": {
+            "weapon": [
+              [
+                400,
+                290,
+                -85
+              ],
+              [
+                275,
+                365,
+                15
+              ],
+              [
+                515,
+                460,
+                0
+              ],
+              [
+                515,
+                470,
+                0
+              ],
+              [
+                525,
+                470,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                400,
+                290
+              ],
+              [
+                275,
+                365
+              ],
+              [
+                515,
+                460
+              ],
+              [
+                515,
+                470
+              ],
+              [
+                525,
+                470
+              ]
+            ],
+            "shield": [
+              [
+                400,
+                445
+              ],
+              [
+                500,
+                410
+              ],
+              [
+                405,
+                450
+              ]
+            ]
+          },
+          "starseer-eclipse": {
+            "weapon": [
+              [
+                435,
+                320,
+                -70
+              ],
+              [
+                410,
+                350,
+                -30
+              ],
+              [
+                485,
+                440,
+                0
+              ],
+              [
+                435,
+                430,
+                0
+              ],
+              [
+                480,
+                400,
+                -20
+              ]
+            ],
+            "cast": [
+              [
+                435,
+                320
+              ],
+              [
+                410,
+                350
+              ],
+              [
+                485,
+                440
+              ],
+              [
+                435,
+                430
+              ],
+              [
+                480,
+                400
+              ]
+            ],
+            "shield": [
+              [
+                345,
+                410
+              ],
+              [
+                500,
+                410
+              ],
+              [
+                380,
+                460
+              ]
+            ]
+          },
+          "starseer-starlit": {
+            "weapon": [
+              [
+                425,
+                305,
+                -70
+              ],
+              [
+                440,
+                325,
+                -70
+              ],
+              [
+                470,
+                390,
+                0
+              ],
+              [
+                470,
+                390,
+                0
+              ],
+              [
+                490,
+                345,
+                -35
+              ]
+            ],
+            "cast": [
+              [
+                425,
+                305
+              ],
+              [
+                440,
+                325
+              ],
+              [
+                470,
+                390
+              ],
+              [
+                470,
+                390
+              ],
+              [
+                490,
+                345
+              ]
+            ],
+            "shield": [
+              [
+                325,
+                430
+              ],
+              [
+                510,
+                405
+              ],
+              [
+                480,
+                360
+              ]
+            ]
+          },
+          "starseer-astral": {
+            "weapon": [
+              [
+                435,
+                310,
+                -70
+              ],
+              [
+                290,
+                240,
+                -130
+              ],
+              [
+                520,
+                415,
+                0
+              ],
+              [
+                530,
+                415,
+                0
+              ],
+              [
+                535,
+                380,
+                -10
+              ]
+            ],
+            "cast": [
+              [
+                435,
+                310
+              ],
+              [
+                290,
+                240
+              ],
+              [
+                520,
+                415
+              ],
+              [
+                530,
+                415
+              ],
+              [
+                535,
+                380
+              ]
+            ],
+            "shield": [
+              [
+                375,
+                400
+              ],
+              [
+                480,
+                415
+              ],
+              [
+                465,
+                380
+              ]
+            ]
+          },
+          "herald": {
+            "weapon": [
+              [
+                350,
+                405,
+                0
+              ],
+              [
+                455,
+                400,
+                0
+              ],
+              [
+                490,
+                400,
+                0
+              ],
+              [
+                490,
+                400,
+                0
+              ],
+              [
+                470,
+                400,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                350,
+                405
+              ],
+              [
+                455,
+                400
+              ],
+              [
+                490,
+                400
+              ],
+              [
+                490,
+                400
+              ],
+              [
+                470,
+                400
+              ]
+            ],
+            "shield": [
+              [
+                325,
+                395
+              ],
+              [
+                500,
+                370
+              ],
+              [
+                380,
+                395
+              ]
+            ]
+          },
+          "herald-ossuary": {
+            "weapon": [
+              [
+                410,
+                390,
+                0
+              ],
+              [
+                450,
+                450,
+                0
+              ],
+              [
+                485,
+                390,
+                0
+              ],
+              [
+                470,
+                400,
+                0
+              ],
+              [
+                460,
+                425,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                410,
+                390
+              ],
+              [
+                450,
+                450
+              ],
+              [
+                485,
+                390
+              ],
+              [
+                470,
+                400
+              ],
+              [
+                460,
+                425
+              ]
+            ],
+            "shield": [
+              [
+                345,
+                410
+              ],
+              [
+                505,
+                390
+              ],
+              [
+                365,
+                410
+              ]
+            ]
+          },
+          "herald-emberhabit": {
+            "weapon": [
+              [
+                425,
+                395,
+                0
+              ],
+              [
+                455,
+                365,
+                0
+              ],
+              [
+                480,
+                385,
+                0
+              ],
+              [
+                500,
+                395,
+                0
+              ],
+              [
+                485,
+                415,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                425,
+                395
+              ],
+              [
+                455,
+                365
+              ],
+              [
+                480,
+                385
+              ],
+              [
+                500,
+                395
+              ],
+              [
+                485,
+                415
+              ]
+            ],
+            "shield": [
+              [
+                355,
+                405
+              ],
+              [
+                500,
+                405
+              ],
+              [
+                385,
+                430
+              ]
+            ]
+          },
+          "herald-pilgrim": {
+            "weapon": [
+              [
+                410,
+                350,
+                0
+              ],
+              [
+                460,
+                390,
+                0
+              ],
+              [
+                490,
+                390,
+                0
+              ],
+              [
+                445,
+                400,
+                0
+              ],
+              [
+                445,
+                420,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                410,
+                350
+              ],
+              [
+                460,
+                390
+              ],
+              [
+                490,
+                390
+              ],
+              [
+                445,
+                400
+              ],
+              [
+                445,
+                420
+              ]
+            ],
+            "shield": [
+              [
+                335,
+                390
+              ],
+              [
+                470,
+                400
+              ],
+              [
+                395,
+                415
+              ]
+            ]
+          }
+        }
+      },
+      "layering": {
+        "planes": [
+          {
+            "plane": "behind",
+            "opacity": 0.62,
+            "mask": "linear-gradient(155deg,#000 35%,transparent 65%)"
+          },
+          {
+            "plane": "front",
+            "opacity": 0.82,
+            "mask": "linear-gradient(155deg,transparent 35%,#000 65%)"
+          }
+        ]
+      },
+      "sizing": {
+        "attachment": {
+          "weapon": 260,
+          "shield": 215,
+          "hand": 150
+        }
+      },
+      "behavior": {
+        "attackPoses": [
+          "attack1",
+          "attack2",
+          "attack3",
+          "attack4"
+        ],
+        "shieldBashPoses": [
+          "shieldBash1",
+          "shieldBash2",
+          "shieldBash3"
+        ],
+        "defaultPose": "idle",
+        "defaultAnchor": "weapon",
+        "handAnchor": "hand",
+        "shieldAnchor": "shield",
+        "castRow": "cast",
+        "weaponRow": "weapon",
+        "shieldRow": "shield",
+        "attachTargetEvent": "damageDealt",
+        "shieldBashKind": "shieldBash",
+        "weaponKinds": [
+          "slash",
+          "bloodSlash",
+          "crossSlash",
+          "whirlwind",
+          "thrust",
+          "riposte"
+        ]
+      }
+    },
+    "combatEffectDirection": {
+      "behavior": {
+        "directions": {
+          "right": 0,
+          "down": 90,
+          "left": 180,
+          "up": -90
+        },
+        "defaultDirection": "right",
+        "mirrorBeyondDeg": 90
+      }
+    },
+    "combatEffectPlayback": {
+      "sizing": {
+        "poseCanvas": 640,
+        "defaultEffectSize": 140,
+        "planEffectSize": 160,
+        "defaultAttachment": 260,
+        "percent": 100,
+        "castSizeFraction": 0.7,
+        "impactSizeFraction": 0.55
+      },
+      "motion": {
+        "defaultDurationMs": 260,
+        "layerDurationMs": 260,
+        "layerFrameCount": 6,
+        "minimumFrameMs": 16,
+        "minimumWrappedMs": 96,
+        "castDelayMs": 65,
+        "castDurationMs": 110,
+        "projectileDelayFraction": 0.3,
+        "targetLocalDelayFraction": 0.25,
+        "impactDelayFraction": 0.55,
+        "impactDurationMs": 160,
+        "impactSize": 110,
+        "impactCastMs": 110,
+        "impactShortMs": 120,
+        "impactLingerMs": 170,
+        "entryOpacityFraction": 0.3,
+        "travelMidFraction": 0.7,
+        "travelMidOffset": 0.6
+      }
+    },
     "combatEffectPresentation": {
       "behavior": {
         "subtleEffects": [
@@ -1198,6 +2491,35 @@ export const uiConfig = deepFreeze({
             "y": 0.35,
             "mask": "linear-gradient(to right,transparent 24%,#0005 52%,#000 78%)"
           }
+        ]
+      }
+    },
+    "combatFormationModel": {
+      "sizing": {
+        "layout": {
+          "hud": 10,
+          "field": 55,
+          "hand": 30,
+          "controls": 5
+        },
+        "figureReference": 150,
+        "ceiling": {
+          "heightFraction": 0.52,
+          "widthFraction": 0.16
+        },
+        "insetCapDivisor": 10,
+        "stepCapDivisor": 6,
+        "gapRamp": {
+          "narrowPx": 375,
+          "widePx": 1200
+        }
+      },
+      "positioning": {
+        "detailReserveFraction": 0.22,
+        "firstFootFraction": 0.45,
+        "footSteps": [
+          0.25,
+          1.125
         ]
       }
     },
@@ -1696,6 +3018,490 @@ export const uiConfig = deepFreeze({
         "aura": {
           "viewBox": "0 0 120 140",
           "svg": "<svg viewBox=\"0 0 120 140\"><g class=\"pose-diamond\"><path d=\"M60 8 78 28 60 48 42 28Z\"/><path d=\"M60 18 68 28 60 38 52 28Z\"/></g><g class=\"pose-constellation\"><path d=\"m25 38 30-23 30 20 16 33-40-11-34 27 7-46\"/><circle cx=\"25\" cy=\"38\" r=\"3\"/><circle cx=\"55\" cy=\"15\" r=\"4\"/><circle cx=\"85\" cy=\"35\" r=\"3\"/><circle cx=\"101\" cy=\"68\" r=\"3\"/><circle cx=\"61\" cy=\"57\" r=\"4\"/><circle cx=\"27\" cy=\"84\" r=\"3\"/></g><g class=\"pose-halo\"><circle cx=\"60\" cy=\"38\" r=\"30\" stroke-dasharray=\"35 11 20 12\"/><circle class=\"pose-halo-gold\" cx=\"60\" cy=\"38\" r=\"36\" stroke-dasharray=\"24 18 42 30\"/></g><ellipse class=\"pose-floor\" cx=\"60\" cy=\"128\" rx=\"42\" ry=\"8\"/></svg>"
+        }
+      }
+    },
+    "poseAnimator": {
+      "motion": {
+        "defaultPlayMs": 260,
+        "minimumPlayMs": 60
+      },
+      "sizing": {
+        "percent": 100
+      }
+    },
+    "presentationSequence": {
+      "behavior": {
+        "schemaVersion": 1,
+        "historyDepth": 60,
+        "limits": {
+          "durationMs": {
+            "min": 100,
+            "max": 30000
+          },
+          "poses": {
+            "min": 5,
+            "max": 7
+          },
+          "maxClips": 100,
+          "maxBindings": 100,
+          "clip": {
+            "offsetMs": {
+              "min": -30000,
+              "max": 30000
+            },
+            "durationMs": {
+              "min": 60,
+              "max": 30000
+            },
+            "x": {
+              "min": -1000,
+              "max": 1000
+            },
+            "y": {
+              "min": -600,
+              "max": 600
+            },
+            "size": {
+              "min": 20,
+              "max": 800
+            },
+            "rotationDeg": {
+              "min": -360,
+              "max": 360
+            }
+          },
+          "binding": {
+            "maxTags": 40,
+            "maxTagLength": 80,
+            "priority": {
+              "min": -999,
+              "max": 999
+            }
+          },
+          "asset": {
+            "maxKeyLength": 300,
+            "maxDataUrlLength": 12000000
+          },
+          "anchorPair": 2,
+          "defaultStringLength": 160
+        },
+        "bindingScore": {
+          "objectMatch": 10000
+        },
+        "highActionMinimum": 2,
+        "playback": {
+          "defaultDurationMs": 600,
+          "minimumDurationMs": 96,
+          "maximumDurationMs": 5000,
+          "maxStoredProjectChars": 40000000
+        }
+      },
+      "motion": {
+        "cues": {
+          "anticipation": 0,
+          "release": 0.3,
+          "contact": 0.5,
+          "recovery": 0.78
+        },
+        "frames": {
+          "count": 6,
+          "lastIndex": 5,
+          "reducedMotionIndex": 2
+        }
+      },
+      "positioning": {
+        "anchors": {
+          "hand": [
+            0.4,
+            0.48
+          ],
+          "weapon": [
+            0.49,
+            0.39
+          ],
+          "shield": [
+            0.38,
+            0.55
+          ],
+          "torso": [
+            0.3,
+            0.55
+          ],
+          "feet": [
+            0.3,
+            0.85
+          ],
+          "target": [
+            0.76,
+            0.55
+          ],
+          "ground": [
+            0.52,
+            0.85
+          ]
+        },
+        "referenceWidth": 1000,
+        "referenceHeight": 600,
+        "figureReference": {
+          "width": 230,
+          "height": 350
+        },
+        "travelOrigin": {
+          "x": 0.3,
+          "y": 0.55
+        },
+        "verticalCentreFraction": 0.5
+      },
+      "components": {
+        "starter": {
+          "schemaVersion": 1,
+          "id": "local.shield-bash",
+          "name": "Shield bash · contact study",
+          "actor": "reaver",
+          "duration": 1200,
+          "poses": [
+            "idle",
+            "shieldBash1",
+            "shieldBash2",
+            "shieldBash3",
+            "guard",
+            "idle"
+          ],
+          "anchors": {
+            "hand": [
+              0.4,
+              0.48
+            ],
+            "weapon": [
+              0.49,
+              0.39
+            ],
+            "shield": [
+              0.38,
+              0.55
+            ],
+            "torso": [
+              0.3,
+              0.55
+            ],
+            "feet": [
+              0.3,
+              0.85
+            ],
+            "target": [
+              0.76,
+              0.55
+            ],
+            "ground": [
+              0.52,
+              0.85
+            ]
+          },
+          "clips": [
+            {
+              "id": "clip.contact",
+              "effect": "shieldBash",
+              "cue": "contact",
+              "offset": 0,
+              "duration": 430,
+              "anchor": "shield",
+              "x": 0,
+              "y": 0,
+              "size": 180,
+              "rotation": 0,
+              "opacity": 0.9,
+              "layer": "front",
+              "travel": false,
+              "muted": false
+            }
+          ],
+          "bindings": [
+            {
+              "id": "binding.shield",
+              "name": "Shield attack",
+              "provider": "ashenspire",
+              "kind": "card",
+              "objectId": "",
+              "event": "actionResolved",
+              "all": [
+                "shield"
+              ],
+              "any": [],
+              "none": [],
+              "resource": "any",
+              "priority": 10,
+              "enabled": true
+            }
+          ],
+          "dependencies": [],
+          "assets": {}
+        },
+        "messages": {
+          "duration": "Sequence duration must be {min}–{max} ms",
+          "poses": "Choose {min} to {max} pose frames",
+          "tooManyClips": "Too many effects (maximum {max})"
+        }
+      }
+    },
+    "reaverAttack": {
+      "components": {
+        "attack": {
+          "id": "reaver-attack-v1",
+          "facing": "right",
+          "frameRoot": "assets/animations/reaver/default-greatsword/right",
+          "frameExtension": ".webp",
+          "runs": [
+            [
+              "F03",
+              3
+            ],
+            [
+              "F04",
+              3
+            ],
+            [
+              "F05",
+              3
+            ],
+            [
+              "F06",
+              3
+            ],
+            [
+              "F03",
+              3
+            ],
+            [
+              "F08",
+              4
+            ],
+            [
+              "F10",
+              3
+            ],
+            [
+              "F09",
+              6
+            ],
+            [
+              "F12",
+              1
+            ],
+            [
+              "F11",
+              1
+            ],
+            [
+              "F13",
+              1
+            ],
+            [
+              "F14",
+              7
+            ],
+            [
+              "F15",
+              4
+            ],
+            [
+              "F17",
+              3
+            ],
+            [
+              "F16",
+              2
+            ],
+            [
+              "F18",
+              4
+            ],
+            [
+              "F02",
+              3
+            ],
+            [
+              "F03",
+              6
+            ]
+          ],
+          "frameMs": 56,
+          "impactFrameIndex": 31,
+          "anchor": {
+            "x": 0.5,
+            "y": 1
+          }
+        }
+      },
+      "motion": {
+        "normalLungeMs": 260,
+        "minimumSpeedScale": 0.1
+      }
+    },
+    "startupGate": {
+      "components": {
+        "prompts": {
+          "pointer": "CLICK TO CONTINUE",
+          "touch": "TAP TO CONTINUE",
+          "keyboard": "PRESS ENTER OR SPACE",
+          "controller": "PRESS A / CROSS OR START / MENU"
+        }
+      },
+      "motion": {
+        "entrance": {
+          "lightUpMs": 560,
+          "fadeMs": 880,
+          "holdDefault": "0.5s",
+          "holdDurations": {
+            "0s": 0,
+            "0.3s": 300,
+            "0.5s": 500,
+            "1s": 1000,
+            "2s": 2000
+          }
+        },
+        "particles": {
+          "defaultCount": 7,
+          "maxCount": 12,
+          "leftPct": {
+            "base": 9,
+            "step": 17,
+            "span": 82
+          },
+          "delayMs": {
+            "step": 1130,
+            "cycle": 6200
+          },
+          "durationMs": {
+            "base": 7600,
+            "cycle": 4,
+            "step": 1400
+          },
+          "sizePx": {
+            "base": 1,
+            "cycle": 3
+          },
+          "idPrefix": "ash-"
+        }
+      }
+    },
+    "tooltipHelp": {
+      "behavior": {
+        "help": {
+          "delays": {
+            "0.25s": 250,
+            "0.5s": 500,
+            "1s": 1000,
+            "1.5s": 1500
+          },
+          "focusMs": 500,
+          "holdMs": 420,
+          "doubleTapMs": 300,
+          "fadeMs": 160,
+          "stepMs": 150,
+          "textLengths": {
+            "medium": 90,
+            "detailedLarge": 220,
+            "large": 420
+          },
+          "settings": [
+            {
+              "key": "hoverTooltips",
+              "def": true,
+              "label": "Hover explanations",
+              "note": "Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available."
+            },
+            {
+              "key": "tooltipDelay",
+              "type": "choice",
+              "def": "1s",
+              "label": "Explanation delay",
+              "note": "Wait before opening or switching hover and nested explanations. A tap or click selects a detail; a second one explains it."
+            },
+            {
+              "key": "tooltipCloseDelay",
+              "type": "choice",
+              "def": "0.5s",
+              "label": "Explanation close delay",
+              "note": "Wait after leaving a detail and its explanation before closing it."
+            }
+          ],
+          "combatTargets": [
+            {
+              "selector": ".hud-class",
+              "title": "Class",
+              "message": "class"
+            },
+            {
+              "selector": ".hud-cinders",
+              "title": "Cinders",
+              "message": "cinders"
+            },
+            {
+              "selector": ".hud-act",
+              "title": "Act",
+              "message": "act"
+            },
+            {
+              "selector": ".hud-floor",
+              "title": "Floor",
+              "message": "floor"
+            },
+            {
+              "selector": ".turn-ribbon",
+              "title": "Turn",
+              "message": "turn"
+            }
+          ],
+          "messages": {
+            "class": "{className}. {classDescription}",
+            "cinders": "{cinders} available. Currency for purchases and services during this run.",
+            "act": "Act {act}. The current region of your climb.",
+            "floor": "Floor {floor}. Your current step through this act.",
+            "turn": "{turn}. {instruction}",
+            "playerTurn": "Select a card and confirm its target, or end your turn.",
+            "enemyTurn": "Enemies are resolving their moves. Your next turn follows.",
+            "hp": "Health remaining. Reaching zero defeats this combatant.",
+            "mana": "Mana pays spell costs.",
+            "stamina": "Stamina pays physical skill and Dodge costs.",
+            "recovery": " Recovers {amount} per turn.",
+            "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
+            "playerPoise": "Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.",
+            "enemyPoise": "Fill it to Stagger. {effect}",
+            "cost": "{amount} required to play {card}.",
+            "costAll": "Spend all remaining {resource} to play {card}.",
+            "costTitle": "{resource} cost",
+            "activeListTitle": "Active skills & stance",
+            "activeList": "{count} active entries. Click to {action} the complete list.",
+            "collapse": "collapse",
+            "expand": "expand",
+            "close": "Close combatant details and return to the battlefield.",
+            "armouryTitle": "Armoury",
+            "armoury": "Inspect your equipment, attributes, deck, and active loadout.",
+            "armouryTest": "View this test build’s fixed weapon, defense, and resource rules.",
+            "arcane": "{value} / {threshold}. Compatible damaging hits with exposure buildup raise this meter.",
+            "arcaneBreak": " At the threshold, apply {status} {value}% for {duration} turns, then reset the meter.",
+            "arcaneLocked": " Locked while Magic Vulnerable is active.",
+            "evadeTitle": "Evade {count}",
+            "evade": "{count} {charges} remaining. Avoids the next dodgeable attack hit, including its damage, impact, and on-hit buildup. Each avoided hit consumes one charge. Unused charges expire at the start of your next turn.",
+            "charge": "charge",
+            "charges": "charges",
+            "stanceFallback": "Current stance.",
+            "stanceDuration": "Persists until replaced or combat ends."
+          }
+        }
+      }
+    },
+    "tooltipPlacement": {
+      "behavior": {
+        "defaults": {
+          "autoFadeMs": 5000,
+          "topBandViewportPct": 25,
+          "sideBandViewportPct": 30
+        },
+        "limits": {
+          "maxBandPct": 50,
+          "edgeEpsilonPx": 0.5
         }
       }
     },
