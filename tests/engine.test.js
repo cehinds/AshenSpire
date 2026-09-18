@@ -8085,6 +8085,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       /nodeVariables\.siphon\.idle: is declared but no effect of 'siphon' reads it/, 'a variable nothing reads is refused by name');
     refuses({ ...contentBundle, nodeEffects: { ...contentBundle.nodeEffects, siphon: { triggers: [{ on: 'arcaneBreak', do: [{ op: 'restoreMana', target: 'self', amount: { variable: 'ghost' } }] }] } } },
       /nodeEffects\.siphon: reads variable 'ghost', which nodeVariables\.csv does not declare/, 'an effect reading an undeclared variable is refused by name');
+    // 80.8d — a branch-scoped pairing is enforced as the branch, not lifted to
+    // its root: cards paired with classification.attack alone may not carry a
+    // skill kind, even though the derived tagFamilyDomains says `card,classification`.
+    refuses({ ...contentBundle, familyNodes: contentBundle.familyNodes.map((r) => (r.family === 'card' && r.nodeId === 'classification' ? { ...r, nodeId: 'classification.attack' } : r)) },
+      /tagging\.card\.defend: holds 'classification\.skill', which is outside every subtree 'card' is paired with in familyNodes\.csv \(the family may carry only classification\.attack under that root\)/,
+      'a tagging row outside the family\'s paired subtree is refused by name');
     // 80.8c — the tree's own shape: a parent that is not a node, and a cycle.
     refuses({ ...contentBundle, nodes: contentBundle.nodes.map((n) => (n.id === 'fx:blade' ? { ...n, parentId: 'nowhere' } : n)) },
       /nodes\.fx:blade\.parentId: names 'nowhere', which is not a node/, 'a parent that is not a node is refused by name');

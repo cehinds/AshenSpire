@@ -78,7 +78,7 @@ export const tagDomains = [
     "id": "property",
     "label": "Property",
     "aside": false,
-    "blurb": "What a carrier CONFERS while it is held. Each property tag has exactly one rule in propertyRules.csv; the carrier that holds it grants it, and it leaves when the carrier does. Cards never carry these."
+    "blurb": "What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
   },
   {
     "id": "classification",

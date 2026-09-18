@@ -41,7 +41,7 @@ delivery,,Delivery,,,,,,,How a direct attack reaches its targets.
 damageType,,Damage type,,,,,,,Identity of a typed HP damage component.
 technique,,Technique,,,,,,,Conditions for explicit technique bonuses.
 theme,,Theme,,,,,,,Build synergies; tags alone grant no effects.
-property,,Property,,,,,,,"What a carrier CONFERS while it is held. Each property tag has exactly one rule in propertyRules.csv; the carrier that holds it grants it, and it leaves when the carrier does. Cards never carry these."
+property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
 blade,card,Blade,C9502E,⚔,,,,,Steel and edge — direct weapon work.
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."

@@ -16,7 +16,9 @@
 //   relations   an endpoint naming no node, a verb outside NODE_RELATIONS, a
 //               self-edge, a duplicate (source, relation, target)
 //   familyNodes an unknown family, a nodeId naming no node, a duplicate pair,
-//               a collection-backed family with no row into classification
+//               a collection-backed family with no row into classification,
+//               and a tagging row outside every subtree its family is paired
+//               with (a branch-scoped pairing is enforced as the branch)
 //   terms       a nodeId naming no node, a template {token} naming no variable
 //               of that node
 //   variables   a nodeId naming no node, a duplicate (node, variable), a
@@ -247,6 +249,21 @@ export function treeProblems(bundle) {
     const roots = subtreesOf.get(spec.family) || [];
     if (!roots.some((id) => isUnder('classification', id) || id === 'classification')) {
       err(`familyNodes.${spec.family}`, `no row lets '${spec.family}' carry the classification subtree, so no object of the family could state its kind — add the row (family, classification)`);
+    }
+  }
+  // THE SUBTREE IS THE LAW, NOT ITS ROOT. familyNodes may name a branch
+  // (`card → classification.attack` would let a card carry attack kinds and
+  // nothing else under classification); the derived tagFamilyDomains lifts
+  // every row to its root because the old table had no narrower word, so
+  // model/tags.js alone would let a branch-scoped family carry any sibling.
+  // Every tagging row is checked here against the subtrees its family is
+  // actually paired with.
+  for (const row of (Array.isArray(b.tagging) ? b.tagging : [])) {
+    if (!row || !families.has(row.family) || !byId.has(row.tagId)) continue;
+    const allowed = subtreesOf.get(row.family) || [];
+    if (!allowed.some((top) => isUnder(row.tagId, top))) {
+      const under = allowed.filter((top) => rootOf(row.tagId) && rootOf(row.tagId).id === rootOf(top)?.id);
+      err(`tagging.${row.family}.${row.objectId}`, `holds '${row.tagId}', which is outside every subtree '${row.family}' is paired with in familyNodes.csv${under.length ? ` (the family may carry only ${under.join(', ')} under that root)` : ''}`);
     }
   }
 

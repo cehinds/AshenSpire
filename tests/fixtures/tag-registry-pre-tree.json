@@ -3,7 +3,7 @@
   {
    "id": "card",
    "label": "Card",
-   "blurb": "What a card IS — its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
+   "blurb": "What a card IS \u2014 its school, form and feel. Carried by cards, by the classes that lean on them, and by the equipment that rewrites them."
   },
   {
    "id": "creature",
@@ -18,7 +18,7 @@
   {
    "id": "run",
    "label": "Run",
-   "blurb": "Run structure — what an event, an encounter or an unlock is about."
+   "blurb": "Run structure \u2014 what an event, an encounter or an unlock is about."
   },
   {
    "id": "itemType",
@@ -28,7 +28,7 @@
   {
    "id": "grantSource",
    "label": "Grant source",
-   "blurb": "Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these — the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
+   "blurb": "Where a starting card came from. The composed deck deals bound cards in this vocabulary's authored order, so adding a source is a row here rather than a code change. Nothing WEARS these \u2014 the `grant` family exists to declare them, the way `effect` declares which words a damage effect may carry."
   },
   {
    "id": "presentation",
@@ -63,7 +63,7 @@
   {
    "id": "property",
    "label": "Property",
-   "blurb": "What a carrier CONFERS while it is held. Each property tag has exactly one rule in propertyRules.csv; the carrier that holds it grants it, and it leaves when the carrier does. Cards never carry these."
+   "blurb": "What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one \u2014 what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
   }
  ],
  "tags": [
@@ -72,15 +72,15 @@
    "domain": "card",
    "label": "Blade",
    "color": "C9502E",
-   "glyph": "⚔",
-   "blurb": "Steel and edge — direct weapon work."
+   "glyph": "\u2694",
+   "blurb": "Steel and edge \u2014 direct weapon work."
   },
   {
    "id": "guard",
    "domain": "card",
    "label": "Guard",
    "color": "7FA8C9",
-   "glyph": "🛡",
+   "glyph": "\ud83d\udee1",
    "blurb": "Bracing, blocking, holding the line."
   },
   {
@@ -88,7 +88,7 @@
    "domain": "card",
    "label": "Blood",
    "color": "8A1A1A",
-   "glyph": "🩸",
+   "glyph": "\ud83e\ude78",
    "blurb": "Bleed, and the letting of it."
   },
   {
@@ -96,7 +96,7 @@
    "domain": "card",
    "label": "Gorefire",
    "color": "C9502E",
-   "glyph": "🔥",
+   "glyph": "\ud83d\udd25",
    "blurb": "The blood-and-flame stance."
   },
   {
@@ -104,15 +104,15 @@
    "domain": "card",
    "label": "Starstone",
    "color": "7FA8C9",
-   "glyph": "✦",
-   "blurb": "Astral sorcery — charges and combos."
+   "glyph": "\u2726",
+   "blurb": "Astral sorcery \u2014 charges and combos."
   },
   {
    "id": "ritual",
    "domain": "card",
    "label": "Ritual",
    "color": "C9A227",
-   "glyph": "◈",
+   "glyph": "\u25c8",
    "blurb": "Rites, offerings, and faith work."
   },
   {
@@ -120,7 +120,7 @@
    "domain": "card",
    "label": "Blight",
    "color": "B5541C",
-   "glyph": "☣",
+   "glyph": "\u2623",
    "blurb": "Creeping decay."
   },
   {
@@ -128,7 +128,7 @@
    "domain": "card",
    "label": "Oath",
    "color": "C9A227",
-   "glyph": "✚",
+   "glyph": "\u271a",
    "blurb": "Binding, lasting commitments."
   },
   {
@@ -136,15 +136,15 @@
    "domain": "card",
    "label": "Flourish",
    "color": "9FC3E8",
-   "glyph": "✧",
-   "blurb": "Finesse — footwork and multi-hit."
+   "glyph": "\u2727",
+   "blurb": "Finesse \u2014 footwork and multi-hit."
   },
   {
    "id": "ash",
    "domain": "card",
    "label": "Ash",
    "color": "7A6F5A",
-   "glyph": "•",
+   "glyph": "\u2022",
    "blurb": "Spent once, then gone to ash."
   },
   {
@@ -152,7 +152,7 @@
    "domain": "card",
    "label": "Heavy",
    "color": "C9A227",
-   "glyph": "◆",
+   "glyph": "\u25c6",
    "blurb": "Slow, committed, and hard to stop."
   },
   {
@@ -160,15 +160,15 @@
    "domain": "card",
    "label": "Basic",
    "color": "7A6F5A",
-   "glyph": "○",
-   "blurb": "Everybody's — on the shelf without being found."
+   "glyph": "\u25cb",
+   "blurb": "Everybody's \u2014 on the shelf without being found."
   },
   {
    "id": "pierce",
    "domain": "card",
    "label": "Pierce",
    "color": "9FC3E8",
-   "glyph": "†",
+   "glyph": "\u2020",
    "blurb": "A precise physical form; presentation only."
   },
   {
@@ -176,7 +176,7 @@
    "domain": "card",
    "label": "Ranged",
    "color": "7FA8C9",
-   "glyph": "➶",
+   "glyph": "\u27b6",
    "blurb": "Authored ranged presentation; no position system."
   },
   {
@@ -184,7 +184,7 @@
    "domain": "card",
    "label": "Precision",
    "color": "C9A227",
-   "glyph": "◎",
+   "glyph": "\u25ce",
    "blurb": "Deliberate aim and finesse; presentation only."
   },
   {
@@ -192,7 +192,7 @@
    "domain": "card",
    "label": "Guile",
    "color": "647B73",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Preparation, misdirection, and stolen openings."
   },
   {
@@ -200,7 +200,7 @@
    "domain": "card",
    "label": "Venom",
    "color": "7FAF63",
-   "glyph": "☠",
+   "glyph": "\u2620",
    "blurb": "Poisons that punish enemies over time."
   },
   {
@@ -208,23 +208,23 @@
    "domain": "card",
    "label": "Extractable",
    "color": "C9A227",
-   "glyph": "⚙",
-   "blurb": "A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it — today."
+   "glyph": "\u2699",
+   "blurb": "A smith can lift this card out of the item that lends it, and seat it in another item's mount. Strikes and defends do not carry it \u2014 today."
   },
   {
    "id": "bound",
    "domain": "item",
    "label": "Bound",
    "color": "C9A227",
-   "glyph": "⛓",
-   "blurb": "Carries its own cards — they arrive with the piece and are named in equipmentGrants.csv."
+   "glyph": "\u26d3",
+   "blurb": "Carries its own cards \u2014 they arrive with the piece and are named in equipmentGrants.csv."
   },
   {
    "id": "beast",
    "domain": "creature",
    "label": "Beast",
    "color": "7A6F5A",
-   "glyph": "🐾",
+   "glyph": "\ud83d\udc3e",
    "blurb": "Animal, unreasoning, driven by hunger."
   },
   {
@@ -232,7 +232,7 @@
    "domain": "creature",
    "label": "Humanoid",
    "color": "B8B0A0",
-   "glyph": "👤",
+   "glyph": "\ud83d\udc64",
    "blurb": "Two arms, two legs, and a reason for being here."
   },
   {
@@ -240,7 +240,7 @@
    "domain": "creature",
    "label": "Undead",
    "color": "647B73",
-   "glyph": "💀",
+   "glyph": "\ud83d\udc80",
    "blurb": "Died once and did not stay down."
   },
   {
@@ -248,15 +248,15 @@
    "domain": "creature",
    "label": "Construct",
    "color": "9FC3E8",
-   "glyph": "⚙",
-   "blurb": "Built, not born — no blood to let."
+   "glyph": "\u2699",
+   "blurb": "Built, not born \u2014 no blood to let."
   },
   {
    "id": "spirit",
    "domain": "creature",
    "label": "Spirit",
    "color": "7FA8C9",
-   "glyph": "👻",
+   "glyph": "\ud83d\udc7b",
    "blurb": "Untethered from the body it used to wear."
   },
   {
@@ -264,7 +264,7 @@
    "domain": "itemType",
    "label": "Blade",
    "color": "C9502E",
-   "glyph": "⚔",
+   "glyph": "\u2694",
    "blurb": "What this piece IS: the Armoury and the smith name it Blade."
   },
   {
@@ -272,7 +272,7 @@
    "domain": "itemType",
    "label": "Shield",
    "color": "7FA8C9",
-   "glyph": "🛡",
+   "glyph": "\ud83d\udee1",
    "blurb": "What this piece IS: the Armoury and the smith name it Shield."
   },
   {
@@ -280,7 +280,7 @@
    "domain": "itemType",
    "label": "Magic Focus",
    "color": "9FC3E8",
-   "glyph": "✦",
+   "glyph": "\u2726",
    "blurb": "What this piece IS: the Armoury and the smith name it Magic Focus."
   },
   {
@@ -288,7 +288,7 @@
    "domain": "itemType",
    "label": "Armor",
    "color": "B8B0A0",
-   "glyph": "▣",
+   "glyph": "\u25a3",
    "blurb": "What this piece IS: the Armoury and the smith name it Armor."
   },
   {
@@ -296,15 +296,15 @@
    "domain": "grantSource",
    "label": "Global",
    "color": "B8B0A0",
-   "glyph": "🌐",
-   "blurb": "Dealt to every class whatever it wears — balance.equipment.startingDeck.global.grants."
+   "glyph": "\ud83c\udf10",
+   "blurb": "Dealt to every class whatever it wears \u2014 balance.equipment.startingDeck.global.grants."
   },
   {
    "id": "from:relic",
    "domain": "grantSource",
    "label": "Relic",
    "color": "C9A227",
-   "glyph": "◈",
+   "glyph": "\u25c8",
    "blurb": "Carried in by the starting relic."
   },
   {
@@ -312,7 +312,7 @@
    "domain": "grantSource",
    "label": "Armor",
    "color": "7FA8C9",
-   "glyph": "▣",
+   "glyph": "\u25a3",
    "blurb": "Bound to the outfit the run begins wearing."
   },
   {
@@ -320,7 +320,7 @@
    "domain": "grantSource",
    "label": "Weapon",
    "color": "C9502E",
-   "glyph": "⚔",
+   "glyph": "\u2694",
    "blurb": "Bound to an armament in hand at creation."
   },
   {
@@ -328,7 +328,7 @@
    "domain": "grantSource",
    "label": "Class",
    "color": "9FC3E8",
-   "glyph": "✦",
+   "glyph": "\u2726",
    "blurb": "The class signature card."
   },
   {
@@ -336,7 +336,7 @@
    "domain": "presentation",
    "label": "blade",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "blade visual identity; no combat modifier."
   },
   {
@@ -344,7 +344,7 @@
    "domain": "presentation",
    "label": "guard",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "guard visual identity; no combat modifier."
   },
   {
@@ -352,7 +352,7 @@
    "domain": "presentation",
    "label": "blood",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "blood visual identity; no combat modifier."
   },
   {
@@ -360,7 +360,7 @@
    "domain": "presentation",
    "label": "gorefire",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "gorefire visual identity; no combat modifier."
   },
   {
@@ -368,7 +368,7 @@
    "domain": "presentation",
    "label": "starstone",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "starstone visual identity; no combat modifier."
   },
   {
@@ -376,7 +376,7 @@
    "domain": "presentation",
    "label": "ritual",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "ritual visual identity; no combat modifier."
   },
   {
@@ -384,7 +384,7 @@
    "domain": "presentation",
    "label": "blight",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "blight visual identity; no combat modifier."
   },
   {
@@ -392,7 +392,7 @@
    "domain": "presentation",
    "label": "oath",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "oath visual identity; no combat modifier."
   },
   {
@@ -400,7 +400,7 @@
    "domain": "presentation",
    "label": "flourish",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "flourish visual identity; no combat modifier."
   },
   {
@@ -408,7 +408,7 @@
    "domain": "presentation",
    "label": "ash",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "ash visual identity; no combat modifier."
   },
   {
@@ -416,7 +416,7 @@
    "domain": "presentation",
    "label": "heavy",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "heavy visual identity; no combat modifier."
   },
   {
@@ -424,7 +424,7 @@
    "domain": "presentation",
    "label": "pierce",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "pierce visual identity; no combat modifier."
   },
   {
@@ -432,7 +432,7 @@
    "domain": "presentation",
    "label": "ranged",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "ranged visual identity; no combat modifier."
   },
   {
@@ -440,7 +440,7 @@
    "domain": "presentation",
    "label": "precision",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "precision visual identity; no combat modifier."
   },
   {
@@ -448,7 +448,7 @@
    "domain": "presentation",
    "label": "guile",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "guile visual identity; no combat modifier."
   },
   {
@@ -456,7 +456,7 @@
    "domain": "presentation",
    "label": "venom",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "venom visual identity; no combat modifier."
   },
   {
@@ -464,7 +464,7 @@
    "domain": "presentation",
    "label": "shield",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "shield visual identity; no combat modifier."
   },
   {
@@ -472,7 +472,7 @@
    "domain": "presentation",
    "label": "barrier",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "barrier visual identity; no combat modifier."
   },
   {
@@ -480,7 +480,7 @@
    "domain": "presentation",
    "label": "ward",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "ward visual identity; no combat modifier."
   },
   {
@@ -488,7 +488,7 @@
    "domain": "presentation",
    "label": "magic",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "magic visual identity; no combat modifier."
   },
   {
@@ -496,7 +496,7 @@
    "domain": "presentation",
    "label": "arcane",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "arcane visual identity; no combat modifier."
   },
   {
@@ -504,7 +504,7 @@
    "domain": "presentation",
    "label": "dodge",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "dodge visual identity; no combat modifier."
   },
   {
@@ -512,7 +512,7 @@
    "domain": "presentation",
    "label": "riposte",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "riposte visual identity; no combat modifier."
   },
   {
@@ -520,7 +520,7 @@
    "domain": "presentation",
    "label": "heal",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "heal visual identity; no combat modifier."
   },
   {
@@ -528,7 +528,7 @@
    "domain": "presentation",
    "label": "cleanse",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "cleanse visual identity; no combat modifier."
   },
   {
@@ -536,7 +536,7 @@
    "domain": "presentation",
    "label": "bind",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "bind visual identity; no combat modifier."
   },
   {
@@ -544,7 +544,7 @@
    "domain": "presentation",
    "label": "frost",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "frost visual identity; no combat modifier."
   },
   {
@@ -552,7 +552,7 @@
    "domain": "presentation",
    "label": "bulwark",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "bulwark visual identity; no combat modifier."
   },
   {
@@ -560,7 +560,7 @@
    "domain": "presentation",
    "label": "utility",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "utility visual identity; no combat modifier."
   },
   {
@@ -568,7 +568,7 @@
    "domain": "attackSource",
    "label": "Weapon",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Weapon identity; effects are authored separately."
   },
   {
@@ -576,7 +576,7 @@
    "domain": "attackSource",
    "label": "Spell",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Spell identity; effects are authored separately."
   },
   {
@@ -584,7 +584,7 @@
    "domain": "attackSource",
    "label": "Unarmed",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Unarmed identity; effects are authored separately."
   },
   {
@@ -592,7 +592,7 @@
    "domain": "delivery",
    "label": "Melee",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Melee identity; effects are authored separately."
   },
   {
@@ -600,7 +600,7 @@
    "domain": "delivery",
    "label": "Projectile",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Projectile identity; effects are authored separately."
   },
   {
@@ -608,7 +608,7 @@
    "domain": "delivery",
    "label": "Area",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Area identity; effects are authored separately."
   },
   {
@@ -616,7 +616,7 @@
    "domain": "damageType",
    "label": "Slashing",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Slashing identity; effects are authored separately."
   },
   {
@@ -624,7 +624,7 @@
    "domain": "damageType",
    "label": "Piercing",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Piercing identity; effects are authored separately."
   },
   {
@@ -632,7 +632,7 @@
    "domain": "damageType",
    "label": "Blunt",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Blunt identity; effects are authored separately."
   },
   {
@@ -640,7 +640,7 @@
    "domain": "damageType",
    "label": "Fire",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Fire identity; effects are authored separately."
   },
   {
@@ -648,7 +648,7 @@
    "domain": "damageType",
    "label": "Frost",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Frost identity; effects are authored separately."
   },
   {
@@ -656,7 +656,7 @@
    "domain": "damageType",
    "label": "Lightning",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Lightning identity; effects are authored separately."
   },
   {
@@ -664,7 +664,7 @@
    "domain": "damageType",
    "label": "Arcane",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Arcane identity; effects are authored separately."
   },
   {
@@ -672,7 +672,7 @@
    "domain": "damageType",
    "label": "Sacred",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Sacred identity; effects are authored separately."
   },
   {
@@ -680,7 +680,7 @@
    "domain": "damageType",
    "label": "Decay",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Decay identity; effects are authored separately."
   },
   {
@@ -688,7 +688,7 @@
    "domain": "technique",
    "label": "Heavy",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Heavy identity; effects are authored separately."
   },
   {
@@ -696,7 +696,7 @@
    "domain": "technique",
    "label": "Precision",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Precision identity; effects are authored separately."
   },
   {
@@ -704,7 +704,7 @@
    "domain": "technique",
    "label": "Cleave",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Cleave identity; effects are authored separately."
   },
   {
@@ -712,7 +712,7 @@
    "domain": "technique",
    "label": "Counter",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Counter identity; effects are authored separately."
   },
   {
@@ -720,7 +720,7 @@
    "domain": "technique",
    "label": "Flourish",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Flourish identity; effects are authored separately."
   },
   {
@@ -728,7 +728,7 @@
    "domain": "theme",
    "label": "Blood",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Blood identity; effects are authored separately."
   },
   {
@@ -736,7 +736,7 @@
    "domain": "theme",
    "label": "Blight",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Blight identity; effects are authored separately."
   },
   {
@@ -744,7 +744,7 @@
    "domain": "theme",
    "label": "Astral",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Astral identity; effects are authored separately."
   },
   {
@@ -752,7 +752,7 @@
    "domain": "theme",
    "label": "Oath",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Oath identity; effects are authored separately."
   },
   {
@@ -760,7 +760,7 @@
    "domain": "theme",
    "label": "Stance",
    "color": "9FC3E8",
-   "glyph": "◇",
+   "glyph": "\u25c7",
    "blurb": "Categorized Stance identity; effects are authored separately."
   },
   {
@@ -768,7 +768,7 @@
    "domain": "property",
    "label": "Siphon",
    "color": "7FA8C9",
-   "glyph": "◈",
+   "glyph": "\u25c8",
    "blurb": "A focus that drinks back: breaking a foe's Arcane Exposure restores Mana."
   },
   {
@@ -776,7 +776,7 @@
    "domain": "property",
    "label": "Overcharge",
    "color": "9FC3E8",
-   "glyph": "✧",
+   "glyph": "\u2727",
    "blurb": "A focus that pushes harder: each hit builds more Arcane Exposure."
   },
   {
@@ -784,7 +784,7 @@
    "domain": "property",
    "label": "Forsaken Medallion",
    "color": "8C7A5B",
-   "glyph": "🏅",
+   "glyph": "\ud83c\udfc5",
    "blurb": "What Forsaken Medallion does when the fight gives it its moment."
   },
   {
@@ -792,7 +792,7 @@
    "domain": "property",
    "label": "Starstone Shard",
    "color": "8C7A5B",
-   "glyph": "💠",
+   "glyph": "\ud83d\udca0",
    "blurb": "What Starstone Shard does when the fight gives it its moment."
   },
   {
@@ -800,7 +800,7 @@
    "domain": "property",
    "label": "Cutpurse's Coin",
    "color": "8C7A5B",
-   "glyph": "🪙",
+   "glyph": "\ud83e\ude99",
    "blurb": "What Cutpurse's Coin does when the fight gives it its moment."
   },
   {
@@ -808,7 +808,7 @@
    "domain": "property",
    "label": "Gold Figurine",
    "color": "8C7A5B",
-   "glyph": "🗿",
+   "glyph": "\ud83d\uddff",
    "blurb": "What Gold Figurine does when the fight gives it its moment."
   },
   {
@@ -816,7 +816,7 @@
    "domain": "property",
    "label": "Golden Sprout",
    "color": "9A9A9A",
-   "glyph": "🌰",
+   "glyph": "\ud83c\udf30",
    "blurb": "What Golden Sprout does when the fight gives it its moment."
   },
   {
@@ -824,7 +824,7 @@
    "domain": "property",
    "label": "Whetstone Fragment",
    "color": "9A9A9A",
-   "glyph": "🪨",
+   "glyph": "\ud83e\udea8",
    "blurb": "What Whetstone Fragment does when the fight gives it its moment."
   },
   {
@@ -832,7 +832,7 @@
    "domain": "property",
    "label": "Kindling Charm",
    "color": "9A9A9A",
-   "glyph": "🕯",
+   "glyph": "\ud83d\udd6f",
    "blurb": "What Kindling Charm does when the fight gives it its moment."
   },
   {
@@ -840,7 +840,7 @@
    "domain": "property",
    "label": "Goldleaf Charm",
    "color": "9A9A9A",
-   "glyph": "🍂",
+   "glyph": "\ud83c\udf42",
    "blurb": "What Goldleaf Charm does when the fight gives it its moment."
   },
   {
@@ -848,7 +848,7 @@
    "domain": "property",
    "label": "Cracked Lantern",
    "color": "9A9A9A",
-   "glyph": "🏮",
+   "glyph": "\ud83c\udfee",
    "blurb": "What Cracked Lantern does when the fight gives it its moment."
   },
   {
@@ -856,7 +856,7 @@
    "domain": "property",
    "label": "Sacrificial Knife",
    "color": "9A9A9A",
-   "glyph": "🔪",
+   "glyph": "\ud83d\udd2a",
    "blurb": "What Sacrificial Knife does when the fight gives it its moment."
   },
   {
@@ -864,7 +864,7 @@
    "domain": "property",
    "label": "Cured Hide",
    "color": "9A9A9A",
-   "glyph": "🛡",
+   "glyph": "\ud83d\udee1",
    "blurb": "What Cured Hide does when the fight gives it its moment."
   },
   {
@@ -872,7 +872,7 @@
    "domain": "property",
    "label": "Ivory Comb",
    "color": "9A9A9A",
-   "glyph": "🪮",
+   "glyph": "\ud83e\udeae",
    "blurb": "What Ivory Comb does when the fight gives it its moment."
   },
   {
@@ -880,7 +880,7 @@
    "domain": "property",
    "label": "Fell Warden Brand",
    "color": "6E9C6E",
-   "glyph": "🔱",
+   "glyph": "\ud83d\udd31",
    "blurb": "What Fell Warden Brand does when the fight gives it its moment."
   },
   {
@@ -888,7 +888,7 @@
    "domain": "property",
    "label": "Bloodied Talisman",
    "color": "6E9C6E",
-   "glyph": "🩸",
+   "glyph": "\ud83e\ude78",
    "blurb": "What Bloodied Talisman does when the fight gives it its moment."
   },
   {
@@ -896,7 +896,7 @@
    "domain": "property",
    "label": "Twinned Armor",
    "color": "6E9C6E",
-   "glyph": "👥",
+   "glyph": "\ud83d\udc65",
    "blurb": "What Twinned Armor does when the fight gives it its moment."
   },
   {
@@ -904,7 +904,7 @@
    "domain": "property",
    "label": "Blight-Touched Idol",
    "color": "6E9C6E",
-   "glyph": "☣",
+   "glyph": "\u2623",
    "blurb": "What Blight-Touched Idol does when the fight gives it its moment."
   },
   {
@@ -912,7 +912,7 @@
    "domain": "property",
    "label": "Warhorn",
    "color": "6E9C6E",
-   "glyph": "📣",
+   "glyph": "\ud83d\udce3",
    "blurb": "What Warhorn does when the fight gives it its moment."
   },
   {
@@ -920,7 +920,7 @@
    "domain": "property",
    "label": "Vow of Vengeance",
    "color": "6E9C6E",
-   "glyph": "⚔",
+   "glyph": "\u2694",
    "blurb": "What Vow of Vengeance does when the fight gives it its moment."
   },
   {
@@ -928,7 +928,7 @@
    "domain": "property",
    "label": "Pearl of Sagacity",
    "color": "6E9C6E",
-   "glyph": "🔮",
+   "glyph": "\ud83d\udd2e",
    "blurb": "What Pearl of Sagacity does when the fight gives it its moment."
   },
   {
@@ -936,7 +936,7 @@
    "domain": "property",
    "label": "Blessed Dew",
    "color": "6E9C6E",
-   "glyph": "💧",
+   "glyph": "\ud83d\udca7",
    "blurb": "What Blessed Dew does when the fight gives it its moment."
   },
   {
@@ -944,7 +944,7 @@
    "domain": "property",
    "label": "Azure Sigil",
    "color": "6E9C6E",
-   "glyph": "🔵",
+   "glyph": "\ud83d\udd35",
    "blurb": "What Azure Sigil does when the fight gives it its moment."
   },
   {
@@ -952,7 +952,7 @@
    "domain": "property",
    "label": "Bloodstained Chalice",
    "color": "6E9C6E",
-   "glyph": "🍷",
+   "glyph": "\ud83c\udf77",
    "blurb": "What Bloodstained Chalice does when the fight gives it its moment."
   },
   {
@@ -960,7 +960,7 @@
    "domain": "property",
    "label": "Goldbough Sapling",
    "color": "B08CC9",
-   "glyph": "🌱",
+   "glyph": "\ud83c\udf31",
    "blurb": "What Goldbough Sapling does when the fight gives it its moment."
   },
   {
@@ -968,7 +968,7 @@
    "domain": "property",
    "label": "Wyrm Heart",
    "color": "B08CC9",
-   "glyph": "🫀",
+   "glyph": "\ud83e\udec0",
    "blurb": "What Wyrm Heart does when the fight gives it its moment."
   },
   {
@@ -976,7 +976,7 @@
    "domain": "property",
    "label": "Titan's Cinder",
    "color": "B08CC9",
-   "glyph": "🌟",
+   "glyph": "\ud83c\udf1f",
    "blurb": "What Titan's Cinder does when the fight gives it its moment."
   },
   {
@@ -984,7 +984,7 @@
    "domain": "property",
    "label": "Radiant Aegis",
    "color": "B08CC9",
-   "glyph": "🛡",
+   "glyph": "\ud83d\udee1",
    "blurb": "What Radiant Aegis does when the fight gives it its moment."
   },
   {
@@ -992,7 +992,7 @@
    "domain": "property",
    "label": "Flayer's Censer",
    "color": "B08CC9",
-   "glyph": "🔥",
+   "glyph": "\ud83d\udd25",
    "blurb": "What Flayer's Censer does when the fight gives it its moment."
   },
   {
@@ -1000,7 +1000,7 @@
    "domain": "property",
    "label": "Vigilant Halo",
    "color": "B08CC9",
-   "glyph": "🌸",
+   "glyph": "\ud83c\udf38",
    "blurb": "What Vigilant Halo does when the fight gives it its moment."
   },
   {
@@ -1008,7 +1008,7 @@
    "domain": "property",
    "label": "Carrion Talon",
    "color": "B08CC9",
-   "glyph": "🦅",
+   "glyph": "\ud83e\udd85",
    "blurb": "What Carrion Talon does when the fight gives it its moment."
   },
   {
@@ -1016,7 +1016,7 @@
    "domain": "property",
    "label": "Ember Idol",
    "color": "B08CC9",
-   "glyph": "🌋",
+   "glyph": "\ud83c\udf0b",
    "blurb": "What Ember Idol does when the fight gives it its moment."
   },
   {
@@ -1024,7 +1024,7 @@
    "domain": "property",
    "label": "Crown of Stitches",
    "color": "C9A227",
-   "glyph": "👑",
+   "glyph": "\ud83d\udc51",
    "blurb": "What Crown of Stitches does when the fight gives it its moment."
   },
   {
@@ -1032,7 +1032,7 @@
    "domain": "property",
    "label": "Warden Horn",
    "color": "C9A227",
-   "glyph": "📯",
+   "glyph": "\ud83d\udcef",
    "blurb": "What Warden Horn does when the fight gives it its moment."
   },
   {
@@ -1040,7 +1040,7 @@
    "domain": "property",
    "label": "Ash of Remembrance",
    "color": "C9A227",
-   "glyph": "⚱",
+   "glyph": "\u26b1",
    "blurb": "What Ash of Remembrance does when the fight gives it its moment."
   },
   {
@@ -1048,7 +1048,7 @@
    "domain": "property",
    "label": "Cinder of the Fallen",
    "color": "C9A227",
-   "glyph": "☠",
+   "glyph": "\u2620",
    "blurb": "What Cinder of the Fallen does when the fight gives it its moment."
   },
   {
@@ -1056,7 +1056,7 @@
    "domain": "property",
    "label": "Crimson Covenant",
    "color": "C9A227",
-   "glyph": "🩸",
+   "glyph": "\ud83e\ude78",
    "blurb": "What Crimson Covenant does when the fight gives it its moment."
   },
   {
@@ -1064,7 +1064,7 @@
    "domain": "property",
    "label": "Traveler's Whetstone",
    "color": "9A9A9A",
-   "glyph": "🔪",
+   "glyph": "\ud83d\udd2a",
    "blurb": "What Traveler's Whetstone does when the fight gives it its moment."
   },
   {
@@ -1072,7 +1072,7 @@
    "domain": "property",
    "label": "Moonlit Vial",
    "color": "9A9A9A",
-   "glyph": "🧪",
+   "glyph": "\ud83e\uddea",
    "blurb": "What Moonlit Vial does when the fight gives it its moment."
   },
   {
@@ -1080,7 +1080,7 @@
    "domain": "property",
    "label": "Warden's Lantern",
    "color": "9A9A9A",
-   "glyph": "🏮",
+   "glyph": "\ud83c\udfee",
    "blurb": "What Warden's Lantern does when the fight gives it its moment."
   },
   {
@@ -1088,7 +1088,7 @@
    "domain": "property",
    "label": "Hollowed Horn",
    "color": "6E9C6E",
-   "glyph": "📯",
+   "glyph": "\ud83d\udcef",
    "blurb": "What Hollowed Horn does when the fight gives it its moment."
   },
   {
@@ -1096,7 +1096,7 @@
    "domain": "property",
    "label": "Gilded Tear",
    "color": "6E9C6E",
-   "glyph": "💛",
+   "glyph": "\ud83d\udc9b",
    "blurb": "What Gilded Tear does when the fight gives it its moment."
   },
   {
@@ -1104,7 +1104,7 @@
    "domain": "property",
    "label": "Watchman's Badge",
    "color": "B08CC9",
-   "glyph": "🎖",
+   "glyph": "\ud83c\udf96",
    "blurb": "What Watchman's Badge does when the fight gives it its moment."
   },
   {
@@ -1112,7 +1112,7 @@
    "domain": "property",
    "label": "Howling Standard",
    "color": "B08CC9",
-   "glyph": "🚩",
+   "glyph": "\ud83d\udea9",
    "blurb": "What Howling Standard does when the fight gives it its moment."
   },
   {
@@ -1120,7 +1120,7 @@
    "domain": "property",
    "label": "Emberwick Charm",
    "color": "9A9A9A",
-   "glyph": "🕯",
+   "glyph": "\ud83d\udd6f",
    "blurb": "What Emberwick Charm does when the fight gives it its moment."
   },
   {
@@ -1128,7 +1128,7 @@
    "domain": "property",
    "label": "Carrion Morsel",
    "color": "9A9A9A",
-   "glyph": "🍖",
+   "glyph": "\ud83c\udf56",
    "blurb": "What Carrion Morsel does when the fight gives it its moment."
   },
   {
@@ -1136,7 +1136,7 @@
    "domain": "property",
    "label": "Gravetender's Bell",
    "color": "6E9C6E",
-   "glyph": "🔔",
+   "glyph": "\ud83d\udd14",
    "blurb": "What Gravetender's Bell does when the fight gives it its moment."
   },
   {
@@ -1144,7 +1144,7 @@
    "domain": "property",
    "label": "Sentinel's Oath",
    "color": "6E9C6E",
-   "glyph": "🛡",
+   "glyph": "\ud83d\udee1",
    "blurb": "What Sentinel's Oath does when the fight gives it its moment."
   },
   {
@@ -1152,7 +1152,7 @@
    "domain": "property",
    "label": "Forsaken Warflag",
    "color": "B08CC9",
-   "glyph": "🏴",
+   "glyph": "\ud83c\udff4",
    "blurb": "What Forsaken Warflag does when the fight gives it its moment."
   },
   {
@@ -1160,7 +1160,7 @@
    "domain": "property",
    "label": "Wrath Coil",
    "color": "B08CC9",
-   "glyph": "⚡",
+   "glyph": "\u26a1",
    "blurb": "What Wrath Coil does when the fight gives it its moment."
   }
  ],
