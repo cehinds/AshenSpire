@@ -469,7 +469,7 @@ export function pieceChip(registries, piece, { selected, kind = null, presentati
   // THE BUTTON ONLY EVER OFFERS THE CHOICE; it never reports it. A chosen card
   // is read off the ring the card wears (kit.css, `.is-chosen`), which is the
   // same ring the spoils door draws — one signal for the whole game.
-  choose.textContent = 'Choose ' + piece.name;
+  choose.textContent = t('equipment.choose', { piece: piece.name });
   // The ring is a colour, and a colour is not available to everyone. This note
   // is the same fact in words, sized out of the layout (`.sr-only`), so the
   // state survives for a screen reader once the button goes quiet.

@@ -6,7 +6,7 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 
 ## 1. Enemy roster
 
-| Act | Enemy | Avg HP | Intent DPS | Heal/t | Poise | Role |
+| Tier | Enemy | Avg HP | Intent DPS | Heal/t | Poise | Role |
 |----:|-------|-------:|-----------:|-------:|------:|------|
 | 1 | Wandering Soldier | 24 | 3.2 | — | 10 | normal |
 | 1 | Blight Hound | 13.5 | 6 | — | 6 | normal |
@@ -14,6 +14,11 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 1 | Grave Wisp | 11 | 2 | 2 | 4 | normal |
 | 1 | Wyrm Aspirant | 70 | 6.9 | 0.7 | 24 | elite |
 | 1 | The Fell Warden | 120 | 10.4 | — | 30 | boss |
+| 1 | Lantern Moth | 15.5 | 3.9 | — | 5 | normal |
+| 1 | Briar Hermit | 26 | 2.3 | 1 | 9 | normal |
+| 1 | Chain Scavenger | 22 | 6 | — | 8 | normal |
+| 1 | The Bell Keeper | 116 | 10.7 | — | 25 | boss |
+| 1 | The Thorn Matriarch | 110 | 9.9 | — | 22 | boss |
 | 2 | Gilded Knight | 44 | 5.5 | — | 18 | normal |
 | 2 | Court Surgeon | 32 | 2.8 | 2.4 | 10 | normal |
 | 2 | Stitched Hound | 26 | 7.2 | — | 8 | normal |
@@ -21,16 +26,25 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 2 | Living Armor | 38 | 7.8 | — | 22 | normal |
 | 2 | Duelist of the Court | 93 | 10.2 | — | 26 | elite |
 | 2 | The Stitched King | 195 | 8.9 | — | 34 | boss |
+| 2 | Mirror Scribe | 30 | 4.5 | — | 8 | normal |
+| 2 | Stitch Crab | 34 | 6.9 | — | 17 | normal |
+| 2 | The Glass Regent | 180 | 12.1 | — | 26 | boss |
+| 2 | The Marrow Organist | 190 | 16.6 | 1.1 | 30 | boss |
 | 3 | Ash Revenant | 36 | 6.6 | 2.7 | 10 | normal |
 | 3 | Ember-Starved Pilgrim | 30 | 5.4 | — | 8 | normal |
 | 3 | Valkyrie Shade | 42 | 7.5 | — | 14 | normal |
 | 3 | Charred Colossus | 57.5 | 8 | — | 30 | normal |
 | 3 | Wyrm Lord | 135 | 8.3 | 1.4 | 30 | elite |
 | 3 | The Blighted Valkyrie | 250 | 12 | — | 36 | boss |
+| 3 | Cinder Mantis | 38 | 10.9 | — | 11 | normal |
+| 3 | Eclipse Cantor | 32 | 6.7 | — | 7 | normal |
+| 3 | The Furnace Saint | 260 | 19.5 | — | 40 | boss |
+| 3 | The Hollow Astronomer | 225 | 24.9 | — | 25 | boss |
+| 3 | The Ashheart Dragon | 245 | 12.7 | — | 34 | boss |
 
 ## 2. Encounters (incoming totals)
 
-| Act | Encounter | Pool | Enemies | Total HP | Incoming DPS | Heal/t |
+| Tier | Encounter | Pool | Enemies | Total HP | Incoming DPS | Heal/t |
 |----:|-----------|------|--------:|---------:|-------------:|-------:|
 | 1 | loneSoldier | normal | 1 | 24 | 3.2 | — |
 | 1 | patrol | normal | 2 | 37.5 | 9.2 | — |
@@ -39,6 +53,11 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 1 | bruiser | normal | 2 | 43 | 6.5 | 2 |
 | 1 | eliteWyrm | elite | 1 | 70 | 6.9 | 0.7 |
 | 1 | bossOmen | boss | 1 | 120 | 10.4 | — |
+| 1 | lanternFlight | normal | 2 | 31 | 7.8 | — |
+| 1 | briarRefuge | normal | 1 | 26 | 2.3 | 1 |
+| 1 | chainAmbush | normal | 1 | 22 | 6 | — |
+| 1 | bossBellKeeper | boss | 1 | 116 | 10.7 | — |
+| 1 | bossThornMatriarch | boss | 1 | 110 | 9.9 | — |
 | 2 | a2_knight | normal | 1 | 44 | 5.5 | — |
 | 2 | a2_surgery | normal | 2 | 49 | 8.3 | 2.4 |
 | 2 | a2_kennel | normal | 2 | 52 | 14.4 | — |
@@ -46,6 +65,10 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 2 | a2_vault | normal | 2 | 70 | 10.6 | 2.4 |
 | 2 | a2_eliteDuelist | elite | 1 | 93 | 10.2 | — |
 | 2 | a2_bossStitchedKing | boss | 1 | 195 | 8.9 | — |
+| 2 | a2_mirrorArchive | normal | 1 | 30 | 4.5 | — |
+| 2 | a2_stitchDrain | normal | 1 | 34 | 6.9 | — |
+| 2 | a2_bossGlassRegent | boss | 1 | 180 | 12.1 | — |
+| 2 | a2_bossMarrowOrganist | boss | 1 | 190 | 16.6 | 1.1 |
 | 3 | a3_revenant | normal | 1 | 36 | 6.6 | 2.7 |
 | 3 | a3_pilgrims | normal | 2 | 60 | 10.8 | — |
 | 3 | a3_shades | normal | 2 | 72 | 12.9 | — |
@@ -53,24 +76,11 @@ moves (locked/phase-2 moves excluded). "Heal/t" is self-heal from move effects.
 | 3 | a3_ashChoir | normal | 2 | 78 | 14.1 | 2.7 |
 | 3 | a3_eliteWyrmLord | elite | 1 | 135 | 8.3 | 1.4 |
 | 3 | a3_bossRotValkyrie | boss | 1 | 250 | 12 | — |
-
-## 2b. Seat tiers (SPEC §13.3)
-
-A seat's rows above were authored at its baseline tier (act 1 → weald, 2 →
-marches, 3 → reach). Climbing a seat at another tier scales enemy HP after the
-roll by `balance.seatTiers[tier] / balance.seatTiers[baseTier]`. The table is
-the measured HP ratio of §2, normals, elites and bosses weighted together:
-
-| tier | multiplier | from |
-|---:|---:|---|
-| 1 | 1.0 | by definition (the validator holds it) |
-| 2 | 1.5 | act-2 normals avg 55.2 HP over act-1 avg 38.1 (1.45); elites 93/70 (1.33); bosses 195/120 (1.63) |
-| 3 | 1.9 | act-3 normals avg 60.7 over 38.1 (1.59); elites 135/70 (1.93); bosses 250/120 (2.08) |
-
-A seat at its own baseline scales by exactly 1, so every default-order run in
-§5 measures the fights it always measured. `node tools/runsim.mjs 300
---seeded-seats` measures the seeded orders; Strength scaling per tier is
-deliberately not introduced here (Endless owns per-loop Strength).
+| 3 | a3_cinderNest | normal | 1 | 38 | 10.9 | — |
+| 3 | a3_eclipseChapel | normal | 1 | 32 | 6.7 | — |
+| 3 | a3_bossFurnaceSaint | boss | 1 | 260 | 19.5 | — |
+| 3 | a3_bossHollowAstronomer | boss | 1 | 225 | 24.9 | — |
+| 3 | a3_bossAshheartDragon | boss | 1 | 245 | 12.7 | — |
 
 ## 3. Player baselines (measured naive starting-deck DPS)
 
@@ -80,64 +90,99 @@ conservative floor. Reference bands assume deck growth: mid = ×1.6, late = ×2.
 
 | Class | Max HP (derived) | Start DPS | ~Mid (×1.6) | ~Late (×2.4) |
 |-------|-----------------:|----------:|------------:|-------------:|
-| Reaver | 96 | 8.7 | 13.9 | 20.9 |
-| Starseer | 82 | 5.8 | 9.3 | 13.9 |
-| Herald | 90 | 6.6 | 10.6 | 15.8 |
+| Reaver | 62 | 11.3 | 18.1 | 27.1 |
+| Starseer | 46 | 15.2 | 24.3 | 36.5 |
+| Rogue | 50 | 16.1 | 25.8 | 38.6 |
+| Herald | 46 | 14.1 | 22.6 | 33.8 |
 
 ## 4. Sanity table — elites & bosses
 
-Reference DPS by act: Act 1 = measured start, Act 2 = ×1.6, Act 3 = ×2.4 (avg
+Reference DPS by tier: tier 1 = measured start, tier 2 = ×1.6, tier 3 = ×2.4 (avg
 across classes). "Turns to kill" = HP / (refDPS − heal). "Turns to die" =
 lowest class HP / incoming DPS. Verdict flags unbeatable-by-construction
 (heal ≥ refDPS → cannot kill) and races (kill ≥ die).
 
-| Act | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |
+| Tier | Encounter | HP | Heal/t | refDPS | Turns to kill | InDPS | Turns to die | Verdict |
 |----:|-----------|---:|-------:|-------:|--------------:|------:|-------------:|---------|
-| 1 | eliteWyrm | 70 | 0.7 | 7 | 11.1 | 6.9 | 11.9 | ok |
-| 1 | bossOmen | 120 | — | 7 | 17.1 | 10.4 | 7.9 | **race — check** |
-| 2 | a2_eliteDuelist | 93 | — | 11.3 | 8.3 | 10.2 | 8 | **race — check** |
-| 2 | a2_bossStitchedKing | 195 | — | 11.3 | 17.3 | 8.9 | 9.2 | **race — check** |
-| 3 | a3_eliteWyrmLord | 135 | 1.4 | 16.9 | 8.7 | 8.3 | 9.9 | ok |
-| 3 | a3_bossRotValkyrie | 250 | — | 16.9 | 14.8 | 12 | 6.8 | **race — check** |
+| 1 | eliteWyrm | 70 | 0.7 | 14.2 | 5.2 | 6.9 | 6.7 | ok |
+| 1 | bossOmen | 120 | — | 14.2 | 8.5 | 10.4 | 4.4 | **race — check** |
+| 1 | bossBellKeeper | 116 | — | 14.2 | 8.2 | 10.7 | 4.3 | **race — check** |
+| 1 | bossThornMatriarch | 110 | — | 14.2 | 7.8 | 9.9 | 4.6 | **race — check** |
+| 2 | a2_eliteDuelist | 93 | — | 22.7 | 4.1 | 10.2 | 4.5 | ok |
+| 2 | a2_bossStitchedKing | 195 | — | 22.7 | 8.6 | 8.9 | 5.2 | **race — check** |
+| 2 | a2_bossGlassRegent | 180 | — | 22.7 | 7.9 | 12.1 | 3.8 | **race — check** |
+| 2 | a2_bossMarrowOrganist | 190 | 1.1 | 22.7 | 8.8 | 16.6 | 2.8 | **race — check** |
+| 3 | a3_eliteWyrmLord | 135 | 1.4 | 34 | 4.1 | 8.3 | 5.5 | ok |
+| 3 | a3_bossRotValkyrie | 250 | — | 34 | 7.3 | 12 | 3.8 | **race — check** |
+| 3 | a3_bossFurnaceSaint | 260 | — | 34 | 7.6 | 19.5 | 2.4 | **race — check** |
+| 3 | a3_bossHollowAstronomer | 225 | — | 34 | 6.6 | 24.9 | 1.8 | **race — check** |
+| 3 | a3_bossAshheartDragon | 245 | — | 34 | 7.2 | 12.7 | 3.6 | **race — check** |
 
 > Note: the Blighted Valkyrie (final boss) also heals **3 per hit she lands** via a
 > phase trigger (not a move effect), up to ~15/turn on her 5-hit moves — the
 > tightest DPS check in the game. Factor this into her row above.
 
-## 5. Act-1 empirical win rate (naive bot, starting deck)
+## 5. Tier-1 empirical win rate (naive bot, starting deck)
 
 Greedy bot, starting deck only (no card acquisition), from full HP, 300 seeds.
-Act 1 is the only act where a starting deck is the correct reference; later acts
+Tier 1 is the only tier where a starting deck is the correct reference; later tiers
 assume deck growth (§4 bands). These are a **floor** — real play does better.
 
 | Class | Encounter | Win % | Avg HP lost (of max) |
 |-------|-----------|------:|---------------------:|
-| Reaver | loneSoldier (normal) | 100 | 0.8 / 96 |
-| Reaver | patrol (normal) | 100 | 6.3 / 96 |
-| Reaver | packHunt (normal) | 100 | 5.9 / 96 |
-| Reaver | twinPatrol (normal) | 100 | 6.9 / 96 |
-| Reaver | bruiser (normal) | 100 | 6.1 / 96 |
-| Reaver | eliteWyrm (elite) | 100 | 25.5 / 96 |
-| Reaver | bossOmen (boss) | 100 | 43.4 / 96 |
-| Starseer | loneSoldier (normal) | 100 | 5.4 / 82 |
-| Starseer | patrol (normal) | 100 | 21.5 / 82 |
-| Starseer | packHunt (normal) | 100 | 20.7 / 82 |
-| Starseer | twinPatrol (normal) | 100 | 26.6 / 82 |
-| Starseer | bruiser (normal) | 100 | 20.5 / 82 |
-| Starseer | eliteWyrm (elite) | 22.3 | 80 / 82 |
-| Starseer | bossOmen (boss) | 0 | 82 / 82 |
-| Herald | loneSoldier (normal) | 100 | 1 / 90 |
-| Herald | patrol (normal) | 100 | 5.2 / 90 |
-| Herald | packHunt (normal) | 100 | 5.2 / 90 |
-| Herald | twinPatrol (normal) | 100 | 4.9 / 90 |
-| Herald | bruiser (normal) | 100 | 4 / 90 |
-| Herald | eliteWyrm (elite) | 100 | 14.5 / 90 |
-| Herald | bossOmen (boss) | 100 | 24.4 / 90 |
+| Reaver | loneSoldier (normal) | 100 | 1.5 / 62 |
+| Reaver | patrol (normal) | 100 | 8.4 / 62 |
+| Reaver | packHunt (normal) | 100 | 7.3 / 62 |
+| Reaver | twinPatrol (normal) | 100 | 8.1 / 62 |
+| Reaver | bruiser (normal) | 100 | 8 / 62 |
+| Reaver | eliteWyrm (elite) | 99.7 | 27.5 / 62 |
+| Reaver | bossOmen (boss) | 78 | 51.4 / 62 |
+| Reaver | lanternFlight (normal) | 100 | 3.6 / 62 |
+| Reaver | briarRefuge (normal) | 100 | 0.9 / 62 |
+| Reaver | chainAmbush (normal) | 100 | 0.7 / 62 |
+| Reaver | bossBellKeeper (boss) | 79.7 | 50.8 / 62 |
+| Reaver | bossThornMatriarch (boss) | 72.3 | 51.8 / 62 |
+| Starseer | loneSoldier (normal) | 100 | 0.9 / 46 |
+| Starseer | patrol (normal) | 100 | 6.4 / 46 |
+| Starseer | packHunt (normal) | 100 | 5.5 / 46 |
+| Starseer | twinPatrol (normal) | 100 | 6.7 / 46 |
+| Starseer | bruiser (normal) | 100 | 5.7 / 46 |
+| Starseer | eliteWyrm (elite) | 99.7 | 24.8 / 46 |
+| Starseer | bossOmen (boss) | 37.3 | 43.4 / 46 |
+| Starseer | lanternFlight (normal) | 100 | 2.7 / 46 |
+| Starseer | briarRefuge (normal) | 100 | 0.5 / 46 |
+| Starseer | chainAmbush (normal) | 100 | 0.7 / 46 |
+| Starseer | bossBellKeeper (boss) | 37 | 43.3 / 46 |
+| Starseer | bossThornMatriarch (boss) | 18.7 | 45 / 46 |
+| Rogue | loneSoldier (normal) | 100 | 0.1 / 50 |
+| Rogue | patrol (normal) | 100 | 3.6 / 50 |
+| Rogue | packHunt (normal) | 100 | 3 / 50 |
+| Rogue | twinPatrol (normal) | 100 | 3.3 / 50 |
+| Rogue | bruiser (normal) | 100 | 3 / 50 |
+| Rogue | eliteWyrm (elite) | 100 | 12 / 50 |
+| Rogue | bossOmen (boss) | 97 | 30.1 / 50 |
+| Rogue | lanternFlight (normal) | 100 | 1.6 / 50 |
+| Rogue | briarRefuge (normal) | 100 | 0.1 / 50 |
+| Rogue | chainAmbush (normal) | 100 | 0.2 / 50 |
+| Rogue | bossBellKeeper (boss) | 97.7 | 28 / 50 |
+| Rogue | bossThornMatriarch (boss) | 96.7 | 30.9 / 50 |
+| Herald | loneSoldier (normal) | 100 | 0.4 / 46 |
+| Herald | patrol (normal) | 100 | 2.6 / 46 |
+| Herald | packHunt (normal) | 100 | 2.3 / 46 |
+| Herald | twinPatrol (normal) | 100 | 2.4 / 46 |
+| Herald | bruiser (normal) | 100 | 2.3 / 46 |
+| Herald | eliteWyrm (elite) | 100 | 8.3 / 46 |
+| Herald | bossOmen (boss) | 100 | 17.8 / 46 |
+| Herald | lanternFlight (normal) | 100 | 1.2 / 46 |
+| Herald | briarRefuge (normal) | 100 | 0.2 / 46 |
+| Herald | chainAmbush (normal) | 100 | 0.2 / 46 |
+| Herald | bossBellKeeper (boss) | 100 | 17.5 / 46 |
+| Herald | bossThornMatriarch (boss) | 100 | 17.5 / 46 |
 
 ## 6. Findings
 
 - **No unbeatable-by-construction encounters** (SPEC §9 acceptance):
-  all 21 encounters — every pool, not just the
+  all 35 encounters — every pool, not just the
   elites and bosses tabled above — resolved to refDPS > self-heal. ✓
 - The sanity model **ignores player Block** — the whole defensive layer — so
   "turns to die" is a zero-block floor. Bosses showing as a "race" is intended
@@ -157,7 +202,7 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 - **One pilot**: the leftmost-affordable bot. It cannot sequence Starstone
   combos, hold a flask for a boss, or curate a deck. A bot floor is not a
   player ceiling, and nothing here is a claim about a human.
-- **Section 5 is act 1 only**, starting deck only, 300 seeds per row.
+- **Section 5 is tier 1 only**, starting deck only, 300 seeds per row.
 - It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is
   unbeatable by construction). Every other number above is a report.
 
