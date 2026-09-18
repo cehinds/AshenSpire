@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1111"
   },
   {
+    "id": "pr-1120",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the game’s own content builder is whole again",
+    "detail": "Nothing you see changes. The tool that packs the game’s content keeps a list of the eight parts a finished pack must contain, and tests itself by removing each one in turn to prove the right checker catches it. One of those eight — the events, the things that happen to you on the road — had stopped being caught the way the list says. Instead of one plain report that the events were missing, the content checker raised seventeen complaints about quests, speakers and a relic that all pointed at events which are in fact present, and never mentioned the one part that was gone. The checker now leaves that part to the tool that owns it and says so once, plainly. Nothing about the events themselves was wrong, and every check the content checker made before it still runs: a pack that ships an empty list of events is still refused, in all seventeen ways.",
+    "build": "0.7.1.77",
+    "pullRequest": 1120,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1120"
+  },
+  {
     "id": "pr-1113",
     "date": "2026-09-18",
     "group": "2026-09-18",
