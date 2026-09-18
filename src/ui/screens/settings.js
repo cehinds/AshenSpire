@@ -1468,6 +1468,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
     else clearSettingsNotice('card-size');
   }
+  // Outstanding across clicks, so a second export cannot start while the first
+  // is still with the clipboard.
+  let exportWritePending = false;
   container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
@@ -1492,12 +1495,38 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // would read "Copied", the notice would agree, and the console fallback
       // would be skipped — leaving no export anywhere. The API is checked before
       // the race rather than inferred from it.
+      // A RACE DOES NOT CANCEL THE LOSER. `writeText` cannot be aborted, so a
+      // write that is merely SLOW — a browser holding it while it asks for
+      // clipboard permission — still lands after the timeout has declared it
+      // failed. Two consequences, and only the second can be prevented:
+      //
+      //   * The clipboard ends up holding this block after the UI said it did
+      //     not. Nothing in the platform can undo that, so it is SAID rather
+      //     than hidden: a late landing posts a notice naming what arrived.
+      //   * Two exports could otherwise be in flight at once and land in
+      //     either order, so the newer text loses to the older. That one is
+      //     preventable: while a write is outstanding the button refuses to
+      //     start another, and says why.
       const CLIPBOARD_WAIT_MS = 1200;
       let copied = false;
+      if (exportWritePending) {
+        showSettingsNotice('A copy is still with the clipboard — waiting for it rather than starting a second one that could land out of order.', 'card-size');
+        return;
+      }
       if (typeof navigator.clipboard?.writeText === 'function') {
+        const write = navigator.clipboard.writeText(text).then(() => true, () => false);
+        exportWritePending = true;
+        // Whenever it settles — before or long after the timeout — the flag is
+        // released, and a landing the user was told had failed is announced.
+        write.then((landed) => {
+          exportWritePending = false;
+          if (landed && !copied) {
+            showSettingsNotice('The clipboard answered late: the block you were told had not copied is on it now.', 'card-size');
+          }
+        });
         try {
           copied = await Promise.race([
-            navigator.clipboard.writeText(text).then(() => true, () => false),
+            write,
             new Promise((settle) => setTimeout(() => settle(false), CLIPBOARD_WAIT_MS)),
           ]);
         } catch {
