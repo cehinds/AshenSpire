@@ -34,11 +34,17 @@ export const wireframeUi = freeze({
     repeatPickDelayMs: w4b.behavior.repeatPickDelayMs,
     // THE MAP TRAY (owner, 2026-09-14; screens/map.js). A pick lights the node
     // at once; the tray waits openDelayMs, slides up in slideMs (styles/map.css
-    // holds the same 240 ms) while the camera glides cameraMs to recentre the
+    // holds the same duration) while the camera glides cameraMs to recentre the
     // node; then the context and Back / Enter fade in. Closing fades them out
     // for fadeMs, then the tray drops and the camera recentres on the map.
-    // Reduced motion takes every one of these to zero.
-    tray: { openDelayMs: 150, slideMs: 240, fadeMs: 140, cameraMs: 300 },
+    // Reduced motion takes every one of these to zero. The numbers live in
+    // content/config/ui/scenes/w4b-map.json, like every other scene number.
+    tray: {
+      openDelayMs: w4b.behavior.tray.openDelayMs,
+      slideMs: w4b.behavior.tray.slideMs,
+      fadeMs: w4b.behavior.tray.fadeMs,
+      cameraMs: w4b.behavior.tray.cameraMs,
+    },
     // W4b header (owner: "10 vh for w4b"). The run HUD and the route strip
     // share one band of heightFraction × the visible height, never shorter
     // than one touch row (minimumTargetPx, physical) plus its two insets.
