@@ -312,6 +312,7 @@ armoury.compare.title,,Compared with equipped,,
 armoury.compare.replaces,,Replaces {name} in {slot},,
 armoury.compare.fills,,Fills the empty {slot} position,,
 armoury.compare.removes,,Removes {name} from {slot},,
+equipment.choose,,Choose {piece},Take this piece as your starting equipment.,Choose
 armoury.compare.role,,{label} {before} → {after},,
 armoury.compare.unchanged,,Combat values unchanged,,
 armoury.eligibility.ready,,Available: {action},,
@@ -333,3 +334,9 @@ iconTray.status,,Status effects,,
 iconTray.potions,,Potions,Potions you carry. A second tap opens that potion.,
 iconTray.more,,+{count},{count} more,
 iconTray.moreOpen,,+{count},"{count} more, view all",
+# ---- the pile doors (SPEC §7.2: the draw/discard viewer and the W1h spent pair)
+common.close,,Close,Close this door and return to what was under it.,Close
+piles.eyebrow,,Pile,Which pile this door is reading.,Pile
+piles.empty,,Empty.,Nothing is in this pile.,Empty
+piles.spent.title,,Card piles,The cards this fight has spent — discarded and exhausted.,Card piles
+piles.spent.nav,,Piles,Choose which spent pile to read.,Piles
