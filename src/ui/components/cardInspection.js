@@ -68,9 +68,46 @@ function doorStackBelowPx() {
   if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
   return inspect + doorReadableMinPx();
 }
+// MEASURE THE DOOR, NOT THE WINDOW. This compared `window.innerWidth`, and the
+// door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
+// so at a 1440px viewport the layout is 748px whatever the screen does. While
+// the inspect width was authored-only that gap was merely conservative and I
+// wrote it down as an accepted caveat. Making the width TUNABLE turned it into
+// the original defect, reachable from the new slider — measured at 1440:
+//
+//   inspect 320 (authored) -> beside, details 393px   fine
+//   inspect 560            -> beside, details 153px   squeezed
+//   inspect 800            -> beside, details   0px   gone
+//
+// So the comparison is against the layout's OWN width. A ResizeObserver is the
+// honest instrument: the layout's width is set by the modal and does not depend
+// on the columns we choose, so reading it and then changing
+// `grid-template-columns` cannot feed back into itself. Before the layout is in
+// the DOM there is nothing to measure, so the viewport still answers the first
+// call and the observer corrects it on the first frame it has a box.
+let doorObserver = null;
+function decideCardDoorShape(widthPx) {
+  const stacked = widthPx < doorStackBelowPx();
+  const next = stacked ? 'stacked' : 'beside';
+  if (document.documentElement.dataset.cardDoor !== next) {
+    document.documentElement.dataset.cardDoor = next;
+  }
+}
 function applyCardDoorShape() {
-  const stacked = window.innerWidth < doorStackBelowPx();
-  document.documentElement.dataset.cardDoor = stacked ? 'stacked' : 'beside';
+  const layout = document.querySelector('.card-inspection-layout');
+  const width = layout ? layout.getBoundingClientRect().width : 0;
+  decideCardDoorShape(width > 0 ? width : window.innerWidth);
+}
+function observeDoorWidth(layout) {
+  if (typeof ResizeObserver !== 'function') return;
+  if (!doorObserver) {
+    doorObserver = new ResizeObserver((entries) => {
+      const box = entries[entries.length - 1]?.contentRect;
+      if (box && box.width > 0) decideCardDoorShape(box.width);
+    });
+  }
+  doorObserver.disconnect();
+  doorObserver.observe(layout);
 }
 function watchCardDoorShape() {
   applyCardDoorShape();
@@ -86,6 +123,9 @@ export function cardInspectionLayout(card, details) {
   watchCardDoorShape();
   const body = document.createElement('section');
   body.className = 'card-inspection-layout';
+  // The first decision is made on the viewport because this node has no box
+  // yet; the observer re-decides against the real one as soon as it does.
+  observeDoorWidth(body);
   const art = document.createElement('div');
   art.className = 'card-inspection-art';
   art.append(card);
