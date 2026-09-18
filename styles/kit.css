@@ -4468,16 +4468,22 @@ button[data-button-size] {
    one line and the band contains them. The relic and potion belt still hangs
    beneath the band's edge, exactly as it does in combat (.shared-hud
    .hud-bottom); that is the band's own design, not an overflow. */
+.dialogue-screen[data-hud-compact='true'] > .topbar {
+  /* Both rows KEEP THEIR OWN LINE and are drawn smaller, rather than being
+     folded side by side: at 411px wide two rows in one line put "CLASS Reaver"
+     on top of "CINDERS 0" and the act name through "FLOOR 0" (owner, a real
+     phone, 2026-09-18). A row that cannot be read is worse than a row that is
+     small, and the band still has to hold both. */
+  padding-block: var(--dialogue-hud-pad, 0.25rem);
+  font-size: var(--dialogue-hud-scale, 0.85em);
+}
 .dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  align-items: center;
-  column-gap: 1.2rem;
-  row-gap: 0;
+  gap: var(--dialogue-hud-row-gap, 0.15rem);
 }
 .dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row, .hud-resource-row) {
   min-width: 0;
   margin: 0;
+  column-gap: var(--dialogue-hud-col-gap, 0.6rem);
 }
 /* The identity truncates rather than wrapping, the way the map's compact
    header already does: a HUD that changes height moves every control below it. */
