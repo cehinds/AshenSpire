@@ -147,6 +147,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // on the whole map. The footer's Recenter went with the old footer: it did
   // exactly what the zoom bar's ⊙ does.
   //
+  // AND IT IS NOT THE FOLDING TRAY (components/trayComponents.js), which is a
+  // docked LIST region: a header Row of caret + name + count the player taps to
+  // fold, with sorting, a resize handle and a remembered size. This tray has no
+  // name, no count and no fold control — it is opened by a pick and closed by
+  // Back or a tap away, and its closed state is a row of controls rather than a
+  // header. Reusing that component would mean inventing a name and a count and
+  // then disabling the three affordances that make it what it is.
+  //
   // The tray and the hint bar are built BEFORE the board mounts: the board
   // checks a saved fit camera against the scene's height, so everything that
   // takes height must already have it, or every remount would discard the
