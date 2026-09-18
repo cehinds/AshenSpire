@@ -3,6 +3,16 @@
 // This module is deliberately pure. Content authors tune the proportions and
 // order in content/source/armouryUi.json; the UI reads this normalized shape
 // and never embeds a second set of layout numbers.
+//
+// TWO TREES, AND THE RULE BETWEEN THEM. The DEFAULTS below and the validator
+// limits belong to the ENGINE: they apply to any content bundle, including one
+// that authors nothing. content/source/armouryUi.json belongs to THIS BUNDLE,
+// and it is kept COMPLETE rather than sparse (engine test 72 holds that line)
+// so a bundle reads as the whole contract instead of a patch over defaults.
+//
+// Completeness means the two trees restate each other, so they can drift apart
+// silently. Test 72 now names every value on which the bundle departs from the
+// default and refuses any other, which is what makes the duplication safe.
 
 const DEFAULTS = Object.freeze({
   shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
