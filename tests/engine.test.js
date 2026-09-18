@@ -7400,7 +7400,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
     eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
     eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
-    eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
+    eq(REG.characterCreation.layout.equipmentChoiceView, 'grid', 'equipment selectors default to the configured grid view');
     eq(REG.characterCreation.layout.equipmentAutoAdvance, false, 'equipment selection waits for Continue by default');
     eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,rightHand,leftHand,equipSlot,relic',
       'the equipment subcard order is authored in character-creation content');
