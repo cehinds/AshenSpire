@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1132",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A conversation reads properly on a phone",
+    "detail": "On a phone the bar along the top was drawing its two lines of information on top of each other — your class over your cinders, the act over the floor — so none of it could be read. It now keeps two readable lines, and the bar is given the room it needs. The two speakers were also far too small, like figures seen at a distance: on a narrow screen you now see each of them whole and large, filling the scene above the text. They stand further apart, so neither crowds the other, and the quest's name is no longer clipped along its top edge.",
+    "build": "0.7.1.80",
+    "pullRequest": 1132,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1132"
+  },
+  {
+    "id": "pr-1129",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The dialogue design says how far apart the speakers stand, and that the quest's name is never clipped",
+    "detail": "Nothing a player sees changes yet. The design notes for quest conversations now set a smallest gap in pixels between the two speakers, as well as a share of the screen, so a narrow screen keeps them apart; and they require the text band's top to clear the quest title's line, so no letter loses its top edge. The game itself follows in a later change.",
+    "build": "0.7.1.77",
+    "pullRequest": 1129,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1129"
+  },
+  {
+    "id": "pr-1122",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Twenty-one documents nothing pointed at are gone",
+    "detail": "Nothing a player sees changes. Old planning and audit documents that no other document or tool referred to have been removed, so the ones that are kept are the ones that are read.",
+    "build": "0.7.1.77",
+    "pullRequest": 1122,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1122"
+  },
+  {
+    "id": "pr-1119",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A small editor for the game's content tables",
+    "detail": "Nothing a player sees changes. Anyone working on the game can now edit its content tables — cards, enemies, items and the rest — through a local editor in the browser instead of hand-editing the files, and it refuses edits that would break a table's own rules.",
+    "build": "0.7.1.77",
+    "pullRequest": 1119,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1119"
+  },
+  {
     "id": "pr-1124",
     "date": "2026-09-18",
     "group": "2026-09-18",

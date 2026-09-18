@@ -1072,6 +1072,12 @@ try {
   console.error('FAIL Armament combat kits:', error);
 }
 try {
+  await import('./card-presentation-levels.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL The card presentation levels (manifest, row solver, subset law):', error);
+}
+try {
   await import('./dev-sweep-fixes.test.mjs');
 } catch (error) {
   zoomExtra++;

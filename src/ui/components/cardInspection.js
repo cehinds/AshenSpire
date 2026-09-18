@@ -158,6 +158,16 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     card.setAttribute('aria-pressed', 'false');
     card.removeAttribute('aria-current');
     card.dispatchEvent(new CustomEvent('cardinspectioncancelreveal'));
+    // HOW A FACE LEARNS IT MUST SAY LESS AGAIN. A card's presentation level
+    // (src/model/cardFields.js) is `focus` while it is lit and its floor when
+    // it is not, so the two cards whose level changed on any selection are
+    // exactly the one newly lit and the one the store has just doused — and
+    // the store hands us that second one by calling this. The event is fired
+    // ON THE CARD ITSELF, so the face that repaints is that card and no other:
+    // dev deliberately deleted the `document.querySelectorAll` sweep this
+    // would otherwise grow back (see the header of cardSelection.js), and a
+    // sweep is also how a card removed from the DOM kept being reconciled.
+    card.dispatchEvent(new CustomEvent('cardinspectiondouse'));
   };
   const select = () => {
     lightCard(identity, douse);

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { equipmentCardModel, equipmentCardTokens } from '../src/model/equipmentCard.js';
@@ -49,4 +49,23 @@ test('a card with no tag badges gives the tag row to the effect row, never to th
   assert.equal(bare.heights.art, full.heights.art);
   assert.ok(bare.heights.effects > full.heights.effects);
   assert.ok(Object.values(bare.heights).reduce((sum, height) => sum + height, 0) <= bare.budget + 1e-9);
+});
+
+// THE READING DOOR'S LEVEL IS NOT THE CALLER'S TO SET (Copilot review, #1127).
+// `renderEquipmentInspection` spread `options` AFTER its own `level: 'inspect'`,
+// so a caller handing a level down overrode it — and `collectibleCard.js`
+// forwards `{ ...options }` verbatim, which is a live path for it. The result
+// was a card inspected at browsing size with its text cut: the exact defect the
+// sizing work closes. Asserted on the source rather than through a DOM, because
+// the fault was the ORDER of two keys in one object literal and that is what has
+// to stay put.
+test('the inspect door pins its own level, whatever a caller forwards through options', () => {
+  const source = readFileSync(new URL('../src/ui/components/equipmentCard.js', import.meta.url), 'utf8');
+  const call = source.match(/export function renderEquipmentInspection[\s\S]*?renderEquipmentCard\([^;]*?\);/);
+  assert.ok(call, 'renderEquipmentInspection still calls renderEquipmentCard');
+  const spreadAt = call[0].indexOf('...options');
+  const levelAt = call[0].indexOf("level: 'inspect'");
+  assert.ok(spreadAt >= 0 && levelAt >= 0, 'the door still spreads options and sets its own level');
+  assert.ok(levelAt > spreadAt,
+    "level: 'inspect' must come AFTER ...options so a forwarded level cannot override the reading door");
 });

@@ -85,7 +85,34 @@ function connectCdp(wsUrl) {
 // Runs INSIDE the page. Kept as one expression so it can be handed to
 // Runtime.evaluate without a build step.
 const PROBE = `(() => {
-  const out = { bleeds: [], escaped: [], scanned: 0 };
+  const out = { bleeds: [], escaped: [], cuts: [], scanned: 0 };
+  // THE GAP THIS CLOSES, AND WHY IT IS NARROW.
+  //
+  // The scan below only looks at elements that OWN a text node, so a container
+  // whose text lives one level down was invisible to it. That is not a corner
+  // case: it is how a card face is built. Measured at b3130e515, on a phone,
+  // the inspect modal cut 37 px off \`.epc-effects\` and 37 px off
+  // \`.epc-bonus\` — a relic's whole rules text, gone off the bottom of the
+  // card with no ellipsis, no clamp and no scroller — and textfit reported a
+  // clean run on those screens. It could not see them.
+  //
+  // KEPT DELIBERATELY NARROW. Applying this to every childless-text container
+  // in the tree reports flex and grid parents whose overflow is the layout
+  // working as intended. A CARD FACE IS DIFFERENT: it is a fixed canvas that
+  // is scaled into its host, so anything past its edge is not laid out
+  // elsewhere, it is LOST. So this asks only about regions inside a card face,
+  // where the answer is unambiguous, and says nothing about anywhere else.
+  const cardRegionCut = (el, cs) => {
+    if (!el.closest('.epc-frame, .card')) return;
+    if (!(el.textContent || '').trim()) return;
+    if (/auto|scroll/.test(cs.overflowX + ' ' + cs.overflowY)) return;
+    if (cs.webkitLineClamp && cs.webkitLineClamp !== 'none') return;
+    if (cs.textOverflow === 'ellipsis') return;
+    const dy = el.scrollHeight - el.clientHeight;
+    const dx = el.scrollWidth - el.clientWidth;
+    if (dx <= 1 && dy <= 1) return;
+    out.cuts.push({ el: id(el), dx: Math.round(dx), dy: Math.round(dy), text: snippet(el) });
+  };
   const id = (el) => el.tagName.toLowerCase()
     + (el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\\s+/).slice(0, 3).join('.') : '');
   const snippet = (el) => (el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 44);
@@ -93,7 +120,7 @@ const PROBE = `(() => {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity) === 0) continue;
     const ownText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (!ownText) continue;
+    if (!ownText) { cardRegionCut(el, cs); continue; }
     out.scanned += 1;
     const scrolls = /auto|scroll/.test(cs.overflowX) || /auto|scroll/.test(cs.overflowY);
     const clamps = cs.webkitLineClamp && cs.webkitLineClamp !== 'none';
@@ -157,6 +184,21 @@ const PLANT = `(() => {
   el.style.cssText = 'position:fixed;left:0;top:0;width:40px;overflow:hidden;white-space:nowrap;font-size:14px';
   el.textContent = 'A LABEL FAR WIDER THAN FORTY PIXELS';
   document.body.appendChild(el);
+  // AND THE SECOND SHAPE, watched red on its own terms. A card-face region
+  // whose text lives one level down and runs off the bottom of the face: the
+  // exact thing that hid 37 px of a relic's rules text on a phone while this
+  // tool reported the screen clean. Both plants must be seen or the run fails.
+  const face = document.createElement('div');
+  face.className = 'epc-frame textfit-plant-frame';
+  face.style.cssText = 'position:fixed;left:0;top:200px;width:120px;height:120px;overflow:hidden';
+  const region = document.createElement('div');
+  region.className = 'textfit-plant-region';
+  region.style.cssText = 'height:20px;overflow:hidden';
+  const line = document.createElement('span');
+  line.textContent = 'A CARD REGION WHOSE TEXT RUNS WELL PAST THE BOTTOM OF ITS OWN BOX AND IS LOST';
+  region.appendChild(line);
+  face.appendChild(region);
+  document.body.appendChild(face);
   return true;
 })()`;
 
@@ -201,10 +243,12 @@ async function main() {
         if (!got) { findings.push({ shape, screen, err: 'probe returned nothing' }); continue; }
         scanned += got.scanned;
         if (SELFTEST) {
-          if (got.bleeds.some((b) => b.el.includes('textfit-plant'))) plantSeen += 1;
+          if (got.bleeds.some((b) => b.el.includes('textfit-plant'))
+            && (got.cuts || []).some((c) => c.el.includes('textfit-plant-region'))) plantSeen += 1;
           continue;
         }
         for (const b of got.bleeds) findings.push({ shape, screen, kind: 'bleed', ...b });
+        for (const c of got.cuts || []) findings.push({ shape, screen, kind: 'cut', ...c });
         for (const e of got.escaped) findings.push({ shape, screen, kind: 'escaped', ...e });
       }
     }
@@ -216,9 +260,9 @@ async function main() {
 
   const shapes = SHAPES.map((s) => `${s.w}x${s.h}`).join(', ');
   if (SELFTEST) {
-    console.log(`textfit --selftest: plant observed red in ${plantSeen}/${plantRuns} page(s)`);
+    console.log(`textfit --selftest: both plants (bleed + card-face cut) observed red in ${plantSeen}/${plantRuns} page(s)`);
     if (plantSeen !== plantRuns) {
-      console.error('textfit --selftest RED — the probe MISSED a planted bleed. It cannot be quoted until it sees one.');
+      console.error('textfit --selftest RED — the probe MISSED a planted bleed or a planted card-face cut. It cannot be quoted until it sees both.');
       return 1;
     }
     console.log('textfit --selftest OK — the probe sees a bleed it is meant to see.');
@@ -233,6 +277,7 @@ async function main() {
     for (const f of findings) {
       const at = `${f.shape.w}x${f.shape.h} ${f.screen}`;
       if (f.err) console.error(`  ERR   ${at} — ${f.err}`);
+      else if (f.kind === 'cut') console.error(`  CUT   ${at} ${f.el} loses ${f.dx}x${f.dy}px of a card face — "${f.text}"`);
       else if (f.kind === 'bleed') console.error(`  BLEED ${at} ${f.el} overflows by ${f.dx}x${f.dy}px — "${f.text}"`);
       else console.error(`  OFF   ${at} ${f.el} at [${f.rect}] outside [${f.view}] — "${f.text}"`);
     }
