@@ -78,3 +78,35 @@ for (const id of ['shop.burn.idle', 'shop.burn.ready']) {
 }
 
 console.log(`PASS ${checks}/${checks}; every card owes two beats and the selection grids keep the first`);
+
+// A REPAINT MAY DESTROY ONLY WHAT IT DREW.
+//
+// Selection repaints a card's face (#1128). The paint kept a NAMED PAIR of
+// children — the `i` and the chevron — and deleted everything else, but the
+// combat hand appends a positional keycap, a `card-unavailable-reason` pill
+// and its `.hand-hit-lane` after the renderer has run. So the first tap on a
+// card in combat removed them, and the hit lane is part of how the hand
+// decides what a touch landed on: the defect could move where a player's taps
+// go. It shipped to dev before it was caught.
+//
+// The rule that replaced it is an inversion, and the inversion is the thing
+// worth guarding: the renderer marks what IT drew, and a repaint keeps every
+// child that is not marked. An allow-list cannot be right here, because the
+// renderer cannot know what a surface will add — so a future edit that goes
+// back to naming children is the regression, whatever names it lists.
+//
+// This guards the SOURCE SHAPE, as the two rules above do. The behavioural
+// proof is the combat gates (tools/handlayout.mjs, tools/hand-resize-probe.mjs).
+{
+  const card = read('src/ui/components/card.js');
+  const paint = card.slice(card.indexOf('const paint = ('));
+  const kept = paint.slice(paint.indexOf('const kept ='), paint.indexOf('el.innerHTML ='));
+  assert.doesNotMatch(kept, /card-info-button|card-more-button/,
+    'the repaint keep-list must not name individual children again: mark what the renderer drew and keep the rest');
+  assert.match(kept, /cardPainted/,
+    'the repaint decides what to keep by the renderer\'s own paint marker');
+  assert.match(paint, /dataset\.cardPainted = '1'/,
+    'each paint stamps the children it drew, or the next repaint cannot tell them from a caller\'s');
+  assert.ok(paint.indexOf("dataset.cardPainted = '1'") < paint.indexOf('for (const node of kept)'),
+    'the stamp lands before the kept children are re-appended, or the kept ones are stamped too and deleted next time');
+}

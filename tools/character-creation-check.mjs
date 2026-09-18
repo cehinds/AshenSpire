@@ -848,6 +848,13 @@ async function checkCatalog(width, height, screenshotName) {
   `${width}x${height}: component catalog includes every creation selector without horizontal overflow`);
   assert(Object.values(receipt.primitives).every((count) => count >= 1),
     `${width}x${height}: component catalog references every reusable creation component`);
+  // ONE FACE IS NOT THREE LEVELS. The sweep above asks only for `>= 1` of each
+  // primitive, and this specimen's entire claim is that glance, focus and
+  // inspect draw DIFFERENT faces — so a specimen that lost two of them still
+  // satisfied the check it was counted by. It already counts faces rather than
+  // wrappers; what it did not do was count how many.
+  assert(receipt.primitives.levels === 3,
+    `${width}x${height}: the presentation-levels specimen draws all three levels (${receipt.primitives.levels} face(s))`);
   await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="grid"]').click()`);
   assert(await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="grid"]').getAttribute('aria-pressed') === 'true'`),
     `${width}x${height}: catalog view-mode specimen switches to Grid`);
