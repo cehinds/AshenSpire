@@ -47,10 +47,38 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'a silent state-loss profile swap is allowed through (the compatibility refusal dropped)',
+        // TWO SITES GUARD THE ATTACK CASE, AND EITHER ALONE REFUSES IT.
+        // stampDeck checks the attack slots in their own plan loop and then
+        // checks every stamped instance again, both throwing the same
+        // `Incompatible attack profile swap`. Planting one site left the other
+        // to throw it, so this plant read as evidence while proving nothing —
+        // it was UNCAUGHT the moment the baseline stopped drowning it. The
+        // defect named here is the refusal being GONE, so both sites go.
+        edits: [
+          {
+            file: 'src/model/loadout.js',
+            find: 'if (prior && next && prior.compatibility !== next.compatibility) {',
+            replace: 'if (false && prior && next && prior.compatibility !== next.compatibility) {',
+          },
+          {
+            file: 'src/model/loadout.js',
+            find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
+            replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
+          },
+        ],
+        expectRed: /FAIL compatibility is consumed to refuse silent state-loss swaps/,
+      },
+      {
+        name: 'the per-instance refusal drops, leaving the non-attack roles unguarded',
+        // The attack-plan loop only ever sees attack slots, so the per-instance
+        // site is the ONLY thing refusing a guard/technique/kit instance. On
+        // its own it is deletable without a single red, which is why it gets
+        // its own plant and its own named assertion rather than sharing the
+        // attack one.
         file: 'src/model/loadout.js',
         find: 'if (prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
         replace: 'if (false && prior && prior.compatibility !== nextCompatibility) throw new Error(`Incompatible',
-        expectRed: /FAIL compatibility is consumed to refuse silent state-loss swaps/,
+        expectRed: /FAIL a non-attack role refuses the same silent state-loss swap/,
       },
     ],
   }));
@@ -116,11 +144,32 @@ check((magic?.effects.find((e) => e.op === 'damage')?.tags || []).includes('star
 check(Array.isArray(magic?.cardTags) && magic.cardTags.includes('starstone'),
   'Ash Staff attack presents its explicit magic/starstone tag', JSON.stringify(magic?.cardTags));
 check(R.cards.get('starstonePebble').name === 'Starstone Pebble', 'IP-safe Starstone Pebble remains authoritative');
-check(attack?.profileReceipt?.base === 2 && attack.profileReceipt.tier === 2
-  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 4,
-  'Ash Staff INT receipt is exactly 2 + 2 + 0 = 4', JSON.stringify(attack?.profileReceipt));
-check(magic?.effects.find((e) => e.op === 'damage')?.amount === 4,
-  'resolved Ash Staff execution definition uses receipt value 4', JSON.stringify(magic?.effects));
+// THE DEFAULT CREATION MODE OWNS THIS NUMBER, NOT THE PROFILE ROW. SPEC §3.5
+// makes Magic `-6 + WIS`, and §5.1 makes `tuned` the default mode with a
+// contractual Starseer preset of 11/11/8/13/10 — so the shipped receipt is
+// -6 + 13 × 1 + 0 = 7. The profile row's own 2 + floor(INT / 5) is the
+// pre-`tuned` formula that `tuned` layers over, and it is still the answer for
+// `standard`/`pointbuy`, which is exactly the additive, save-safe promise §5.1
+// makes for the older modes. This row asserted that legacy answer against the
+// default mode and so shipped red from 9434b7c5 (2026-08-23) onward: the mode
+// moved and the expectation did not. The legacy answer keeps its own row below,
+// so neither side can move again without one of the two going red by name.
+check(attack?.profileReceipt?.base === -6 && attack.profileReceipt.sourceStat === 'wisdom'
+  && attack.profileReceipt.tier === 13 && attack.profileReceipt.gainPerTier === 1
+  && attack.profileReceipt.rarityBonus === 0 && attack.profileReceipt.value === 7,
+  'Ash Staff tuned WIS receipt is exactly -6 + 13 + 0 = 7', JSON.stringify(attack?.profileReceipt));
+check(magic?.effects.find((e) => e.op === 'damage')?.amount === 7,
+  'resolved Ash Staff execution definition uses receipt value 7', JSON.stringify(magic?.effects));
+// §5.1: "both older modes must continue to validate exactly as authored". A
+// `standard` run carries no equipmentProfiles layer, so it reads the profile
+// row untouched — base 2, INT, per 5 — and that is the one place 2 + 2 + 0 = 4
+// is still the right answer.
+const standardSeer = createRunState({ seed: 2, classId: 'starseer', registries: R, attributeMode: 'standard' });
+const standardReceipt = standardSeer.deck.find((c) => c.equipmentRole === 'attack')?.profileReceipt;
+check(standardReceipt?.base === 2 && standardReceipt.sourceStat === 'intelligence'
+  && standardReceipt.pointsPerTier === 5 && standardReceipt.tier === 2
+  && standardReceipt.rarityBonus === 0 && standardReceipt.value === 4,
+  'legacy standard mode still reads the authored INT profile: 2 + 2 + 0 = 4', JSON.stringify(standardReceipt));
 
 const C = createCombat({
   registries: R,
@@ -141,8 +190,8 @@ if (!C.piles.hand.includes(liveAttack)) {
 const previewDamage = previewCard(C, liveAttack.instanceId, 'e1').values.find((v) => v.op === 'damage').value;
 const hpBefore = C.enemies[0].hp;
 dispatch(C, { type: 'playCard', cardInstanceId: liveAttack.instanceId, targetId: 'e1' });
-check(previewDamage === 4 && hpBefore - C.enemies[0].hp === previewDamage,
-  'Ash Staff magic preview and execution share exact value 4', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
+check(previewDamage === 7 && hpBefore - C.enemies[0].hp === previewDamage,
+  'Ash Staff magic preview and execution share exact value 7', `${previewDamage}/${hpBefore - C.enemies[0].hp}`);
 
 // Stable role identity: a profile swap may change what the card resolves to,
 // never its instance id, upgrade flag, or signature card.
@@ -213,15 +262,21 @@ let layeredError = '';
 try {
   layered = createRunState({
     seed: 3, classId: 'starseer', registries: R,
+    // THE MODE LAYER IS NOT A CALLER ARGUMENT. Since 9434b7c5 the creation
+    // mode's own `equipmentProfiles` occupies that slot (state.js
+    // initializeRunDerivedStats), so a caller-supplied modeModifiers.
+    // equipmentProfiles is replaced rather than merged — passing one here
+    // would assert a layer that never lands. `tuned` supplies it instead, and
+    // base === -6 below is the proof it did.
     derivedStatOptions: {
-      modeModifiers: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 2 } } },
       runModifiers: [{ equipmentProfiles: { staffMagicAttack: { gainPerTier: 3 } } }],
       explicitOverride: { equipmentProfiles: { staffMagicAttack: { gainPerTier: 4 } } },
     },
   });
 } catch (error) { layeredError = error.message; layered = createRunState({ seed: 3, classId: 'starseer', registries: R }); }
 const layeredAttack = layered.deck.find((c) => c.equipmentRole === 'attack');
-check(layeredAttack?.profileReceipt?.gainPerTier === 4 && layeredAttack.profileReceipt.value === 10,
+check(layeredAttack?.profileReceipt?.base === -6 && layeredAttack.profileReceipt.gainPerTier === 4
+  && layeredAttack.profileReceipt.value === 46,
   'mode/run/explicit equipment scaling resolves once with explicit precedence', layeredError || JSON.stringify(layeredAttack?.profileReceipt));
 check(layered.equipmentProfileRuleSnapshot?.profiles?.staffMagicAttack?.gainPerTier === 4,
   'run persists the host-resolved equipment profile snapshot', JSON.stringify(layered.equipmentProfileRuleSnapshot));
@@ -291,6 +346,17 @@ let incompatibleSaid = '';
 try { stampDeck(R, incompatible); } catch (error) { incompatibleSaid = error.message; }
 check(/Incompatible attack profile swap/.test(incompatibleSaid),
   'compatibility is consumed to refuse silent state-loss swaps', incompatibleSaid);
+// THE ATTACK PLAN LOOP NEVER SEES THESE. Guard, technique and kit-granted
+// instances are refused by the per-instance site alone; the row above is
+// satisfied by either site and so says nothing about this one. Without this
+// red the non-attack half of the refusal is deletable in silence.
+const incompatibleGuardRun = createRunState({ seed: 34, classId: 'starseer', registries: R });
+const incompatibleGuard = incompatibleGuardRun.deck.find((c) => c.equipmentRole === 'guard');
+incompatibleGuard.profileId = 'staffMagicAttack';
+let incompatibleGuardSaid = '';
+try { stampDeck(R, incompatibleGuardRun); } catch (error) { incompatibleGuardSaid = error.message; }
+check(/Incompatible guard profile swap/.test(incompatibleGuardSaid),
+  'a non-attack role refuses the same silent state-loss swap', incompatibleGuardSaid);
 
 const persisted = createRunState({ seed: 4, classId: 'starseer', registries: R });
 const saveStorage = createMemoryStorage();
