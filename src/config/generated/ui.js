@@ -40,7 +40,7 @@
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
-// source content/config/ui/scenes/w4c-dialogue.json 2e77d4eb2a49419a
+// source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
@@ -320,7 +320,9 @@ export const uiConfig = deepFreeze({
           "paddingBlockRem": 0.2,
           "paddingInlineRem": 0.5,
           "gapRem": 0.25,
-          "maxLines": 2
+          "maxLines": 2,
+          "minHeightRem": 2.75,
+          "maxHeightRem": 5.5
         },
         "hud": {
           "compactBelowHeightPx": 500
@@ -342,6 +344,8 @@ export const uiConfig = deepFreeze({
           "minGapPx": 24,
           "fit": "shrinkToLane",
           "anchor": "revealLine",
+          "maxOuterOverflowVw": 8,
+          "minVisibleHeightVh": 22,
           "listener": {
             "minOpacity": 0.62,
             "brightness": 0.8,

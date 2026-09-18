@@ -4665,6 +4665,15 @@ button[data-button-size] {
   grid-template-columns: repeat(var(--dialogue-response-columns, 1), minmax(0, 1fr));
   gap: var(--dialogue-response-gap, 0.4rem);
 }
+/* THE ANSWERS TAKE THE BAND'S SPARE HEIGHT rather than leaving a strip of it
+   empty under the last one (owner, a phone, 2026-09-18) — but only when the
+   band can hold them grown, which the stage measures before asking for it.
+   They stop at sizing.responses.maxHeightRem, so four answers never become
+   slabs on a desktop. */
+.dialogue-region[data-response-stretch='true'] > .dialogue-responses {
+  align-content: stretch;
+  grid-auto-rows: var(--dialogue-response-row-h, minmax(var(--dialogue-response-min-h, 2.75rem), var(--dialogue-response-max-h, 5.5rem)));
+}
 .dialogue-responses:empty { display: none; }
 .dialogue-region[data-response-placement='beside'] > .dialogue-responses { align-self: center; }
 .dialogue-responses > .dialogue-response {

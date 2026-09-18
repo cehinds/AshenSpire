@@ -286,8 +286,8 @@ export function dialogueLanes(frameWidth, layout) {
   const laneWidth = (width - inset * 2 - gap) / 2;
   if (!(laneWidth > 0)) throw new Error('dialogue portrait insets and minGapVw leave no lane for a figure');
   return Object.freeze({
-    left: Object.freeze({ left: inset, width: laneWidth }),
-    right: Object.freeze({ left: width - inset - laneWidth, width: laneWidth }),
+    left: Object.freeze({ left: inset, width: laneWidth, side: 'left' }),
+    right: Object.freeze({ left: width - inset - laneWidth, width: laneWidth, side: 'right' }),
   });
 }
 
@@ -434,7 +434,13 @@ export function dialogueFrameVars(layout, parent) {
     '--dialogue-response-pad-inline': rem(responses.paddingInlineRem),
     '--dialogue-response-gap': rem(responses.gapRem),
     '--dialogue-response-lines': String(responses.maxLines),
-    '--dialogue-response-min-h': `calc(${round(parent.sizing.minimums.targetPx)}px / var(--ui-zoom, 1))`,
+    '--dialogue-response-min-h': `max(${rem(responses.minHeightRem)}, calc(${round(parent.sizing.minimums.targetPx)}px / var(--ui-zoom, 1)))`,
+    // THE ANSWERS TAKE THE ROOM RATHER THAN LEAVING IT EMPTY. The band is one
+    // size for the whole conversation, so the controls do not move when the
+    // answers appear; what that reserved on the answering beat was a visible
+    // empty strip under the last answer (owner, a phone, 2026-09-18). The rows
+    // grow into it, up to sizing.responses.maxHeightRem.
+    '--dialogue-response-max-h': rem(responses.maxHeightRem),
     // The listener is dimmed, never past the floor its config sets: a speaker
     // reads as the speaker, and the other one still reads as a person.
     '--dialogue-listener-opacity': String(listener.minOpacity),
