@@ -76,6 +76,7 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
+import { cardLevelCssProperties } from './ui/models/CardSizeModel.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -281,6 +282,12 @@ document.documentElement.style.setProperty('--selection-glow', selectionGlowFilt
   document.documentElement.style.setProperty('--inspect-size', inspect.size);
   document.documentElement.style.setProperty('--inspect-label', inspect.label);
   document.documentElement.style.setProperty('--inspect-gap', inspect.gap);
+}
+// How big a card is, at each of the three levels (config-owned). A surface
+// whose width is decided by its container rather than by its render call reads
+// these; a card that knows its own level carries `--epc-level-w` instead.
+for (const [name, value] of Object.entries(cardLevelCssProperties())) {
+  document.documentElement.style.setProperty(name, value);
 }
 const HUD_PRESENTATION = UI.hudPresentation || {};
 const projectHudToken = (key, min, max, cssName, unit) => {

@@ -457,10 +457,12 @@ function pieceArt(piece, fallback = '⚔') {
 let chosenNoteSerial = 0;
 
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
-export function pieceChip(registries, piece, { selected, kind = null, presentation = null }) {
+export function pieceChip(registries, piece, { selected, kind = null, presentation = null, level = 'glance' }) {
   const card = document.createElement('div');
   card.className = 'equip-chip poker-equipment-choice';
-  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false }) : renderEquipmentCard(registries, piece, { interactive: false, presentation })).card;
+  // A chip is something you are BROWSING past, so it is a glance card. The
+  // reading is the detail pane's job and the art is the inspect modal's.
+  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false, level }) : renderEquipmentCard(registries, piece, { interactive: false, presentation, level })).card;
   face.tabIndex = 0;
   face.setAttribute('role', 'group');
   const choose = document.createElement('button');
@@ -520,8 +522,8 @@ function inventoryFace(registries, row, {
     const trail = el.querySelector('.r-trail');
     // WC2: the metadata band ends with how many of this item the run holds.
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
-      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count })
-      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count })).card);
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, level: 'focus' })
+      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, level: 'focus' })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }
