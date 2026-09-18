@@ -47,11 +47,12 @@ export function componentDimensions(s,mode){
     const d=dialogueScene,slot=d.portraits.slot,share=d.portraits.visibleFraction;
     const floorLine=units(head+scene*(1-d.background.floorHeightPercent/100)),reveal=head+scene;
     const slotTop=head+slot.topOffsetVh,visible=units(reveal-slotTop),figure=units(visible*share.denominator/share.numerator);
-    const lane=units((100-2*slot.insetVw-d.portraits.minGapVw)/2),slotWidth=Math.min(mode==='wide'?slot.widthVw:slot.compactWidthVw,lane);
+    const lane=units((100-2*slot.insetVw-d.portraits.minGapVw)/2) // the gap also has a ${d.portraits.minGapPx}px floor
+    ,slotWidth=Math.min(mode==='wide'?slot.widthVw:slot.compactWidthVw,lane);
     row('scene.skybox',100,floorLine,'Layer z2 · frame top → floor line; runs behind the HUD band');
     row('scene.floor',100,units(h-floorLine),`Layer z3 · floor line at ${floorLine}vh → frame bottom; runs behind the context and footer bands`);
     row('scene.playerPortrait',slotWidth,`${figure}vh figure · ${visible}vh visible`,`Layer z4 · stays inside its ${lane}vw lane; shrinks only when wider than the lane · full figure zoomed so the top ${share.numerator}/${share.denominator} spans slot top (${slotTop}vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped`);
-    row('scene.npcPortrait',slotWidth,`${figure}vh figure · ${visible}vh visible`,`Layer z4 · as the player, mirrored; lanes are half the frame less insets and a ${d.portraits.minGapVw}vw gap, so both are always visible; a figure wider than its ${lane}vw lane shrinks and sinks to the reveal line; the speaker draws above the listener`);
+    row('scene.npcPortrait',slotWidth,`${figure}vh figure · ${visible}vh visible`,`Layer z4 · as the player, mirrored; lanes are half the frame less insets and a gap of ${d.portraits.minGapVw}vw or ${d.portraits.minGapPx}px, whichever is larger, so both are always visible; a figure wider than its ${lane}vw lane shrinks and sinks to the reveal line; the speaker draws above the listener`);
     row('context.revealLine',100,`edge at ${reveal}vh`,'Top edge of the opaque context band; everything above it is visible');
     row('context.dialogue',95,units(ctx-4),'Layer z5 · opaque band; quest title, narrative, responses; no sub-headings');
     const c=d.context,columns=c.responseColumns[mode]??c.responseColumns.compact,responseRows=Math.ceil(c.maxVisibleResponses/columns);

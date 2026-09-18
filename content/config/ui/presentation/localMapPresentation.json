@@ -1,0 +1,18 @@
+{
+  "sizing": {
+    "defaults": {
+      "defaultZoom": 1.5,
+      "minZoom": 1,
+      "maxZoom": 5,
+      "zoomStep": 1.25,
+      "inspectionFactor": 1.3,
+      "dragThreshold": 7,
+      "panFraction": 0.18,
+      "focusDuration": 200,
+      "wheelSensitivity": 0.002
+    }
+  },
+  "behavior": {
+    "overrides": {}
+  }
+}

@@ -456,7 +456,8 @@ FOR layer IN SortByZ(scene.layerOrder):           // bottom of the stack first
 // playerPortrait, npcPortrait: FullFigure(art) placed by
 //     CloseUpPlacement(art, Slot(side, scene.portraits.slot), revealLine, scene.portraits.visibleFraction)
 //     the opaque context band occludes each figure below revealLine; never crop or mask
-//     lane.width = (frame.width - 2 × slot.inset - scene.portraits.minGapVw) / 2   // one lane per side; never overlap
+//     gap = Max(scene.portraits.minGapVw × frame.width, scene.portraits.minGapPx)   // pixel floor for narrow screens
+//     lane.width = (frame.width - 2 × slot.inset - gap) / 2   // one lane per side; never overlap
 //     IF scene.portraits.fit = shrinkToLane: figure.height = Min(figure.height, lane.width / ArtAspect(art))
 //     figure.center = Clamp(slot.center, lane.start + figure.width / 2, lane.end - figure.width / 2)
 //     IF scene.portraits.anchor = revealLine: figure.top = revealLine - figure.height × visibleFraction   // never hover

@@ -288,6 +288,16 @@ function collectContentProblems(bundle, errors = []) {
   const err = (path, msg) => errors.push({ path, msg });
   const b = bundle || {};
 
+  // The `events` door belongs to tools/content-build.mjs (its K15 matrix): a
+  // bundle carrying no events section at all is a BUILD fault, not a content
+  // fault. The cross-reference rules below read the shipped event list, and an
+  // absent section read as "zero shipped events" makes every event-referencing
+  // row look wrong — a flood of false refusals that never names the one thing
+  // actually missing, and that steals the door from its owner. So when the door
+  // is open we skip the cross-references ONLY: every shape rule below still
+  // runs, and an events section that SHIPS is cross-referenced exactly as before.
+  const eventsDoorOpen = b.events == null;
+
   const schoolBuildup = b.balance && b.balance.arcaneExposure && b.balance.arcaneExposure.schoolBuildupMultipliers;
   if (!schoolBuildup || typeof schoolBuildup !== 'object' || Array.isArray(schoolBuildup)) {
     err('balance.arcaneExposure.schoolBuildupMultipliers', 'must be an explicit school map');
@@ -309,12 +319,12 @@ function collectContentProblems(bundle, errors = []) {
     } else {
       const eventIds = new Set((Array.isArray(b.events) ? b.events : []).map((e) => e && e.id));
       for (const [eventId, requirement] of Object.entries(eventGates)) {
-        if (!eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
+        if (!eventsDoorOpen && !eventIds.has(eventId)) err(`eventHistoryRequirements.${eventId}`, 'unknown event');
         for (const problem of eventChoiceRequirementProblems(requirement)) err(`eventHistoryRequirements.${eventId}`, problem);
         for (const group of ['all', 'any', 'none']) {
           for (const ref of (requirement && Array.isArray(requirement[group]) ? requirement[group] : [])) {
             if (ref && ref.eventId === eventId) err(`eventHistoryRequirements.${eventId}.${group}`, 'an event cannot be gated on its own choice');
-            if (ref && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
+            if (ref && !eventsDoorOpen && !eventIds.has(ref.eventId)) err(`eventHistoryRequirements.${eventId}.${group}`, `unknown event '${ref && ref.eventId}'`);
           }
         }
       }
@@ -350,7 +360,7 @@ function collectContentProblems(bundle, errors = []) {
     });
     const eventSpeakers = b.eventSpeakers || {};
     for (const [eventId, speakerId] of Object.entries(eventSpeakers)) {
-      if (!eventById.has(eventId)) err(`eventSpeakers.${eventId}`, 'unknown event');
+      if (!eventsDoorOpen && !eventById.has(eventId)) err(`eventSpeakers.${eventId}`, 'unknown event');
       if (!speakerIds.has(speakerId)) err(`eventSpeakers.${eventId}`, `unknown speaker '${speakerId}'`);
     }
     (Array.isArray(b.atlasQuests) ? b.atlasQuests : []).forEach((quest, index) => {
@@ -371,7 +381,7 @@ function collectContentProblems(bundle, errors = []) {
           const steps = Array.isArray(chain && chain.steps) ? chain.steps : [];
           if (!steps.length) err(`${at}.steps`, 'a quest chain needs at least one step');
           steps.forEach((eventId, index) => {
-            if (!eventById.has(eventId)) err(`${at}.steps[${index}]`, `quest chain step '${eventId}' is not a shipped event`);
+            if (!eventsDoorOpen && !eventById.has(eventId)) err(`${at}.steps[${index}]`, `quest chain step '${eventId}' is not a shipped event`);
             else if (!eventSpeakers[eventId]) err(`${at}.steps[${index}]`, `chain event '${eventId}' names no speaker (eventSpeakers)`);
           });
           const completes = Array.isArray(chain && chain.completes) ? chain.completes : [];
@@ -381,12 +391,14 @@ function collectContentProblems(bundle, errors = []) {
             const ids = choiceIdsOf(ref && ref.eventId);
             const choiceIndex = ref ? ids.indexOf(ref.choiceId) : -1;
             const event = ref && eventById.get(ref.eventId);
-            if (!event || choiceIndex < 0) {
+            // With the events door open the event half of this ref is unknowable;
+            // eventChoiceIds still ships, so the choice half is still proven.
+            if ((!eventsDoorOpen && !event) || choiceIndex < 0) {
               err(where, `quest completion ref '${ref && ref.eventId}/${ref && ref.choiceId}' does not resolve to a shipped choice`);
               return;
             }
             if (!steps.includes(ref.eventId)) err(where, `quest completion ref '${ref.eventId}/${ref.choiceId}' is not a step of this chain`);
-            const choice = Array.isArray(event.choices) ? event.choices[choiceIndex] : null;
+            const choice = event && Array.isArray(event.choices) ? event.choices[choiceIndex] : null;
             if (ref.choiceId === 'leave' || (choice && String(choice.label).trim().toLowerCase() === 'leave')) {
               err(where, `a Leave choice may not complete a quest ('${ref.eventId}/${ref.choiceId}')`);
             }
@@ -412,7 +424,7 @@ function collectContentProblems(bundle, errors = []) {
     const startingRelics = new Set((Array.isArray(b.classes) ? b.classes : []).map((row) => row && row.startingRelic));
     for (const relic of (Array.isArray(b.relics) ? b.relics : [])) {
       if (!relic || relic.pool !== 'quest') continue;
-      if (!granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
+      if (!eventsDoorOpen && !granted.has(relic.id)) err(`relics.${relic.id}.pool`, 'a quest-pool relic must be granted by id from at least one event choice');
       if (startingRelics.has(relic.id)) err(`relics.${relic.id}.pool`, 'a class starting relic cannot be quest-pool');
     }
   }
