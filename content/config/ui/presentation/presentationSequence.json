@@ -1,0 +1,131 @@
+{
+  "behavior": {
+    "schemaVersion": 1,
+    "historyDepth": 60
+  },
+  "motion": {
+    "cues": {
+      "anticipation": 0,
+      "release": 0.3,
+      "contact": 0.5,
+      "recovery": 0.78
+    }
+  },
+  "positioning": {
+    "anchors": {
+      "hand": [
+        0.4,
+        0.48
+      ],
+      "weapon": [
+        0.49,
+        0.39
+      ],
+      "shield": [
+        0.38,
+        0.55
+      ],
+      "torso": [
+        0.3,
+        0.55
+      ],
+      "feet": [
+        0.3,
+        0.85
+      ],
+      "target": [
+        0.76,
+        0.55
+      ],
+      "ground": [
+        0.52,
+        0.85
+      ]
+    }
+  },
+  "components": {
+    "starter": {
+      "schemaVersion": 1,
+      "id": "local.shield-bash",
+      "name": "Shield bash · contact study",
+      "actor": "reaver",
+      "duration": 1200,
+      "poses": [
+        "idle",
+        "shieldBash1",
+        "shieldBash2",
+        "shieldBash3",
+        "guard",
+        "idle"
+      ],
+      "anchors": {
+        "hand": [
+          0.4,
+          0.48
+        ],
+        "weapon": [
+          0.49,
+          0.39
+        ],
+        "shield": [
+          0.38,
+          0.55
+        ],
+        "torso": [
+          0.3,
+          0.55
+        ],
+        "feet": [
+          0.3,
+          0.85
+        ],
+        "target": [
+          0.76,
+          0.55
+        ],
+        "ground": [
+          0.52,
+          0.85
+        ]
+      },
+      "clips": [
+        {
+          "id": "clip.contact",
+          "effect": "shieldBash",
+          "cue": "contact",
+          "offset": 0,
+          "duration": 430,
+          "anchor": "shield",
+          "x": 0,
+          "y": 0,
+          "size": 180,
+          "rotation": 0,
+          "opacity": 0.9,
+          "layer": "front",
+          "travel": false,
+          "muted": false
+        }
+      ],
+      "bindings": [
+        {
+          "id": "binding.shield",
+          "name": "Shield attack",
+          "provider": "ashenspire",
+          "kind": "card",
+          "objectId": "",
+          "event": "actionResolved",
+          "all": [
+            "shield"
+          ],
+          "any": [],
+          "none": [],
+          "resource": "any",
+          "priority": 10,
+          "enabled": true
+        }
+      ],
+      "dependencies": [],
+      "assets": {}
+    }
+  }
+}

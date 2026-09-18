@@ -3,55 +3,18 @@
 // This module is deliberately pure. Content authors tune the proportions and
 // order in content/source/armouryUi.json; the UI reads this normalized shape
 // and never embeds a second set of layout numbers.
+//
+// The FALLBACK defaults those authored values override now live in
+// content/config/ui/presentation/armouryLayout.json rather than in this file.
+//
+// NOTE, because it is a real seam and not a tidy one: armoury layout is still
+// authored in TWO trees — content/source/armouryUi.json for the tuned values,
+// content/config for the defaults beneath them. Moving the defaults out of JS
+// removes the copy that was in code; deciding which of the two trees should own
+// this surface is a separate call, and it has not been made here.
+import { uiConfig } from '../config/generated/ui.js';
 
-const DEFAULTS = Object.freeze({
-  shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
-  character: { spriteRatio: 0.38, statsRatio: 0.62, statsPaneRatio: 0.6, minWidth: '0' },
-  equipment: {
-    groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armor', 'rightHand', 'leftHand'], defaultView: 'list', gridColumns: 3,
-  },
-  inventorySplit: {
-    defaultArmamentsRatio: 0.6,
-    minimumArmamentsRatio: 0.3,
-    maximumArmamentsRatio: 0.8,
-    snapRatios: [0.4, 0.5, 0.6, 0.7],
-    snapTolerance: 0.035,
-    compactItemsBelowPx: 520,
-    foldSubcardsBelowPx: 420,
-    foldGroupsBelowPx: 260,
-  },
-  trays: {
-    defaultHeightRatio: 0.45,
-    minimumHeightRatio: 0.3,
-    maximumHeightRatio: 0.9,
-    multipleExpandedMinimumRatio: 0.3,
-    snapRatios: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-    snapTolerance: 0.035,
-    contentGapRem: 0.35,
-  },
-  combatPower: {
-    groupLabel: 'Combat Power',
-    cards: [
-      { id: 'strike', role: 'attack', label: 'Strike', fullLabel: 'Strike Power' },
-      { id: 'potency', role: 'technique', label: 'Magic', fullLabel: 'Magic Power' },
-      { id: 'defense', role: 'guard', label: 'Defense', fullLabel: 'Guard / Defense' },
-    ],
-  },
-  cards: { defaultView: 'list', gridColumns: 4 },
-  comparison: {
-    presentation: 'tooltip', holdPreviewDelayMs: 160, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
-  },
-  cardClasses: { inventoryItem: { holdAction: false } },
-  viewModes: {
-    grid: { label: 'Character', pane: 'character', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
-    rack: { label: 'Inventory', pane: 'inventory', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
-    hybrid: { label: 'Hybrid', pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
-  },
-  responsive: {
-    breakpoint: 760,
-    phone: { minWidth: '0', characterRatio: 0.4, equipmentRatio: 0.6, cardsGridColumns: 2, armamentGridColumns: 2 },
-  },
-});
+const DEFAULTS = uiConfig.presentation.armouryLayout.sizing.defaults;
 
 const ratio = (value, path) => {
   if (!Number.isFinite(value) || value <= 0 || value >= 1) {

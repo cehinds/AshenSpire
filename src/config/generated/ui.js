@@ -17,6 +17,7 @@
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json e0cd44e04fa02f5b
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
+// source content/config/ui/presentation/armouryLayout.json 0bc9278cfe9cf33f
 // source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
@@ -28,6 +29,7 @@
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
+// source content/config/ui/presentation/presentationSequence.json 9ce98d8fece297df
 // source content/config/ui/presentation/reaverAttack.json b1062ab030ccd896
 // source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
 // source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
@@ -1050,6 +1052,140 @@ export const uiConfig = deepFreeze({
           "dodge": {
             "pose": "idle",
             "motion": "sidestep"
+          }
+        }
+      }
+    },
+    "armouryLayout": {
+      "sizing": {
+        "defaults": {
+          "shell": {
+            "characterRatio": 0.4,
+            "equipmentRatio": 0.6,
+            "gapRem": 1.6
+          },
+          "character": {
+            "spriteRatio": 0.38,
+            "statsRatio": 0.62,
+            "statsPaneRatio": 0.6,
+            "minWidth": "0"
+          },
+          "equipment": {
+            "groupLabel": "Armaments",
+            "outerBorder": false,
+            "slotOrder": [
+              "armor",
+              "rightHand",
+              "leftHand"
+            ],
+            "defaultView": "list",
+            "gridColumns": 3
+          },
+          "inventorySplit": {
+            "defaultArmamentsRatio": 0.6,
+            "minimumArmamentsRatio": 0.3,
+            "maximumArmamentsRatio": 0.8,
+            "snapRatios": [
+              0.4,
+              0.5,
+              0.6,
+              0.7
+            ],
+            "snapTolerance": 0.035,
+            "compactItemsBelowPx": 520,
+            "foldSubcardsBelowPx": 420,
+            "foldGroupsBelowPx": 260
+          },
+          "trays": {
+            "defaultHeightRatio": 0.45,
+            "minimumHeightRatio": 0.3,
+            "maximumHeightRatio": 0.9,
+            "multipleExpandedMinimumRatio": 0.3,
+            "snapRatios": [
+              0.3,
+              0.4,
+              0.5,
+              0.6,
+              0.7,
+              0.8,
+              0.9
+            ],
+            "snapTolerance": 0.035,
+            "contentGapRem": 0.35
+          },
+          "combatPower": {
+            "groupLabel": "Combat Power",
+            "cards": [
+              {
+                "id": "strike",
+                "role": "attack",
+                "label": "Strike",
+                "fullLabel": "Strike Power"
+              },
+              {
+                "id": "potency",
+                "role": "technique",
+                "label": "Magic",
+                "fullLabel": "Magic Power"
+              },
+              {
+                "id": "defense",
+                "role": "guard",
+                "label": "Defense",
+                "fullLabel": "Guard / Defense"
+              }
+            ]
+          },
+          "cards": {
+            "defaultView": "list",
+            "gridColumns": 4
+          },
+          "comparison": {
+            "presentation": "tooltip",
+            "holdPreviewDelayMs": 160,
+            "tooltipWidthRem": 52,
+            "tooltipMaxHeightRatio": 0.8
+          },
+          "cardClasses": {
+            "inventoryItem": {
+              "holdAction": false
+            }
+          },
+          "viewModes": {
+            "grid": {
+              "label": "Character",
+              "pane": "character",
+              "character": "expanded",
+              "armaments": "folded",
+              "inventory": "folded",
+              "cards": "expanded"
+            },
+            "rack": {
+              "label": "Inventory",
+              "pane": "inventory",
+              "character": "folded",
+              "armaments": "expanded",
+              "inventory": "expanded",
+              "cards": "folded"
+            },
+            "hybrid": {
+              "label": "Hybrid",
+              "pane": "both",
+              "character": "folded",
+              "armaments": "folded",
+              "inventory": "folded",
+              "cards": "folded"
+            }
+          },
+          "responsive": {
+            "breakpoint": 760,
+            "phone": {
+              "minWidth": "0",
+              "characterRatio": 0.4,
+              "equipmentRatio": 0.6,
+              "cardsGridColumns": 2,
+              "armamentGridColumns": 2
+            }
           }
         }
       }
@@ -2826,6 +2962,137 @@ export const uiConfig = deepFreeze({
         "aura": {
           "viewBox": "0 0 120 140",
           "svg": "<svg viewBox=\"0 0 120 140\"><g class=\"pose-diamond\"><path d=\"M60 8 78 28 60 48 42 28Z\"/><path d=\"M60 18 68 28 60 38 52 28Z\"/></g><g class=\"pose-constellation\"><path d=\"m25 38 30-23 30 20 16 33-40-11-34 27 7-46\"/><circle cx=\"25\" cy=\"38\" r=\"3\"/><circle cx=\"55\" cy=\"15\" r=\"4\"/><circle cx=\"85\" cy=\"35\" r=\"3\"/><circle cx=\"101\" cy=\"68\" r=\"3\"/><circle cx=\"61\" cy=\"57\" r=\"4\"/><circle cx=\"27\" cy=\"84\" r=\"3\"/></g><g class=\"pose-halo\"><circle cx=\"60\" cy=\"38\" r=\"30\" stroke-dasharray=\"35 11 20 12\"/><circle class=\"pose-halo-gold\" cx=\"60\" cy=\"38\" r=\"36\" stroke-dasharray=\"24 18 42 30\"/></g><ellipse class=\"pose-floor\" cx=\"60\" cy=\"128\" rx=\"42\" ry=\"8\"/></svg>"
+        }
+      }
+    },
+    "presentationSequence": {
+      "behavior": {
+        "schemaVersion": 1,
+        "historyDepth": 60
+      },
+      "motion": {
+        "cues": {
+          "anticipation": 0,
+          "release": 0.3,
+          "contact": 0.5,
+          "recovery": 0.78
+        }
+      },
+      "positioning": {
+        "anchors": {
+          "hand": [
+            0.4,
+            0.48
+          ],
+          "weapon": [
+            0.49,
+            0.39
+          ],
+          "shield": [
+            0.38,
+            0.55
+          ],
+          "torso": [
+            0.3,
+            0.55
+          ],
+          "feet": [
+            0.3,
+            0.85
+          ],
+          "target": [
+            0.76,
+            0.55
+          ],
+          "ground": [
+            0.52,
+            0.85
+          ]
+        }
+      },
+      "components": {
+        "starter": {
+          "schemaVersion": 1,
+          "id": "local.shield-bash",
+          "name": "Shield bash · contact study",
+          "actor": "reaver",
+          "duration": 1200,
+          "poses": [
+            "idle",
+            "shieldBash1",
+            "shieldBash2",
+            "shieldBash3",
+            "guard",
+            "idle"
+          ],
+          "anchors": {
+            "hand": [
+              0.4,
+              0.48
+            ],
+            "weapon": [
+              0.49,
+              0.39
+            ],
+            "shield": [
+              0.38,
+              0.55
+            ],
+            "torso": [
+              0.3,
+              0.55
+            ],
+            "feet": [
+              0.3,
+              0.85
+            ],
+            "target": [
+              0.76,
+              0.55
+            ],
+            "ground": [
+              0.52,
+              0.85
+            ]
+          },
+          "clips": [
+            {
+              "id": "clip.contact",
+              "effect": "shieldBash",
+              "cue": "contact",
+              "offset": 0,
+              "duration": 430,
+              "anchor": "shield",
+              "x": 0,
+              "y": 0,
+              "size": 180,
+              "rotation": 0,
+              "opacity": 0.9,
+              "layer": "front",
+              "travel": false,
+              "muted": false
+            }
+          ],
+          "bindings": [
+            {
+              "id": "binding.shield",
+              "name": "Shield attack",
+              "provider": "ashenspire",
+              "kind": "card",
+              "objectId": "",
+              "event": "actionResolved",
+              "all": [
+                "shield"
+              ],
+              "any": [],
+              "none": [],
+              "resource": "any",
+              "priority": 10,
+              "enabled": true
+            }
+          ],
+          "dependencies": [],
+          "assets": {}
         }
       }
     },

@@ -1,9 +1,15 @@
-export const VERSION=1;
-export const CUES={anticipation:0,release:.3,contact:.5,recovery:.78};
-export const ANCHORS={hand:[.40,.48],weapon:[.49,.39],shield:[.38,.55],torso:[.30,.55],feet:[.30,.85],target:[.76,.55],ground:[.52,.85]};
+import {uiConfig} from '../config/generated/ui.js';
+import {thaw} from '../config/authored.js';
+
+// Cues, anchors and the starter project live in
+// content/config/ui/presentation/presentationSequence.json.
+const SEQ=uiConfig.presentation.presentationSequence;
+export const VERSION=SEQ.behavior.schemaVersion;
+export const CUES=thaw(SEQ.motion.cues);
+export const ANCHORS=thaw(SEQ.positioning.anchors);
 export const clone=value=>JSON.parse(JSON.stringify(value));
 export const title=id=>id.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[-_]/g,' ').replace(/^./,c=>c.toUpperCase());
-export function starter(){return {schemaVersion:VERSION,id:'local.shield-bash',name:'Shield bash · contact study',actor:'reaver',duration:1200,poses:['idle','shieldBash1','shieldBash2','shieldBash3','guard','idle'],anchors:clone(ANCHORS),clips:[{id:'clip.contact',effect:'shieldBash',cue:'contact',offset:0,duration:430,anchor:'shield',x:0,y:0,size:180,rotation:0,opacity:.9,layer:'front',travel:false,muted:false}],bindings:[{id:'binding.shield',name:'Shield attack',provider:'ashenspire',kind:'card',objectId:'',event:'actionResolved',all:['shield'],any:[],none:[],resource:'any',priority:10,enabled:true}],dependencies:[],assets:{}};}
+export function starter(){return thaw(SEQ.components.starter);}
 export function startTime(clip,project){return (CUES[clip.cue]??0)*project.duration+clip.offset;}
 export function sample(project,time,{reducedMotion=false,reduceFlashes=false,direction='right'}={}){
  const t=Math.max(0,Math.min(project.duration,time)),poseIndex=Math.min(project.poses.length-1,Math.floor(t/project.duration*project.poses.length));
@@ -69,4 +75,4 @@ export function validate(project,catalog=null){
  if(catalog&&Array.isArray(project.poses)&&project.poses.some(p=>!catalog.poses(project.actor).includes(p)&&!Object.hasOwn(project.assets||{},'pose:'+p)))errors.push('Missing character pose');
  return errors;
 }
-export function history(initial){let current=clone(initial),past=[],future=[];return {get value(){return clone(current);},get canUndo(){return !!past.length;},get canRedo(){return !!future.length;},set(next){past.push(clone(current));past=past.slice(-60);current=clone(next);future=[];},undo(){if(past.length){future.push(current);current=past.pop();}},redo(){if(future.length){past.push(current);current=future.pop();}}};}
+export function history(initial){let current=clone(initial),past=[],future=[];return {get value(){return clone(current);},get canUndo(){return !!past.length;},get canRedo(){return !!future.length;},set(next){past.push(clone(current));past=past.slice(-SEQ.behavior.historyDepth);current=clone(next);future=[];},undo(){if(past.length){future.push(current);current=past.pop();}},redo(){if(future.length){past.push(current);current=future.pop();}}};}
