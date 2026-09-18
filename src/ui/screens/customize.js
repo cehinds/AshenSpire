@@ -957,7 +957,12 @@ export function mountCustomize(app, {
     const surface = equipmentSurfaceReceipt(registries, run);
     // The summary is a row of slots you SCAN to check your loadout, not one you
     // read — same level, and therefore same size, as the picker you chose from.
-    const inert = { interactive: false, inspection: false, level: 'glance' };
+    // Same SURFACE too: these slots stand on the character-creation screen, so
+    // they take that screen's glance patch (`card.json` surfaces.creation adds
+    // `footer`) and show the same regions the chip you picked did. Omitting it
+    // would have made the summary a quieter card than its own picker for no
+    // reason anyone authored.
+    const inert = { interactive: false, inspection: false, level: 'glance', surface: 'creation' };
     const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
     const slots = [
       { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },

@@ -291,7 +291,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders });
-      const tile = shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, level: 'focus' }).card });
+      const tile = shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, avail, { card: renderCollectibleCard(registries, def, 'Relic', { interactive: false, surface: 'shop' }).card });
       addOffer('relics', {
         ref: relicRefs[i], tile, name: def.name, desc: relicText(def, registries),
         price: t('shop.price', { cost: item.cost }), avail,
@@ -312,7 +312,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
       const avail = offerAvailability({ price: item.cost, cinders: run.cinders, capacityFull: !slotsFree() });
-      const tile = shopItem(flaskIdentityHtml(def), def.textTemplate, item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, level: 'focus' }).card });
+      const tile = shopItem(flaskIdentityHtml(def), def.textTemplate, item.cost, avail, { titleHtml: true, card: renderCollectibleCard(registries, def, 'Potion', { interactive: false, surface: 'shop' }).card });
       addOffer('flasks', {
         ref: flaskRefs[i], tile, name: def.name, desc: def.textTemplate || '',
         price: t('shop.price', { cost: item.cost }), avail,
@@ -705,7 +705,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
   }
 
   function armamentOffer(def, inspect, summary) {
-    const face = renderEquipmentCard(registries, def, { interactive: false, inspection: false, level: 'focus' }).card;
+    const face = renderEquipmentCard(registries, def, { interactive: false, inspection: false, level: 'glance', surface: 'shop' }).card;
     const card = el('div', { class: 'as-option noarrow hosts-face shop-inspect-card' }, face);
     card.setAttribute('aria-label', `${def.name}. ${summary}. Inspect.`);
     bindCardInspection(card, { title: def.name, readOnly: true, open: () => { card.focus({ preventScroll: true }); inspect(); } });
