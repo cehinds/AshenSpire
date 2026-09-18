@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-18",
     "summary": "And the change that wrote that mention now has one too",
     "detail": "Nothing you see changes in play. Writing a missing line in this list is itself a change, and it needs its own line or the gap simply moves along by one. This is that line, so the chain ends here rather than being handed on again.",
-    "build": "0.7.1.95",
+    "build": "0.7.1.96",
     "pullRequest": 1154,
     "url": "https://github.com/cehinds/AshenSpire/pull/1154"
+  },
+  {
+    "id": "pr-1150",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the top bar now runs with the rest of them",
+    "detail": "Nothing you see changes in play. The check that guards how the bar along the top folds on a phone had been written but was not in the list the project runs, so a green result said nothing about it; it runs with the others now. The design notes it is checked against were also tightened where they could be read to say the opposite of what the bar does, and one of the check's own tests was reading too little of the stylesheet to catch the fault it exists for.",
+    "build": "0.7.1.95",
+    "pullRequest": 1150,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1150"
   },
   {
     "id": "pr-1141",

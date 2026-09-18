@@ -128,10 +128,8 @@
       "gate": "data-layout='narrow'",
       "maxWidthPx": 520,
       "meters": "stacked",
-      "layers": {
-        "header": true,
+      "layerOverrides": {
         "class": false,
-        "cinders": true,
         "position": false,
         "route": false
       }
