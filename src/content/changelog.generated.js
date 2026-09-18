@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1124",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The last of the game’s look-and-layout settings move out of the code",
+    "detail": "Nothing you see changes in play — that is the point, and it is checked rather than hoped. Ten parts of the game still kept their presentation settings written into the program itself: the map’s tile sizes and zoom limits, the stances a fighter can hold, which animation each kind of action plays, where the class medallion sits on each painted figure, the environment paintings and their scenes, the map node icons and their descriptions, the in-run menu, the gamepad button names, and the timings and artwork of the combat pose stage. All of it now lives as plain, organised settings files alongside the rest, so a value can be changed in one readable place instead of hunted through the code. Every one of those parts was recorded before the move and is held to exactly what it produced before — same values, in the same order — and a further check refuses to let a stray number creep back into the code beside its new home.",
+    "build": "0.7.1.78",
+    "pullRequest": 1124,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1124"
+  },
+  {
     "id": "pr-1126",
     "date": "2026-09-18",
     "group": "2026-09-18",
