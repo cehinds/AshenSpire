@@ -282,7 +282,7 @@ export function renderCard(registries, ref, opts = {}) {
         visible.has('footer'),                  // .card-metadata
       ];
       const bands = cardShape().bands.filter((_, index) => drawn[index]);
-      el.style.setProperty('--card-bands', bands.map((b) => `${b}fr`).join(' '));
+      el.style.setProperty("--card-bands", bands.map((b) => `minmax(0, ${b}fr)`).join(" "));
     }
     el.dataset.level = at;
     // `data-tag-rows` is what the stylesheet and every tool read to know the

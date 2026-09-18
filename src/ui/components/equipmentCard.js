@@ -108,6 +108,16 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // the row tokens rather than once here: a card that lights rises to `focus`
   // and must grow with what it now says, or the fields and the frame drift.
   card.dataset.item = model.id;
+  // THE DOM AGREES WITH THE SELECTION ABOUT WHICH CARD THIS IS. With an
+  // identity override, `data-item` alone would say one thing and the selection
+  // store another — and `bindCardInspection`'s fallback chain, if the explicit
+  // argument were ever refactored away, would quietly resolve back to the item
+  // id and re-couple the faces this override exists to separate.
+  // It is written to `data-instance-id`, which that chain already prefers over
+  // `data-item`, rather than over `data-item` itself: styles/kit.css and two QA
+  // tools select real pieces by `[data-item="..."]`, so that attribute has to
+  // keep naming the piece.
+  if (identityOverride) card.dataset.instanceId = identityOverride;
   // WC2a1–WC2c3: which rows each region carries, from the item's own data
   // (hand, card package, modifiers, relic modes, potion effects). A bespoke
   // presentation without a variant (the empty hand) keeps the plain face.
