@@ -4542,8 +4542,11 @@ button[data-button-size] {
 /* THE BAND ALWAYS DRAWS, AND HOLDS ITS OWN ROWS (owner, 2026-09-15). The
    shared HUD stacks an identity row above a resource row, which is two rows in
    a band that is 10% of the host: 103px of rows in 94px of band at 390x844,
-   and the same again on a short landscape screen. Folded, the two rows sit on
-   one line and the band contains them. The relic and potion belt still hangs
+   and the same again on a short landscape screen. Folded, the two rows KEEP
+   THEIR OWN LINE and are drawn smaller (below), and below the narrow gate the
+   band is four things and fits without either (§ BAND ON A PHONE). They sat
+   side by side on one line until 2026-09-18, which is what drew CLASS over
+   ACT. The relic and potion belt still hangs
    beneath the band's edge, exactly as it does in combat (.shared-hud
    .hud-bottom); that is the band's own design, not an overflow. */
 /* dev's own answer to the same overlap (25f513d, "owner, a real phone"):

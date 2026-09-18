@@ -51,10 +51,16 @@ test('the fold is what makes the meters one line, and it is not written twice', 
   const block = foldBlock();
   assert.match(block, /grid-auto-flow: column/, 'the fold reflows the meters onto one line');
   // One home: the map host must not carry a private copy of a fold rule.
-  const mapOwn = css.split('\n').filter((line) => line.trimStart().startsWith(MAP_HOST));
-  for (const line of mapOwn) {
-    assert.ok(!/grid-auto-flow: column|text-overflow: ellipsis/.test(line),
-      `the map host keeps no private copy of a fold rule: ${line.trim()}`);
+  // RULE BODIES, NOT SELECTOR LINES. The copy this forbids is exactly the one
+  // that was there — `.resbars {` on one line and `grid-auto-flow: column` on
+  // the next — so a check that reads only the selector line would pass on the
+  // very regression it exists to catch (Copilot, #1134).
+  const outsideFold = css.replace(block, '');
+  for (const rule of outsideFold.matchAll(/(^|\})([^{}]*)\{([^}]*)\}/g)) {
+    const [, , selector, body] = rule;
+    if (!selector.includes(MAP_HOST)) continue;
+    assert.ok(!/grid-auto-flow:\s*column|text-overflow:\s*ellipsis/.test(body),
+      `the map host keeps no private copy of a fold rule: ${selector.trim()}`);
   }
 });
 
@@ -89,10 +95,14 @@ test('the wireframe states the phone band, and states it as the published gate',
   const phone = hudConfig.phone;
   assert.ok(phone, 'hudConfig carries the phone band');
   assert.equal(phone.meters, 'stacked');
-  assert.deepEqual(
-    { class: phone.layers.class, position: phone.layers.position, route: phone.layers.route, cinders: phone.layers.cinders },
-    { class: false, position: false, route: false, cinders: true },
+  // An OVERRIDE map, merged over config.layers: it names only what a phone
+  // changes, so it must not carry the meters or the controls it leaves alone.
+  assert.deepEqual(phone.layerOverrides, { class: false, position: false, route: false },
     'four things: stacked meters, Cinders, Armoury, Menu — the wide facts are absent');
+  for (const key of ['vitality', 'armoury', 'menu', 'cinders']) {
+    assert.ok(!(key in phone.layerOverrides), `${key} is not a phone override; the base layers own it`);
+    assert.equal(hudConfig.layers[key], true, `${key} stays on, so the merge draws it`);
+  }
   assert.match(phone.gate, /data-layout='narrow'/, 'the gate is the composition main.js publishes, not a second measurement');
   const wgh7 = /\['WGH7',[\s\S]*?\n\];/.exec(hudReference) || /\['WGH7',[\s\S]*/.exec(hudReference);
   assert.match(wgh7[0], /ONLY CINDERS REMAINS/, 'WGH7 says what the phone band carries');
