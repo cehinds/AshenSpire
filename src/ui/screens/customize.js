@@ -316,7 +316,14 @@ export function mountCustomize(app, {
       // design exists to make impossible. `renderEquipment` rebuilds each
       // container with the current view on it, so the old sweep is not a
       // second place that has to agree.
-      renderEquipment();
+      //
+      // THE OPEN SECTION IS CARRIED ACROSS THE REDRAW. A rebuild mounts a fresh
+      // disclosure, and a fresh one starts closed: switching view while Main
+      // Hand was open folded the whole picker away, and the choices box
+      // measured 0x0. `renderEquipment` already takes the section to reopen, so
+      // the toggle hands it the one that was open rather than teaching the fold
+      // to survive a remount.
+      renderEquipment(equipmentFold?.openKey || null);
       renderViewToggles();
     }, 'Starting equipment choice view'));
   }
