@@ -76,7 +76,7 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor } from './ui/models/CardSizeModel.js';
+import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, restingWidthPx } from './ui/models/CardSizeModel.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -637,6 +637,13 @@ function applyCardSizeSettings(settings) {
   for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
     document.documentElement.style.setProperty(name, value);
   }
+  // A RESTING CARD IS SIZED FOR THE VIEWPORT IT IS RESTING IN. `glance` is the
+  // browsing size and `glance.variants.mobile` is that size on a phone; the
+  // chosen one is written to the SAME property name, so a card, a stylesheet
+  // and a tool all keep asking one question. Redeclaring `--card-w-glance`
+  // inside a media query would have been the later-rule-wins shape that has
+  // already produced three defects in this component.
+  document.documentElement.style.setProperty('--card-w-glance', `${restingWidthPx(window.innerWidth, levels)}px`);
   if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
 }
 
@@ -731,6 +738,10 @@ function applyDisplaySettings(settings) {
   }
 }
 applyDisplaySettings(activeSettings);
+// The resting width depends on the viewport, so it is re-resolved when the
+// viewport changes — a phone rotated into landscape crosses the compact
+// breakpoint, and a desktop window dragged narrow crosses it too.
+window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that

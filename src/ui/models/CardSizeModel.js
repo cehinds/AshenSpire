@@ -234,3 +234,39 @@ export function cardSizingExport(levels) {
   // have quietly rewritten the shape into a form the file does not use.
   return JSON.stringify({ levels: out }, null, 2);
 }
+
+/**
+ * The width below which a card at rest uses its MOBILE glance width.
+ *
+ * Read from the kit's existing `tokens.compactBelowPx` rather than a number of
+ * this component's own: "is this a compact viewport" is one question the whole
+ * kit already answers, and a card that disagreed with the rest of the UI about
+ * where mobile starts would be a second definition of the same word.
+ */
+export function cardMobileBelowPx(tokens = uiConfig.tokens) {
+  const px = Number(tokens?.compactBelowPx);
+  if (!Number.isFinite(px) || px <= 0) {
+    throw new Error(`ui tokens.compactBelowPx must be a positive number, got ${JSON.stringify(tokens?.compactBelowPx)}`);
+  }
+  return px;
+}
+
+/**
+ * The resting width for a given viewport width.
+ *
+ * `glance` is the size a card rests at; `glance.variants.mobile` is that size
+ * ON A PHONE, where the same number reads differently because `--ui-zoom` has
+ * already scaled it. It ships EQUAL to `glance`, so nothing moves until it is
+ * tuned — a variant that silently changed the phone on the day it was added
+ * would be a behaviour change wearing a knob's clothes.
+ *
+ * This resolves in JS rather than in a media query so there is one property
+ * name for a resting card's width. The alternative — a `--card-w-glance`
+ * redeclared inside `@media` — is the same later-rule-wins shape that has
+ * produced three defects in this component already.
+ */
+export function restingWidthPx(viewportWidthPx, levels, tokens = uiConfig.tokens) {
+  const glance = levels.glance;
+  const mobile = glance.variants && glance.variants.mobile;
+  return (viewportWidthPx < cardMobileBelowPx(tokens) && Number.isFinite(mobile)) ? mobile : glance.widthPx;
+}

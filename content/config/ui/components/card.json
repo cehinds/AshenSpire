@@ -5,7 +5,7 @@
     "levels": {
       "glance": {
         "widthPx": 152,
-        "variants": { "compact": 108 }
+        "variants": { "compact": 108, "mobile": 152 }
       },
       "focus": { "widthPx": 280 },
       "inspect": { "widthPx": 320 }
