@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-18",
     "group": "2026-09-18",
     "summary": "Cards you are browsing are browsing-sized again, and reading one on a phone reads down the page",
-    "detail": "Every card you had not picked up was being drawn at the size meant for the one you are reading — the shop's shelves worst of all — so a screen of choices was a screen of oversized cards. They rest at browsing size now, grow when you pick one, and grow again when you open it to read. Opening a card on a phone no longer squeezes its description into a strip two words wide beside it: the card sits at the top at full size and the text runs underneath it, one scroll. On a desktop the two still sit side by side.",
-    "build": "0.7.1.109",
+    "detail": "Every card you had not picked up was being drawn at the size meant for the one you are reading — the shop's shelves worst of all — so a screen of choices was a screen of oversized cards. They rest at browsing size now, grow when you pick one, and grow again when you open it to read. Opening a card on a phone no longer squeezes its description into a strip two words wide beside it: the card sits at the top at full size and the text runs underneath it, one scroll. On a desktop the two still sit side by side. The loadout summary at the end of character creation keeps the line under each card that the picker above it shows, so a slot and the chip you chose it from read the same.",
+    "build": "0.7.1.111",
     "pullRequest": 1162,
     "url": "https://github.com/cehinds/AshenSpire/pull/1162"
   },
