@@ -28,10 +28,12 @@ import { serve } from './serve.mjs';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const { uiConfig } = await import(new URL('../src/config/generated/ui.js', import.meta.url));
 const MIN_GAP_PX = uiConfig.scenes.w4c.positioning.portraits.minGapPx;
+const MIN_VISIBLE_VH = uiConfig.scenes.w4c.positioning.portraits.minVisibleHeightVh;
+const MAX_OUTER_VW = uiConfig.scenes.w4c.positioning.portraits.maxOuterOverflowVw;
 const args = process.argv.slice(2);
 const oi = args.indexOf('--out');
 const OUT = oi >= 0 && args[oi + 1] ? resolve(args[oi + 1]) : null;
-const HOSTS = [[1280, 800], [740, 372], [390, 844], [844, 390]];
+const HOSTS = [[1280, 800], [844, 390], [740, 372], [411, 783], [390, 844]];
 const TOUCH_TARGET_PX = 44;
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 
@@ -147,7 +149,17 @@ const mountProbe = (count) => `(async () => {
     scrollHeight: region.scrollHeight, clientHeight: region.clientHeight,
     band: { top: band.top, bottom: band.bottom, height: band.height, width: band.width },
     buttons, bandCss: getComputedStyle(host.querySelector('.dialogue-context')).height,
-    pad, title, figures, frameWidth: host.clientWidth,
+    pad, title, figures, frameWidth: host.clientWidth, frameHeight: host.clientHeight,
+    revealLine: parseFloat(getComputedStyle(host).getPropertyValue('--dialogue-reveal-line')) || null,
+    // What the band leaves empty under its last answer, and the gap it sets
+    // between its own rows — the most it may leave (owner, 2026-09-18).
+    slackBelow: (() => {
+      const last = [...region.querySelectorAll('.dialogue-response')].pop();
+      if (!last) return null;
+      return (band.bottom - parseFloat(regionStyle.paddingBottom) * (band.width / region.clientWidth)) - last.getBoundingClientRect().bottom;
+    })(),
+    bandGap: parseFloat(regionStyle.rowGap || regionStyle.gap || '0') * (band.width / region.clientWidth),
+    stretched: region.dataset.responseStretch,
     scrollTop: region.scrollTop, regionPadTop: parseFloat(regionStyle.paddingTop), regionBorderTop: parseFloat(regionStyle.borderTopWidth),
     titleMarginTop: titleStyle ? parseFloat(titleStyle.marginTop) : null, regionAlign: regionStyle.alignContent,
   };
@@ -190,7 +202,7 @@ try {
     }
     // A page that never came up is not a verdict about the band.
     if (!ready) throw new Error(`the game never loaded at ${tag} (http://127.0.0.1:${port}/)`);
-    for (const count of [4, 5]) {
+    for (const count of [3, 4, 5]) {
       const facts = await ev(mountProbe(count));
       const scrolls = facts.scrollHeight > facts.clientHeight;
       const short = facts.buttons.filter((b) => b.height < TOUCH_TARGET_PX - 0.5);
@@ -208,18 +220,42 @@ try {
           ? `the title's line (${title.lineHeight.toFixed(1)}px) is shorter than its face needs (${title.faceNeeds.toFixed(1)}px)`
           : `the title is outside the panel's padding box (top ${(title.top - facts.pad.top).toFixed(1)}px; fromRegionTop ${(title.top - facts.band.top).toFixed(1)}, pad ${facts.regionPadTop}, border ${facts.regionBorderTop}, scrollTop ${facts.scrollTop}, align ${facts.regionAlign}, marginTop ${facts.titleMarginTop})`);
       }
+      // THE BAND LEAVES NO STRIP OF ITSELF EMPTY under the last answer: what
+      // is left over is at most the gap it already puts between its rows.
+      // Checked where a player answers — three and four answers — not with the
+      // five that deliberately scroll.
+      if (count <= 4 && facts.slackBelow != null && facts.slackBelow > facts.bandGap + 1) {
+        problems.push(`${facts.slackBelow.toFixed(1)}px of band left empty under the last answer (its own gap is ${facts.bandGap.toFixed(1)}px)`);
+      }
       // Two figures, never closer than the configured floor.
       const boxes = facts.figures.filter((f) => f.box.length === 4);
       const gap = boxes.length === 2 ? boxes[1].box[0] - boxes[0].box[2] : null;
       if (boxes.length !== 2) problems.push(`${boxes.length} figure(s) placed, expected 2`);
       else if (!(gap >= MIN_GAP_PX - 0.5)) problems.push(`the figures are ${gap.toFixed(1)}px apart, under the ${MIN_GAP_PX}px floor`);
+      // EACH SPEAKER IS BIG ENOUGH TO READ, AND WHOLLY IN THE FRAME WHERE IT
+      // MATTERS. Height comes first and width yields: a figure may lean over
+      // the frame's outer edge (portraits.maxOuterOverflowVw) rather than
+      // shrink, but its head and upper body stay inside, and it is never
+      // reduced below portraits.minVisibleHeightVh of the frame.
+      const heightFloor = facts.frameHeight * (MIN_VISIBLE_VH / 100);
+      const outerAllowance = facts.frameWidth * (MAX_OUTER_VW / 100) + 1;
+      for (const figure of boxes) {
+        const [left, top, right, bottom] = figure.box;
+        const shown = Math.min(bottom, facts.revealLine ?? bottom) - top;
+        if (shown < heightFloor - 0.5) problems.push(`the ${figure.side} figure shows ${shown.toFixed(0)}px, under the ${heightFloor.toFixed(0)}px floor`);
+        const centre = (left + right) / 2;
+        if (centre < 0 || centre > facts.frameWidth) problems.push(`the ${figure.side} figure's head is outside the frame`);
+        if (left < -outerAllowance || right > facts.frameWidth + outerAllowance) {
+          problems.push(`the ${figure.side} figure leans ${Math.max(-left, right - facts.frameWidth).toFixed(0)}px past the frame, over its ${(outerAllowance - 1).toFixed(0)}px allowance`);
+        }
+      }
       if (count <= 4 && scrolls) problems.push(`scrolls (${facts.scrollHeight} > ${facts.clientHeight})`);
       if (count <= 4 && outside.length) problems.push(`${outside.length} response(s) outside the band`);
       const lost = facts.buttons.filter((b) => b.top < facts.band.top - 0.5 || b.bottom > facts.band.bottom + 0.5);
       if (count > 4 && !scrolls && lost.length) problems.push(`${lost.length} response(s) outside a band that does not scroll`);
       if (short.length) problems.push(`${short.length} response(s) under the ${TOUCH_TARGET_PX}px target`);
       const verdict = problems.length ? 'FAIL' : 'PASS';
-      console.log(`  ${verdict}  ${tag} · ${count} responses · layout ${facts.layout} · ${scrolls ? 'scrolls' : 'no scroll'} · band ${facts.clientHeight}/${facts.scrollHeight}px · title ${title ? title.lineHeight.toFixed(1) + '/' + title.faceNeeds.toFixed(1) + 'px ink' + title.inkAscent.toFixed(1) + ' font:' + (title.displayFontLoaded ? 'loaded' : 'FALLBACK') : 'none'} · gap ${gap == null ? 'n/a' : gap.toFixed(1) + 'px'} · buttons ${facts.buttons.map((b) => Math.round(b.height)).join('/')}px${problems.length ? ` — ${problems.join('; ')}` : ''}`);
+      console.log(`  ${verdict}  ${tag} · ${count} responses · layout ${facts.layout} · ${scrolls ? 'scrolls' : 'no scroll'} · band ${facts.clientHeight}/${facts.scrollHeight}px · title ${title ? title.lineHeight.toFixed(1) + '/' + title.faceNeeds.toFixed(1) + 'px ink' + title.inkAscent.toFixed(1) + ' font:' + (title.displayFontLoaded ? 'loaded' : 'FALLBACK') : 'none'} · figures ${boxes.map((f) => Math.round(Math.min(f.box[3], facts.revealLine ?? f.box[3]) - f.box[1])).join('/') || 'n/a'}px · gap ${gap == null ? 'n/a' : gap.toFixed(1) + 'px'} · slack ${facts.slackBelow == null ? 'n/a' : facts.slackBelow.toFixed(1) + '/' + facts.bandGap.toFixed(1) + 'px'} · buttons ${facts.buttons.map((b) => Math.round(b.height)).join('/')}px${problems.length ? ` — ${problems.join('; ')}` : ''}`);
       if (problems.length) failures.push(`${tag} ${count}: ${problems.join('; ')}`);
       if (OUT) {
         const shot = await send('Page.captureScreenshot', { format: 'png' });

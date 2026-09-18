@@ -7,11 +7,15 @@
 // The FALLBACK defaults those authored values override now live in
 // content/config/ui/presentation/armouryLayout.json rather than in this file.
 //
-// NOTE, because it is a real seam and not a tidy one: armoury layout is still
-// authored in TWO trees — content/source/armouryUi.json for the tuned values,
-// content/config for the defaults beneath them. Moving the defaults out of JS
-// removes the copy that was in code; deciding which of the two trees should own
-// this surface is a separate call, and it has not been made here.
+// TWO TREES, AND THE RULE BETWEEN THEM. Those defaults, and the validator
+// limits beside them, belong to the ENGINE: they apply to any content bundle,
+// including one that authors nothing. content/source/armouryUi.json belongs to
+// THIS BUNDLE, and it is kept COMPLETE rather than sparse (engine test 72 holds
+// that line) so a bundle reads as the whole contract, not a patch over defaults.
+//
+// Completeness means the two trees restate each other, so they can drift apart
+// silently. Test 72 now names every value on which the bundle departs from the
+// default and refuses any other, which is what makes the duplication safe.
 import { uiConfig } from '../config/generated/ui.js';
 
 const DEFAULTS = uiConfig.presentation.armouryLayout.sizing.defaults;

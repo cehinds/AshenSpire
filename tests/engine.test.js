@@ -7657,6 +7657,57 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(contentBundle.equipment.armouryUi.layout.trays,
       'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
     const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
+
+    // The Armoury is authored in TWO trees on purpose, and this is the rule
+    // between them. content/config/ui/presentation/armouryLayout.json holds the
+    // DEFAULTS and the validator's limits — they belong to the engine and apply
+    // to any content bundle. content/source/armouryUi.json holds what THIS
+    // bundle authors, and the assert above keeps it complete rather than sparse,
+    // so a bundle reads as the whole contract instead of a patch over defaults.
+    //
+    // Completeness has a price nothing used to charge: 54 of the bundle's 60
+    // leaf values merely restate the default, so a default could be edited and
+    // no test would notice, and a deliberate authored choice was indistinguish-
+    // able from an inherited one. This names every real deviation and refuses
+    // any other, which makes both directions of drift a named red.
+    const authoredDeviations = new Map([
+      ['cardClasses.inventoryItem.holdAction',
+        'Inventory items opt into the shared hold action; the engine default stays hold-safe.'],
+      ['viewModes.rack.label', 'This bundle calls the equipped-gear tab Equipment, not Inventory.'],
+      ['viewModes.hybrid.label', 'This bundle spends the hybrid slot on a second Inventory tab.'],
+      ['viewModes.hybrid.pane', 'That tab takes the full surface rather than the engine split.'],
+      ['viewModes.hybrid.armaments', 'Armaments stay open on it — the approved Hybrid pane.'],
+      ['viewModes.hybrid.inventory', 'Inventory stays open on it for the same reason.'],
+      ['viewModes.cards', 'A fourth tab for the full deck, which the engine does not ship.'],
+    ]);
+    const defaultsLayout = normalizeArmouryLayout({});
+    const found = [];
+    (function compare(authored, defaults, path) {
+      const keys = new Set([...Object.keys(defaults || {}), ...Object.keys(authored || {})]);
+      for (const key of keys) {
+        const at = path ? `${path}.${key}` : key;
+        const mine = authored ? authored[key] : undefined;
+        const theirs = defaults ? defaults[key] : undefined;
+        if (theirs !== undefined && mine !== undefined
+          && theirs && typeof theirs === 'object' && !Array.isArray(theirs)) {
+          compare(mine, theirs, at);
+          continue;
+        }
+        if (JSON.stringify(mine) !== JSON.stringify(theirs)) found.push(at);
+      }
+    }(layout, defaultsLayout, ''));
+    for (const path of found) {
+      assert(authoredDeviations.has(path),
+        `the Armoury bundle departs from the engine default at ${path} with no reason recorded beside it`);
+      assert((authoredDeviations.get(path) || '').length > 20,
+        `the Armoury deviation at ${path} needs a reason a reader can act on, not a word`);
+    }
+    for (const path of authoredDeviations.keys()) {
+      assert(found.includes(path),
+        `the Armoury deviation recorded at ${path} no longer departs from the engine default — drop it or restore it`);
+    }
+    eq(found.length, authoredDeviations.size,
+      'every value the Armoury bundle authors either matches the engine default or is a named, argued deviation');
     eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
     eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
     eq(layout.character.spriteRatio, 0.38, 'sprite owns the authored 38% character height');
