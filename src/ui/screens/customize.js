@@ -317,12 +317,15 @@ export function mountCustomize(app, {
       // container with the current view on it, so the old sweep is not a
       // second place that has to agree.
       //
-      // THE OPEN SECTION IS CARRIED ACROSS THE REDRAW. A rebuild mounts a fresh
-      // disclosure, and a fresh one starts closed: switching view while Main
-      // Hand was open folded the whole picker away, and the choices box
-      // measured 0x0. `renderEquipment` already takes the section to reopen, so
-      // the toggle hands it the one that was open rather than teaching the fold
-      // to survive a remount.
+      // AND IT HANDS BACK THE SECTION THE PLAYER HAD OPEN. `renderEquipment`
+      // re-opens the fold only when it is TOLD which section to open
+      // (`preferredOpenId`, below); called bare it rebuilds every section
+      // closed. So switching the view shut the picker: all four containers
+      // collapsed to zero width with their chips still inside them, and the
+      // step rendered empty at every size. Measured on dev before this fix —
+      // grid read `312:2` for the open section, list read `0:2` for all four.
+      // Changing how the choices are ARRANGED must not change which of them
+      // you are looking at.
       renderEquipment(equipmentFold?.openKey || null);
       renderViewToggles();
     }, 'Starting equipment choice view'));
