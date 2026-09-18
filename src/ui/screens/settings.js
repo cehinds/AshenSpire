@@ -54,6 +54,16 @@ const CARD_WIDTH_BOUNDS = cardWidthBounds();
 // made reliable should not be made at all, so the late landing now states only
 // what is always true: the block on the clipboard is the one from that copy.
 let exportWritePending = false;
+// THE BAG IN FRONT OF THE USER, which is not the one a handler closed over.
+// `persistSettingsChange` (`src/main.js`) reassigns `activeSettings` from a
+// fresh `saves.loadMeta()` on every change, so each render opens with a
+// DIFFERENT object: a panel writes into its own bag (`settings[key] = val`
+// below) and therefore stays right about itself, while a handler left over
+// from a CLOSED panel keeps reading a bag nobody writes to any more. Anything
+// that asks "what do the sliders read NOW" has to ask the live panel, so the
+// current render records itself here and the export's settlement reads this
+// rather than its own closure.
+let panelSettings = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -1289,6 +1299,7 @@ function categoryHtml(cat, settings, saves) {
  * its place in the ring all follow from that one list.
  */
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null }) {
+  panelSettings = settings;
   let html = '';
   let cats = [];
   let current = null;
@@ -1575,7 +1586,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // staying behind. So the ladder is re-asked at the moment of speaking, and
       // when it has changed the notice says the text is stale rather than
       // describing a state that has passed.
-      const settled = cardLevelsWithOverrides(settings);
+      // ASK THE LIVE PANEL, NOT THIS CLOSURE. Within one render the captured
+      // bag is right — the rows write into it before calling `onChange` — but
+      // a panel closed and reopened inside this wait leaves this handler
+      // holding a bag the new panel never touches, so it would compare the
+      // copied block against numbers nobody is looking at and could call it
+      // current while the visible sliders say otherwise.
+      const settled = cardLevelsWithOverrides(panelSettings || settings);
       const settledRefusal = settled.refused;
       // COMPARE THE THING, NOT A PROXY FOR IT. The first version of this asked
       // whether the REFUSAL MESSAGE had changed, which cannot see one valid
