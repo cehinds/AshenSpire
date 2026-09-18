@@ -808,12 +808,17 @@ async function checkCatalog(width, height, screenshotName) {
         sigil: root.querySelectorAll('[data-catalog-component="sigil-choice"] .cz-opt').length,
         keepsake: root.querySelectorAll('[data-catalog-component="keepsake-choice"] .cz-keepsake').length,
         equipment: root.querySelectorAll('[data-catalog-component="equipment-choice-card"] .equip-chip').length,
+        // Three real faces at glance / focus / inspect. Counting the faces
+        // rather than the figures is what makes this a check: a specimen that
+        // renders three captions over three empty boxes would still pass on
+        // wrappers alone.
+        levels: root.querySelectorAll('[data-catalog-component="card-presentation-levels"] .cc-card-level .equipment-poker-card').length,
         relic: root.querySelectorAll('[data-catalog-component="relic-choice-card"] .cc-relic-card').length,
       },
       overflow: root.scrollWidth > root.clientWidth + 1,
     };
   })()`);
-  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,class-preview-pane,class-resource-grid,class-choice-card,view-mode-toggle,boolean-setting-toggle,selection-section-face,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice,equipment-choice-card,relic-choice-card', `${width}x${height}: component catalog shows live sections plus all reusable creation components`);
+  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,class-preview-pane,class-resource-grid,class-choice-card,view-mode-toggle,boolean-setting-toggle,selection-section-face,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice,equipment-choice-card,card-presentation-levels,relic-choice-card', `${width}x${height}: component catalog shows live sections plus all reusable creation components`);
   assert(receipt.controls.classes >= 2 && receipt.controls.stats >= 5 && receipt.controls.keepsakes >= 2
     && receipt.controls.armour >= 2 && receipt.controls.left >= 2 && receipt.controls.right >= 2
     && receipt.controls.relics >= 2 && receipt.controls.seed === 1 && !receipt.overflow,

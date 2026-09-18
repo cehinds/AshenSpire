@@ -48,7 +48,7 @@
  * empty answer, not a fallback, which is the whole point.
  */
 export const SURFACES = Object.freeze([
-  'combat', 'reward', 'draft', 'shop', 'smith', 'mount', 'armoury', 'none',
+  'combat', 'reward', 'draft', 'shop', 'smith', 'mount', 'armoury', 'creation', 'none',
 ]);
 
 /**
@@ -88,6 +88,18 @@ const OFFERS = Object.freeze({
   smith: Object.freeze(['upgrade']),
   mount: Object.freeze(['seat']),
   armoury: Object.freeze(['equip', 'unequip']),
+  // The starting-equipment picker. It is a real place a card stands on — the
+  // player is choosing, not reading — and it is named here rather than left to
+  // `none` because this list is also the vocabulary the presentation-level
+  // manifest patches (content/config/ui/components/card.json, behavior.fields.
+  // surfaces). A surface whose fields a screen can tune but whose verbs live
+  // somewhere else would be two vocabularies for one word.
+  //
+  // Its own chooser is the `.equipment-choose` button pieceChip draws beside
+  // the face, so nothing routes through the inspect door here yet; the verb is
+  // stated anyway, because the honest answer to "what can I do with this card
+  // on the creation screen" is `choose`, not silence.
+  creation: Object.freeze(['choose']),
   none: Object.freeze([]),
 });
 

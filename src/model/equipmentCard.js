@@ -50,11 +50,27 @@ export function equipmentCardModel(registries, piece) {
  * shrinks to stay whole instead of being cut. `idealCh` is expressed against
  * the card's own width, so the face scales with the card and not the viewport.
  */
-export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [] } = {}) {
+export function equipmentCardTokens(config = balance.ui.equipmentCard, { collapse = [], omit = [] } = {}) {
   const { text, frameWidthPx, frameHeightPx, paddingPx, gapPx } = config;
-  // A region the card has nothing to put in (a relic or potion has no tag
-  // badges) takes no floor, so its height is spare for the regions that grow.
+  // COLLAPSE AND OMIT ARE NOT THE SAME THING, and the difference is the whole
+  // value of the presentation levels (src/model/cardFields.js).
+  //
+  //   COLLAPSE — the card HAS this region and has nothing to put in it (a
+  //   relic or potion has no tag badges). The row still exists, because the
+  //   face still has that many landmarks; it just takes no floor, so its
+  //   height is spare for the regions that grow.
+  //
+  //   OMIT — this level does not say this at all. The row is GONE: no floor,
+  //   no growth, no gap on either side of it, and no element in the DOM. That
+  //   last part is not an optimisation. A region hidden with `display:none`
+  //   still costs a row in this budget, so a glance card would be the same
+  //   card with holes in it rather than a genuinely larger-typed one; and a
+  //   screen reader must not announce a field the player cannot see.
+  //
+  // So `omit` leaves `order` before anything is measured, which is what
+  // returns its pixels — and its gaps — to the regions that remain.
   const regions = Object.fromEntries(Object.entries(config.regions)
+    .filter(([key]) => !omit.includes(key))
     .map(([key, spec]) => [key, collapse.includes(key) ? { ...spec, minPx: 0, grow: 0 } : spec]));
   const order = Object.keys(regions);
   const gaps = gapPx * Math.max(0, order.length - 1);
@@ -95,6 +111,8 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
   const type = Object.fromEntries(Object.entries(text).map(([key, spec]) => [key, clamp(spec)]));
   return { rows, type, frameWidthPx, frameHeightPx, paddingPx, gapPx,
     bonusMaxLines: config.bonusMaxLines, info: config.info,
+    /** The regions that got a row, in order — what the renderer must emit. */
+    regions: order,
     /** Exposed so a gate can assert the solver honoured the declared floors. */
     heights: height, budget };
 }

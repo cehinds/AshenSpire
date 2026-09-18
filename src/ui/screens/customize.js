@@ -58,6 +58,7 @@ import {
 // copy in code — the baseline counts it — but a NEW sentence does not join it.
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { levelForView } from '../../model/cardFields.js';
 
 /** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
 function sectionHead(kicker, title, trail = []) {
@@ -306,7 +307,16 @@ export function mountCustomize(app, {
     }, 'Class choice view'));
     $('#cz-equipment-view-toggle').replaceChildren(viewModeToggle(state.equipmentChoiceView, (mode) => {
       state.equipmentChoiceView = mode;
-      for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = mode;
+      // THE TOGGLE REDRAWS THE CHIPS, as the class toggle above already does.
+      // Setting `data-view` on the containers was enough while the view was
+      // only a CSS arrangement of the same faces; a view now SELECTS a
+      // presentation level (src/model/cardFields.js), and the level is read
+      // when a face is built. Leaving the old chips in place would show grid's
+      // arrangement with list's fields, which is the drift the one-vocabulary
+      // design exists to make impossible. `renderEquipment` rebuilds each
+      // container with the current view on it, so the old sweep is not a
+      // second place that has to agree.
+      renderEquipment();
       renderViewToggles();
     }, 'Starting equipment choice view'));
   }
@@ -829,7 +839,13 @@ export function mountCustomize(app, {
         showDetails(piece);
       };
       for (const piece of section.choices) {
-        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null });
+        // THE VIEW SELECTS A LEVEL; it does not own a field set. Grid is a
+        // wall of candidates to tell apart, so it asks for `glance`; list is
+        // one card at a time with room to read, so it asks for `focus`. The
+        // mapping is one line in src/model/cardFields.js rather than a second
+        // authored table per view — views x levels x surfaces is the shape
+        // this design exists to avoid.
+        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: levelForView(state.equipmentChoiceView) });
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
         face.addEventListener('cardinspectionselect', () => focusChoice(piece));
@@ -1159,6 +1175,28 @@ export function mountCustomize(app, {
       return chipButton;
     }));
     drawArmourChoices();
+    // THE THREE PRESENTATION LEVELS, side by side, on one item. The catalogue's
+    // job is to show what a component's model can be asked for, and "how much
+    // this card says" is now part of that model (src/model/cardFields.js), so
+    // a reviewer can see glance / focus / inspect differ — and by how much the
+    // effect rows grow as the regions above them are withheld — without
+    // driving a real screen into three different states to get there.
+    //
+    // These are REAL faces from the real renderer, at the real levels; nothing
+    // here is a mock-up of one. `inspection: false` is how the last specimen
+    // reaches `inspect`, which is the same door the modal's own face uses.
+    // It wears the picker's own container classes so the faces are sized by the
+    // rules that already size faces in a picker — the catalogue must not grow a
+    // second opinion about how big a card is.
+    const levelSpecimen = el('div', { class: 'cc-catalog-specimen cc-card-selectors cc-card-levels', dataset: { view: 'list' } });
+    for (const at of ['glance', 'focus', 'inspect']) {
+      const face = renderEquipmentCard(registries, specimenArmours[0], at === 'inspect'
+        ? { interactive: false, inspection: false }
+        : { interactive: false, level: at }).card;
+      levelSpecimen.append(el('figure', { class: 'cc-card-level', dataset: { level: at } }, [
+        face, el('figcaption', {}, at),
+      ]));
+    }
     const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
     const relicSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen' });
     let specimenRelicId = specimenRelics[0].id;
@@ -1197,6 +1235,7 @@ export function mountCustomize(app, {
         'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
       ) },
       { key: 'equipment-choice-card', label: 'Equipment choice card', node: armourSpecimen },
+      { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
