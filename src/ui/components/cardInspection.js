@@ -54,9 +54,17 @@ import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel
 // inspect width is whatever has been projected onto `:root`; the authored sum
 // is the fallback for a page that projects nothing.
 let doorShapeWatched = false;
+// PIXELS OR NOTHING. A custom property is UNREGISTERED here, so
+// `getPropertyValue` hands back the token exactly as it was written rather than
+// a resolved length — and `parseFloat` is happy to read `20rem` as 20 and `50%`
+// as 50. That would have silently put the threshold at 404 instead of 704 and
+// looked like it was working. Only a bare px length is read; anything else
+// falls back to the authored sum rather than being half-understood.
+const PX = /^(\d+(?:\.\d+)?)px$/;
 function doorStackBelowPx() {
   const projected = getComputedStyle(document.documentElement).getPropertyValue('--card-w-inspect').trim();
-  const inspect = Number.parseFloat(projected);
+  const match = PX.exec(projected);
+  const inspect = match ? Number(match[1]) : NaN;
   if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
   return inspect + doorReadableMinPx();
 }
