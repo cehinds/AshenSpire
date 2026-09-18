@@ -929,7 +929,9 @@ export function mountCustomize(app, {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
-    const inert = { interactive: false, inspection: false };
+    // The summary is a row of slots you SCAN to check your loadout, not one you
+    // read — same level, and therefore same size, as the picker you chose from.
+    const inert = { interactive: false, inspection: false, level: 'glance' };
     const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
     const slots = [
       { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },

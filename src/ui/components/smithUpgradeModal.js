@@ -207,8 +207,9 @@ export function mountSmithUpgradeModal(host, initialModel, {
     // navigation listens, so the selecting tap it swallows never reaches it.
     if (piece) bindCardInspection(card, { title: item.name, open: opener => {
       const owned = Number.isInteger(item.inventoryCount) ? item.inventoryCount : null;
-      const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false, owned })
-        : renderEquipmentCard(registries, piece, { inspection: false, interactive: false, owned });
+      // This face goes straight into openCardInspection, so it is an inspect card.
+      const rendered = item.itemKind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { inspection: false, interactive: false, owned, level: 'inspect' })
+        : renderEquipmentCard(registries, piece, { inspection: false, interactive: false, owned, level: 'inspect' });
       const details = equipmentDetails(rendered.explanations);
       details.prepend(prose('Smithing tier ' + item.currentLevel + ' → ' + item.nextLevel + '. Cost: ' + item.cost + ' Smithing Stone. Select the item in the Smith to review its exact upgrade changes.'));
       return openCardInspection({ title: item.name, card: rendered.card, details, opener });

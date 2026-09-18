@@ -1,6 +1,14 @@
 {
   "sizing": {
     "ratio": { "numerator": 5, "denominator": 8 },
-    "bands": [1, 4, 4, 1]
+    "bands": [1, 4, 4, 1],
+    "levels": {
+      "glance": {
+        "widthPx": 152,
+        "variants": { "compact": 108 }
+      },
+      "focus": { "widthPx": 280 },
+      "inspect": { "widthPx": 320 }
+    }
   }
 }
