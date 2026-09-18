@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1162",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The check that keeps every card one shape can now fail",
+    "detail": "Nothing you see changes in play. The check added with the card-shape work could pass while saying nothing: with no card on any screen it reported success, and it read what the stylesheet declared rather than the size a card was actually drawn at, so a rule that pinned a width and a height could quietly draw a different shape and still be called correct. It now measures the drawn card, refuses to pass when it found nothing to look at, and names the screens whose shape is worked out in code and so cannot be tested by tampering. One page of developer previews also stated the card's shape by hand instead of reading the one authored number.",
+    "build": "0.7.1.105",
+    "pullRequest": 1162,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1162"
+  },
+  {
     "id": "pr-1161",
     "date": "2026-09-18",
     "group": "2026-09-18",

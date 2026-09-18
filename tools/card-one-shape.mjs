@@ -103,12 +103,22 @@ const PROBE = `(() => {
     if (el.closest('.epc-frame, .equipment-poker-card')) continue;
     const raw = getComputedStyle(el).aspectRatio;
     const m = /^\\s*([0-9.]+)\\s*(?:\\/\\s*([0-9.]+))?\\s*$/.exec(raw);
+    // offsetWidth/Height, NOT getBoundingClientRect: the hand FANS its cards,
+    // and a rect is the axis-aligned box of a rotated card rather than the
+    // card's own. Measured with rects, eight fanned faces read 0.725 and eight
+    // more 0.7357 against an authored 0.714286 — the rotation, reported as a
+    // second shape. offsetWidth is the pre-transform border box, which is the
+    // thing this gate is actually asking about.
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
     out.push({
       id: el.dataset.cardId || '(no id)',
       raw,
-      ratio: m ? Number(m[1]) / (m[2] === undefined ? 1 : Number(m[2])) : null,
+      declared: m ? Number(m[1]) / (m[2] === undefined ? 1 : Number(m[2])) : null,
+      rendered: w > 2 && h > 2 ? w / h : null,
+      w, h,
       host: (el.parentElement?.className || '(root)').toString().split(/\\s+/).slice(0, 2).join('.'),
-      shown: el.getBoundingClientRect().width > 2,
+      shown: w > 2,
     });
   }
   return out;
@@ -116,11 +126,44 @@ const PROBE = `(() => {
 
 // The selftest plants exactly the defect this tool exists to catch: one surface
 // quietly drawing the card at a second shape.
+// TWO DEFECTS, BECAUSE THE GATE NOW HAS TWO WAYS TO LOOK. A declaration-only
+// plant proved nothing about the pixel path: a face judged by its rendered box
+// ignores an inline `aspect-ratio`, so this selftest ran 5/10 and said so.
+//   - a SHOWN card gets an explicit height, which is how a real second shape
+//     arrives (an explicit width/height pair overrides `aspect-ratio`);
+//   - a card with no box gets a second `aspect-ratio`, which is the only thing
+//     a hidden face can drift by.
+// A page is caught only if the defect it could plant was seen.
+// WHAT THE PLANT CAN AND CANNOT MOVE.
+//
+// A declaration-only plant proved nothing about the pixel path, so this plants
+// both. But on the combat and co-op HANDS the rendered ratio cannot be moved
+// at all: those surfaces compute card geometry in JS from the SAME authored
+// ratio (HandLayout / CombatLayout read `sizing.ratio`), so the face's box is
+// derived rather than declared. Setting width, height, or even the slot's
+// height — with !important — re-sizes the card and leaves the ratio at the
+// authored value, which is the correct behaviour and not a hole in the probe.
+//
+// So the plant REPORTS what it managed: 'both' when the rendered ratio moved,
+// 'declared' when only the declaration could be moved. The selftest requires
+// every plantable page to be caught and NAMES the rest, rather than counting
+// a surface whose shape is structurally pinned as a miss it never made.
 const PLANT = `(() => {
-  const el = document.querySelector('.card');
-  if (!el) return false;
-  el.style.aspectRatio = '5 / 8';
-  return true;
+  const all = [...document.querySelectorAll('.card')]
+    .filter((el) => !el.closest('.epc-frame, .equipment-poker-card'));
+  const target = all.find((el) => el.offsetWidth > 2 && el.offsetHeight > 2) || all[0];
+  if (!target) return false;
+  const ratio = (el) => (el.offsetWidth > 2 && el.offsetHeight > 2 ? el.offsetWidth / el.offsetHeight : null);
+  const before = ratio(target);
+  target.style.aspectRatio = '5 / 8';
+  if (before != null) {
+    target.style.setProperty('height', \`\${Math.round(target.offsetHeight * 1.35)}px\`, 'important');
+    if (ratio(target) === before && target.parentElement) {
+      target.parentElement.style.setProperty('height', \`\${Math.round(target.offsetHeight * 1.35)}px\`, 'important');
+    }
+  }
+  const after = ratio(target);
+  return (before == null || after !== before) ? 'both' : 'declared';
 })()`;
 
 async function main() {
@@ -132,6 +175,9 @@ async function main() {
   const seen = new Map();   // ratio (rounded) -> [{ where, id, host, raw }]
   const findings = [];
   let cards = 0;
+  const plantPinned = [];
+  let measuredByBox = 0;
+  let measuredByDeclaration = 0;
   let plantRuns = 0;
   let plantSeen = 0;
   try {
@@ -159,8 +205,12 @@ async function main() {
 
         if (SELFTEST) {
           const planted = await cdp.send('Runtime.evaluate', { expression: PLANT, returnByValue: true }, sessionId);
-          if (planted.result?.value !== true) continue;   // no card on this screen to plant on
+          if (!planted.result?.value) continue;   // no card on this screen to plant on
+          if (planted.result.value === 'declared') { plantPinned.push(where); continue; }
           plantRuns += 1;
+          // Let the plant's layout settle, and let any screen that repaints on its
+          // own get that repaint out of the way before the probe reads.
+          await new Promise((d) => setTimeout(d, 400));
         }
 
         const res = await cdp.send('Runtime.evaluate', { expression: PROBE, returnByValue: true }, sessionId);
@@ -168,22 +218,50 @@ async function main() {
         if (!rows) { findings.push(`${where}: probe returned nothing`); continue; }
 
         if (SELFTEST) {
-          const shapes = new Set(rows.filter((r) => r.ratio != null).map((r) => Math.round(r.ratio * 10000)));
-          if (shapes.size > 1) plantSeen += 1;
+          // CAUGHT MEANS "DIFFERS FROM THE AUTHORED SHAPE", not "differs from
+          // its neighbour". Counting distinct shapes WITHIN a page could never
+          // catch a page holding one card: planting on the only face made every
+          // face on that page agree, so five of ten pages reported a miss the
+          // probe had not actually made.
+          const drifted = rows
+            .map((r) => r.rendered ?? r.declared)
+            .filter((v) => v != null)
+            .some((v) => Math.abs(v - authored.value) > authored.value * 0.02);
+          if (drifted) plantSeen += 1;
           continue;
         }
 
         if (!rows.length) { console.log(`  note  ${where}: no playing card on this screen`); continue; }
         cards += rows.length;
         for (const row of rows) {
-          if (row.ratio == null) {
+          if (row.declared == null && row.rendered == null) {
             findings.push(`${where} ${row.id} in .${row.host}: declares NO aspect ratio ("${row.raw}")`
               + ' — the card\'s shape never reached the stylesheet');
             continue;
           }
-          const key = Math.round(row.ratio * 10000);
+          // PIXELS DECIDE WHERE THERE ARE PIXELS. Reading only the computed
+          // `aspect-ratio` asks whether the card DECLARES the authored shape,
+          // which is a weaker question than whether it IS that shape: an
+          // explicit width AND height pair overrides `aspect-ratio` outright,
+          // so a rule like `.card-inspection-art > .card { width:220px;
+          // height:308px }` can report `var(--card-ratio)` while drawing
+          // whatever those two numbers happen to make. This gate's whole claim
+          // is one SHAPE, so a card with a real box is judged by its box, and
+          // the declaration covers the faces that are in the DOM but not on
+          // screen — which is how the surfaces behind a wizard step stay
+          // measured at all.
+          const measured = row.rendered ?? row.declared;
+          if (row.rendered != null) measuredByBox += 1; else measuredByDeclaration += 1;
+          // A percentage-width cell rounds to whole pixels, so a rendered
+          // ratio lands a fraction off its authored value: the co-op hand's
+          // card measures 199x280 where the authored shape wants 200x280, and
+          // 0.710714 is that missing pixel rather than a second shape. Bucket
+          // at 2% of the authored value — six times tighter than the 12%
+          // between 5:7 and 5:8, and loose enough that a rounded pixel is not
+          // reported as drift.
+          const key = Math.round(measured / (authored.value * 0.02));
           if (!seen.has(key)) seen.set(key, []);
-          seen.get(key).push({ where, ...row });
+          seen.get(key).push({ where, measured, ...row });
         }
       }
     }
@@ -194,7 +272,16 @@ async function main() {
   }
 
   if (SELFTEST) {
-    console.log(`card-one-shape --selftest: a planted second shape was seen in ${plantSeen}/${plantRuns} page(s)`);
+    console.log(`card-one-shape --selftest: a planted second shape was seen in ${plantSeen}/${plantRuns} plantable page(s)`);
+    if (plantPinned.length) {
+      // NAMED, NOT SILENTLY PASSED. These surfaces derive the card's box from
+      // the authored ratio in JS, so no CSS plant can give them a second shape.
+      // They are still measured by the gate proper; what cannot be demonstrated
+      // here is the probe's reaction to drift on them, and that is said out
+      // loud rather than folded into a ratio that would read as full coverage.
+      console.log(`      shape is JS-derived and cannot be planted on ${plantPinned.length} page(s),`
+        + ` so the pixel path is unproven there: ${plantPinned.join('; ')}`);
+    }
     if (!plantRuns || plantSeen !== plantRuns) {
       console.error('card-one-shape --selftest RED — the probe MISSED a planted second shape.'
         + ' It cannot be quoted until it sees one.');
@@ -205,7 +292,20 @@ async function main() {
   }
 
   const ratios = [...seen.keys()].sort((a, b) => a - b);
+  const asRatio = (key) => key * authored.value * 0.02;
   console.log(`card-one-shape: ${cards} playing-card face(s) measured across ${SCREENS.length} screen(s) x ${SHAPES.length} shape(s)`);
+  console.log(`      ${measuredByBox} judged by rendered box, ${measuredByDeclaration} by declaration (in the DOM, not on screen)`);
+  // A GREEN THAT MEANS "I FOUND NOTHING TO LOOK AT" IS NOT A PASS.
+  // With no card anywhere, `seen` and `findings` were both empty, so this
+  // printed GREEN — with NaN for the ratio — and exited 0. A broken mount, a
+  // renamed class or an accidentally empty screen list would all have read as
+  // proof that the card has one shape. The gate has to be able to fail.
+  if (!cards) {
+    findings.push('no playing card was measured on ANY screen — this gate cannot pass vacuously.'
+      + ' Either the screens stopped rendering cards, or `.card` stopped being how a card is found.');
+  } else if (!seen.size) {
+    findings.push(`${cards} face(s) were found but none yielded a shape — every one was unmeasurable.`);
+  }
   console.log(`      authored: content/config/ui/components/card.json sizing.ratio = ${authored.text} (${authored.value.toFixed(6)})`);
 
   if (ratios.length > 1) {
@@ -213,10 +313,10 @@ async function main() {
     for (const key of ratios) {
       const rows = seen.get(key);
       const where = [...new Set(rows.map((r) => `${r.where} .${r.host}`))].slice(0, 6).join('; ');
-      findings.push(`  ${(key / 10000).toFixed(6)} on ${rows.length} face(s): ${where}`);
+      findings.push(`  ${asRatio(key).toFixed(6)} on ${rows.length} face(s): ${where}`);
     }
-  } else if (ratios.length === 1 && Math.abs(ratios[0] / 10000 - authored.value) > 1e-4) {
-    findings.push(`the playing card is one shape — ${(ratios[0] / 10000).toFixed(6)} — but that is NOT the`
+  } else if (ratios.length === 1 && Math.abs(asRatio(ratios[0]) - authored.value) > authored.value * 0.01) {
+    findings.push(`the playing card is one shape — ${asRatio(ratios[0]).toFixed(6)} — but that is NOT the`
       + ` authored ${authored.text} (${authored.value.toFixed(6)}). The face and its config have parted company.`);
   }
 
@@ -239,7 +339,7 @@ async function main() {
   }
 
   if (!findings.length) {
-    console.log(`card-one-shape GREEN — one shape, ${(ratios[0] / 10000).toFixed(6)}, on every surface, and it is the authored one.`);
+    console.log(`card-one-shape GREEN — one shape, ${asRatio(ratios[0]).toFixed(6)}, on every surface, and it is the authored one.`);
   } else {
     for (const f of findings) console.error('  ' + f);
     console.error(`\ncard-one-shape RED — ${findings.length} finding(s)`);
