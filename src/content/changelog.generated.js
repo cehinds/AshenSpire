@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1133",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Two more changes that landed without a mention now have one",
+    "detail": "Nothing you see changes in play. Two changes had already landed without a line in this list, so the changelog you can read in the game did not mention them: a separate editing tool for the people who build the game, and a clear-out of twenty-one written notes nothing referred to any more. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.81",
+    "pullRequest": 1133,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1133"
+  },
+  {
     "id": "pr-1132",
     "date": "2026-09-18",
     "group": "2026-09-18",
