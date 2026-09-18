@@ -312,6 +312,7 @@ armoury.compare.title,,Compared with equipped,,
 armoury.compare.replaces,,Replaces {name} in {slot},,
 armoury.compare.fills,,Fills the empty {slot} position,,
 armoury.compare.removes,,Removes {name} from {slot},,
+equipment.choose,,Choose {piece},Take this piece as your starting equipment.,Choose
 armoury.compare.role,,{label} {before} → {after},,
 armoury.compare.unchanged,,Combat values unchanged,,
 armoury.eligibility.ready,,Available: {action},,
