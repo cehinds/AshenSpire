@@ -231,7 +231,7 @@
     "scene right slot",
     "config.portraits.slot width",
     "three times the visible band",
-    "full figure zoomed like WGQ2, mirrored to face the player; never overlaps WGQ2 (lanes split by config.portraits.minGapVw); the speaker draws above the listener, and the listener dims no further than config.portraits.listener"
+    "full figure zoomed like WGQ2, mirrored to face the player; never overlaps WGQ2 (lanes split by the larger of config.portraits.minGapVw and config.portraits.minGapPx); the speaker draws above the listener, and the listener dims no further than config.portraits.listener"
   ],
   [
     "WGQ4",
