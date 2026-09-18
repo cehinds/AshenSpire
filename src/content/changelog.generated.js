@@ -8,19 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-18",
     "summary": "And the change that wrote that mention now has one too",
     "detail": "Nothing you see changes in play. Writing a missing line in this list is itself a change, and it needs its own line or the gap simply moves along by one. This is that line, so the chain ends here rather than being handed on again.",
-    "build": "0.7.1.91",
+    "build": "0.7.1.95",
     "pullRequest": 1154,
     "url": "https://github.com/cehinds/AshenSpire/pull/1154"
+  },
+  {
+    "id": "pr-1141",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The answers fill the space under a conversation, and both speakers fill the scene",
+    "detail": "When you answer, the buttons now grow to take the empty room that used to sit under the last one, so nothing is left blank and every answer is easier to hit. The two people talking are also drawn as large as the scene allows: whoever is too wide for their half now leans out towards the edge of the screen rather than shrinking, so you see them at full height, with their head and shoulders always in view, and they never overlap each other.",
+    "build": "0.7.1.94",
+    "pullRequest": 1141,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1141"
   },
   {
     "id": "pr-1149",
     "date": "2026-09-18",
     "group": "2026-09-18",
-    "summary": "The change that gave the Windows repair its mention now has one of its own",
-    "detail": "Nothing you see changes in play. The repair to the checks that broke on Windows landed without a line in this list, so the changelog you can read in the game did not mention it; a following change added that line, and landed without a line of its own. This is that line, with the build it shipped in.",
+    "summary": "A receipt points at the change it belongs to",
+    "detail": "Nothing a player sees changes. One entry in this list named the wrong pull request; it now names its own.",
     "build": "0.7.1.87",
     "pullRequest": 1149,
     "url": "https://github.com/cehinds/AshenSpire/pull/1149"
+  },
+  {
+    "id": "pr-1136",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The map remembers where you left it, and not where you left a different window",
+    "detail": "The map keeps the view you had, but a view saved on one window size was being restored onto another, which could leave the board sitting oddly. A saved view is now kept with the size it was solved for, and one that no longer fits is worked out afresh.",
+    "build": "0.7.1.87",
+    "pullRequest": 1136,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1136"
   },
   {
     "id": "pr-1134",
@@ -33,6 +53,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1134"
   },
   {
+    "id": "pr-1147",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The potion count on the map is a plain number",
+    "detail": "Nothing a player sees changes; the written description now matches the game. The note describing the map's potion icons still said the count sat in a small pill, which it no longer does.",
+    "build": "0.7.1.86",
+    "pullRequest": 1147,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1147"
+  },
+  {
     "id": "pr-1137",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -43,6 +73,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1137"
   },
   {
+    "id": "pr-1143",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The map's potions come out when you reach for them",
+    "detail": "On the map the small potion icons no longer sit out on the bar. The Potions button is larger, and resting on it slides the potions up out of it one after another, with the number you carry above each; move away and they fold back in.",
+    "build": "0.7.1.85",
+    "pullRequest": 1143,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1143"
+  },
+  {
+    "id": "pr-1140",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The rest of the game’s look-and-timing settings move out of the code",
+    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
+    "build": "0.7.1.92",
+    "pullRequest": 1140,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
+  },
+  {
     "id": "pr-1133",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -51,6 +101,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.81",
     "pullRequest": 1133,
     "url": "https://github.com/cehinds/AshenSpire/pull/1133"
+  },
+  {
+    "id": "pr-1130",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the world map’s camera can run on a slower computer again",
+    "detail": "Nothing you see changes. One of the checks that proves the world map remembers where its camera was gave up before it had looked at anything. It allowed seven seconds for the game to open, and on a slower computer opening the game from its loose files takes longer than that — mostly because the build stamp each page carries is worked out afresh from every file in the project, every time a page asks for it. The check now waits as long as that opening really takes, and only while it is waiting for a page to open; everywhere else it is as impatient as it was. The game itself is unchanged, and so is the way the stamp is worked out.",
+    "build": "0.7.1.81",
+    "pullRequest": 1130,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1130"
   },
   {
     "id": "pr-1132",
