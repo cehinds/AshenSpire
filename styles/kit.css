@@ -3448,9 +3448,11 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 
 /* ═══ THE SAME CHOICES AS A LIST ══════════════════════════════════════════
    Grid, above, is a browsing wall: the card is shrunk to 152px, the Choose
-   button is laid OVER its foot so no row reserves height for it, and both it
-   and the information badge are hidden until a card is focused — everything
-   bought back is spent on fitting more cards in the glass (#996).
+   button is laid OVER its foot so no row reserves height for it, and it is
+   hidden until a card is focused — everything bought back is spent on fitting
+   more cards in the glass (#996). The information badge is no longer hidden
+   here: what an unfocused face withholds is the presentation levels' to say,
+   as the note below this block sets out.
    List makes the opposite trade and is the honest counterpart the toggle
    never had. One card per row at a readable 108px beside a text column, so
    the name and the Choose button are legible WITHOUT focusing first, and the
