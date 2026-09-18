@@ -7,12 +7,17 @@ export const hudConfig = {
   // THE PHONE BAND (owner, 2026-09-18): "just vertically stacked vitality
   // block, cinders, armament and menu button. should be uniform in every view.
   // act and floor should show up in wide screen but on mobile, that's how it
-  // should be." So at or below `maxWidthPx` the band carries FOUR things in
+  // should be." Under `gate` the band carries FOUR things in
   // every context — map, room, fight, conversation — and the wide-screen facts
   // are ABSENT, not truncated. `gate` is the composition main.js already
-  // publishes on <html> (balance.ui.uiScale.narrowMax); nothing re-measures it.
+  // publishes on <html> from balance.ui.uiScale.narrowMax; `maxWidthPx` records
+  // where balance draws that line today and is NOT a second decider — nothing
+  // here re-measures the viewport.
+  // `layerOverrides` is MERGED OVER config.layers, never used in its place: it
+  // names only what a phone changes. Read as a whole layer map it would filter
+  // away the meters and the two controls the same rule says to draw.
   phone: { gate: "data-layout='narrow'", maxWidthPx: 520, meters: 'stacked',
-    layers: { header: true, class: false, cinders: true, position: false, route: false } },
+    layerOverrides: { class: false, position: false, route: false } },
   diagram: { columns: { wide: 62, compact: 48, portraitSE: 40, portraitS24: 42 }, trackColumns: 20, labelColumns: 8 },
   layout: { gapRem: 0.35, insetRem: 0.5, meterHeightRem: 1.15, actionHeightRem: 2.75, radiusRem: 0.25 },
   colors: { background: '#211a12', gold: '#d5af68', text: '#eee2ca', health: '#668c46', mana: '#478dbc', stamina: '#bf9949' },
@@ -35,14 +40,14 @@ const behavior = `INPUT snapshot, context, config, commandRegistry
 model = ProjectKnownHudFields(snapshot, config.sample)
 visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
-IF ViewportUnder(config.phone.maxWidthPx)            // the published gate, never a second measurement
+IF HostComposition() MATCHES config.phone.gate        // the published state, never a second measurement
   // One band in every context: stacked meters, Cinders, Armoury, Menu.
-  visible = FilterConfiguredActiveLayers(model, config.phone.layers)
+  visible = FilterConfiguredActiveLayers(model, Merge(config.layers, config.phone.layerOverrides))
   ComposeHeader(visible.cinders)
   ComposeStackedMeters(visible.vitality); ComposeActions(visible.armoury, visible.menu)
 ELSE
   ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+  ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
 ComposeDetachedRail(visible.relics)
