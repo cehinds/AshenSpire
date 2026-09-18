@@ -37,6 +37,34 @@ feature/* ──► dev ──► release ──► main
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning (spec §9 M3 targets: ~35–50% experienced-player win rate).
 
+### A pull request is not done until the owner can merge it with one click
+
+Owner's rule, 2026-09-18, for every session and agent working here. The
+owner reads the PR list and merges; nothing else is theirs to do there.
+
+1. **Open it ready for review, never as a draft.** Say in the body what is
+   unverified rather than hiding it behind draft status.
+2. **Have it reviewed before you call it done.** Spawn a review agent, or
+   message another live session, with the PR number; verify each finding
+   against the diff, fix what stands, push, and note the review's outcome in
+   the PR (who reviewed, what changed, what was declined and why).
+3. **Keep it mergeable.** Whenever anything else lands on the base branch,
+   merge the base into your branch (or rebase, on a branch only you have
+   pushed to), resolve every conflict yourself, regenerate the derived files
+   with the tooling (`node tools/launch.mjs --build-only`,
+   `node tools/about-changelog.mjs --write`, never by hand), re-point the
+   receipt so the box and the CHANGELOG agree, and push. The owner never
+   resolves a conflict.
+4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
+   "flake" is not a diagnosis. Never skip or quarantine a test to get green.
+5. **Keep checking after you open it.** Until it is merged or closed, re-check
+   it after every merge to the base branch and on a scheduled check-in;
+   if two open PRs touch the same code, message the other session and agree
+   who lands first and who rebases.
+6. **Land nothing yourself on `dev` without the review above**, and nothing
+   on `main` or `release` at all — those are the owner's (see
+   [Coordination and release boundary](#coordination-and-release-boundary)).
+
 ## Adding content (quick reference)
 
 Full walkthroughs live in `DEVELOPER.md` (lands with M1). Short version:
