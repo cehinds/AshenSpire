@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-18",
     "summary": "The save now carries your character as a picture of what is worn, held and carried",
     "detail": "Nothing you see changes. Beside the fields the game has always kept — your class, your armament sets, your relics and your deck — a run now also writes a single picture of the same facts: what sits at your core, what is worn on the body and at the neck, what is in each hand, what passive things ride along, and every card you own. That picture is drawn from the fields that own the truth every time the run is saved, so the two can never disagree; an older save is given its picture the moment it loads, and a save whose picture was edited by hand has it redrawn and a line written in the load record saying so. It is the groundwork for the equipment and cards becoming one collection later, and it changes nothing about how a run plays.",
-    "build": "0.7.1.114",
+    "build": "0.7.1.116",
     "pullRequest": 1165,
     "url": "https://github.com/cehinds/AshenSpire/pull/1165"
   },

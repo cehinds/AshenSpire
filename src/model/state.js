@@ -665,7 +665,10 @@ export function projectZones(run) {
  *
  * The ONE writer of `zones` and `collection`. Called at createRunState, in
  * serializeRun (so what is written is what the legacy fields say at that
- * moment, whatever a writer did between) and at the migration door. Until
+ * moment, whatever a writer did between), at the migration door, at the end
+ * of the two load doors that heal and re-stamp after the migration
+ * (save.js loadRun, tools/session.mjs restoreSession) and in the co-op
+ * session's serialize, which emits member runs without serializeRun. Until
  * phase 3b, nothing else may write these two fields.
  */
 export function syncZones(run) {

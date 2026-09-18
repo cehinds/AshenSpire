@@ -16,7 +16,7 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck } from '../src/model/loadout.js';
@@ -195,6 +195,7 @@ export function createSession({ registries, seedString, endless = false, restore
         initializeRunSmithing(registries, md.run);
         stampDeck(registries, md.run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
         initializeRunFlaskCharges(md.run, registries);
+        syncZones(md.run); // the restore re-stamped the deck; the projection follows it (plan phase 3a)
         delete md.run.migratedFromRunSchemaVersion;
         delete md.run.reprojectedZones; // no ledger is open on a member record; the re-projection stands
         members.set(md.id, {
@@ -1272,6 +1273,10 @@ export function createSession({ registries, seedString, endless = false, restore
   // live fight (combat is not persisted; resume lands at the pre-combat node).
   function serialize() {
     if (live || session.scene.kind === 'combat') return null;
+    // Member runs are emitted as they are, not through serializeRun, so the
+    // projection is drawn here from the fields that own it (plan phase 3a):
+    // what is written is what class, loadout, relics and deck say now.
+    for (const m of members.values()) syncZones(m.run);
     return {
       v: 1,
       seed: session.seed,

@@ -8235,6 +8235,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(loaded.reprojectedZones, undefined, 'the marker does not ride the run');
     const row = (saves.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'zones');
     assert(row && row.kind === 'overwrite' && /phase 3b/.test(row.why), `the ledger names the re-projection — got ${JSON.stringify(row).slice(0, 200)}`);
+
+    // The run that LEAVES the door carries a projection that is true now.
+    // A save with no loadout is healed with the bare one and its deck is
+    // re-stamped inside the door, after the migration drew the projection —
+    // so the door draws it again, and nothing waits for the next save.
+    const bare = JSON.parse(storage.getItem(RUN_KEY));
+    delete bare.loadout; bare.zones.hands = { main: null, off: null }; bare.zones.worn.body = null; bare.collection = [];
+    storage.setItem(RUN_KEY, JSON.stringify(bare));
+    const healed = saves.loadRun(REG);
+    assert(healed && healed.loadout, 'the loadout-less save is healed');
+    eq(healed.zones.hands.main, healed.loadout.sets.rightHand[healed.loadout.active.rightHand], 'the loaded projection reads the healed loadout');
+    eq(healed.zones.worn.body, healed.loadout.sets.armor[healed.loadout.active.armor], 'and its armour');
+    eq(JSON.stringify(healed.collection), JSON.stringify(healed.deck), 'the loaded collection is the re-stamped deck, card for card');
   });
 
   const passed = results.filter((r) => r.ok).length;

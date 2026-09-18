@@ -27,7 +27,7 @@
 //      restoreProfile — preservation the player cannot reach is a kinder word
 //      for lost.
 
-import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
+import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, syncZones, RUN_SCHEMA_VERSION } from '../model/state.js';
 import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLocations } from '../model/loadout.js';
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
@@ -702,6 +702,13 @@ export function createSaveManager(storage) {
           });
         }
         initializeRunFlaskCharges(run, registries);
+        // Plan phase 3a: the heals above (a missing loadout given the bare
+        // one, the deck re-stamped) wrote the fields the projection is drawn
+        // from, so it is drawn again here — the run that leaves the door
+        // carries a projection that is true NOW, not one that waits for the
+        // next save to catch up. The heals were noted where they fired; the
+        // projection following them is not a second event.
+        syncZones(run);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
         const reason = e && e.message ? e.message : 'invalid derived-stat snapshot';
