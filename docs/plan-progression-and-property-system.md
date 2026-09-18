@@ -171,6 +171,18 @@ row is checked against.
 | Migration: `loadout` slots → `zones.hands`/`zones.worn`; `relics` → `zones.passive`; `deck` copied to `collection`; `class` → `zones.core` (a class card id equal to the class id, phase 5 gives it content) | `migrateRunSchema` |
 | `serializeRun`/`deserializeRun` and `validateRunShape` updated | |
 
+**3a AS BUILT (2026-09-18):** `zones` and `collection` are a PROJECTION,
+not a second authority. Thirty-one sites write `class`, `loadout`, `relics`
+and `deck` (`armamentTrading`, `cardExtraction`, `cardRemoval`, the reward and
+shop screens, `combatSnapshot`, `save.js`, …); flipping them is 3b's whole
+job, and a phase that made zones authoritative while those writers still
+wrote the old fields would be two homes for one fact with nothing keeping
+them equal. So `projectZones(run)` reads the legacy fields, `syncZones` is
+the one writer (creation, serialize, migrate), `validateRunShape` checks the
+shape, and a save whose carried projection disagrees is re-projected with a
+ledger note rather than refused. `worn.talisman` is included beside the
+plan's four because the slot table already declares it. SPEC §13.4a.
+
 **PR 3b: equipment rows become cards.**
 
 | Change | Where |
