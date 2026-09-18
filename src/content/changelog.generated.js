@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1118",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "You and the person you are speaking to are both fully in view, whatever you play on",
+    "detail": "In a conversation, each of you keeps to your own half of the screen, so the two of you can no longer overlap and neither is hidden behind the other. On a narrow screen a figure too wide for its half is made smaller as a whole, and still stands on the top edge of the text rather than floating above it; on a wide screen nothing changes. The one listening is dimmed, but never so far that you cannot make them out. On a short or narrow screen the bar along the top now fits its own row, instead of spilling past it. The answer buttons carry only the answer: if you cannot afford a response, it reads as unavailable and says why when you hover or with a screen reader, and an answer you must hold down says so the same way, instead of a small word on the button.",
+    "build": "0.7.1.77",
+    "pullRequest": 1118,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1118"
+  },
+  {
+    "id": "pr-1116",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Events open again instead of crashing",
+    "detail": "Walking into an event on the map threw an error and the screen never appeared. It opens normally again.",
+    "build": "0.7.1.76",
+    "pullRequest": 1116,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1116"
+  },
+  {
     "id": "pr-1111",
     "date": "2026-09-18",
     "group": "2026-09-18",
