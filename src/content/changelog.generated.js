@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-18",
     "summary": "The rest of the game’s look-and-timing settings move out of the code",
     "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
-    "build": "0.7.1.89",
+    "build": "0.7.1.92",
     "pullRequest": 1140,
     "url": "https://github.com/cehinds/AshenSpire/pull/1140"
   },
@@ -21,6 +21,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.86",
     "pullRequest": 1134,
     "url": "https://github.com/cehinds/AshenSpire/pull/1134"
+  },
+  {
+    "id": "pr-1137",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The checks that prove this game’s other checks can still fail were themselves broken on Windows",
+    "detail": "Nothing a player sees changes. Before any check on this game is trusted, it is first made to fail on purpose: a known fault is planted into the real files and the check must catch it. On Windows, where the invisible character that ends each line of a file differs from the one the build servers use, a planted fault that spanned more than one line was never really planted at all — and the tool then reported that the fault’s location had moved, rather than that it had failed to plant it. Twenty-three plants across eighteen checks were affected, so those checks read as broken on every Windows run while the build servers saw nothing wrong. A plant is now read the way the file it lands in is actually written, whichever machine it is on, and the planter itself has gained a check of its own that runs on every change.",
+    "build": "0.7.1.85",
+    "pullRequest": 1137,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1137"
+  },
+  {
+    "id": "pr-1133",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Two more changes that landed without a mention now have one",
+    "detail": "Nothing you see changes in play. Two changes had already landed without a line in this list, so the changelog you can read in the game did not mention them: a separate editing tool for the people who build the game, and a clear-out of twenty-one written notes nothing referred to any more. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.81",
+    "pullRequest": 1133,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1133"
+  },
+  {
+    "id": "pr-1130",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the world map’s camera can run on a slower computer again",
+    "detail": "Nothing you see changes. One of the checks that proves the world map remembers where its camera was gave up before it had looked at anything. It allowed seven seconds for the game to open, and on a slower computer opening the game from its loose files takes longer than that — mostly because the build stamp each page carries is worked out afresh from every file in the project, every time a page asks for it. The check now waits as long as that opening really takes, and only while it is waiting for a page to open; everywhere else it is as impatient as it was. The game itself is unchanged, and so is the way the stamp is worked out.",
+    "build": "0.7.1.81",
+    "pullRequest": 1130,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1130"
   },
   {
     "id": "pr-1132",
