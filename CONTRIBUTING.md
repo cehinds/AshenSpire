@@ -13,7 +13,7 @@
 How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
 Review or approval may permit integration to `dev`; only the owner merges to
-`main`, creates a release tag, or publishes a release.
+`release` or `main`, creates a release tag, or publishes a release.
 
 ## Branch model
 
@@ -27,7 +27,7 @@ feature/* ──► dev ──► release ──► main
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Cut from `dev` when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`. |
-| `test` | Sandbox for balance experiments and playtest builds. Branch from `dev`, cherry-pick winners back. Force-pushes allowed here and nowhere else. |
+| `test` | Sandbox for balance experiments and playtest builds. Branch from `dev`, cherry-pick winners back. Force-pushes allowed here, and on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
 ## Commits & PRs
@@ -50,19 +50,22 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    the PR (who reviewed, what changed, what was declined and why).
 3. **Keep it mergeable.** Whenever anything else lands on the base branch,
    merge the base into your branch (or rebase, on a branch only you have
-   pushed to), resolve every conflict yourself, regenerate the derived files
-   with the tooling (`node tools/launch.mjs --build-only`,
-   `node tools/about-changelog.mjs --write`, never by hand), re-point the
-   receipt so the box and the CHANGELOG agree, and push. The owner never
-   resolves a conflict.
+   pushed to), resolve every conflict yourself, and regenerate the derived
+   files with the tooling, never by hand, in the order the CHANGELOG.md
+   header gives: `node tools/launch.mjs --build-only`, re-point the receipt
+   to that ordinal plus one, `node tools/about-changelog.mjs --write`,
+   rebuild again — so the box and the CHANGELOG agree — and push. The owner
+   never resolves a conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
 5. **Keep checking after you open it.** Until it is merged or closed, re-check
-   it after every merge to the base branch and on a scheduled check-in;
+   it after every merge to the base branch and on a check-in you schedule
+   yourself (an hour apart is enough);
    if two open PRs touch the same code, message the other session and agree
    who lands first and who rebases.
-6. **Land nothing yourself on `dev` without the review above**, and nothing
-   on `main` or `release` at all — those are the owner's (see
+6. **Leave the merge to the owner.** A finished PR waits in the list for
+   the owner to merge; merge it to `dev` yourself only when the owner has
+   asked you to land work, and never to `release` or `main` (see
    [Coordination and release boundary](#coordination-and-release-boundary)).
 
 ## Adding content (quick reference)
