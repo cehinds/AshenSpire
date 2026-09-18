@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1141",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The answers fill the space under a conversation, and both speakers fill the scene",
+    "detail": "When you answer, the buttons now grow to take the empty room that used to sit under the last one, so nothing is left blank and every answer is easier to hit. The two people talking are also drawn as large as the scene allows: whoever is too wide for their half now leans out towards the edge of the screen rather than shrinking, so you see them at full height, with their head and shoulders always in view, and they never overlap each other.",
+    "build": "0.7.1.88",
+    "pullRequest": 1141,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1141"
+  },
+  {
     "id": "pr-1134",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -11,6 +21,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.86",
     "pullRequest": 1134,
     "url": "https://github.com/cehinds/AshenSpire/pull/1134"
+  },
+  {
+    "id": "pr-1137",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The checks that prove this game’s other checks can still fail were themselves broken on Windows",
+    "detail": "Nothing a player sees changes. Before any check on this game is trusted, it is first made to fail on purpose: a known fault is planted into the real files and the check must catch it. On Windows, where the invisible character that ends each line of a file differs from the one the build servers use, a planted fault that spanned more than one line was never really planted at all — and the tool then reported that the fault’s location had moved, rather than that it had failed to plant it. Twenty-three plants across eighteen checks were affected, so those checks read as broken on every Windows run while the build servers saw nothing wrong. A plant is now read the way the file it lands in is actually written, whichever machine it is on, and the planter itself has gained a check of its own that runs on every change.",
+    "build": "0.7.1.85",
+    "pullRequest": 1137,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1137"
   },
   {
     "id": "pr-1132",
