@@ -142,12 +142,21 @@
      width is min(100%, its steps), and a percentage against a content-sized
      column has nothing to resolve against — every chip collapsed to 12 px. */
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 64rem) minmax(0, 1fr); grid-template-areas: "zoom hint pots";
-  align-items: center; gap: 0 1rem; min-height: calc(var(--iconbtn-size) + 1rem);
+  align-items: center; gap: 0 1rem;
+  min-height: max(calc(var(--iconbtn-size) + 1rem), calc(var(--map-potions-size) + 0.8rem));
   padding: .5rem 1.4rem calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
 }
 .map-tray-row > .map-zoom { grid-area: zoom; justify-self: start; gap: .6rem; padding: 0; border: 0; background: none; }
 .mapscreen .map-tray-row > .hint-bar { grid-area: hint; justify-self: center; margin: 0; width: 100%; max-width: 100%; }
-.map-tray-row > .map-potions { grid-area: pots; justify-self: end; display: flex; align-items: center; gap: .6rem; min-width: 0; max-width: 100%; }
+/* POTIONS IS THE BIG CONTROL IN THIS CORNER (owner, 2026-09-17): 1.6x the
+   touch row, and the minis stand ABOVE it rather than beside it. The host is
+   the button's own box, so the minis hang off its top edge and the row's
+   height is what holds it. */
+.mapscreen { --map-potions-size: calc(var(--iconbtn-size) + 3.2rem); }
+.map-tray-row > .map-potions {
+  grid-area: pots; justify-self: end; align-self: center; position: relative;
+  width: var(--map-potions-size); height: var(--map-potions-size);
+}
 /* Too narrow for one line: the hint bar takes its own line above the other two. */
 @container map-tray (max-width: 104rem) {
   .map-tray-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "hint hint" "zoom pots"; }
@@ -156,13 +165,49 @@
 /* Potions, as in combat's footer: a round control, its minis (the shared icon
    tray) beside it, --icon-tray-slots of them wide before the +N tile. */
 .map-potions .run-potions-btn {
-  flex: none; width: calc(var(--iconbtn-size) + .4rem); height: calc(var(--iconbtn-size) + .4rem);
-  min-width: 0; padding: 0; border-radius: 50%; font-size: 1.1rem; line-height: 1.1; letter-spacing: 0;
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  min-width: 0; padding: 0; border-radius: 50%; font-size: 1.3rem; line-height: 1.1; letter-spacing: 0;
 }
+/* THE MINIS COME OUT OF THE BUTTON, and only for a pointer that stays (owner,
+   2026-09-17). They keep their space while hidden, so the Potions button never
+   moves out from under the cursor; they fade and slide from the button's edge
+   after the player's OWN tooltip delay (--potion-reveal-delay, handed over by
+   components/runPotions.js from the setting tooltips read) and go back with no
+   wait at all. `visibility` keeps them out of the tab order until the corner
+   has focus, and the button sits first in the DOM so a keyboard reaches them
+   through it. Reduced motion keeps the reveal and drops the movement. */
 .map-potions .run-potion-minis {
-  flex: 0 1 auto; min-width: 0; max-width: 100%; justify-content: flex-end;
-  width: calc(var(--icon-tray-slots, 4) * (var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))) + var(--icon-tray-gap, calc(3px / var(--ui-zoom, 1)))) - var(--icon-tray-gap, calc(3px / var(--ui-zoom, 1))));
+  visibility: hidden;
+  position: absolute; left: 50%; bottom: calc(100% + 0.5rem); transform: translateX(-50%);
+  transition: visibility 0s linear var(--potion-reveal-fade, 160ms);
+  width: max-content; max-width: 40vw; justify-content: center; flex-wrap: nowrap;
 }
+/* NOTHING BEHIND THEM (owner, 2026-09-17): the flask's own art over the map
+   rather than on a chip, with the count a small number ABOVE it rather than a
+   pill on its corner. The pill's ground goes with the chip's; an ink shadow is
+   what keeps a bare number readable on parchment. */
+.map-potions .potion-mini { background: none; border-color: transparent; overflow: visible; }
+.map-potions .potion-mini > .as-pill.round {
+  left: 50%; right: auto; top: -1.15rem; bottom: auto; transform: translateX(-50%);
+  min-width: 0; padding: 0; background: none; border: 0; border-radius: 0;
+  font-size: 0.95rem; line-height: 1; color: var(--parchment);
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+}
+.map-potions:hover .run-potion-minis,
+.map-potions:focus-within .run-potion-minis { visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms); }
+.map-potions .run-potion-minis > * {
+  opacity: 0; transform: translateY(0.7rem);
+  transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
+}
+.map-potions:hover .run-potion-minis > *,
+.map-potions:focus-within .run-potion-minis > * { opacity: 1; transform: none; }
+/* One after another, nearest the button first — the tray holds four at most. */
+.map-potions:hover .run-potion-minis > *:nth-last-child(1), .map-potions:focus-within .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-reveal-delay, 500ms); }
+.map-potions:hover .run-potion-minis > *:nth-last-child(2), .map-potions:focus-within .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 40ms); }
+.map-potions:hover .run-potion-minis > *:nth-last-child(3), .map-potions:focus-within .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 80ms); }
+.map-potions:hover .run-potion-minis > *:nth-last-child(4), .map-potions:focus-within .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 120ms); }
+.reduced-motion .map-potions .run-potion-minis > * { transform: none; }
+
 .map-tray-reveal {
   position: absolute; left: 0; right: 0; bottom: 100%; height: 0; overflow: hidden;
   display: flex; flex-direction: column; background: var(--panel); border-top: 0 solid var(--line);
