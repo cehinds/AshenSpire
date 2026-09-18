@@ -1495,9 +1495,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         ? `the AUTHORED sizes, not the ones shown: ${refused}`
         : `the tuned sizes — ${cardSizingExportPath}`;
       if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+      // TAGGED WHEN IT SPEAKS ABOUT A REFUSAL, because an untagged notice cannot
+      // be withdrawn by the one that posted it. Exporting under a broken ladder
+      // replaced the tagged refusal with an untagged one, and then correcting
+      // the slider could not clear it — Settings went on claiming the authored
+      // sizes had been copied while the tuned ones were live. The tag follows
+      // whether this notice is about a refusal, not who happened to post it.
       showSettingsNotice(copied
         ? `Copied ${what}.`
-        : `Could not reach the clipboard. The block is in the browser console — ${what}.`);
+        : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
+      refused ? 'card-size' : '');
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });
   });
