@@ -332,9 +332,10 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       // scales its root before the map settles, so a mount can land on 390x405
       // of an eventual 433x643 and never re-fit, `recenter`'s observer being
       // one-shot with no window `resize` to follow the app's own scaling. That
-      // is a real wart, and it is one shape mis-measuring itself rather than a
-      // desktop camera on a phone. It belongs to its own gate; folded in here
-      // it would only put this verdict back on a race.
+      // is a real wart — #1142 — and it is one shape mis-measuring itself rather
+      // than a desktop camera on a phone, which is the property this case owns.
+      // It belongs to that gate; folded in here it would only put this verdict
+      // back on which layout stage the remount happened to catch.
       pass: desktopFit.viewportWidth > phoneFit.viewportWidth
         && !!desktopSolve && !!phoneSolve
         && Math.abs(desktopSolve.width - desktopFit.viewportWidth) <= 1
