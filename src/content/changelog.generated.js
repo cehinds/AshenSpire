@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1134"
   },
   {
+    "id": "pr-1130",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the world map’s camera can run on a slower computer again",
+    "detail": "Nothing you see changes. One of the checks that proves the world map remembers where its camera was gave up before it had looked at anything. It allowed seven seconds for the game to open, and on a slower computer opening the game from its loose files takes longer than that — mostly because the build stamp each page carries is worked out afresh from every file in the project, every time a page asks for it. The check now waits as long as that opening really takes, and only while it is waiting for a page to open; everywhere else it is as impatient as it was. The game itself is unchanged, and so is the way the stamp is worked out.",
+    "build": "0.7.1.81",
+    "pullRequest": 1130,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1130"
+  },
+  {
     "id": "pr-1132",
     "date": "2026-09-18",
     "group": "2026-09-18",
