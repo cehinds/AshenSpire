@@ -19,6 +19,11 @@ import { openModal } from './modalShell.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { button, cardGrid, categoryNav, el, flavour, railed, railItem, statusText } from '../kit/index.js';
 import { SPENT_PILES, spentPileView } from '../models/PileViewerModel.js';
+// This door's words live in content/source/uiStrings.csv, like every other
+// migrated surface: the ratchet (tools/uistrings.mjs) caught this file GROWING
+// past its baseline when the spent-pile pair landed, which is exactly the
+// regression it exists to stop.
+import { t } from '../strings.js';
 
 export function openPileModal(registries, title, cards, { shuffleForDisplay = false } = {}) {
   let list = [...cards];
@@ -29,10 +34,10 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
     }
   }
 
-  const done = button({ label: 'Close', role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+  const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
 
-  // The COUNT is the head's status, not part of the title: "Draw pile" names
-  // the door and stays put while `(5)` changes underneath it. The old markup
+  // The COUNT is the head's status, never part of the name. The pile's name
+  // stays put while `(5)` changes underneath it. The old markup
   // baked the number into the <h2>, so the thing a player reads as the name
   // of the surface changed every time a card moved.
   const status = statusText(`${list.length} ${list.length === 1 ? 'card' : 'cards'}`, { class: 'modal-head-status' });
@@ -40,7 +45,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
   const shell = openModal({
     size: 'xl',
     className: 'pile-modal',
-    eyebrow: 'Pile',
+    eyebrow: t('piles.eyebrow'),
     title,
     headExtras: status,
     bodyClassName: 'pile-body',
@@ -48,7 +53,7 @@ export function openPileModal(registries, title, cards, { shuffleForDisplay = fa
       // The body is the kit's CardGrid: the same faces the fan draws, wrapped,
       // at one gap. An empty pile says so in Flavour rather than drawing air.
       const grid = cardGrid(list.map((inst) => renderCard(registries, inst, { small: true, inspectReadOnly: true })), { class: 'grid' });
-      if (!list.length) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
+      if (!list.length) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
       host.appendChild(grid);
     },
     primary: done,
@@ -96,14 +101,14 @@ export function openSpentPileModal(registries, piles, opener = document.activeEl
       return face;
     });
     const grid = cardGrid(faces, { class: 'grid' });
-    if (view.empty) grid.appendChild(flavour('Empty.', { class: 'pile-empty' }));
+    if (view.empty) grid.appendChild(flavour(t('piles.empty'), { class: 'pile-empty' }));
     collection.replaceChildren(grid);
     read(view.detail);
   };
   const choose = (id) => { if (!SPENT_PILES.includes(id)) return; active = id; selectedId = null; paint(); };
-  const nav = categoryNav({ items, ariaLabel: 'Piles', choose });
-  const done = button({ label: 'Close', role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
-  const shell = openModal({ title: 'Card piles', size: 'xl', className: 'pile-modal spent-pile-modal',
+  const nav = categoryNav({ items, ariaLabel: t('piles.spent.nav'), choose });
+  const done = button({ label: t('common.close'), role: 'exit', className: 'pile-done', attrs: { 'data-focusable': 'true' } });
+  const shell = openModal({ title: t('piles.spent.title'), size: 'xl', className: 'pile-modal spent-pile-modal',
     showMenuButton: false, opener, bodyClassName: 'pile-body',
     body: (host) => host.append(railed(nav, pane)),
     primary: done, footSize: 'short',
