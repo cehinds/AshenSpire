@@ -78,3 +78,66 @@ for (const id of ['shop.burn.idle', 'shop.burn.ready']) {
 }
 
 console.log(`PASS ${checks}/${checks}; every card owes two beats and the selection grids keep the first`);
+
+// A REPAINT MAY DESTROY ONLY WHAT IT DREW.
+//
+// Selection repaints a card's face (#1128). The paint kept a NAMED PAIR of
+// children — the `i` and the chevron — and deleted everything else, but the
+// combat hand appends a positional keycap, a `card-unavailable-reason` pill
+// and its `.hand-hit-lane` after the renderer has run. So the first tap on a
+// card in combat removed them, and the hit lane is part of how the hand
+// decides what a touch landed on: the defect could move where a player's taps
+// go. It shipped to dev before it was caught.
+//
+// The rule that replaced it is an inversion, and the inversion is the thing
+// worth guarding: the renderer marks what IT drew, and a repaint keeps every
+// child that is not marked. An allow-list cannot be right here, because the
+// renderer cannot know what a surface will add — so a future edit that goes
+// back to naming children is the regression, whatever names it lists.
+//
+// This guards the SOURCE SHAPE, as the two rules above do. The behavioural
+// proof is the combat gates (tools/handlayout.mjs, tools/hand-resize-probe.mjs).
+{
+  const card = read('src/ui/components/card.js');
+  const paint = card.slice(card.indexOf('const paint = ('));
+  const kept = paint.slice(paint.indexOf('const kept ='), paint.indexOf('el.innerHTML ='));
+  assert.doesNotMatch(kept, /card-info-button|card-more-button/,
+    'the repaint keep-list must not name individual children again: mark what the renderer drew and keep the rest');
+  assert.match(kept, /cardPainted/,
+    'the repaint decides what to keep by the renderer\'s own paint marker');
+  assert.match(paint, /dataset\.cardPainted = '1'/,
+    'each paint stamps the children it drew, or the next repaint cannot tell them from a caller\'s');
+  assert.ok(paint.indexOf("dataset.cardPainted = '1'") < paint.indexOf('for (const node of kept)'),
+    'the stamp lands before the kept children are re-appended, or the kept ones are stamped too and deleted next time');
+}
+
+// ONE TRACK PER IN-FLOW CHILD, OR EVERY BAND ON EVERY CARD IS MISALIGNED.
+//
+// A level that withholds a region must give its grid track back, so the paint
+// recomputes `--card-bands` from the children it actually drew. That list is a
+// POSITIONAL MIRROR of the emit order — name, art, body, metadata — and the
+// cost rail and the tag strip are deliberately absent from it because both are
+// absolutely positioned and take no track. A future edit that adds a fifth
+// in-flow child, or reorders the emits, shifts every band on every playing
+// card with nothing to say so: `card-one-shape.mjs` states in its own boundary
+// that it asks about the card's OUTER shape and not its face bands, and the
+// presentation-level gate covers `cardFields`, not tracks.
+//
+// So the mirror is pinned here: four entries, in the emitted order, and the
+// rail's own offset derived from the same list rather than from the root
+// property (which is head/total for the AUTHORED four and drifts as soon as a
+// band is withheld).
+{
+  const card = read('src/ui/components/card.js');
+  const paint = card.slice(card.indexOf('const paint = ('));
+  const block = paint.slice(paint.indexOf('const drawn = ['), paint.indexOf('el.dataset.level'));
+  const order = [...block.matchAll(/\/\/ \.([a-z-]+)/g)].map((m) => m[1]);
+  assert.deepEqual(order.slice(0, 4), ['cname', 'art', 'cd-body', 'card-metadata'],
+    'the drawn-children list must mirror the emit order of the four in-flow grid children');
+  assert.doesNotMatch(block, /card-cost-rail|ctags/,
+    'the cost rail and the tag strip are absolutely positioned and take no track: counting them misaligns every band');
+  assert.match(block, /minmax\(0, \$\{b\}fr\)/,
+    'bands must be shrinkable: a bare `fr` carries an implicit auto minimum and lets content take the budget back');
+  assert.match(block, /--card-band-head/,
+    'the cost rail hangs under the head band, so its offset is derived from the same recomputed list');
+}

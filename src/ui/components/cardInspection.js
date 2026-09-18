@@ -1,7 +1,7 @@
 import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
-import { lightCard, countBeat, spendSelectingBeat } from './cardSelection.js';
+import { lightCard, countBeat, spendSelectingBeat, litCard } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
@@ -113,7 +113,7 @@ export function openCardInspection({ title, card, details, opener, actions = nul
 }
 
 /** Information owns only its own button; action/hold/drag handlers stay on hosts. */
-export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false }) {
+export function bindCardInspection(card, { title, open, readOnly = false, touchSelectionSafe = false, actionOwnsTouch = false, identity: givenIdentity = null }) {
   card.style.userSelect = 'none';
   card.classList.add('card-inspection-target');
   if (!card.hasAttribute('tabindex')) card.tabIndex = 0;
@@ -148,7 +148,14 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
       }
     }, revealDelayMs());
   };
-  const identity = card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
+  // A CALLER MAY NAME THE CARD'S LOGICAL IDENTITY. Selection is page-wide and
+  // keyed by identity, so two faces of the SAME item are one lit card — which
+  // is right on a screen (a picker rebuilt under you keeps your choice) and
+  // wrong in the component catalogue, where three faces of one item exist
+  // precisely to be compared side by side. Without this, selecting any of them
+  // promoted all three to `focus` and destroyed the comparison they are there
+  // to show. Defaults to the DOM's own answer, so every screen is unchanged.
+  const identity = givenIdentity || card.dataset.instanceId || card.dataset.item || card.dataset.cardId || title;
   // HOW THIS CARD PUTS ITSELF OUT. The store calls this on the card that was
   // lit before, so nothing traverses the document looking for it. A pending
   // reveal is cancelled with it: otherwise it lands after the card has lost
@@ -232,6 +239,37 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     spendSelectingBeat(identity, douse);
     select(); revealInfo();
   });
+  // A REBUILT CARD ADOPTS THE SELECTION IT ALREADY HELD.
+  //
+  // Selection is keyed by LOGICAL identity precisely so it survives a host
+  // re-render — that is the store's stated contract, and it is what lets a
+  // screen repaint its grid without losing the player's choice. But the store
+  // also holds the previous card's `douse`, closed over a node that the
+  // rebuild has just detached. So the replacement read as lit (its level
+  // resolved to `focus`) while carrying none of the selected classes, and
+  // lighting a different card only doused the detached ghost — leaving the
+  // replacement stuck in the focused presentation with no way out.
+  //
+  // Re-registering here is the fix that keeps the contract rather than
+  // trading it away: clearing the selection before a rebuild would fix the
+  // stuck card by discarding the very thing identity-keying exists to
+  // preserve. `lightCard` replaces the douse for an already-lit id and keeps
+  // its beats, so the count a player has spent survives the repaint too.
+  //
+  // THE STORE HOLDS ONE DOUSE PER IDENTITY, and this makes that visible rather
+  // than causing it. Where several LIVE cards share one identity — the creation
+  // screen's left and right hand pickers offer the same pieces, and a shop's
+  // faces can fall through to `title` — every one of them lights here, and only
+  // the last to bind owns the douse, so the others keep the glow until they are
+  // rebuilt. That is the pre-existing shape of a page-wide store keyed by
+  // identity, unchanged by this block and reproducible without it; scoping
+  // selection per grid is the fix for it and is its own question.
+  if (litCard() === identity) {
+    lightCard(identity, douse);
+    card.classList.add('inspection-selected');
+    card.setAttribute('aria-pressed', 'true');
+    card.setAttribute('aria-current', 'true');
+  }
   card.append(info, more);
   card.addEventListener('pointerdown', event => { touch = event.pointerType === 'touch'; });
   card.addEventListener('click', event => {

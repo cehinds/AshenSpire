@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1161",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Cards keep what was pinned to them, and a browsing card really is larger-typed",
+    "detail": "In a fight, the first tap on a card no longer wipes the marks pinned to it — its key hint, the note saying why it cannot be played, the hold meter and the invisible strip that decides what your thumb landed on all survive being redrawn. A card that says less now gives the space back to the words it does show, instead of leaving an empty band at its foot. Flavour text written for playing cards had always existed and was shown to nobody; it now reads in the card's own information window, in the same place an item's does. In the developer catalogue, the three sample cards that exist to be compared no longer move together when you tap one.",
+    "build": "0.7.1.104",
+    "pullRequest": 1161,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1161"
+  },
+  {
+    "id": "pr-1160",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Your armour choices come back when you switch how they are listed",
+    "detail": "Switching the starting-equipment picker between Grid and List used to empty it — the choices were still there, but nothing was open to hold them, so the step looked blank. The section you had open stays open now.",
+    "build": "0.7.1.104",
+    "pullRequest": 1160,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1160"
+  },
+  {
     "id": "pr-1154",
     "date": "2026-09-18",
     "group": "2026-09-18",

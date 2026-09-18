@@ -74,7 +74,7 @@ function applyCardTokens(card, tokens) {
  * level there: the creation picker shows rarity while you are choosing, the
  * combat hand does not show it at all.
  */
-export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = 'glance', surface = 'none' } = {}) {
+export function renderEquipmentCard(registries, piece, { interactive = true, presentation = null, inspection = true, owned = null, level = 'glance', surface = 'none', identity: identityOverride = null } = {}) {
   configureTooltipGlossary(registries);
   const model = presentation || equipmentCardModel(registries, piece);
   // An inert face — one rendered with no inspection door — is standing IN FOR
@@ -85,7 +85,10 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   const floor = inspection === false ? 'inspect' : level;
   // `card.dataset.item` is the identity bindCardInspection lights this card
   // by; asking the store with the same key is what keeps the two facts one.
-  const identity = model.id;
+  // An explicit identity feeds BOTH the lit-card comparison below and the
+  // selection binding, so a caller that renames a card cannot leave the two
+  // disagreeing about which card is lit. Only the catalogue passes one.
+  const identity = identityOverride || model.id;
   const levelNow = () => resolveCardLevel({ floor, lit: litCard() === identity, inspecting: inspection === false });
   let drawn = levelNow();
   const tokensFor = (at) => equipmentCardTokens(undefined, {
@@ -105,6 +108,16 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // the row tokens rather than once here: a card that lights rises to `focus`
   // and must grow with what it now says, or the fields and the frame drift.
   card.dataset.item = model.id;
+  // THE DOM AGREES WITH THE SELECTION ABOUT WHICH CARD THIS IS. With an
+  // identity override, `data-item` alone would say one thing and the selection
+  // store another — and `bindCardInspection`'s fallback chain, if the explicit
+  // argument were ever refactored away, would quietly resolve back to the item
+  // id and re-couple the faces this override exists to separate.
+  // It is written to `data-instance-id`, which that chain already prefers over
+  // `data-item`, rather than over `data-item` itself: styles/kit.css and two QA
+  // tools select real pieces by `[data-item="..."]`, so that attribute has to
+  // keep naming the piece.
+  if (identityOverride) card.dataset.instanceId = identityOverride;
   // WC2a1–WC2c3: which rows each region carries, from the item's own data
   // (hand, card package, modifiers, relic modes, potion effects). A bespoke
   // presentation without a variant (the empty hand) keeps the plain face.
@@ -184,7 +197,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
   // Keep explanation gestures out of the containing equipment hold action.
   if (interactive) for (const type of ['pointerdown', 'touchstart', 'click', 'keydown']) card.addEventListener(type, event => event.stopPropagation());
   if (inspection) {
-    bindCardInspection(card, { title: model.name, readOnly: interactive,
+    bindCardInspection(card, { title: model.name, readOnly: interactive, identity,
       open: opener => {
         // THE DOOR READS ITS OWN FACE'S EXPLANATIONS, not this one's. The
         // outer card may be standing at `glance`, where it has not built a tag

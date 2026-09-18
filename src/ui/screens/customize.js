@@ -1209,9 +1209,15 @@ export function mountCustomize(app, {
     // second opinion about how big a card is.
     const levelSpecimen = el('div', { class: 'cc-catalog-specimen cc-card-selectors cc-card-levels', dataset: { view: 'list' } });
     for (const at of ['glance', 'focus', 'inspect']) {
+      // EACH SPECIMEN IS ITS OWN CARD AS FAR AS SELECTION IS CONCERNED.
+      // All three draw the same item on purpose — that is the comparison — but
+      // selection is page-wide and keyed by identity, so sharing one meant
+      // lighting any face promoted all three to `focus` and the three-level
+      // comparison collapsed into three identical cards. On a real screen that
+      // sharing is the correct behaviour; here it defeats the specimen.
       const face = renderEquipmentCard(registries, specimenArmours[0], at === 'inspect'
         ? { interactive: false, inspection: false }
-        : { interactive: false, level: at }).card;
+        : { interactive: false, level: at, identity: `catalog-level-${at}` }).card;
       levelSpecimen.append(el('figure', { class: 'cc-card-level', dataset: { level: at } }, [
         face, el('figcaption', {}, at),
       ]));

@@ -10,6 +10,7 @@ import { configureTooltipGlossary, decorateKeywords } from './tooltipGlossary.js
 import { resolveCard, relicPropertyRules } from '../../model/registries.js';
 import { playingCardModel, playingCardClasses, staticCardTokens } from '../../model/playingCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
+import { cardShape } from '../models/CardSizeModel.js';
 import { litCard } from './cardSelection.js';
 import { relicTokens, tokenRe } from '../../model/validate.js';
 import { flaskGrowthClause } from '../../model/flaskgrowth.js';
@@ -187,10 +188,15 @@ export function renderCard(registries, ref, opts = {}) {
   //   type     the type band               tags    the subtype chips
   //   effects  the rule text               footer  the rarity/owned band
   //
-  // `flavor` has no landmark here: a playing card authors none, so the level
-  // that would show it simply has nothing to show. That is the same absence
-  // the equipment solver already handles for a card with no tag badges, not a
-  // special case.
+  // `flavor` has no landmark ON THE FACE, and that is a layout decision rather
+  // than an absence of data. This note used to claim a playing card authors no
+  // flavour, which was false: `resolveCard` composes `profile.flavor ||
+  // def.flavor`, the generated basic profiles author it, and so do the
+  // colorless and co-op sets. Believing the comment meant the text was written
+  // and shown to nobody.
+  // The face has four fixed bands and no room to grow one, so the flavour is
+  // carried by the reading door's pane — the same place, and the same
+  // `inspection-lore` disclosure, the equipment card uses for its own.
   //
   // `cname` is not a region, for the same reason `.epc-name` is not: the title
   // is what tells one card from another and shows at every level.
@@ -212,11 +218,27 @@ export function renderCard(registries, ref, opts = {}) {
     // The information button and the chevron are children of the card that
     // `bindCardInspection` appended with their own listeners; a repaint must
     // hand them back rather than take them away.
+    // WHAT A REPAINT MAY DESTROY IS WHAT IT DREW, AND NOTHING ELSE.
+    //
+    // This kept a NAMED PAIR — the `i` and the chevron — on the premise that
+    // they are the only children a caller adds. They are not. The combat hand
+    // appends a positional keycap, a `card-unavailable-reason` pill and its
+    // `.hand-hit-lane` to the card AFTER the renderer has run (hand.js), and
+    // selection repaints now, so the first tap on a card in combat deleted
+    // them. The hit lane is part of how the hand decides what a touch landed
+    // on, so this could move where a player's taps go.
+    //
+    // An allow-list of foreign children cannot be right, because the renderer
+    // cannot know what a surface will add. Invert it: mark the children THIS
+    // renderer drew and keep everything unmarked. New callers and new
+    // decorations are then safe by default rather than by remembering to come
+    // back and edit a list here.
+    //
     // Guarded, because this renderer is also exercised against the minimal DOM
-    // the wireframe tests build, which has no `querySelectorAll`. There is
-    // nothing to keep on a first paint in any case — the door has not run yet.
-    const kept = typeof el.querySelectorAll === 'function'
-      ? [...el.querySelectorAll(':scope > .card-info-button, :scope > .card-more-button')]
+    // the wireframe tests build, which has no `children`. There is nothing to
+    // keep on a first paint in any case — the door has not run yet.
+    const kept = el.children
+      ? [...el.children].filter((node) => node?.dataset?.cardPainted !== '1')
       : [];
     el.innerHTML =
       region('facts', `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
@@ -234,7 +256,49 @@ export function renderCard(registries, ref, opts = {}) {
         : '') + '</div>') +
       (body ? `<div class="cd-body">${body}</div>` : '') +
       region('footer', metadataBand(def.rarity, opts.owned));
+    // Stamp what this paint drew BEFORE the kept children go back on, so the
+    // next repaint can tell the two apart. Guarded for the same minimal DOM.
+    if (el.children) for (const node of el.children) { if (node.dataset) node.dataset.cardPainted = '1'; }
     for (const node of kept) el.append(node);
+    // A WITHHELD REGION GIVES ITS TRACK BACK.
+    //
+    // WC1 lays the face out on four authored bands — name / art / body /
+    // metadata — and the level decides which of those children are drawn. The
+    // bands were the authored four regardless, so a `glance` card that
+    // withholds its metadata band left an EMPTY TRAILING TRACK: about a tenth
+    // of the face spent on nothing, and none of it returned to the rule text.
+    // That is the opposite of the claim levels are built on — that omitting a
+    // region returns its pixels — and it held for the equipment face (whose
+    // solver already recomputes rows) while quietly not holding here.
+    //
+    // The card states the bands for the children it ACTUALLY drew, in face
+    // order. The numbers are still the authored ones; only the absent band is
+    // dropped, so the remaining shares keep their proportions to each other.
+    {
+      const drawn = [
+        true,                                   // .cname, always
+        visible.has('art'),                     // .art
+        Boolean(body),                          // .cd-body (type and/or effects)
+        visible.has('footer'),                  // .card-metadata
+      ];
+      const bands = cardShape().bands.filter((_, index) => drawn[index]);
+      el.style.setProperty('--card-bands', bands.map((b) => `minmax(0, ${b}fr)`).join(' '));
+      // THE COST RAIL HANGS UNDER THE HEAD BAND, SO IT MOVES WITH IT.
+      // `--card-band-head` is the head's share of the face, projected once on
+      // :root as head/total = 10%. Withholding a band changes that total —
+      // 1/9 rather than 1/10 — so a rail pinned to the root value drifts up
+      // into the name it is meant to sit below: measured at shop glance, 0.3px
+      // of clearance against the 2.7px the four-band face gives. Re-derived
+      // here from the same list, so the rail and the bands cannot disagree.
+      const total = bands.reduce((sum, b) => sum + b, 0);
+      el.style.setProperty('--card-band-head', `${(bands[0] / total) * 100}%`);
+      // The layout's own invariant, asserted where it is created rather than
+      // left to a gate that does not look at bands: one track per in-flow
+      // child. The `drawn` list is a positional mirror of the emit order
+      // below, and a future edit that adds a fifth in-flow child or reorders
+      // the emits would silently misalign every band on every card.
+      el.dataset.cardBands = String(bands.length);
+    }
     el.dataset.level = at;
     // `data-tag-rows` is what the stylesheet and every tool read to know the
     // text's share of the budget. At a level that withholds the chips there
@@ -271,6 +335,27 @@ export function renderCard(registries, ref, opts = {}) {
       const liveCosts = model.hasPreview ? model.costs : null;
       details.innerHTML = opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, model.tokens, liveCosts);
       decorateKeywords(details);
+      // AUTHORED FLAVOUR REACHES THE PLAYER, at the level that promises
+      // everything. The note above the regions used to say a playing card
+      // authors no flavour; that was simply false — `resolveCard` composes
+      // `profile.flavor || def.flavor` (model/registries.js), the generated
+      // basic profiles author it, and so do the colorless and co-op sets. It
+      // was written, stored, and shown to nobody.
+      // It goes in the reading door's pane rather than on the face, which is
+      // exactly where the equipment card puts its own (`inspection-lore` in
+      // equipmentCard.js) — same disclosure, same summary, so the two card
+      // types read the same way at the same level.
+      if (def.flavor) {
+        const lore = document.createElement('details');
+        lore.className = 'inspection-lore';
+        const summary = document.createElement('summary');
+        summary.textContent = 'Flavor';
+        summary.tabIndex = 0;
+        const text = document.createElement('p');
+        text.textContent = def.flavor;
+        lore.append(summary, text);
+        details.append(lore);
+      }
       const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read
