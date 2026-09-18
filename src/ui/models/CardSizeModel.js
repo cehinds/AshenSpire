@@ -250,6 +250,15 @@ export function cardDoorStackBelowPx(config = uiConfig.components.card.sizing) {
  * control clamped its display to 640. The control said 640 and the card drew
  * 1000. One authored home, read by both.
  */
+/** The variants that have a control of their own, and therefore do not inherit. */
+export function tunableVariantNames(config = uiConfig.components.card.sizing) {
+  const named = config?.tuning?.slidered;
+  if (!Array.isArray(named)) {
+    throw new Error(`card sizing.tuning.slidered must be an array of variant names, got ${JSON.stringify(named)}`);
+  }
+  return named;
+}
+
 export function cardWidthBounds(config = uiConfig.components.card.sizing) {
   const min = Number(config?.tuning?.minPx);
   const max = Number(config?.tuning?.maxPx);
@@ -285,6 +294,7 @@ export function cardLevelsWithOverrides(settings = {}, config = uiConfig.compone
   // the layout were different facts. Clamping rather than refusing, because the
   // control itself clamps: agreeing with what the tuner can see is the point.
   const { min, max } = cardWidthBounds();
+  const slidered = new Set(tunableVariantNames());
   // `null` means "no override here", so the authored width stands. Anything the
   // control would show is normalised the control's way.
   const px = (value) => (value === '' || value === null || value === undefined
@@ -293,9 +303,33 @@ export function cardLevelsWithOverrides(settings = {}, config = uiConfig.compone
   const merged = {};
   for (const [level, row] of Object.entries(authored)) {
     const variants = { ...row.variants };
+    const own = px(settings[`cardWidth_${level}`]);
     for (const name of Object.keys(variants)) {
       const override = px(settings[`cardWidth_${level}_${name}`]);
-      if (override !== null) variants[name] = override;
+      if (override !== null) { variants[name] = override; continue; }
+      // A VARIANT WITH NO SLIDER STILL HAS TO FOLLOW ITS LEVEL. `compact` is the
+      // width a resting card takes in the creation picker's List view, and it
+      // is not one of the four the owner asked for ("Just 3 (4 for mobile)
+      // sizes"). Left alone it stayed at the authored 108px however far the
+      // Resting slider moved, so "how wide a card is while you are browsing
+      // past it" was false in List view — and the ladder could refuse against
+      // `glance:compact`, naming a width with no control behind it.
+      //
+      // So an un-slidered variant keeps its PROPORTION to the level it hangs
+      // under rather than its pixel value. At the authored widths that is
+      // 108/152, which returns exactly 108 — it ships unchanged and follows
+      // once tuned, the same bargain `mobile` makes.
+      //
+      // ONLY the un-slidered ones. Letting `mobile` inherit too put the control
+      // and the layout back in disagreement — its row displays the authored 152
+      // as its default, so a glance tuned to 200 would have drawn a 200px phone
+      // card under a slider reading 152. Which variants have a control of their
+      // own is authored in `sizing.tuning.slidered`, read by this model and by
+      // the settings rows, rather than each keeping its own idea.
+      if (slidered.has(name)) continue;
+      if (own !== null && row.widthPx > 0) {
+        variants[name] = Math.max(min, Math.round((variants[name] / row.widthPx) * own));
+      }
     }
     merged[level] = { widthPx: px(settings[`cardWidth_${level}`]) ?? row.widthPx, variants };
   }

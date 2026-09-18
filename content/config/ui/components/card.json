@@ -11,7 +11,7 @@
       "inspect": { "widthPx": 320 }
     },
     "doorReadableMinPx": 384,
-    "tuning": { "minPx": 64, "maxPx": 640 }
+    "tuning": { "minPx": 64, "maxPx": 640, "slidered": ["mobile"] }
   },
   "behavior": {
     "fields": {

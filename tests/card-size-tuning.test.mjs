@@ -49,6 +49,7 @@ import {
   normalizeTunedNumber,
   restingWidthPx,
   cardMobileBelowPx,
+  tunableVariantNames,
   cardDoorStackBelowPx,
   doorReadableMinPx,
 } from '../src/ui/models/CardSizeModel.js';
@@ -204,4 +205,33 @@ test('D4 a missing authored term throws by name rather than guessing', () => {
     /inspect\.widthPx/);
   assert.throws(() => doorReadableMinPx({ levels: AUTHORED }), /doorReadableMinPx/);
   assert.throws(() => cardWidthBounds({ tuning: { minPx: 640, maxPx: 64 } }), /minPx < maxPx/);
+});
+
+// ── variants without a control of their own ────────────────────────────────
+
+test('E1 an un-slidered variant follows its level; a slidered one does not', () => {
+  const slidered = new Set(tunableVariantNames());
+  assert.ok(slidered.has('mobile'), 'mobile has its own row');
+  assert.ok(!slidered.has('compact'), 'compact has no row, so it must inherit');
+
+  const base = cardLevelsWithOverrides({});
+  assert.deepEqual(base.levels.glance.variants, AUTHORED.glance.variants,
+    'untuned, every variant is exactly the authored one');
+
+  const tuned = cardLevelsWithOverrides({ cardWidth_glance: 200 });
+  const ratio = AUTHORED.glance.variants.compact / AUTHORED.glance.widthPx;
+  assert.equal(tuned.levels.glance.variants.compact, Math.round(200 * ratio),
+    'compact keeps its proportion to glance');
+  assert.equal(tuned.levels.glance.variants.mobile, AUTHORED.glance.variants.mobile,
+    'mobile holds at the value ITS OWN control displays, or the two disagree');
+});
+
+test('E2 an explicit variant override still wins over inheritance', () => {
+  const { levels } = cardLevelsWithOverrides({ cardWidth_glance: 200, cardWidth_glance_mobile: 110 });
+  assert.equal(levels.glance.variants.mobile, 110);
+  assert.equal(levels.glance.variants.compact, Math.round(200 * (AUTHORED.glance.variants.compact / AUTHORED.glance.widthPx)));
+});
+
+test('E3 the slidered list is authored, not invented here', () => {
+  assert.throws(() => tunableVariantNames({ tuning: { minPx: 64, maxPx: 640 } }), /slidered/);
 });
