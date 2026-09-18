@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>AshenSpire Studio</title><link rel="stylesheet" href="/styles.css"></head>
+<body>
+  <header><a class="brand" href="#sprites"><span class="mark"></span>AshenSpire <strong>Studio</strong></a><div id="project" class="project">Opening workspace…</div><div class="header-actions"><button id="preview-game">Preview game</button><button id="review" class="primary">Review changes <span id="count">0</span></button></div></header>
+  <nav aria-label="Editor sections" id="navigation"></nav>
+  <main id="main" tabindex="-1"><p>Opening your game…</p></main>
+  <footer><span id="workspace-status">Local workspace</span><span id="status" role="status">Changes are saved with backups</span></footer>
+  <dialog id="dialog"><div id="dialog-body"></div><form method="dialog"><button class="dialog-close">Close</button></form></dialog>
+  <div id="toast" role="status" hidden></div>
+  <input id="import-files" type="file" accept="image/png,image/webp,image/gif,image/jpeg" multiple hidden>
+  <script type="module" src="/app.js"></script>
+</body></html>
