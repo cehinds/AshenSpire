@@ -52,10 +52,12 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    merge the base into your branch (or rebase, on a branch only you have
    pushed to), resolve every conflict yourself, and regenerate the derived
    files with the tooling, never by hand, in the order the CHANGELOG.md
-   header gives: `node tools/launch.mjs --build-only`, re-point the receipt
-   to that ordinal plus one, `node tools/about-changelog.mjs --write`,
-   rebuild again — so the box and the CHANGELOG agree — and push. The owner
-   never resolves a conflict.
+   header gives. The *receipt* is the PR's CHANGELOG.md entry, which names
+   the build it shipped in; the *box* is `buildordinal.json`, which the
+   rebuild writes. So: `node tools/launch.mjs --build-only`, re-point the
+   receipt to the box's ordinal plus one, `node tools/about-changelog.mjs
+   --write`, rebuild again — the box and the receipt now agree — and push.
+   The owner never resolves a conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
 5. **Keep checking after you open it.** Until it is merged or closed, re-check
