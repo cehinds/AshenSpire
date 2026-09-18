@@ -525,6 +525,7 @@ const SECTIONS = {
 const ADVANCED_GROUPS = Object.freeze([
   { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
 ]);
