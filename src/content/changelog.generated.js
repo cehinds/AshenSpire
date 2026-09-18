@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1115",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The list of changes under Settings, About fills in seven gaps",
+    "detail": "Nothing you see changes in play. Seven changes that had already landed were missing from this list, so the changelog you can read in the game did not mention them: one that puts your relics, potions and status effects in a single row of icons, and six that only touched the project's own writing and checking tools. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.72",
+    "pullRequest": 1115,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1115"
+  },
+  {
     "id": "pr-1107",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -33,6 +43,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1106"
   },
   {
+    "id": "pr-1112",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The plan for quest conversations keeps both speakers on screen",
+    "detail": "Nothing you see changes yet. The written plan for face-to-face quest conversations now says that you and the person you are speaking to are both visible at every screen size. Each of you keeps to one half of the screen and the two never overlap; a figure too wide for its half is drawn smaller as a whole and still stands on the line where the words begin, rather than floating above it. Wide screens look as they do today, and the person listening is dimmed only so far, so you can still see them.",
+    "build": "0.7.1.67",
+    "pullRequest": 1112,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1112"
+  },
+  {
     "id": "pr-997",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -43,6 +63,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/997"
   },
   {
+    "id": "pr-1109",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Your relics, potions and status effects sit in one row of icons",
+    "detail": "The top band now holds your relics, your potion icons and your status effects in a single row, drawn at the same size and spacing as the status icons on a fighter's card and opening the same kind of explanation. Relics appear on the world map's band too, where they were missing before, and the icons sit together instead of spread far apart. When more icons exist than the row can hold, it ends with a count you can open to see the rest.",
+    "build": "0.7.1.63",
+    "pullRequest": 1109,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1109"
+  },
+  {
     "id": "pr-1105",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -51,6 +81,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.62",
     "pullRequest": 1105,
     "url": "https://github.com/cehinds/AshenSpire/pull/1105"
+  },
+  {
+    "id": "pr-1110",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The written plan for the gameplay screens is now a stack of layers",
+    "detail": "Nothing you see changes. Combat, the world map and quest conversations are each described as a stack of layers — sky, ground, figures, the band of words, the controls — with each layer able to be switched off on its own and every overlap measured. The conversation screen is written down in that form too: the ground sits at sixty per cent of the view, the figures are drawn full height so their upper third rises above the words, and the scene, the people and the words arrive in that order.",
+    "build": "0.7.1.62",
+    "pullRequest": 1110,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1110"
+  },
+  {
+    "id": "pr-1104",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The world's written history quotes the owner's own telling of it",
+    "detail": "Nothing you see changes. The documents that hold this world's history used to retell the owner's own account in their own words. They now carry his wording directly, and the three things that account leaves deliberately unexplained are written into the tables that track them, so they stay open questions on purpose rather than by omission.",
+    "build": "0.7.1.59",
+    "pullRequest": 1104,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1104"
   },
   {
     "id": "pr-994",
@@ -81,6 +131,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.57",
     "pullRequest": 1101,
     "url": "https://github.com/cehinds/AshenSpire/pull/1101"
+  },
+  {
+    "id": "pr-1057",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A checking tool reads the combat screen the way it works today",
+    "detail": "Nothing you see changes. The tool that walks the combat screen and checks what it says still expected the older screen: it looked for a fighter's name before the fighter is chosen, and for card costs and tags that had already moved. It failed before it reached most of its checks. It now selects a fighter first and reads the card the way the screen presents it, so the checks it was written for actually run.",
+    "build": "0.7.1.57",
+    "pullRequest": 1057,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1057"
+  },
+  {
+    "id": "pr-1039",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A saved-game check starts a climb the way you do",
+    "detail": "Nothing you see changes. One of the checks that proves the world map remembers where its camera was never actually reached a new climb: it stopped at the question that asks you to confirm the slot, and character creation was never opened. It now presses Start at that question and makes the same choices you would — class, then the rest — so the case it was written to prove is the one it walks.",
+    "build": "0.7.1.57",
+    "pullRequest": 1039,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1039"
+  },
+  {
+    "id": "pr-1022",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The wording check counts each file once on Windows",
+    "detail": "Nothing you see changes. The check that guards the game's written text against accidental loss compared each file against its record using the path style of the computer running it. On Windows the two never matched, so all sixty-two files with text in them were counted twice — once as shrunk, once as grown — and the check reported over a hundred differences that did not exist. It now uses one path style everywhere, so the count is the real one.",
+    "build": "0.7.1.57",
+    "pullRequest": 1022,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1022"
   },
   {
     "id": "pr-1098",
