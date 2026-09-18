@@ -2,6 +2,11 @@ import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { balance } from '../../content/balance.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
+
+// Band defaults, the fade and the clamp live in
+// content/config/ui/presentation/tooltipPlacement.json.
+const TT = uiConfig.presentation.tooltipPlacement.behavior;
 
 // The presenter's four height rungs, smallest first. tooltip.js steps a panel
 // up this list until its content fits; nothing else sizes a tooltip.
@@ -12,7 +17,7 @@ export const TOOLTIP_WIREFRAMES = Object.freeze(['WT1', 'WT2', 'WT3']);
 export const TOOLTIP_ARROW_EDGES = Object.freeze(['top', 'bottom', 'left', 'right']);
 
 const finite = (value, fallback) => Number.isFinite(value) ? value : fallback;
-const clampPct = (value, fallback) => Math.max(0, Math.min(50, finite(value, fallback)));
+const clampPct = (value, fallback) => Math.max(0, Math.min(TT.limits.maxBandPct, finite(value, fallback)));
 
 // One authored policy for every contextual explanation. Views supply only the
 // anchor and whether the current composition is narrow; the model decides which
@@ -22,9 +27,9 @@ export function tooltipPlacementModel(presentation = {}) {
     variant: 'edge-aware',
     tokens: {
       hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, balance.ui.tooltipPlacement.hoverDelayMs)),
-      autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, 5000)),
-      topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
-      sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),
+      autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, TT.defaults.autoFadeMs)),
+      topBandViewportPct: clampPct(presentation.topBandViewportPct, TT.defaults.topBandViewportPct),
+      sideBandViewportPct: clampPct(presentation.sideBandViewportPct, TT.defaults.sideBandViewportPct),
     },
     accessibility: {
       label: 'Contextual explanation',
@@ -125,7 +130,7 @@ export function tooltipArrow(panel, anchor, { widthPx, heightPx, insetPx = 0 } =
   if (!panel || !anchor || !(widthPx > 0) || !(heightPx > 0)) return NO_ARROW;
   const p = { left: finite(panel.left, 0), top: finite(panel.top, 0), width: finite(panel.width, 0), height: finite(panel.height, 0) };
   const a = { left: finite(anchor.left, 0), top: finite(anchor.top, 0), width: finite(anchor.width, 0), height: finite(anchor.height, 0) };
-  const eps = 0.5;
+  const eps = TT.limits.edgeEpsilonPx;
   const pRight = p.left + p.width, pBottom = p.top + p.height;
   const aRight = a.left + a.width, aBottom = a.top + a.height;
   const edge = pBottom <= a.top + eps ? 'bottom'

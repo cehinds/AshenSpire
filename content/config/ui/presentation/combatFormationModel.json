@@ -10,6 +10,20 @@
     "ceiling": {
       "heightFraction": 0.52,
       "widthFraction": 0.16
+    },
+    "insetCapDivisor": 10,
+    "stepCapDivisor": 6,
+    "gapRamp": {
+      "narrowPx": 375,
+      "widePx": 1200
     }
+  },
+  "positioning": {
+    "detailReserveFraction": 0.22,
+    "firstFootFraction": 0.45,
+    "footSteps": [
+      0.25,
+      1.125
+    ]
   }
 }

@@ -11,6 +11,17 @@
 const BACKSLASH = String.fromCharCode(92);
 const BACKTICK = String.fromCharCode(96);
 
+// The last character that decides whether a `/` divides or opens a regex.
+const lastSignificant = (text) => {
+  for (let i = text.length - 1; i >= 0; i -= 1) if (!/\s/.test(text[i])) return text[i];
+  return '';
+};
+// `/` opens a regex at the start of input, or after an operator, a comma, a
+// semicolon, or an opening bracket — anywhere a VALUE may begin. After an
+// identifier, a number or a closing bracket, a value has just ended, so `/`
+// divides.
+const REGEX_MAY_FOLLOW = /^$|[([{,;:=!&|?+\-*%<>~^]/;
+
 /**
  * `src` with comment bodies and string bodies removed.
  *
@@ -33,6 +44,30 @@ export function stripCommentsAndStrings(src) {
       i += 2;
       while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i += 1;
       i += 2;
+      continue;
+    }
+    // A REGULAR EXPRESSION is not arithmetic, and `[A-Za-z0-9]` is not a 9.
+    //
+    // Telling a regex from a division needs the parser this file deliberately
+    // is not, so it uses the rule every JS tokenizer uses: after a value, `/`
+    // divides; after an operator, a keyword or an opening bracket, it opens a
+    // regex. The previous significant character decides. Where that rule is
+    // wrong the cost is a stray literal reported, not a real one hidden — the
+    // guard stays loud rather than going quiet, which is the direction a check
+    // should fail in.
+    if (c === '/' && REGEX_MAY_FOLLOW.test(lastSignificant(out))) {
+      i += 1;
+      let inClass = false;
+      while (i < n) {
+        if (src[i] === BACKSLASH) { i += 2; continue; }
+        if (src[i] === '[') inClass = true;
+        else if (src[i] === ']') inClass = false;
+        else if (src[i] === '/' && !inClass) { i += 1; break; }
+        else if (src[i] === '\n') break;
+        i += 1;
+      }
+      while (i < n && /[a-z]/.test(src[i])) i += 1; // flags
+      out += '/./';
       continue;
     }
     if (c === '"' || c === "'") {

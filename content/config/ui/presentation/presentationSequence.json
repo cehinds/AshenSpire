@@ -1,7 +1,69 @@
 {
   "behavior": {
     "schemaVersion": 1,
-    "historyDepth": 60
+    "historyDepth": 60,
+    "limits": {
+      "durationMs": {
+        "min": 100,
+        "max": 30000
+      },
+      "poses": {
+        "min": 5,
+        "max": 7
+      },
+      "maxClips": 100,
+      "maxBindings": 100,
+      "clip": {
+        "offsetMs": {
+          "min": -30000,
+          "max": 30000
+        },
+        "durationMs": {
+          "min": 60,
+          "max": 30000
+        },
+        "x": {
+          "min": -1000,
+          "max": 1000
+        },
+        "y": {
+          "min": -600,
+          "max": 600
+        },
+        "size": {
+          "min": 20,
+          "max": 800
+        },
+        "rotationDeg": {
+          "min": -360,
+          "max": 360
+        }
+      },
+      "binding": {
+        "maxTags": 40,
+        "maxTagLength": 80,
+        "priority": {
+          "min": -999,
+          "max": 999
+        }
+      },
+      "asset": {
+        "maxKeyLength": 300,
+        "maxDataUrlLength": 12000000
+      },
+      "anchorPair": 2,
+      "defaultStringLength": 160
+    },
+    "bindingScore": {
+      "objectMatch": 10000
+    },
+    "highActionMinimum": 2,
+    "playback": {
+      "defaultDurationMs": 600,
+      "minimumDurationMs": 96,
+      "maximumDurationMs": 5000,
+      "maxStoredProjectChars": 40000000
+    }
   },
   "motion": {
     "cues": {
@@ -9,6 +71,11 @@
       "release": 0.3,
       "contact": 0.5,
       "recovery": 0.78
+    },
+    "frames": {
+      "count": 6,
+      "lastIndex": 5,
+      "reducedMotionIndex": 2
     }
   },
   "positioning": {
@@ -41,7 +108,18 @@
         0.52,
         0.85
       ]
-    }
+    },
+    "referenceWidth": 1000,
+    "referenceHeight": 600,
+    "figureReference": {
+      "width": 230,
+      "height": 350
+    },
+    "travelOrigin": {
+      "x": 0.3,
+      "y": 0.55
+    },
+    "verticalCentreFraction": 0.5
   },
   "components": {
     "starter": {
@@ -126,6 +204,11 @@
       ],
       "dependencies": [],
       "assets": {}
+    },
+    "messages": {
+      "duration": "Sequence duration must be {min}–{max} ms",
+      "poses": "Choose {min} to {max} pose frames",
+      "tooManyClips": "Too many effects (maximum {max})"
     }
   }
 }

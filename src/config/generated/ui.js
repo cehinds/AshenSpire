@@ -22,19 +22,20 @@
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
-// source content/config/ui/presentation/combatEffectPlayback.json a32509cccf40092b
+// source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
-// source content/config/ui/presentation/combatFormationModel.json 0a2ac2f627fcaaa6
+// source content/config/ui/presentation/combatFormationModel.json 81e83684b1160d5d
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
-// source content/config/ui/presentation/poseAnimator.json 2eab31f7017c356c
-// source content/config/ui/presentation/presentationSequence.json 9ce98d8fece297df
+// source content/config/ui/presentation/poseAnimator.json d24e65c7e8f3721d
+// source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
 // source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
 // source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
+// source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
@@ -2393,7 +2394,11 @@ export const uiConfig = deepFreeze({
       "sizing": {
         "poseCanvas": 640,
         "defaultEffectSize": 140,
-        "planEffectSize": 160
+        "planEffectSize": 160,
+        "defaultAttachment": 260,
+        "percent": 100,
+        "castSizeFraction": 0.7,
+        "impactSizeFraction": 0.55
       },
       "motion": {
         "defaultDurationMs": 260,
@@ -2406,9 +2411,14 @@ export const uiConfig = deepFreeze({
         "projectileDelayFraction": 0.3,
         "targetLocalDelayFraction": 0.25,
         "impactDelayFraction": 0.55,
-        "impactDurationMs": 170,
-        "impactSize": 160,
-        "impactCastMs": 110
+        "impactDurationMs": 160,
+        "impactSize": 110,
+        "impactCastMs": 110,
+        "impactShortMs": 120,
+        "impactLingerMs": 170,
+        "entryOpacityFraction": 0.3,
+        "travelMidFraction": 0.7,
+        "travelMidOffset": 0.6
       }
     },
     "combatEffectPresentation": {
@@ -2496,7 +2506,21 @@ export const uiConfig = deepFreeze({
         "ceiling": {
           "heightFraction": 0.52,
           "widthFraction": 0.16
+        },
+        "insetCapDivisor": 10,
+        "stepCapDivisor": 6,
+        "gapRamp": {
+          "narrowPx": 375,
+          "widePx": 1200
         }
+      },
+      "positioning": {
+        "detailReserveFraction": 0.22,
+        "firstFootFraction": 0.45,
+        "footSteps": [
+          0.25,
+          1.125
+        ]
       }
     },
     "combatPoseStates": {
@@ -3001,12 +3025,77 @@ export const uiConfig = deepFreeze({
       "motion": {
         "defaultPlayMs": 260,
         "minimumPlayMs": 60
+      },
+      "sizing": {
+        "percent": 100
       }
     },
     "presentationSequence": {
       "behavior": {
         "schemaVersion": 1,
-        "historyDepth": 60
+        "historyDepth": 60,
+        "limits": {
+          "durationMs": {
+            "min": 100,
+            "max": 30000
+          },
+          "poses": {
+            "min": 5,
+            "max": 7
+          },
+          "maxClips": 100,
+          "maxBindings": 100,
+          "clip": {
+            "offsetMs": {
+              "min": -30000,
+              "max": 30000
+            },
+            "durationMs": {
+              "min": 60,
+              "max": 30000
+            },
+            "x": {
+              "min": -1000,
+              "max": 1000
+            },
+            "y": {
+              "min": -600,
+              "max": 600
+            },
+            "size": {
+              "min": 20,
+              "max": 800
+            },
+            "rotationDeg": {
+              "min": -360,
+              "max": 360
+            }
+          },
+          "binding": {
+            "maxTags": 40,
+            "maxTagLength": 80,
+            "priority": {
+              "min": -999,
+              "max": 999
+            }
+          },
+          "asset": {
+            "maxKeyLength": 300,
+            "maxDataUrlLength": 12000000
+          },
+          "anchorPair": 2,
+          "defaultStringLength": 160
+        },
+        "bindingScore": {
+          "objectMatch": 10000
+        },
+        "highActionMinimum": 2,
+        "playback": {
+          "defaultDurationMs": 600,
+          "minimumDurationMs": 96,
+          "maximumDurationMs": 5000,
+          "maxStoredProjectChars": 40000000
+        }
       },
       "motion": {
         "cues": {
@@ -3014,6 +3103,11 @@ export const uiConfig = deepFreeze({
           "release": 0.3,
           "contact": 0.5,
           "recovery": 0.78
+        },
+        "frames": {
+          "count": 6,
+          "lastIndex": 5,
+          "reducedMotionIndex": 2
         }
       },
       "positioning": {
@@ -3046,7 +3140,18 @@ export const uiConfig = deepFreeze({
             0.52,
             0.85
           ]
-        }
+        },
+        "referenceWidth": 1000,
+        "referenceHeight": 600,
+        "figureReference": {
+          "width": 230,
+          "height": 350
+        },
+        "travelOrigin": {
+          "x": 0.3,
+          "y": 0.55
+        },
+        "verticalCentreFraction": 0.5
       },
       "components": {
         "starter": {
@@ -3131,6 +3236,11 @@ export const uiConfig = deepFreeze({
           ],
           "dependencies": [],
           "assets": {}
+        },
+        "messages": {
+          "duration": "Sequence duration must be {min}–{max} ms",
+          "poses": "Choose {min} to {max} pose frames",
+          "tooManyClips": "Too many effects (maximum {max})"
         }
       }
     },
@@ -3379,6 +3489,19 @@ export const uiConfig = deepFreeze({
             "stanceFallback": "Current stance.",
             "stanceDuration": "Persists until replaced or combat ends."
           }
+        }
+      }
+    },
+    "tooltipPlacement": {
+      "behavior": {
+        "defaults": {
+          "autoFadeMs": 5000,
+          "topBandViewportPct": 25,
+          "sideBandViewportPct": 30
+        },
+        "limits": {
+          "maxBandPct": 50,
+          "edgeEpsilonPx": 0.5
         }
       }
     },
