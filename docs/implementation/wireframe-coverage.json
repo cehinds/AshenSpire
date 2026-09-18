@@ -880,14 +880,14 @@
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
+        "structural": "Atlas: wireframe-atlas-selection.test.mjs passes (select, enter, context projection)",
+        "wide": "Atlas at 1280x800: header 9.0 / scene 63.2 / context 20.0 / footer 7.8 % of height; no screen scroll",
         "compact": "pending",
         "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
+        "galaxyS24": "Atlas at 360x780: header 9.6 / scene 62.9 / context 20.0 / footer 7.5 %; no screen scroll",
+        "interactions": "Atlas: select then Enter travels via onTravel; second tap travels; Details opens the location dialog. Keyboard Enter not provable in the preview pane."
       },
-      "notes": "Classic act map: select then Enter, context band, Recenter/Enter footer. Header (run HUD + route strip) is now W4b's 10 vh via the map-compact HUD context (MapHeaderLayout, wireframeUi.map.header): 10% at 1280x800, 1440x860, 390x844 and 375x667; 52 px physical floor (13.3%) at 844x390. Map scene 58.9% at 1280x800, 68.6% at 390x844. Atlas pending in its own branch; it can opt into the same header."
+            "notes": "W4b is now implemented by BOTH maps. Classic act map: select then Enter, context band, Recenter/Enter footer; header (run HUD + route strip) is W4b's 10 vh via the map-compact HUD context (MapHeaderLayout, wireframeUi.map.header): 10% at 1280x800, 1440x860, 390x844 and 375x667; 52 px physical floor (13.3%) at 844x390; map scene 58.9% at 1280x800, 68.6% at 390x844. World-journey atlas: W4b bands, select-then-Enter, context band, Recenter/Enter footer; 390x844: 9.4 / 63.6 / 20.0 / 7.0 %; scene ~63% because header and footer need less than 10%. The atlas can still opt into the classic map's shared header."
     },
     {
       "id": "W4c",
@@ -3428,7 +3428,7 @@
       "id": "WGM0",
       "name": "Map composition",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3447,13 +3447,14 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas (src/ui/screens/worldAtlas.js) composes header, map scene, context band and Recenter/Enter footer. No region selector: a journey has one world map."
     },
     {
       "id": "WGM1",
       "name": "Map viewport",
       "parent": "WCF2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3472,7 +3473,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas scene: the scrollport is the camera and fills the scene band (~63% of height)."
     },
     {
       "id": "WGM2",
@@ -3503,7 +3505,7 @@
       "id": "WGM3",
       "name": "Node button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3522,7 +3524,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Atlas node buttons select a discovered place (aria-pressed ring); tapping the selected place again enters it."
     },
     {
       "id": "WGM4",
@@ -3548,7 +3551,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Selected node context band: floor, kind, blurb, boss destination, key reveal; shown kind under fog; sizes to content up to 20%."
+      "notes": "Context band. Classic act map: floor, kind, blurb, boss destination, key reveal; shown kind under fog. Atlas: region, name, road state and description of the selected place, open roads, sealed roads, guiding lights. Both size to content, cap at 20% and scroll inside."
     },
     {
       "id": "WGM5",
@@ -3573,7 +3576,8 @@
         "iphoneSE": "pending",
         "galaxyS24": "pending",
         "interactions": "pending"
-      }
+      },
+      "notes": "Not applicable to the atlas: a journey has one world map."
     },
     {
       "id": "WGM6",
@@ -3599,7 +3603,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Footer Recenter calls the board resetFraming."
+      "notes": "Footer Recenter. Classic act map: calls the board resetFraming. Atlas: the former \"You\" camera control, same camera call."
     },
     {
       "id": "WGM7",
@@ -3625,7 +3629,7 @@
         "galaxyS24": "pending",
         "interactions": "pending"
       },
-      "notes": "Footer Enter disabled until a reachable node is selected, then names the kind; picking the selected node again also enters."
+      "notes": "Footer Enter. Classic act map: disabled until a reachable node is selected, then names the kind; picking the selected node again also enters. Atlas: travels a selected open road via onTravel, or opens the place where you stand; disabled for a place with no road."
     },
     {
       "id": "WGP0",

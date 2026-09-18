@@ -1,4 +1,6 @@
 import { positioning } from './wireframe-positioning.mjs';
+import { readFileSync } from 'node:fs';
+const dialogueScene=JSON.parse(readFileSync(new URL('./gameplay-config.json',import.meta.url),'utf8')).W4c;
 // Proposed documentation dimensions; not runtime tuning or observed geometry.
 const units=n=>Number(n.toFixed(2));
 const content={
@@ -41,9 +43,21 @@ export function componentDimensions(s,mode){
    row('scene',100,scene,'Includes region internal spacing');row('context',100,ctx,'Includes region internal spacing');
    if(s.id==='W4b')row('scene.map',95,60,'Owner target ≈60vh ×95vw');
    else if(s.id==='W4c'){
-    row('scene.playerPortrait',mode==='wide'?20:30,units(scene-4),'Left; bounded artwork, intrinsic ratio');
-    row('scene.npcPortrait',mode==='wide'?20:30,units(scene-4),'Right; bounded artwork, intrinsic ratio');
-    row('context.dialogue',95,units(ctx-4),'Short authored caption/response body; shared remaining budget');
+    // Layer geometry is read from the gallery's W4c scene config, not typed here.
+    const d=dialogueScene,slot=d.portraits.slot,share=d.portraits.visibleFraction;
+    const floorLine=units(head+scene*(1-d.background.floorHeightPercent/100)),reveal=head+scene;
+    const slotTop=head+slot.topOffsetVh,visible=units(reveal-slotTop),figure=units(visible*share.denominator/share.numerator);
+    const lane=units((100-2*slot.insetVw-d.portraits.minGapVw)/2),slotWidth=Math.min(mode==='wide'?slot.widthVw:slot.compactWidthVw,lane);
+    row('scene.skybox',100,floorLine,'Layer z2 · frame top → floor line; runs behind the HUD band');
+    row('scene.floor',100,units(h-floorLine),`Layer z3 · floor line at ${floorLine}vh → frame bottom; runs behind the context and footer bands`);
+    row('scene.playerPortrait',slotWidth,`${figure}vh figure · ${visible}vh visible`,`Layer z4 · stays inside its ${lane}vw lane; shrinks only when wider than the lane · full figure zoomed so the top ${share.numerator}/${share.denominator} spans slot top (${slotTop}vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped`);
+    row('scene.npcPortrait',slotWidth,`${figure}vh figure · ${visible}vh visible`,`Layer z4 · as the player, mirrored; lanes are half the frame less insets and a ${d.portraits.minGapVw}vw gap, so both are always visible; a figure wider than its ${lane}vw lane shrinks and sinks to the reveal line; the speaker draws above the listener`);
+    row('context.revealLine',100,`edge at ${reveal}vh`,'Top edge of the opaque context band; everything above it is visible');
+    row('context.dialogue',95,units(ctx-4),'Layer z5 · opaque band; quest title, narrative, responses; no sub-headings');
+    const c=d.context,columns=c.responseColumns[mode]??c.responseColumns.compact,responseRows=Math.ceil(c.maxVisibleResponses/columns);
+    row('context.questTitle',95,`${c.questTitleLines} line`,'Replaces the eyebrow, speaker line and prompt hint');
+    row('context.narrative',95,`≤ ${c.narrativeMaxLines} lines`,'One authored beat');
+    row('context.responses',95,`${responseRows} rows × min target`,`${c.maxVisibleResponses} responses in ${columns} column${columns>1?'s':''} fit without scrolling; the band scrolls only past ${c.maxVisibleResponses}; each response wraps to ${c.responseMaxLines} lines`);
    }else{row('scene.battlefield',95,units(scene-4),'Art and targets fit inside scene');row('context.hand',95,units(ctx-4),'Playing-card host allocation, not standalone card size');}
  }else{
    row('body.activePane',pane,usable,'All child slots below share this allocation');

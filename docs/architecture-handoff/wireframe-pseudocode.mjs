@@ -444,11 +444,31 @@ ON Enter: RevalidateReachabilityAndDispatchExistingNodeEntryCommand()
 ON constrainedTextOrHeight: HonorInputMinimumsAndControlledDetailsOverflow()
 Never add combat footer controls or a fifth region-selector band.`,
 W4c: `INPUT: dialogueGraph, questSnapshot, playerIdentity, npcIdentity, locale
-PARENT: W4; BODY: portrait dialogue replacing hand/cards
-model.scene = PlayerPortraitLeftAndNPCPortraitRight()
-model.context = CurrentSpeakerShortCaptionAndRequiredChoices()
+PARENT: W4; BODY: dialogue replacing hand/cards
+scene = config.W4c    // bands, background, layers, layerOrder, portraits, context, entrance
+bands = AllocateW4Bands(frame, scene.bands)
+revealLine = bands.context.top
+floorLine = bands.scene.top + bands.scene.height × GroundLineFraction(scene.background.floorHeightPercent)
+FOR layer IN SortByZ(scene.layerOrder):           // bottom of the stack first
+    IF scene.layers[layer.id]: PaintLayer(layer, bands)
+// skybox: frame top → floorLine, behind every band
+// floor: floorLine → frame bottom, behind the context and footer bands
+// playerPortrait, npcPortrait: FullFigure(art) placed by
+//     CloseUpPlacement(art, Slot(side, scene.portraits.slot), revealLine, scene.portraits.visibleFraction)
+//     the opaque context band occludes each figure below revealLine; never crop or mask
+//     lane.width = (frame.width - 2 × slot.inset - scene.portraits.minGapVw) / 2   // one lane per side; never overlap
+//     IF scene.portraits.fit = shrinkToLane: figure.height = Min(figure.height, lane.width / ArtAspect(art))
+//     figure.center = Clamp(slot.center, lane.start + figure.width / 2, lane.end - figure.width / 2)
+//     IF scene.portraits.anchor = revealLine: figure.top = revealLine - figure.height × visibleFraction   // never hover
+//     the speaker draws above the listener when scene.portraits.speakerAbove; the listener dims to scene.portraits.listener at most
+// context: opaque band from revealLine; RenderInOrder(scene.context.order) = quest title, narrative, responses
+//     no eyebrow, speaker line or prompt hint (scene.context.headings); the speaker is named under the portrait
+//     responses = ResponseGrid(choices, scene.context.responseColumns[mode])
+//     IF Count(choices) <= scene.context.maxVisibleResponses: ShrinkToFit(context, noScroll) ELSE ScrollBody(context)
+// hud, footer: shared HUD; [Back, SkipSpeech, Continue]
 model.actions = [Back, SkipSpeech, Continue]
-RenderWithW4(model); KeepFooterInlineAndPortraitSidesStable()
+PlayEntrance(scene.entrance); EnableControlsAfterLastEntranceStep()
+KeepFooterInlineAndPortraitSidesStable()
 
 FUNCTION ShowBeat(id, reviewing = false):
     StopClipAndTimers(); generation = generation + 1

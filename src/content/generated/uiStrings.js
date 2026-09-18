@@ -899,6 +899,69 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "atlas.recenter",
+    "extends": "",
+    "short": "Recenter",
+    "full": "Frame the map on where you stand and the roads open to you.",
+    "tip": "Recenter"
+  },
+  {
+    "id": "atlas.enter",
+    "extends": "",
+    "short": "Enter",
+    "full": "Travel the open road to the selected place, or open the place where you stand.",
+    "tip": "Enter"
+  },
+  {
+    "id": "atlas.enterNamed",
+    "extends": "",
+    "short": "Enter {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.inspect",
+    "extends": "",
+    "short": "Details",
+    "full": "Open the full view of the selected place.",
+    "tip": "Details"
+  },
+  {
+    "id": "atlas.context.aria",
+    "extends": "",
+    "short": "Selected place",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.status.here",
+    "extends": "",
+    "short": "You are here.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.status.road",
+    "extends": "",
+    "short": "A connected road leads here.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.status.far",
+    "extends": "",
+    "short": "Explore connecting roads to reach this place.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.roads.title",
+    "extends": "",
+    "short": "Open roads",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.bar.cards",
     "extends": "",
     "short": "CARDS",
@@ -1844,6 +1907,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "equipment.choose",
+    "extends": "",
+    "short": "Choose {piece}",
+    "full": "Take this piece as your starting equipment.",
+    "tip": "Choose"
+  },
+  {
     "id": "armoury.compare.role",
     "extends": "",
     "short": "{label} {before} → {after}",
@@ -1975,5 +2045,40 @@ export const uiStrings = [
     "short": "+{count}",
     "full": "{count} more, view all",
     "tip": ""
+  },
+  {
+    "id": "common.close",
+    "extends": "",
+    "short": "Close",
+    "full": "Close this door and return to what was under it.",
+    "tip": "Close"
+  },
+  {
+    "id": "piles.eyebrow",
+    "extends": "",
+    "short": "Pile",
+    "full": "Which pile this door is reading.",
+    "tip": "Pile"
+  },
+  {
+    "id": "piles.empty",
+    "extends": "",
+    "short": "Empty.",
+    "full": "Nothing is in this pile.",
+    "tip": "Empty"
+  },
+  {
+    "id": "piles.spent.title",
+    "extends": "",
+    "short": "Card piles",
+    "full": "The cards this fight has spent — discarded and exhausted.",
+    "tip": "Card piles"
+  },
+  {
+    "id": "piles.spent.nav",
+    "extends": "",
+    "short": "Piles",
+    "full": "Choose which spent pile to read.",
+    "tip": "Piles"
   }
 ];

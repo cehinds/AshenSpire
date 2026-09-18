@@ -6,11 +6,8 @@ import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScale
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { overheadStackBottom } from '../models/CombatOverlayModel.js';
-import { sceneLayers } from '../models/SceneLayerModel.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
-import { ENVIRONMENTS } from '../../content/environments.js';
-
-const sceneById = (id) => ENVIRONMENTS.flatMap(region => region.scenes).find(scene => scene.id === id) || null;
+import { fitSceneBackdrop } from './sceneBackdrop.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -89,6 +86,7 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.zIndex = String(slot.row);
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
+      frame.dataset.formationCell = slot.cell;
       frame.dataset.baseSpriteScale = String(fitted.scale);
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
@@ -128,19 +126,10 @@ export function wireBattlefieldStage(field, model) {
     combat.style.setProperty('--environment-top', `${(fieldRect.top - rect.top) / zoom}px`);
     combat.style.setProperty('--environment-height', `${fieldRect.height / zoom}px`);
     // WGS1: crop the scene's painted plate so its ground line meets the floor
-    // band (WGS7) and its sky fills the rest (WGS6). Feet are not moved.
+    // band (WGS7) and its sky fills the rest (WGS6). Feet are not moved. The
+    // fitter is the W4 parent's, shared with the quest dialogue.
     const backdrop = combat.querySelector('.environment-backdrop');
-    const art = backdrop?.querySelector(':scope > svg');
-    if (art) {
-      const layers = sceneLayers({ width: backdrop.clientWidth, height: fieldRect.height / zoom, scene: sceneById(backdrop.dataset.scene) });
-      if (layers.skyline.viewBox) art.setAttribute('viewBox', layers.skyline.viewBox.join(' '));
-      backdrop.dataset.sceneFit = layers.aligned ? 'floor' : 'cover';
-      backdrop.dataset.skyline = layers.skyline.visible ? 'on' : 'off';
-      backdrop.dataset.floor = layers.floor.visible ? 'on' : 'off';
-      // Screen px below the battlefield's top edge (relative, so it cannot go
-      // stale when the whole board shifts without resizing).
-      backdrop.dataset.floorTop = String(layers.floor.top * zoom);
-    }
+    if (backdrop) fitSceneBackdrop(backdrop, { width: backdrop.clientWidth, height: fieldRect.height / zoom, zoom });
     field.dataset.groundY = String(fieldRect.top + plan.ground);
   };
   const schedule = () => { cancelAnimationFrame(frameRequest); frameRequest = requestAnimationFrame(refresh); };

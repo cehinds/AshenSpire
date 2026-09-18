@@ -130,7 +130,37 @@
         ]
       }
     },
-    "minimumHudHeightRem": 5.5
+    "minimumHudHeightRem": 5.5,
+    "layerOrder": [
+      {
+        "id": "skyline",
+        "z": 1
+      },
+      {
+        "id": "floor",
+        "z": 2
+      },
+      {
+        "id": "actors",
+        "z": 3
+      },
+      {
+        "id": "targets",
+        "z": 4
+      },
+      {
+        "id": "context",
+        "z": 5
+      },
+      {
+        "id": "hud",
+        "z": 6
+      },
+      {
+        "id": "footer",
+        "z": 6
+      }
+    ]
   },
   "W4b": {
     "parent": "W4",
@@ -258,7 +288,37 @@
         ]
       }
     },
-    "minimumHudHeightRem": 5.5
+    "minimumHudHeightRem": 5.5,
+    "layerOrder": [
+      {
+        "id": "skyline",
+        "z": 1
+      },
+      {
+        "id": "floor",
+        "z": 2
+      },
+      {
+        "id": "paths",
+        "z": 3
+      },
+      {
+        "id": "nodes",
+        "z": 4
+      },
+      {
+        "id": "context",
+        "z": 5
+      },
+      {
+        "id": "hud",
+        "z": 6
+      },
+      {
+        "id": "footer",
+        "z": 6
+      }
+    ]
   },
   "W4c": {
     "parent": "W4",
@@ -269,11 +329,12 @@
       "footer": 15
     },
     "layers": {
-      "skyline": true,
+      "skybox": true,
       "floor": true,
-      "hud": true,
-      "portraits": true,
+      "playerPortrait": true,
+      "npcPortrait": true,
       "context": true,
+      "hud": true,
       "footer": true
     },
     "components": [
@@ -302,7 +363,7 @@
       "WGH8"
     ],
     "background": {
-      "floorHeightPercent": 35,
+      "floorHeightPercent": 60,
       "skylineColor": "#635139",
       "floorColor": "#382c20"
     },
@@ -385,6 +446,120 @@
         ]
       }
     },
-    "minimumHudHeightRem": 5.5
+    "minimumHudHeightRem": 5.5,
+    "layerOrder": [
+      {
+        "id": "skybox",
+        "z": 2,
+        "extent": "frame top to floor line, behind every band"
+      },
+      {
+        "id": "floor",
+        "z": 3,
+        "extent": "floor line to frame bottom, behind the context and footer bands"
+      },
+      {
+        "id": "playerPortrait",
+        "z": 4,
+        "extent": "slot top to three times the visible band; lower part occluded"
+      },
+      {
+        "id": "npcPortrait",
+        "z": 4,
+        "extent": "slot top to three times the visible band; lower part occluded"
+      },
+      {
+        "id": "context",
+        "z": 5,
+        "occludes": true,
+        "extent": "reveal line to footer top, opaque"
+      },
+      {
+        "id": "hud",
+        "z": 6,
+        "extent": "frame top to scene window top"
+      },
+      {
+        "id": "footer",
+        "z": 6,
+        "extent": "footer top to frame bottom"
+      }
+    ],
+    "portraits": {
+      "slot": {
+        "widthVw": 20,
+        "compactWidthVw": 30,
+        "insetVw": 2.5,
+        "topOffsetVh": 2
+      },
+      "visibleFraction": {
+        "numerator": 1,
+        "denominator": 3
+      },
+      "speaker": "npcPortrait",
+      "speakerAbove": true,
+      "mirrorNpc": true,
+      "alwaysVisible": true,
+      "minGapVw": 2,
+      "fit": "shrinkToLane",
+      "anchor": "revealLine",
+      "listener": {
+        "minOpacity": 0.85,
+        "brightness": 0.8,
+        "saturation": 0.7
+      }
+    },
+    "entrance": [
+      {
+        "layers": [
+          "skybox",
+          "floor",
+          "hud",
+          "footer"
+        ],
+        "atMs": 0,
+        "fadeMs": 0
+      },
+      {
+        "layers": [
+          "playerPortrait",
+          "npcPortrait"
+        ],
+        "atMs": 0,
+        "fadeMs": 400
+      },
+      {
+        "layers": [
+          "context"
+        ],
+        "atMs": 400,
+        "fadeMs": 300,
+        "riseVh": 2
+      }
+    ],
+    "configSource": "Game values live in content/config/ui/scenes/w4c-dialogue.json; this block mirrors them for the gallery.",
+    "context": {
+      "headings": {
+        "questEyebrow": false,
+        "speakerLine": false,
+        "promptHint": false
+      },
+      "order": [
+        "questTitle",
+        "narrative",
+        "responses"
+      ],
+      "questTitleLines": 1,
+      "narrativeMaxLines": 2,
+      "maxVisibleResponses": 4,
+      "responseColumns": {
+        "wide": 2,
+        "compact": 2,
+        "portrait": 1
+      },
+      "responseMaxLines": 2,
+      "overflow": "the band scrolls only when responses exceed maxVisibleResponses",
+      "speakerName": "shown under the speaking portrait, not in the band"
+    }
   }
 }

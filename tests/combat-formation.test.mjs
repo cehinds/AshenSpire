@@ -20,6 +20,13 @@ test('six reserved mirrored slots keep empty encounter positions stable',()=>{
     assert.ok(full.slots[0].x<full.slots[2].x && full.slots[2].x<full.slots[4].x);
   }
 });
+test('cells are named row letter then battlefield column, left to right',()=>{
+  for(const width of [360,794,1440]) {
+    const p=combatFormation({width,height:380,friends:ids('p',6),enemies:ids('e',6)});
+    assert.deepEqual(p.slots.map(s=>s.cell),['A1','A2','B1','B2','C1','C2','A4','A3','B4','B3','C4','C3']);
+    for(const row of [0,1,2]) assert.deepEqual(p.slots.filter(s=>s.row===row).sort((a,b)=>a.x-b.x).map(s=>s.cell),[1,2,3,4].map(n=>'ABC'[row]+n));
+  }
+});
 test('fitting baselines remain separate from lowered display anchors',()=>{
  const p=combatFormation({width:1440,height:450,friends:ids('p',6),enemies:[]});
  assert.ok(p.slots[0].fitGround<p.slots[0].ground);

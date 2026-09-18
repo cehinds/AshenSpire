@@ -5120,7 +5120,7 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 
 ## Wireframe W4: Gameplay / encounter regions
 
-**Parent: W0.** Shared region host, spacing, safe areas, visual states and transitions. Child view models specify region proportions and registered bodies. Combat, map, and dialogue have distinct domain intents; never copy a command or effect merely because the container is shared.
+**Parent: W0.** Shared region host, spacing, safe areas, visual states and transitions. Child view models specify region proportions and registered bodies. Combat, map, and dialogue have distinct domain intents; never copy a command or effect merely because the container is shared. Every W2 child is a layer stack, listed bottom to top in gameplay-config.json (layerOrder): the painted scene plate (skyline/skybox, then floor) is the bottom of the stack, scene content stands on it, the context band sits above that, and the HUD and footer bands are the top panels. Each layer is switchable on its own (layers), and where one layer runs under another the overlap is part of the specification, not an accident of layout.
 
 **Wide**
 
@@ -5270,7 +5270,7 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 
 ### Wireframe W4a: Combat — tightly packed footer
 
-**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. A/End Turn/P are largest and raised; pile buttons smaller; gaps minimal in every mode. No space-between. Empty resources/piles fade; End Turn does not and turns green when legal with zero actions. Proposed 10% HUD / 40% battlefield / 35% hand / 15% footer is the latest discussed starting allocation, subject to readability/playability verification.
+**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. A/End Turn/P are largest and raised; pile buttons smaller; gaps minimal in every mode. No space-between. Empty resources/piles fade; End Turn does not and turns green when legal with zero actions. Proposed 10% HUD / 40% battlefield / 35% hand / 15% footer is the latest discussed starting allocation, subject to readability/playability verification. Layer stack, top first: effects and pointers z7 (code only, always on), HUD and footer z6, hand z5, targets z4, actors z3, floor z2, skyline z1.
 
 **Wide**
 
@@ -5432,7 +5432,7 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 
 ### Wireframe W4b: Map — 10 / 60 / 20 / 10
 
-**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. Normal height budget is 10/60/20/10, with spacing inside the bands and viewport/zoom conversion centralized. Preserve minimum readable/control sizes; map yields only where required. No combat footer.
+**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. Normal height budget is 10/60/20/10, with spacing inside the bands and viewport/zoom conversion centralized. Preserve minimum readable/control sizes; map yields only where required. No combat footer. Layer stack, top first: HUD and footer z6, node details z5, nodes z4, paths z3, floor z2, skyline z1.
 
 **Wide**
 
@@ -5591,21 +5591,23 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 
 ### Wireframe W4c: Quest dialogue — player left, NPC right
 
-**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. Portraits remain left/right even on mobile. Dialogue replaces the hand. Audio may advance linear speech only; Back/Skip never commit choices or repeat effects. Captions/manual navigation work without playable audio.
+**Parent: W4.** Inherits the parent geometry, spacing, transitions, focus treatment, and lifecycle. Only view-model content, registered body slots, and declared action policies differ. Layer stack, bottom to top (layerOrder): the skybox z2 runs from the frame top to the floor line, behind the HUD; the floor z3 runs from the floor line (background.floorHeightPercent of the scene window is ground) to the frame bottom, behind the context and footer bands; the player and NPC portraits z4 are each the full figure zoomed so its top fraction (portraits.visibleFraction) spans the slot top to the reveal line, with the speaker drawn above the listener; the opaque context band z5, whose top edge is the reveal line, hides the figures below it, so nothing is cropped or masked; the HUD and footer bands z6 are the top panels. Every layer is switchable on its own (layers). Entrance (entrance): the scene, HUD and footer appear at once, the portraits fade in, then the context band fades in and rises; controls work once the last step ends, and reduced motion shows every layer at once. Context band contents (context): the quest title on one line, the narrative beat, then the responses; no eyebrow, speaker line or prompt hint, because the speaker is named under the speaking portrait. Up to four responses (context.maxVisibleResponses) show without scrolling, in a grid of context.responseColumns (two columns on wide and short landscape screens, one in portrait); the band scrolls only when there are more. Both portraits are visible at every size (portraits.alwaysVisible): each figure keeps to its lane, half the frame less the insets and portraits.minGapVw, so the two never overlap; a figure wider than its lane shrinks as a whole (portraits.fit shrinkToLane), so wide screens keep the zoom and only narrow ones shrink, and sinks so its top share still stands on the reveal line (portraits.anchor), never hovering; the listener dims no further than portraits.listener. Portraits stay left and right even on mobile. Dialogue replaces the hand. Audio may advance linear speech only; Back/Skip never commit choices or repeat effects. Captions/manual navigation work without playable audio.
 
 **Wide**
 
 ```text
 ┌────────────────────────────────────────────────┐
-│ HUD · Resources                         [Menu] │
-│                                                │
-│ [Player]           [Scene]               [NPC] │
-│ Player name                           NPC name │
-│                                                │
-│ Speaker                              [Voice Ⅱ] │
+│ HUD · Resources                 [Menu]  z6     │
+│ skybox z2 · runs behind the HUD                │
+│     ╭──╮                          ╭──╮         │
+│     │P │ Player z4       NPC z4 │ N│           │
+│ ────┤  ├── floor line · floor z3 ┤  ├────      │
+│    ╱    ╲                        ╱    ╲        │
+│ ══ reveal line · context z5 hides the rest ══  │
+│ Quest title                          [Voice Ⅱ] │
 │ One short caption beat.                        │
-│ [Responses only when required]                 │
-│                                                │
+│ [Response 1]          [Response 2]             │
+│ [Response 3]          [Response 4]             │
 │ [Back]              [Skip]          [Continue] │
 └────────────────────────────────────────────────┘
 ```
@@ -5621,9 +5623,15 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 | `W4c.body` | 100vw | 75vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes internal padding; scroll only this region if needed |
 | `W4c.scene` | 100vw | 40vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
-| `W4c.scene.playerPortrait` | 20vw | 36vh | W4c.scene | left-center | center / center | normal grid flow | 2.5vw from respective scene edge | Left; bounded artwork, intrinsic ratio |
-| `W4c.scene.npcPortrait` | 20vw | 36vh | W4c.scene | right-center | center / center | normal grid flow | 2.5vw from respective scene edge | Right; bounded artwork, intrinsic ratio |
-| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | normal grid flow | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Short authored caption/response body; shared remaining budget |
+| `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
+| `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
+| `W4c.scene.playerPortrait` | 20vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 20vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
+| `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
+| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
+| `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
+| `W4c.context.narrative` | 95vw | ≤ 2 lines | W4c.context.dialogue | below quest title | start / start | column row 2 | half gap | One authored beat |
+| `W4c.context.responses` | 95vw | 2 rows × min target | W4c.context.dialogue | below narrative | stretch / start | response grid; columns from config.context.responseColumns | half gap between rows and columns | 4 responses in 2 columns fit without scrolling; the band scrolls only past 4; each response wraps to 2 lines |
 | `W4c.footer` | 100vw | 15vh | W4c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Reserved bottom band; no extra height outside total |
 | `W4c.footer.closeBack` | 46.5vw | 6vh | W4c.footer | bottom-left | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-left when two actions |
 | `W4c.footer.primary` | 46.5vw | 6vh | W4c.footer | bottom-right | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-right when two actions |
@@ -5636,12 +5644,16 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 
 ```text
 ┌──────────────────────────────────┐
-│ Compact HUD               [Menu] │
-│ [Player]                   [NPC] │
-│ Player name             NPC name │
-│ Speaker                [Voice Ⅱ] │
+│ Compact HUD · z6          [Menu] │
+│ skybox z2                        │
+│  ╭─╮                      ╭─╮    │
+│  │P│ Player z4   NPC z4  │N│     │
+│ ─┤ ├──── floor z3 ───────┤ ├─    │
+│ ═ reveal line · context z5 ═══   │
+│ Quest title            [Voice Ⅱ] │
 │ One short caption beat.          │
-│ [Required responses]             │
+│ [Response 1]  [Response 2]       │
+│ [Response 3]  [Response 4]       │
 │ [Back]       [Skip]   [Continue] │
 └──────────────────────────────────┘
 ```
@@ -5657,9 +5669,15 @@ Nested rows are subdivisions, not additional viewport bands. Control heights and
 | `W4c.body` | 100vw | 75vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes internal padding; scroll only this region if needed |
 | `W4c.scene` | 100vw | 40vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
-| `W4c.scene.playerPortrait` | 30vw | 36vh | W4c.scene | left-center | center / center | normal grid flow | 2.5vw from respective scene edge | Left; bounded artwork, intrinsic ratio |
-| `W4c.scene.npcPortrait` | 30vw | 36vh | W4c.scene | right-center | center / center | normal grid flow | 2.5vw from respective scene edge | Right; bounded artwork, intrinsic ratio |
-| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | normal grid flow | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Short authored caption/response body; shared remaining budget |
+| `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
+| `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
+| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
+| `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
+| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
+| `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
+| `W4c.context.narrative` | 95vw | ≤ 2 lines | W4c.context.dialogue | below quest title | start / start | column row 2 | half gap | One authored beat |
+| `W4c.context.responses` | 95vw | 2 rows × min target | W4c.context.dialogue | below narrative | stretch / start | response grid; columns from config.context.responseColumns | half gap between rows and columns | 4 responses in 2 columns fit without scrolling; the band scrolls only past 4; each response wraps to 2 lines |
 | `W4c.footer` | 100vw | 15vh | W4c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Reserved bottom band; no extra height outside total |
 | `W4c.footer.closeBack` | 46.5vw | 6vh | W4c.footer | bottom-left | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-left when two actions |
 | `W4c.footer.primary` | 46.5vw | 6vh | W4c.footer | bottom-right | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-right when two actions |
@@ -5675,16 +5693,19 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 
 ```text
 ┌───────────────────────────┐
-│ Compact HUD        [Menu] │
-│                           │
-│ [Player]            [NPC] │
-│ Player name      NPC name │
-│                           │
-│ Speaker         [Voice Ⅱ] │
+│ Compact HUD · z6   [Menu] │
+│ skybox z2                 │
+│  ╭─╮             ╭─╮      │
+│  │P│ z4       z4 │N│      │
+│ ─┤ ├── floor z3 ┤ ├─      │
+│ both always visible       │
+│ ═ reveal line · z5 ═══    │
+│ Quest title     [Voice Ⅱ] │
 │ One short caption beat.   │
-│                           │
-│ [Required responses]      │
-│                           │
+│ [Response 1]              │
+│ [Response 2]              │
+│ [Response 3]              │
+│ [Response 4]              │
 │ [Back]   [Skip][Continue] │
 └───────────────────────────┘
 ```
@@ -5700,9 +5721,15 @@ Reference viewport: 375 × 667 CSS px. Same inherited portrait layout; dimension
 | `W4c.body` | 100vw | 75vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes internal padding; scroll only this region if needed |
 | `W4c.scene` | 100vw | 40vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
-| `W4c.scene.playerPortrait` | 30vw | 36vh | W4c.scene | left-center | center / center | normal grid flow | 2.5vw from respective scene edge | Left; bounded artwork, intrinsic ratio |
-| `W4c.scene.npcPortrait` | 30vw | 36vh | W4c.scene | right-center | center / center | normal grid flow | 2.5vw from respective scene edge | Right; bounded artwork, intrinsic ratio |
-| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | normal grid flow | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Short authored caption/response body; shared remaining budget |
+| `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
+| `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
+| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
+| `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
+| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
+| `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
+| `W4c.context.narrative` | 95vw | ≤ 2 lines | W4c.context.dialogue | below quest title | start / start | column row 2 | half gap | One authored beat |
+| `W4c.context.responses` | 95vw | 4 rows × min target | W4c.context.dialogue | below narrative | stretch / start | response grid; columns from config.context.responseColumns | half gap between rows and columns | 4 responses in 1 column fit without scrolling; the band scrolls only past 4; each response wraps to 2 lines |
 | `W4c.footer` | 100vw | 15vh | W4c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Reserved bottom band; no extra height outside total |
 | `W4c.footer.closeBack` | 46.5vw | 6vh | W4c.footer | bottom-left | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-left when two actions |
 | `W4c.footer.primary` | 46.5vw | 6vh | W4c.footer | bottom-right | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-right when two actions |
@@ -5718,16 +5745,19 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 
 ```text
 ┌───────────────────────────┐
-│ Compact HUD        [Menu] │
-│                           │
-│ [Player]            [NPC] │
-│ Player name      NPC name │
-│                           │
-│ Speaker         [Voice Ⅱ] │
+│ Compact HUD · z6   [Menu] │
+│ skybox z2                 │
+│  ╭─╮             ╭─╮      │
+│  │P│ z4       z4 │N│      │
+│ ─┤ ├── floor z3 ┤ ├─      │
+│ both always visible       │
+│ ═ reveal line · z5 ═══    │
+│ Quest title     [Voice Ⅱ] │
 │ One short caption beat.   │
-│                           │
-│ [Required responses]      │
-│                           │
+│ [Response 1]              │
+│ [Response 2]              │
+│ [Response 3]              │
+│ [Response 4]              │
 │ [Back]   [Skip][Continue] │
 └───────────────────────────┘
 ```
@@ -5743,9 +5773,15 @@ Reference viewport: 360 × 780 CSS px. Same inherited portrait layout; dimension
 | `W4c.body` | 100vw | 75vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes internal padding; scroll only this region if needed |
 | `W4c.scene` | 100vw | 40vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
 | `W4c.context` | 100vw | 35vh | W4c.frame | below preceding band | stretch / stretch | normal grid flow | 0; band padding included in height | Includes region internal spacing |
-| `W4c.scene.playerPortrait` | 30vw | 36vh | W4c.scene | left-center | center / center | normal grid flow | 2.5vw from respective scene edge | Left; bounded artwork, intrinsic ratio |
-| `W4c.scene.npcPortrait` | 30vw | 36vh | W4c.scene | right-center | center / center | normal grid flow | 2.5vw from respective scene edge | Right; bounded artwork, intrinsic ratio |
-| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | normal grid flow | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Short authored caption/response body; shared remaining budget |
+| `W4c.scene.skybox` | 100vw | 26vh | W4c.frame | frame top | stretch / start | layer z2 · absolute sheet, bottom of the stack | 0; runs behind the HUD band | Layer z2 · frame top → floor line; runs behind the HUD band |
+| `W4c.scene.floor` | 100vw | 74vh | W4c.frame | floor line | stretch / start | layer z3 · absolute sheet | 0; runs behind the context and footer bands | Layer z3 · floor line at 26vh → frame bottom; runs behind the context and footer bands |
+| `W4c.scene.playerPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | left slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · stays inside its 46.5vw lane; shrinks only when wider than the lane · full figure zoomed so the top 1/3 spans slot top (12vh) → reveal line; the rest is occluded by the context band, footer and frame edge, never cropped |
+| `W4c.scene.npcPortrait` | 30vw | 114vh figure · 38vh visible | W4c.frame | right slot top | center / start | layer z4 · absolute; overruns the scene into lower layers | 2.5vw from respective frame edge; top 2vh below the scene top | Layer z4 · as the player, mirrored; lanes are half the frame less insets and a 2vw gap, so both are always visible; a figure wider than its 46.5vw lane shrinks and sinks to the reveal line; the speaker draws above the listener |
+| `W4c.context.revealLine` | 100vw | edge at 50vh | W4c.context | context top edge | stretch / start | occluding edge of layer z5 | 0 | Top edge of the opaque context band; everything above it is visible |
+| `W4c.context.dialogue` | 95vw | 31vh | W4c.context | center | center / center | inside layer z5 (opaque band) | 2.5vw horizontal / 2vh vertical inset, except map has no vertical inset | Layer z5 · opaque band; quest title, narrative, responses; no sub-headings |
+| `W4c.context.questTitle` | 95vw | 1 line | W4c.context.dialogue | top-left | start / start | column row 1 | 2.5vw side inset; half gap to the band top | Replaces the eyebrow, speaker line and prompt hint |
+| `W4c.context.narrative` | 95vw | ≤ 2 lines | W4c.context.dialogue | below quest title | start / start | column row 2 | half gap | One authored beat |
+| `W4c.context.responses` | 95vw | 4 rows × min target | W4c.context.dialogue | below narrative | stretch / start | response grid; columns from config.context.responseColumns | half gap between rows and columns | 4 responses in 1 column fit without scrolling; the band scrolls only past 4; each response wraps to 2 lines |
 | `W4c.footer` | 100vw | 15vh | W4c.frame | bottom / full width | stretch / center | normal grid flow | 0; reserved grid row | Reserved bottom band; no extra height outside total |
 | `W4c.footer.closeBack` | 46.5vw | 6vh | W4c.footer | bottom-left | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-left when two actions |
 | `W4c.footer.primary` | 46.5vw | 6vh | W4c.footer | bottom-right | center / center | single-row footer grid item | 2.5vw side inset; vertically centered in footer | Bottom-right when two actions |
