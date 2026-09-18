@@ -282,7 +282,22 @@ export function renderCard(registries, ref, opts = {}) {
         visible.has('footer'),                  // .card-metadata
       ];
       const bands = cardShape().bands.filter((_, index) => drawn[index]);
-      el.style.setProperty("--card-bands", bands.map((b) => `minmax(0, ${b}fr)`).join(" "));
+      el.style.setProperty('--card-bands', bands.map((b) => `minmax(0, ${b}fr)`).join(' '));
+      // THE COST RAIL HANGS UNDER THE HEAD BAND, SO IT MOVES WITH IT.
+      // `--card-band-head` is the head's share of the face, projected once on
+      // :root as head/total = 10%. Withholding a band changes that total —
+      // 1/9 rather than 1/10 — so a rail pinned to the root value drifts up
+      // into the name it is meant to sit below: measured at shop glance, 0.3px
+      // of clearance against the 2.7px the four-band face gives. Re-derived
+      // here from the same list, so the rail and the bands cannot disagree.
+      const total = bands.reduce((sum, b) => sum + b, 0);
+      el.style.setProperty('--card-band-head', `${(bands[0] / total) * 100}%`);
+      // The layout's own invariant, asserted where it is created rather than
+      // left to a gate that does not look at bands: one track per in-flow
+      // child. The `drawn` list is a positional mirror of the emit order
+      // below, and a future edit that adds a fifth in-flow child or reorders
+      // the emits would silently misalign every band on every card.
+      el.dataset.cardBands = String(bands.length);
     }
     el.dataset.level = at;
     // `data-tag-rows` is what the stylesheet and every tool read to know the

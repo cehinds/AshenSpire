@@ -255,6 +255,15 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
   // stuck card by discarding the very thing identity-keying exists to
   // preserve. `lightCard` replaces the douse for an already-lit id and keeps
   // its beats, so the count a player has spent survives the repaint too.
+  //
+  // THE STORE HOLDS ONE DOUSE PER IDENTITY, and this makes that visible rather
+  // than causing it. Where several LIVE cards share one identity — the creation
+  // screen's left and right hand pickers offer the same pieces, and a shop's
+  // faces can fall through to `title` — every one of them lights here, and only
+  // the last to bind owns the douse, so the others keep the glow until they are
+  // rebuilt. That is the pre-existing shape of a page-wide store keyed by
+  // identity, unchanged by this block and reproducible without it; scoping
+  // selection per grid is the fix for it and is its own question.
   if (litCard() === identity) {
     lightCard(identity, douse);
     card.classList.add('inspection-selected');

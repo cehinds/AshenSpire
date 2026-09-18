@@ -855,6 +855,14 @@ async function checkCatalog(width, height, screenshotName) {
   // wrappers; what it did not do was count how many.
   assert(receipt.primitives.levels === 3,
     `${width}x${height}: the presentation-levels specimen draws all three levels (${receipt.primitives.levels} face(s))`);
+  // THREE FACES IS NOT THREE LEVELS EITHER. Counting faces would pass three
+  // identical `glance` cards — and, more to the point, it would pass the exact
+  // defect this specimen was fixed for: the three faces once shared one logical
+  // identity, so lighting any of them promoted all three to `focus` and the
+  // comparison collapsed while the count stayed at 3.
+  const levels = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-catalog-component="card-presentation-levels"] .cc-card-level .equipment-poker-card')].map((f) => f.dataset.level))`);
+  assert(new Set(JSON.parse(levels)).size === 3,
+    `${width}x${height}: the three presentation-level specimens draw three DIFFERENT levels (${levels})`);
   await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="grid"]').click()`);
   assert(await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="grid"]').getAttribute('aria-pressed') === 'true'`),
     `${width}x${height}: catalog view-mode specimen switches to Grid`);

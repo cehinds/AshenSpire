@@ -110,3 +110,34 @@ console.log(`PASS ${checks}/${checks}; every card owes two beats and the selecti
   assert.ok(paint.indexOf("dataset.cardPainted = '1'") < paint.indexOf('for (const node of kept)'),
     'the stamp lands before the kept children are re-appended, or the kept ones are stamped too and deleted next time');
 }
+
+// ONE TRACK PER IN-FLOW CHILD, OR EVERY BAND ON EVERY CARD IS MISALIGNED.
+//
+// A level that withholds a region must give its grid track back, so the paint
+// recomputes `--card-bands` from the children it actually drew. That list is a
+// POSITIONAL MIRROR of the emit order — name, art, body, metadata — and the
+// cost rail and the tag strip are deliberately absent from it because both are
+// absolutely positioned and take no track. A future edit that adds a fifth
+// in-flow child, or reorders the emits, shifts every band on every playing
+// card with nothing to say so: `card-one-shape.mjs` states in its own boundary
+// that it asks about the card's OUTER shape and not its face bands, and the
+// presentation-level gate covers `cardFields`, not tracks.
+//
+// So the mirror is pinned here: four entries, in the emitted order, and the
+// rail's own offset derived from the same list rather than from the root
+// property (which is head/total for the AUTHORED four and drifts as soon as a
+// band is withheld).
+{
+  const card = read('src/ui/components/card.js');
+  const paint = card.slice(card.indexOf('const paint = ('));
+  const block = paint.slice(paint.indexOf('const drawn = ['), paint.indexOf('el.dataset.level'));
+  const order = [...block.matchAll(/\/\/ \.([a-z-]+)/g)].map((m) => m[1]);
+  assert.deepEqual(order.slice(0, 4), ['cname', 'art', 'cd-body', 'card-metadata'],
+    'the drawn-children list must mirror the emit order of the four in-flow grid children');
+  assert.doesNotMatch(block, /card-cost-rail|ctags/,
+    'the cost rail and the tag strip are absolutely positioned and take no track: counting them misaligns every band');
+  assert.match(block, /minmax\(0, \$\{b\}fr\)/,
+    'bands must be shrinkable: a bare `fr` carries an implicit auto minimum and lets content take the budget back');
+  assert.match(block, /--card-band-head/,
+    'the cost rail hangs under the head band, so its offset is derived from the same recomputed list');
+}
