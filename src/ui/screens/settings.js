@@ -26,7 +26,7 @@ import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } f
 import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
-import { cardLevels, cardLevelsWithOverrides, cardSizingExport } from '../models/CardSizeModel.js';
+import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath } from '../models/CardSizeModel.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -467,7 +467,7 @@ const ROWS = [
     note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
     label: 'Export card sizes',
-    note: 'Copies the current sizes as the JSON block from content/config/ui/components/card.json, ready to paste back in as the new default.' },
+    note: 'Copies the current sizes as the `sizing.levels` block of content/config/ui/components/card.json. It is that block, not the whole file — paste it over `sizing.levels`, or send it on as it stands.' },
   { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
@@ -1442,10 +1442,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     btn.addEventListener('click', openDebugLog);
   });
 
-  // EXPORT WHAT THE FILE EXPECTS. The block this copies is the shape
-  // content/config/ui/components/card.json already uses, so a size worth
-  // keeping is pasted in rather than transcribed — transcription is where a
-  // number would get changed on the way home.
+  // EXPORT WHAT THE FILE EXPECTS, AND SAY WHERE IT GOES. The block this copies
+  // is the shape content/config/ui/components/card.json already uses, so a size
+  // worth keeping is pasted in rather than transcribed — transcription is where
+  // a number would get changed on the way home.
+  //
+  // It is a FRAGMENT, nested at `sizing.levels`, and the row note says so. An
+  // earlier draft emitted a bare `{ levels: … }` and described it as the file:
+  // pasted over card.json that leaves no `sizing` block at all and the config
+  // builder refuses it. The path comes from `cardSizingExportPath` so this note
+  // and the model cannot drift about where the text belongs.
   container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
@@ -1460,7 +1466,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         copied = false;
       }
       btn.textContent = copied ? 'Copied' : 'See log';
-      if (!copied) console.log(text);
+      if (!copied) console.log(`${cardSizingExportPath}\n${text}`);
       if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });

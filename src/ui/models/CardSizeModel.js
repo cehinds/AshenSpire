@@ -152,6 +152,30 @@ export function cardLevelWidthPx(level, config) {
 }
 
 /**
+ * The SAME width, written so the cascade can still be overridden.
+ *
+ * A renderer that sets an inline `--epc-level-w: 152px` wins over the root
+ * `--card-w-glance` the tuner projects, because an inline style beats a
+ * document-level custom property. That is how the card-size sliders came to
+ * move `--card-w-*` while every equipment card stayed exactly where it was:
+ * measured on the shop's armament shelf, `--card-w-glance` went 152px -> 250px
+ * and the faces did not move off 182px, because each one carried the authored
+ * number inline.
+ *
+ * So a renderer writes a REFERENCE, not a resolved number: `var(--card-w-glance,
+ * 152px)`. The projected value wins where one exists, and the authored literal
+ * is the fallback — which is also what the preview pages need, since they
+ * project no tokens of their own and would otherwise render zero-width cards.
+ * One home for the number, and the override reaches every surface that draws a
+ * card rather than only the ones that happen not to set it inline.
+ */
+export function cardLevelWidthCss(level, config) {
+  const [name, variant] = String(level || 'focus').split(':');
+  const px = cardLevelWidthPx(level, config);   // also validates the level by name
+  return `var(--card-w-${name}${variant ? `-${variant}` : ''}, ${px}px)`;
+}
+
+/**
  * The root custom properties the stylesheet reads. A surface whose width is
  * decided by its CONTAINER rather than by its render call — the picker's view
  * toggle flips `data-view` on the grid without re-rendering a single card —
@@ -176,6 +200,22 @@ export function cardLevelCssProperties(config) {
  * would not have moved when card.json did. Both terms are authored, so the
  * config stays the one home and `cardInspectionLayout()` only has to compare.
  */
+/**
+ * The readable measure a door's details column needs beside the card.
+ *
+ * Exported in its own right because the threshold is no longer a fixed sum: the
+ * inspect width is tunable at runtime, so a caller that has the EFFECTIVE width
+ * still needs the authored second term to add to it. Reading it from the config
+ * here keeps that term in one home rather than letting the caller carry 384.
+ */
+export function doorReadableMinPx(config = uiConfig.components.card.sizing) {
+  const readable = Number(config?.doorReadableMinPx);
+  if (!Number.isFinite(readable) || readable <= 0) {
+    throw new Error(`card sizing.doorReadableMinPx must be a positive number, got ${JSON.stringify(config?.doorReadableMinPx)}`);
+  }
+  return readable;
+}
+
 export function cardDoorStackBelowPx(config = uiConfig.components.card.sizing) {
   const inspect = Number(config?.levels?.inspect?.widthPx);
   const readable = Number(config?.doorReadableMinPx);
@@ -222,6 +262,18 @@ export function cardLevelsWithOverrides(settings = {}, config = uiConfig.compone
       return { levels: authored, refused: `${order[i - 1]} (${merged[order[i - 1]].widthPx}px) must be smaller than ${order[i]} (${merged[order[i]].widthPx}px)` };
     }
   }
+  // EVERY RESTING WIDTH IS A RESTING WIDTH, INCLUDING THE VARIANTS.
+  // Checking only `glance.widthPx` left the ladder open at exactly the place
+  // this PR widened it: `glance.variants.mobile` is what a phone actually
+  // rests at, so a mobile override of 640 against the default focus of 280
+  // passed the loop above and still put a browsing card half again wider than
+  // a selected one. A variant is refused by its own key, so the message names
+  // the slider that is wrong rather than the level it hangs under.
+  for (const [name, width] of Object.entries(merged.glance.variants)) {
+    if (!(width < merged.focus.widthPx)) {
+      return { levels: authored, refused: `glance:${name} (${width}px) must be smaller than focus (${merged.focus.widthPx}px)` };
+    }
+  }
   return { levels: merged, refused: null };
 }
 
@@ -248,12 +300,22 @@ export function cardSizingExport(levels) {
       ? { widthPx: row.widthPx, variants: { ...row.variants } }
       : { widthPx: row.widthPx };
   }
-  // ONLY THE BLOCK BEING TUNED. An earlier draft also emitted `ratio` and
-  // `bands` for completeness and would have been wrong to paste: the generated
-  // config resolves `ratio` to a NUMBER (0.714286) while card.json authors it
-  // as `{ numerator, denominator }`, so a round trip through this export would
-  // have quietly rewritten the shape into a form the file does not use.
-  return JSON.stringify({ levels: out }, null, 2);
+  // ONLY THE BLOCK BEING TUNED, AT ITS REAL PATH. An earlier draft also emitted
+  // `ratio` and `bands` for completeness and would have been wrong to paste:
+  // the generated config resolves `ratio` to a NUMBER (0.714286) while
+  // card.json authors it as `{ numerator, denominator }`, so a round trip
+  // through this export would have quietly rewritten the shape into a form the
+  // file does not use.
+  //
+  // But a bare `{ levels: … }` was wrong too, and for the opposite reason: the
+  // widths live at `sizing.levels`, not at the root, so text that LOOKED like a
+  // whole card.json would have produced a file with no `sizing` block at all
+  // and the config builder would have refused it. Nesting it under `sizing`
+  // costs one line and makes the destination unambiguous — it reads as the
+  // fragment it is, not as a file. `cardSizingExportPath` names that path for
+  // whatever is doing the copying, so the UI and this function cannot drift
+  // about where the text belongs.
+  return JSON.stringify({ sizing: { levels: out } }, null, 2);
 }
 
 /**
@@ -291,3 +353,6 @@ export function restingWidthPx(viewportWidthPx, levels, tokens = uiConfig.tokens
   const mobile = glance.variants && glance.variants.mobile;
   return (viewportWidthPx < cardMobileBelowPx(tokens) && Number.isFinite(mobile)) ? mobile : glance.widthPx;
 }
+
+/** Where `cardSizingExport`'s text belongs, for whatever presents the copy. */
+export const cardSizingExportPath = 'content/config/ui/components/card.json → sizing.levels';

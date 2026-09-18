@@ -3,7 +3,7 @@ import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
-import { cardDoorStackBelowPx } from '../models/CardSizeModel.js';
+import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -46,10 +46,22 @@ import { cardDoorStackBelowPx } from '../models/CardSizeModel.js';
 // So the decision sits beside the layout it governs. One listener for this
 // module's life rather than one per door: the attribute is on `:root`, one door
 // is open at a time, and a per-door listener would be a leak with no reader.
-const cardDoorStackBelow = cardDoorStackBelowPx();
+// THE THRESHOLD IS READ, NOT REMEMBERED. It was a module-level `const`
+// computed once from the authored config, which was fine while the widths were
+// authored-only and wrong the moment they became tunable: turning the inspect
+// slider up moved `--card-w-inspect` and left the breakpoint at the old 704, so
+// the door would sit beside a card too wide to fit next to it. The effective
+// inspect width is whatever has been projected onto `:root`; the authored sum
+// is the fallback for a page that projects nothing.
 let doorShapeWatched = false;
+function doorStackBelowPx() {
+  const projected = getComputedStyle(document.documentElement).getPropertyValue('--card-w-inspect').trim();
+  const inspect = Number.parseFloat(projected);
+  if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
+  return inspect + doorReadableMinPx();
+}
 function applyCardDoorShape() {
-  const stacked = window.innerWidth < cardDoorStackBelow;
+  const stacked = window.innerWidth < doorStackBelowPx();
   document.documentElement.dataset.cardDoor = stacked ? 'stacked' : 'beside';
 }
 function watchCardDoorShape() {
