@@ -242,8 +242,18 @@ export function dialogueEntrance(layout, { reducedMotion = false, replay = true 
  * physical minimum and the scene absorbs the shortfall.
  * frame: { width, height, zoom, rem } in local px, as combat passes it.
  */
-export function dialogueBands(frame, layout, parent) {
-  return allocateSceneBands(frame, layout, parent, { label: 'dialogue' });
+export function dialogueBands(frame, layout, parent, compact = false) {
+  // A COMPACT HOST GETS A DIFFERENT SPLIT, not a squeezed one. The shared HUD
+  // draws two rows of facts; a 10% band holds them on a desktop and not on a
+  // phone, where 10% of 824px is 82px against 96px of readable rows — and a
+  // band that cannot hold its rows pushes the relic belt onto the meters.
+  // The room comes from the context band, which on a phone had a visibly empty
+  // strip under its last response (owner, 2026-09-18).
+  const shares = compact && layout.sizing.bandsCompact ? layout.sizing.bandsCompact : layout.sizing.bands;
+  const sum = shares.hud + shares.scene + shares.context + shares.footer;
+  if (Math.abs(sum - 100) > 1e-9) throw new Error(`dialogue band shares sum to ${sum}, not 100`);
+  const plan = shares === layout.sizing.bands ? layout : { ...layout, sizing: { ...layout.sizing, bands: shares } };
+  return allocateSceneBands(frame, plan, parent, { label: 'dialogue' });
 }
 
 /** dialogueCompactHost(viewportWidth, parent) → the compact slot width applies. */
@@ -265,8 +275,14 @@ export function dialogueLanes(frameWidth, layout) {
   const insetVw = layout.positioning.portraitSlot.insetVw;
   const gapVw = layout.positioning.portraits.minGapVw;
   if (!(gapVw >= 0)) throw new Error(`dialogue positioning.portraits.minGapVw must be ≥ 0, got ${gapVw}`);
+  const gapPx = layout.positioning.portraits.minGapPx;
+  if (!(gapPx >= 0)) throw new Error(`dialogue positioning.portraits.minGapPx must be ≥ 0, got ${gapPx}`);
   const inset = width * (insetVw / 100);
-  const gap = width * (gapVw / 100);
+  // A SHARE OF THE FRAME IS NOT A GAP ON A PHONE: 1.5vw is 6.5px at 390 wide,
+  // where the two figures read as one crowd, against 80px on a desktop. The
+  // floor is the gap's real minimum and the share takes over once it is wider
+  // (owner, 2026-09-18, after the 390x844 preview).
+  const gap = Math.max(width * (gapVw / 100), gapPx);
   const laneWidth = (width - inset * 2 - gap) / 2;
   if (!(laneWidth > 0)) throw new Error('dialogue portrait insets and minGapVw leave no lane for a figure');
   return Object.freeze({

@@ -75,11 +75,12 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
   assert.deepEqual(uiConfig.scenes.w4c, {
     sizing: {
       bands: { hud: 10, scene: 40, context: 35, footer: 15 },
+      bandsCompact: { hud: 12, scene: 40, context: 33, footer: 15 },
       floorPercent: 60,
       portraitSlot: { widthVw: 20, compactWidthVw: 30 },
       context: {
         widthVw: 95, captionLines: 3, captionLineHeight: 1.45,
-        titleRem: 0.95, titleLineHeight: 1.2, textRem: 0.9, paddingRem: 0.35, gapRem: 0.25,
+        titleRem: 0.95, titleLineHeight: 1.45, textRem: 0.9, paddingRem: 0.5, gapRem: 0.25,
       },
       responses: { fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2 },
       hud: { compactBelowHeightPx: 500 },
@@ -88,7 +89,8 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
     positioning: {
       portraitSlot: { insetVw: 2.5, topOffsetVh: 2 },
       portraits: {
-        visibleFraction: 1 / 3, mirrorNpc: true, minGapVw: 1.5, fit: 'shrinkToLane', anchor: 'revealLine',
+        visibleFraction: 1 / 3, visibleFractionCompact: 1, mirrorNpc: true, minGapVw: 1.5, minGapPx: 24,
+        fit: 'shrinkToLane', anchor: 'revealLine',
         listener: { minOpacity: 0.62, brightness: 0.8, saturation: 0.55 },
       },
       context: { insetVw: 2.5, insetVh: 2 },
