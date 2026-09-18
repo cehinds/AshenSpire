@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1115"
   },
   {
+    "id": "pr-1114",
+    "date": "2026-09-17",
+    "group": "2026-09-17",
+    "summary": "The project stores its own AI working instructions",
+    "detail": "Nothing you see changes in play. Two notes describing how the project's AI helpers are meant to work — which model handles which kind of task, and the rules they follow while building — used to exist only as chat uploads. They now live in the repository under docs/ai/, marked as advice that the specification and contributing guides override wherever they disagree.",
+    "build": "0.7.1.71",
+    "pullRequest": 1114,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1114"
+  },
+  {
     "id": "pr-1107",
     "date": "2026-09-15",
     "group": "2026-09-15",
