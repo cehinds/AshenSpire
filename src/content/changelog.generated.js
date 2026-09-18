@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1154",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "And the change that wrote that mention now has one too",
+    "detail": "Nothing you see changes in play. Writing a missing line in this list is itself a change, and it needs its own line or the gap simply moves along by one. This is that line, so the chain ends here rather than being handed on again.",
+    "build": "0.7.1.96",
+    "pullRequest": 1154,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1154"
+  },
+  {
     "id": "pr-1150",
     "date": "2026-09-18",
     "group": "2026-09-18",
