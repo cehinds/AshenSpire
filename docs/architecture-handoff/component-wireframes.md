@@ -3815,14 +3815,14 @@ INPUT snapshot, context, config, commandRegistry
 model = ProjectKnownHudFields(snapshot, config.sample)
 visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
-IF ViewportUnder(config.phone.maxWidthPx)            // the published gate, never a second measurement
+IF HostComposition() MATCHES config.phone.gate        // the published state, never a second measurement
   // One band in every context: stacked meters, Cinders, Armoury, Menu.
-  visible = FilterConfiguredActiveLayers(model, config.phone.layers)
+  visible = FilterConfiguredActiveLayers(model, Merge(config.layers, config.phone.layerOverrides))
   ComposeHeader(visible.cinders)
   ComposeStackedMeters(visible.vitality); ComposeActions(visible.armoury, visible.menu)
 ELSE
   ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+  ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
 ComposeDetachedRail(visible.relics)
@@ -4133,14 +4133,14 @@ INPUT snapshot, context, config, commandRegistry
 model = ProjectKnownHudFields(snapshot, config.sample)
 visible = FilterConfiguredActiveLayers(model, config.layers)
 // Collapsed layers leave no reserved row or gap.
-IF ViewportUnder(config.phone.maxWidthPx)            // the published gate, never a second measurement
+IF HostComposition() MATCHES config.phone.gate        // the published state, never a second measurement
   // One band in every context: stacked meters, Cinders, Armoury, Menu.
-  visible = FilterConfiguredActiveLayers(model, config.phone.layers)
+  visible = FilterConfiguredActiveLayers(model, Merge(config.layers, config.phone.layerOverrides))
   ComposeHeader(visible.cinders)
   ComposeStackedMeters(visible.vitality); ComposeActions(visible.armoury, visible.menu)
 ELSE
   ComposeHeader(visible.class, visible.cinders, visible.position)
-ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
+  ComposePrimaryRow(visible.vitality, visible.armoury, visible.menu)
 // One Potions control owns flask charges and carried consumables.
 potionEntries = ProjectPotions(snapshot, visible.chargeFlasks, visible.potions)
 ComposeDetachedRail(visible.relics)
