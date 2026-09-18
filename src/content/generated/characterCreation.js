@@ -10,7 +10,7 @@ export const characterCreation = {
   "layout": {
     "classPreviewPercent": 30,
     "classChoiceView": "list",
-    "equipmentChoiceView": "list",
+    "equipmentChoiceView": "grid",
     "equipmentAutoAdvance": false
   },
   "equipmentSections": [
