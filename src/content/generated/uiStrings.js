@@ -808,11 +808,67 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "map.recenter",
+    "id": "map.back",
     "extends": "",
-    "short": "Recenter",
-    "full": "Frame the map on where you stand.",
-    "tip": "Recenter"
+    "short": "Back",
+    "full": "Clear the selection and close the tray.",
+    "tip": "Back"
+  },
+  {
+    "id": "potions.run.title",
+    "extends": "",
+    "short": "Potions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.drink",
+    "extends": "",
+    "short": "Drink",
+    "full": "Drink this flask now.",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.drop",
+    "extends": "",
+    "short": "Drop",
+    "full": "Leave this potion behind for good.",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.none",
+    "extends": "",
+    "short": "No potions carried.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.empty",
+    "extends": "",
+    "short": "No charges remain",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.setting",
+    "extends": "",
+    "short": "Turn on Use flasks outside combat in Settings to drink here",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.keep",
+    "extends": "",
+    "short": "Charge flasks stay with the run",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "potions.run.combatOnly",
+    "extends": "",
+    "short": "Only in combat. You can drop it here.",
+    "full": "",
+    "tip": ""
   },
   {
     "id": "map.context.aria",

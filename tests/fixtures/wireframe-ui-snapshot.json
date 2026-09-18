@@ -19,6 +19,12 @@
   },
   "map": {
     "repeatPickDelayMs": 400,
+    "tray": {
+      "openDelayMs": 150,
+      "slideMs": 240,
+      "fadeMs": 140,
+      "cameraMs": 300
+    },
     "header": {
       "heightFraction": 0.1,
       "minimumTargetPx": 44,

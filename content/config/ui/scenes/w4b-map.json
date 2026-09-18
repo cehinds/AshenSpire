@@ -13,6 +13,12 @@
     "header": { "insetPx": 4 }
   },
   "behavior": {
-    "repeatPickDelayMs": 400
+    "repeatPickDelayMs": 400,
+    "tray": {
+      "openDelayMs": 150,
+      "slideMs": 240,
+      "fadeMs": 140,
+      "cameraMs": 300
+    }
   }
 }
