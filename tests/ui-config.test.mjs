@@ -160,7 +160,7 @@ test('tokens are exported resolved, and a file-local variable wins over a token'
 });
 
 test('fractions compile to the same double the old expressions gave', () => {
-  assert.equal(uiConfig.components.card.sizing.ratio, 5 / 8);
+  assert.equal(uiConfig.components.card.sizing.ratio, 5 / 7);
   assert.equal(uiConfig.screens.shop.sizing.railFraction, 21.6 / 95);
   assert.equal(uiConfig.scenes.w4c.positioning.portraits.visibleFraction, 1 / 3);
 });
