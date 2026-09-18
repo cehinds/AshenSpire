@@ -13,6 +13,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1141"
   },
   {
+    "id": "pr-1149",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A receipt points at the change it belongs to",
+    "detail": "Nothing a player sees changes. One entry in this list named the wrong pull request; it now names its own.",
+    "build": "0.7.1.87",
+    "pullRequest": 1149,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1149"
+  },
+  {
+    "id": "pr-1136",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The map remembers where you left it, and not where you left a different window",
+    "detail": "The map keeps the view you had, but a view saved on one window size was being restored onto another, which could leave the board sitting oddly. A saved view is now kept with the size it was solved for, and one that no longer fits is worked out afresh.",
+    "build": "0.7.1.87",
+    "pullRequest": 1136,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1136"
+  },
+  {
     "id": "pr-1134",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -23,6 +43,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1134"
   },
   {
+    "id": "pr-1147",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The potion count on the map is a plain number",
+    "detail": "Nothing a player sees changes; the written description now matches the game. The note describing the map's potion icons still said the count sat in a small pill, which it no longer does.",
+    "build": "0.7.1.86",
+    "pullRequest": 1147,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1147"
+  },
+  {
     "id": "pr-1137",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -31,6 +61,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.85",
     "pullRequest": 1137,
     "url": "https://github.com/cehinds/AshenSpire/pull/1137"
+  },
+  {
+    "id": "pr-1143",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The map's potions come out when you reach for them",
+    "detail": "On the map the small potion icons no longer sit out on the bar. The Potions button is larger, and resting on it slides the potions up out of it one after another, with the number you carry above each; move away and they fold back in.",
+    "build": "0.7.1.85",
+    "pullRequest": 1143,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1143"
   },
   {
     "id": "pr-1132",
