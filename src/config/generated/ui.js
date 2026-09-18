@@ -22,11 +22,14 @@
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
+// source content/config/ui/presentation/combatFormationModel.json 0a2ac2f627fcaaa6
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
+// source content/config/ui/presentation/reaverAttack.json b1062ab030ccd896
+// source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
 // source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
@@ -2313,6 +2316,21 @@ export const uiConfig = deepFreeze({
         ]
       }
     },
+    "combatFormationModel": {
+      "sizing": {
+        "layout": {
+          "hud": 10,
+          "field": 55,
+          "hand": 30,
+          "controls": 5
+        },
+        "figureReference": 150,
+        "ceiling": {
+          "heightFraction": 0.52,
+          "widthFraction": 0.16
+        }
+      }
+    },
     "combatPoseStates": {
       "components": {
         "poseStates": {
@@ -2808,6 +2826,146 @@ export const uiConfig = deepFreeze({
         "aura": {
           "viewBox": "0 0 120 140",
           "svg": "<svg viewBox=\"0 0 120 140\"><g class=\"pose-diamond\"><path d=\"M60 8 78 28 60 48 42 28Z\"/><path d=\"M60 18 68 28 60 38 52 28Z\"/></g><g class=\"pose-constellation\"><path d=\"m25 38 30-23 30 20 16 33-40-11-34 27 7-46\"/><circle cx=\"25\" cy=\"38\" r=\"3\"/><circle cx=\"55\" cy=\"15\" r=\"4\"/><circle cx=\"85\" cy=\"35\" r=\"3\"/><circle cx=\"101\" cy=\"68\" r=\"3\"/><circle cx=\"61\" cy=\"57\" r=\"4\"/><circle cx=\"27\" cy=\"84\" r=\"3\"/></g><g class=\"pose-halo\"><circle cx=\"60\" cy=\"38\" r=\"30\" stroke-dasharray=\"35 11 20 12\"/><circle class=\"pose-halo-gold\" cx=\"60\" cy=\"38\" r=\"36\" stroke-dasharray=\"24 18 42 30\"/></g><ellipse class=\"pose-floor\" cx=\"60\" cy=\"128\" rx=\"42\" ry=\"8\"/></svg>"
+        }
+      }
+    },
+    "reaverAttack": {
+      "components": {
+        "attack": {
+          "id": "reaver-attack-v1",
+          "facing": "right",
+          "frameRoot": "assets/animations/reaver/default-greatsword/right",
+          "frameExtension": ".webp",
+          "runs": [
+            [
+              "F03",
+              3
+            ],
+            [
+              "F04",
+              3
+            ],
+            [
+              "F05",
+              3
+            ],
+            [
+              "F06",
+              3
+            ],
+            [
+              "F03",
+              3
+            ],
+            [
+              "F08",
+              4
+            ],
+            [
+              "F10",
+              3
+            ],
+            [
+              "F09",
+              6
+            ],
+            [
+              "F12",
+              1
+            ],
+            [
+              "F11",
+              1
+            ],
+            [
+              "F13",
+              1
+            ],
+            [
+              "F14",
+              7
+            ],
+            [
+              "F15",
+              4
+            ],
+            [
+              "F17",
+              3
+            ],
+            [
+              "F16",
+              2
+            ],
+            [
+              "F18",
+              4
+            ],
+            [
+              "F02",
+              3
+            ],
+            [
+              "F03",
+              6
+            ]
+          ],
+          "frameMs": 56,
+          "impactFrameIndex": 31,
+          "anchor": {
+            "x": 0.5,
+            "y": 1
+          }
+        }
+      },
+      "motion": {
+        "normalLungeMs": 260
+      }
+    },
+    "startupGate": {
+      "components": {
+        "prompts": {
+          "pointer": "CLICK TO CONTINUE",
+          "touch": "TAP TO CONTINUE",
+          "keyboard": "PRESS ENTER OR SPACE",
+          "controller": "PRESS A / CROSS OR START / MENU"
+        }
+      },
+      "motion": {
+        "entrance": {
+          "lightUpMs": 560,
+          "fadeMs": 880,
+          "holdDefault": "0.5s",
+          "holdDurations": {
+            "0s": 0,
+            "0.3s": 300,
+            "0.5s": 500,
+            "1s": 1000,
+            "2s": 2000
+          }
+        },
+        "particles": {
+          "defaultCount": 7,
+          "maxCount": 12,
+          "leftPct": {
+            "base": 9,
+            "step": 17,
+            "span": 82
+          },
+          "delayMs": {
+            "step": 1130,
+            "cycle": 6200
+          },
+          "durationMs": {
+            "base": 7600,
+            "cycle": 4,
+            "step": 1400
+          },
+          "sizePx": {
+            "base": 1,
+            "cycle": 3
+          },
+          "idPrefix": "ash-"
         }
       }
     },

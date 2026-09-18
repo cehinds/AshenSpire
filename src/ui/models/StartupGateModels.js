@@ -1,29 +1,27 @@
 import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { uiConfig } from '../../config/generated/ui.js';
+import { thaw } from '../../config/authored.js';
 
-const DEFAULT_PROMPTS = Object.freeze({
-  pointer: 'CLICK TO CONTINUE',
-  touch: 'TAP TO CONTINUE',
-  keyboard: 'PRESS ENTER OR SPACE',
-  controller: 'PRESS A / CROSS OR START / MENU',
-});
+const GATE = uiConfig.presentation.startupGate;
+
+const DEFAULT_PROMPTS = Object.freeze(thaw(GATE.components.prompts));
 
 export const TITLE_ENTRANCE_TIMING = Object.freeze({
-  lightUpMs: 560,
-  fadeMs: 880,
-  holdDefault: '0.5s',
-  holdDurations: Object.freeze({ '0s': 0, '0.3s': 300, '0.5s': 500, '1s': 1000, '2s': 2000 }),
+  ...thaw(GATE.motion.entrance),
+  holdDurations: Object.freeze(thaw(GATE.motion.entrance.holdDurations)),
 });
 
-function particles(count = 7) {
-  const total = Math.max(0, Math.min(12, Math.floor(Number(count) || 0)));
+function particles(count = GATE.motion.particles.defaultCount) {
+  const p = GATE.motion.particles;
+  const total = Math.max(0, Math.min(p.maxCount, Math.floor(Number(count) || 0)));
   return Array.from({ length: total }, (_, index) => Object.freeze({
-    id: `ash-${index + 1}`,
-    leftPct: 9 + ((index * 17) % 82),
-    delayMs: (index * 1130) % 6200,
-    durationMs: 7600 + (index % 4) * 1400,
-    sizePx: 1 + (index % 3),
+    id: `${p.idPrefix}${index + 1}`,
+    leftPct: p.leftPct.base + ((index * p.leftPct.step) % p.leftPct.span),
+    delayMs: (index * p.delayMs.step) % p.delayMs.cycle,
+    durationMs: p.durationMs.base + (index % p.durationMs.cycle) * p.durationMs.step,
+    sizePx: p.sizePx.base + (index % p.sizePx.cycle),
   }));
 }
 export function startupGateModel({

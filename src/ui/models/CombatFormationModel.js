@@ -1,10 +1,14 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
+import { uiConfig } from '../../config/generated/ui.js';
+import { thaw } from '../../config/authored.js';
+
+const SIZING = uiConfig.presentation.combatFormationModel.sizing;
 
 // Presentation only. Encounter order and domain row/range facts are untouched.
-export const COMBAT_LAYOUT = Object.freeze({ hud: 10, field: 55, hand: 30, controls: 5 });
-export const FIGURE_REFERENCE = 150;
+export const COMBAT_LAYOUT = Object.freeze(thaw(SIZING.layout));
+export const FIGURE_REFERENCE = SIZING.figureReference;
 export function figureCeiling({ width, height }) {
-  return Math.max(wireframeUi.formation.minimumSpritePx, Math.min(height * .52, width * .16));
+  return Math.max(wireframeUi.formation.minimumSpritePx, Math.min(height * SIZING.ceiling.heightFraction, width * SIZING.ceiling.widthFraction));
 }
 
 export function combatFormation({ width, height, friends, enemies, rem = 16 }) {
