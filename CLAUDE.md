@@ -8,3 +8,9 @@ How work is branched, reviewed, and merged is in
 request in `cef8ed00`. The coordination rules it carried — one task per branch,
 draft pull requests into `dev`, and only the owner merging to `main` — live in
 CONTRIBUTING.md under *Coordination and release boundary* and *Branch model*.)
+
+How AI work is routed between models, efforts, and subagents is in
+[docs/ai/AI-ROUTING.md](docs/ai/AI-ROUTING.md); the owner's Forge working mode
+(guided learning vs. builder mode, context and memory handling) is in
+[docs/ai/FORGE-OPERATING-INSTRUCTIONS.md](docs/ai/FORGE-OPERATING-INSTRUCTIONS.md).
+Both are advisory and never override SPEC.md, CONTRIBUTING.md, or DEVELOPER.md.

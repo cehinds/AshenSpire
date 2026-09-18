@@ -259,7 +259,7 @@ test('a content/config JSON is stray, by name, unless the generated module was c
     writeFileSync(gen, generate(compileEntries(entries)));
     assert.deepEqual(configSourceErrors(content), [], 'current: nothing stray');
     // CRLF checkouts hash the same as LF ones.
-    put('ui/components/card.json', entries.find((e) => e.rel === 'ui/components/card.json').text.replace(/\n/g, '\r\n'));
+    put('ui/components/card.json', entries.find((e) => e.rel === 'ui/components/card.json').text.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n'));
     assert.deepEqual(configSourceErrors(content), [], 'a CRLF copy of the same file is still current');
     put('ui/components/card.json', '{ "sizing": { "ratio": 0.7, "bands": [1, 4, 4, 1] } }\n');
     put('ui/screens/zz.json', '{ "sizing": {} }\n');
