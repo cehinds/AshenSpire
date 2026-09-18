@@ -26,13 +26,16 @@ import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } f
 import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
-import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath } from '../models/CardSizeModel.js';
+import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds } from '../models/CardSizeModel.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
 // rather than a number typed twice. content/config/ui/components/card.json is
 // the one home; these rows lay a tuning override over it.
 const CARD_LEVELS = cardLevels();
+// The same authored range the model clamps to, so the control and the width it
+// produces cannot disagree about what is in bounds.
+const CARD_WIDTH_BOUNDS = cardWidthBounds();
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -454,16 +457,16 @@ const ROWS = [
   // than one you were browsing past. A set of numbers that breaks it is
   // REFUSED and the authored table stands — see cardLevelsWithOverrides.
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance', type: 'number',
-    def: CARD_LEVELS.glance.widthPx, min: 64, max: 640, slider: true, label: 'Resting card width',
+    def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width',
     note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance_mobile', type: 'number',
-    def: CARD_LEVELS.glance.variants.mobile, min: 64, max: 640, slider: true, label: 'Resting card width, phone',
+    def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width, phone',
     note: 'The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.' },
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_focus', type: 'number',
-    def: CARD_LEVELS.focus.widthPx, min: 64, max: 640, slider: true, label: 'Selected card width',
+    def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Selected card width',
     note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_inspect', type: 'number',
-    def: CARD_LEVELS.inspect.widthPx, min: 64, max: 640, slider: true, label: 'Reading card width',
+    def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Reading card width',
     note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
     label: 'Export card sizes',
@@ -1453,6 +1456,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // pasted over card.json that leaves no `sizing` block at all and the config
   // builder refuses it. The path comes from `cardSizingExportPath` so this note
   // and the model cannot drift about where the text belongs.
+  // A REFUSAL RESOLVED AT BOOT HAS NOBODY TO TELL, SO IT IS RE-ASKED HERE.
+  // `showSettingsNotice` is a no-op before this panel exists, and a bad ladder
+  // stored in a profile is decided at startup — so on reload the sliders showed
+  // the rejected numbers, the authored widths were in force, and nothing said
+  // why until the next edit. Re-running the pure validator when Settings opens
+  // costs nothing and closes that window; it reads the same settings bag the
+  // boot path did, so the two cannot disagree.
+  {
+    const { refused } = cardLevelsWithOverrides(settings);
+    if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`);
+  }
   container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
@@ -1468,17 +1482,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
       btn.textContent = copied ? 'Copied' : 'See log';
       if (!copied) console.log(`${cardSizingExportPath}\n${text}`);
+      // "Copied" WHEN NOTHING WAS COPIED IS THE WORST OF THE THREE OUTCOMES.
+      // The notice below said it regardless, so a browser that refuses the
+      // clipboard produced a confident lie. The wording now follows `copied`.
       // SAY WHAT WAS COPIED WHEN IT IS NOT WHAT IS ON THE SLIDERS. A refused
       // ladder falls back to the authored table, so this button hands over the
       // AUTHORED numbers while the controls still show the rejected ones —
       // silently, until now. Copying the wrong sizes and passing them on as a
       // new default is the one outcome this feature must not produce quietly.
-      if (refused) {
-        console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
-        showSettingsNotice(`Copied the AUTHORED sizes, not the ones shown: ${refused}.`);
-      } else {
-        showSettingsNotice(`Copied — ${cardSizingExportPath}.`);
-      }
+      const what = refused
+        ? `the AUTHORED sizes, not the ones shown: ${refused}`
+        : `the tuned sizes — ${cardSizingExportPath}`;
+      if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+      showSettingsNotice(copied
+        ? `Copied ${what}.`
+        : `Could not reach the clipboard. The block is in the browser console — ${what}.`);
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });
   });

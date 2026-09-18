@@ -10,7 +10,8 @@
       "focus": { "widthPx": 280 },
       "inspect": { "widthPx": 320 }
     },
-    "doorReadableMinPx": 384
+    "doorReadableMinPx": 384,
+    "tuning": { "minPx": 64, "maxPx": 640 }
   },
   "behavior": {
     "fields": {

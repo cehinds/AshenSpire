@@ -241,11 +241,35 @@ export function cardDoorStackBelowPx(config = uiConfig.components.card.sizing) {
  * bad number would hide exactly the mistake the tuner is trying to see. A
  * refused table falls back to the authored one and says which key was wrong.
  */
+/**
+ * The range a tuned width may take, authored beside the widths themselves.
+ *
+ * It had FOUR copies as `min: 64, max: 640` on the settings rows and no copy at
+ * all in the model, so a width arriving from anywhere but a slider — a restored
+ * profile, `shotSettings` — was accepted at any positive value while the
+ * control clamped its display to 640. The control said 640 and the card drew
+ * 1000. One authored home, read by both.
+ */
+export function cardWidthBounds(config = uiConfig.components.card.sizing) {
+  const min = Number(config?.tuning?.minPx);
+  const max = Number(config?.tuning?.maxPx);
+  if (!Number.isFinite(min) || min <= 0 || !Number.isFinite(max) || max <= min) {
+    throw new Error(`card sizing.tuning must be { minPx, maxPx } with 0 < minPx < maxPx, got ${JSON.stringify(config?.tuning)}`);
+  }
+  return { min, max };
+}
+
 export function cardLevelsWithOverrides(settings = {}, config = uiConfig.components.card.sizing.levels) {
   const authored = cardLevels(config);
+  // CLAMPED TO THE SAME RANGE THE CONTROL SHOWS. A stored 1000 rendered as 640
+  // in the slider and drew at 1000, so the number on screen and the number in
+  // the layout were different facts. Clamping rather than refusing, because the
+  // control itself clamps: agreeing with what the tuner can see is the point.
+  const { min, max } = cardWidthBounds();
   const px = (value) => {
     const n = Number(value);
-    return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return Math.round(Math.min(max, Math.max(min, n)));
   };
   const merged = {};
   for (const [level, row] of Object.entries(authored)) {
