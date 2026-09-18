@@ -36,6 +36,18 @@ const CARD_LEVELS = cardLevels();
 // The same authored range the model clamps to, so the control and the width it
 // produces cannot disagree about what is in bounds.
 const CARD_WIDTH_BOUNDS = cardWidthBounds();
+// A CLIPBOARD WRITE OUTLIVES THE PANEL THAT STARTED IT, so the guard against a
+// second export cannot live inside `renderSettings`. It did, and closing and
+// reopening Settings handed the button a fresh `false` while the first write
+// was still unsettled — two writes in flight again, free to land in either
+// order, which is the one thing the guard exists to prevent. It belongs to the
+// clipboard operation's lifetime, so it sits here.
+//
+// It carries the block it is holding and the settings bag that produced it.
+// There is ONE bag — `meta.settings`, which both `openSettings` and
+// `openOverlay` resolve to and every render writes through — so comparing
+// against it later is exact rather than a guess about which panel is open.
+let exportWrite = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -1468,9 +1480,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
     else clearSettingsNotice('card-size');
   }
-  // Outstanding across clicks, so a second export cannot start while the first
-  // is still with the clipboard.
-  let exportWritePending = false;
   container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const { levels, refused } = cardLevelsWithOverrides(settings);
@@ -1509,26 +1518,37 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       //     start another, and says why.
       const CLIPBOARD_WAIT_MS = 1200;
       let copied = false;
-      if (exportWritePending) {
+      if (exportWrite) {
         showSettingsNotice('A copy is still with the clipboard — waiting for it rather than starting a second one that could land out of order.', 'card-size');
         return;
       }
       if (typeof navigator.clipboard?.writeText === 'function') {
         const write = navigator.clipboard.writeText(text).then(() => true, () => false);
-        exportWritePending = true;
-        // Whenever it settles — before or long after the timeout — the flag is
-        // released, and a landing the user was told had failed is announced.
+        exportWrite = { text, settings };
+        // ASK THE TIMER, NOT THE RESULT, WHETHER THIS WAS LATE. Keying the
+        // announcement on `copied` was wrong by one microtask: this handler is
+        // subscribed to `write` BEFORE `Promise.race` is, so on an ordinary
+        // fast copy it runs while `copied` is still its initial `false` and
+        // announced a late landing that never happened. The timeout callback
+        // runs before the race resolves, so its own flag is the honest witness.
+        let timedOut = false;
+        const timeout = new Promise((settle) => setTimeout(() => { timedOut = true; settle(false); }, CLIPBOARD_WAIT_MS));
+        // Whenever it settles — before or long after the timeout — the pending
+        // record is released, and a landing the user was told had failed is
+        // announced. By then the panel may have been closed and reopened and
+        // the sliders moved, so the notice says WHICH block arrived rather than
+        // letting it be read as the numbers now on screen.
         write.then((landed) => {
-          exportWritePending = false;
-          if (landed && !copied) {
-            showSettingsNotice('The clipboard answered late: the block you were told had not copied is on it now.', 'card-size');
-          }
+          const pending = exportWrite;
+          exportWrite = null;
+          if (!landed || !timedOut) return;
+          const stale = cardSizingExport(cardLevelsWithOverrides(pending.settings).levels) !== pending.text;
+          showSettingsNotice(stale
+            ? 'The clipboard answered late, and it holds the earlier copy — not the sizes shown now. Copy again to replace it.'
+            : 'The clipboard answered late: the block you were told had not copied is on it now.', 'card-size');
         });
         try {
-          copied = await Promise.race([
-            write,
-            new Promise((settle) => setTimeout(() => settle(false), CLIPBOARD_WAIT_MS)),
-          ]);
+          copied = await Promise.race([write, timeout]);
         } catch {
           copied = false;
         }
