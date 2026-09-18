@@ -19,12 +19,15 @@
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
 // source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
+// source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
+// source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
+// source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
@@ -1128,6 +1131,1115 @@ export const uiConfig = deepFreeze({
         }
       }
     },
+    "combatEffectAnchors": {
+      "positioning": {
+        "anchors": {
+          "reaver": {
+            "weapon": [
+              [
+                335,
+                470,
+                90
+              ],
+              [
+                290,
+                535,
+                150
+              ],
+              [
+                275,
+                265,
+                -165
+              ],
+              [
+                425,
+                550,
+                35
+              ],
+              [
+                480,
+                390,
+                -25
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                420
+              ],
+              [
+                385,
+                480
+              ],
+              [
+                360,
+                280
+              ],
+              [
+                390,
+                485
+              ],
+              [
+                420,
+                415
+              ]
+            ],
+            "shield": [
+              [
+                375,
+                385
+              ],
+              [
+                520,
+                375
+              ],
+              [
+                400,
+                410
+              ]
+            ]
+          },
+          "reaver-vigil": {
+            "weapon": [
+              [
+                335,
+                480,
+                90
+              ],
+              [
+                245,
+                545,
+                155
+              ],
+              [
+                245,
+                385,
+                130
+              ],
+              [
+                420,
+                550,
+                35
+              ],
+              [
+                430,
+                510,
+                35
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                425
+              ],
+              [
+                380,
+                475
+              ],
+              [
+                320,
+                335
+              ],
+              [
+                355,
+                485
+              ],
+              [
+                380,
+                480
+              ]
+            ],
+            "shield": [
+              [
+                385,
+                410
+              ],
+              [
+                520,
+                405
+              ],
+              [
+                430,
+                420
+              ]
+            ]
+          },
+          "reaver-oathsworn": {
+            "weapon": [
+              [
+                335,
+                465,
+                90
+              ],
+              [
+                260,
+                545,
+                150
+              ],
+              [
+                255,
+                350,
+                135
+              ],
+              [
+                410,
+                550,
+                40
+              ],
+              [
+                410,
+                520,
+                40
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                420
+              ],
+              [
+                380,
+                475
+              ],
+              [
+                320,
+                305
+              ],
+              [
+                355,
+                490
+              ],
+              [
+                365,
+                480
+              ]
+            ],
+            "shield": [
+              [
+                370,
+                400
+              ],
+              [
+                505,
+                390
+              ],
+              [
+                405,
+                420
+              ]
+            ]
+          },
+          "reaver-warden": {
+            "weapon": [
+              [
+                335,
+                465,
+                90
+              ],
+              [
+                250,
+                545,
+                150
+              ],
+              [
+                255,
+                380,
+                135
+              ],
+              [
+                405,
+                550,
+                45
+              ],
+              [
+                245,
+                555,
+                130
+              ]
+            ],
+            "cast": [
+              [
+                335,
+                420
+              ],
+              [
+                380,
+                475
+              ],
+              [
+                320,
+                325
+              ],
+              [
+                355,
+                485
+              ],
+              [
+                285,
+                510
+              ]
+            ],
+            "shield": [
+              [
+                365,
+                385
+              ],
+              [
+                495,
+                400
+              ],
+              [
+                430,
+                415
+              ]
+            ]
+          },
+          "rogue": {
+            "weapon": [
+              [
+                385,
+                440,
+                45
+              ],
+              [
+                285,
+                345,
+                -150
+              ],
+              [
+                570,
+                450,
+                5
+              ],
+              [
+                395,
+                420,
+                30
+              ],
+              [
+                525,
+                500,
+                10
+              ]
+            ],
+            "cast": [
+              [
+                360,
+                415
+              ],
+              [
+                330,
+                365
+              ],
+              [
+                520,
+                445
+              ],
+              [
+                365,
+                400
+              ],
+              [
+                480,
+                490
+              ]
+            ],
+            "shield": [
+              [
+                320,
+                400
+              ],
+              [
+                470,
+                400
+              ],
+              [
+                395,
+                425
+              ]
+            ]
+          },
+          "rogue-nightveil": {
+            "weapon": [
+              [
+                250,
+                420,
+                35
+              ],
+              [
+                470,
+                525,
+                65
+              ],
+              [
+                580,
+                415,
+                5
+              ],
+              [
+                380,
+                470,
+                45
+              ],
+              [
+                420,
+                520,
+                45
+              ]
+            ],
+            "cast": [
+              [
+                250,
+                400
+              ],
+              [
+                465,
+                500
+              ],
+              [
+                540,
+                410
+              ],
+              [
+                340,
+                425
+              ],
+              [
+                400,
+                485
+              ]
+            ],
+            "shield": [
+              [
+                405,
+                400
+              ],
+              [
+                515,
+                395
+              ],
+              [
+                410,
+                425
+              ]
+            ]
+          },
+          "rogue-duelist": {
+            "weapon": [
+              [
+                460,
+                440,
+                65
+              ],
+              [
+                565,
+                430,
+                5
+              ],
+              [
+                570,
+                400,
+                0
+              ],
+              [
+                490,
+                425,
+                25
+              ],
+              [
+                470,
+                490,
+                45
+              ]
+            ],
+            "cast": [
+              [
+                430,
+                405
+              ],
+              [
+                525,
+                425
+              ],
+              [
+                530,
+                400
+              ],
+              [
+                445,
+                405
+              ],
+              [
+                430,
+                455
+              ]
+            ],
+            "shield": [
+              [
+                370,
+                390
+              ],
+              [
+                505,
+                380
+              ],
+              [
+                430,
+                405
+              ]
+            ]
+          },
+          "rogue-shadow": {
+            "weapon": [
+              [
+                390,
+                340,
+                -70
+              ],
+              [
+                475,
+                455,
+                25
+              ],
+              [
+                455,
+                465,
+                25
+              ],
+              [
+                450,
+                465,
+                30
+              ],
+              [
+                455,
+                480,
+                45
+              ]
+            ],
+            "cast": [
+              [
+                385,
+                385
+              ],
+              [
+                460,
+                445
+              ],
+              [
+                445,
+                455
+              ],
+              [
+                410,
+                440
+              ],
+              [
+                430,
+                450
+              ]
+            ],
+            "shield": [
+              [
+                350,
+                400
+              ],
+              [
+                510,
+                390
+              ],
+              [
+                395,
+                410
+              ]
+            ]
+          },
+          "starseer": {
+            "weapon": [
+              [
+                400,
+                290,
+                -85
+              ],
+              [
+                275,
+                365,
+                15
+              ],
+              [
+                515,
+                460,
+                0
+              ],
+              [
+                515,
+                470,
+                0
+              ],
+              [
+                525,
+                470,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                400,
+                290
+              ],
+              [
+                275,
+                365
+              ],
+              [
+                515,
+                460
+              ],
+              [
+                515,
+                470
+              ],
+              [
+                525,
+                470
+              ]
+            ],
+            "shield": [
+              [
+                400,
+                445
+              ],
+              [
+                500,
+                410
+              ],
+              [
+                405,
+                450
+              ]
+            ]
+          },
+          "starseer-eclipse": {
+            "weapon": [
+              [
+                435,
+                320,
+                -70
+              ],
+              [
+                410,
+                350,
+                -30
+              ],
+              [
+                485,
+                440,
+                0
+              ],
+              [
+                435,
+                430,
+                0
+              ],
+              [
+                480,
+                400,
+                -20
+              ]
+            ],
+            "cast": [
+              [
+                435,
+                320
+              ],
+              [
+                410,
+                350
+              ],
+              [
+                485,
+                440
+              ],
+              [
+                435,
+                430
+              ],
+              [
+                480,
+                400
+              ]
+            ],
+            "shield": [
+              [
+                345,
+                410
+              ],
+              [
+                500,
+                410
+              ],
+              [
+                380,
+                460
+              ]
+            ]
+          },
+          "starseer-starlit": {
+            "weapon": [
+              [
+                425,
+                305,
+                -70
+              ],
+              [
+                440,
+                325,
+                -70
+              ],
+              [
+                470,
+                390,
+                0
+              ],
+              [
+                470,
+                390,
+                0
+              ],
+              [
+                490,
+                345,
+                -35
+              ]
+            ],
+            "cast": [
+              [
+                425,
+                305
+              ],
+              [
+                440,
+                325
+              ],
+              [
+                470,
+                390
+              ],
+              [
+                470,
+                390
+              ],
+              [
+                490,
+                345
+              ]
+            ],
+            "shield": [
+              [
+                325,
+                430
+              ],
+              [
+                510,
+                405
+              ],
+              [
+                480,
+                360
+              ]
+            ]
+          },
+          "starseer-astral": {
+            "weapon": [
+              [
+                435,
+                310,
+                -70
+              ],
+              [
+                290,
+                240,
+                -130
+              ],
+              [
+                520,
+                415,
+                0
+              ],
+              [
+                530,
+                415,
+                0
+              ],
+              [
+                535,
+                380,
+                -10
+              ]
+            ],
+            "cast": [
+              [
+                435,
+                310
+              ],
+              [
+                290,
+                240
+              ],
+              [
+                520,
+                415
+              ],
+              [
+                530,
+                415
+              ],
+              [
+                535,
+                380
+              ]
+            ],
+            "shield": [
+              [
+                375,
+                400
+              ],
+              [
+                480,
+                415
+              ],
+              [
+                465,
+                380
+              ]
+            ]
+          },
+          "herald": {
+            "weapon": [
+              [
+                350,
+                405,
+                0
+              ],
+              [
+                455,
+                400,
+                0
+              ],
+              [
+                490,
+                400,
+                0
+              ],
+              [
+                490,
+                400,
+                0
+              ],
+              [
+                470,
+                400,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                350,
+                405
+              ],
+              [
+                455,
+                400
+              ],
+              [
+                490,
+                400
+              ],
+              [
+                490,
+                400
+              ],
+              [
+                470,
+                400
+              ]
+            ],
+            "shield": [
+              [
+                325,
+                395
+              ],
+              [
+                500,
+                370
+              ],
+              [
+                380,
+                395
+              ]
+            ]
+          },
+          "herald-ossuary": {
+            "weapon": [
+              [
+                410,
+                390,
+                0
+              ],
+              [
+                450,
+                450,
+                0
+              ],
+              [
+                485,
+                390,
+                0
+              ],
+              [
+                470,
+                400,
+                0
+              ],
+              [
+                460,
+                425,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                410,
+                390
+              ],
+              [
+                450,
+                450
+              ],
+              [
+                485,
+                390
+              ],
+              [
+                470,
+                400
+              ],
+              [
+                460,
+                425
+              ]
+            ],
+            "shield": [
+              [
+                345,
+                410
+              ],
+              [
+                505,
+                390
+              ],
+              [
+                365,
+                410
+              ]
+            ]
+          },
+          "herald-emberhabit": {
+            "weapon": [
+              [
+                425,
+                395,
+                0
+              ],
+              [
+                455,
+                365,
+                0
+              ],
+              [
+                480,
+                385,
+                0
+              ],
+              [
+                500,
+                395,
+                0
+              ],
+              [
+                485,
+                415,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                425,
+                395
+              ],
+              [
+                455,
+                365
+              ],
+              [
+                480,
+                385
+              ],
+              [
+                500,
+                395
+              ],
+              [
+                485,
+                415
+              ]
+            ],
+            "shield": [
+              [
+                355,
+                405
+              ],
+              [
+                500,
+                405
+              ],
+              [
+                385,
+                430
+              ]
+            ]
+          },
+          "herald-pilgrim": {
+            "weapon": [
+              [
+                410,
+                350,
+                0
+              ],
+              [
+                460,
+                390,
+                0
+              ],
+              [
+                490,
+                390,
+                0
+              ],
+              [
+                445,
+                400,
+                0
+              ],
+              [
+                445,
+                420,
+                0
+              ]
+            ],
+            "cast": [
+              [
+                410,
+                350
+              ],
+              [
+                460,
+                390
+              ],
+              [
+                490,
+                390
+              ],
+              [
+                445,
+                400
+              ],
+              [
+                445,
+                420
+              ]
+            ],
+            "shield": [
+              [
+                335,
+                390
+              ],
+              [
+                470,
+                400
+              ],
+              [
+                395,
+                415
+              ]
+            ]
+          }
+        }
+      },
+      "layering": {
+        "planes": [
+          {
+            "plane": "behind",
+            "opacity": 0.62,
+            "mask": "linear-gradient(155deg,#000 35%,transparent 65%)"
+          },
+          {
+            "plane": "front",
+            "opacity": 0.82,
+            "mask": "linear-gradient(155deg,transparent 35%,#000 65%)"
+          }
+        ]
+      },
+      "sizing": {
+        "attachment": {
+          "weapon": 260,
+          "shield": 215,
+          "hand": 150
+        }
+      },
+      "behavior": {
+        "attackPoses": [
+          "attack1",
+          "attack2",
+          "attack3",
+          "attack4"
+        ],
+        "shieldBashPoses": [
+          "shieldBash1",
+          "shieldBash2",
+          "shieldBash3"
+        ],
+        "defaultPose": "idle",
+        "defaultAnchor": "weapon",
+        "handAnchor": "hand",
+        "shieldAnchor": "shield",
+        "castRow": "cast",
+        "weaponRow": "weapon",
+        "shieldRow": "shield",
+        "attachTargetEvent": "damageDealt",
+        "shieldBashKind": "shieldBash",
+        "weaponKinds": [
+          "slash",
+          "bloodSlash",
+          "crossSlash",
+          "whirlwind",
+          "thrust",
+          "riposte"
+        ]
+      }
+    },
+    "combatEffectDirection": {
+      "behavior": {
+        "directions": {
+          "right": 0,
+          "down": 90,
+          "left": 180,
+          "up": -90
+        },
+        "defaultDirection": "right",
+        "mirrorBeyondDeg": 90
+      }
+    },
     "combatEffectPresentation": {
       "behavior": {
         "subtleEffects": [
@@ -1696,6 +2808,113 @@ export const uiConfig = deepFreeze({
         "aura": {
           "viewBox": "0 0 120 140",
           "svg": "<svg viewBox=\"0 0 120 140\"><g class=\"pose-diamond\"><path d=\"M60 8 78 28 60 48 42 28Z\"/><path d=\"M60 18 68 28 60 38 52 28Z\"/></g><g class=\"pose-constellation\"><path d=\"m25 38 30-23 30 20 16 33-40-11-34 27 7-46\"/><circle cx=\"25\" cy=\"38\" r=\"3\"/><circle cx=\"55\" cy=\"15\" r=\"4\"/><circle cx=\"85\" cy=\"35\" r=\"3\"/><circle cx=\"101\" cy=\"68\" r=\"3\"/><circle cx=\"61\" cy=\"57\" r=\"4\"/><circle cx=\"27\" cy=\"84\" r=\"3\"/></g><g class=\"pose-halo\"><circle cx=\"60\" cy=\"38\" r=\"30\" stroke-dasharray=\"35 11 20 12\"/><circle class=\"pose-halo-gold\" cx=\"60\" cy=\"38\" r=\"36\" stroke-dasharray=\"24 18 42 30\"/></g><ellipse class=\"pose-floor\" cx=\"60\" cy=\"128\" rx=\"42\" ry=\"8\"/></svg>"
+        }
+      }
+    },
+    "tooltipHelp": {
+      "behavior": {
+        "help": {
+          "delays": {
+            "0.25s": 250,
+            "0.5s": 500,
+            "1s": 1000,
+            "1.5s": 1500
+          },
+          "focusMs": 500,
+          "holdMs": 420,
+          "doubleTapMs": 300,
+          "fadeMs": 160,
+          "stepMs": 150,
+          "textLengths": {
+            "medium": 90,
+            "detailedLarge": 220,
+            "large": 420
+          },
+          "settings": [
+            {
+              "key": "hoverTooltips",
+              "def": true,
+              "label": "Hover explanations",
+              "note": "Show explanations when the pointer rests on a detail. Keyboard and explicit inspection remain available."
+            },
+            {
+              "key": "tooltipDelay",
+              "type": "choice",
+              "def": "1s",
+              "label": "Explanation delay",
+              "note": "Wait before opening or switching hover and nested explanations. A tap or click selects a detail; a second one explains it."
+            },
+            {
+              "key": "tooltipCloseDelay",
+              "type": "choice",
+              "def": "0.5s",
+              "label": "Explanation close delay",
+              "note": "Wait after leaving a detail and its explanation before closing it."
+            }
+          ],
+          "combatTargets": [
+            {
+              "selector": ".hud-class",
+              "title": "Class",
+              "message": "class"
+            },
+            {
+              "selector": ".hud-cinders",
+              "title": "Cinders",
+              "message": "cinders"
+            },
+            {
+              "selector": ".hud-act",
+              "title": "Act",
+              "message": "act"
+            },
+            {
+              "selector": ".hud-floor",
+              "title": "Floor",
+              "message": "floor"
+            },
+            {
+              "selector": ".turn-ribbon",
+              "title": "Turn",
+              "message": "turn"
+            }
+          ],
+          "messages": {
+            "class": "{className}. {classDescription}",
+            "cinders": "{cinders} available. Currency for purchases and services during this run.",
+            "act": "Act {act}. The current region of your climb.",
+            "floor": "Floor {floor}. Your current step through this act.",
+            "turn": "{turn}. {instruction}",
+            "playerTurn": "Select a card and confirm its target, or end your turn.",
+            "enemyTurn": "Enemies are resolving their moves. Your next turn follows.",
+            "hp": "Health remaining. Reaching zero defeats this combatant.",
+            "mana": "Mana pays spell costs.",
+            "stamina": "Stamina pays physical skill and Dodge costs.",
+            "recovery": " Recovers {amount} per turn.",
+            "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
+            "playerPoise": "Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.",
+            "enemyPoise": "Fill it to Stagger. {effect}",
+            "cost": "{amount} required to play {card}.",
+            "costAll": "Spend all remaining {resource} to play {card}.",
+            "costTitle": "{resource} cost",
+            "activeListTitle": "Active skills & stance",
+            "activeList": "{count} active entries. Click to {action} the complete list.",
+            "collapse": "collapse",
+            "expand": "expand",
+            "close": "Close combatant details and return to the battlefield.",
+            "armouryTitle": "Armoury",
+            "armoury": "Inspect your equipment, attributes, deck, and active loadout.",
+            "armouryTest": "View this test build’s fixed weapon, defense, and resource rules.",
+            "arcane": "{value} / {threshold}. Compatible damaging hits with exposure buildup raise this meter.",
+            "arcaneBreak": " At the threshold, apply {status} {value}% for {duration} turns, then reset the meter.",
+            "arcaneLocked": " Locked while Magic Vulnerable is active.",
+            "evadeTitle": "Evade {count}",
+            "evade": "{count} {charges} remaining. Avoids the next dodgeable attack hit, including its damage, impact, and on-hit buildup. Each avoided hit consumes one charge. Unused charges expire at the start of your next turn.",
+            "charge": "charge",
+            "charges": "charges",
+            "stanceFallback": "Current stance.",
+            "stanceDuration": "Persists until replaced or combat ends."
+          }
         }
       }
     },
