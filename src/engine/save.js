@@ -557,6 +557,21 @@ export function createSaveManager(storage) {
             why: 'an older build wrote this save; the schema stamp was brought forward',
           });
         }
+        // Plan phase 3a: `zones`/`collection` are a projection of the legacy
+        // fields and were re-derived at the migration door; a save whose
+        // carried projection disagreed (an edit by hand — serializeRun cannot
+        // write one) is noted here, where the ledger is open, never refused.
+        if (run.reprojectedZones !== undefined) {
+          note(run, {
+            kind: 'overwrite',
+            site: 'state.js:migrateRunSchema',
+            field: 'zones',
+            was: run.reprojectedZones,
+            now: { zones: run.zones, collection: run.collection },
+            why: 'the saved zones disagreed with the class, loadout, relics and deck they are projected from; those fields own the truth until phase 3b, so the projection was re-derived',
+          });
+          delete run.reprojectedZones;
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {

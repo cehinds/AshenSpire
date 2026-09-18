@@ -1632,6 +1632,14 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 *Falsify:* a fixture save at schemaVersion 5 loads with `seatOrder` `['weald','marches','reach']` and `streamCounters` unchanged; `validateRunShape({ ...run, seatOrder: ['weald','weald','reach'] })` names `seatOrder`; two runs with the same seed and different `firstSeat` pins have identical `streamCounters` after creation.
 
+### 13.4a The run carries its zones (plan phase 3a)
+
+- **Run schemaVersion 7.** `run.zones` — `{ core: id|null, worn: { body, head, hands, feet, talisman }, hands: { main, off }, passive: [relicId] }` — and `run.collection` (`[cardInstance]`) ride the save (`RUN_SHAPE` rows `{ key: 'zones', type: 'object' }`, `{ key: 'collection', type: 'array' }`; `validateRunShape` refuses a missing zone, a worn slot outside `WORN_ZONE_SLOTS`, a hand outside `main`/`off`, a non-id in `passive`, and a collection entry with no `instanceId`/`cardId`).
+- **Authority stays with the legacy fields** until phase 3b: `class`, `loadout`, `relics` and `deck` are written by the game; `zones`/`collection` are their **projection** (`projectZones`, registry-free) and have ONE writer, `syncZones`, called at `createRunState`, `serializeRun` and `migrateRunSchema`. `core` is the class id; `worn.body` is the active armour and `worn.head/hands/feet` are `null` until 3b authors the rows; `collection` is exactly the deck until a card can be owned and not decked.
+- **Migration** (`migrateRunSchema`): a run at schemaVersion ≤ 6 gains its projection from its own fields; nothing else moves and no RNG is drawn. A schema-7 save whose carried projection disagrees with its legacy fields is **re-projected and noted** on the load ledger (`save.js:loadRun`, field `zones`), never refused — the truth is intact.
+
+*Falsify:* a fixture save at schemaVersion 6 loads with `zones.hands.main` equal to its active right-hand piece and `collection` equal to its deck; `validateRunShape({ ...run, zones: { ...run.zones, worn: { ...run.zones.worn, cloak: null } } })` names `zones.worn.cloak`; a save with `zones.passive` edited loads with the relics' order restored and one ledger row on `zones`.
+
 ### 13.5 The last seat opens the causeway to the Ashen Spire
 
 The Blighted Valkyrie (`a3_bossRotValkyrie`) is **not** in any seat's boss pool. She is the boss of the **tier-3 act, whatever seat it is**: `buildActMap` at tier 3 draws the seat's pool as usual **and** appends the Valkyrie's encounter as one more destination, so the final act always offers her beside the seat's own bosses and `restBeforeElite`/pre-boss-rest rules apply to her terminal like any other. Her encounter row carries `seat: null` — the one row the schema admits `null` for, by name, so the rule is visible in the data and a second null is a validation error. Which terminal ends the run is the player's route, as §12.4 already states.

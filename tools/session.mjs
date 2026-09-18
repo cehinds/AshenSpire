@@ -196,6 +196,7 @@ export function createSession({ registries, seedString, endless = false, restore
         stampDeck(registries, md.run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
         initializeRunFlaskCharges(md.run, registries);
         delete md.run.migratedFromRunSchemaVersion;
+        delete md.run.reprojectedZones; // no ledger is open on a member record; the re-projection stands
         members.set(md.id, {
           id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),

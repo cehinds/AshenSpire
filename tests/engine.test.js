@@ -8179,6 +8179,64 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/propertyRuleEffects\.json/.test(words), 'and names the file the triggers belong in');
   });
 
+  // ---- 82. Zones in run state (plan phase 3a) --------------------------------
+  // The character as cards in zones, as a PROJECTION of the fields that own
+  // the truth today (SPEC §13.4a). Four claims: a fresh run carries its
+  // projection; a schema-6 save is filled at the migration door with no
+  // registries; the shape is refused by name; a tampered projection is
+  // re-derived and noted, never refused.
+  test('82. zones and collection ride the save as a projection; a schema-6 save is filled; a tampered one is re-projected and noted', () => {
+    const run = createRunState({ seed: 0x3a3a, classId: 'reaver', registries: REG });
+    eq(run.schemaVersion, 7, 'schema 7');
+    eq(run.zones.core, 'reaver', 'core is the class id');
+    eq(run.zones.hands.main, run.loadout.sets.rightHand[run.loadout.active.rightHand], 'main hand is the active right-hand piece');
+    eq(run.zones.hands.off, run.loadout.sets.leftHand[run.loadout.active.leftHand], 'off hand is the active left-hand piece');
+    eq(run.zones.worn.body, run.loadout.sets.armor[0], 'body is the active armour');
+    eq(run.zones.worn.head, null, 'head/hands/feet are null until 3b authors the rows');
+    eq(JSON.stringify(run.zones.passive), JSON.stringify(run.relics), 'passive is the relics, in order');
+    eq(run.collection.map((c) => c.instanceId).join('|'), run.deck.map((c) => c.instanceId).join('|'), 'collection is the deck, instance for instance');
+    assert(run.collection[0] !== run.deck[0], 'and a copy, not the same objects');
+
+    // serializeRun writes what the legacy fields say NOW, not what zones said.
+    run.relics.push('warhorn');
+    const saved = JSON.parse(serializeRun(run));
+    eq(saved.zones.passive.join('|'), 'forsakenMedallion|warhorn', 'a relic added after creation is in the saved projection');
+
+    // A schema-6 save (no zones) migrates with its projection filled — from
+    // its own fields, no registries in hand.
+    const old = JSON.parse(serializeRun(run));
+    delete old.zones; delete old.collection; old.schemaVersion = 6;
+    const back = deserializeRun(JSON.stringify(old));
+    eq(back.schemaVersion, RUN_SCHEMA_VERSION, 'brought forward');
+    eq(back.migratedFromRunSchemaVersion, 6, 'and says from where');
+    eq(back.zones.hands.main, run.zones.hands.main, 'filled: main hand');
+    eq(back.collection.length, run.deck.length, 'filled: collection');
+    eq(back.reprojectedZones, undefined, 'a fill is not a disagreement');
+
+    // The shape, refused by name.
+    const said = (r) => validateRunShape(r).join(' | ');
+    assert(/missing 'zones'/.test(said({ ...run, zones: undefined })), 'a missing zones is named');
+    assert(/zones\.worn\.cloak is not a worn slot/.test(said({ ...run, zones: { ...run.zones, worn: { ...run.zones.worn, cloak: null } } })), 'an unknown worn slot is named');
+    assert(/zones\.hands\.main must be an id or null/.test(said({ ...run, zones: { ...run.zones, hands: { main: 7, off: null } } })), 'a non-id hand is named');
+    assert(/zones\.passive\[0\] must be a relic id/.test(said({ ...run, zones: { ...run.zones, passive: [''] } })), 'a blank relic id is named');
+    assert(/collection\[0\] must be a card instance/.test(said({ ...run, collection: [{ cardId: 'strike' }] })), 'a collection entry with no instanceId is named');
+
+    // A schema-7 save whose zones were edited by hand loads with the
+    // projection re-derived and the disagreement noted on the ledger.
+    const storage = createMemoryStorage();
+    const saves = createSaveManager(storage);
+    saves.saveRun(run, createRng(1));
+    const raw = JSON.parse(storage.getItem(RUN_KEY));
+    raw.zones.passive = ['warhorn'];
+    storage.setItem(RUN_KEY, JSON.stringify(raw));
+    const loaded = saves.loadRun(REG);
+    assert(loaded, 'the edited save still loads');
+    eq(loaded.zones.passive.join('|'), 'forsakenMedallion|warhorn', 'the projection is re-derived from the relics');
+    eq(loaded.reprojectedZones, undefined, 'the marker does not ride the run');
+    const row = (saves.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'zones');
+    assert(row && row.kind === 'overwrite' && /phase 3b/.test(row.why), `the ledger names the re-projection — got ${JSON.stringify(row).slice(0, 200)}`);
+  });
+
   const passed = results.filter((r) => r.ok).length;
   const failed = results.length - passed;
   return { passed, failed, results };

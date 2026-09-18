@@ -142,7 +142,7 @@ test('13.4 validateRunShape names a bad seatOrder; the load door fills a pre-§1
   const old = JSON.parse(serializeRun(run));
   delete old.seatOrder; old.schemaVersion = 5;
   const back = deserializeRun(JSON.stringify(old));
-  assert.equal(back.schemaVersion, 6);
+  assert.equal(back.schemaVersion, RUN_SCHEMA_VERSION);
   assert.equal(back.migratedFromRunSchemaVersion, 5);
   assert.equal(back.seatOrder, undefined, 'the model leaves the order to the load door');
   const store = createMemoryStorage();
