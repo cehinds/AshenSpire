@@ -1484,15 +1484,25 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       //
       // So the wait is bounded, and a clipboard that has not answered in time
       // is treated exactly like one that said no.
+      // NO API IS A FAILURE, NOT A SUCCESS. Wrapping the call in
+      // `Promise.resolve(...)` to bound the wait turned the MISSING-clipboard
+      // case into a pass: `navigator.clipboard?.writeText(text)` is `undefined`
+      // on an insecure context or an older browser, and
+      // `Promise.resolve(undefined).then(() => true)` says it worked. The button
+      // would read "Copied", the notice would agree, and the console fallback
+      // would be skipped — leaving no export anywhere. The API is checked before
+      // the race rather than inferred from it.
       const CLIPBOARD_WAIT_MS = 1200;
       let copied = false;
-      try {
-        copied = await Promise.race([
-          Promise.resolve(navigator.clipboard?.writeText(text)).then(() => true, () => false),
-          new Promise((settle) => setTimeout(() => settle(false), CLIPBOARD_WAIT_MS)),
-        ]);
-      } catch {
-        copied = false;
+      if (typeof navigator.clipboard?.writeText === 'function') {
+        try {
+          copied = await Promise.race([
+            navigator.clipboard.writeText(text).then(() => true, () => false),
+            new Promise((settle) => setTimeout(() => settle(false), CLIPBOARD_WAIT_MS)),
+          ]);
+        } catch {
+          copied = false;
+        }
       }
       btn.textContent = copied ? 'Copied' : 'See log';
       if (!copied) console.log(`${cardSizingExportPath}\n${text}`);
@@ -1521,11 +1531,18 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // were copied while `text` still held the old ones. The question is
       // whether the block that was serialised is still the block the settings
       // would produce, so that is what is asked.
-      const moved = cardSizingExport(settled.levels) !== text;
+      // BOTH HALVES, because either alone has a blind spot. Comparing only the
+      // block misses valid -> INVALID: a refused ladder falls back to the
+      // authored table, so an export that started from the authored defaults
+      // serialises identically and `moved` stays false — then the captured
+      // `refused` (null) says "Copied the tuned sizes" while the controls are
+      // being rejected. Comparing only the verdict misses valid -> valid, which
+      // is what the previous commit fixed. The pair covers both.
+      const moved = settledRefusal !== refused || cardSizingExport(settled.levels) !== text;
       const what = moved
         ? 'sizes that have since changed — copy again'
-        : refused
-          ? `the AUTHORED sizes, not the ones shown: ${refused}`
+        : settledRefusal
+          ? `the AUTHORED sizes, not the ones shown: ${settledRefusal}`
           : `the tuned sizes — ${cardSizingExportPath}`;
       if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
       // TAGGED WHEN IT SPEAKS ABOUT A REFUSAL, because an untagged notice cannot
