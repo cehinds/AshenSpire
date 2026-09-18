@@ -4327,6 +4327,37 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
   display: grid; grid-template-columns: minmax(0, var(--card-w-inspect, 320px)) minmax(0, 1fr);
   min-height: 0; height: 100%; gap: 2%; padding: 1rem;
 }
+/* TWO COLUMNS NEED TWO COLUMNS' WORTH OF ROOM.
+   The rule above pins the art track to the authored inspect width, and it sits
+   AFTER the two `max-width: 600px` collapses further up this file — same
+   specificity, later in the source, so it won at every width. On a 390px phone
+   the card took 320 and the details took what was left: a column so narrow it
+   broke "Smithing tier 0 → 1" across five lines, one or two words at a time.
+   Fixing the card's size on a phone had broken the pane beside it.
+   Below the two-column floor the door reads TOP TO BOTTOM instead: the card at
+   its full inspect size, the details underneath at the full width, one scroll.
+   The card does not shrink — the layout stops competing with it for room.
+   The floor is the authored card width plus a readable measure beside it
+   (24rem), so it is derived from the same number the track is, not guessed. */
+@media (max-width: calc(20rem + 24rem)) {
+  .card-inspection-modal .card-inspection-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: max-content;
+    align-content: start;
+    height: auto;
+    gap: 1rem;
+    overflow-y: auto;
+  }
+  .card-inspection-modal .card-inspection-art { max-width: 100%; margin-inline: auto; }
+  .card-inspection-modal .card-inspection-art > .equipment-poker-card,
+  .card-inspection-modal .card-inspection-art > .card {
+    width: 100%; max-width: var(--card-w-inspect, 320px); margin-inline: auto;
+  }
+  /* The details stop being their own scroller: the whole column scrolls as one,
+     which is what "read down the page" means on a phone. */
+  .card-inspection-modal .card-inspection-details { overflow-y: visible; }
+  .card-inspection-modal .modal-body { overflow-y: auto; }
+}
 .card-inspection-modal .card-inspection-art { min-width: 0; max-width: var(--card-w-inspect, 320px); width: 100%; }
 .card-inspection-modal .card-inspection-art > .card[data-wireframe='WC1'] {
   width: 100%; height: auto; min-height: 0; aspect-ratio: var(--card-ratio);
