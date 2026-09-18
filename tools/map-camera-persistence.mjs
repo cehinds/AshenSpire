@@ -39,6 +39,34 @@ const VIEWPORTS = [
   { name: '412x915', width: 412, height: 915, deviceScaleFactor: 3 },
 ];
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+// THE MOUNT BUDGET BELONGS TO THE ENTRY, NOT TO ONE NUMBER FOR BOTH DOORS.
+//
+// Every other wait below is an in-page transition — an overlay opening, a menu
+// row answering, a screen remounting inside a document that is already up — and
+// waitFor's 7 s default is generous for those. A wait that FOLLOWS A NAVIGATE
+// is a different thing: it is the whole document coming up. Through the SOURCE
+// entry (no --entry, which is what --selftest uses, because its plants go into
+// src/) that means the unbundled ES-module graph plus one request for
+// src/buildversion.js — and tools/serve.mjs stamps that module by re-deriving
+// sourceDigest() over the entire tree ON EVERY REQUEST. That is deliberate and
+// stays (see its comment: a stamp frozen at boot would name a source that is no
+// longer there), but it is not free here.
+//
+// Measured on this Windows machine, 2026-09-17, against the real source mount:
+// that one request costs 4.7-8.8 s on its own (2,386 files, 49 MB, of which
+// assets/ is the bulk), it is synchronous, so every other module queues behind
+// it, and the first map mount of a freshly checked-out tree took 23.3 s end to
+// end. The 7 s default could not be met, so the tool timed out in its first
+// wait and judged nothing — a red that was never about the camera.
+//
+// So a source-entry mount is given a budget measured against that mount: 45 s,
+// about twice the slowest observed, which still fails in well under a minute
+// when a mount is genuinely broken. The bundle entry (--entry) is served as one
+// already-stamped file and keeps the 7 s default, so a real hang on that door
+// still fails fast. Caching the digest per file would cut the warm cost but not
+// this one — the first request of a run is always cold — so the budget is the
+// fix and the cache is not.
+const MOUNT_TIMEOUT_MS = ENTRY ? 7000 : 45000;
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl);
@@ -115,6 +143,10 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }
       throw new Error(`timed out waiting for ${label}; last=${JSON.stringify(last)}`);
     };
+    // A mount wait — the first thing asked of a document that a Page.navigate
+    // has just started. These carry the entry's budget; everything else stays
+    // on waitFor's default.
+    const waitForMount = (label, expression) => waitFor(label, expression, MOUNT_TIMEOUT_MS);
     // A trusted pointer press at the control's center — the player's tap, not
     // a scripted .click() — as startup-gate and title-new-slot drive the doors.
     const press = async (selector) => {
@@ -159,7 +191,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       await cdp.send('Page.navigate', {
         url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
       }, sessionId);
-      await waitFor('the real map and its camera report', `(() => {
+      await waitForMount('the real map and its camera report', `(() => {
         const port = document.querySelector('.map-scroll');
         return !!(port && document.querySelector('#zoom-in')
           && document.querySelector('#open-armoury')
@@ -230,7 +262,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
     await cdp.send('Page.navigate', {
       url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
     }, sessionId);
-    await waitFor('desktop fit camera', `(() => {
+    await waitForMount('desktop fit camera', `(() => {
       const port = document.querySelector('.map-scroll');
       return !!(port && port.dataset.framing && port.dataset.cameraRestore);
     })()`);
@@ -320,7 +352,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         deviceScaleFactor: exitShape.deviceScaleFactor, mobile: exitShape.mobile,
       }, sessionId);
       await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=title` }, sessionId);
-      await waitFor('the folded title and its Continue door', `(() => {
+      await waitForMount('the folded title and its Continue door', `(() => {
         const button = document.querySelector('.title-menu .slot-continue:not([disabled])');
         return !!button && /continue/i.test(button.textContent);
       })()`);
@@ -401,7 +433,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }, sessionId);
       await evaluate(`localStorage.clear()`);
       await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}` }, sessionId);
-      await waitFor('the startup gate (flush case)', `!!document.querySelector('.startup-gate')`);
+      await waitForMount('the startup gate (flush case)', `!!document.querySelector('.startup-gate')`);
       await evaluate(`document.querySelector('.startup-gate').click()`);
       await waitFor('the real folded title (flush case)', `!!document.querySelector('.title-menu .slot-new')`);
       await evaluate(`document.querySelector('.title-menu .slot-new').click()`);
@@ -575,7 +607,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
     await cdp.send('Page.navigate', {
       url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE&zeroHeightSettle=1`,
     }, sessionId);
-    await waitFor('zero-height map scrollport mount', `!!document.querySelector('.map-scroll')`);
+    await waitForMount('zero-height map scrollport mount', `!!document.querySelector('.map-scroll')`);
     await wait(170); // outlast the 120 ms backstop while clientHeight is held at zero
     const zeroBefore = await readState();
     await evaluate(`window.__releaseMapHeight = true`);
