@@ -6,6 +6,19 @@
 // can't diverge. Pure presentation data + tiny pure helpers, no game state.
 
 import { balance } from '../content/balance.js';
+import { uiConfig } from '../config/generated/ui.js';
+
+// THE TABLES NOW LIVE IN content/config/ui/presentation/uiContent.json and are
+// compiled into src/config/generated/ui.js. What stays in this file is the
+// reasoning and the helpers; what moved is every value they read — including
+// the tooltip prose, which was the last place here where a sentence could hold
+// a number nothing synced.
+const { components, behavior } = uiConfig.presentation.uiContent;
+const copy = components.copy;
+
+/** Fill `{token}` holes from a bag — the idiom statusTooltipText already uses. */
+const fill = (template, values) => Object.entries(values)
+  .reduce((text, [token, v]) => text.split(`{${token}}`).join(String(v)), template);
 
 // ---- status tooltip tokens (#61) --------------------------------------------
 // Status tooltips carry {tokens} bound to the row's OWN knobs, so the prose
@@ -26,7 +39,7 @@ export function statusTooltipText(def) {
     sub('proc.poiseDamage', def.proc.poiseDamage);
   }
   if (def.resists) sub('resists.percent', def.resists.percent);
-  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * 100));
+  if (def.taggedVulnerability) sub('tv.pct', Math.round((def.taggedVulnerability.mult - 1) * behavior.percentScale));
   if (def.decay && typeof def.decay === 'object') sub('decay.duration', def.decay.duration);
   for (const [i, effect] of (def.onEnter || []).entries()) sub(`onEnter.${i}.amount`, effect.amount);
   for (const [i, hook] of (def.hooks || []).entries()) {
@@ -39,20 +52,22 @@ export function statusTooltipText(def) {
 // percent payload is not a generic stack count; its duration is a separate
 // clock and must be named separately.
 export function statusInstancePresentation(def, inst) {
+  const s = copy.status;
   const rawValue = inst && inst.meter ? inst.meter.value : (inst && inst.stacks) || 0;
-  const valueToken = def.instancePresentation?.valueToken || 'stacks';
+  const valueToken = def.instancePresentation?.valueToken || s.defaultValueToken;
   const durationText = inst && Number.isFinite(inst.duration)
-    ? `${inst.duration} ${inst.duration === 1 ? 'turn' : 'turns'}` : '';
-  const valueText = valueToken === 'percent' ? `${rawValue}%` : String(rawValue);
-  const label = valueToken === 'percent'
-    ? `${def.name} ${valueText}${durationText ? ` · ${durationText}` : ''}`
-    : `${def.name} ×${rawValue}`;
+    ? `${inst.duration} ${inst.duration === 1 ? s.turnSingular : s.turnPlural}` : '';
+  const isPercent = valueToken === s.percentValueToken;
+  const valueText = isPercent ? `${rawValue}%` : String(rawValue);
+  const label = isPercent
+    ? fill(s.percentLabel, { name: def.name, value: valueText, duration: durationText ? `${s.durationJoiner}${durationText}` : '' })
+    : fill(s.stackLabel, { name: def.name, value: rawValue });
   return {
     valueToken,
     valueText,
     durationText,
     label,
-    tooltip: `${statusTooltipText(def)}${durationText ? ` Turns left: ${inst.duration}.` : ''}`,
+    tooltip: `${statusTooltipText(def)}${durationText ? fill(s.turnsLeft, { duration: inst.duration }) : ''}`,
     semantic: { statusId: def.id, valueToken, ariaLabel: label },
   };
 }
@@ -67,30 +82,14 @@ export function statusInstanceSemanticAttrs(presentation) {
 }
 
 // ---- map node types ---------------------------------------------------------
-export const NODE_TYPES = {
-  monster: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
-  fight: { icon: '⚔', name: 'Monster', blurb: 'A fight — cinders and a card reward.' },
-  elite: { icon: '☠', name: 'Elite', blurb: 'A hard fight. Drops a relic.' },
-  boss: { icon: '👁', name: 'Boss', blurb: 'The act boss.' },
-  shrine: { icon: '♨', name: 'Shrine of Emberlight', blurb: 'Rest (heal), smith an owned armament, or mend an ally.' },
-  merchant: { icon: '⚖', name: 'Merchant', blurb: 'Cards, relics, flasks, card removal.' },
-  treasure: { icon: '▣', name: 'Treasure', blurb: 'A relic, free.' },
-  event: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
-  unknown: { icon: '?', name: 'Unknown', blurb: 'An event, a fight, a shrine… who can say.' },
-};
-export const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || '?';
+export const NODE_TYPES = components.nodeTypes;
+export const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || copy.nodeIconFallback;
 export const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
 export const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
 
 // Tints for the map glyphs. Here rather than in the map's markup for the reason
 // this file already claims in its header — one source, or they diverge.
-export const NODE_TINT = {
-  elite: 'var(--ember)',
-  boss: 'var(--ember)',
-  shrine: 'var(--gold)',
-  merchant: 'var(--grace)',
-  treasure: 'var(--gold)',
-};
+export const NODE_TINT = components.nodeTint;
 
 /**
  * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
@@ -119,18 +118,14 @@ export function legendEntries() {
 }
 
 // ---- act titles -------------------------------------------------------------
-export const ACT_NAMES = {
-  1: 'ACT I — THE FALLOW MARCHES',
-  2: 'ACT II — THE STITCHED COURT',
-  3: 'ACT III — THE ASHEN CROWN',
-};
+export const ACT_NAMES = components.actNames;
 // Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
 // The cycling arithmetic is `actPlate` (below, with the per-act art it now also
 // serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
 // this line held a literal `3` beside a table of three, which is one fact in two
 // places and would have gone wrong the day a fourth act was named.
 export const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
-const TIER_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
+const TIER_NUMERALS = components.tierNumerals;
 /**
  * actTitle(actNumber, seatName?) — with a seat name the title is the TIER and
  * the SEAT (SPEC §13.2: `Act <tier> · <seat name>`), e.g. `ACT II — THE PALE
@@ -139,59 +134,65 @@ const TIER_NUMERALS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
  */
 export function actTitle(actNumber, seatName = null) {
   const loop = Math.floor((actNumber - 1) / ACT_NAME_COUNT);
+  const plate = actPlate(actNumber, ACT_NAME_COUNT);
   const base = seatName
-    ? `ACT ${TIER_NUMERALS[actPlate(actNumber, ACT_NAME_COUNT) - 1] || actPlate(actNumber, ACT_NAME_COUNT)} — ${String(seatName).toUpperCase()}`
-    : (ACT_NAMES[actPlate(actNumber, ACT_NAME_COUNT)] || `ACT ${actNumber}`);
-  return loop > 0 ? `${base} · CYCLE ${loop + 1}` : base;
+    ? fill(copy.actTitle.tiered, { tier: TIER_NUMERALS[plate - 1] || plate, seat: String(seatName).toUpperCase() })
+    : (ACT_NAMES[plate] || fill(copy.actTitle.numbered, { act: actNumber }));
+  return loop > 0 ? `${base}${fill(copy.actTitle.cycleSuffix, { cycle: loop + 1 })}` : base;
 }
 
 // ---- enemy intents ----------------------------------------------------------
 // `iv` is a preview/snapshot intent:
 //   { kind, moveId?, damage?, hits?, block?, delayed?, pending?, totalDamage? }
-export const INTENT_ICONS = { attack: '⚔', block: '🛡', buff: '↑', debuff: '☾', staggered: '✦', unknown: '?' };
+export const INTENT_ICONS = components.intentIcons;
 
 // Solo (previewIntent) supplies { kind, damage, hits, block, delayed, pending,
 // totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
 // supplies the same fields plus moveId (null when unknown). These helpers key on
 // kind + field presence so both shapes render identically.
 const isUnknownIntent = (iv) => !iv || iv.kind === 'unknown' || iv.moveId === null;
+const BADGES = components.intentBadges;
 
 /** The badge shown over an enemy → { cls, html }. */
 // An intent is one StatePill in the fact's own tone (styles/kit.css): the kind
 // picks the tone, the glyph and the number are the pill's label. `cls` stays
 // the hook the tools and the fx layer read; `tone` is what the kit draws with.
 export function intentBadge(iv) {
-  if (isUnknownIntent(iv)) return { cls: 'unknown', tone: '', glyph: '', label: '?' };
-  if (iv.kind === 'staggered') return { cls: 'staggered', tone: 'gold', glyph: '✦', label: 'Staggered' };
+  if (isUnknownIntent(iv)) return { ...BADGES.unknown };
+  if (iv.kind === 'staggered') return { ...BADGES.staggered };
   if (iv.damage != null) {
     const n = iv.hits > 1 ? `${iv.damage}×${iv.hits}` : `${iv.damage}`;
     return {
-      cls: `attack${iv.delayed ? ' delayed' : ''}`, tone: 'danger', glyph: INTENT_ICONS.attack,
-      label: `${n}${iv.delayed ? ' ⌛' : ''}`, dashed: !!iv.delayed,
+      cls: `${BADGES.attack.cls}${iv.delayed ? BADGES.attack.delayedCls : ''}`,
+      tone: BADGES.attack.tone, glyph: INTENT_ICONS.attack,
+      label: `${n}${iv.delayed ? BADGES.attack.delayedSuffix : ''}`, dashed: !!iv.delayed,
     };
   }
-  if (iv.block != null) return { cls: 'block', tone: 'frost', glyph: INTENT_ICONS.block, label: String(iv.block) };
-  if (iv.kind === 'buff') return { cls: 'buff', tone: 'gold', glyph: INTENT_ICONS.buff, label: '' };
-  if (iv.kind === 'debuff') return { cls: 'debuff', tone: 'violet', glyph: INTENT_ICONS.debuff, label: '' };
-  return { cls: iv.kind || 'unknown', tone: '', glyph: '', label: '?' };
+  if (iv.block != null) return { cls: BADGES.block.cls, tone: BADGES.block.tone, glyph: INTENT_ICONS.block, label: String(iv.block) };
+  if (iv.kind === 'buff') return { cls: BADGES.buff.cls, tone: BADGES.buff.tone, glyph: INTENT_ICONS.buff, label: BADGES.buff.label };
+  if (iv.kind === 'debuff') return { cls: BADGES.debuff.cls, tone: BADGES.debuff.tone, glyph: INTENT_ICONS.debuff, label: BADGES.debuff.label };
+  return { ...BADGES.unknown, cls: iv.kind || BADGES.unknown.cls };
 }
 
 /** Intent hover tooltip. `victim` names who attacks/debuffs hit ('you' solo,
  *  'each hero' in co-op). Reads totalDamage/pending when the caller has them. */
-export function intentTooltip(iv, { victim = 'you' } = {}) {
-  if (isUnknownIntent(iv)) return '<div class="tt-title">Intent: Unknown</div>';
-  if (iv.kind === 'staggered') return `<div class="tt-title">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.`;
+export function intentTooltip(iv, { victim = copy.intentTooltips.defaultVictim } = {}) {
+  const tt = copy.intentTooltips;
+  if (isUnknownIntent(iv)) return tt.unknown;
+  if (iv.kind === 'staggered') return tt.staggered;
   if (iv.damage != null) {
-    const total = iv.totalDamage != null && iv.hits > 1 ? ` (${iv.totalDamage} total)` : '';
-    let t = `<div class="tt-title">Intent: Attack</div>Attacking ${victim} for <b>${iv.damage}${iv.hits > 1 ? ` × ${iv.hits}${total}` : ''}</b> damage (modifiers included).`;
-    if (iv.pending) t += '<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.';
-    else if (iv.delayed) t += '<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.';
+    const multi = iv.hits > 1;
+    const total = iv.totalDamage != null && multi ? fill(tt.attackTotal, { totalDamage: iv.totalDamage }) : '';
+    const extra = multi ? fill(tt.attackMultiplier, { hits: iv.hits, total }) : '';
+    let t = fill(tt.attack, { victim, damage: iv.damage, extra });
+    if (iv.pending) t += tt.committed;
+    else if (iv.delayed) t += tt.delayed;
     return t;
   }
-  if (iv.block != null) return '<div class="tt-title">Intent: Defend</div>Gaining Block.';
-  if (iv.kind === 'buff') return '<div class="tt-title">Intent: Buff</div>Strengthening itself.';
-  if (iv.kind === 'debuff') return `<div class="tt-title">Intent: Debuff</div>Hindering ${victim}.`;
-  return '<div class="tt-title">Intent: Unknown</div>';
+  if (iv.block != null) return tt.block;
+  if (iv.kind === 'buff') return tt.buff;
+  if (iv.kind === 'debuff') return fill(tt.debuff, { victim });
+  return tt.unknown;
 }
 
 // ---- act backdrops ---------------------------------------------------------
@@ -247,7 +248,7 @@ export const PARCHMENT_ACTS = balance.ui.parchmentActs;
  * literal here would be a second copy of a fact `tools/parchment.mjs`,
  * `tools/bundle.mjs`'s MIME table and the act-plate test all depend on.
  */
-export const PARCHMENT_EXT = '.svg';
+export const PARCHMENT_EXT = behavior.parchmentExt;
 export function parchmentAsset(actNumber) {
   return `assets/map/parchment_act${actPlate(actNumber, PARCHMENT_ACTS)}${PARCHMENT_EXT}`;
 }
@@ -291,31 +292,9 @@ export function actPlate(actNumber, plates) {
 // The production order is identical in all three contexts. Four stable bands
 // separate navigation, comfort, Armoury destinations, and run lifecycle so
 // placement never changes under muscle memory.
-export const MENU_TABS = [
-  { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
-  { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
-];
+export const MENU_TABS = components.menuTabs;
 
-const QUICK_MENU_ROWS = [
-  { act: 'tab', tab: 'settings', band: 'navigation' },
-  { act: 'tab', tab: 'controls', band: 'navigation' },
-  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'comfort', control: 'switch',
-    tip: 'Use the browser fullscreen owner; its live state is shared with Settings.' },
-  { act: 'music', icon: '♫', label: 'Music', band: 'comfort', control: 'switch',
-    tip: 'Turn music on or off without changing its volume, sound effects, or global mute.' },
-  { act: 'inventory', icon: '▦', label: 'Inventory', band: 'armoury',
-    tip: 'Open carried weapons, armour, and items.' },
-  { act: 'character', icon: '♟', label: 'Character', band: 'armoury',
-    tip: 'Open the compact character and vitality view.' },
-  { act: 'load', icon: '↥', label: 'Load', band: 'run', tone: 'danger',
-    tip: 'Replace unsaved progress with the active slot after confirmation.' },
-  { act: 'save', icon: '💾', label: 'Save', band: 'run',
-    tip: 'Write the exact committed combat turn to this slot and stay here.' },
-  { act: 'saveQuit', icon: '↯', label: 'Save and Quit', band: 'run',
-    tip: 'Write the exact committed combat turn, then return to the title.' },
-  { act: 'quit', icon: '⏻', label: 'Quit Without Saving', band: 'run', tone: 'danger',
-    tip: 'Discard changes since the last save and return to the title after confirmation.' },
-];
+const QUICK_MENU_ROWS = components.quickMenuRows;
 
 export const MENU = {
   map: QUICK_MENU_ROWS,
@@ -328,7 +307,7 @@ export const MENU = {
   overlay: QUICK_MENU_ROWS,
 };
 
-const BANDS = ['navigation', 'comfort', 'armoury', 'run'];
+const BANDS = behavior.bands;
 
 // The acts a MENU row may name — the vocabulary, beside the table it governs.
 // It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
@@ -355,7 +334,7 @@ const BANDS = ['navigation', 'comfort', 'armoury', 'run'];
 // that opens the three contexts can subtract what was drawn from what is
 // declared here. That instrument is Bjorn's lens and is not written yet — this
 // comment is the statement of the gap, not a claim it is closed.
-export const MENU_ACTS = ['tab', 'fullscreen', 'music', 'inventory', 'character', 'load', 'save', 'saveQuit', 'quit'];
+export const MENU_ACTS = behavior.menuActs;
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
@@ -398,7 +377,7 @@ export function menuTabs({ hasSave = true, counts = {} } = {}) {
  * the two readings look different, which is the point of being able to try both).
  */
 export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
-  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
+  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== behavior.tailBand));
   const ordered = BANDS.flatMap((b) => src.filter((r) => r.band === b));
   let prevBand = null;
   return ordered.map((r) => {
@@ -426,40 +405,23 @@ export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {
 // controls screen wants a readable word; these lived as two near-identical
 // tables (input.js PAD_LABELS / controls.js BUTTON_NAMES) that agreed on
 // buttons 0-11 and silently disagreed on the d-pad and guide.
-export const PAD_BUTTONS = {
-  0: { glyph: 'A', name: 'A' },
-  1: { glyph: 'B', name: 'B' },
-  2: { glyph: 'X', name: 'X' },
-  3: { glyph: 'Y', name: 'Y' },
-  4: { glyph: 'LB', name: 'LB' },
-  5: { glyph: 'RB', name: 'RB' },
-  6: { glyph: 'LT', name: 'LT' },
-  7: { glyph: 'RT', name: 'RT' },
-  8: { glyph: 'Back', name: 'Back' },
-  9: { glyph: 'Start', name: 'Start' },
-  10: { glyph: 'L3', name: 'L3' },
-  11: { glyph: 'R3', name: 'R3' },
-  12: { glyph: '▲', name: 'D-Up' },
-  13: { glyph: '▼', name: 'D-Down' },
-  14: { glyph: '◀', name: 'D-Left' },
-  15: { glyph: '▶', name: 'D-Right' },
-  16: { glyph: '⊙', name: 'Guide' },
-};
+export const PAD_BUTTONS = components.padButtons;
 /** Compact glyph for the hint bar; falls back to B<n> for unmapped buttons. */
 export function padGlyph(btn) {
   const b = PAD_BUTTONS[btn];
-  return b ? b.glyph : `B${btn}`;
+  return b ? b.glyph : fill(copy.padGlyphFallback, { button: btn });
 }
 /** Readable name for the controls/rebind list; '—' when nothing is bound. */
 export function padName(btn) {
-  if (btn == null) return '—';
+  if (btn == null) return copy.padNameUnbound;
   const b = PAD_BUTTONS[btn];
-  return b ? b.name : `Btn ${btn}`;
+  return b ? b.name : fill(copy.padNameFallback, { button: btn });
 }
 
 // ---- why a piece is not yours, in the player's words ------------------------
 // `ownership().why()` (src/model/loadout.js) names the GATE and declares the
-// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives here.
+// closed set of them as OWNERSHIP_GATES; the sentence is UI copy and lives in
+// content/config/ui/presentation/uiContent.json with the rest of the prose.
 // It was a literal inside equipment.js's `gate()`, which was fine while one
 // screen existed and becomes a copy nothing syncs the moment a second one asks
 // the same question (Law 1 clause 2, pointed at prose).
@@ -471,10 +433,7 @@ export function padName(btn) {
 // A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
 // that is the whole point of the hint column. This is what is said when the
 // table has nothing to say.
-export const LOCK_COPY = Object.freeze({
-  unearned: 'Not yet earned.',
-  unfound: 'Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them.',
-});
+export const LOCK_COPY = behavior.lockCopy;
 
 // ---- what a kind of armament is called in the plural ------------------------
 // The Compendium's section headings. A LABEL is a word, not a derivation:
@@ -484,11 +443,12 @@ export const LOCK_COPY = Object.freeze({
 // rather than a broken screen, and says so in the console so the plausible one
 // is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
 // wrong but reasonable is the invisible failure).
-const ARMAMENT_KIND_LABELS = { weapon: 'WEAPONS', shield: 'SHIELDS', staff: 'STAVES' };
+const ARMAMENT_KIND_LABELS = behavior.armamentKindLabels;
 export function armamentKindLabel(kind) {
   const known = ARMAMENT_KIND_LABELS[kind];
   if (known) return known;
   console.warn(`[content] armament kind ${JSON.stringify(kind)} has no heading in`
-    + ' src/ui/uiContent.js ARMAMENT_KIND_LABELS — showing a derived one.');
-  return `${String(kind || '').toUpperCase()}S`;
+    + ' content/config/ui/presentation/uiContent.json behavior.armamentKindLabels'
+    + ' — showing a derived one.');
+  return `${String(kind || '').toUpperCase()}${copy.armamentKindFallbackSuffix}`;
 }

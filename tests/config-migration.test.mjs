@@ -1,0 +1,99 @@
+// tests/config-migration.test.mjs — the JS config tables that moved into
+// content/config/ui/presentation/, and the shims left in their place.
+//
+// TWO CLAIMS, AND THEY ARE DIFFERENT CLAIMS:
+//
+//   1. NOTHING MOVED BUT THE HOME. tests/fixtures/config-migration-baseline
+//      .json was captured by tests/capture-config-baseline.mjs running on dev
+//      BEFORE any shim existed, so it records what the hand-written modules
+//      actually exported. Every module is re-transcribed here and held to it —
+//      values, types, KEY ORDER, and the results of the functions that read the
+//      tables. Key order is in the contract because consumers iterate these:
+//      legendEntries walks NODE_TYPES, menuRows walks the band order, so a JSON
+//      round-trip that reordered keys would change a screen while every value
+//      stayed equal.
+//
+//   2. THE SHIMS AUTHOR NO NUMBER. A shim that quietly keeps one literal is the
+//      second copy the move exists to delete, and it is invisible — the values
+//      still agree on the day it is written. Same shape as the wireframeUi
+//      guard in tests/ui-config.test.mjs.
+//
+// THE ONE DIFFERENCE THIS ALLOWS, and only in one direction: the compiled
+// config is DEEP-frozen and `Object.freeze` in the old modules was shallow, so
+// nested rows that were mutable are now frozen. That is a strengthening — it
+// closes a hole rather than opening one — and nothing else is permitted.
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { MIGRATED, captureModule } from './capture-config-baseline.mjs';
+import { numericLiterals } from './source-literals.mjs';
+
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const lf = (text) => text.replace(/\r\n/g, '\n');
+const baseline = JSON.parse(readFileSync(new URL('./fixtures/config-migration-baseline.json', import.meta.url), 'utf8'));
+
+/** Every path at which `want` and `got` differ, as readable lines. */
+function differences(want, got, path = '') {
+  if (JSON.stringify(want) === JSON.stringify(got)) return [];
+  const bothObjects = want && got && typeof want === 'object' && typeof got === 'object';
+  if (!bothObjects) return [`${path}: ${JSON.stringify(want)} -> ${JSON.stringify(got)}`];
+  const keys = new Set([...Object.keys(want), ...Object.keys(got)]);
+  return [...keys].flatMap((k) => differences(want[k], got[k], `${path}.${k}`));
+}
+
+// A shallow Object.freeze left nested rows mutable; deepFreeze does not.
+const isFreezeDeepening = (line) => line.endsWith('.frozen: false -> true');
+
+for (const rel of MIGRATED) {
+  test(`${rel} exports exactly what it exported before the move`, async () => {
+    assert.ok(baseline[rel], `${rel} is in the baseline fixture`);
+    const found = differences(baseline[rel], await captureModule(rel));
+    const changed = found.filter((line) => !isFreezeDeepening(line));
+    assert.deepEqual(changed, [], `${rel} must be identical to dev:\n  ${changed.join('\n  ')}`);
+  });
+}
+
+test('the baseline covers every migrated module and every module is reached', () => {
+  assert.deepEqual(Object.keys(baseline).sort(), [...MIGRATED].sort());
+});
+
+
+// ---------------------------------------------------------------------------
+// The shims author no number of their own.
+// ---------------------------------------------------------------------------
+//
+// A shim that quietly keeps one literal is the second copy the move exists to
+// delete, and it is invisible: the two values still agree on the day it is
+// written. Same shape as the wireframeUi guard in tests/ui-config.test.mjs.
+//
+// SHIMS is MIGRATED plus paintedOutfits.js, which is not in the equality
+// fixture because it exports only DOM builders and needs a document — but its
+// stage geometry, its timings and its aura artwork moved out all the same, so
+// it is held to the no-literals promise with the rest.
+const SHIMS = [...MIGRATED, 'src/ui/paintedOutfits.js'];
+
+for (const rel of SHIMS) {
+  test(`${rel} authors no number of its own`, () => {
+    const source = lf(readFileSync(join(ROOT, ...rel.split('/')), 'utf8'));
+    assert.match(source, /config\/generated\/ui\.js/, `${rel} reads the compiled config`);
+    const found = numericLiterals(source);
+    const report = found.map((f) => `  ${rel}:${f.line}  ${f.value}  |  ${f.text}`).join('\n');
+    assert.deepEqual(found, [], `these numbers belong in content/config, not in the shim:\n${report}`);
+  });
+}
+
+test('the guard can still see a literal that is smuggled back in', () => {
+  // The guard's own integrity: a check that cannot fail is not a check, and a
+  // stripper with one bracket wrong goes quiet rather than red.
+  const planted = [
+    "import { uiConfig } from '../config/generated/ui.js';",
+    "// a comment with 4321 in it is not code",
+    "const prose = 'a string with 8765 in it is not code';",
+    'const gap = 12;',
+    'const css = `width:${gap * 7}px`;',
+  ].join('\n');
+  assert.deepEqual(numericLiterals(planted).map((f) => f.value), ['12', '7'],
+    'comments and string bodies are ignored; declarations and interpolations are not');
+});

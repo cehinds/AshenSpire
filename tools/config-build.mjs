@@ -23,7 +23,13 @@
 //
 // Folder → export shape: ui/tokens.json → uiConfig.tokens; ui/scenes/<id>-<name>
 // .json → uiConfig.scenes.<id>; ui/components/<name>.json →
-// uiConfig.components.<name>; ui/screens/<name>.json → uiConfig.screens.<name>.
+// uiConfig.components.<name>; ui/screens/<name>.json → uiConfig.screens.<name>;
+// ui/presentation/<name>.json → uiConfig.presentation.<name>.
+//
+// presentation/ holds the tables that were hand-written JS data in src/ — map
+// tiles, pose states, animation families, art anchors, environments, menus.
+// Each file is named for the module that reads it, so the JSON and its shim
+// are findable from either end.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join, relative, sep } from 'node:path';
@@ -35,7 +41,7 @@ export const CONFIG_DIR = 'content/config';
 export const GENERATED = 'src/config/generated/ui.js';
 
 export const SECTIONS = ['vars', 'sizing', 'positioning', 'layering', 'motion', 'components', 'behavior'];
-export const GROUPS = ['scenes', 'components', 'screens'];
+export const GROUPS = ['scenes', 'components', 'screens', 'presentation'];
 export const FOOTER_ACTIONS = ['back', 'skipSpeech', 'continue'];
 const NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const REF = /^\$([A-Za-z_][A-Za-z0-9_]*)$/;
@@ -192,7 +198,7 @@ export function compileEntries(entries) {
     return value;
   }
 
-  const config = { tokens: {}, scenes: {}, components: {}, screens: {} };
+  const config = { tokens: {}, scenes: {}, components: {}, screens: {}, presentation: {} };
   const seen = new Map();
   const scopes = [];
   for (const f of files) {

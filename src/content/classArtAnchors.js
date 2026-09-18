@@ -1,6 +1,12 @@
 // src/content/classArtAnchors.js — THE ONE HOME of where the sigil medallion
 // sits on each painted class figure.
 //
+// The measurements themselves now live in
+// content/config/ui/presentation/classArtAnchors.json under
+// `positioning.medallionPct`. Everything below — why they are measured rather
+// than derived, and how each was taken — is unchanged and binds whoever edits
+// that file.
+//
 // Two readers and neither retypes it:
 //   · runtime — src/ui/assets.js `classSprite()` positions the overlay
 //   · the manifest — tools/concept-cutout.mjs emits it per sprite as
@@ -23,45 +29,29 @@
 // HOW EACH NUMBER WAS TAKEN. The medallion disc was drawn at candidate heights
 // over each sprite and inspected: the accepted value puts the whole disc on
 // chest, clear of the face opening and of the collar edge above it. The disc is
-// 22px in a 190px frame, so it spans ±5.8 percentage points around the centre —
-// a value is only good if that whole band is chest.
+// a share of the frame (7% of its height, in `classSprite()`), so a value is
+// only good if that whole band is chest.
 //
 // IF THE ART IS REPLACED these numbers are wrong until re-measured. They are
 // bound to the source paintings pinned in tools/concept-cutout.mjs `CONCEPTS`;
 // that tool fails rather than guessing when a class here has no anchor.
 //
-// Headless-safe: data only, no document, no storage, no timers.
-
-/**
- * Medallion centre per class, as `{ x, y }` percentages of the sprite frame.
- * Measured on the 450x570 outputs of the cutters.
- */
-// RE-MEASURED 2026-09-07, AND THE ANCHOR GREW AN X.
+// RE-MEASURED 2026-09-07, AND THE ANCHOR GREW AN X. The 2026-09-04 pass
+// recorded three of these as null — "measured as unplaceable" — and named the
+// two things that defeated every candidate. Both were properties of the DISC,
+// not of the art, and both are fixed:
 //
-// The 2026-09-04 pass recorded three of these as null — "measured as
-// unplaceable" — and named the two things that defeated every candidate. Both
-// were properties of the DISC, not of the art, and both are fixed now, so the
-// measurement is possible again and these are real numbers:
+//   · SIZE. The disc was a fixed 22px in a 190px frame whatever the art did,
+//     which covered a full-body figure's chest from collar to forearm. It is
+//     now a share of the frame, in `classSprite()`, and scales with its host.
+//   · POSITION. The anchor was a HEIGHT only, centred at `left: 50%` — a claim
+//     that the torso is horizontally centred, which a cape sweeping to one side
+//     makes false. The anchor now carries an x as well.
 //
-//   · SIZE. The disc was a fixed 22px in a 190px frame — 11.6% of the frame's
-//     height whatever the art did. A bust's chest was about a third of the
-//     frame; a full-body chest is about a tenth, so 22px covered the Reaver's
-//     chest from collar to forearm. The disc is now a share of the frame
-//     (7% of its height, in `classSprite()`), which is a chest-sized jewel on
-//     a full-body figure and scales with whatever frame it is drawn in.
-//   · POSITION. The anchor was a HEIGHT only, and the overlay was centred at
-//     `left: 50%` — a claim that the torso is horizontally centred. A cape
-//     sweeping to one side moves the content box's centre off the body's. The
-//     anchor now carries an x as well, so the disc goes where the chest is
-//     rather than where the frame's middle is.
-//
-// HOW THESE WERE TAKEN. The method the file has always used: candidate discs
-// drawn over the SHIPPED 450x570 sprites at the shipped 7% size and inspected,
-// four candidates per class, then the surviving pair re-inspected at the real
-// 150x190 combat host so the choice was judged at the size a player sees. The
-// accepted value puts the whole disc on chest, clear of the face opening above
-// and of the hands, belt or existing gold clasp below. Evidence: the candidate
-// and size sheets in the 2026-09-07 anchor pass.
+// Candidates were drawn over the SHIPPED 450x570 sprites at the shipped size,
+// four per class, then the surviving pair re-inspected at the real 150x190
+// combat host so the choice was judged at the size a player sees. Evidence: the
+// candidate and size sheets in the 2026-09-07 anchor pass.
 //
 // Per class, and why that spot: the Reaver's chest plate sits in the hollow
 // between his crossed forearms; the Starseer's is the V below the mantle
@@ -70,12 +60,15 @@
 // shipped sprite is STILL THE BUST, that number was measured for this art, and
 // it re-inspected well, so it is left alone rather than churned. It is wrong
 // the moment its full-body figure ships, exactly as before.
-export const CLASS_MEDALLION_PCT = Object.freeze({
-  reaver: Object.freeze({ x: 50, y: 35 }),
-  starseer: Object.freeze({ x: 48, y: 37 }),
-  rogue: Object.freeze({ x: 49, y: 35 }),
-  herald: Object.freeze({ x: 50, y: 61 }),
-});
+//
+// Headless-safe: data only, no document, no storage, no timers.
+import { uiConfig } from '../config/generated/ui.js';
+
+/**
+ * Medallion centre per class, as `{ x, y }` percentages of the sprite frame.
+ * Measured on the 450x570 outputs of the cutters.
+ */
+export const CLASS_MEDALLION_PCT = uiConfig.presentation.classArtAnchors.positioning.medallionPct;
 
 /**
  * The medallion centre for a class as `{ x, y }` percentages of the sprite
