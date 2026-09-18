@@ -1467,7 +1467,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       }
       btn.textContent = copied ? 'Copied' : 'See log';
       if (!copied) console.log(`${cardSizingExportPath}\n${text}`);
-      if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+      // SAY WHAT WAS COPIED WHEN IT IS NOT WHAT IS ON THE SLIDERS. A refused
+      // ladder falls back to the authored table, so this button hands over the
+      // AUTHORED numbers while the controls still show the rejected ones —
+      // silently, until now. Copying the wrong sizes and passing them on as a
+      // new default is the one outcome this feature must not produce quietly.
+      if (refused) {
+        console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+        showSettingsNotice(`Copied the AUTHORED sizes, not the ones shown: ${refused}.`);
+      } else {
+        showSettingsNotice(`Copied — ${cardSizingExportPath}.`);
+      }
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });
   });

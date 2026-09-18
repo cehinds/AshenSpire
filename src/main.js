@@ -644,7 +644,18 @@ function applyCardSizeSettings(settings) {
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
   document.documentElement.style.setProperty('--card-w-glance', `${restingWidthPx(window.innerWidth, levels)}px`);
-  if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+  // A REFUSAL HAS TO ANSWER, NOT JUST BE LOGGED. The slider keeps the number
+  // that was typed, the game quietly goes back to the authored table, and the
+  // export copies the authored values — so from the player's chair the control
+  // moved and nothing happened. `showSettingsNotice` exists for exactly this
+  // ("a refused write can answer instead of being a silent no-op", #67), and
+  // leaving this one to `console.warn` reintroduced the defect that helper was
+  // written to prevent. It is a no-op when Settings is not open, which is the
+  // right shape for a refusal resolved at boot rather than at a slider.
+  if (refused) {
+    console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+    showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`);
+  }
 }
 
 function applyDisplaySettings(settings) {
