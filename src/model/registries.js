@@ -142,7 +142,7 @@ const TYPE_SINGULAR = {
 const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
 
 function stampTags(bundle) {
-  const { families, index, keyOf } = tagIndex(bundle);
+  const { families, index, kinds: kindsOf, keyOf } = tagIndex(bundle);
   // PROPERTY TAGS NEVER JOIN `tags`. They are the one domain that confers
   // behaviour (the property root in content/source/nodes.csv), and their one reader is the
   // mount path (engine/properties.js). Stamped onto `propertyTags` instead —
@@ -152,18 +152,9 @@ function stampTags(bundle) {
   const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
     .filter((t) => t && t.domain === 'property').map((t) => t.id));
   // WHAT THE OBJECT IS is stamped as `kindIds` (not `kinds`: a slot row already
-  // owns that word for the piece kinds it takes), read from the raw junction because
-  // tagIndex leaves every aside domain out (model/tags.js asideDomainIds) — the
-  // list readers must never see a kind, and this is the one reader that must.
-  const kindIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
-    .filter((t) => t && t.domain === 'classification').map((t) => t.id));
-  const kindsOf = new Map();
-  for (const row of (Array.isArray(bundle.tagging) ? bundle.tagging : [])) {
-    if (!row || !kindIds.has(row.tagId)) continue;
-    const k = keyOf(row.family, row.scope, row.objectId);
-    if (!kindsOf.has(k)) kindsOf.set(k, []);
-    if (!kindsOf.get(k).includes(row.tagId)) kindsOf.get(k).push(row.tagId);
-  }
+  // owns that word for the piece kinds it takes). tagIndex keeps the kind rows
+  // apart from the list — every list reader must never see a kind, and this is
+  // the one reader that must (model/tree.js cardKind reads the stamp).
   const stamped = new Map();
   for (const spec of families.values()) {
     // A non-string source is refused BY NAME in model/tags.js. Skipping it here

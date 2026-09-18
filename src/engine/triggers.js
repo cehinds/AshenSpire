@@ -291,8 +291,11 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       return ctx.player.counters.attacksPlayedThisCombat === 0;
     }
     case 'cardTypeIs': {
+      // `card.type` and `event.cardType` are the card's KIND (model/tree.js
+      // cardKind), set where the card ref and the cardPlayed receipt are built
+      // — the predicate's authored word (attack, skill, …) is compared against
+      // the tag the card carries, never against def.type.
       if (pctx.card) return pctx.card.type === pred.type;
-      // Trigger context: the cardPlayed event carries the type.
       return !!pctx.event && pctx.event.cardType === pred.type;
     }
     case 'eventIsAttack':

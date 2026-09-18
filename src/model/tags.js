@@ -478,8 +478,18 @@ export function tagIndex(bundle) {
     .map((row) => [row.family, row]));
   const index = new Map();
   const aside = asideTagIds(b);
+  // The kind rows, kept apart: every reader of the LIST must not see them, and
+  // the one reader that asks what an object IS (registries stampTags, the
+  // framework importer) reads them here by name.
+  const kindIds = new Set((Array.isArray(b.tags) ? b.tags : []).filter((t) => t && t.domain === 'classification').map((t) => t.id));
+  const kinds = new Map();
   for (const row of (Array.isArray(b.tagging) ? b.tagging : [])) {
     if (!row || !families.has(row.family)) continue;
+    if (kindIds.has(row.tagId)) {
+      const k = rowKey(row.family, row.scope, row.objectId);
+      if (!kinds.has(k)) kinds.set(k, []);
+      if (!kinds.get(k).includes(row.tagId)) kinds.get(k).push(row.tagId);
+    }
     if (aside.has(row.tagId)) continue;
     const k = rowKey(row.family, row.scope, row.objectId);
     const list = index.get(k);
@@ -498,7 +508,11 @@ export function tagIndex(bundle) {
   const tagIdsOf = (family, object) => (object && object.id != null
     ? (index.get(rowKey(family, scopeOf(family, object), object.id)) || [])
     : []);
-  return { families, index, keyOf: rowKey, scopeOf, tagIdsOf };
+  /** The classification node ids an object carries — what it IS. */
+  const kindIdsOf = (family, object) => (object && object.id != null
+    ? (kinds.get(rowKey(family, scopeOf(family, object), object.id)) || [])
+    : []);
+  return { families, index, kinds, keyOf: rowKey, scopeOf, tagIdsOf, kindIdsOf };
 }
 
 /**

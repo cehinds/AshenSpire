@@ -170,13 +170,16 @@ const TEST_TAGGING = [
 ];
 
 function testBundle() {
-  return {
+  // withKindRows: every fixture card and enemy states its kind, as shipped
+  // content must (model/tree.js) — the engine reads a card's kind tag, never
+  // its `type`, so a fixture without the row would be no kind at all.
+  return withKindRows({
     ...contentBundle,
     tagging: [...contentBundle.tagging, ...TEST_TAGGING],
     cards: [...contentBundle.cards, ...TEST_CARDS],
     statuses: [...contentBundle.statuses, ...TEST_STATUSES],
     enemies: [...contentBundle.enemies, ...TEST_ENEMIES],
-  };
+  });
 }
 
 const REG = createRegistries(testBundle());

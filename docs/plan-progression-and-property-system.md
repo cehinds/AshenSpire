@@ -129,12 +129,27 @@ the fold — 50 property rules resolved to their numbers, 58 framework rows with
 names the additions (nine roots, 61 framework nodes now registered, 435 kind
 rows, 24 pairings).
 
-**Not done here, deliberately:** templates still bind `{tokens}` by op
-position (`computeTokenBindings`), not by variable name; the two `bound`
-nodes (`item/bound`, `equipment.bound`) and the `presentation` mirror of the
-card schools are not merged; no reader has been switched from the collection
-to `kindIds` yet — the identity layer is complete and provably equal, and each
-switch is its own feel-neutral change.
+**Two switches, in the same phase (owner's ask):**
+
+- *Templates bind by variable name.* A rule's sentence and a relic's sentence
+  read a power's numbers as `{variable}` → `resolveVariable` (`tree.js`
+  `nodeTokens`; `relicTokens(def, rules, registries)`), never by counting op
+  positions; `{restoreMana.2}` is the variable `restoreMana_2`. The validator
+  binds the same way (`nodeVariableBindings`) and keeps the "every
+  player-visible number is stated" guard by carrying the op that reads each
+  variable. Only a relic's own passives, which are not nodes, still bind by op.
+- *Readers ask the kind, not the collection.* `cardKind(def)` reads the kind
+  tag; the attack counter (`combat.js`, `coopCombat.js`), the card ref and
+  `cardPlayed` receipt, the `cardTypeIs` predicate, `combatAnimation`, the
+  combat screen's skill highlight, `consequence.js` and the framework
+  importer's classification (`cardPropertyInstances`, from the junction's
+  kind row) no longer touch `def.type`. A def with no kind row answers null,
+  never quietly its type — so every fixture carries its kind rows too.
+
+**Not done here, deliberately:** the two `bound` nodes (`item/bound`,
+`equipment.bound`) and the `presentation` mirror of the card schools are not
+merged; `def.type` still exists on the card row as the authored word the kind
+row is checked against.
 
 ## Phase 3 — Cards in zones; collection and deck (3 PRs)
 

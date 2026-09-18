@@ -31,7 +31,10 @@ import { properties as frameworkProperties } from '../src/framework/data/propert
 import { relations as frameworkRelations } from '../src/framework/data/relations.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILY_DOMAINS } from '../src/content/tags.js';
 import { createRegistries, objectKinds } from '../src/model/registries.js';
-import { resolveVariable, nodeTree, CARD_TYPE_KIND } from '../src/model/tree.js';
+import { resolveVariable, nodeTree, nodeTokens, cardKind, CARD_TYPE_KIND } from '../src/model/tree.js';
+import { relicTokens } from '../src/model/validate.js';
+import { relicPropertyRules } from '../src/model/registries.js';
+import { cardPropertyInstances } from '../src/framework/importer.js';
 import { NODE_RELATIONS } from '../src/model/schemas.js';
 import { RELATION_KINDS } from '../src/framework/schema.js';
 
@@ -136,4 +139,37 @@ test('the tree is one tree: paths derive from parents, roots are domains, and th
   assert.deepEqual([...NODE_RELATIONS].sort(), [...RELATION_KINDS].sort(), 'model/schemas.js NODE_RELATIONS and framework/schema.js RELATION_KINDS are one list');
   const roots = contentBundle.nodes.filter((n) => !n.parentId).map((n) => n.id).sort();
   assert.deepEqual(roots, TAG_DOMAINS.map((d) => d.id).sort(), 'every root is a domain and every domain is a root');
+});
+
+test('the engine reads a card\'s kind, and the kind is the type for every shipped card', () => {
+  // The switch: combat.js, coopCombat.js, triggers.js, combatAnimation.js,
+  // consequence.js and the combat screen ask cardKind(def) — the kind tag —
+  // instead of def.type. Feel-neutral because validate.js refuses a card whose
+  // kind and type disagree; this is that refusal asserted the other way round.
+  for (const def of REG.cards.all()) {
+    assert.equal(cardKind(def), def.type, `card '${def.id}' kind tag reads as its type`);
+    assert.equal(cardPropertyInstances(def)[0].propertyId, CARD_TYPE_KIND[def.type], `the framework classifies '${def.id}' by its kind row`);
+  }
+  assert.equal(cardKind({ id: 'noRow', type: 'attack' }), null, 'a def with no kind row is no kind — never quietly its type');
+});
+
+test('a relic sentence binds its powers\' numbers by variable name, and reads the same', () => {
+  // The switch: relicTokens(def, rules, registries) takes the rules' numbers
+  // from nodeTokens — {poiseDamage} reads the variable poiseDamage through its
+  // binding — not by counting op positions. Every token a relic sentence uses
+  // that belongs to a rule is a declared variable of that node, and the number
+  // it renders is the bound balance row.
+  let bound = 0;
+  for (const def of REG.relics.all()) {
+    const rules = relicPropertyRules(REG, def);
+    if (!rules.length) continue;
+    const byName = Object.assign({}, ...rules.map((r) => nodeTokens(REG, r.tag)));
+    const tokens = relicTokens(def, rules, REG);
+    for (const [token, value] of Object.entries(byName)) {
+      assert.equal(tokens[token], value, `relic '${def.id}' token {${token}} is the variable's bound value`);
+      bound += 1;
+    }
+  }
+  assert.ok(bound >= 48, `${bound} rule tokens bound by name across the relics`);
+  assert.equal(nodeTokens(REG, 'siphon')['restoreMana.2'], REG.balance.exposure.siphonRefundMastered, 'a repeated token spells its variable restoreMana_2 as {restoreMana.2}');
 });

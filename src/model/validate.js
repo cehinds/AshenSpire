@@ -38,7 +38,7 @@ import {
   VARIABLE_SCOPES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
-import { treeProblems } from './tree.js';
+import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
@@ -174,8 +174,8 @@ const KNOWN_BUNDLE_KEYS = new Set([
  * cross-module mutable, and loadout.js was already resetting it defensively at
  * three call sites. Each caller gets its own.
  */
-export const TOKEN_PATTERN = '\\{([A-Za-z][\\w.]*)\\}';
-export const tokenRe = () => new RegExp(TOKEN_PATTERN, 'g');
+export { TOKEN_PATTERN, tokenRe } from './tokens.js';
+import { TOKEN_PATTERN, tokenRe } from './tokens.js';
 
 function relicModifierTokenBindings(def) {
   const counts = {};
@@ -194,7 +194,7 @@ function relicModifierTokenBindings(def) {
   return out;
 }
 
-export function relicTokens(def, rules = []) {
+export function relicTokens(def, rules = [], registries = null) {
   // DELEGATES. It used to carry its own grammar — a `['amount','stacks','value',
   // 'n']` scan plus status/id keying — and Bjorn's review found 3 of 4 synthetic
   // relics built from DECLARED vocabulary rendering a raw token, with a green
@@ -208,14 +208,16 @@ export function relicTokens(def, rules = []) {
   // this flattens, and the grammar stays where it already lived.
   //
   // `rules` is the relic's property rules (model/registries.js
-  // relicPropertyRules), passed by every caller that has registries in hand.
-  // Since plan phase 2 that is where a relic's triggers live, so a caller that
-  // does not pass them gets the relic's passive tokens and leaves `{poiseDamage}`
-  // standing — the same honest degrade an unresolvable token has always had,
-  // rather than a number invented to fill the hole.
+  // relicPropertyRules) and `registries` the registries they came from, passed
+  // by every caller that has them. Since plan phase 2 a relic's triggers live in
+  // its rules, and since the tag tree a rule's numbers are VARIABLES: the
+  // sentence binds them BY NAME (tree.js nodeTokens — `{poiseDamage}` reads the
+  // variable poiseDamage), not by counting ops. Only the relic's own passives
+  // and effects, which are not nodes, are still bound by op position. A caller
+  // with no registries gets those alone and leaves `{poiseDamage}` standing —
+  // the same honest degrade an unresolvable token has always had.
   const ops = [];
   for (const t of def.triggers || []) for (const op of t.do || []) ops.push(op);
-  for (const rule of rules || []) for (const t of rule.triggers || []) for (const op of t.do || []) ops.push(op);
   for (const op of def.effects || []) ops.push(op);
   for (const op of def.do || []) ops.push(op);
   const tokens = {};
@@ -225,6 +227,9 @@ export function relicTokens(def, rules = []) {
   }
   for (const binding of relicModifierTokenBindings(def)) {
     if (typeof binding.value === 'number') tokens[binding.token] = binding.value;
+  }
+  if (registries) {
+    for (const rule of rules || []) Object.assign(tokens, nodeTokens(registries, rule.tag));
   }
   return tokens;
 }
@@ -1405,7 +1410,7 @@ function collectContentProblems(bundle, errors = []) {
       .filter((rule) => rule && typeof rule.tag === 'string')
       .map((rule) => [rule.tag, rule]));
   for (const relic of b.relics || []) {
-    validateRelicTemplate(relic, `relics.${relic.id}`, err, propertyRulesByTag, relicTagsByRelic);
+    validateRelicTemplate(relic, `relics.${relic.id}`, err, propertyRulesByTag, relicTagsByRelic, b);
     if (Array.isArray(relic.triggers) && relic.triggers.length) {
       err(`relics.${relic.id}.triggers`, `authors triggers on the relic, which no longer reads them — a relic's triggers are its property rule now: register a '${relic.id}' tag in content/source/tags.csv with domain 'property', move these to content/source/propertyRuleEffects.json under that tag, and add 'relic,,${relic.id},${relic.id}' to content/source/tagging.csv`);
     }
@@ -2099,7 +2104,7 @@ function validateCardTemplates(card, path, err) {
   }
 }
 
-function validateRelicTemplate(relic, path, err, rulesByTag = null, taggingByObject = null) {
+function validateRelicTemplate(relic, path, err, rulesByTag = null, taggingByObject = null, bundle = null) {
   if (typeof relic.textTemplate !== 'string') return;
   // A relic's sentence covers the whole relic, and since plan phase 2 the whole
   // relic is two homes: the passives it still owns, and the triggers that moved
@@ -2109,10 +2114,13 @@ function validateRelicTemplate(relic, path, err, rulesByTag = null, taggingByObj
   for (const trig of relic.triggers || []) {
     if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
   }
-  for (const trig of relicRuleTriggers(relic, rulesByTag, taggingByObject)) {
-    if (trig && Array.isArray(trig.do)) effects.push(...trig.do);
-  }
-  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, relicModifierTokenBindings(relic));
+  // The rules' half binds BY NAME: one binding per variable the relic's nodes
+  // declare (tree.js nodeVariableBindings), carrying the op that reads it so
+  // the "every player-visible number is stated" rule below is asked of a
+  // variable exactly as it was of an op position.
+  const byName = [];
+  for (const tag of (taggingByObject && taggingByObject.get(relic.id)) || []) byName.push(...nodeVariableBindings(bundle, tag));
+  checkTemplate(relic.textTemplate, effects, `${path}.textTemplate`, err, [...relicModifierTokenBindings(relic), ...byName]);
 }
 
 /**
@@ -2221,7 +2229,11 @@ function propertyRuleProblems(b, vctx) {
     if (typeof rule.textTemplate === 'string' && Array.isArray(rule.triggers)) {
       const effects = rule.triggers.flatMap((trig) => (trig && Array.isArray(trig.do) ? trig.do : []));
       if (rule.textTemplate.trim()) {
-        checkTemplate(rule.textTemplate, effects, `${path}.textTemplate`, err);
+        // Bound by NAME — the rule's sentence reads the node's variables — and
+        // by op position for a rule authored straight into `propertyRules` with
+        // literal numbers and no node (a fixture; shipped rules are derived
+        // from nodes and carry balance refs, which bind nothing here).
+        checkTemplate(rule.textTemplate, effects, `${path}.textTemplate`, err, nodeVariableBindings(b, rule.tag));
       } else if (effects.length && !carriersOf(b, rule.tag).length) {
         err(`${path}.textTemplate`, `is empty and no carrier holds '${rule.tag}', so the numbers in its triggers are stated nowhere — give the rule its own sentence, or add the tagging row for the carrier whose text already covers it`);
       }
