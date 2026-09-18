@@ -77,6 +77,7 @@ import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
 import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, restingWidthPx } from './ui/models/CardSizeModel.js';
+import { refreshCardDoorShape } from './ui/components/cardInspection.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -644,6 +645,11 @@ function applyCardSizeSettings(settings) {
   // inside a media query would have been the later-rule-wins shape that has
   // already produced three defects in this component.
   document.documentElement.style.setProperty('--card-w-glance', `${restingWidthPx(window.innerWidth, levels)}px`);
+  // The door's threshold reads `--card-w-inspect`, which has just moved. Its
+  // observer only sees the layout's own box change, and the modal layout is
+  // 100% x 100% — so a door standing open would keep its old shape until a
+  // resize or a reopen. Tell it the term it depends on has changed.
+  refreshCardDoorShape();
   // A REFUSAL HAS TO ANSWER, NOT JUST BE LOGGED. The slider keeps the number
   // that was typed, the game quietly goes back to the authored table, and the
   // export copies the authored values — so from the player's chair the control

@@ -143,16 +143,39 @@ function contentWidthOf(node) {
   const pad = (Number.parseFloat(cs.paddingLeft) || 0) + (Number.parseFloat(cs.paddingRight) || 0);
   return Math.max(0, node.clientWidth - pad);
 }
+// ONLY THE LAYOUTS THE ATTRIBUTE ACTUALLY GOVERNS GET A VOTE. Every
+// `data-card-door` rule in the stylesheet is scoped under
+// `.card-inspection-modal`, so an EMBEDDED inspection — the Armoury's detail
+// pane, a non-modal host — is not governed by this decision at all. Letting one
+// vote meant a narrow pane sitting behind a newly opened modal could force a
+// desktop door with ample room into the stacked layout, on the strength of a
+// measurement of something the rule never touches. "Narrowest wins" is the
+// right rule among the door's OWN layouts and the wrong one across unrelated
+// surfaces.
 function narrowestDoorWidth() {
   let slimmest = null;
   let width = 0;
-  for (const node of document.querySelectorAll('.card-inspection-layout')) {
+  for (const node of document.querySelectorAll('.card-inspection-modal .card-inspection-layout')) {
     if (!node.isConnected) continue;
     const w = contentWidthOf(node);
     if (w <= 0) continue;
     if (slimmest === null || w < width) { slimmest = node; width = w; }
   }
   return slimmest ? { node: slimmest, width } : null;
+}
+
+/**
+ * Re-decide the door's shape because something OTHER than its box moved.
+ *
+ * The observer watches the layout's own size, and the modal layout is
+ * `width: 100%; height: 100%` — so tuning the inspect width changes the
+ * threshold without changing anything the observer can see, and a door standing
+ * open kept its old shape until a resize or a reopen. Whoever moves an authored
+ * or tuned term calls this; `src/main.js` does it when the card-size settings
+ * are applied.
+ */
+export function refreshCardDoorShape() {
+  applyCardDoorShape();
 }
 // AND A CLOSED DOOR'S LAYOUT IS RELEASED, NOT MERELY IGNORED. Skipping detached
 // nodes in `narrowestDoorWidth` stopped them voting but left them observed, and
