@@ -155,6 +155,24 @@ player selects away — the map moving up and auto-recentring on both.
   in one testable place: a charge flask is drunk only with "Use flasks outside
   combat" on and a charge left and never dropped; a carried potion is
   combat-only and may be dropped. The list says why when it refuses.
+- **Potions is the big control in the corner** (owner, 2026-09-17): 1.6x the
+  touch row (72 px at 375x812), and the row's height is what holds it rather
+  than letting it float over the map.
+- **The minis stand ABOVE the button and come out on hover**: hidden at rest,
+  they fade and rise 0.7rem out of its top edge, nearest one first, 40 ms
+  apart. Nothing is drawn behind them — the flask's own art over the map, and
+  the count is a small plain number above each flask, holding itself up with an
+  ink shadow rather than a pill, because a plate in the corner read as chrome.
+  THE WAIT IS THE PLAYER'S OWN tooltip delay and the tooltip's fade
+  (`model/tooltipSettings.js`: 0.25/0.5/1/1.5 s by their setting, 160 ms),
+  handed to the CSS as `--potion-reveal-delay` and `--potion-reveal-fade` —
+  hovering Potions feels like hovering anything else on the screen. Going back
+  has no wait. They keep their space while hidden, so the button never moves
+  out from under the cursor, and `visibility` keeps them out of the tab order
+  until the corner has focus; the button sits first in the DOM, so a keyboard
+  reaches them through it (measured: focusing Potions reveals them, blurring
+  hides them). On a touch screen there is no hover and the button's list is the
+  way in.
 - **Reduced motion** takes every delay, slide, fade and glide to zero.
 
 Browser evidence (Edge, emulation, `?shot=map`): at 1280×800 the closed tray

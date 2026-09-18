@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1140",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The rest of the game’s look-and-timing settings move out of the code",
+    "detail": "Nothing you see changes in play, and as before that is checked rather than hoped. Fourteen more parts of the game kept presentation settings written into the program: where a weapon effect attaches to each painted figure, how long explanations wait before opening, the Reaver’s attack animation, the drifting ash on the title screen, where fighters plant their feet, the Armoury’s default proportions, and the timings of combat effects. All of it now lives as plain, organised settings files with the rest. Every one of those parts was recorded before the move and is held to exactly what it produced before, and a further check refuses to let a stray number creep back in beside its new home.",
+    "build": "0.7.1.89",
+    "pullRequest": 1140,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1140"
+  },
+  {
+    "id": "pr-1134",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The bar along the top reads the same on a phone in every screen",
+    "detail": "Walking into an event or a conversation on a phone, the bar along the top printed its words on top of each other — your class over the act, the floor over both — and the health, mana and stamina bars were cut off by its bottom edge. On a phone that bar now carries four things and nothing else: your health, mana and stamina stacked one under the other, your cinders centred above them, and the two buttons for your armament and the menu. Your class, the act and the floor are still there on a wider screen, where they fit. The map, a fight, a shrine and a conversation all draw that same bar now, so it no longer changes shape as you walk through a door.",
+    "build": "0.7.1.86",
+    "pullRequest": 1134,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1134"
+  },
+  {
     "id": "pr-1132",
     "date": "2026-09-18",
     "group": "2026-09-18",
