@@ -3,6 +3,7 @@ import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
+import { cardDoorStackBelowPx } from '../models/CardSizeModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -14,8 +15,43 @@ import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 // The behaviour is unchanged. Selection is still page-wide; the sweep is gone
 // because a card now hands the store the callback that puts it out.
 
+// THE DOOR'S SHAPE BELONGS TO THE DOOR, NOT TO THE APP SHELL.
+//
+// Below the inspect card's own width plus the readable measure beside it there
+// is no room for two columns, and the door reads top to bottom instead. A media
+// query cannot read a custom property, so the comparison happens in JS and the
+// stylesheet keys on `data-card-door` — which keeps card.json the one home for
+// both numbers rather than having a breakpoint restate one of them.
+//
+// This lived in `src/main.js` and was WRONG THERE, measured rather than argued:
+// the reading door is a shared component with three hosts, and only one of them
+// boots `main.js`. `weapon-cards-preview.html` and the wireframe gallery load
+// this module directly, so on those pages the attribute was never written and
+// the door kept two columns at every width — at 390 the details column measured
+// 24.969px, which is not a column, it is a seam. The fix was in the app and the
+// defect was in the component.
+//
+// So the decision sits beside the layout it governs. One listener for this
+// module's life rather than one per door: the attribute is on `:root`, one door
+// is open at a time, and a per-door listener would be a leak with no reader.
+const cardDoorStackBelow = cardDoorStackBelowPx();
+let doorShapeWatched = false;
+function applyCardDoorShape() {
+  const stacked = window.innerWidth < cardDoorStackBelow;
+  document.documentElement.dataset.cardDoor = stacked ? 'stacked' : 'beside';
+}
+function watchCardDoorShape() {
+  applyCardDoorShape();
+  if (doorShapeWatched) return;
+  doorShapeWatched = true;
+  window.addEventListener('resize', applyCardDoorShape);
+}
+
 /** Read-only composition shared by equipment and playing-card detail surfaces. */
 export function cardInspectionLayout(card, details) {
+  // Resolved as the layout is built, so a door opened on any host — the game,
+  // the weapon preview, the wireframe gallery — reads the same shape.
+  watchCardDoorShape();
   const body = document.createElement('section');
   body.className = 'card-inspection-layout';
   const art = document.createElement('div');
