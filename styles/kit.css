@@ -3445,7 +3445,6 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.2; padding:6px 4px; font-size:14px; }
 /* Retain the action slot so browsing does not move the next row under a pointer. */
 .cc-card-selectors[data-view="grid"] .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
-.cc-card-selectors[data-view="grid"] .poker-equipment-choice:not(.choice-focused) .card-info-button { visibility:hidden; pointer-events:none; }
 
 /* ═══ THE SAME CHOICES AS A LIST ══════════════════════════════════════════
    Grid, above, is a browsing wall: the card is shrunk to 152px, the Choose
@@ -3474,6 +3473,22 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 .cc-card-selectors[data-view="list"] .equipment-choose {
   position:static; width:100%; margin-top:0; min-height:var(--tap-floor); font-size:14px;
 }
+
+/* WHAT AN UNFOCUSED CHIP WITHHOLDS IS AUTHORED NOW, NOT HAND-ROLLED HERE.
+   A `:not(.choice-focused) .card-info-button { visibility:hidden }` rule stood
+   here: one screen's private flag, in CSS, for the one field anybody had got
+   round to hiding. That is the mechanism the presentation levels replace —
+   `content/config/ui/components/card.json` says what each of glance / focus /
+   inspect shows, `src/model/cardFields.js` answers it, and the face does not
+   render what it is not saying. A second copy of that decision in a selector
+   is exactly the drift Law 1 is about, so the rule is gone rather than kept
+   "just for the button". */
+/* The catalogue's three-level specimen: FLOW ONLY. Each face is sized by the
+   picker rules above, because how big a card is has one home and this is not
+   it; all this adds is that the three stand side by side under their names. */
+.cc-card-levels { display:flex; flex-wrap:wrap; align-items:flex-start; }
+.cc-card-levels > .cc-card-level { margin:0; }
+.cc-card-levels > .cc-card-level > figcaption { text-align:center; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
 .cc-equipment-details { max-width:none; }
 .cc-equipment-details h3 { margin:0 0 8px; }
 .cc-choice-context, .cc-package-context { color:var(--muted); font-size:14px; line-height:1.4; margin:0 0 12px; }

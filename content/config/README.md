@@ -98,6 +98,35 @@ Files in `scenes/` also have to satisfy the W4 contract:
 - `components.footer.actions` come from the known set (`back`, `skipSpeech`, `continue`);
 - `positioning.portraits.visibleFraction` is greater than 0 and at most 1.
 
+## Card presentation levels (`ui/components/card.json`, `behavior.fields`)
+
+`behavior.fields` is the one place that says how much a card face shows:
+
+```json
+"fields": {
+  "levels":   { "glance": [...], "focus": [...], "inspect": [...] },
+  "surfaces": { "<surfaceId>": { "<level>": { "add": [...], "drop": [...] } } }
+}
+```
+
+Rules `tests/card-presentation-levels.test.mjs` enforces, each of which would
+otherwise fail silently:
+
+- Region keys are exactly the keys of `balance.ui.equipmentCard.regions`. A key
+  that drifts out of that set is a row the face loses with nothing to say so.
+  `name` is never a region: it sits over the art and shows at every level.
+- `inspect` names every region — it is the level whose job is to show
+  everything, so a region it omits is one nothing ever shows.
+- `glance` is a subset of `focus` is a subset of `inspect`, at the base level
+  and on every patched surface. Choosing a card must never make it say less.
+- A surface patch is **sparse** (`add`/`drop` against the base level), never a
+  second full table, and may only name a surface `src/services/cardActions.js`
+  already declares.
+
+Nothing here sets a level: the level is derived from which card is lit
+(`src/ui/components/cardSelection.js`) and a view mode only selects one of the
+three. See `docs/COMPONENT-MODEL-ARCHITECTURE.md`.
+
 ## Adding a file
 
 1. Put it in `ui/scenes/`, `ui/components/`, `ui/screens/` or

@@ -457,12 +457,17 @@ function pieceArt(piece, fallback = '⚔') {
 let chosenNoteSerial = 0;
 
 /** The kit picker's chip (creation's starting kit): an OptionCard — art, name, mods, tags. `.ec-*` are the hooks the tools read. */
-export function pieceChip(registries, piece, { selected, kind = null, presentation = null, level = 'glance' }) {
+/**
+ * `level` is the FLOOR this picker's current view mode asks for — a view
+ * SELECTS one of the three presentation levels (src/model/cardFields.js), it
+ * does not own a field set of its own. Lighting a chip still promotes it to
+ * `focus` on top of that floor, so the grid's glance faces say more the moment
+ * one is chosen without the picker keeping its own copy of which that is.
+ */
+export function pieceChip(registries, piece, { selected, kind = null, presentation = null, level = 'glance', surface = 'creation' }) {
   const card = document.createElement('div');
   card.className = 'equip-chip poker-equipment-choice';
-  // A chip is something you are BROWSING past, so it is a glance card. The
-  // reading is the detail pane's job and the art is the inspect modal's.
-  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false, level }) : renderEquipmentCard(registries, piece, { interactive: false, presentation, level })).card;
+  const face = (kind ? renderCollectibleCard(registries, piece, kind, { interactive: false, level, surface }) : renderEquipmentCard(registries, piece, { interactive: false, presentation, level, surface })).card;
   face.tabIndex = 0;
   face.setAttribute('role', 'group');
   const choose = document.createElement('button');
@@ -521,9 +526,13 @@ function inventoryFace(registries, row, {
   if (['armor', 'weapon', 'shield', 'staff'].includes(row.item.kind) || ['Potion', 'Relic'].includes(row.category)) {
     const trail = el.querySelector('.r-trail');
     // WC2: the metadata band ends with how many of this item the run holds.
+    // The Armoury names itself so the manifest can patch what a glance says
+    // here: the question on this screen is what goes in which slot, so the
+    // type band earns its row before anything else does
+    // (content/config/ui/components/card.json, behavior.fields.surfaces).
     el.replaceChildren((['Potion', 'Relic'].includes(row.category)
-      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, level: 'focus' })
-      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, level: 'focus' })).card);
+      ? renderCollectibleCard(registries, row.item, row.category, { interactive: false, owned: row.count, surface: 'armoury' })
+      : renderEquipmentCard(registries, row.item, { interactive: false, owned: row.count, surface: 'armoury' })).card);
     if (trail) el.append(trail);
     el.classList.add('poker-inventory-face');
   }

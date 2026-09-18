@@ -10,5 +10,19 @@
       "focus": { "widthPx": 280 },
       "inspect": { "widthPx": 320 }
     }
+  },
+  "behavior": {
+    "fields": {
+      "levels": {
+        "glance": ["art", "facts", "effects"],
+        "focus": ["art", "type", "facts", "effects", "footer"],
+        "inspect": ["art", "type", "facts", "tags", "effects", "flavor", "footer"]
+      },
+      "surfaces": {
+        "creation": { "glance": { "add": ["footer"] } },
+        "armoury": { "glance": { "add": ["type"] } },
+        "combat": { "focus": { "drop": ["footer"] } }
+      }
+    }
   }
 }

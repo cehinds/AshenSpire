@@ -3,7 +3,7 @@
 // Every value is already resolved: variables substituted, fractions divided.
 //
 // source content/config/ui/components/buttons.json f03ef73d87040802
-// source content/config/ui/components/card.json 505c710790832a50
+// source content/config/ui/components/card.json 64730a735fd83caa
 // source content/config/ui/components/categoryNav.json 631202269af56449
 // source content/config/ui/components/choiceBody.json a94c731dc8075f80
 // source content/config/ui/components/dialogueFrame.json e924351f29b485fa
@@ -500,6 +500,56 @@ export const uiConfig = deepFreeze({
           },
           "inspect": {
             "widthPx": 320
+          }
+        }
+      },
+      "behavior": {
+        "fields": {
+          "levels": {
+            "glance": [
+              "art",
+              "facts",
+              "effects"
+            ],
+            "focus": [
+              "art",
+              "type",
+              "facts",
+              "effects",
+              "footer"
+            ],
+            "inspect": [
+              "art",
+              "type",
+              "facts",
+              "tags",
+              "effects",
+              "flavor",
+              "footer"
+            ]
+          },
+          "surfaces": {
+            "creation": {
+              "glance": {
+                "add": [
+                  "footer"
+                ]
+              }
+            },
+            "armoury": {
+              "glance": {
+                "add": [
+                  "type"
+                ]
+              }
+            },
+            "combat": {
+              "focus": {
+                "drop": [
+                  "footer"
+                ]
+              }
+            }
           }
         }
       }
