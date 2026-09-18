@@ -76,7 +76,7 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties } from './ui/models/CardSizeModel.js';
+import { cardLevelCssProperties, cardShapeCssProperties } from './ui/models/CardSizeModel.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -286,7 +286,10 @@ document.documentElement.style.setProperty('--selection-glow', selectionGlowFilt
 // How big a card is, at each of the three levels (config-owned). A surface
 // whose width is decided by its container rather than by its render call reads
 // these; a card that knows its own level carries `--epc-level-w` instead.
-for (const [name, value] of Object.entries(cardLevelCssProperties())) {
+// ...and what SHAPE it is. The stylesheet used to write the ratio and the four
+// face bands out a second time, so editing card.json moved the hand's geometry
+// maths and left the card's own face untouched. Both halves read this now.
+for (const [name, value] of Object.entries({ ...cardLevelCssProperties(), ...cardShapeCssProperties() })) {
   document.documentElement.style.setProperty(name, value);
 }
 const HUD_PRESENTATION = UI.hudPresentation || {};

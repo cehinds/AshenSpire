@@ -350,9 +350,29 @@ function fitCardFaces(cards) {
   long.forEach(row => { row.el.dataset.name = 'long'; });
   const veryLong = long.filter(({name}) => name.scrollWidth > name.clientWidth + 1);
   veryLong.forEach(row => { row.el.dataset.name = 'verylong'; });
+  // WHICH ROW EACH CHIP LANDED ON — COUNTED, NOT DIVIDED, AND AGAINST THE
+  // CHIP'S OWN ORIGIN.
+  //
+  // This was wrong twice, and on the one face that matters most it was wrong
+  // silently. `chip.offsetTop` is measured from the chip's OFFSET PARENT, and
+  // WC0 makes `.ctags` `position: absolute` (kit.css) — so on a playing card
+  // the strip IS that offset parent and chip tops already start at 0. The old
+  // line subtracted `tags.offsetTop`, which is measured from `.art` instead, so
+  // every position came out negative, nothing ever cleared the `>= 2` test, and
+  // the `+N` deferral NEVER FIRED on a combat card. The rows past the second
+  // were then cut off by `.ctags`'s own `overflow: hidden` with no ellipsis and
+  // no scroller. Measured at c63a09620, ?shot=combat, 1200x730: Guard Counter's
+  // strip was 78 px of content in a 36 px box — 42 px of a card's subtypes
+  // gone, and `data-tag-rows` reporting 0 for a five-chip card at 390x844.
+  //
+  // Second: the pitch. `chip.offsetHeight + 2` assumed a 2 px gap while the
+  // stylesheet's is `0.3rem` (3 px at the shipped 10px root), so a row cost 20
+  // px and the arithmetic charged 19 — a drift that grows with every row. There
+  // is no need to divide at all: chips on one row share an offsetTop, so the
+  // DISTINCT tops in order ARE the rows.
   for (const row of rows) {
-    const top = row.tags?.offsetTop || 0;
-    row.positions = row.chips.map(chip => Math.round((chip.offsetTop - top) / Math.max(1, chip.offsetHeight + 2)));
+    const tops = [...new Set(row.chips.map(chip => chip.offsetTop))].sort((a, b) => a - b);
+    row.positions = row.chips.map(chip => tops.indexOf(chip.offsetTop));
   }
   for (const row of rows) {
     row.chips.forEach((chip, i) => {
@@ -365,10 +385,24 @@ function fitCardFaces(cards) {
       row.tags.appendChild(row.more);
     }
   }
-  const overflow = rows.filter(({more,tags}) => more && Math.round((more.offsetTop - tags.offsetTop) / Math.max(1, more.offsetHeight + 2)) >= 2);
-  for (const row of overflow) {
-    const last = row.chips.filter(chip => !chip.hidden).pop();
-    if (last) { last.hidden = true; row.hidden++; row.more.textContent = '+' + row.hidden; }
+  // `+N` is itself a chip and can be the thing that pushes the strip to a third
+  // row. Same counting, same origin — and it REPEATS: dropping one chip can
+  // widen `+N` from "+1" to "+10" and overflow again, which the single pass
+  // below used to leave on the face. Bounded by the chip count, and every pass
+  // reads the whole batch before the next one writes.
+  for (let pass = 0; pass < 8; pass++) {
+    const overflow = rows.filter((row) => {
+      if (!row.more) return false;
+      const live = [...row.chips.filter(chip => !chip.hidden), row.more];
+      const tops = [...new Set(live.map(chip => chip.offsetTop))].sort((a, b) => a - b);
+      return tops.indexOf(row.more.offsetTop) >= 2;
+    });
+    if (!overflow.length) break;
+    for (const row of overflow) {
+      const last = row.chips.filter(chip => !chip.hidden).pop();
+      if (!last) continue;
+      last.hidden = true; row.hidden++; row.more.textContent = '+' + row.hidden;
+    }
   }
   for (const row of rows) {
     if (row.more) {

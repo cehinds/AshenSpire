@@ -64,6 +64,19 @@ behavior, and remove the adapter only after repository-wide consumer proof.
   `src/model/` and `src/engine/`.
 - Content changes prefer JSON/CSV and reusable interpreters over per-entity
   imperative branches.
+- **A component's size and shape are authored data, and a stylesheet reads them
+  rather than restating them.** The playing card is the worked example:
+  `content/config/ui/components/card.json` holds `sizing.ratio`, `sizing.bands`
+  and `sizing.levels`; `src/ui/models/CardSizeModel.js` validates them and
+  projects `--card-ratio`, `--card-height-per-width`, `--card-bands`,
+  `--card-band-head` and `--card-w-<level>` onto `:root` from the composition
+  root; and every `.card` rule in `styles/` reads those properties. Until this
+  was closed the ratio and the four face bands were written out a second time in
+  `styles/kit.css`, so the card shipped at two shapes at once and editing the
+  config moved neither. A page that draws card faces without booting `main.js`
+  (`armament-kits-preview.html`) projects them itself; there is deliberately no
+  fallback in the stylesheet, so a missing projection is a shapeless, loud card
+  rather than a quietly wrong one. `node tools/card-one-shape.mjs` is the gate.
 - The architecture refresh routine updates only the current-dev inventory; it
   cannot replace this contract or silently change the redesign goals.
 
