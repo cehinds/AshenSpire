@@ -16,9 +16,19 @@
 // source content/config/ui/components/selection.json 0ffebfc692d8cbf9
 // source content/config/ui/components/tooltip.json 2f6625d2c80ff482
 // source content/config/ui/components/workspace.json e0cd44e04fa02f5b
+// source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
+// source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
+// source content/config/ui/presentation/combatAura.json 63555f490073dfb7
+// source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
+// source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
+// source content/config/ui/presentation/environments.json 1b9778ab17a88e57
+// source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
+// source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
+// source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
+// source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
-// source content/config/ui/scenes/w4b-map.json 76d58e8f8b8ca705
+// source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 9136780826a283d6
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
@@ -255,7 +265,13 @@ export const uiConfig = deepFreeze({
         }
       },
       "behavior": {
-        "repeatPickDelayMs": 400
+        "repeatPickDelayMs": 400,
+        "tray": {
+          "openDelayMs": 150,
+          "slideMs": 240,
+          "fadeMs": 140,
+          "cameraMs": 300
+        }
       }
     },
     "w4c": {
@@ -629,6 +645,1323 @@ export const uiConfig = deepFreeze({
         "candidatesWidth": 0.44,
         "candidatesMinRem": 14,
         "candidatesMaxRem": 60
+      }
+    }
+  },
+  "presentation": {
+    "actionAnimations": {
+      "behavior": {
+        "tags": [
+          [
+            "guard",
+            "guard"
+          ],
+          [
+            "ranged",
+            "projectile"
+          ],
+          [
+            "pierce",
+            "thrust"
+          ],
+          [
+            "starstone",
+            "spell"
+          ],
+          [
+            "ritual",
+            "spell"
+          ],
+          [
+            "gorefire",
+            "spell"
+          ],
+          [
+            "blight",
+            "spell"
+          ],
+          [
+            "oath",
+            "spell"
+          ],
+          [
+            "ash",
+            "spell"
+          ],
+          [
+            "heavy",
+            "strike"
+          ],
+          [
+            "blade",
+            "slash"
+          ],
+          [
+            "flourish",
+            "slash"
+          ],
+          [
+            "precision",
+            "thrust"
+          ],
+          [
+            "guile",
+            "dodge"
+          ],
+          [
+            "venom",
+            "spell"
+          ],
+          [
+            "blood",
+            "slash"
+          ]
+        ],
+        "types": {
+          "attack": "strike",
+          "block": "guard",
+          "buff": "spell",
+          "debuff": "spell",
+          "power": "spell"
+        },
+        "actors": {
+          "reaver": {
+            "spriteClass": "reaver",
+            "tempo": 1.12,
+            "reach": 1.1,
+            "actions": {
+              "dodgeRoll": "dodge",
+              "defend": "guard",
+              "strike": "slash"
+            }
+          },
+          "rogue": {
+            "spriteClass": "rogue",
+            "tempo": 0.78,
+            "reach": 1.15,
+            "actions": {
+              "dodgeRoll": "dodge",
+              "defend": "guard",
+              "strike": "thrust"
+            }
+          },
+          "starseer": {
+            "spriteClass": "starseer",
+            "tempo": 1.05,
+            "reach": 0.75,
+            "actions": {
+              "dodgeRoll": "dodge",
+              "defend": "guard"
+            }
+          },
+          "herald": {
+            "spriteClass": "herald",
+            "tempo": 1.15,
+            "reach": 0.8,
+            "actions": {
+              "dodgeRoll": "dodge",
+              "defend": "guard"
+            }
+          },
+          "wanderingSoldier": {
+            "spriteClass": null,
+            "tempo": 1,
+            "reach": 0.9,
+            "actions": {
+              "slash": "slash",
+              "guard": "guard",
+              "warcry": "spell"
+            }
+          },
+          "blightHound": {
+            "spriteClass": null,
+            "tempo": 0.72,
+            "reach": 1.25,
+            "actions": {
+              "bite": "strike",
+              "lunge": "thrust"
+            }
+          },
+          "fellWarden": {
+            "spriteClass": null,
+            "tempo": 1.3,
+            "reach": 1.15,
+            "actions": {
+              "caneStrike": "strike",
+              "hammerToss": "projectile",
+              "heldBlade": "slash",
+              "twinDaggers": "thrust"
+            }
+          },
+          "lanternMoth": {
+            "spriteClass": null,
+            "tempo": 0.68,
+            "reach": 0.55,
+            "actions": {
+              "lanternDust": "spell",
+              "wingSparks": "projectile"
+            }
+          },
+          "briarHermit": {
+            "spriteClass": null,
+            "tempo": 1.18,
+            "reach": 0.65,
+            "actions": {
+              "rootShelter": "guard",
+              "briarCast": "projectile",
+              "sapMend": "spell"
+            }
+          },
+          "chainScavenger": {
+            "spriteClass": null,
+            "tempo": 0.95,
+            "reach": 1.25,
+            "actions": {
+              "hookCast": "projectile",
+              "chainSnare": "spell",
+              "draggingBlow": "strike"
+            }
+          },
+          "bellKeeper": {
+            "spriteClass": null,
+            "tempo": 1.4,
+            "reach": 0.85,
+            "actions": {
+              "bronzeToll": "spell",
+              "clapperSwing": "slash",
+              "muffledPrayer": "guard",
+              "crackedPeal": "spell"
+            }
+          },
+          "thornMatriarch": {
+            "spriteClass": null,
+            "tempo": 1.3,
+            "reach": 0.8,
+            "actions": {
+              "rootCrown": "guard",
+              "thornNeedles": "projectile",
+              "entwiningRoots": "spell"
+            }
+          },
+          "mirrorScribe": {
+            "spriteClass": null,
+            "tempo": 0.9,
+            "reach": 0.6,
+            "actions": {
+              "silverScript": "spell",
+              "shardVolley": "projectile",
+              "polishedWard": "guard"
+            }
+          },
+          "stitchCrab": {
+            "spriteClass": null,
+            "tempo": 0.75,
+            "reach": 0.85,
+            "actions": {
+              "shellFold": "guard",
+              "seamShears": "slash",
+              "scuttleRush": "thrust"
+            }
+          },
+          "glassRegent": {
+            "spriteClass": null,
+            "tempo": 1.02,
+            "reach": 1.2,
+            "actions": {
+              "prismGuard": "guard",
+              "crystalRapier": "thrust",
+              "splinterRain": "projectile",
+              "shatteredCourt": "spell"
+            }
+          },
+          "marrowOrganist": {
+            "spriteClass": null,
+            "tempo": 1.35,
+            "reach": 0.55,
+            "actions": {
+              "bonePrelude": "spell",
+              "ivoryKeys": "projectile",
+              "funeralChord": "spell",
+              "quietRefrain": "spell"
+            }
+          },
+          "cinderMantis": {
+            "spriteClass": null,
+            "tempo": 0.7,
+            "reach": 1.3,
+            "actions": {
+              "scythePair": "slash",
+              "emberPounce": "thrust",
+              "foldedBlades": "guard"
+            }
+          },
+          "eclipseCantor": {
+            "spriteClass": null,
+            "tempo": 1.1,
+            "reach": 0.5,
+            "actions": {
+              "darkHymn": "spell",
+              "lunarRay": "projectile",
+              "fadingEcho": "spell"
+            }
+          },
+          "furnaceSaint": {
+            "spriteClass": null,
+            "tempo": 1.45,
+            "reach": 1.05,
+            "actions": {
+              "openFurnace": "projectile",
+              "censerSweep": "slash",
+              "coolingAsh": "guard"
+            }
+          },
+          "hollowAstronomer": {
+            "spriteClass": null,
+            "tempo": 1.25,
+            "reach": 0.7,
+            "actions": {
+              "starChart": "spell",
+              "orbitalShards": "projectile",
+              "totalEclipse": "spell",
+              "fallingHeavens": "projectile"
+            }
+          },
+          "ashheartDragon": {
+            "spriteClass": null,
+            "tempo": 1.2,
+            "reach": 1.4,
+            "actions": {
+              "obsidianClaws": "slash",
+              "tailBastion": "guard",
+              "heartRumble": "spell",
+              "ashBreath": "projectile"
+            }
+          }
+        }
+      },
+      "motion": {
+        "families": {
+          "neutral": {
+            "pose": "idle",
+            "motion": "settle"
+          },
+          "slash": {
+            "pose": "attack1",
+            "motion": "sweep"
+          },
+          "thrust": {
+            "pose": "attack2",
+            "motion": "lunge"
+          },
+          "strike": {
+            "pose": "attack3",
+            "motion": "impact"
+          },
+          "projectile": {
+            "pose": "attack4",
+            "motion": "release"
+          },
+          "spell": {
+            "pose": "guard",
+            "motion": "cast"
+          },
+          "guard": {
+            "pose": "guard",
+            "motion": "brace"
+          },
+          "dodge": {
+            "pose": "idle",
+            "motion": "sidestep"
+          }
+        }
+      }
+    },
+    "classArtAnchors": {
+      "positioning": {
+        "medallionPct": {
+          "reaver": {
+            "x": 50,
+            "y": 35
+          },
+          "starseer": {
+            "x": 48,
+            "y": 37
+          },
+          "rogue": {
+            "x": 49,
+            "y": 35
+          },
+          "herald": {
+            "x": 50,
+            "y": 61
+          }
+        }
+      }
+    },
+    "combatAura": {
+      "components": {
+        "powerFrames": {
+          "power1": {
+            "radius": 1.4,
+            "blur": 3,
+            "alpha": 0.55,
+            "brightness": 1.03
+          },
+          "power2": {
+            "radius": 2.6,
+            "blur": 8,
+            "alpha": 0.95,
+            "brightness": 1.16
+          },
+          "power3": {
+            "radius": 1.8,
+            "blur": 5,
+            "alpha": 0.7,
+            "brightness": 1.06
+          }
+        },
+        "colors": {
+          "stamina": "88,225,131",
+          "mana": "91,165,255",
+          "hp": "255,91,102",
+          "power": "220,221,255"
+        }
+      },
+      "behavior": {
+        "guardedRestPoses": [
+          "guard",
+          "shieldGuard",
+          "parry"
+        ],
+        "defaultPalette": "power",
+        "guardedPalette": "mana"
+      },
+      "sizing": {
+        "restingGlow": {
+          "innerBlurPx": 2,
+          "outerBlurPx": 4,
+          "innerAlphaHex": "55",
+          "outerAlphaHex": "22"
+        },
+        "spread": 1.3,
+        "faded": {
+          "radius": 1,
+          "alpha": 0.26,
+          "blur": 3
+        },
+        "lit": {
+          "radius": 1.6,
+          "alpha": 0.8,
+          "blur": 5
+        }
+      }
+    },
+    "combatEffectPresentation": {
+      "behavior": {
+        "subtleEffects": [
+          "steelGlint",
+          "dustStep",
+          "focusMotes",
+          "guardPulse",
+          "weak",
+          "frail",
+          "resist",
+          "strength",
+          "dexterity"
+        ],
+        "layeredCardEffects": [
+          "slash",
+          "shieldBash",
+          "starbolt",
+          "bloodSlash"
+        ],
+        "auraEffects": [
+          "bloodAura",
+          "frostAura",
+          "poisonAura",
+          "sacredAura"
+        ],
+        "cardOpacity": {
+          "layered": 0.72,
+          "plain": 1
+        },
+        "treatments": {
+          "aura": {
+            "sizeScale": 1,
+            "opacity": 0.55,
+            "startScale": 0.92,
+            "endScale": 1.04
+          },
+          "subtle": {
+            "sizeScale": 0.72,
+            "opacity": 0.55,
+            "startScale": 0.9,
+            "endScale": 1.04
+          },
+          "full": {
+            "sizeScale": 1,
+            "opacity": 1,
+            "startScale": 0.65,
+            "endScale": 0.9
+          }
+        }
+      },
+      "layering": {
+        "cardEffectLayers": [
+          {
+            "id": "wake",
+            "plane": "behind",
+            "opacity": 0.44,
+            "scale": 1.95,
+            "x": 0.4,
+            "y": 0.35,
+            "mask": "linear-gradient(to right,#000 20%,#0009 55%,transparent 88%)"
+          },
+          {
+            "id": "edge",
+            "plane": "front",
+            "opacity": 0.66,
+            "scale": 1.65,
+            "x": 0.68,
+            "y": 0.35,
+            "mask": "linear-gradient(to right,transparent 24%,#0005 52%,#000 78%)"
+          }
+        ]
+      }
+    },
+    "combatPoseStates": {
+      "components": {
+        "poseStates": {
+          "prototypeGuardStance": {
+            "name": "Measured Guard",
+            "frame": "guard",
+            "fallback": "idle",
+            "color": "#8dc9ed",
+            "motif": "diamond"
+          },
+          "prototypeFocusStance": {
+            "name": "Astral Focus",
+            "frame": "guard",
+            "fallback": "idle",
+            "color": "#b8a5ff",
+            "motif": "constellation"
+          },
+          "prepared": {
+            "name": "Prepared",
+            "frame": "prepared",
+            "fallback": "guard",
+            "color": "#ccbaff",
+            "motif": "diamond"
+          },
+          "starstoneCharge": {
+            "name": "Starstone Charge",
+            "frame": "starstoneCharge",
+            "fallback": "guard",
+            "color": "#929fff",
+            "motif": "constellation"
+          },
+          "bloodRite": {
+            "name": "Blood Rite",
+            "frame": "bloodRite",
+            "fallback": "guard",
+            "color": "#df6274",
+            "motif": "halo"
+          },
+          "gorefire": {
+            "name": "Gorefire Stance",
+            "frame": "attack1",
+            "fallback": "guard",
+            "color": "#ef794b",
+            "motif": "halo"
+          },
+          "bulwark": {
+            "name": "Bulwark Stance",
+            "frame": "shieldGuard3",
+            "fallback": "guard",
+            "color": "#8dc9ed",
+            "motif": "diamond"
+          }
+        }
+      },
+      "behavior": {
+        "bloodRiteStatuses": [
+          "thornHalo",
+          "communion",
+          "lifeTithe",
+          "stigmata",
+          "zealotry",
+          "emberTide",
+          "harbingerOfBlight"
+        ]
+      }
+    },
+    "environments": {
+      "components": {
+        "regions": [
+          {
+            "id": "ashen-crown",
+            "name": "The Ashen Crown",
+            "atlas": "assets/environments/ashen-crown-combat.webp",
+            "map": "assets/environments/ashen-crown-map.webp",
+            "scenes": [
+              {
+                "id": "ashen-crown-1",
+                "name": "King’s Causeway",
+                "box": [
+                  0,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.5,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "ashen-crown-2",
+                "name": "Bell Court",
+                "box": [
+                  768,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.5,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "ashen-crown-3",
+                "name": "Ashfall Gardens",
+                "box": [
+                  0,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.4,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "ashen-crown-4",
+                "name": "Throne Undercroft",
+                "box": [
+                  768,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.44,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              }
+            ]
+          },
+          {
+            "id": "hollow-weald",
+            "name": "The Hollow Weald",
+            "atlas": "assets/environments/hollow-weald-combat.webp",
+            "map": "assets/environments/hollow-weald-map.webp",
+            "scenes": [
+              {
+                "id": "hollow-weald-1",
+                "name": "Lanternwood Crossing",
+                "box": [
+                  0,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.48,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "hollow-weald-2",
+                "name": "Drowned Hamlet",
+                "box": [
+                  768,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.5,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "hollow-weald-3",
+                "name": "Roots of the Elder",
+                "box": [
+                  0,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.42,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "hollow-weald-4",
+                "name": "Hunter’s Moon Clearing",
+                "box": [
+                  768,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.44,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              }
+            ]
+          },
+          {
+            "id": "pale-marches",
+            "name": "The Pale Marches",
+            "atlas": "assets/environments/pale-marches-combat.webp",
+            "map": "assets/environments/pale-marches-map.webp",
+            "scenes": [
+              {
+                "id": "pale-marches-1",
+                "name": "Frostgate Pass",
+                "box": [
+                  0,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.47,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "pale-marches-2",
+                "name": "Frozen Pilgrim Road",
+                "box": [
+                  768,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.48,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "pale-marches-3",
+                "name": "Monastery of Silence",
+                "box": [
+                  0,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.39,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "pale-marches-4",
+                "name": "The Glass Lake",
+                "box": [
+                  768,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.39,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              }
+            ]
+          },
+          {
+            "id": "cinder-reach",
+            "name": "The Cinder Reach",
+            "atlas": "assets/environments/cinder-reach-combat.webp",
+            "map": "assets/environments/cinder-reach-map.webp",
+            "scenes": [
+              {
+                "id": "cinder-reach-1",
+                "name": "Basalt Stair",
+                "box": [
+                  0,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.56,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "cinder-reach-2",
+                "name": "The Dead Foundry",
+                "box": [
+                  768,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.55,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "cinder-reach-3",
+                "name": "Caldera Rim",
+                "box": [
+                  0,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.41,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "cinder-reach-4",
+                "name": "Ember Mine Mouth",
+                "box": [
+                  768,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.43,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              }
+            ]
+          },
+          {
+            "id": "drowned-coast",
+            "name": "The Drowned Coast",
+            "atlas": "assets/environments/drowned-coast-combat.webp",
+            "map": "assets/environments/drowned-coast-map.webp",
+            "scenes": [
+              {
+                "id": "drowned-coast-1",
+                "name": "Tidebound Chapel",
+                "box": [
+                  0,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.51,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "drowned-coast-2",
+                "name": "The Salt Causeway",
+                "box": [
+                  768,
+                  0,
+                  768,
+                  512
+                ],
+                "floorStart": 0.47,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "drowned-coast-3",
+                "name": "Starwatch Terrace",
+                "box": [
+                  0,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.41,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              },
+              {
+                "id": "drowned-coast-4",
+                "name": "Grave of Ships",
+                "box": [
+                  768,
+                  512,
+                  768,
+                  512
+                ],
+                "floorStart": 0.36,
+                "fieldRatio": 0.6,
+                "groundAnchor": 0.76
+              }
+            ]
+          }
+        ],
+        "megaMaps": [
+          {
+            "id": "the-fractured-realm",
+            "name": "The Fractured Realm",
+            "map": "assets/environments/the-fractured-realm-world.webp"
+          },
+          {
+            "id": "the-shattered-gulf",
+            "name": "The Shattered Gulf",
+            "map": "assets/environments/the-shattered-gulf-world.webp"
+          },
+          {
+            "id": "the-fivefold-frontier",
+            "name": "The Fivefold Frontier",
+            "map": "assets/environments/the-fivefold-frontier-world.webp"
+          }
+        ]
+      },
+      "sizing": {
+        "atlasSize": [
+          1536,
+          1024
+        ],
+        "mapTerrainRevealRadius": 74
+      }
+    },
+    "localMapPresentation": {
+      "sizing": {
+        "defaults": {
+          "defaultZoom": 1.5,
+          "minZoom": 1,
+          "maxZoom": 5,
+          "zoomStep": 1.25,
+          "inspectionFactor": 1.3,
+          "dragThreshold": 7,
+          "panFraction": 0.18,
+          "focusDuration": 200,
+          "wheelSensitivity": 0.002
+        }
+      },
+      "behavior": {
+        "overrides": {}
+      }
+    },
+    "mapPresentation": {
+      "behavior": {
+        "presentation": {
+          "tileSize": 512,
+          "levels": [
+            512,
+            1024,
+            2048,
+            4096
+          ],
+          "pixelRatioCap": 1.5,
+          "concurrentLoads": 3,
+          "cacheTiles": 28,
+          "levelHysteresis": 0.15,
+          "atlasZoomMax": 40,
+          "routeWidth": 3,
+          "routeOutlineWidth": 6
+        }
+      },
+      "sizing": {
+        "closeNodeScale": 2
+      }
+    },
+    "paintedOutfits": {
+      "sizing": {
+        "stage": {
+          "canvas": 640,
+          "centerX": 320,
+          "floorY": 600,
+          "percent": 100
+        },
+        "defeated": {
+          "defaultScale": 1,
+          "transform": "translate(-50%,5.208333%)"
+        }
+      },
+      "motion": {
+        "blendMs": 140,
+        "immediateBlendThresholdMs": 30,
+        "transitionMs": 360,
+        "transitionMidpointMs": 180,
+        "auraFadeMs": 360,
+        "auraEasing": "ease-in-out",
+        "auraResumeEasing": "ease-out",
+        "pulseCycleMs": 4200,
+        "reactionMs": 260,
+        "defaultPlayMs": 260,
+        "minPlayMs": 60,
+        "fourStepSequenceLength": 4,
+        "fourStepOffsets": [
+          0.28,
+          0.55,
+          0.8
+        ]
+      },
+      "behavior": {
+        "restPose": "idle",
+        "defeatedPose": "defeated",
+        "guardedRestPoses": [
+          "guard",
+          "shieldGuard",
+          "parry"
+        ],
+        "guardAura": "guard",
+        "reactionResources": [
+          "hp",
+          "heal"
+        ],
+        "attackSequenceKey": "attack",
+        "defaultArmourId": "default",
+        "attackPoses": [
+          "attack1",
+          "attack2",
+          "attack3",
+          "attack4"
+        ]
+      },
+      "components": {
+        "aura": {
+          "viewBox": "0 0 120 140",
+          "svg": "<svg viewBox=\"0 0 120 140\"><g class=\"pose-diamond\"><path d=\"M60 8 78 28 60 48 42 28Z\"/><path d=\"M60 18 68 28 60 38 52 28Z\"/></g><g class=\"pose-constellation\"><path d=\"m25 38 30-23 30 20 16 33-40-11-34 27 7-46\"/><circle cx=\"25\" cy=\"38\" r=\"3\"/><circle cx=\"55\" cy=\"15\" r=\"4\"/><circle cx=\"85\" cy=\"35\" r=\"3\"/><circle cx=\"101\" cy=\"68\" r=\"3\"/><circle cx=\"61\" cy=\"57\" r=\"4\"/><circle cx=\"27\" cy=\"84\" r=\"3\"/></g><g class=\"pose-halo\"><circle cx=\"60\" cy=\"38\" r=\"30\" stroke-dasharray=\"35 11 20 12\"/><circle class=\"pose-halo-gold\" cx=\"60\" cy=\"38\" r=\"36\" stroke-dasharray=\"24 18 42 30\"/></g><ellipse class=\"pose-floor\" cx=\"60\" cy=\"128\" rx=\"42\" ry=\"8\"/></svg>"
+        }
+      }
+    },
+    "uiContent": {
+      "components": {
+        "nodeTypes": {
+          "monster": {
+            "icon": "⚔",
+            "name": "Monster",
+            "blurb": "A fight — cinders and a card reward."
+          },
+          "fight": {
+            "icon": "⚔",
+            "name": "Monster",
+            "blurb": "A fight — cinders and a card reward."
+          },
+          "elite": {
+            "icon": "☠",
+            "name": "Elite",
+            "blurb": "A hard fight. Drops a relic."
+          },
+          "boss": {
+            "icon": "👁",
+            "name": "Boss",
+            "blurb": "The act boss."
+          },
+          "shrine": {
+            "icon": "♨",
+            "name": "Shrine of Emberlight",
+            "blurb": "Rest (heal), smith an owned armament, or mend an ally."
+          },
+          "merchant": {
+            "icon": "⚖",
+            "name": "Merchant",
+            "blurb": "Cards, relics, flasks, card removal."
+          },
+          "treasure": {
+            "icon": "▣",
+            "name": "Treasure",
+            "blurb": "A relic, free."
+          },
+          "event": {
+            "icon": "?",
+            "name": "Unknown",
+            "blurb": "An event, a fight, a shrine… who can say."
+          },
+          "unknown": {
+            "icon": "?",
+            "name": "Unknown",
+            "blurb": "An event, a fight, a shrine… who can say."
+          }
+        },
+        "nodeTint": {
+          "elite": "var(--ember)",
+          "boss": "var(--ember)",
+          "shrine": "var(--gold)",
+          "merchant": "var(--grace)",
+          "treasure": "var(--gold)"
+        },
+        "actNames": {
+          "1": "ACT I — THE FALLOW MARCHES",
+          "2": "ACT II — THE STITCHED COURT",
+          "3": "ACT III — THE ASHEN CROWN"
+        },
+        "tierNumerals": [
+          "I",
+          "II",
+          "III",
+          "IV",
+          "V",
+          "VI",
+          "VII",
+          "VIII",
+          "IX"
+        ],
+        "padButtons": {
+          "0": {
+            "glyph": "A",
+            "name": "A"
+          },
+          "1": {
+            "glyph": "B",
+            "name": "B"
+          },
+          "2": {
+            "glyph": "X",
+            "name": "X"
+          },
+          "3": {
+            "glyph": "Y",
+            "name": "Y"
+          },
+          "4": {
+            "glyph": "LB",
+            "name": "LB"
+          },
+          "5": {
+            "glyph": "RB",
+            "name": "RB"
+          },
+          "6": {
+            "glyph": "LT",
+            "name": "LT"
+          },
+          "7": {
+            "glyph": "RT",
+            "name": "RT"
+          },
+          "8": {
+            "glyph": "Back",
+            "name": "Back"
+          },
+          "9": {
+            "glyph": "Start",
+            "name": "Start"
+          },
+          "10": {
+            "glyph": "L3",
+            "name": "L3"
+          },
+          "11": {
+            "glyph": "R3",
+            "name": "R3"
+          },
+          "12": {
+            "glyph": "▲",
+            "name": "D-Up"
+          },
+          "13": {
+            "glyph": "▼",
+            "name": "D-Down"
+          },
+          "14": {
+            "glyph": "◀",
+            "name": "D-Left"
+          },
+          "15": {
+            "glyph": "▶",
+            "name": "D-Right"
+          },
+          "16": {
+            "glyph": "⊙",
+            "name": "Guide"
+          }
+        },
+        "menuTabs": [
+          {
+            "id": "settings",
+            "label": "Settings",
+            "icon": "⚙",
+            "tip": "Display, audio, and accessibility."
+          },
+          {
+            "id": "controls",
+            "label": "Controls",
+            "icon": "⌨",
+            "tip": "Every key and pad button, and how to rebind them."
+          }
+        ],
+        "quickMenuRows": [
+          {
+            "act": "tab",
+            "tab": "settings",
+            "band": "navigation"
+          },
+          {
+            "act": "tab",
+            "tab": "controls",
+            "band": "navigation"
+          },
+          {
+            "act": "fullscreen",
+            "icon": "⛶",
+            "label": "Fullscreen",
+            "band": "comfort",
+            "control": "switch",
+            "tip": "Use the browser fullscreen owner; its live state is shared with Settings."
+          },
+          {
+            "act": "music",
+            "icon": "♫",
+            "label": "Music",
+            "band": "comfort",
+            "control": "switch",
+            "tip": "Turn music on or off without changing its volume, sound effects, or global mute."
+          },
+          {
+            "act": "inventory",
+            "icon": "▦",
+            "label": "Inventory",
+            "band": "armoury",
+            "tip": "Open carried weapons, armour, and items."
+          },
+          {
+            "act": "character",
+            "icon": "♟",
+            "label": "Character",
+            "band": "armoury",
+            "tip": "Open the compact character and vitality view."
+          },
+          {
+            "act": "load",
+            "icon": "↥",
+            "label": "Load",
+            "band": "run",
+            "tone": "danger",
+            "tip": "Replace unsaved progress with the active slot after confirmation."
+          },
+          {
+            "act": "save",
+            "icon": "💾",
+            "label": "Save",
+            "band": "run",
+            "tip": "Write the exact committed combat turn to this slot and stay here."
+          },
+          {
+            "act": "saveQuit",
+            "icon": "↯",
+            "label": "Save and Quit",
+            "band": "run",
+            "tip": "Write the exact committed combat turn, then return to the title."
+          },
+          {
+            "act": "quit",
+            "icon": "⏻",
+            "label": "Quit Without Saving",
+            "band": "run",
+            "tone": "danger",
+            "tip": "Discard changes since the last save and return to the title after confirmation."
+          }
+        ],
+        "intentIcons": {
+          "attack": "⚔",
+          "block": "🛡",
+          "buff": "↑",
+          "debuff": "☾",
+          "staggered": "✦",
+          "unknown": "?"
+        },
+        "intentBadges": {
+          "unknown": {
+            "cls": "unknown",
+            "tone": "",
+            "glyph": "",
+            "label": "?"
+          },
+          "staggered": {
+            "cls": "staggered",
+            "tone": "gold",
+            "glyph": "✦",
+            "label": "Staggered"
+          },
+          "attack": {
+            "cls": "attack",
+            "delayedCls": " delayed",
+            "tone": "danger",
+            "delayedSuffix": " ⌛"
+          },
+          "block": {
+            "cls": "block",
+            "tone": "frost"
+          },
+          "buff": {
+            "cls": "buff",
+            "tone": "gold",
+            "label": ""
+          },
+          "debuff": {
+            "cls": "debuff",
+            "tone": "violet",
+            "label": ""
+          }
+        },
+        "copy": {
+          "intentTooltips": {
+            "unknown": "<div class=\"tt-title\">Intent: Unknown</div>",
+            "staggered": "<div class=\"tt-title\">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.",
+            "attack": "<div class=\"tt-title\">Intent: Attack</div>Attacking {victim} for <b>{damage}{extra}</b> damage (modifiers included).",
+            "attackMultiplier": " × {hits}{total}",
+            "attackTotal": " ({totalDamage} total)",
+            "committed": "<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.",
+            "delayed": "<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.",
+            "block": "<div class=\"tt-title\">Intent: Defend</div>Gaining Block.",
+            "buff": "<div class=\"tt-title\">Intent: Buff</div>Strengthening itself.",
+            "debuff": "<div class=\"tt-title\">Intent: Debuff</div>Hindering {victim}.",
+            "defaultVictim": "you"
+          },
+          "status": {
+            "turnSingular": "turn",
+            "turnPlural": "turns",
+            "durationJoiner": " · ",
+            "turnsLeft": " Turns left: {duration}.",
+            "percentLabel": "{name} {value}{duration}",
+            "stackLabel": "{name} ×{value}",
+            "defaultValueToken": "stacks",
+            "percentValueToken": "percent"
+          },
+          "actTitle": {
+            "tiered": "ACT {tier} — {seat}",
+            "numbered": "ACT {act}",
+            "cycleSuffix": " · CYCLE {cycle}"
+          },
+          "armamentKindFallbackSuffix": "S",
+          "padGlyphFallback": "B{button}",
+          "padNameFallback": "Btn {button}",
+          "padNameUnbound": "—",
+          "nodeIconFallback": "?"
+        }
+      },
+      "behavior": {
+        "bands": [
+          "navigation",
+          "comfort",
+          "armoury",
+          "run"
+        ],
+        "menuActs": [
+          "tab",
+          "fullscreen",
+          "music",
+          "inventory",
+          "character",
+          "load",
+          "save",
+          "saveQuit",
+          "quit"
+        ],
+        "armamentKindLabels": {
+          "weapon": "WEAPONS",
+          "shield": "SHIELDS",
+          "staff": "STAVES"
+        },
+        "parchmentExt": ".svg",
+        "lockCopy": {
+          "unearned": "Not yet earned.",
+          "unfound": "Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them."
+        },
+        "percentScale": 100
       }
     }
   }

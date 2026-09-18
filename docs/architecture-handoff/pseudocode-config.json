@@ -118,6 +118,10 @@
     "value_2": {
       "value": 2,
       "unit": "count"
+    },
+    "value_4": {
+      "value": 4,
+      "unit": "count"
     }
   }
 }

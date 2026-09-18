@@ -507,7 +507,8 @@
         "minOpacity": 0.85,
         "brightness": 0.8,
         "saturation": 0.7
-      }
+      },
+      "minGapPx": 24
     },
     "entrance": [
       {
@@ -559,7 +560,8 @@
       },
       "responseMaxLines": 2,
       "overflow": "the band scrolls only when responses exceed maxVisibleResponses",
-      "speakerName": "shown under the speaking portrait, not in the band"
+      "speakerName": "shown under the speaking portrait, not in the band",
+      "titleClearsLineBox": true
     }
   }
 }

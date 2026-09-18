@@ -1,0 +1,344 @@
+{
+  "vars": {
+    "paneWidth": 768,
+    "paneHeight": 512,
+    "atlasWidth": {
+      "numerator": "$paneWidth",
+      "denominator": 0.5
+    },
+    "atlasHeight": {
+      "numerator": "$paneHeight",
+      "denominator": 0.5
+    },
+    "fieldRatio": 0.6,
+    "groundAnchor": 0.76
+  },
+  "components": {
+    "regions": [
+      {
+        "id": "ashen-crown",
+        "name": "The Ashen Crown",
+        "atlas": "assets/environments/ashen-crown-combat.webp",
+        "map": "assets/environments/ashen-crown-map.webp",
+        "scenes": [
+          {
+            "id": "ashen-crown-1",
+            "name": "King’s Causeway",
+            "box": [
+              0,
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.5,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "ashen-crown-2",
+            "name": "Bell Court",
+            "box": [
+              "$paneWidth",
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.5,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "ashen-crown-3",
+            "name": "Ashfall Gardens",
+            "box": [
+              0,
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.4,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "ashen-crown-4",
+            "name": "Throne Undercroft",
+            "box": [
+              "$paneWidth",
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.44,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          }
+        ]
+      },
+      {
+        "id": "hollow-weald",
+        "name": "The Hollow Weald",
+        "atlas": "assets/environments/hollow-weald-combat.webp",
+        "map": "assets/environments/hollow-weald-map.webp",
+        "scenes": [
+          {
+            "id": "hollow-weald-1",
+            "name": "Lanternwood Crossing",
+            "box": [
+              0,
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.48,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "hollow-weald-2",
+            "name": "Drowned Hamlet",
+            "box": [
+              "$paneWidth",
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.5,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "hollow-weald-3",
+            "name": "Roots of the Elder",
+            "box": [
+              0,
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.42,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "hollow-weald-4",
+            "name": "Hunter’s Moon Clearing",
+            "box": [
+              "$paneWidth",
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.44,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          }
+        ]
+      },
+      {
+        "id": "pale-marches",
+        "name": "The Pale Marches",
+        "atlas": "assets/environments/pale-marches-combat.webp",
+        "map": "assets/environments/pale-marches-map.webp",
+        "scenes": [
+          {
+            "id": "pale-marches-1",
+            "name": "Frostgate Pass",
+            "box": [
+              0,
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.47,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "pale-marches-2",
+            "name": "Frozen Pilgrim Road",
+            "box": [
+              "$paneWidth",
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.48,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "pale-marches-3",
+            "name": "Monastery of Silence",
+            "box": [
+              0,
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.39,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "pale-marches-4",
+            "name": "The Glass Lake",
+            "box": [
+              "$paneWidth",
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.39,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          }
+        ]
+      },
+      {
+        "id": "cinder-reach",
+        "name": "The Cinder Reach",
+        "atlas": "assets/environments/cinder-reach-combat.webp",
+        "map": "assets/environments/cinder-reach-map.webp",
+        "scenes": [
+          {
+            "id": "cinder-reach-1",
+            "name": "Basalt Stair",
+            "box": [
+              0,
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.56,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "cinder-reach-2",
+            "name": "The Dead Foundry",
+            "box": [
+              "$paneWidth",
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.55,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "cinder-reach-3",
+            "name": "Caldera Rim",
+            "box": [
+              0,
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.41,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "cinder-reach-4",
+            "name": "Ember Mine Mouth",
+            "box": [
+              "$paneWidth",
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.43,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          }
+        ]
+      },
+      {
+        "id": "drowned-coast",
+        "name": "The Drowned Coast",
+        "atlas": "assets/environments/drowned-coast-combat.webp",
+        "map": "assets/environments/drowned-coast-map.webp",
+        "scenes": [
+          {
+            "id": "drowned-coast-1",
+            "name": "Tidebound Chapel",
+            "box": [
+              0,
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.51,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "drowned-coast-2",
+            "name": "The Salt Causeway",
+            "box": [
+              "$paneWidth",
+              0,
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.47,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "drowned-coast-3",
+            "name": "Starwatch Terrace",
+            "box": [
+              0,
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.41,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          },
+          {
+            "id": "drowned-coast-4",
+            "name": "Grave of Ships",
+            "box": [
+              "$paneWidth",
+              "$paneHeight",
+              "$paneWidth",
+              "$paneHeight"
+            ],
+            "floorStart": 0.36,
+            "fieldRatio": "$fieldRatio",
+            "groundAnchor": "$groundAnchor"
+          }
+        ]
+      }
+    ],
+    "megaMaps": [
+      {
+        "id": "the-fractured-realm",
+        "name": "The Fractured Realm",
+        "map": "assets/environments/the-fractured-realm-world.webp"
+      },
+      {
+        "id": "the-shattered-gulf",
+        "name": "The Shattered Gulf",
+        "map": "assets/environments/the-shattered-gulf-world.webp"
+      },
+      {
+        "id": "the-fivefold-frontier",
+        "name": "The Fivefold Frontier",
+        "map": "assets/environments/the-fivefold-frontier-world.webp"
+      }
+    ]
+  },
+  "sizing": {
+    "atlasSize": [
+      "$atlasWidth",
+      "$atlasHeight"
+    ],
+    "mapTerrainRevealRadius": 74
+  }
+}

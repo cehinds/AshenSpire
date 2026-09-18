@@ -30,9 +30,17 @@ One JSON file per subject. The folder decides where the file appears in
 | `ui/scenes/w4c-dialogue.json` | `uiConfig.scenes.w4c` | dialogue: bands, portraits, context, footer, layers, entrance |
 | `ui/components/<name>.json` | `uiConfig.components.<name>` | a part shared by several screens (card, buttons, tooltip, HUD …) |
 | `ui/screens/<name>.json` | `uiConfig.screens.<name>` | one screen's own layout (armoury, shop, smith) |
+| `ui/presentation/<name>.json` | `uiConfig.presentation.<name>` | a presentation table a src/ module used to hold as JS (map tiles, pose states, animation families, art anchors, environments, menus) |
 
 A scene file's key is the text before its first `-`: `w4a-combat.json` is
-`scenes.w4a`. Components and screens use the whole file name.
+`scenes.w4a`. Components, screens and presentation files use the whole file name.
+
+A `presentation/` file is named for the module that reads it —
+`presentation/mapPresentation.json` is read by `src/content/mapPresentation.js` —
+so the JSON and its shim are findable from either end. Those modules keep their
+exports and their reasoning and hold no numbers of their own;
+`tests/config-migration.test.mjs` proves both, against a fixture captured before
+the tables moved.
 
 `components/dialogueFrame.json` holds the two pre-W4c dialogue numbers
 (`portraitShare`, `sceneMinRem`) that `DialogueModel` still reads through
@@ -92,8 +100,8 @@ Files in `scenes/` also have to satisfy the W4 contract:
 
 ## Adding a file
 
-1. Put it in `ui/scenes/`, `ui/components/` or `ui/screens/`, using only the
-   sections above.
+1. Put it in `ui/scenes/`, `ui/components/`, `ui/screens/` or
+   `ui/presentation/`, using only the sections above.
 2. Run `node tools/config-build.mjs`.
 3. Read it from `uiConfig` (`src/config/generated/ui.js`).
 4. Commit the JSON and the regenerated module together.

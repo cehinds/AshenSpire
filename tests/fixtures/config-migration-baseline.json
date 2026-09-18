@@ -1,0 +1,6652 @@
+{
+  "src/ui/uiContent.js": {
+    "exports": {
+      "ACT_NAMES": {
+        "__keys": [
+          "1",
+          "2",
+          "3"
+        ],
+        "frozen": false,
+        "values": {
+          "1": {
+            "__string": "ACT I — THE FALLOW MARCHES"
+          },
+          "2": {
+            "__string": "ACT II — THE STITCHED COURT"
+          },
+          "3": {
+            "__string": "ACT III — THE ASHEN CROWN"
+          }
+        }
+      },
+      "ACT_NAME_COUNT": {
+        "__number": "3"
+      },
+      "BACKDROP_ACTS": {
+        "__number": "3"
+      },
+      "INTENT_ICONS": {
+        "__keys": [
+          "attack",
+          "block",
+          "buff",
+          "debuff",
+          "staggered",
+          "unknown"
+        ],
+        "frozen": false,
+        "values": {
+          "attack": {
+            "__string": "⚔"
+          },
+          "block": {
+            "__string": "🛡"
+          },
+          "buff": {
+            "__string": "↑"
+          },
+          "debuff": {
+            "__string": "☾"
+          },
+          "staggered": {
+            "__string": "✦"
+          },
+          "unknown": {
+            "__string": "?"
+          }
+        }
+      },
+      "LOCK_COPY": {
+        "__keys": [
+          "unearned",
+          "unfound"
+        ],
+        "frozen": true,
+        "values": {
+          "unearned": {
+            "__string": "Not yet earned."
+          },
+          "unfound": {
+            "__string": "Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them."
+          }
+        }
+      },
+      "MENU": {
+        "__keys": [
+          "map",
+          "combat",
+          "overlay"
+        ],
+        "frozen": false,
+        "values": {
+          "map": {
+            "__array": [
+              {
+                "__keys": [
+                  "act",
+                  "tab",
+                  "band"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "tab"
+                  },
+                  "tab": {
+                    "__string": "settings"
+                  },
+                  "band": {
+                    "__string": "navigation"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "tab",
+                  "band"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "tab"
+                  },
+                  "tab": {
+                    "__string": "controls"
+                  },
+                  "band": {
+                    "__string": "navigation"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "control",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "fullscreen"
+                  },
+                  "icon": {
+                    "__string": "⛶"
+                  },
+                  "label": {
+                    "__string": "Fullscreen"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "control": {
+                    "__string": "switch"
+                  },
+                  "tip": {
+                    "__string": "Use the browser fullscreen owner; its live state is shared with Settings."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "control",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "music"
+                  },
+                  "icon": {
+                    "__string": "♫"
+                  },
+                  "label": {
+                    "__string": "Music"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "control": {
+                    "__string": "switch"
+                  },
+                  "tip": {
+                    "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "inventory"
+                  },
+                  "icon": {
+                    "__string": "▦"
+                  },
+                  "label": {
+                    "__string": "Inventory"
+                  },
+                  "band": {
+                    "__string": "armoury"
+                  },
+                  "tip": {
+                    "__string": "Open carried weapons, armour, and items."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "character"
+                  },
+                  "icon": {
+                    "__string": "♟"
+                  },
+                  "label": {
+                    "__string": "Character"
+                  },
+                  "band": {
+                    "__string": "armoury"
+                  },
+                  "tip": {
+                    "__string": "Open the compact character and vitality view."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tone",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "load"
+                  },
+                  "icon": {
+                    "__string": "↥"
+                  },
+                  "label": {
+                    "__string": "Load"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tone": {
+                    "__string": "danger"
+                  },
+                  "tip": {
+                    "__string": "Replace unsaved progress with the active slot after confirmation."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "save"
+                  },
+                  "icon": {
+                    "__string": "💾"
+                  },
+                  "label": {
+                    "__string": "Save"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tip": {
+                    "__string": "Write the exact committed combat turn to this slot and stay here."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "saveQuit"
+                  },
+                  "icon": {
+                    "__string": "↯"
+                  },
+                  "label": {
+                    "__string": "Save and Quit"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tip": {
+                    "__string": "Write the exact committed combat turn, then return to the title."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tone",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "quit"
+                  },
+                  "icon": {
+                    "__string": "⏻"
+                  },
+                  "label": {
+                    "__string": "Quit Without Saving"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tone": {
+                    "__string": "danger"
+                  },
+                  "tip": {
+                    "__string": "Discard changes since the last save and return to the title after confirmation."
+                  }
+                }
+              }
+            ],
+            "frozen": false
+          },
+          "combat": {
+            "__array": [
+              {
+                "__keys": [
+                  "act",
+                  "tab",
+                  "band"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "tab"
+                  },
+                  "tab": {
+                    "__string": "settings"
+                  },
+                  "band": {
+                    "__string": "navigation"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "tab",
+                  "band"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "tab"
+                  },
+                  "tab": {
+                    "__string": "controls"
+                  },
+                  "band": {
+                    "__string": "navigation"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "control",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "fullscreen"
+                  },
+                  "icon": {
+                    "__string": "⛶"
+                  },
+                  "label": {
+                    "__string": "Fullscreen"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "control": {
+                    "__string": "switch"
+                  },
+                  "tip": {
+                    "__string": "Use the browser fullscreen owner; its live state is shared with Settings."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "control",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "music"
+                  },
+                  "icon": {
+                    "__string": "♫"
+                  },
+                  "label": {
+                    "__string": "Music"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "control": {
+                    "__string": "switch"
+                  },
+                  "tip": {
+                    "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "inventory"
+                  },
+                  "icon": {
+                    "__string": "▦"
+                  },
+                  "label": {
+                    "__string": "Inventory"
+                  },
+                  "band": {
+                    "__string": "armoury"
+                  },
+                  "tip": {
+                    "__string": "Open carried weapons, armour, and items."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "character"
+                  },
+                  "icon": {
+                    "__string": "♟"
+                  },
+                  "label": {
+                    "__string": "Character"
+                  },
+                  "band": {
+                    "__string": "armoury"
+                  },
+                  "tip": {
+                    "__string": "Open the compact character and vitality view."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tone",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "load"
+                  },
+                  "icon": {
+                    "__string": "↥"
+                  },
+                  "label": {
+                    "__string": "Load"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tone": {
+                    "__string": "danger"
+                  },
+                  "tip": {
+                    "__string": "Replace unsaved progress with the active slot after confirmation."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "save"
+                  },
+                  "icon": {
+                    "__string": "💾"
+                  },
+                  "label": {
+                    "__string": "Save"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tip": {
+                    "__string": "Write the exact committed combat turn to this slot and stay here."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "saveQuit"
+                  },
+                  "icon": {
+                    "__string": "↯"
+                  },
+                  "label": {
+                    "__string": "Save and Quit"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tip": {
+                    "__string": "Write the exact committed combat turn, then return to the title."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tone",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "quit"
+                  },
+                  "icon": {
+                    "__string": "⏻"
+                  },
+                  "label": {
+                    "__string": "Quit Without Saving"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tone": {
+                    "__string": "danger"
+                  },
+                  "tip": {
+                    "__string": "Discard changes since the last save and return to the title after confirmation."
+                  }
+                }
+              }
+            ],
+            "frozen": false
+          },
+          "overlay": {
+            "__array": [
+              {
+                "__keys": [
+                  "act",
+                  "tab",
+                  "band"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "tab"
+                  },
+                  "tab": {
+                    "__string": "settings"
+                  },
+                  "band": {
+                    "__string": "navigation"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "tab",
+                  "band"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "tab"
+                  },
+                  "tab": {
+                    "__string": "controls"
+                  },
+                  "band": {
+                    "__string": "navigation"
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "control",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "fullscreen"
+                  },
+                  "icon": {
+                    "__string": "⛶"
+                  },
+                  "label": {
+                    "__string": "Fullscreen"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "control": {
+                    "__string": "switch"
+                  },
+                  "tip": {
+                    "__string": "Use the browser fullscreen owner; its live state is shared with Settings."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "control",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "music"
+                  },
+                  "icon": {
+                    "__string": "♫"
+                  },
+                  "label": {
+                    "__string": "Music"
+                  },
+                  "band": {
+                    "__string": "comfort"
+                  },
+                  "control": {
+                    "__string": "switch"
+                  },
+                  "tip": {
+                    "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "inventory"
+                  },
+                  "icon": {
+                    "__string": "▦"
+                  },
+                  "label": {
+                    "__string": "Inventory"
+                  },
+                  "band": {
+                    "__string": "armoury"
+                  },
+                  "tip": {
+                    "__string": "Open carried weapons, armour, and items."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "character"
+                  },
+                  "icon": {
+                    "__string": "♟"
+                  },
+                  "label": {
+                    "__string": "Character"
+                  },
+                  "band": {
+                    "__string": "armoury"
+                  },
+                  "tip": {
+                    "__string": "Open the compact character and vitality view."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tone",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "load"
+                  },
+                  "icon": {
+                    "__string": "↥"
+                  },
+                  "label": {
+                    "__string": "Load"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tone": {
+                    "__string": "danger"
+                  },
+                  "tip": {
+                    "__string": "Replace unsaved progress with the active slot after confirmation."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "save"
+                  },
+                  "icon": {
+                    "__string": "💾"
+                  },
+                  "label": {
+                    "__string": "Save"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tip": {
+                    "__string": "Write the exact committed combat turn to this slot and stay here."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "saveQuit"
+                  },
+                  "icon": {
+                    "__string": "↯"
+                  },
+                  "label": {
+                    "__string": "Save and Quit"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tip": {
+                    "__string": "Write the exact committed combat turn, then return to the title."
+                  }
+                }
+              },
+              {
+                "__keys": [
+                  "act",
+                  "icon",
+                  "label",
+                  "band",
+                  "tone",
+                  "tip"
+                ],
+                "frozen": false,
+                "values": {
+                  "act": {
+                    "__string": "quit"
+                  },
+                  "icon": {
+                    "__string": "⏻"
+                  },
+                  "label": {
+                    "__string": "Quit Without Saving"
+                  },
+                  "band": {
+                    "__string": "run"
+                  },
+                  "tone": {
+                    "__string": "danger"
+                  },
+                  "tip": {
+                    "__string": "Discard changes since the last save and return to the title after confirmation."
+                  }
+                }
+              }
+            ],
+            "frozen": false
+          }
+        }
+      },
+      "MENU_ACTS": {
+        "__array": [
+          {
+            "__string": "tab"
+          },
+          {
+            "__string": "fullscreen"
+          },
+          {
+            "__string": "music"
+          },
+          {
+            "__string": "inventory"
+          },
+          {
+            "__string": "character"
+          },
+          {
+            "__string": "load"
+          },
+          {
+            "__string": "save"
+          },
+          {
+            "__string": "saveQuit"
+          },
+          {
+            "__string": "quit"
+          }
+        ],
+        "frozen": false
+      },
+      "MENU_TABS": {
+        "__array": [
+          {
+            "__keys": [
+              "id",
+              "label",
+              "icon",
+              "tip"
+            ],
+            "frozen": false,
+            "values": {
+              "id": {
+                "__string": "settings"
+              },
+              "label": {
+                "__string": "Settings"
+              },
+              "icon": {
+                "__string": "⚙"
+              },
+              "tip": {
+                "__string": "Display, audio, and accessibility."
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "label",
+              "icon",
+              "tip"
+            ],
+            "frozen": false,
+            "values": {
+              "id": {
+                "__string": "controls"
+              },
+              "label": {
+                "__string": "Controls"
+              },
+              "icon": {
+                "__string": "⌨"
+              },
+              "tip": {
+                "__string": "Every key and pad button, and how to rebind them."
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "NODE_TINT": {
+        "__keys": [
+          "elite",
+          "boss",
+          "shrine",
+          "merchant",
+          "treasure"
+        ],
+        "frozen": false,
+        "values": {
+          "elite": {
+            "__string": "var(--ember)"
+          },
+          "boss": {
+            "__string": "var(--ember)"
+          },
+          "shrine": {
+            "__string": "var(--gold)"
+          },
+          "merchant": {
+            "__string": "var(--grace)"
+          },
+          "treasure": {
+            "__string": "var(--gold)"
+          }
+        }
+      },
+      "NODE_TYPES": {
+        "__keys": [
+          "monster",
+          "fight",
+          "elite",
+          "boss",
+          "shrine",
+          "merchant",
+          "treasure",
+          "event",
+          "unknown"
+        ],
+        "frozen": false,
+        "values": {
+          "monster": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "⚔"
+              },
+              "name": {
+                "__string": "Monster"
+              },
+              "blurb": {
+                "__string": "A fight — cinders and a card reward."
+              }
+            }
+          },
+          "fight": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "⚔"
+              },
+              "name": {
+                "__string": "Monster"
+              },
+              "blurb": {
+                "__string": "A fight — cinders and a card reward."
+              }
+            }
+          },
+          "elite": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "☠"
+              },
+              "name": {
+                "__string": "Elite"
+              },
+              "blurb": {
+                "__string": "A hard fight. Drops a relic."
+              }
+            }
+          },
+          "boss": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "👁"
+              },
+              "name": {
+                "__string": "Boss"
+              },
+              "blurb": {
+                "__string": "The act boss."
+              }
+            }
+          },
+          "shrine": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "♨"
+              },
+              "name": {
+                "__string": "Shrine of Emberlight"
+              },
+              "blurb": {
+                "__string": "Rest (heal), smith an owned armament, or mend an ally."
+              }
+            }
+          },
+          "merchant": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "⚖"
+              },
+              "name": {
+                "__string": "Merchant"
+              },
+              "blurb": {
+                "__string": "Cards, relics, flasks, card removal."
+              }
+            }
+          },
+          "treasure": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "▣"
+              },
+              "name": {
+                "__string": "Treasure"
+              },
+              "blurb": {
+                "__string": "A relic, free."
+              }
+            }
+          },
+          "event": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "?"
+              },
+              "name": {
+                "__string": "Unknown"
+              },
+              "blurb": {
+                "__string": "An event, a fight, a shrine… who can say."
+              }
+            }
+          },
+          "unknown": {
+            "__keys": [
+              "icon",
+              "name",
+              "blurb"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "?"
+              },
+              "name": {
+                "__string": "Unknown"
+              },
+              "blurb": {
+                "__string": "An event, a fight, a shrine… who can say."
+              }
+            }
+          }
+        }
+      },
+      "PAD_BUTTONS": {
+        "__keys": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "4",
+          "5",
+          "6",
+          "7",
+          "8",
+          "9",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16"
+        ],
+        "frozen": false,
+        "values": {
+          "0": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "A"
+              },
+              "name": {
+                "__string": "A"
+              }
+            }
+          },
+          "1": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "B"
+              },
+              "name": {
+                "__string": "B"
+              }
+            }
+          },
+          "2": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "X"
+              },
+              "name": {
+                "__string": "X"
+              }
+            }
+          },
+          "3": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "Y"
+              },
+              "name": {
+                "__string": "Y"
+              }
+            }
+          },
+          "4": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "LB"
+              },
+              "name": {
+                "__string": "LB"
+              }
+            }
+          },
+          "5": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "RB"
+              },
+              "name": {
+                "__string": "RB"
+              }
+            }
+          },
+          "6": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "LT"
+              },
+              "name": {
+                "__string": "LT"
+              }
+            }
+          },
+          "7": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "RT"
+              },
+              "name": {
+                "__string": "RT"
+              }
+            }
+          },
+          "8": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "Back"
+              },
+              "name": {
+                "__string": "Back"
+              }
+            }
+          },
+          "9": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "Start"
+              },
+              "name": {
+                "__string": "Start"
+              }
+            }
+          },
+          "10": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "L3"
+              },
+              "name": {
+                "__string": "L3"
+              }
+            }
+          },
+          "11": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "R3"
+              },
+              "name": {
+                "__string": "R3"
+              }
+            }
+          },
+          "12": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "▲"
+              },
+              "name": {
+                "__string": "D-Up"
+              }
+            }
+          },
+          "13": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "▼"
+              },
+              "name": {
+                "__string": "D-Down"
+              }
+            }
+          },
+          "14": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "◀"
+              },
+              "name": {
+                "__string": "D-Left"
+              }
+            }
+          },
+          "15": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "▶"
+              },
+              "name": {
+                "__string": "D-Right"
+              }
+            }
+          },
+          "16": {
+            "__keys": [
+              "glyph",
+              "name"
+            ],
+            "frozen": false,
+            "values": {
+              "glyph": {
+                "__string": "⊙"
+              },
+              "name": {
+                "__string": "Guide"
+              }
+            }
+          }
+        }
+      },
+      "PARCHMENT_ACTS": {
+        "__number": "3"
+      },
+      "PARCHMENT_EXT": {
+        "__string": ".svg"
+      },
+      "actPlate": {
+        "__function": "actPlate",
+        "length": 2
+      },
+      "actTitle": {
+        "__function": "actTitle",
+        "length": 1
+      },
+      "armamentKindLabel": {
+        "__function": "armamentKindLabel",
+        "length": 1
+      },
+      "backdropClass": {
+        "__function": "backdropClass",
+        "length": 1
+      },
+      "intentBadge": {
+        "__function": "intentBadge",
+        "length": 1
+      },
+      "intentTooltip": {
+        "__function": "intentTooltip",
+        "length": 1
+      },
+      "legendEntries": {
+        "__function": "legendEntries",
+        "length": 0
+      },
+      "menuRows": {
+        "__function": "menuRows",
+        "length": 1
+      },
+      "menuTabRefs": {
+        "__function": "menuTabRefs",
+        "length": 0
+      },
+      "menuTabs": {
+        "__function": "menuTabs",
+        "length": 0
+      },
+      "nodeBlurb": {
+        "__function": "nodeBlurb",
+        "length": 1
+      },
+      "nodeIcon": {
+        "__function": "nodeIcon",
+        "length": 1
+      },
+      "nodeName": {
+        "__function": "nodeName",
+        "length": 1
+      },
+      "padGlyph": {
+        "__function": "padGlyph",
+        "length": 1
+      },
+      "padName": {
+        "__function": "padName",
+        "length": 1
+      },
+      "parchmentAsset": {
+        "__function": "parchmentAsset",
+        "length": 1
+      },
+      "parchmentClass": {
+        "__function": "parchmentClass",
+        "length": 1
+      },
+      "statusInstancePresentation": {
+        "__function": "statusInstancePresentation",
+        "length": 2
+      },
+      "statusInstanceSemanticAttrs": {
+        "__function": "statusInstanceSemanticAttrs",
+        "length": 1
+      },
+      "statusTooltipText": {
+        "__function": "statusTooltipText",
+        "length": 1
+      }
+    },
+    "probes": {
+      "nodeIcon([\"boss\"])": {
+        "__string": "👁"
+      },
+      "nodeIcon([\"nope\"])": {
+        "__string": "?"
+      },
+      "nodeName([\"shrine\"])": {
+        "__string": "Shrine of Emberlight"
+      },
+      "nodeBlurb([\"event\"])": {
+        "__string": "An event, a fight, a shrine… who can say."
+      },
+      "legendEntries([])": {
+        "__array": [
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "⚔"
+              },
+              "name": {
+                "__string": "Monster"
+              },
+              "tint": {
+                "__string": ""
+              }
+            }
+          },
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "☠"
+              },
+              "name": {
+                "__string": "Elite"
+              },
+              "tint": {
+                "__string": "var(--ember)"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "👁"
+              },
+              "name": {
+                "__string": "Boss"
+              },
+              "tint": {
+                "__string": "var(--ember)"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "♨"
+              },
+              "name": {
+                "__string": "Shrine of Emberlight"
+              },
+              "tint": {
+                "__string": "var(--gold)"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "⚖"
+              },
+              "name": {
+                "__string": "Merchant"
+              },
+              "tint": {
+                "__string": "var(--grace)"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "▣"
+              },
+              "name": {
+                "__string": "Treasure"
+              },
+              "tint": {
+                "__string": "var(--gold)"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "icon",
+              "name",
+              "tint"
+            ],
+            "frozen": false,
+            "values": {
+              "icon": {
+                "__string": "?"
+              },
+              "name": {
+                "__string": "Unknown"
+              },
+              "tint": {
+                "__string": ""
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "actTitle([1])": {
+        "__string": "ACT I — THE FALLOW MARCHES"
+      },
+      "actTitle([2])": {
+        "__string": "ACT II — THE STITCHED COURT"
+      },
+      "actTitle([7])": {
+        "__string": "ACT I — THE FALLOW MARCHES · CYCLE 3"
+      },
+      "actTitle([4,\"The Pale Marches\"])": {
+        "__string": "ACT I — THE PALE MARCHES · CYCLE 2"
+      },
+      "actPlate([7,3])": {
+        "__number": "1"
+      },
+      "actPlate([0,3])": {
+        "__number": "1"
+      },
+      "actPlate([5,0])": {
+        "__number": "1"
+      },
+      "backdropClass([4])": {
+        "__string": "backdrop act-1"
+      },
+      "parchmentAsset([5])": {
+        "__string": "assets/map/parchment_act2.svg"
+      },
+      "parchmentClass([2])": {
+        "__string": "parch-2"
+      },
+      "padGlyph([0])": {
+        "__string": "A"
+      },
+      "padGlyph([99])": {
+        "__string": "B99"
+      },
+      "padName([14])": {
+        "__string": "D-Left"
+      },
+      "padName([null])": {
+        "__string": "—"
+      },
+      "padName([99])": {
+        "__string": "Btn 99"
+      },
+      "armamentKindLabel([\"staff\"])": {
+        "__string": "STAVES"
+      },
+      "armamentKindLabel([\"weapon\"])": {
+        "__string": "WEAPONS"
+      },
+      "menuTabRefs([])": {
+        "__array": [
+          {
+            "__string": "settings"
+          },
+          {
+            "__string": "controls"
+          }
+        ],
+        "frozen": false
+      },
+      "menuTabs([{}])": {
+        "__array": [
+          {
+            "__keys": [
+              "id",
+              "label",
+              "icon",
+              "tip"
+            ],
+            "frozen": false,
+            "values": {
+              "id": {
+                "__string": "settings"
+              },
+              "label": {
+                "__string": "Settings"
+              },
+              "icon": {
+                "__string": "⚙"
+              },
+              "tip": {
+                "__string": "Display, audio, and accessibility."
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "label",
+              "icon",
+              "tip"
+            ],
+            "frozen": false,
+            "values": {
+              "id": {
+                "__string": "controls"
+              },
+              "label": {
+                "__string": "Controls"
+              },
+              "icon": {
+                "__string": "⌨"
+              },
+              "tip": {
+                "__string": "Every key and pad button, and how to rebind them."
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "menuTabs([{\"hasSave\":false}])": {
+        "__array": [
+          {
+            "__keys": [
+              "id",
+              "label",
+              "icon",
+              "tip"
+            ],
+            "frozen": false,
+            "values": {
+              "id": {
+                "__string": "settings"
+              },
+              "label": {
+                "__string": "Settings"
+              },
+              "icon": {
+                "__string": "⚙"
+              },
+              "tip": {
+                "__string": "Display, audio, and accessibility."
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "label",
+              "icon",
+              "tip"
+            ],
+            "frozen": false,
+            "values": {
+              "id": {
+                "__string": "controls"
+              },
+              "label": {
+                "__string": "Controls"
+              },
+              "icon": {
+                "__string": "⌨"
+              },
+              "tip": {
+                "__string": "Every key and pad button, and how to rebind them."
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "menuRows([\"map\",{}])": {
+        "__array": [
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "tab"
+              },
+              "tab": {
+                "__string": "settings"
+              },
+              "icon": {
+                "__string": "⚙"
+              },
+              "label": {
+                "__string": "Settings"
+              },
+              "tip": {
+                "__string": "Display, audio, and accessibility."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "tab"
+              },
+              "tab": {
+                "__string": "controls"
+              },
+              "icon": {
+                "__string": "⌨"
+              },
+              "label": {
+                "__string": "Controls"
+              },
+              "tip": {
+                "__string": "Every key and pad button, and how to rebind them."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "fullscreen"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "⛶"
+              },
+              "label": {
+                "__string": "Fullscreen"
+              },
+              "tip": {
+                "__string": "Use the browser fullscreen owner; its live state is shared with Settings."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": "switch"
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "music"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "♫"
+              },
+              "label": {
+                "__string": "Music"
+              },
+              "tip": {
+                "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": "switch"
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "inventory"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "▦"
+              },
+              "label": {
+                "__string": "Inventory"
+              },
+              "tip": {
+                "__string": "Open carried weapons, armour, and items."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "character"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "♟"
+              },
+              "label": {
+                "__string": "Character"
+              },
+              "tip": {
+                "__string": "Open the compact character and vitality view."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "load"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "↥"
+              },
+              "label": {
+                "__string": "Load"
+              },
+              "tip": {
+                "__string": "Replace unsaved progress with the active slot after confirmation."
+              },
+              "tone": {
+                "__string": "danger"
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "save"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "💾"
+              },
+              "label": {
+                "__string": "Save"
+              },
+              "tip": {
+                "__string": "Write the exact committed combat turn to this slot and stay here."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "saveQuit"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "↯"
+              },
+              "label": {
+                "__string": "Save and Quit"
+              },
+              "tip": {
+                "__string": "Write the exact committed combat turn, then return to the title."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "quit"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "⏻"
+              },
+              "label": {
+                "__string": "Quit Without Saving"
+              },
+              "tip": {
+                "__string": "Discard changes since the last save and return to the title after confirmation."
+              },
+              "tone": {
+                "__string": "danger"
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "menuRows([\"combat\",{\"current\":\"settings\"}])": {
+        "__array": [
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "tab"
+              },
+              "tab": {
+                "__string": "settings"
+              },
+              "icon": {
+                "__string": "⚙"
+              },
+              "label": {
+                "__string": "Settings"
+              },
+              "tip": {
+                "__string": "Display, audio, and accessibility."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": true
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "tab"
+              },
+              "tab": {
+                "__string": "controls"
+              },
+              "icon": {
+                "__string": "⌨"
+              },
+              "label": {
+                "__string": "Controls"
+              },
+              "tip": {
+                "__string": "Every key and pad button, and how to rebind them."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "fullscreen"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "⛶"
+              },
+              "label": {
+                "__string": "Fullscreen"
+              },
+              "tip": {
+                "__string": "Use the browser fullscreen owner; its live state is shared with Settings."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": "switch"
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "music"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "♫"
+              },
+              "label": {
+                "__string": "Music"
+              },
+              "tip": {
+                "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": "switch"
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "inventory"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "▦"
+              },
+              "label": {
+                "__string": "Inventory"
+              },
+              "tip": {
+                "__string": "Open carried weapons, armour, and items."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "character"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "♟"
+              },
+              "label": {
+                "__string": "Character"
+              },
+              "tip": {
+                "__string": "Open the compact character and vitality view."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "load"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "↥"
+              },
+              "label": {
+                "__string": "Load"
+              },
+              "tip": {
+                "__string": "Replace unsaved progress with the active slot after confirmation."
+              },
+              "tone": {
+                "__string": "danger"
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "save"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "💾"
+              },
+              "label": {
+                "__string": "Save"
+              },
+              "tip": {
+                "__string": "Write the exact committed combat turn to this slot and stay here."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "saveQuit"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "↯"
+              },
+              "label": {
+                "__string": "Save and Quit"
+              },
+              "tip": {
+                "__string": "Write the exact committed combat turn, then return to the title."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "quit"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "⏻"
+              },
+              "label": {
+                "__string": "Quit Without Saving"
+              },
+              "tip": {
+                "__string": "Discard changes since the last save and return to the title after confirmation."
+              },
+              "tone": {
+                "__string": "danger"
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "menuRows([\"overlay\",{\"fixedEnds\":false,\"hasSave\":false}])": {
+        "__array": [
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "tab"
+              },
+              "tab": {
+                "__string": "settings"
+              },
+              "icon": {
+                "__string": "⚙"
+              },
+              "label": {
+                "__string": "Settings"
+              },
+              "tip": {
+                "__string": "Display, audio, and accessibility."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "tab"
+              },
+              "tab": {
+                "__string": "controls"
+              },
+              "icon": {
+                "__string": "⌨"
+              },
+              "label": {
+                "__string": "Controls"
+              },
+              "tip": {
+                "__string": "Every key and pad button, and how to rebind them."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "fullscreen"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "⛶"
+              },
+              "label": {
+                "__string": "Fullscreen"
+              },
+              "tip": {
+                "__string": "Use the browser fullscreen owner; its live state is shared with Settings."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": "switch"
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "music"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "♫"
+              },
+              "label": {
+                "__string": "Music"
+              },
+              "tip": {
+                "__string": "Turn music on or off without changing its volume, sound effects, or global mute."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": "switch"
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "inventory"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "▦"
+              },
+              "label": {
+                "__string": "Inventory"
+              },
+              "tip": {
+                "__string": "Open carried weapons, armour, and items."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "character"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "♟"
+              },
+              "label": {
+                "__string": "Character"
+              },
+              "tip": {
+                "__string": "Open the compact character and vitality view."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "load"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "↥"
+              },
+              "label": {
+                "__string": "Load"
+              },
+              "tip": {
+                "__string": "Replace unsaved progress with the active slot after confirmation."
+              },
+              "tone": {
+                "__string": "danger"
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "save"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "💾"
+              },
+              "label": {
+                "__string": "Save"
+              },
+              "tip": {
+                "__string": "Write the exact committed combat turn to this slot and stay here."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "saveQuit"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "↯"
+              },
+              "label": {
+                "__string": "Save and Quit"
+              },
+              "tip": {
+                "__string": "Write the exact committed combat turn, then return to the title."
+              },
+              "tone": {
+                "__string": ""
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          },
+          {
+            "__keys": [
+              "act",
+              "tab",
+              "icon",
+              "label",
+              "tip",
+              "tone",
+              "badge",
+              "on",
+              "control",
+              "sep"
+            ],
+            "frozen": false,
+            "values": {
+              "act": {
+                "__string": "quit"
+              },
+              "tab": null,
+              "icon": {
+                "__string": "⏻"
+              },
+              "label": {
+                "__string": "Quit Without Saving"
+              },
+              "tip": {
+                "__string": "Discard changes since the last save and return to the title after confirmation."
+              },
+              "tone": {
+                "__string": "danger"
+              },
+              "badge": {
+                "__string": ""
+              },
+              "on": {
+                "__boolean": false
+              },
+              "control": {
+                "__string": ""
+              },
+              "sep": {
+                "__boolean": false
+              }
+            }
+          }
+        ],
+        "frozen": false
+      },
+      "intentBadge([{\"kind\":\"unknown\"}])": {
+        "__keys": [
+          "cls",
+          "tone",
+          "glyph",
+          "label"
+        ],
+        "frozen": false,
+        "values": {
+          "cls": {
+            "__string": "unknown"
+          },
+          "tone": {
+            "__string": ""
+          },
+          "glyph": {
+            "__string": ""
+          },
+          "label": {
+            "__string": "?"
+          }
+        }
+      },
+      "intentBadge([{\"kind\":\"staggered\"}])": {
+        "__keys": [
+          "cls",
+          "tone",
+          "glyph",
+          "label"
+        ],
+        "frozen": false,
+        "values": {
+          "cls": {
+            "__string": "staggered"
+          },
+          "tone": {
+            "__string": "gold"
+          },
+          "glyph": {
+            "__string": "✦"
+          },
+          "label": {
+            "__string": "Staggered"
+          }
+        }
+      },
+      "intentBadge([{\"damage\":5,\"hits\":2,\"delayed\":true}])": {
+        "__keys": [
+          "cls",
+          "tone",
+          "glyph",
+          "label",
+          "dashed"
+        ],
+        "frozen": false,
+        "values": {
+          "cls": {
+            "__string": "attack delayed"
+          },
+          "tone": {
+            "__string": "danger"
+          },
+          "glyph": {
+            "__string": "⚔"
+          },
+          "label": {
+            "__string": "5×2 ⌛"
+          },
+          "dashed": {
+            "__boolean": true
+          }
+        }
+      },
+      "intentBadge([{\"block\":4}])": {
+        "__keys": [
+          "cls",
+          "tone",
+          "glyph",
+          "label"
+        ],
+        "frozen": false,
+        "values": {
+          "cls": {
+            "__string": "block"
+          },
+          "tone": {
+            "__string": "frost"
+          },
+          "glyph": {
+            "__string": "🛡"
+          },
+          "label": {
+            "__string": "4"
+          }
+        }
+      },
+      "intentBadge([{\"kind\":\"buff\"}])": {
+        "__keys": [
+          "cls",
+          "tone",
+          "glyph",
+          "label"
+        ],
+        "frozen": false,
+        "values": {
+          "cls": {
+            "__string": "buff"
+          },
+          "tone": {
+            "__string": "gold"
+          },
+          "glyph": {
+            "__string": "↑"
+          },
+          "label": {
+            "__string": ""
+          }
+        }
+      },
+      "intentBadge([{\"kind\":\"debuff\"}])": {
+        "__keys": [
+          "cls",
+          "tone",
+          "glyph",
+          "label"
+        ],
+        "frozen": false,
+        "values": {
+          "cls": {
+            "__string": "debuff"
+          },
+          "tone": {
+            "__string": "violet"
+          },
+          "glyph": {
+            "__string": "☾"
+          },
+          "label": {
+            "__string": ""
+          }
+        }
+      },
+      "intentTooltip([{\"kind\":\"unknown\"}])": {
+        "__string": "<div class=\"tt-title\">Intent: Unknown</div>"
+      },
+      "intentTooltip([{\"kind\":\"staggered\"}])": {
+        "__string": "<div class=\"tt-title\">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage."
+      },
+      "intentTooltip([{\"damage\":5,\"hits\":2,\"totalDamage\":10,\"pending\":true}])": {
+        "__string": "<div class=\"tt-title\">Intent: Attack</div>Attacking you for <b>5 × 2 (10 total)</b> damage (modifiers included).<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it."
+      },
+      "intentTooltip([{\"damage\":5,\"hits\":1,\"delayed\":true},{\"victim\":\"each hero\"}])": {
+        "__string": "<div class=\"tt-title\">Intent: Attack</div>Attacking each hero for <b>5</b> damage (modifiers included).<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it."
+      },
+      "intentTooltip([{\"block\":3}])": {
+        "__string": "<div class=\"tt-title\">Intent: Defend</div>Gaining Block."
+      },
+      "intentTooltip([{\"kind\":\"buff\"}])": {
+        "__string": "<div class=\"tt-title\">Intent: Buff</div>Strengthening itself."
+      },
+      "intentTooltip([{\"kind\":\"debuff\"},{\"victim\":\"each hero\"}])": {
+        "__string": "<div class=\"tt-title\">Intent: Debuff</div>Hindering each hero."
+      }
+    }
+  },
+  "src/content/mapPresentation.js": {
+    "exports": {
+      "MAP_CLOSE_NODE_SCALE": {
+        "__number": "2"
+      },
+      "MAP_PRESENTATION": {
+        "__keys": [
+          "tileSize",
+          "levels",
+          "pixelRatioCap",
+          "concurrentLoads",
+          "cacheTiles",
+          "levelHysteresis",
+          "atlasZoomMax",
+          "routeWidth",
+          "routeOutlineWidth"
+        ],
+        "frozen": true,
+        "values": {
+          "tileSize": {
+            "__number": "512"
+          },
+          "levels": {
+            "__array": [
+              {
+                "__number": "512"
+              },
+              {
+                "__number": "1024"
+              },
+              {
+                "__number": "2048"
+              },
+              {
+                "__number": "4096"
+              }
+            ],
+            "frozen": false
+          },
+          "pixelRatioCap": {
+            "__number": "1.5"
+          },
+          "concurrentLoads": {
+            "__number": "3"
+          },
+          "cacheTiles": {
+            "__number": "28"
+          },
+          "levelHysteresis": {
+            "__number": "0.15"
+          },
+          "atlasZoomMax": {
+            "__number": "40"
+          },
+          "routeWidth": {
+            "__number": "3"
+          },
+          "routeOutlineWidth": {
+            "__number": "6"
+          }
+        }
+      }
+    },
+    "probes": {}
+  },
+  "src/content/localMapPresentation.js": {
+    "exports": {
+      "localMapPolicy": {
+        "__function": "localMapPolicy",
+        "length": 1
+      }
+    },
+    "probes": {
+      "localMapPolicy([])": {
+        "__keys": [
+          "defaultZoom",
+          "minZoom",
+          "maxZoom",
+          "zoomStep",
+          "inspectionFactor",
+          "dragThreshold",
+          "panFraction",
+          "focusDuration",
+          "wheelSensitivity"
+        ],
+        "frozen": false,
+        "values": {
+          "defaultZoom": {
+            "__number": "1.5"
+          },
+          "minZoom": {
+            "__number": "1"
+          },
+          "maxZoom": {
+            "__number": "5"
+          },
+          "zoomStep": {
+            "__number": "1.25"
+          },
+          "inspectionFactor": {
+            "__number": "1.3"
+          },
+          "dragThreshold": {
+            "__number": "7"
+          },
+          "panFraction": {
+            "__number": "0.18"
+          },
+          "focusDuration": {
+            "__number": "200"
+          },
+          "wheelSensitivity": {
+            "__number": "0.002"
+          }
+        }
+      },
+      "localMapPolicy([\"ashen-crown\"])": {
+        "__keys": [
+          "defaultZoom",
+          "minZoom",
+          "maxZoom",
+          "zoomStep",
+          "inspectionFactor",
+          "dragThreshold",
+          "panFraction",
+          "focusDuration",
+          "wheelSensitivity"
+        ],
+        "frozen": false,
+        "values": {
+          "defaultZoom": {
+            "__number": "1.5"
+          },
+          "minZoom": {
+            "__number": "1"
+          },
+          "maxZoom": {
+            "__number": "5"
+          },
+          "zoomStep": {
+            "__number": "1.25"
+          },
+          "inspectionFactor": {
+            "__number": "1.3"
+          },
+          "dragThreshold": {
+            "__number": "7"
+          },
+          "panFraction": {
+            "__number": "0.18"
+          },
+          "focusDuration": {
+            "__number": "200"
+          },
+          "wheelSensitivity": {
+            "__number": "0.002"
+          }
+        }
+      }
+    }
+  },
+  "src/content/combatEffectPresentation.js": {
+    "exports": {
+      "CARD_EFFECT_LAYERS": {
+        "__array": [
+          {
+            "__keys": [
+              "id",
+              "plane",
+              "opacity",
+              "scale",
+              "x",
+              "y",
+              "mask"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "wake"
+              },
+              "plane": {
+                "__string": "behind"
+              },
+              "opacity": {
+                "__number": "0.44"
+              },
+              "scale": {
+                "__number": "1.95"
+              },
+              "x": {
+                "__number": "0.4"
+              },
+              "y": {
+                "__number": "0.35"
+              },
+              "mask": {
+                "__string": "linear-gradient(to right,#000 20%,#0009 55%,transparent 88%)"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "plane",
+              "opacity",
+              "scale",
+              "x",
+              "y",
+              "mask"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "edge"
+              },
+              "plane": {
+                "__string": "front"
+              },
+              "opacity": {
+                "__number": "0.66"
+              },
+              "scale": {
+                "__number": "1.65"
+              },
+              "x": {
+                "__number": "0.68"
+              },
+              "y": {
+                "__number": "0.35"
+              },
+              "mask": {
+                "__string": "linear-gradient(to right,transparent 24%,#0005 52%,#000 78%)"
+              }
+            }
+          }
+        ],
+        "frozen": true
+      },
+      "LAYERED_CARD_EFFECTS": {
+        "__array": [
+          {
+            "__string": "slash"
+          },
+          {
+            "__string": "shieldBash"
+          },
+          {
+            "__string": "starbolt"
+          },
+          {
+            "__string": "bloodSlash"
+          }
+        ],
+        "frozen": true
+      },
+      "SUBTLE_COMBAT_EFFECTS": {
+        "__array": [
+          {
+            "__string": "steelGlint"
+          },
+          {
+            "__string": "dustStep"
+          },
+          {
+            "__string": "focusMotes"
+          },
+          {
+            "__string": "guardPulse"
+          },
+          {
+            "__string": "weak"
+          },
+          {
+            "__string": "frail"
+          },
+          {
+            "__string": "resist"
+          },
+          {
+            "__string": "strength"
+          },
+          {
+            "__string": "dexterity"
+          }
+        ],
+        "frozen": true
+      },
+      "combatEffectOpacity": {
+        "__function": "combatEffectOpacity",
+        "length": 1
+      },
+      "combatEffectPresentation": {
+        "__function": "combatEffectPresentation",
+        "length": 1
+      }
+    },
+    "probes": {
+      "combatEffectPresentation([\"slash\"])": {
+        "__keys": [
+          "sizeScale",
+          "opacity",
+          "startScale",
+          "endScale"
+        ],
+        "frozen": false,
+        "values": {
+          "sizeScale": {
+            "__number": "1"
+          },
+          "opacity": {
+            "__number": "0.72"
+          },
+          "startScale": {
+            "__number": "0.65"
+          },
+          "endScale": {
+            "__number": "0.9"
+          }
+        }
+      },
+      "combatEffectPresentation([\"steelGlint\"])": {
+        "__keys": [
+          "sizeScale",
+          "opacity",
+          "startScale",
+          "endScale"
+        ],
+        "frozen": false,
+        "values": {
+          "sizeScale": {
+            "__number": "0.72"
+          },
+          "opacity": {
+            "__number": "0.55"
+          },
+          "startScale": {
+            "__number": "0.9"
+          },
+          "endScale": {
+            "__number": "1.04"
+          }
+        }
+      },
+      "combatEffectPresentation([\"bloodAura\"])": {
+        "__keys": [
+          "sizeScale",
+          "opacity",
+          "startScale",
+          "endScale"
+        ],
+        "frozen": false,
+        "values": {
+          "sizeScale": {
+            "__number": "1"
+          },
+          "opacity": {
+            "__number": "0.55"
+          },
+          "startScale": {
+            "__number": "0.92"
+          },
+          "endScale": {
+            "__number": "1.04"
+          }
+        }
+      },
+      "combatEffectPresentation([\"unknownKind\"])": {
+        "__keys": [
+          "sizeScale",
+          "opacity",
+          "startScale",
+          "endScale"
+        ],
+        "frozen": false,
+        "values": {
+          "sizeScale": {
+            "__number": "1"
+          },
+          "opacity": {
+            "__number": "1"
+          },
+          "startScale": {
+            "__number": "0.65"
+          },
+          "endScale": {
+            "__number": "0.9"
+          }
+        }
+      },
+      "combatEffectOpacity([\"slash\"])": {
+        "__number": "0.72"
+      },
+      "combatEffectOpacity([\"steelGlint\"])": {
+        "__number": "1"
+      }
+    }
+  },
+  "src/content/combatPoseStates.js": {
+    "exports": {
+      "BLOOD_RITE_STATUSES": {
+        "__array": [
+          {
+            "__string": "thornHalo"
+          },
+          {
+            "__string": "communion"
+          },
+          {
+            "__string": "lifeTithe"
+          },
+          {
+            "__string": "stigmata"
+          },
+          {
+            "__string": "zealotry"
+          },
+          {
+            "__string": "emberTide"
+          },
+          {
+            "__string": "harbingerOfBlight"
+          }
+        ],
+        "frozen": true
+      },
+      "COMBAT_POSE_STATES": {
+        "__keys": [
+          "prototypeGuardStance",
+          "prototypeFocusStance",
+          "prepared",
+          "starstoneCharge",
+          "bloodRite",
+          "gorefire",
+          "bulwark"
+        ],
+        "frozen": true,
+        "values": {
+          "prototypeGuardStance": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Measured Guard"
+              },
+              "frame": {
+                "__string": "guard"
+              },
+              "fallback": {
+                "__string": "idle"
+              },
+              "color": {
+                "__string": "#8dc9ed"
+              },
+              "motif": {
+                "__string": "diamond"
+              }
+            }
+          },
+          "prototypeFocusStance": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Astral Focus"
+              },
+              "frame": {
+                "__string": "guard"
+              },
+              "fallback": {
+                "__string": "idle"
+              },
+              "color": {
+                "__string": "#b8a5ff"
+              },
+              "motif": {
+                "__string": "constellation"
+              }
+            }
+          },
+          "prepared": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Prepared"
+              },
+              "frame": {
+                "__string": "prepared"
+              },
+              "fallback": {
+                "__string": "guard"
+              },
+              "color": {
+                "__string": "#ccbaff"
+              },
+              "motif": {
+                "__string": "diamond"
+              }
+            }
+          },
+          "starstoneCharge": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Starstone Charge"
+              },
+              "frame": {
+                "__string": "starstoneCharge"
+              },
+              "fallback": {
+                "__string": "guard"
+              },
+              "color": {
+                "__string": "#929fff"
+              },
+              "motif": {
+                "__string": "constellation"
+              }
+            }
+          },
+          "bloodRite": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Blood Rite"
+              },
+              "frame": {
+                "__string": "bloodRite"
+              },
+              "fallback": {
+                "__string": "guard"
+              },
+              "color": {
+                "__string": "#df6274"
+              },
+              "motif": {
+                "__string": "halo"
+              }
+            }
+          },
+          "gorefire": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Gorefire Stance"
+              },
+              "frame": {
+                "__string": "attack1"
+              },
+              "fallback": {
+                "__string": "guard"
+              },
+              "color": {
+                "__string": "#ef794b"
+              },
+              "motif": {
+                "__string": "halo"
+              }
+            }
+          },
+          "bulwark": {
+            "__keys": [
+              "name",
+              "frame",
+              "fallback",
+              "color",
+              "motif"
+            ],
+            "frozen": false,
+            "values": {
+              "name": {
+                "__string": "Bulwark Stance"
+              },
+              "frame": {
+                "__string": "shieldGuard3"
+              },
+              "fallback": {
+                "__string": "guard"
+              },
+              "color": {
+                "__string": "#8dc9ed"
+              },
+              "motif": {
+                "__string": "diamond"
+              }
+            }
+          }
+        }
+      }
+    },
+    "probes": {}
+  },
+  "src/content/actionAnimations.js": {
+    "exports": {
+      "ACTION_ANIMATION_ACTORS": {
+        "__keys": [
+          "reaver",
+          "rogue",
+          "starseer",
+          "herald",
+          "wanderingSoldier",
+          "blightHound",
+          "fellWarden",
+          "lanternMoth",
+          "briarHermit",
+          "chainScavenger",
+          "bellKeeper",
+          "thornMatriarch",
+          "mirrorScribe",
+          "stitchCrab",
+          "glassRegent",
+          "marrowOrganist",
+          "cinderMantis",
+          "eclipseCantor",
+          "furnaceSaint",
+          "hollowAstronomer",
+          "ashheartDragon"
+        ],
+        "frozen": true,
+        "values": {
+          "reaver": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": {
+                "__string": "reaver"
+              },
+              "tempo": {
+                "__number": "1.12"
+              },
+              "reach": {
+                "__number": "1.1"
+              },
+              "actions": {
+                "__keys": [
+                  "dodgeRoll",
+                  "defend",
+                  "strike"
+                ],
+                "frozen": true,
+                "values": {
+                  "dodgeRoll": {
+                    "__string": "dodge"
+                  },
+                  "defend": {
+                    "__string": "guard"
+                  },
+                  "strike": {
+                    "__string": "slash"
+                  }
+                }
+              }
+            }
+          },
+          "rogue": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": {
+                "__string": "rogue"
+              },
+              "tempo": {
+                "__number": "0.78"
+              },
+              "reach": {
+                "__number": "1.15"
+              },
+              "actions": {
+                "__keys": [
+                  "dodgeRoll",
+                  "defend",
+                  "strike"
+                ],
+                "frozen": true,
+                "values": {
+                  "dodgeRoll": {
+                    "__string": "dodge"
+                  },
+                  "defend": {
+                    "__string": "guard"
+                  },
+                  "strike": {
+                    "__string": "thrust"
+                  }
+                }
+              }
+            }
+          },
+          "starseer": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": {
+                "__string": "starseer"
+              },
+              "tempo": {
+                "__number": "1.05"
+              },
+              "reach": {
+                "__number": "0.75"
+              },
+              "actions": {
+                "__keys": [
+                  "dodgeRoll",
+                  "defend"
+                ],
+                "frozen": true,
+                "values": {
+                  "dodgeRoll": {
+                    "__string": "dodge"
+                  },
+                  "defend": {
+                    "__string": "guard"
+                  }
+                }
+              }
+            }
+          },
+          "herald": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": {
+                "__string": "herald"
+              },
+              "tempo": {
+                "__number": "1.15"
+              },
+              "reach": {
+                "__number": "0.8"
+              },
+              "actions": {
+                "__keys": [
+                  "dodgeRoll",
+                  "defend"
+                ],
+                "frozen": true,
+                "values": {
+                  "dodgeRoll": {
+                    "__string": "dodge"
+                  },
+                  "defend": {
+                    "__string": "guard"
+                  }
+                }
+              }
+            }
+          },
+          "wanderingSoldier": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1"
+              },
+              "reach": {
+                "__number": "0.9"
+              },
+              "actions": {
+                "__keys": [
+                  "slash",
+                  "guard",
+                  "warcry"
+                ],
+                "frozen": true,
+                "values": {
+                  "slash": {
+                    "__string": "slash"
+                  },
+                  "guard": {
+                    "__string": "guard"
+                  },
+                  "warcry": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "blightHound": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "0.72"
+              },
+              "reach": {
+                "__number": "1.25"
+              },
+              "actions": {
+                "__keys": [
+                  "bite",
+                  "lunge"
+                ],
+                "frozen": true,
+                "values": {
+                  "bite": {
+                    "__string": "strike"
+                  },
+                  "lunge": {
+                    "__string": "thrust"
+                  }
+                }
+              }
+            }
+          },
+          "fellWarden": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.3"
+              },
+              "reach": {
+                "__number": "1.15"
+              },
+              "actions": {
+                "__keys": [
+                  "caneStrike",
+                  "hammerToss",
+                  "heldBlade",
+                  "twinDaggers"
+                ],
+                "frozen": true,
+                "values": {
+                  "caneStrike": {
+                    "__string": "strike"
+                  },
+                  "hammerToss": {
+                    "__string": "projectile"
+                  },
+                  "heldBlade": {
+                    "__string": "slash"
+                  },
+                  "twinDaggers": {
+                    "__string": "thrust"
+                  }
+                }
+              }
+            }
+          },
+          "lanternMoth": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "0.68"
+              },
+              "reach": {
+                "__number": "0.55"
+              },
+              "actions": {
+                "__keys": [
+                  "lanternDust",
+                  "wingSparks"
+                ],
+                "frozen": true,
+                "values": {
+                  "lanternDust": {
+                    "__string": "spell"
+                  },
+                  "wingSparks": {
+                    "__string": "projectile"
+                  }
+                }
+              }
+            }
+          },
+          "briarHermit": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.18"
+              },
+              "reach": {
+                "__number": "0.65"
+              },
+              "actions": {
+                "__keys": [
+                  "rootShelter",
+                  "briarCast",
+                  "sapMend"
+                ],
+                "frozen": true,
+                "values": {
+                  "rootShelter": {
+                    "__string": "guard"
+                  },
+                  "briarCast": {
+                    "__string": "projectile"
+                  },
+                  "sapMend": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "chainScavenger": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "0.95"
+              },
+              "reach": {
+                "__number": "1.25"
+              },
+              "actions": {
+                "__keys": [
+                  "hookCast",
+                  "chainSnare",
+                  "draggingBlow"
+                ],
+                "frozen": true,
+                "values": {
+                  "hookCast": {
+                    "__string": "projectile"
+                  },
+                  "chainSnare": {
+                    "__string": "spell"
+                  },
+                  "draggingBlow": {
+                    "__string": "strike"
+                  }
+                }
+              }
+            }
+          },
+          "bellKeeper": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.4"
+              },
+              "reach": {
+                "__number": "0.85"
+              },
+              "actions": {
+                "__keys": [
+                  "bronzeToll",
+                  "clapperSwing",
+                  "muffledPrayer",
+                  "crackedPeal"
+                ],
+                "frozen": true,
+                "values": {
+                  "bronzeToll": {
+                    "__string": "spell"
+                  },
+                  "clapperSwing": {
+                    "__string": "slash"
+                  },
+                  "muffledPrayer": {
+                    "__string": "guard"
+                  },
+                  "crackedPeal": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "thornMatriarch": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.3"
+              },
+              "reach": {
+                "__number": "0.8"
+              },
+              "actions": {
+                "__keys": [
+                  "rootCrown",
+                  "thornNeedles",
+                  "entwiningRoots"
+                ],
+                "frozen": true,
+                "values": {
+                  "rootCrown": {
+                    "__string": "guard"
+                  },
+                  "thornNeedles": {
+                    "__string": "projectile"
+                  },
+                  "entwiningRoots": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "mirrorScribe": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "0.9"
+              },
+              "reach": {
+                "__number": "0.6"
+              },
+              "actions": {
+                "__keys": [
+                  "silverScript",
+                  "shardVolley",
+                  "polishedWard"
+                ],
+                "frozen": true,
+                "values": {
+                  "silverScript": {
+                    "__string": "spell"
+                  },
+                  "shardVolley": {
+                    "__string": "projectile"
+                  },
+                  "polishedWard": {
+                    "__string": "guard"
+                  }
+                }
+              }
+            }
+          },
+          "stitchCrab": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "0.75"
+              },
+              "reach": {
+                "__number": "0.85"
+              },
+              "actions": {
+                "__keys": [
+                  "shellFold",
+                  "seamShears",
+                  "scuttleRush"
+                ],
+                "frozen": true,
+                "values": {
+                  "shellFold": {
+                    "__string": "guard"
+                  },
+                  "seamShears": {
+                    "__string": "slash"
+                  },
+                  "scuttleRush": {
+                    "__string": "thrust"
+                  }
+                }
+              }
+            }
+          },
+          "glassRegent": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.02"
+              },
+              "reach": {
+                "__number": "1.2"
+              },
+              "actions": {
+                "__keys": [
+                  "prismGuard",
+                  "crystalRapier",
+                  "splinterRain",
+                  "shatteredCourt"
+                ],
+                "frozen": true,
+                "values": {
+                  "prismGuard": {
+                    "__string": "guard"
+                  },
+                  "crystalRapier": {
+                    "__string": "thrust"
+                  },
+                  "splinterRain": {
+                    "__string": "projectile"
+                  },
+                  "shatteredCourt": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "marrowOrganist": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.35"
+              },
+              "reach": {
+                "__number": "0.55"
+              },
+              "actions": {
+                "__keys": [
+                  "bonePrelude",
+                  "ivoryKeys",
+                  "funeralChord",
+                  "quietRefrain"
+                ],
+                "frozen": true,
+                "values": {
+                  "bonePrelude": {
+                    "__string": "spell"
+                  },
+                  "ivoryKeys": {
+                    "__string": "projectile"
+                  },
+                  "funeralChord": {
+                    "__string": "spell"
+                  },
+                  "quietRefrain": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "cinderMantis": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "0.7"
+              },
+              "reach": {
+                "__number": "1.3"
+              },
+              "actions": {
+                "__keys": [
+                  "scythePair",
+                  "emberPounce",
+                  "foldedBlades"
+                ],
+                "frozen": true,
+                "values": {
+                  "scythePair": {
+                    "__string": "slash"
+                  },
+                  "emberPounce": {
+                    "__string": "thrust"
+                  },
+                  "foldedBlades": {
+                    "__string": "guard"
+                  }
+                }
+              }
+            }
+          },
+          "eclipseCantor": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.1"
+              },
+              "reach": {
+                "__number": "0.5"
+              },
+              "actions": {
+                "__keys": [
+                  "darkHymn",
+                  "lunarRay",
+                  "fadingEcho"
+                ],
+                "frozen": true,
+                "values": {
+                  "darkHymn": {
+                    "__string": "spell"
+                  },
+                  "lunarRay": {
+                    "__string": "projectile"
+                  },
+                  "fadingEcho": {
+                    "__string": "spell"
+                  }
+                }
+              }
+            }
+          },
+          "furnaceSaint": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.45"
+              },
+              "reach": {
+                "__number": "1.05"
+              },
+              "actions": {
+                "__keys": [
+                  "openFurnace",
+                  "censerSweep",
+                  "coolingAsh"
+                ],
+                "frozen": true,
+                "values": {
+                  "openFurnace": {
+                    "__string": "projectile"
+                  },
+                  "censerSweep": {
+                    "__string": "slash"
+                  },
+                  "coolingAsh": {
+                    "__string": "guard"
+                  }
+                }
+              }
+            }
+          },
+          "hollowAstronomer": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.25"
+              },
+              "reach": {
+                "__number": "0.7"
+              },
+              "actions": {
+                "__keys": [
+                  "starChart",
+                  "orbitalShards",
+                  "totalEclipse",
+                  "fallingHeavens"
+                ],
+                "frozen": true,
+                "values": {
+                  "starChart": {
+                    "__string": "spell"
+                  },
+                  "orbitalShards": {
+                    "__string": "projectile"
+                  },
+                  "totalEclipse": {
+                    "__string": "spell"
+                  },
+                  "fallingHeavens": {
+                    "__string": "projectile"
+                  }
+                }
+              }
+            }
+          },
+          "ashheartDragon": {
+            "__keys": [
+              "spriteClass",
+              "tempo",
+              "reach",
+              "actions"
+            ],
+            "frozen": true,
+            "values": {
+              "spriteClass": null,
+              "tempo": {
+                "__number": "1.2"
+              },
+              "reach": {
+                "__number": "1.4"
+              },
+              "actions": {
+                "__keys": [
+                  "obsidianClaws",
+                  "tailBastion",
+                  "heartRumble",
+                  "ashBreath"
+                ],
+                "frozen": true,
+                "values": {
+                  "obsidianClaws": {
+                    "__string": "slash"
+                  },
+                  "tailBastion": {
+                    "__string": "guard"
+                  },
+                  "heartRumble": {
+                    "__string": "spell"
+                  },
+                  "ashBreath": {
+                    "__string": "projectile"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ACTION_ANIMATION_FAMILIES": {
+        "__keys": [
+          "neutral",
+          "slash",
+          "thrust",
+          "strike",
+          "projectile",
+          "spell",
+          "guard",
+          "dodge"
+        ],
+        "frozen": true,
+        "values": {
+          "neutral": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "idle"
+              },
+              "motion": {
+                "__string": "settle"
+              }
+            }
+          },
+          "slash": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "attack1"
+              },
+              "motion": {
+                "__string": "sweep"
+              }
+            }
+          },
+          "thrust": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "attack2"
+              },
+              "motion": {
+                "__string": "lunge"
+              }
+            }
+          },
+          "strike": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "attack3"
+              },
+              "motion": {
+                "__string": "impact"
+              }
+            }
+          },
+          "projectile": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "attack4"
+              },
+              "motion": {
+                "__string": "release"
+              }
+            }
+          },
+          "spell": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "guard"
+              },
+              "motion": {
+                "__string": "cast"
+              }
+            }
+          },
+          "guard": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "guard"
+              },
+              "motion": {
+                "__string": "brace"
+              }
+            }
+          },
+          "dodge": {
+            "__keys": [
+              "pose",
+              "motion"
+            ],
+            "frozen": true,
+            "values": {
+              "pose": {
+                "__string": "idle"
+              },
+              "motion": {
+                "__string": "sidestep"
+              }
+            }
+          }
+        }
+      },
+      "ACTION_ANIMATION_TAGS": {
+        "__array": [
+          {
+            "__array": [
+              {
+                "__string": "guard"
+              },
+              {
+                "__string": "guard"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "ranged"
+              },
+              {
+                "__string": "projectile"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "pierce"
+              },
+              {
+                "__string": "thrust"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "starstone"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "ritual"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "gorefire"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "blight"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "oath"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "ash"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "heavy"
+              },
+              {
+                "__string": "strike"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "blade"
+              },
+              {
+                "__string": "slash"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "flourish"
+              },
+              {
+                "__string": "slash"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "precision"
+              },
+              {
+                "__string": "thrust"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "guile"
+              },
+              {
+                "__string": "dodge"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "venom"
+              },
+              {
+                "__string": "spell"
+              }
+            ],
+            "frozen": true
+          },
+          {
+            "__array": [
+              {
+                "__string": "blood"
+              },
+              {
+                "__string": "slash"
+              }
+            ],
+            "frozen": true
+          }
+        ],
+        "frozen": true
+      },
+      "ACTION_ANIMATION_TYPES": {
+        "__keys": [
+          "attack",
+          "block",
+          "buff",
+          "debuff",
+          "power"
+        ],
+        "frozen": true,
+        "values": {
+          "attack": {
+            "__string": "strike"
+          },
+          "block": {
+            "__string": "guard"
+          },
+          "buff": {
+            "__string": "spell"
+          },
+          "debuff": {
+            "__string": "spell"
+          },
+          "power": {
+            "__string": "spell"
+          }
+        }
+      }
+    },
+    "probes": {}
+  },
+  "src/content/classArtAnchors.js": {
+    "exports": {
+      "CLASS_MEDALLION_PCT": {
+        "__keys": [
+          "reaver",
+          "starseer",
+          "rogue",
+          "herald"
+        ],
+        "frozen": true,
+        "values": {
+          "reaver": {
+            "__keys": [
+              "x",
+              "y"
+            ],
+            "frozen": true,
+            "values": {
+              "x": {
+                "__number": "50"
+              },
+              "y": {
+                "__number": "35"
+              }
+            }
+          },
+          "starseer": {
+            "__keys": [
+              "x",
+              "y"
+            ],
+            "frozen": true,
+            "values": {
+              "x": {
+                "__number": "48"
+              },
+              "y": {
+                "__number": "37"
+              }
+            }
+          },
+          "rogue": {
+            "__keys": [
+              "x",
+              "y"
+            ],
+            "frozen": true,
+            "values": {
+              "x": {
+                "__number": "49"
+              },
+              "y": {
+                "__number": "35"
+              }
+            }
+          },
+          "herald": {
+            "__keys": [
+              "x",
+              "y"
+            ],
+            "frozen": true,
+            "values": {
+              "x": {
+                "__number": "50"
+              },
+              "y": {
+                "__number": "61"
+              }
+            }
+          }
+        }
+      },
+      "medallionAnchor": {
+        "__function": "medallionAnchor",
+        "length": 1
+      },
+      "medallionDeclared": {
+        "__function": "medallionDeclared",
+        "length": 1
+      }
+    },
+    "probes": {
+      "medallionAnchor([\"reaver\"])": {
+        "__keys": [
+          "x",
+          "y"
+        ],
+        "frozen": true,
+        "values": {
+          "x": {
+            "__number": "50"
+          },
+          "y": {
+            "__number": "35"
+          }
+        }
+      },
+      "medallionAnchor([\"starseer\"])": {
+        "__keys": [
+          "x",
+          "y"
+        ],
+        "frozen": true,
+        "values": {
+          "x": {
+            "__number": "48"
+          },
+          "y": {
+            "__number": "37"
+          }
+        }
+      },
+      "medallionAnchor([\"rogue\"])": {
+        "__keys": [
+          "x",
+          "y"
+        ],
+        "frozen": true,
+        "values": {
+          "x": {
+            "__number": "49"
+          },
+          "y": {
+            "__number": "35"
+          }
+        }
+      },
+      "medallionAnchor([\"herald\"])": {
+        "__keys": [
+          "x",
+          "y"
+        ],
+        "frozen": true,
+        "values": {
+          "x": {
+            "__number": "50"
+          },
+          "y": {
+            "__number": "61"
+          }
+        }
+      },
+      "medallionAnchor([\"nobody\"])": null,
+      "medallionDeclared([\"reaver\"])": {
+        "__boolean": true
+      },
+      "medallionDeclared([\"nobody\"])": {
+        "__boolean": false
+      }
+    }
+  },
+  "src/content/environments.js": {
+    "exports": {
+      "ENVIRONMENTS": {
+        "__array": [
+          {
+            "__keys": [
+              "id",
+              "name",
+              "atlas",
+              "map",
+              "scenes"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "ashen-crown"
+              },
+              "name": {
+                "__string": "The Ashen Crown"
+              },
+              "atlas": {
+                "__string": "assets/environments/ashen-crown-combat.webp"
+              },
+              "map": {
+                "__string": "assets/environments/ashen-crown-map.webp"
+              },
+              "scenes": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "ashen-crown-1"
+                      },
+                      "name": {
+                        "__string": "King’s Causeway"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.5"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "ashen-crown-2"
+                      },
+                      "name": {
+                        "__string": "Bell Court"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.5"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "ashen-crown-3"
+                      },
+                      "name": {
+                        "__string": "Ashfall Gardens"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.4"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "ashen-crown-4"
+                      },
+                      "name": {
+                        "__string": "Throne Undercroft"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.44"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "name",
+              "atlas",
+              "map",
+              "scenes"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "hollow-weald"
+              },
+              "name": {
+                "__string": "The Hollow Weald"
+              },
+              "atlas": {
+                "__string": "assets/environments/hollow-weald-combat.webp"
+              },
+              "map": {
+                "__string": "assets/environments/hollow-weald-map.webp"
+              },
+              "scenes": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "hollow-weald-1"
+                      },
+                      "name": {
+                        "__string": "Lanternwood Crossing"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.48"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "hollow-weald-2"
+                      },
+                      "name": {
+                        "__string": "Drowned Hamlet"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.5"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "hollow-weald-3"
+                      },
+                      "name": {
+                        "__string": "Roots of the Elder"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.42"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "hollow-weald-4"
+                      },
+                      "name": {
+                        "__string": "Hunter’s Moon Clearing"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.44"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "name",
+              "atlas",
+              "map",
+              "scenes"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "pale-marches"
+              },
+              "name": {
+                "__string": "The Pale Marches"
+              },
+              "atlas": {
+                "__string": "assets/environments/pale-marches-combat.webp"
+              },
+              "map": {
+                "__string": "assets/environments/pale-marches-map.webp"
+              },
+              "scenes": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "pale-marches-1"
+                      },
+                      "name": {
+                        "__string": "Frostgate Pass"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.47"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "pale-marches-2"
+                      },
+                      "name": {
+                        "__string": "Frozen Pilgrim Road"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.48"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "pale-marches-3"
+                      },
+                      "name": {
+                        "__string": "Monastery of Silence"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.39"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "pale-marches-4"
+                      },
+                      "name": {
+                        "__string": "The Glass Lake"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.39"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "name",
+              "atlas",
+              "map",
+              "scenes"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "cinder-reach"
+              },
+              "name": {
+                "__string": "The Cinder Reach"
+              },
+              "atlas": {
+                "__string": "assets/environments/cinder-reach-combat.webp"
+              },
+              "map": {
+                "__string": "assets/environments/cinder-reach-map.webp"
+              },
+              "scenes": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "cinder-reach-1"
+                      },
+                      "name": {
+                        "__string": "Basalt Stair"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.56"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "cinder-reach-2"
+                      },
+                      "name": {
+                        "__string": "The Dead Foundry"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.55"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "cinder-reach-3"
+                      },
+                      "name": {
+                        "__string": "Caldera Rim"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.41"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "cinder-reach-4"
+                      },
+                      "name": {
+                        "__string": "Ember Mine Mouth"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.43"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "name",
+              "atlas",
+              "map",
+              "scenes"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "drowned-coast"
+              },
+              "name": {
+                "__string": "The Drowned Coast"
+              },
+              "atlas": {
+                "__string": "assets/environments/drowned-coast-combat.webp"
+              },
+              "map": {
+                "__string": "assets/environments/drowned-coast-map.webp"
+              },
+              "scenes": {
+                "__array": [
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "drowned-coast-1"
+                      },
+                      "name": {
+                        "__string": "Tidebound Chapel"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.51"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "drowned-coast-2"
+                      },
+                      "name": {
+                        "__string": "The Salt Causeway"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.47"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "drowned-coast-3"
+                      },
+                      "name": {
+                        "__string": "Starwatch Terrace"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "0"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.41"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  },
+                  {
+                    "__keys": [
+                      "id",
+                      "name",
+                      "box",
+                      "floorStart",
+                      "fieldRatio",
+                      "groundAnchor"
+                    ],
+                    "frozen": true,
+                    "values": {
+                      "id": {
+                        "__string": "drowned-coast-4"
+                      },
+                      "name": {
+                        "__string": "Grave of Ships"
+                      },
+                      "box": {
+                        "__array": [
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          },
+                          {
+                            "__number": "768"
+                          },
+                          {
+                            "__number": "512"
+                          }
+                        ],
+                        "frozen": true
+                      },
+                      "floorStart": {
+                        "__number": "0.36"
+                      },
+                      "fieldRatio": {
+                        "__number": "0.6"
+                      },
+                      "groundAnchor": {
+                        "__number": "0.76"
+                      }
+                    }
+                  }
+                ],
+                "frozen": true
+              }
+            }
+          }
+        ],
+        "frozen": true
+      },
+      "ENVIRONMENT_ATLAS_SIZE": {
+        "__array": [
+          {
+            "__number": "1536"
+          },
+          {
+            "__number": "1024"
+          }
+        ],
+        "frozen": true
+      },
+      "MAP_TERRAIN_REVEAL_RADIUS": {
+        "__number": "74"
+      },
+      "MEGA_MAPS": {
+        "__array": [
+          {
+            "__keys": [
+              "id",
+              "name",
+              "map"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "the-fractured-realm"
+              },
+              "name": {
+                "__string": "The Fractured Realm"
+              },
+              "map": {
+                "__string": "assets/environments/the-fractured-realm-world.webp"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "name",
+              "map"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "the-shattered-gulf"
+              },
+              "name": {
+                "__string": "The Shattered Gulf"
+              },
+              "map": {
+                "__string": "assets/environments/the-shattered-gulf-world.webp"
+              }
+            }
+          },
+          {
+            "__keys": [
+              "id",
+              "name",
+              "map"
+            ],
+            "frozen": true,
+            "values": {
+              "id": {
+                "__string": "the-fivefold-frontier"
+              },
+              "name": {
+                "__string": "The Fivefold Frontier"
+              },
+              "map": {
+                "__string": "assets/environments/the-fivefold-frontier-world.webp"
+              }
+            }
+          }
+        ],
+        "frozen": true
+      }
+    },
+    "probes": {}
+  },
+  "src/ui/combatAura.js": {
+    "exports": {
+      "POWER_FRAMES": {
+        "__keys": [
+          "power1",
+          "power2",
+          "power3"
+        ],
+        "frozen": true,
+        "values": {
+          "power1": {
+            "__keys": [
+              "radius",
+              "blur",
+              "alpha",
+              "brightness"
+            ],
+            "frozen": false,
+            "values": {
+              "radius": {
+                "__number": "1.4"
+              },
+              "blur": {
+                "__number": "3"
+              },
+              "alpha": {
+                "__number": "0.55"
+              },
+              "brightness": {
+                "__number": "1.03"
+              }
+            }
+          },
+          "power2": {
+            "__keys": [
+              "radius",
+              "blur",
+              "alpha",
+              "brightness"
+            ],
+            "frozen": false,
+            "values": {
+              "radius": {
+                "__number": "2.6"
+              },
+              "blur": {
+                "__number": "8"
+              },
+              "alpha": {
+                "__number": "0.95"
+              },
+              "brightness": {
+                "__number": "1.16"
+              }
+            }
+          },
+          "power3": {
+            "__keys": [
+              "radius",
+              "blur",
+              "alpha",
+              "brightness"
+            ],
+            "frozen": false,
+            "values": {
+              "radius": {
+                "__number": "1.8"
+              },
+              "blur": {
+                "__number": "5"
+              },
+              "alpha": {
+                "__number": "0.7"
+              },
+              "brightness": {
+                "__number": "1.06"
+              }
+            }
+          }
+        }
+      },
+      "auraFilter": {
+        "__function": "auraFilter",
+        "length": 1
+      },
+      "resourceAura": {
+        "__function": "resourceAura",
+        "length": 0
+      }
+    },
+    "probes": {
+      "auraFilter([\"power1\",\"idle\",[],false])": {
+        "__string": "drop-shadow(1.4px 0 0 rgba(220,221,255,0.55)) drop-shadow(-1.4px 0 0 rgba(220,221,255,0.55)) drop-shadow(0 1.4px 3px rgba(220,221,255,0.55)) brightness(1.03)"
+      },
+      "auraFilter([\"power2\",\"guard\",[\"hp\"],true])": {
+        "__string": "drop-shadow(2.6px 0 0 rgba(255,91,102,0.95)) drop-shadow(-2.6px 0 0 rgba(255,91,102,0.95)) drop-shadow(0 2.6px 8px rgba(255,91,102,0.95)) brightness(1.16)"
+      },
+      "auraFilter([\"idle\",\"bloodRite\",[],false])": {
+        "__string": "drop-shadow(0 0 2px #df627455) drop-shadow(0 0 4px #df627422)"
+      },
+      "auraFilter([\"idle\",\"guard\",[],false])": {
+        "__string": "drop-shadow(1px 0 0 rgba(91,165,255,0.26)) drop-shadow(-1px 0 0 rgba(91,165,255,0.26)) drop-shadow(0 1px 3px rgba(91,165,255,0.26))"
+      },
+      "auraFilter([\"idle\",\"idle\",[],false])": {
+        "__string": "none"
+      },
+      "auraFilter([\"power3\",\"idle\",[\"stamina\",\"mana\"],true])": {
+        "__string": "drop-shadow(1.8px 0 0 rgba(88,225,131,0.7)) drop-shadow(-1.8px 0 0 rgba(88,225,131,0.7)) drop-shadow(0 1.8px 5px rgba(88,225,131,0.7)) drop-shadow(3.1px 0 0 rgba(91,165,255,0.7)) drop-shadow(-3.1px 0 0 rgba(91,165,255,0.7)) drop-shadow(0 3.1px 5px rgba(91,165,255,0.7)) brightness(1.06)"
+      },
+      "resourceAura([{\"staminaCost\":2,\"manaCost\":0}])": {
+        "__array": [
+          {
+            "__string": "stamina"
+          }
+        ],
+        "frozen": false
+      },
+      "resourceAura([{\"hpCost\":3}])": {
+        "__array": [
+          {
+            "__string": "hp"
+          }
+        ],
+        "frozen": false
+      },
+      "resourceAura([{\"effects\":[{\"op\":\"loseHp\",\"target\":\"self\",\"amount\":2}]}])": {
+        "__array": [
+          {
+            "__string": "hp"
+          }
+        ],
+        "frozen": false
+      },
+      "resourceAura([{}])": {
+        "__array": [],
+        "frozen": false
+      }
+    }
+  }
+}

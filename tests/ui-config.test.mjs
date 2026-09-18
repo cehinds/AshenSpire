@@ -47,7 +47,7 @@ test('the real tree compiles clean and the generated module is current', () => {
 });
 
 test('uiConfig mirrors the folders, holds only resolved values, and is deep-frozen', () => {
-  assert.deepEqual(Object.keys(uiConfig), ['tokens', 'scenes', 'components', 'screens']);
+  assert.deepEqual(Object.keys(uiConfig), ['tokens', 'scenes', 'components', 'screens', 'presentation']);
   assert.deepEqual(Object.keys(uiConfig.scenes).sort(), ['w4', 'w4a', 'w4b', 'w4c']);
   for (const name of ['card', 'selection', 'inspect', 'identity', 'possession', 'buttons', 'tooltip', 'hud', 'categoryNav', 'workspace', 'choiceBody', 'inspector']) {
     assert.ok(uiConfig.components[name], `components.${name}`);
@@ -212,7 +212,7 @@ test('a duplicate key is refused by name', () => {
 
 test('a file outside the known places is refused by name', () => {
   refusedWith(withFile('ui/panels/zz.json', { sizing: {} }),
-    'content/config/ui/panels/zz.json: not a known place — config files sit at ui/tokens.json or ui/{scenes,components,screens}/<name>.json');
+    'content/config/ui/panels/zz.json: not a known place — config files sit at ui/tokens.json or ui/{scenes,components,screens,presentation}/<name>.json');
 });
 
 test('scene bands that do not sum to 100 are refused by name', () => {
