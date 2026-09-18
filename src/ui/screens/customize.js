@@ -316,7 +316,17 @@ export function mountCustomize(app, {
       // design exists to make impossible. `renderEquipment` rebuilds each
       // container with the current view on it, so the old sweep is not a
       // second place that has to agree.
-      renderEquipment();
+      //
+      // AND IT HANDS BACK THE SECTION THE PLAYER HAD OPEN. `renderEquipment`
+      // re-opens the fold only when it is TOLD which section to open
+      // (`preferredOpenId`, below); called bare it rebuilds every section
+      // closed. So switching the view shut the picker: all four containers
+      // collapsed to zero width with their chips still inside them, and the
+      // step rendered empty at every size. Measured on dev before this fix —
+      // grid read `312:2` for the open section, list read `0:2` for all four.
+      // Changing how the choices are ARRANGED must not change which of them
+      // you are looking at.
+      renderEquipment(equipmentFold?.openKey || null);
       renderViewToggles();
     }, 'Starting equipment choice view'));
   }
