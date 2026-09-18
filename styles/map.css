@@ -128,15 +128,58 @@
    PAINTS and this one paints 35% wider than its own radius eight times a
    second. One home, two readers (the keyframe below, and mountMap). */
 .mapscreen { --halo-peak: 1.35; }
-/* W4b: the scene, then the selected node's context, then Recenter / Enter. */
-/* A FIXED height: the scene must not shrink under the finger when a pick fills
-   the band, and a saved fit camera is checked against the scene's height. */
-.mapscreen > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw; border-top: 1px solid var(--line); background: var(--panel); }
-.mapscreen > .map-context > * { margin: 0; }
+/* THE MAP TRAY (owner, 2026-09-14; screens/map.js). One row takes layout height
+   — the zoom bar left, the hint bar centred, Potions in the corner — so the
+   scene, and the camera framed against it, never change while the tray works.
+   Picking a lit node slides the reveal up OVER the foot of the map: the node's
+   context (a FIXED height, so a long blurb scrolls instead of growing) and Back
+   / Enter, centred and held clear of the Potions column. Row + reveal stay
+   within the bottom band this replaced. The height is written by map.js from
+   the reveal's own content, so there is no second copy of it here. */
+.mapscreen > .map-tray { position: relative; z-index: 30; flex: 0 0 auto; container: map-tray / inline-size; background: var(--panel); border-top: 1px solid var(--line); }
+.map-tray-row {
+  /* A DEFINITE middle track, not auto: the hint bar is a kit ButtonRow whose
+     width is min(100%, its steps), and a percentage against a content-sized
+     column has nothing to resolve against — every chip collapsed to 12 px. */
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 64rem) minmax(0, 1fr); grid-template-areas: "zoom hint pots";
+  align-items: center; gap: 0 1rem; min-height: calc(var(--iconbtn-size) + 1rem);
+  padding: .5rem 1.4rem calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
+}
+.map-tray-row > .map-zoom { grid-area: zoom; justify-self: start; gap: .6rem; padding: 0; border: 0; background: none; }
+.mapscreen .map-tray-row > .hint-bar { grid-area: hint; justify-self: center; margin: 0; width: 100%; max-width: 100%; }
+.map-tray-row > .map-potions { grid-area: pots; justify-self: end; display: flex; align-items: center; gap: .6rem; min-width: 0; max-width: 100%; }
+/* Too narrow for one line: the hint bar takes its own line above the other two. */
+@container map-tray (max-width: 104rem) {
+  .map-tray-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "hint hint" "zoom pots"; }
+  .mapscreen .map-tray-row > .hint-bar { margin-bottom: .5rem; }
+}
+/* Potions, as in combat's footer: a round control, its minis (the shared icon
+   tray) beside it, --icon-tray-slots of them wide before the +N tile. */
+.map-potions .run-potions-btn {
+  flex: none; width: calc(var(--iconbtn-size) + .4rem); height: calc(var(--iconbtn-size) + .4rem);
+  min-width: 0; padding: 0; border-radius: 50%; font-size: 1.1rem; line-height: 1.1; letter-spacing: 0;
+}
+.map-potions .run-potion-minis {
+  flex: 0 1 auto; min-width: 0; max-width: 100%; justify-content: flex-end;
+  width: calc(var(--icon-tray-slots, 4) * (var(--icon-tray-size, calc(25px / var(--ui-zoom, 1))) + var(--icon-tray-gap, calc(3px / var(--ui-zoom, 1)))) - var(--icon-tray-gap, calc(3px / var(--ui-zoom, 1))));
+}
+.map-tray-reveal {
+  position: absolute; left: 0; right: 0; bottom: 100%; height: 0; overflow: hidden;
+  display: flex; flex-direction: column; background: var(--panel); border-top: 0 solid var(--line);
+  transition: height 240ms cubic-bezier(.2, .8, .2, 1);
+}
+.map-tray[data-open="true"] > .map-tray-reveal { border-top-width: 1px; }
+.map-tray-reveal > * { opacity: 0; transition: opacity 180ms ease; }
+.map-tray[data-shown="true"] > .map-tray-reveal > * { opacity: 1; }
+.map-tray-reveal > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw 0; }
+.map-tray-reveal > .map-context > * { margin: 0; }
 .mapscreen .map-context-title { font: 600 1.5rem/1.2 var(--font-display); color: var(--parchment); }
 .mapscreen .map-context-line { color: var(--muted); }
-.mapscreen > .map-footer { flex: 0 0 auto; padding: .5rem 2.5vw calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1)); background: var(--panel); }
-.mapscreen > .map-footer > .modal-btnrow { width: 100%; }
+/* Back and Enter are centred on the SCREEN, not on the space left beside
+   Potions: they take the row ABOVE it, so the clearance between them is
+   vertical and a phone keeps two full-width buttons instead of two slivers. */
+.map-tray-pair { flex: 0 0 auto; display: flex; justify-content: center; gap: .8rem; padding: .5rem 1.4rem; }
+.map-tray-pair > .as-btn { flex: 0 1 18rem; min-width: 0; }
 .map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 4; }
 /* The pad cursor and hover both repaint the stroke; the glow keeps the
    selection visible under either. */

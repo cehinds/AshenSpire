@@ -9,8 +9,9 @@
 // the VIEWER and never the act.
 //
 // WHAT IS STILL THIS FILE'S: the chrome a solo run needs and a co-op client does
-// not — the hero header, the relic and flask strip, the legend, the quick-nav,
-// the hint bar, and this screen's own keyboard handler.
+// not — the hero header, the relic strip, the legend, the quick-nav, the map
+// tray (hint bar, Potions, the selected node and Back / Enter), and this
+// screen's own keyboard handler.
 //
 // TWO MODES, and the toggle is Settings → Display · Map reveal:
 //
@@ -28,7 +29,7 @@ import { passiveFlag } from '../../model/registries.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { veilIsOpen } from '../components/veil.js';
-import { matchAction, actionDestinationForEvent, isEngaged, focusFirst } from '../input.js';
+import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, focusElement } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { mountMapBoard } from '../components/mapboard.js';
@@ -36,10 +37,12 @@ import { resolveMapMode } from '../../model/mapknowledge.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { seatNameOf } from '../components/runHud.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
-import { button, buttonRow, el, popover, row } from '../kit/index.js';
+import { mountRunPotions } from '../components/runPotions.js';
+import { button, el, popover, row } from '../kit/index.js';
 import { t } from '../strings.js';
 import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
 import { MAP_HEADER_LAYOUT, sizeMapHeader } from '../components/mapHeader.js';
+import { reducedMotionRequested } from '../motion.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -75,6 +78,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   liveMapViewportRelease?.();
   liveMapViewportRelease = null;
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls });
   const map = run.mapGraph;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
   // screen still computes. Geometry, drawing and the camera are the board's
@@ -111,12 +115,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
-  // Bars, relics, flasks, Armoury and Menu: components/runHud.js fills the
-  // band for every room, so the map cannot drift from the merchant or the
-  // Shrine any more than it could from combat (E9 / #254).
+  // Bars, relics, Armoury and Menu: components/runHud.js fills the band for
+  // every room, so the map cannot drift from the merchant or the Shrine any
+  // more than it could from combat (E9 / #254).
   wireRunHud(app, {
-    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange,
-    remount: () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls }),
+    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount,
   });
   // W4b's 10 vh header takes its height NOW, before the board mounts: the
   // board checks a saved fit camera against the scene's height (see below).
@@ -129,28 +132,41 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // zoom bar and the delivered-tap-size note — is the same code the co-op
   // client mounts. Read ui/components/mapboard.js's header for why.
   //
-  // The hint bar goes in as `chromeHtml` so it lands BETWEEN the scrollport and
-  // the zoom bar, and the order is a fix rather than a preference: `.hint-bar`
-  // is fixed to the bottom of the VIEWPORT, so once the zoom buttons stopped
-  // floating and took the bottom of the map, the two claimed the same band and
-  // the hint pill sat on top of the − and the ⊙ (map.css, `.mapscreen
-  // .hint-bar`). It was never unpressable, so the reach sweep was right to stay
-  // green — this was only ever visible to an eye.
-  // The legend belongs to the corner it opens from — the ? in the zoom bar — so
-  // it is mounted with the board's chrome, not on the HUD.
+  // ---- THE MAP TRAY (owner, 2026-09-14) -------------------------------------
   //
-  // W4b's bands are built BEFORE the board mounts: the board checks a saved
-  // fit camera against the scene's height, so the bands must already take
-  // theirs, or every remount would discard the player's pan. They move below
-  // the board's chrome once it is mounted; that changes no height.
+  // One row at the foot of the map: the zoom bar left, the hint bar centred,
+  // Potions in the corner where combat's footer keeps it. The row is the only
+  // part of the tray that takes layout height, so the scene's height, and the
+  // camera framed against it, never change while the tray works.
+  //
+  // Picking a lit node OPENS the tray: after a beat it slides up over the foot
+  // of the map, never higher than today's bottom band reached, and shows the
+  // node's context with Back and Enter centred clear of Potions. The camera
+  // recentres the picked node in the map still visible above it. Back, or a
+  // tap anywhere on the map but a lit node, closes it and the camera recentres
+  // on the whole map. The footer's Recenter went with the old footer: it did
+  // exactly what the zoom bar's ⊙ does.
+  //
+  // The tray and the hint bar are built BEFORE the board mounts: the board
+  // checks a saved fit camera against the scene's height, so everything that
+  // takes height must already have it, or every remount would discard the
+  // player's pan. The zoom bar, which is the board's, joins the row once it
+  // exists; it is no taller than Potions, so that changes no height.
   const screen = app.querySelector('.mapscreen');
   let selection = { selectedId: null };
   const readings = new Map();
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
-  const recenterButton = button({ label: t('map.recenter'), id: 'map-recenter', className: 'map-recenter' });
+  const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back' });
   const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
-  const footer = el('footer', { class: 'map-footer' }, buttonRow({ size: 'fill', buttons: [recenterButton, enterButton] }));
-  screen.append(context, footer);
+  const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, el('div', { class: 'map-tray-pair' }, [backButton, enterButton])]);
+  trayReveal.inert = true;
+  const potionsHost = el('div', { class: 'map-potions' });
+  const trayRow = el('div', { class: 'map-tray-row' });
+  trayRow.insertAdjacentHTML('beforeend', hintBarHtml('map'));
+  trayRow.appendChild(potionsHost);
+  const tray = el('div', { class: 'map-tray', dataset: { open: 'false', shown: 'false' } }, [trayReveal, trayRow]);
+  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { onSave?.(); remount(); } });
+  screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
     act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
@@ -168,19 +184,65 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       onPick: (id, reading) => selectNode(id, reading),
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },
-    chromeHtml: hintBarHtml('map'),
   });
-
-  // ---- W4b: SELECT, THEN ENTER ---------------------------------------------
-  // The scene is followed by the selected node's context and a Recenter /
-  // Enter footer. The board is shared with co-op, whose client keeps its own
-  // pick; only this solo screen asks for the second step.
-  screen.append(context, footer);
+  const zoomBar = app.querySelector('.map-zoom');
+  if (zoomBar) trayRow.prepend(zoomBar);
+  // Below the board and its notes; moving it changes no height.
+  screen.append(tray);
   // Live only after the resting text is in place: a mount announces nothing.
   context.setAttribute('aria-live', 'polite');
-  recenterButton.addEventListener('click', () => board.resetFraming());
+
+  // ---- W4b: SELECT, THEN ENTER — in the tray ------------------------------
+  const trayTiming = wireframeUi.map.tray;
+  let trayTimer = 0;
+  const reduced = () => reducedMotionRequested();
+  const wait = (ms, fn) => { clearTimeout(trayTimer); trayTimer = setTimeout(fn, reduced() ? 0 : ms); };
+  const glideMs = () => (reduced() ? 0 : trayTiming.cameraMs);
+  function openTray() {
+    if (tray.dataset.open === 'true') {
+      // Already open (or closing): stay open, and recentre on the new pick.
+      clearTimeout(trayTimer);
+      tray.dataset.shown = 'true';
+      trayReveal.inert = false;
+      board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
+      return;
+    }
+    wait(trayTiming.openDelayMs, () => {
+      const height = trayReveal.scrollHeight;
+      tray.dataset.open = 'true';
+      trayReveal.inert = false;
+      trayReveal.style.height = `${height}px`;
+      board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
+      wait(trayTiming.slideMs, () => {
+        tray.dataset.shown = 'true';
+        if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
+      });
+    });
+  }
+  function closeTray() {
+    clearTimeout(trayTimer);
+    if (tray.dataset.open !== 'true') return;
+    tray.dataset.shown = 'false';
+    trayReveal.inert = true;
+    wait(trayTiming.fadeMs, () => {
+      tray.dataset.open = 'false';
+      trayReveal.style.height = '0px';
+      board.resetFraming({ glideMs: glideMs() });
+    });
+  }
+  backButton.addEventListener('click', () => clearSelection());
   enterButton.addEventListener('click', () => {
     if (selection.selectedId && reachable.has(selection.selectedId)) onPick(selection.selectedId);
+  });
+  // A tap on the map away from the lit nodes closes the tray; a mouse drag
+  // that pans the board is not a tap.
+  let pressAt = null;
+  board.scroll.addEventListener('pointerdown', (ev) => { pressAt = { x: ev.clientX, y: ev.clientY }; });
+  board.scroll.addEventListener('click', (ev) => {
+    const moved = pressAt ? Math.hypot(ev.clientX - pressAt.x, ev.clientY - pressAt.y) : 0;
+    pressAt = null;
+    if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
+    clearSelection();
   });
   function selectNode(id, reading) {
     if (reading) readings.set(id, reading);
@@ -188,6 +250,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (next.enter) { onPick(id); return; }
     selection = next;
     renderSelection();
+    if (selection.selectedId) openTray();
+  }
+  function clearSelection() {
+    if (!selection.selectedId) return;
+    selection = { selectedId: null };
+    renderSelection();
+    closeTray();
   }
   function renderSelection() {
     for (const node of app.querySelectorAll('.map-node.selected')) node.classList.remove('selected');
@@ -300,6 +369,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   viewport?.addEventListener('resize', recenterAfterSettle);
   liveMapViewportRelease = () => {
     cancelAnimationFrame(frameA); cancelAnimationFrame(frameB);
+    clearTimeout(trayTimer);
     window.removeEventListener('resize', recenterAfterSettle);
     for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(type, recenterAfterSettle);
     viewport?.removeEventListener('resize', recenterAfterSettle);

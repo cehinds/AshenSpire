@@ -148,7 +148,15 @@ title.save.aria,,Saved climb in slot {slot},,
 # ---- the act map (W4b) ---------------------------------------------------
 map.enter,,Enter,Travel to the selected node.,Enter
 map.enterNamed,,Enter {name},Travel to the selected node.,
-map.recenter,,Recenter,Frame the map on where you stand.,Recenter
+map.back,,Back,Clear the selection and close the tray.,Back
+potions.run.title,,Potions,,
+potions.run.drink,,Drink,Drink this flask now.,
+potions.run.drop,,Drop,Leave this potion behind for good.,
+potions.run.none,,No potions carried.,,
+potions.run.empty,,No charges remain,,
+potions.run.setting,,Turn on Use flasks outside combat in Settings to drink here,,
+potions.run.keep,,Charge flasks stay with the run,,
+potions.run.combatOnly,,Only in combat. You can drop it here.,,
 map.context.aria,,Selected node,,
 map.context.empty,,Choose a lit node to see what waits there.,,
 map.context.floor,,Floor {floor},,

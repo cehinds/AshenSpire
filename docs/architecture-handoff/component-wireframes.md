@@ -4883,6 +4883,12 @@ On dispose: release timers, observers and events
 
 ## Wireframe WGM6: Recenter button
 
+> SUPERSEDED on the act map (owner, 2026-09-14). The map's footer is now a tray
+> and carries no Recenter: it ran the same `resetFraming` as the zoom bar's ⊙,
+> which is the only one left. The drawing below stands for the component
+> itself; `docs/implementation/approved-wireframes.md` § *Map tray* is what the
+> map ships.
+
 **Parent: WCB4.** Use cases: Combat/map/dialogue composition. Owner selection propagates to the component; no duplicated selected state.
 
 **Wide**

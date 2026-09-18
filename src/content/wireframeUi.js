@@ -19,6 +19,13 @@ export const wireframeUi = freeze({
     // W4b: a repeat pick enters only after the selection has stood this long.
     // Owner kept 400 ms on 2026-09-13.
     repeatPickDelayMs: 400,
+    // THE MAP TRAY (owner, 2026-09-14; screens/map.js). A pick lights the node
+    // at once; the tray waits openDelayMs, slides up in slideMs (styles/map.css
+    // holds the same 240 ms) while the camera glides cameraMs to recentre the
+    // node; then the context and Back / Enter fade in. Closing fades them out
+    // for fadeMs, then the tray drops and the camera recentres on the map.
+    // Reduced motion takes every one of these to zero.
+    tray: { openDelayMs: 150, slideMs: 240, fadeMs: 140, cameraMs: 300 },
     // W4b header (owner: "10 vh for w4b"). The run HUD and the route strip
     // share one band of heightFraction × the visible height, never shorter
     // than one touch row (minimumTargetPx, physical) plus its two insets.
