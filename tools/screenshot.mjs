@@ -79,11 +79,21 @@ const SHOTS = [
   // recorded above for ?shot=death, one screen over.
   //
   // Still uncovered, and named so the next reader does not have to diff it:
-  // compendium, components, crisis, event, profile, rest, reward, shop — nine
-  // states in main.js against twelve here before this line.
+  // compendium, components, crisis, profile, reward — five, after event, rest
+  // and shop joined the list below.
   // `stable: true` — see captureStable below. These screens hold still once
   // they have settled, so two captures of one must come out byte-identical;
   // the animated screens above cannot make that promise and are not asked to.
+  // Added 2026-09-18 (this branch). `?shot=event`, `?shot=rest` and
+  // `?shot=shop` have been in src/main.js all along and were never captured —
+  // so the rooms that draw the SHARED RUN HUD outside the map had no
+  // photographic coverage at all, and a fold that broke the event room's
+  // header at phone width shipped without a single frame of it. The same
+  // defect Vira recorded for ?shot=death and the sentence above records for
+  // ?shot=customize, two screens over.
+  { name: 'event', query: '?shot=event' }, // quest dialogue — the W4c folded band
+  { name: 'rest', query: '?shot=rest' }, // shrine — the unfolded room band
+  { name: 'shop', query: '?shot=shop' }, // merchant — the unfolded room band
   { name: 'customize', query: '?shot=customize', stable: true }, // character build — the class figure
   // One capture per class, and one off-default tint, because the class sprites
   // are four sources × five tints and a single default shot is evidence for one

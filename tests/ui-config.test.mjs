@@ -82,7 +82,10 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
         widthVw: 95, captionLines: 3, captionLineHeight: 1.45,
         titleRem: 0.95, titleLineHeight: 1.45, textRem: 0.9, paddingRem: 0.5, gapRem: 0.25,
       },
-      responses: { fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2 },
+      responses: {
+        fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2,
+        minHeightRem: 2.75, maxHeightRem: 5.5,
+      },
       hud: { compactBelowHeightPx: 500 },
       footer: { heightVh: 6 },
     },
@@ -91,6 +94,7 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
       portraits: {
         visibleFraction: 1 / 3, visibleFractionCompact: 1, mirrorNpc: true, minGapVw: 1.5, minGapPx: 24,
         fit: 'shrinkToLane', anchor: 'revealLine',
+        maxOuterOverflowVw: 8, minVisibleHeightVh: 22,
         listener: { minOpacity: 0.62, brightness: 0.8, saturation: 0.55 },
       },
       context: { insetVw: 2.5, insetVh: 2 },
@@ -160,7 +164,7 @@ test('tokens are exported resolved, and a file-local variable wins over a token'
 });
 
 test('fractions compile to the same double the old expressions gave', () => {
-  assert.equal(uiConfig.components.card.sizing.ratio, 5 / 8);
+  assert.equal(uiConfig.components.card.sizing.ratio, 5 / 7);
   assert.equal(uiConfig.screens.shop.sizing.railFraction, 21.6 / 95);
   assert.equal(uiConfig.scenes.w4c.positioning.portraits.visibleFraction, 1 / 3);
 });

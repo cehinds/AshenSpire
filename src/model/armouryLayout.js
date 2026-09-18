@@ -4,64 +4,22 @@
 // order in content/source/armouryUi.json; the UI reads this normalized shape
 // and never embeds a second set of layout numbers.
 //
-// TWO TREES, AND THE RULE BETWEEN THEM. The DEFAULTS below and the validator
-// limits belong to the ENGINE: they apply to any content bundle, including one
-// that authors nothing. content/source/armouryUi.json belongs to THIS BUNDLE,
-// and it is kept COMPLETE rather than sparse (engine test 72 holds that line)
-// so a bundle reads as the whole contract instead of a patch over defaults.
+// The FALLBACK defaults those authored values override now live in
+// content/config/ui/presentation/armouryLayout.json rather than in this file.
+//
+// TWO TREES, AND THE RULE BETWEEN THEM. Those defaults, and the validator
+// limits beside them, belong to the ENGINE: they apply to any content bundle,
+// including one that authors nothing. content/source/armouryUi.json belongs to
+// THIS BUNDLE, and it is kept COMPLETE rather than sparse (engine test 72 holds
+// that line) so a bundle reads as the whole contract, not a patch over defaults.
 //
 // Completeness means the two trees restate each other, so they can drift apart
 // silently. Test 72 now names every value on which the bundle departs from the
 // default and refuses any other, which is what makes the duplication safe.
+import { uiConfig } from '../config/generated/ui.js';
 
-const DEFAULTS = Object.freeze({
-  shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
-  character: { spriteRatio: 0.38, statsRatio: 0.62, statsPaneRatio: 0.6, minWidth: '0' },
-  equipment: {
-    groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armor', 'rightHand', 'leftHand'], defaultView: 'list', gridColumns: 3,
-  },
-  inventorySplit: {
-    defaultArmamentsRatio: 0.6,
-    minimumArmamentsRatio: 0.3,
-    maximumArmamentsRatio: 0.8,
-    snapRatios: [0.4, 0.5, 0.6, 0.7],
-    snapTolerance: 0.035,
-    compactItemsBelowPx: 520,
-    foldSubcardsBelowPx: 420,
-    foldGroupsBelowPx: 260,
-  },
-  trays: {
-    defaultHeightRatio: 0.45,
-    minimumHeightRatio: 0.3,
-    maximumHeightRatio: 0.9,
-    multipleExpandedMinimumRatio: 0.3,
-    snapRatios: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-    snapTolerance: 0.035,
-    contentGapRem: 0.35,
-  },
-  combatPower: {
-    groupLabel: 'Combat Power',
-    cards: [
-      { id: 'strike', role: 'attack', label: 'Strike', fullLabel: 'Strike Power' },
-      { id: 'potency', role: 'technique', label: 'Magic', fullLabel: 'Magic Power' },
-      { id: 'defense', role: 'guard', label: 'Defense', fullLabel: 'Guard / Defense' },
-    ],
-  },
-  cards: { defaultView: 'list', gridColumns: 4 },
-  comparison: {
-    presentation: 'tooltip', holdPreviewDelayMs: 160, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
-  },
-  cardClasses: { inventoryItem: { holdAction: false } },
-  viewModes: {
-    grid: { label: 'Character', pane: 'character', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
-    rack: { label: 'Inventory', pane: 'inventory', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
-    hybrid: { label: 'Hybrid', pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
-  },
-  responsive: {
-    breakpoint: 760,
-    phone: { minWidth: '0', characterRatio: 0.4, equipmentRatio: 0.6, cardsGridColumns: 2, armamentGridColumns: 2 },
-  },
-});
+const DEFAULTS = uiConfig.presentation.armouryLayout.sizing.defaults;
+const LIMITS = uiConfig.presentation.armouryLayout.behavior.limits;
 
 const ratio = (value, path) => {
   if (!Number.isFinite(value) || value <= 0 || value >= 1) {
@@ -98,15 +56,15 @@ export function normalizeArmouryLayout(source = {}) {
   const phone = { ...DEFAULTS.responsive.phone, ...(responsive.phone || {}) };
 
   const shellTotal = Number(shell.characterRatio) + Number(shell.equipmentRatio);
-  if (Math.abs(shellTotal - 1) > 0.0001) {
+  if (Math.abs(shellTotal - 1) > LIMITS.ratioEpsilon) {
     throw new Error(`armouryUi.layout.shell ratios must total 1 (got ${shellTotal})`);
   }
   const characterTotal = Number(character.spriteRatio) + Number(character.statsRatio);
-  if (Math.abs(characterTotal - 1) > 0.0001) {
+  if (Math.abs(characterTotal - 1) > LIMITS.ratioEpsilon) {
     throw new Error(`armouryUi.layout.character ratios must total 1 (got ${characterTotal})`);
   }
   const phoneTotal = Number(phone.characterRatio) + Number(phone.equipmentRatio);
-  if (Math.abs(phoneTotal - 1) > 0.0001) {
+  if (Math.abs(phoneTotal - 1) > LIMITS.ratioEpsilon) {
     throw new Error(`armouryUi.layout.responsive.phone ratios must total 1 (got ${phoneTotal})`);
   }
   if (!Array.isArray(equipment.slotOrder) || new Set(equipment.slotOrder).size !== equipment.slotOrder.length
@@ -116,7 +74,7 @@ export function normalizeArmouryLayout(source = {}) {
   if (!['list', 'grid'].includes(equipment.defaultView)) {
     throw new Error('armouryUi.layout.equipment.defaultView must be list or grid');
   }
-  if (!Number.isInteger(Number(equipment.gridColumns)) || Number(equipment.gridColumns) < 1 || Number(equipment.gridColumns) > 8) {
+  if (!Number.isInteger(Number(equipment.gridColumns)) || Number(equipment.gridColumns) < 1 || Number(equipment.gridColumns) > LIMITS.maxGridColumns) {
     throw new Error('armouryUi.layout.equipment.gridColumns must be an integer from 1 to 8');
   }
   if (!Array.isArray(inventorySplit.snapRatios) || !inventorySplit.snapRatios.length
@@ -147,21 +105,21 @@ export function normalizeArmouryLayout(source = {}) {
     || trayStops.some((value) => value < Number(trays.minimumHeightRatio) || value > Number(trays.maximumHeightRatio))) {
     throw new Error('armouryUi.layout.trays.snapRatios must be unique and within the tray minimum and maximum');
   }
-  if (!Array.isArray(combatPower.cards) || combatPower.cards.length !== 3
+  if (!Array.isArray(combatPower.cards) || combatPower.cards.length !== LIMITS.combatPowerCardCount
     || combatPower.cards.some((card) => !card || !card.id || !card.role || !card.label || !card.fullLabel)) {
     throw new Error('armouryUi.layout.combatPower.cards must declare three labelled power cards');
   }
   if (!['list', 'grid'].includes(cards.defaultView)) {
     throw new Error('armouryUi.layout.cards.defaultView must be list or grid');
   }
-  if (!Number.isInteger(Number(cards.gridColumns)) || Number(cards.gridColumns) < 1 || Number(cards.gridColumns) > 8) {
+  if (!Number.isInteger(Number(cards.gridColumns)) || Number(cards.gridColumns) < 1 || Number(cards.gridColumns) > LIMITS.maxGridColumns) {
     throw new Error('armouryUi.layout.cards.gridColumns must be an integer from 1 to 8');
   }
   if (!['tooltip', 'inline'].includes(comparison.presentation)) {
     throw new Error('armouryUi.layout.comparison.presentation must be tooltip or inline');
   }
   if (!Number.isInteger(Number(comparison.holdPreviewDelayMs)) || Number(comparison.holdPreviewDelayMs) < 0
-    || Number(comparison.holdPreviewDelayMs) > 600000) {
+    || Number(comparison.holdPreviewDelayMs) > LIMITS.maxHoldPreviewDelayMs) {
     throw new Error('armouryUi.layout.comparison.holdPreviewDelayMs must be an integer from 0 to 600000');
   }
   positive(Number(comparison.tooltipWidthRem), 'comparison.tooltipWidthRem');
@@ -169,10 +127,10 @@ export function normalizeArmouryLayout(source = {}) {
   if (typeof inventoryItemClass.holdAction !== 'boolean') {
     throw new Error('armouryUi.layout.cardClasses.inventoryItem.holdAction must be true or false');
   }
-  if (!Number.isInteger(Number(phone.cardsGridColumns)) || Number(phone.cardsGridColumns) < 1 || Number(phone.cardsGridColumns) > 8) {
+  if (!Number.isInteger(Number(phone.cardsGridColumns)) || Number(phone.cardsGridColumns) < 1 || Number(phone.cardsGridColumns) > LIMITS.maxGridColumns) {
     throw new Error('armouryUi.layout.responsive.phone.cardsGridColumns must be an integer from 1 to 8');
   }
-  if (!Number.isInteger(Number(phone.armamentGridColumns)) || Number(phone.armamentGridColumns) < 1 || Number(phone.armamentGridColumns) > 8) {
+  if (!Number.isInteger(Number(phone.armamentGridColumns)) || Number(phone.armamentGridColumns) < 1 || Number(phone.armamentGridColumns) > LIMITS.maxGridColumns) {
     throw new Error('armouryUi.layout.responsive.phone.armamentGridColumns must be an integer from 1 to 8');
   }
   const paneValues = new Set(['character', 'inventory', 'both']);

@@ -42,7 +42,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
 
   // Each figure's host sits at the layer's origin; its placement is a
   // translate-then-scale about that origin, in the frame's local px.
-  function placeFigures(rootRect, zoom, revealLine, lanes, rootWidth, compact) {
+  function placeFigures(rootRect, zoom, revealLine, lanes, rootWidth, compact, rootHeight) {
     for (const portrait of root.querySelectorAll('.dialogue-portrait')) {
       const host = portrait.querySelector(':scope > .dialogue-portrait-art > *');
       const slotEl = portrait.querySelector(':scope > .dialogue-portrait-slot');
@@ -90,7 +90,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
       // Each side keeps to its own lane, so the two figures cannot overlap
       // however narrow the host is (DialogueModel.dialogueLanes).
       const lane = portrait.dataset.side === 'right' ? lanes.right : lanes.left;
-      const placement = closeUpPlacement(measured, slot, revealLine, layout, lane, compact);
+      const placement = closeUpPlacement(measured, slot, revealLine, layout, lane, compact, { width: rootWidth, height: rootHeight });
       host.style.transform = `translate(${placement.x}px, ${placement.y}px) scale(${placement.scale})`;
       // The lane cuts the figure's sides, as the context band cuts its legs.
       portrait.style.clipPath = placement.clipTo
@@ -129,7 +129,7 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
   // scrolling (DialogueModel.dialogueResponsePlan). With any further responses
   // set aside, the first of the layout's response grids whose band content
   // fits is used; only responses past the maximum then scroll the band.
-  function fitResponses() {
+  function fitResponses(rowRem = 16) {
     const region = root.querySelector('.dialogue-region');
     const box = region?.querySelector(':scope > .dialogue-responses');
     if (!region || !box) return;
@@ -148,6 +148,43 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
       if (region.scrollHeight <= region.clientHeight) { chosen = candidate; fits = true; break; }
     }
     applyResponseLayout(region, chosen);
+    // GROW THE ROWS BY EXACTLY WHAT THE BAND HAS SPARE, not to a fixed maximum:
+    // a cap either overshoots (and the band scrolls, putting an answer out of
+    // reach) or undershoots (and leaves the strip the owner saw). The spare
+    // height is measured, divided between the grid's rows, and each row is held
+    // between sizing.responses.minHeightRem and maxHeightRem.
+    region.dataset.responseStretch = 'false';
+    box.style.removeProperty('--dialogue-response-row-h');
+    const rows = Math.ceil(buttons.length / Math.max(1, chosen.columns));
+    // THE SPARE IS WHAT THE EYE SEES, not what scrollHeight reports: a panel
+    // whose content is shorter than itself still reports scrollHeight ===
+    // clientHeight, so measuring that way found no room and grew nothing. The
+    // room is the distance from the last answer's bottom edge to the panel's
+    // inner bottom edge.
+    const regionRect = region.getBoundingClientRect();
+    const paint = regionRect.width / region.clientWidth || 1;
+    const innerBottom = regionRect.bottom - parseFloat(getComputedStyle(region).paddingBottom) * paint;
+    const lastBottom = buttons[buttons.length - 1].getBoundingClientRect().bottom;
+    const spare = (innerBottom - lastBottom) / paint;
+    if (rows > 0 && spare > 0) {
+      // The bounds come from the config in px. Reading them back off the
+      // element gives `calc(…)` strings, which parse to NaN and quietly pinned
+      // the cap to whatever the row already was, so nothing ever grew.
+      const current = buttons[0].getBoundingClientRect().height / paint;
+      const max = layout.sizing.responses.maxHeightRem * rowRem;
+      const min = Math.max(layout.sizing.responses.minHeightRem * rowRem, parent.sizing.minimums.targetPx);
+      const grown = Math.min(max, Math.max(min, current + spare / rows));
+      if (grown > current + 0.5) {
+        box.style.setProperty('--dialogue-response-row-h', `${grown}px`);
+        region.dataset.responseStretch = 'true';
+        // Never at the cost of reach: if the grown rows scroll the band, the
+        // rows go back to what they were.
+        if (region.scrollHeight > region.clientHeight) {
+          box.style.removeProperty('--dialogue-response-row-h');
+          region.dataset.responseStretch = 'false';
+        }
+      }
+    }
     buttons.forEach((button) => button.style.removeProperty('display'));
     region.dataset.responseLayout = `${chosen.columns}:${chosen.placement}`;
     region.dataset.responseFits = String(fits);
@@ -192,8 +229,8 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     // the whole figure instead; a wide-but-short window still can, and keeps
     // the close-up it had (844x390, where the whole-figure rule made both
     // speakers small and distant).
-    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(window.innerWidth, parent));
-    fitResponses();
+    placeFigures(rect, zoom, revealLine, dialogueLanes(width, layout), width, dialogueCompactHost(window.innerWidth, parent), height);
+    fitResponses(rem);
   }
 
   // ResizeObserver delivers during layout; defer writes to the next frame.

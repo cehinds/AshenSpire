@@ -48,7 +48,9 @@
         "paddingBlockRem": 0.2,
         "paddingInlineRem": 0.5,
         "gapRem": 0.25,
-        "maxLines": 2
+        "maxLines": 2,
+        "minHeightRem": 2.75,
+        "maxHeightRem": 5.5
       },
       "hud": {
         "compactBelowHeightPx": 500
@@ -70,6 +72,8 @@
         "minGapPx": 24,
         "fit": "shrinkToLane",
         "anchor": "revealLine",
+        "maxOuterOverflowVw": 8,
+        "minVisibleHeightVh": 22,
         "listener": {
           "minOpacity": 0.62,
           "brightness": 0.8,

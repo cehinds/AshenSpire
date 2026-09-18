@@ -1022,9 +1022,12 @@
   :root .combat:not(.coop) .field:has(.enemy-row > .combatant:nth-child(4)) .enemy-row > .combatant { min-width:calc(86px / var(--ui-zoom,1)); }
 }
 
-/* A hand card has one portrait profile; viewport changes never resize one axis alone. */
+/* A hand card has one portrait profile; viewport changes never resize one axis
+   alone. The profile itself is authored once, in card.json, and reaches here as
+   --card-ratio / --card-height-per-width (src/ui/models/CardSizeModel.js): the
+   1.4 that used to sit in this calc was 7/5 written out by hand. */
 :root .combat:not(.coop) .hand .card {
-  height: calc(var(--card-w) * 1.4); aspect-ratio: 5 / 7;
+  height: calc(var(--card-w) * var(--card-height-per-width)); aspect-ratio: var(--card-ratio);
   --card-art-h: calc(var(--card-w) * 0.30);
   --card-name-h: calc(var(--card-w) * 0.18);
 }
@@ -1163,8 +1166,14 @@
   gap: 0; overflow: visible;
 }
 :root .combat[data-layout='formation'] .hand .card {
+  /* 178px is the hand's own pinned width (SPEC §12's 150-180 band); the HEIGHT
+     is the card's shape applied to it, not a second 249.2px to keep in step. */
   box-sizing: border-box; flex: 0 0 178px; min-width: 178px; max-width: 178px;
-  width: 178px; height: 249.2px; min-height: 249.2px; max-height: 249.2px; aspect-ratio: 5 / 7;
+  width: 178px;
+  height: calc(178px * var(--card-height-per-width));
+  min-height: calc(178px * var(--card-height-per-width));
+  max-height: calc(178px * var(--card-height-per-width));
+  aspect-ratio: var(--card-ratio);
 }
 :root .combat[data-layout='formation'] .hand .card .ctext { min-height: 0; overflow: hidden; }
 :root .combat[data-layout='formation'][data-turn='enemy'] .hand {
