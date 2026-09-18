@@ -89,8 +89,10 @@ standard runs use; the world-journey atlas follows in its own branch.
     its own overflow, so a pick never shrinks the scene under the finger.
   - Without the board's reading a node reads as unknown; the hidden kind
     cannot leak through a caller that forgot to pass one.
-- **Footer (WGM6, WGM7).** Recenter (the board's existing `resetFraming`)
-  sits on the left and Enter on the right. Enter is disabled until a
+- **Footer (WGM6, WGM7).** ~~Recenter (the board's existing `resetFraming`)
+  sits on the left and Enter on the right.~~ Superseded by *Map tray* below:
+  the footer is a tray, and Recenter went with it (it ran the same
+  `resetFraming` the zoom bar's ⊙ does). Enter is still disabled until a
   reachable node is selected and then names the kind.
 - **Co-op.** The co-op map shares the board but keeps its own pick; nothing
   changes there.
@@ -117,8 +119,51 @@ Limits:
 - ~~The run HUD plus route strip still take about 17% rather than W4b's 10%
   header.~~ Superseded by *Map header: W4b's 10 vh* below: the header is now
   10% of the height, with a 52 px physical floor on short hosts.
-- The zoom bar's ⊙ remains beside the footer's Recenter (the co-op map shares
-  that bar).
+- ~~The zoom bar's ⊙ remains beside the footer's Recenter (the co-op map shares
+  that bar).~~ Closed by *Map tray* below: the second Recenter is gone and ⊙,
+  which the co-op map shares, is the only one.
+## Map tray
+
+Owner, 2026-09-14: "the potions button from the bottom hud should remain
+present in the map mode in the usual position", with the navigation buttons
+appearing in the centre when a location is selected so they never overlap it,
+and the bottom compressed to a tray that opens on select and closes when the
+player selects away — the map moving up and auto-recentring on both.
+
+- **Closed (`.map-tray-row`, screens/map.js).** The zoom bar left, the hint
+  bar centred, Potions in the corner combat's footer keeps it in
+  (components/runPotions.js). ONE row, and the only part of the tray that takes
+  layout height — the scene, and the camera framed against it, do not change
+  when the tray works. Below ~104rem the hint bar takes its own line.
+- **Open.** A pick lights the node, and after `wireframeUi.map.tray` says
+  (150 ms) the reveal slides up OVER the foot of the map with the node's
+  context and Back / Enter. Measured: it stops at y 609 of 800 on desktop and
+  y 670 of 844 on a phone, where the bands it replaced started at 552 and 662 —
+  the tray never reaches higher than the old bottom band did.
+- **Back and Enter** are centred on the screen (1280: 443–837, centre 640;
+  390: centre 196 of 195) and sit on the row ABOVE Potions, so the clearance is
+  vertical and a phone keeps two full-width buttons.
+- **Camera (mapboard `centerOnNode`).** Opening centres the picked node in
+  what is left visible, closing returns to the computed frame. Measured with
+  the camera panned 180 px away: centred to 1 px on open, and to 1 px on the
+  whole map after Back. `insetBottom` grows the content box at the foot only,
+  so a node on the bottom row can still reach the middle. The framing is NOT
+  touched — this is a look, not a hand on the ladder.
+- **Closing.** Back, or a tap on the map away from a lit node; a mouse drag
+  that pans is not a tap (6 px).
+- **Potions out of combat (models/RunPotionModel.js).** The room rail's rules,
+  in one testable place: a charge flask is drunk only with "Use flasks outside
+  combat" on and a charge left and never dropped; a carried potion is
+  combat-only and may be dropped. The list says why when it refuses.
+- **Reduced motion** takes every delay, slide, fade and glide to zero.
+
+Browser evidence (Edge, emulation, `?shot=map`): at 1280×800 the closed tray
+is 60 px and opens to 191 px against the old band's 248; at 390×844 it is 58 px
+and opens to 174 px against 182. Selecting, Back, tapping away, the Potions
+list and its refusal line were driven at both sizes. The transition and glide
+themselves could not be timed in that pane (it parks the document timeline);
+they were verified on the reduced-motion path, which lands instantly.
+
 ## Combatant inspector
 
 Branch `feature/wireframe-combatant-inspector`, based on dev `3c72a6df`.

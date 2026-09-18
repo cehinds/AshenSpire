@@ -201,7 +201,8 @@ test('closeUpPlacement zooms the whole figure so its visible fraction spans slot
   assert.ok(placed.y + (art.top + art.height) * placed.scale > revealLine, 'the lower two thirds run on under the context band');
   // The placement also reports the figure's own width: the lane rule needs it,
   // and so does any instrument checking that two figures do not overlap.
-  assert.deepEqual(Object.keys(placed).sort(), ['scale', 'width', 'x', 'y']);
+  assert.deepEqual(Object.keys(placed).sort(), ['clipTo', 'scale', 'width', 'x', 'y']);
+  assert.equal(placed.clipTo, null, 'nothing is cut while the config shrinks instead');
   assert.ok(near(placed.width, art.width * placed.scale), 'the reported width is the scaled art width');
   assert.ok(Object.isFrozen(placed));
 });
@@ -331,7 +332,7 @@ test('at every host the two figures never share a pixel, and each stands in its 
 test('a lane is half the frame less the insets and the configured gap, and the two never meet', () => {
   const lanes = dialogueLanes(1000, W4C_LAYOUT);
   const inset = 1000 * (W4C_LAYOUT.positioning.portraitSlot.insetVw / 100);
-  const gap = 1000 * (W4C_LAYOUT.positioning.portraits.minGapVw / 100);
+  const gap = Math.max(1000 * (W4C_LAYOUT.positioning.portraits.minGapVw / 100), W4C_LAYOUT.positioning.portraits.minGapPx);
   assert.ok(near(lanes.left.width, (1000 - inset * 2 - gap) / 2));
   assert.ok(near(lanes.left.left, inset));
   assert.ok(near(lanes.right.left + lanes.right.width, 1000 - inset));
@@ -378,4 +379,104 @@ test('the HUD draws its compact form on a short host and always draws', () => {
     const { bands } = frameGeometry(host);
     assert.ok(bands.hud > 0, `${host.label}: the HUD band must always have height`);
   }
+});
+
+// THE GAP'S FLOOR (#1127). A share of the frame is not a gap on a phone: at 390
+// wide 1.5vw is 6.5px and the two figures read as one crowd, against 80px on a
+// desktop. positioning.portraits.minGapPx is the gap's real minimum, and the
+// share takes over once it is the wider of the two.
+test('the gap between the lanes is never under its pixel floor, at any width', () => {
+  const floor = W4C_LAYOUT.positioning.portraits.minGapPx;
+  for (const host of HOSTS) {
+    const { lanes } = frameGeometry(host);
+    const gap = lanes.right.left - (lanes.left.left + lanes.left.width);
+    assert.ok(gap >= floor - 1e-6, `${host.label}: the lanes are ${gap.toFixed(1)}px apart, under the ${floor}px floor`);
+    assert.ok(lanes.left.width > 0 && lanes.right.width > 0, `${host.label}: the floor left no lane`);
+  }
+  // Wide frames keep the share, which is wider than the floor there.
+  const wide = dialogueLanes(4000, W4C_LAYOUT);
+  assert.ok(near(wide.right.left - (wide.left.left + wide.left.width), 4000 * 0.015), 'the share wins on a wide frame');
+  assert.throws(
+    () => dialogueLanes(400, edited(W4C_LAYOUT, (d) => { d.positioning.portraits.minGapPx = -1; })),
+    /minGapPx must be ≥ 0/,
+  );
+});
+
+test('the two figures are at least the floor apart at every host', () => {
+  const floor = W4C_LAYOUT.positioning.portraits.minGapPx;
+  for (const host of HOSTS) {
+    const { revealLine, lanes, slots } = frameGeometry(host);
+    const left = visibleBox(FIGURES.player, closeUpPlacement(FIGURES.player, slots.left, revealLine, W4C_LAYOUT, lanes.left));
+    const right = visibleBox(FIGURES.npc, closeUpPlacement(FIGURES.npc, slots.right, revealLine, W4C_LAYOUT, lanes.right));
+    assert.ok(right.left - left.right >= floor - 1e-6, `${host.label}: the figures are ${(right.left - left.right).toFixed(1)}px apart`);
+  }
+});
+
+// The quest's name is drawn whole: the line it sits on is at least as tall as
+// the display face needs, so the panel (which clips, for its ellipsis) cannot
+// cut the ascenders (owner, 2026-09-18).
+test('the title line leaves room for the display face at the configured size', () => {
+  const { titleRem, titleLineHeight, paddingRem } = W4C_LAYOUT.sizing.context;
+  // Cinzel reports a font box of 1.125em (ascent 0.9375 + descent 0.25).
+  const faceNeeds = 1.125;
+  assert.ok(titleLineHeight >= faceNeeds, `a title line of ${titleLineHeight} cannot hold a face needing ${faceNeeds}`);
+  assert.ok(titleRem > 0 && paddingRem > 0);
+});
+
+// The second way to keep a figure in its lane, which the config can choose:
+// the spec's zoom is kept and the lane cuts the figure's sides.
+test('clipToLane keeps the spec zoom and reports the lane to cut to', () => {
+  const clipping = edited(W4C_LAYOUT, (d) => { d.positioning.portraits.fit = 'clipToLane'; });
+  for (const host of HOSTS) {
+    const { revealLine, lanes, slots } = frameGeometry(host, clipping);
+    const placed = closeUpPlacement(FIGURES.player, slots.left, revealLine, clipping, lanes.left);
+    const span = revealLine - slots.left.top;
+    // The top share fills slot top to reveal line, at every size.
+    assert.ok(near(FIGURES.player.height * placed.scale / 3, span, 1e-6), `${host.label}: the top third does not fill the band`);
+    const width = FIGURES.player.width * placed.scale;
+    if (width > lanes.left.width) {
+      assert.ok(placed.clipTo, `${host.label}: a figure wider than its lane must be cut to it`);
+      assert.ok(near(placed.clipTo.width, lanes.left.width));
+    } else {
+      assert.equal(placed.clipTo, null, `${host.label}: a figure inside its lane is not cut`);
+    }
+  }
+});
+
+// A COMPACT HOST GETS ITS OWN BAND PLAN (#1127). The shared HUD draws two rows
+// of facts, and a 10% band holds them on a desktop but not on a phone; the room
+// comes from the context band, which had an empty strip under its responses.
+test('a compact host takes the compact band plan, and both plans sum to 100', () => {
+  const frame = { width: 433, height: 824, zoom: 1, rem: 16 };
+  const roomy = dialogueBands(frame, W4C_LAYOUT, W4_PARENT, false);
+  const compact = dialogueBands(frame, W4C_LAYOUT, W4_PARENT, true);
+  assert.ok(near(roomy.hud, frame.height * 0.10), 'a roomy host keeps the 10% band');
+  assert.ok(near(compact.hud, frame.height * 0.12), 'a compact host gets 12%');
+  assert.ok(compact.hud > roomy.hud && compact.context < roomy.context, 'the room comes from the context band');
+  for (const shares of [W4C_LAYOUT.sizing.bands, W4C_LAYOUT.sizing.bandsCompact]) {
+    assert.equal(shares.hud + shares.scene + shares.context + shares.footer, 100);
+  }
+  assert.throws(
+    () => dialogueBands(frame, edited(W4C_LAYOUT, (d) => { d.sizing.bandsCompact.hud = 20; }), W4_PARENT, true),
+    /sum to 108, not 100/,
+  );
+});
+
+// A NARROW HOST SHOWS THE WHOLE FIGURE (#1127). A third of the figure filling
+// the band is a close-up a desktop can carry; half a 433px frame cannot, and
+// shrinking that zoom to fit left both speakers a third of the height the spec
+// asks for.
+test('a narrow host shows the whole figure, filling the same band', () => {
+  const host = { label: '411x783', width: 433, height: 824 };
+  const { revealLine, lanes, slots } = frameGeometry(host);
+  const span = revealLine - slots.left.top;
+  const wide = closeUpPlacement(FIGURES.player, slots.left, revealLine, W4C_LAYOUT, lanes.left, false);
+  const narrow = closeUpPlacement(FIGURES.player, slots.left, revealLine, W4C_LAYOUT, lanes.left, true);
+  // What the band SHOWS is the point, not the raw zoom: the close-up shows a
+  // third of a figure that had to shrink to fit its lane, and on a narrow host
+  // that third is half the band. The whole-figure rule fills the band instead.
+  const shown = (placement, fraction) => FIGURES.player.height * placement.scale * fraction;
+  assert.ok(near(shown(narrow, 1), span, 1e-6), 'the whole figure fills slot top to reveal line');
+  assert.ok(shown(narrow, 1) > shown(wide, 1 / 3), 'and it shows more of the speaker than the shrunken close-up did');
+  assert.ok(FIGURES.player.width * narrow.scale <= lanes.left.width + 1e-6, 'while still inside its lane');
 });
