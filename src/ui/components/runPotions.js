@@ -11,6 +11,11 @@
 //     potion, a second tap opens its flask menu (Use / Inspect / Drop, the
 //     menu the room rail's tiles opened). What does not fit is `+N`, which
 //     opens the Potions list.
+//   · THEY COME OUT ON HOVER (owner, 2026-09-17), sliding and fading out of
+//     the button's edge — and the wait is the player's OWN tooltip delay
+//     rather than a second number beside it: the same setting, read through
+//     the same model (model/tooltipSettings.js), with the tooltip's fade.
+//     styles/map.css does the reveal; this hands it the two durations.
 //   · The Potions button opens the list: one row per entry with its one verb,
 //     Drink for a charge flask and Drop for a carried potion, disabled with
 //     the reason when the rules refuse it.
@@ -21,6 +26,7 @@ import { applyRunPotion, runPotionPlan, runPotionRows, runPotionVerb } from '../
 import { flaskDetailLines, flaskPresentation, flaskTooltipHtml, mountFlaskActionMenu } from './flask.js';
 import { iconTray, observeIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from './iconTray.js';
 import { settingOn } from '../screens/settings.js';
+import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { button, flavour, openModal, optionCard } from '../kit/index.js';
 import { t, tFull } from '../strings.js';
@@ -32,6 +38,11 @@ export function mountRunPotions(host, { registries, run, meta, onChange = null }
     if (applyRunPotion({ registries, run, entry, actionId, plan: planFor(entry) })) onChange?.();
   };
   const control = button({ label: t('iconTray.potions'), className: 'run-potions-btn', attrs: { 'aria-haspopup': 'dialog' } });
+  // The player's tooltip delay and fade, so hovering Potions feels like
+  // hovering anything else on the screen.
+  const hover = resolveTooltipSettings(meta.settings);
+  host.style.setProperty('--potion-reveal-delay', `${hover.open}ms`);
+  host.style.setProperty('--potion-reveal-fade', `${hover.fade}ms`);
   const openList = () => openRunPotions({ registries, run, opener: control, planFor, onAction: act });
   const minis = iconTray({ label: t('iconTray.potions'), attrs: { class: 'run-potion-minis' } });
   minis.style.setProperty('--icon-tray-slots', String(wireframeUi.iconTray.footerPotionIcons));
@@ -47,7 +58,7 @@ export function mountRunPotions(host, { registries, run, meta, onChange = null }
     }),
   })));
   control.addEventListener('click', openList);
-  host.replaceChildren(minis, control);
+  host.replaceChildren(control, minis);
   observeIconTray(minis);
   return { control, minis };
 }
