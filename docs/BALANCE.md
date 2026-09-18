@@ -202,7 +202,7 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 - **One pilot**: the leftmost-affordable bot. It cannot sequence Starstone
   combos, hold a flask for a boss, or curate a deck. A bot floor is not a
   player ceiling, and nothing here is a claim about a human.
-- **Section 5 is act 1 only**, starting deck only, 300 seeds per row.
+- **Section 5 is tier 1 only**, starting deck only, 300 seeds per row.
 - It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is
   unbeatable by construction). Every other number above is a report.
 

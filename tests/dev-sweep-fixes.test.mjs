@@ -23,6 +23,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createSession } from '../tools/session.mjs';
 import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 // These files EXPLAIN the defect in their comments, naming the very expression
@@ -34,27 +35,50 @@ let checks = 0;
 const ok = (cond, what) => { assert.ok(cond, what); checks += 1; };
 
 // ---- 1. the balance tool reads seats, and `act` is gone from the content ----
+//
+// BEHAVIOURAL, not a source match: the rule moved to src/model/encounterTier.js
+// precisely so it could be driven directly, without importing a tool that runs
+// a 300-seed simulation at module load (Copilot's review on #1111 asked for
+// this, and it is the better test).
 ok(!reg.encounters.all().some((enc) => enc.act != null),
   'no encounter row carries `act` — the field the tool used to read is gone');
-ok(reg.encounters.all().length > 0 && new Set(reg.encounters.all().map((e) => e.seat)).size > 1,
-  'encounters span more than one seat, so a tier-blind tool would be wrong about most of them');
-const balanceSrc = code('tools/balance.mjs');
-// The defect's exact shape: `|| 1` turned a field that no longer exists into
-// "Act 1" for all 35 encounters. (The comment above the fix names `enc.act`
-// on purpose, so this looks for the expression, not the spelling.)
-ok(!/\.act \|\| 1/.test(balanceSrc) && !/\(e\.act \|\| 1\)/.test(balanceSrc),
-  'tools/balance.mjs no longer defaults a missing `act` to tier 1');
-ok(/function tierOf\(enc\)/.test(balanceSrc) && /SEAT_TIER\.get\(enc\.seat\)/.test(balanceSrc),
-  'tools/balance.mjs resolves an encounter to its seat\'s authored baseTier');
-ok(/throw new Error\(`balance: encounter/.test(balanceSrc),
-  'an unknown seat is a throw, not a silent fall back to tier 1');
-// The one null seat is the last tier's extra terminal (SPEC §13.5), not tier 1.
+const TIERS = seatTiers(reg);
+ok(TIERS.size === reg.seats.all().length && [...TIERS.values()].every(Number.isInteger),
+  'every declared seat maps to an integer baseTier');
+ok(new Set(reg.encounters.all().map((e) => encounterTier(e, TIERS))).size > 1,
+  'the encounters resolve to MORE THAN ONE tier — the whole defect was that they all read as 1');
+for (const enc of reg.encounters.all()) {
+  const tier = encounterTier(enc, TIERS);
+  ok(Number.isInteger(tier) && tier >= 1, `${enc.id} resolves to a real tier (${tier}), not a default`);
+  break; // one worked example; the set-size check above covers the rest
+}
+// The one null seat (SPEC §13.5) is the LAST tier's extra terminal, not tier 1.
 const nullSeat = reg.encounters.all().filter((enc) => enc.seat == null);
 ok(nullSeat.length === 1 && nullSeat[0].pool === 'boss',
   'exactly one encounter has a null seat, and it is a boss');
-const tiers = new Set(reg.seats.all().map((s) => s.baseTier));
-ok(tiers.has(1) && Math.max(...tiers) > 1,
-  'the seats declare more than one tier, so the tier the tool prints is a real distinction');
+ok(encounterTier(nullSeat[0], TIERS) === lastTier(TIERS),
+  `the null-seat boss (${nullSeat[0].id}) grades at the last tier, not the first`);
+// An unknown seat is LOUD. This is the failure mode the defect had: a value the
+// content does not declare quietly becoming a plausible tier.
+assert.throws(() => encounterTier({ id: 'planted', seat: 'nowhere', enemies: [] }, TIERS),
+  /not a declared seat/, 'an encounter naming an unknown seat throws by name');
+checks += 1;
+assert.throws(() => encounterTier(null, TIERS), /requires an encounter row/,
+  'and a missing encounter row throws rather than defaulting');
+checks += 1;
+// An enemy nothing fights has NO tier. Returning the last one (or the first)
+// would be the same invention, one level down — Copilot's finding on #1111.
+ok(enemyTier('noSuchEnemy', reg.encounters.all(), TIERS) === null,
+  'an enemy no encounter fields resolves to null, not to a tier');
+const someEnemy = reg.encounters.all()[0].enemies[0];
+ok(enemyTier(someEnemy, reg.encounters.all(), TIERS) === encounterTier(reg.encounters.all()[0], TIERS),
+  `a fielded enemy (${someEnemy}) takes its encounter's tier`);
+// And the tool itself is wired to that module rather than keeping a second copy.
+const balanceSrc = code('tools/balance.mjs');
+ok(/from\s+'\.\.\/src\/model\/encounterTier\.js'/.test(balanceSrc),
+  'tools/balance.mjs resolves tiers through the shared module');
+ok(!/\.act\s*\|\|\s*1/.test(balanceSrc),
+  'and no longer defaults a missing `act` to tier 1');
 
 // ---- 2 + 3. the co-op snapshot carries the seat and the fight's history -----
 const host = createSession({ registries: reg, seedString: 'GUARD2' });
@@ -87,11 +111,11 @@ ok(acted.every((e) => e.performedMoves.every((m) => typeof m === 'string' && m))
   'each recorded move is a move id the client can name');
 
 const coopSrc = code('src/ui/screens/coop.js');
-ok(/const history = def && Array\.isArray\(entity\.performedMoves\)/.test(coopSrc),
+ok(/const\s+history\s*=\s*def\s*&&\s*Array\.isArray\(entity\.performedMoves\)/.test(coopSrc),
   'coop.js builds the inspector\'s history from performedMoves');
-ok(/\? \{ moveCards, history \}/.test(coopSrc),
+ok(/\{\s*moveCards\s*,\s*history\s*\}/.test(coopSrc),
   'the enemy subject carries that history, so the section reads `known`/`none` instead of `unknown`');
-ok(/seatName: snap\.seatName \|\| null/.test(coopSrc),
+ok(/seatName\s*:\s*snap\.seatName\s*\|\|\s*null/.test(coopSrc),
   'coop.js passes the seat name through to the map board\'s act plate');
 
 // ---- 4. a finished fight is not a resume point ------------------------------
@@ -110,14 +134,14 @@ assert.throws(
 checks += 1;
 
 const combatSrc = code('src/ui/screens/combat.js');
-ok(/fightOver = true;\s*\n\s*closeQuickNav\(\);/.test(combatSrc),
+ok(/fightOver\s*=\s*true\s*;\s*closeQuickNav\(\s*\)\s*;/.test(combatSrc),
   'combat.js closes the menu the moment the fight resolves');
-ok(/menuBtn\.disabled = true/.test(combatSrc),
+ok(/menuBtn\.disabled\s*=\s*true/.test(combatSrc),
   'and disables the button, so the victory beat is not a window into Save/Quit');
-ok(/if \(fightOver\) return;/.test(combatSrc),
+ok(/if\s*\(\s*fightOver\s*\)\s*return\s*;/.test(combatSrc),
   'and the click handler refuses even if something re-opens it');
 const mainSrc = code('src/main.js');
-ok(/const savedSnapshot = storedSnapshot && !storedSnapshot\.result \? storedSnapshot : null;/.test(mainSrc),
+ok(/storedSnapshot\s*&&\s*!storedSnapshot\.result\s*\?\s*storedSnapshot\s*:\s*null/.test(mainSrc),
   'a slot that already holds an ended snapshot falls back to the deterministic restart instead of being unplayable');
 
 console.log(`${checks} checks passed`);

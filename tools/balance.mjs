@@ -23,6 +23,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
+import { seatTiers, lastTier, encounterTier, enemyTier } from '../src/model/encounterTier.js';
 
 // A no-op punching bag for measuring unopposed player DPS.
 const DUMMY = { id: 'balanceDummy', name: 'Dummy', hp: [100000, 100000], poiseMax: 999999, moves: { wait: { intent: 'unknown', weight: 1 } } };
@@ -137,25 +138,17 @@ P('');
 // tier 1 for the whole game, which is why the sanity table never flagged a
 // late-act race: it was grading act-3 HP against act-1 DPS.
 //
-// The tier is the seat's authored `baseTier` (§13.1: "the act it used to be").
-// An unknown seat id is a THROW, not a default — silently falling back to 1 is
-// exactly the failure being fixed here.
-const SEAT_TIER = new Map(REG.seats.all().map((seat) => [seat.id, seat.baseTier]));
-const LAST_TIER = Math.max(...SEAT_TIER.values());
-// The ONE null seat (SPEC §13.5): the Blighted Valkyrie is the last tier's
-// extra terminal whatever seat holds it, so she belongs to the last tier.
-function tierOf(enc) {
-  if (!enc) return LAST_TIER;
-  if (enc.seat == null) return LAST_TIER;
-  const tier = SEAT_TIER.get(enc.seat);
-  if (tier == null) throw new Error(`balance: encounter '${enc.id}' names seat '${enc.seat}', which is not in content/seats.js`);
-  return tier;
-}
+// The rule itself lives in src/model/encounterTier.js — one home, drivable by a
+// test without importing this tool (which runs a 300-seed simulation at load).
+const SEAT_TIER = seatTiers(REG);
+const LAST_TIER = lastTier(SEAT_TIER);
+const tierOf = (enc) => encounterTier(enc, SEAT_TIER);
 
-// Group enemies by the tier of the encounters that use them.
-function actOf(enemyId) {
-  return tierOf(REG.encounters.all().find((x) => x.enemies.includes(enemyId)));
-}
+// The tier of the encounters that field this enemy, or NULL when nothing does.
+// A roster entry no encounter uses has NO tier, and the table prints '—' rather
+// than the last one: guessing here would be the same silent invention that made
+// every fight in the game read as Act 1.
+const tierOfEnemy = (enemyId) => enemyTier(enemyId, REG.encounters.all(), SEAT_TIER);
 
 P('## 1. Enemy roster');
 P('');
@@ -166,7 +159,7 @@ for (const def of REG.enemies.all()) {
   const s = enemyStats(def);
   const pool = REG.encounters.all().find((x) => x.enemies.includes(def.id));
   const role = pool ? pool.pool : 'normal';
-  P(`| ${actOf(def.id)} | ${def.name} | ${s.hp} | ${round1(s.dps)} | ${s.heal ? round1(s.heal) : '—'} | ${s.poise} | ${role} |`);
+  P(`| ${tierOfEnemy(def.id) ?? '—'} | ${def.name} | ${s.hp} | ${round1(s.dps)} | ${s.heal ? round1(s.heal) : '—'} | ${s.poise} | ${role} |`);
 }
 P('');
 
@@ -223,12 +216,12 @@ for (const tier of new Set(SEAT_TIER.values())) {
 }
 for (const enc of REG.encounters.all()) {
   if (enc.pool === 'normal') continue;
-  const act = tierOf(enc);
+  const tier = tierOf(enc);
   const stats = enc.enemies.map((id) => enemyStats(REG.enemies.get(id)));
   const hp = stats.reduce((a, s) => a + s.hp, 0);
   const heal = stats.reduce((a, s) => a + s.heal, 0);
   const inDps = stats.reduce((a, s) => a + s.dps, 0);
-  const refDps = avgStartDps * bandMult[act];
+  const refDps = avgStartDps * bandMult[tier];
   const net = refDps - heal;
   const ttk = net > 0 ? hp / net : Infinity;
   const ttd = inDps > 0 ? minHp / inDps : Infinity;
@@ -236,7 +229,7 @@ for (const enc of REG.encounters.all()) {
   if (!isFinite(ttk)) verdict = '**UNBEATABLE (heal ≥ DPS)**';
   else if (ttk >= ttd) verdict = '**race — check**';
   else if (ttk <= 2) verdict = 'trivial?';
-  P(`| ${act} | ${enc.id} | ${hp} | ${heal ? round1(heal) : '—'} | ${round1(refDps)} | ${round1(ttk)} | ${round1(inDps)} | ${round1(ttd)} | ${verdict} |`);
+  P(`| ${tier} | ${enc.id} | ${hp} | ${heal ? round1(heal) : '—'} | ${round1(refDps)} | ${round1(ttk)} | ${round1(inDps)} | ${round1(ttd)} | ${verdict} |`);
 }
 P('');
 P('> Note: the Blighted Valkyrie (final boss) also heals **3 per hit she lands** via a');
@@ -281,11 +274,11 @@ P('');
 // game. Watched, 2026-08-15; that observation is why this pass exists.
 const unbeatable = [];
 for (const enc of REG.encounters.all()) {
-  const act = tierOf(enc);
+  const tier = tierOf(enc);
   const stats = enc.enemies.map((id) => enemyStats(REG.enemies.get(id)));
   const heal = stats.reduce((a, s) => a + s.heal, 0);
-  const refDps = avgStartDps * bandMult[act];
-  if (refDps - heal <= 0) unbeatable.push(`${enc.id} (tier ${act}, ${enc.pool}): heal ${round1(heal)}/t vs refDPS ${round1(refDps)}`);
+  const refDps = avgStartDps * bandMult[tier];
+  if (refDps - heal <= 0) unbeatable.push(`${enc.id} (tier ${tier}, ${enc.pool}): heal ${round1(heal)}/t vs refDPS ${round1(refDps)}`);
 }
 const unbeatableCount = unbeatable.length;
 
@@ -322,7 +315,7 @@ P('  (the Valkyrie note above is exactly the hole this leaves).');
 P('- **One pilot**: the leftmost-affordable bot. It cannot sequence Starstone');
 P('  combos, hold a flask for a boss, or curate a deck. A bot floor is not a');
 P('  player ceiling, and nothing here is a claim about a human.');
-P('- **Section 5 is act 1 only**, starting deck only, 300 seeds per row.');
+P('- **Section 5 is tier 1 only**, starting deck only, 300 seeds per row.');
 P('- It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is');
 P('  unbeatable by construction). Every other number above is a report.');
 P('');

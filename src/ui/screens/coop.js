@@ -558,10 +558,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // reads as "not revealed" and is a different claim entirely.
       // Names and details come from the move cards already built above — one
       // source for both, so the history and the move set cannot word a move
-      // two different ways.
+      // two different ways. Indexed once: this runs on every inspector open,
+      // and a scan per entry is a needless m×n in a path a player waits on.
+      const cardsByMoveId = moveCards && new Map(moveCards.map((c) => [c.moveId, c]));
       const history = def && Array.isArray(entity.performedMoves)
         ? entity.performedMoves.map((moveId) => {
-          const card = moveCards.find((c) => c.moveId === moveId);
+          const card = cardsByMoveId.get(moveId);
           return { name: card ? card.name : moveId, detail: card ? card.detail : '' };
         })
         : null;

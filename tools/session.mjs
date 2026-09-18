@@ -603,7 +603,7 @@ export function createSession({ registries, seedString, endless = false, restore
         // was `unknown` — not "has not acted yet", but "we cannot see" — for
         // the whole of every fight. An empty array is a real answer and a
         // missing field is not; that distinction is the section's whole point.
-        performedMoves: [...(e.performedMoves || [])],
+        performedMoves: Array.isArray(e.performedMoves) ? e.performedMoves.slice() : [],
         arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
