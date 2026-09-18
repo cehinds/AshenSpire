@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1118",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "One more gap in the list of changes is filled",
+    "detail": "Nothing you see changes in play. A change that landed while the previous gap-filling was under way was itself missing from the list of changes under Settings, About. It now has its line, with the build it shipped in.",
+    "build": "0.7.1.74",
+    "pullRequest": 1118,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1118"
+  },
+  {
     "id": "pr-1115",
     "date": "2026-09-18",
     "group": "2026-09-18",

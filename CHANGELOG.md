@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-18
 
+- **One more gap in the list of changes is filled** ([#1118](https://github.com/cehinds/AshenSpire/pull/1118), `0.7.1.74`). Nothing you see changes in play. A change that landed while the previous gap-filling was under way was itself missing from the list of changes under Settings, About. It now has its line, with the build it shipped in.
+
 - **The list of changes under Settings, About fills in seven gaps** ([#1115](https://github.com/cehinds/AshenSpire/pull/1115), `0.7.1.72`). Nothing you see changes in play. Seven changes that had already landed were missing from this list, so the changelog you can read in the game did not mention them: one that puts your relics, potions and status effects in a single row of icons, and six that only touched the project's own writing and checking tools. Each now has its line, with the build it shipped in.
 
 ## 2026-09-17
