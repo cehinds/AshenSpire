@@ -252,6 +252,62 @@ export function dialogueCompactHost(viewportWidth, parent) {
 }
 
 /**
+ * dialogueLanes(frameWidth, layout) → { left, right }, each { left, width }.
+ *
+ * THE LANE (owner, 2026-09-15, #1112): each speaker owns half the frame, less
+ * the side insets and positioning.portraits.minGapVw between the two, so the
+ * figures cannot meet however narrow the host is. The slot still says where a
+ * figure is centred; the lane says how far it may spread.
+ */
+export function dialogueLanes(frameWidth, layout) {
+  const width = frameWidth;
+  if (!(width > 0)) throw new Error(`dialogueLanes needs a positive frame width, got ${width}`);
+  const insetVw = layout.positioning.portraitSlot.insetVw;
+  const gapVw = layout.positioning.portraits.minGapVw;
+  if (!(gapVw >= 0)) throw new Error(`dialogue positioning.portraits.minGapVw must be ≥ 0, got ${gapVw}`);
+  const inset = width * (insetVw / 100);
+  const gap = width * (gapVw / 100);
+  const laneWidth = (width - inset * 2 - gap) / 2;
+  if (!(laneWidth > 0)) throw new Error('dialogue portrait insets and minGapVw leave no lane for a figure');
+  return Object.freeze({
+    left: Object.freeze({ left: inset, width: laneWidth }),
+    right: Object.freeze({ left: width - inset - laneWidth, width: laneWidth }),
+  });
+}
+
+/**
+ * dialogueCompactBand(viewportHeight, layout) → the HUD draws its one-row
+ * compact form. A short screen cannot give the shared HUD two rows inside a
+ * 10% band, and the band must never be the thing that gives way: it always
+ * draws (owner, 2026-09-15).
+ *
+ * THE HEIGHT IS THE SCREEN'S, NOT THE FRAME'S, and the difference is the whole
+ * bug: at a 740x372 screen the app zooms to 0.62, so the frame is 600 CSS px
+ * tall and a frame-px test called it roomy while the player was looking at
+ * 372 real px. This is combat's own question (its `max-height: 500px` rule is
+ * physical too), and dialogueCompactHost asks the width the same way.
+ */
+export function dialogueCompactBand(viewportHeight, layout) {
+  const below = layout.sizing.hud.compactBelowHeightPx;
+  if (!(below > 0)) throw new Error(`dialogue sizing.hud.compactBelowHeightPx must be > 0, got ${below}`);
+  return viewportHeight < below;
+}
+
+/**
+ * dialogueHudCompact({ width, height }, layout, parent) → the HUD folds its
+ * two rows onto one line.
+ *
+ * A 10% band holds one row of the shared HUD, not two. It stacks them when the
+ * screen is SHORT (the band itself is small) and when it is NARROW (the rows
+ * cannot sit side by side at full width), so the question is both, asked in
+ * physical px: 390x844 is roomy in height and still cannot stack two rows in
+ * 94 frame px, and 740x372 is wide and still short.
+ */
+export function dialogueHudCompact(viewport, layout, parent) {
+  return dialogueCompactBand(viewport.height, layout) || dialogueCompactHost(viewport.width, parent);
+}
+
+/**
  * dialogueFooterPlan(layout) → the footer's actions in vw: each one share of
  * the width left after the two side insets and the gaps between actions.
  */
@@ -324,6 +380,12 @@ export function dialogueFrameVars(layout, parent) {
   if (!Number.isInteger(responses.maxLines) || responses.maxLines < 1) {
     throw new Error(`dialogue sizing.responses.maxLines must be a whole number ≥ 1, got ${responses.maxLines}`);
   }
+  const listener = positioning.portraits.listener;
+  for (const [name, value] of [['minOpacity', listener?.minOpacity], ['brightness', listener?.brightness], ['saturation', listener?.saturation]]) {
+    if (!(value > 0) || value > 1) {
+      throw new Error(`dialogue positioning.portraits.listener.${name} must satisfy 0 < v ≤ 1, got ${value}`);
+    }
+  }
   dialogueResponsePlan(layout, 0);
   const footer = dialogueFooterPlan(layout);
   const stack = dialogueStack(layout);
@@ -357,6 +419,12 @@ export function dialogueFrameVars(layout, parent) {
     '--dialogue-response-gap': rem(responses.gapRem),
     '--dialogue-response-lines': String(responses.maxLines),
     '--dialogue-response-min-h': `calc(${round(parent.sizing.minimums.targetPx)}px / var(--ui-zoom, 1))`,
+    // The listener is dimmed, never past the floor its config sets: a speaker
+    // reads as the speaker, and the other one still reads as a person.
+    '--dialogue-listener-opacity': String(listener.minOpacity),
+    '--dialogue-listener-brightness': String(listener.brightness),
+    '--dialogue-listener-saturation': String(listener.saturation),
+    '--dialogue-portrait-gap': vw(positioning.portraits.minGapVw),
     ...Object.fromEntries(stack.order.map((id) => [`--dialogue-z-${kebab(id)}`, String(stack.z[id])])),
     '--dialogue-z-portraits': String(stack.portraitsZ),
     '--dialogue-speaker-lift': String(stack.speakerLift),

@@ -28,7 +28,9 @@
 //   · an 'aria-label': '…' pair inside an attrs object
 // and that LOOKS like prose rather than machinery: it has a letter, is longer
 // than two characters, and is not a bare identifier (`small`), a selector
-// (`.card`), a URL, or a camelCase token (`rewardCollect`). Template literals
+// (`.card`), a URL, a camelCase token (`rewardCollect`), or a dotted
+// uiStrings id (`shop.review.buy.card` — a file that asks the table by id has
+// already done the migration this counts). Template literals
 // are deliberately NOT counted: an interpolated string is a sentence and an
 // expression at once, and a count that includes them would move whenever the
 // expression moved. They are copy too — the baseline's `note` says so rather
@@ -39,7 +41,12 @@
 //   node tools/uistrings.mjs --write-baseline rewrite the baseline from the tree
 //   node tools/uistrings.mjs --selftest      plant a new literal and a removed one; both must be CAUGHT
 //
-// BOUNDARY. A green here does NOT mean the migrated screens read well, that
+// BOUNDARY, and one limit worth naming: this reads the file as TEXT, comments
+// included, so a comment that quotes a copy position (`title: "Draw pile"`)
+// counts as one. Rare, and stripping comments correctly is its own parser; a
+// comment that trips it should be reworded rather than the count fudged.
+//
+// A green here does NOT mean the migrated screens read well, that
 // the table's ids are reachable, or that a string in the table is the one a
 // screen shows. It counts literals in positions. The table's own rules —
 // unknown id, missing form, unresolved token, extends cycles — are
@@ -84,6 +91,14 @@ export function isCopy(s) {
   if (/^[.#[]/.test(s)) return false;                    // selector
   if (/^https?:/.test(s)) return false;                  // url
   if (/^[a-z]+(?:[A-Z][a-z0-9]*)+$/.test(s)) return false; // camelCase key
+  // A DOTTED ID IS THE ANSWER, NOT THE PROBLEM. 'shop.review.buy.card' is a
+  // uiStrings.csv row id — a file holding those has already moved its copy to
+  // the table, which is the whole point of this ratchet. Counting them made
+  // models/ConfirmationReviewModel.js read as SIX new copy sites for doing
+  // exactly the right thing, and the only way back to green would have been to
+  // move the copy back into code. No sentence has this shape: it is dotted,
+  // unspaced and lowercase-initial throughout.
+  if (/^[a-z][A-Za-z0-9]*(?:\.[A-Za-z0-9]+)+$/.test(s)) return false; // uiStrings id
   return true;
 }
 
@@ -220,6 +235,11 @@ function selftest() {
   // And the reading itself: machinery must not be counted as prose.
   ok(!isCopy('small') && !isCopy('.card') && !isCopy('rewardCollect') && !isCopy('https://x.y') && isCopy('Take the card'),
     'the prose test admits a sentence and refuses a token, a selector, a camelCase key and a URL');
+  // A uiStrings id is the migration's OUTPUT. Counting it would have punished
+  // the only file that had finished the job, and a real sentence that happens
+  // to end in a full stop must still be counted.
+  ok(!isCopy('shop.review.buy.card') && !isCopy('piles.spent.title') && isCopy('Empty.') && isCopy('Are you sure. Really.'),
+    'the prose test refuses a dotted uiStrings id and still admits a sentence with a full stop');
 
   // Keys are one spelling on every platform. A Windows walk once keyed
   // src\ui\x.js against a baseline of src/ui/x.js and read 124 files as

@@ -47,7 +47,7 @@ test('the real tree compiles clean and the generated module is current', () => {
 });
 
 test('uiConfig mirrors the folders, holds only resolved values, and is deep-frozen', () => {
-  assert.deepEqual(Object.keys(uiConfig), ['tokens', 'scenes', 'components', 'screens']);
+  assert.deepEqual(Object.keys(uiConfig), ['tokens', 'scenes', 'components', 'screens', 'presentation']);
   assert.deepEqual(Object.keys(uiConfig.scenes).sort(), ['w4', 'w4a', 'w4b', 'w4c']);
   for (const name of ['card', 'selection', 'inspect', 'identity', 'possession', 'buttons', 'tooltip', 'hud', 'categoryNav', 'workspace', 'choiceBody', 'inspector']) {
     assert.ok(uiConfig.components[name], `components.${name}`);
@@ -82,11 +82,15 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
         titleRem: 0.95, titleLineHeight: 1.2, textRem: 0.9, paddingRem: 0.35, gapRem: 0.25,
       },
       responses: { fontRem: 0.85, lineHeight: 1.2, paddingBlockRem: 0.2, paddingInlineRem: 0.5, gapRem: 0.25, maxLines: 2 },
+      hud: { compactBelowHeightPx: 500 },
       footer: { heightVh: 6 },
     },
     positioning: {
       portraitSlot: { insetVw: 2.5, topOffsetVh: 2 },
-      portraits: { visibleFraction: 1 / 3, mirrorNpc: true },
+      portraits: {
+        visibleFraction: 1 / 3, mirrorNpc: true, minGapVw: 1.5, fit: 'shrinkToLane', anchor: 'revealLine',
+        listener: { minOpacity: 0.62, brightness: 0.8, saturation: 0.55 },
+      },
       context: { insetVw: 2.5, insetVh: 2 },
       footer: { sideInsetVw: 2.5, gapVw: 1.5 },
     },
@@ -112,6 +116,7 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
     components: { footer: { actions: ['back', 'skipSpeech', 'continue'] } },
     behavior: {
       maxVisibleResponses: 4,
+      responseHints: 'tooltip',
       responseLayouts: [
         { columns: 1, placement: 'below' },
         { columns: 2, placement: 'below' },
@@ -122,9 +127,12 @@ test('the W4c dialogue scene resolves to exactly the authored contract', () => {
 });
 
 // #1106 shipped the dialogue reframe before this tree was on dev, reading its
-// scene objects from an interim src/ui/sceneConfig.js. The fixture is that
-// file's resolved w4Parent()/w4cLayout(), captured from dev at the merge.
-test('the W4 scenes equal what #1106 shipped in its interim sceneConfig, key order included', () => {
+// scene objects from an interim src/ui/sceneConfig.js. The fixture began as
+// that file's resolved w4Parent()/w4cLayout(), captured from dev at the merge.
+// #1117 ADDS to it and changes nothing in it: the lane rule, the listener's
+// floor, the HUD's compact threshold and the response-hint switch are new
+// keys; every value #1106 shipped is still here, in the same order.
+test('the W4 scenes equal what #1106 shipped, plus the keys #1117 added, key order included', () => {
   const shipped = JSON.parse(readFileSync(new URL('./fixtures/w4-scene-config-1106.json', import.meta.url), 'utf8'));
   const ours = { w4: uiConfig.scenes.w4, w4c: uiConfig.scenes.w4c };
   assert.deepStrictEqual(JSON.parse(JSON.stringify(ours)), shipped);
@@ -204,7 +212,7 @@ test('a duplicate key is refused by name', () => {
 
 test('a file outside the known places is refused by name', () => {
   refusedWith(withFile('ui/panels/zz.json', { sizing: {} }),
-    'content/config/ui/panels/zz.json: not a known place — config files sit at ui/tokens.json or ui/{scenes,components,screens}/<name>.json');
+    'content/config/ui/panels/zz.json: not a known place — config files sit at ui/tokens.json or ui/{scenes,components,screens,presentation}/<name>.json');
 });
 
 test('scene bands that do not sum to 100 are refused by name', () => {

@@ -1795,6 +1795,13 @@ export const uiStrings = [
     "tip": "Choose"
   },
   {
+    "id": "dialogue.respond.hold",
+    "extends": "",
+    "short": "Hold to answer",
+    "full": "A binding response is held down rather than tapped; the tooltip and the screen reader say so instead of a word on the button.",
+    "tip": "Hold to answer"
+  },
+  {
     "id": "armoury.title",
     "extends": "",
     "short": "Armoury",
@@ -1849,6 +1856,13 @@ export const uiStrings = [
     "short": "Removes {name} from {slot}",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "equipment.choose",
+    "extends": "",
+    "short": "Choose {piece}",
+    "full": "Take this piece as your starting equipment.",
+    "tip": "Choose"
   },
   {
     "id": "armoury.compare.role",
@@ -1982,5 +1996,40 @@ export const uiStrings = [
     "short": "+{count}",
     "full": "{count} more, view all",
     "tip": ""
+  },
+  {
+    "id": "common.close",
+    "extends": "",
+    "short": "Close",
+    "full": "Close this door and return to what was under it.",
+    "tip": "Close"
+  },
+  {
+    "id": "piles.eyebrow",
+    "extends": "",
+    "short": "Pile",
+    "full": "Which pile this door is reading.",
+    "tip": "Pile"
+  },
+  {
+    "id": "piles.empty",
+    "extends": "",
+    "short": "Empty.",
+    "full": "Nothing is in this pile.",
+    "tip": "Empty"
+  },
+  {
+    "id": "piles.spent.title",
+    "extends": "",
+    "short": "Card piles",
+    "full": "The cards this fight has spent — discarded and exhausted.",
+    "tip": "Card piles"
+  },
+  {
+    "id": "piles.spent.nav",
+    "extends": "",
+    "short": "Piles",
+    "full": "Choose which spent pile to read.",
+    "tip": "Piles"
   }
 ];

@@ -3173,8 +3173,10 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    `.cc-card-selectors` used to be matched here by `:has(.poker-equipment-choice)`
    — a content sniff. `:has()` takes the specificity of its most specific
    argument, so that selector (0,3,0) and the section's own (0,4,0) both
-   outranked `.as-options[data-view="grid"]` (0,2,0), which is the ONLY rule
-   `data-view` drives. The screen wrote the player's choice onto the container
+   outranked `.as-options[data-view="grid"]` (0,2,0) — which, before this
+   change, was the only rule in the kit that `data-view` drove at all (the
+   picker's own two branches below are the rules this change adds).
+   The screen wrote the player's choice onto the container
    (customize.js) and the stylesheet then ignored it, so List and Grid rendered
    the same grid — and there was no `[data-view="list"]` rule anywhere, so even
    at equal specificity List had nothing to apply. The toggle had one authored
@@ -4429,6 +4431,30 @@ button[data-button-size] {
    Only the portraits and the context enter (DialogueModel.dialogueEntrance). */
 #app > .dialogue-screen { animation: none; }
 .dialogue-screen > .topbar { position: relative; z-index: var(--dialogue-z-hud, 6); background: rgba(13, 11, 8, 0.92); }
+/* THE BAND ALWAYS DRAWS, AND HOLDS ITS OWN ROWS (owner, 2026-09-15). The
+   shared HUD stacks an identity row above a resource row, which is two rows in
+   a band that is 10% of the host: 103px of rows in 94px of band at 390x844,
+   and the same again on a short landscape screen. Folded, the two rows sit on
+   one line and the band contains them. The relic and potion belt still hangs
+   beneath the band's edge, exactly as it does in combat (.shared-hud
+   .hud-bottom); that is the band's own design, not an overflow. */
+.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 1.2rem;
+  row-gap: 0;
+}
+.dialogue-screen[data-hud-compact='true'] > .topbar > .hud-top > :is(.hud-info-row, .hud-resource-row) {
+  min-width: 0;
+  margin: 0;
+}
+/* The identity truncates rather than wrapping, the way the map's compact
+   header already does: a HUD that changes height moves every control below it. */
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-identity > .as-eyebrow,
+.dialogue-screen[data-hud-compact='true'] > .topbar .hud-identity > .as-context {
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .dialogue-plate-layer { position: absolute; inset: 0; pointer-events: none; }
 .dialogue-plate-layer > .environment-backdrop { top: 0; height: 100%; }
 .dialogue-skybox { z-index: var(--dialogue-z-skybox, 2); clip-path: inset(0 0 calc(100% - var(--dialogue-floor-line, 18%)) 0); }
@@ -4441,7 +4467,12 @@ button[data-button-size] {
 /* Inside the portrait layer the speaker is drawn over the listener
    (sceneLayouts W4c portraits.speakerAbove); the listener dims below. */
 .dialogue-portrait[data-speaking='true'] { z-index: calc(var(--dialogue-own-z, 0) + var(--dialogue-speaker-lift, 1)); }
-.dialogue-portrait[data-speaking='false'] { opacity: 0.62; filter: saturate(0.55) brightness(0.8); }
+/* The listener is dimmed to the floor its config sets (positioning.portraits
+   .listener), never past it: both speakers stay readable at every size. */
+.dialogue-portrait[data-speaking='false'] {
+  opacity: var(--dialogue-listener-opacity, 0.62);
+  filter: saturate(var(--dialogue-listener-saturation, 0.55)) brightness(var(--dialogue-listener-brightness, 0.8));
+}
 .dialogue-portrait-art { position: absolute; inset: 0; }
 /* WCF3: the speaker wears the shared selection glow. It sits on the untransformed
    art layer so the zoom does not thicken it. */

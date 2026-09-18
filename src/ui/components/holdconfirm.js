@@ -174,7 +174,7 @@ export function beatCue(phase, id, form) {
  * click that a mobile browser may suppress after a stationary long press.
  */
 export function armHold(btn, {
-  ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
+  ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null, showHint = true,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
   onHoldStart = null, onHoldEnd = null, settleMs = 0,
 }) {
@@ -256,7 +256,11 @@ export function armHold(btn, {
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
       btn.dataset.holdMs = String(now);
       if (btn.style.getPropertyValue('--hold') === '') btn.style.setProperty('--hold', '0');
-      if (!btn.querySelector('.hold-hint')) {
+      // A screen may carry the instruction in the control's tooltip and its
+      // accessible description instead of a word on the face (W4c responses,
+      // behavior.responseHints). The states above are written either way, so
+      // an instrument and a screenshot still read the same control.
+      if (showHint && !btn.querySelector('.hold-hint')) {
         // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
         // gesture a tired player has to find is a gesture they will fight; the
         // word is three letters and it costs the control nothing.
@@ -1022,7 +1026,7 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null, showHint = true } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
@@ -1083,6 +1087,7 @@ export function beatArmer(meta, registries) {
       id: actionId,
       hintHost,
       hintBefore,
+      showHint,
     });
     // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
     // never a list. Some actions are reached without the focus cursor at all —

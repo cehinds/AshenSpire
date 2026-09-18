@@ -26,14 +26,26 @@ const positive = (value, name) => {
 };
 
 /**
- * closeUpPlacement(art, slot, revealLine, layout) → { scale, x, y }
+ * closeUpPlacement(art, slot, revealLine, layout, lane) → { scale, x, y, width }
  *
- * art:        { top, height, centerX } — the visible art in the host's px.
+ * art:        { top, height, centerX, width } — the visible art in the host's px.
  * slot:       { left, top, width } — the portrait slot in layer px.
  * revealLine: the context band's top edge, in layer px, below the slot top.
- * layout:     a W4 scene config with positioning.portraits.visibleFraction.
+ * layout:     a W4 scene config with positioning.portraits.visibleFraction and,
+ *             for the lane rule, fit/anchor.
+ * lane:       { left, width } — the half of the frame this figure may occupy
+ *             (dialogueLanes). Optional: without it the figure is placed as
+ *             before, centred on the slot and scaled by height alone.
+ *
+ * THE LANE RULE (owner, 2026-09-15, #1112). Both speakers stay fully visible at
+ * every size, so a figure never leaves its own half of the frame. The zoom is
+ * still the height rule — the visible fraction spans slot top to reveal line —
+ * and a WIDE host therefore keeps exactly today's figure. Only when that zoom
+ * makes the figure wider than its lane is it scaled down AS A WHOLE, by width;
+ * it then sinks so its top share still stands on the reveal line rather than
+ * hovering above it. The centre is the slot's, clamped into the lane.
  */
-export function closeUpPlacement(art, slot, revealLine, layout) {
+export function closeUpPlacement(art, slot, revealLine, layout, lane = null) {
   if (!art || !slot) throw new Error('closeUpPlacement needs the art box and a slot');
   const top = finite(art.top, 'art.top');
   const height = positive(art.height, 'art.height');
@@ -48,10 +60,35 @@ export function closeUpPlacement(art, slot, revealLine, layout) {
   if (!Number.isFinite(fraction) || !(fraction > 0) || fraction > 1) {
     throw new Error(`closeUpPlacement: visibleFraction must satisfy 0 < f ≤ 1 (got ${fraction})`);
   }
-  const scale = span / (height * fraction);
+  const byHeight = span / (height * fraction);
+  const artWidth = Number.isFinite(art.width) ? art.width : null;
+  const portraits = layout?.positioning?.portraits ?? {};
+  const shrinks = portraits.fit === 'shrinkToLane' && lane != null && artWidth != null;
+  let scale = byHeight;
+  if (shrinks) {
+    const laneWidth = positive(lane.width, 'lane.width');
+    if (artWidth * byHeight > laneWidth) scale = laneWidth / artWidth;
+  }
+  // Anchored on the reveal line: the visible top sits one visible fraction of
+  // the scaled figure above it, so a figure that shrank still stands on the
+  // line instead of floating. Unshrunk, that is the slot top it always used.
+  const anchored = shrinks && portraits.anchor === 'revealLine';
+  const visibleTop = anchored ? revealLine - height * fraction * scale : slotTop;
+  const figureWidth = artWidth == null ? null : artWidth * scale;
+  let centerTarget = left + width / 2;
+  if (shrinks) {
+    const laneLeft = finite(lane.left, 'lane.left');
+    const laneWidth = positive(lane.width, 'lane.width');
+    const half = figureWidth / 2;
+    // A lane narrower than the figure cannot hold it; clamp to the lane's own
+    // centre rather than inverting the bounds.
+    const low = laneLeft + half, high = laneLeft + laneWidth - half;
+    centerTarget = low > high ? laneLeft + laneWidth / 2 : Math.min(Math.max(centerTarget, low), high);
+  }
   return Object.freeze({
     scale,
-    x: left + width / 2 - centerX * scale,
-    y: slotTop - top * scale,
+    x: centerTarget - centerX * scale,
+    y: visibleTop - top * scale,
+    width: figureWidth,
   });
 }

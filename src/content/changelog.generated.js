@@ -3,6 +3,86 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1124",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The last of the game’s look-and-layout settings move out of the code",
+    "detail": "Nothing you see changes in play — that is the point, and it is checked rather than hoped. Ten parts of the game still kept their presentation settings written into the program itself: the map’s tile sizes and zoom limits, the stances a fighter can hold, which animation each kind of action plays, where the class medallion sits on each painted figure, the environment paintings and their scenes, the map node icons and their descriptions, the in-run menu, the gamepad button names, and the timings and artwork of the combat pose stage. All of it now lives as plain, organised settings files alongside the rest, so a value can be changed in one readable place instead of hunted through the code. Every one of those parts was recorded before the move and is held to exactly what it produced before — same values, in the same order — and a further check refuses to let a stray number creep back into the code beside its new home.",
+    "build": "0.7.1.78",
+    "pullRequest": 1124,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1124"
+  },
+  {
+    "id": "pr-1126",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "You and the person you are speaking to are both fully in view, whatever you play on",
+    "detail": "In a conversation, each of you keeps to your own half of the screen, so the two of you can no longer overlap and neither is hidden behind the other. On a narrow screen a figure too wide for its half is made smaller as a whole, and still stands on the top edge of the text rather than floating above it; on a wide screen nothing changes. The one listening is dimmed, but never so far that you cannot make them out. On a short or narrow screen the bar along the top now fits its own row, instead of spilling past it. The answer buttons carry only the answer: if you cannot afford a response, it reads as unavailable and says why when you hover or with a screen reader, and an answer you must hold down says so the same way, instead of a small word on the button.",
+    "build": "0.7.1.77",
+    "pullRequest": 1126,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1126"
+  },
+  {
+    "id": "pr-1116",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Events open again instead of crashing",
+    "detail": "Walking into an event on the map threw an error and the screen never appeared. It opens normally again.",
+    "build": "0.7.1.76",
+    "pullRequest": 1116,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1116"
+  },
+  {
+    "id": "pr-1111",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Five fixes: free cards show their cost, a won fight can no longer be saved into a dead slot, and a co-op party can see where it is and what it is fighting",
+    "detail": "Cards that cost nothing to play — Shiv, Quick Cut, Comet Fragment, Warcry — printed no action cost at all, so the one place you count what a turn can still afford simply said nothing about them. They now read ◆ 0, which is the point of a free card. When a fight ends there is a short beat before the spoils open, and during it the menu was still live: saving in that moment wrote a save that loaded back into a fight already won, with nothing left to kill and no way onward. The menu now closes the moment the fight resolves, the game refuses to save a finished fight at all, and a save already stuck that way now reopens at the fight instead of a dead end. In a co-op party, the heading over the fight and over the map said only “ACT II” where a solo run names the place — The Pale Marches, The Cinder Reach — because the host never sent it. It sends it now. And reading an enemy in co-op, the list of what it had already done always said the same thing whether it had acted or not; a co-op client can now see the moves an enemy has actually made, and an enemy that has done nothing yet says so. Behind all of this, the tool that grades the game’s difficulty had been calling every fight in the game a first-act fight since the regions were reworked, so its warnings about late-game fights were measured against a starting deck; it reads the real region now, and four late bosses turn out to be closer races than it had been reporting.",
+    "build": "0.7.1.75",
+    "pullRequest": 1111,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1111"
+  },
+  {
+    "id": "pr-1120",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A check on the game’s own content builder is whole again",
+    "detail": "Nothing you see changes. The tool that packs the game’s content keeps a list of the eight parts a finished pack must contain, and tests itself by removing each one in turn to prove the right checker catches it. One of those eight — the events, the things that happen to you on the road — had stopped being caught the way the list says. Instead of one plain report that the events were missing, the content checker raised seventeen complaints about quests, speakers and a relic that all pointed at events which are in fact present, and never mentioned the one part that was gone. The checker now leaves that part to the tool that owns it and says so once, plainly. Nothing about the events themselves was wrong, and every check the content checker made before it still runs: a pack that ships an empty list of events is still refused, in all seventeen ways.",
+    "build": "0.7.1.77",
+    "pullRequest": 1120,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1120"
+  },
+  {
+    "id": "pr-1113",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "A change that landed without a receipt now has one",
+    "detail": "Nothing you see changes in play, apart from this list growing by one entry. One change merged without an entry here, so the changelog you can read in the game did not mention it either: the one that stores the instructions for working on this game in the repository. It is written up below, citing the build it actually landed in.",
+    "build": "0.7.1.73",
+    "pullRequest": 1113,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1113"
+  },
+  {
+    "id": "pr-1115",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The list of changes under Settings, About fills in seven gaps",
+    "detail": "Nothing you see changes in play. Seven changes that had already landed were missing from this list, so the changelog you can read in the game did not mention them: one that puts your relics, potions and status effects in a single row of icons, and six that only touched the project's own writing and checking tools. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.72",
+    "pullRequest": 1115,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1115"
+  },
+  {
+    "id": "pr-1114",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The owner's instructions for working on this game live in the repository",
+    "detail": "Nothing you see changes in play. The instructions that say how this game is worked on — which assistant handles which kind of task, and the rules and boundaries they work under — used to exist only as files passed around in chat. They are now kept with the game's own documents, marked as advice: where they disagree with the specification or the contributing rules, those still decide.",
+    "build": "0.7.1.71",
+    "pullRequest": 1114,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1114"
+  },
+  {
     "id": "pr-1107",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -33,6 +113,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1106"
   },
   {
+    "id": "pr-1112",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The plan for quest conversations keeps both speakers on screen",
+    "detail": "Nothing you see changes yet. The written plan for face-to-face quest conversations now says that you and the person you are speaking to are both visible at every screen size. Each of you keeps to one half of the screen and the two never overlap; a figure too wide for its half is drawn smaller as a whole and still stands on the line where the words begin, rather than floating above it. Wide screens look as they do today, and the person listening is dimmed only so far, so you can still see them.",
+    "build": "0.7.1.67",
+    "pullRequest": 1112,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1112"
+  },
+  {
     "id": "pr-997",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -43,6 +133,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/997"
   },
   {
+    "id": "pr-1109",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "Your relics, potions and status effects sit in one row of icons",
+    "detail": "The top band now holds your relics, your potion icons and your status effects in a single row, drawn at the same size and spacing as the status icons on a fighter's card and opening the same kind of explanation. Relics appear on the world map's band too, where they were missing before, and the icons sit together instead of spread far apart. When more icons exist than the row can hold, it ends with a count you can open to see the rest.",
+    "build": "0.7.1.63",
+    "pullRequest": 1109,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1109"
+  },
+  {
     "id": "pr-1105",
     "date": "2026-09-15",
     "group": "2026-09-15",
@@ -51,6 +151,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.62",
     "pullRequest": 1105,
     "url": "https://github.com/cehinds/AshenSpire/pull/1105"
+  },
+  {
+    "id": "pr-1110",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The written plan for the gameplay screens is now a stack of layers",
+    "detail": "Nothing you see changes. Combat, the world map and quest conversations are each described as a stack of layers — sky, ground, figures, the band of words, the controls — with each layer able to be switched off on its own and every overlap measured. The conversation screen is written down in that form too: the ground sits at sixty per cent of the view, the figures are drawn full height so their upper third rises above the words, and the scene, the people and the words arrive in that order.",
+    "build": "0.7.1.62",
+    "pullRequest": 1110,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1110"
+  },
+  {
+    "id": "pr-1104",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The world's written history quotes the owner's own telling of it",
+    "detail": "Nothing you see changes. The documents that hold this world's history used to retell the owner's own account in their own words. They now carry his wording directly, and the three things that account leaves deliberately unexplained are written into the tables that track them, so they stay open questions on purpose rather than by omission.",
+    "build": "0.7.1.59",
+    "pullRequest": 1104,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1104"
   },
   {
     "id": "pr-994",
@@ -81,6 +201,36 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.57",
     "pullRequest": 1101,
     "url": "https://github.com/cehinds/AshenSpire/pull/1101"
+  },
+  {
+    "id": "pr-1057",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A checking tool reads the combat screen the way it works today",
+    "detail": "Nothing you see changes. The tool that walks the combat screen and checks what it says still expected the older screen: it looked for a fighter's name before the fighter is chosen, and for card costs and tags that had already moved. It failed before it reached most of its checks. It now selects a fighter first and reads the card the way the screen presents it, so the checks it was written for actually run.",
+    "build": "0.7.1.57",
+    "pullRequest": 1057,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1057"
+  },
+  {
+    "id": "pr-1039",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "A saved-game check starts a climb the way you do",
+    "detail": "Nothing you see changes. One of the checks that proves the world map remembers where its camera was never actually reached a new climb: it stopped at the question that asks you to confirm the slot, and character creation was never opened. It now presses Start at that question and makes the same choices you would — class, then the rest — so the case it was written to prove is the one it walks.",
+    "build": "0.7.1.57",
+    "pullRequest": 1039,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1039"
+  },
+  {
+    "id": "pr-1022",
+    "date": "2026-09-15",
+    "group": "2026-09-15",
+    "summary": "The wording check counts each file once on Windows",
+    "detail": "Nothing you see changes. The check that guards the game's written text against accidental loss compared each file against its record using the path style of the computer running it. On Windows the two never matched, so all sixty-two files with text in them were counted twice — once as shrunk, once as grown — and the check reported over a hundred differences that did not exist. It now uses one path style everywhere, so the count is the real one.",
+    "build": "0.7.1.57",
+    "pullRequest": 1022,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1022"
   },
   {
     "id": "pr-1098",

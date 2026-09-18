@@ -550,8 +550,25 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         { label: 'Block', value: entity.block || 0 },
       ].filter(row => row.value != null);
       const abilities = activeCombatAbilities(registries, entity, false);
+      const moveCards = def ? enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) : null;
+      // PREVIOUS ACTIONS, oldest first — the moves that RESOLVED, which is what
+      // solo reads off `entity.performedMoves`. The snapshot now carries the
+      // field, so an enemy that has acted lists what it did and one that has
+      // not says so; before this the section could only say `unknown`, which
+      // reads as "not revealed" and is a different claim entirely.
+      // Names and details come from the move cards already built above — one
+      // source for both, so the history and the move set cannot word a move
+      // two different ways. Indexed once: this runs on every inspector open,
+      // and a scan per entry is a needless m×n in a path a player waits on.
+      const cardsByMoveId = moveCards && new Map(moveCards.map((c) => [c.moveId, c]));
+      const history = def && Array.isArray(entity.performedMoves)
+        ? entity.performedMoves.map((moveId) => {
+          const card = cardsByMoveId.get(moveId);
+          return { name: card ? card.name : moveId, detail: card ? card.detail : '' };
+        })
+        : null;
       const subject = { name, resources, statuses: abilities, ...(def
-        ? { moveCards: enemyMoveCards(def, { enemy: entity, preview: entity.intent, registries }) }
+        ? { moveCards, history }
         : { abilities }) };
       openModal({ title: name, size: 'md', className: 'combatant-door', opener,
         bodyClassName: 'combatant-inspector-body',
@@ -913,6 +930,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       // this sit.
       act: {
         seedString: snap.seedString, nodes: map.nodes, columns: map.columns, actNumber: snap.actNumber,
+        // The map title is `ACT <tier> — <SEAT>` (SPEC §13.2). The board has
+        // read `act.seatName` since seats landed; this screen never passed it,
+        // so co-op's map plate said a bare "ACT II" while solo named the seat.
+        // Null for an older host that does not send it — actTitle() already
+        // falls back to the bare plate rather than printing "undefined".
+        seatName: snap.seatName || null,
         startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds,
       },
       // THE VIEWER — the half that is legitimately different on every screen.

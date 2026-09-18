@@ -1763,7 +1763,16 @@ function startFight(pool, nodeId) {
 }
 
 function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
-  const savedSnapshot = resuming ? run.combatEntered?.snapshot : null;
+  const storedSnapshot = resuming ? run.combatEntered?.snapshot : null;
+  // SAVES IN THE WILD ALREADY CARRY THE POISONED SHAPE. Saving during the
+  // victory hand-off wrote a checkpoint whose `result` was 'victory', and
+  // restoring it mounts a fight that can never end — the run is stuck at a
+  // cleared battlefield. commitCombatSnapshot now refuses to write one, but
+  // that does nothing for a slot already holding it, so an ended snapshot is
+  // dropped here and the run takes the deterministic restart path the
+  // encounter receipt alone has always supported. A refought encounter is a
+  // far smaller loss than an unplayable slot.
+  const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;
   run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
@@ -2285,12 +2294,17 @@ function coopCombatShot() {
   ];
   const snapshot = {
     actNumber: 1, floor: 3, seedString: 'SHOWCASE', endless: false,
+    // THE SEAT, because the real host sends it (tools/session.mjs snapshot()).
+    // A canned snapshot that omits a field the producer sends is how a harness
+    // goes green about a screen no party can actually see — the exact trap the
+    // `columns` note on this shot's map sibling records.
+    seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
     scene: {
       kind: 'combat', pool: 'normal', phase: 'player', turn: 2, headcount: 2,
       enemies: [
-        { id: 'e1', enemyId: 'blightHound', hp: 13, maxHp: 30, block: 0, alive: true, intent: { kind: 'attack', moveId: 'bite', damage: 6, hits: 1, delayed: false }, statuses: { bleed: { meter: { value: 4, max: 12 } } }, poiseMeter: { value: 4, max: 10 } },
-        { id: 'e2', enemyId: 'blightHound', hp: 30, maxHp: 30, block: 5, alive: true, intent: { kind: 'block', moveId: 'guard', block: 5 }, statuses: {}, poiseMeter: { value: 0, max: 10 } },
-        { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 } },
+        { id: 'e1', enemyId: 'blightHound', hp: 13, maxHp: 30, block: 0, alive: true, intent: { kind: 'attack', moveId: 'bite', damage: 6, hits: 1, delayed: false }, statuses: { bleed: { meter: { value: 4, max: 12 } } }, poiseMeter: { value: 4, max: 10 }, performedMoves: ['bite', 'howl'] },
+        { id: 'e2', enemyId: 'blightHound', hp: 30, maxHp: 30, block: 5, alive: true, intent: { kind: 'block', moveId: 'guard', block: 5 }, statuses: {}, poiseMeter: { value: 0, max: 10 }, performedMoves: ['bite'] },
+        { id: 'e3', enemyId: 'graveWisp', hp: 22, maxHp: 22, block: 0, alive: true, intent: { kind: 'attack', moveId: 'hex', damage: 4, hits: 2, delayed: true }, statuses: { vulnerable: { stacks: 1 } }, poiseMeter: { value: 0, max: 8 }, performedMoves: [] },
       ],
       players: [
         { id: 'p1', hp: 61, maxHp: 72, mana: 1, maxMana: 2, stamina: 2, maxStamina: 2, block: 8, energy: 2, energyMax: 3, connected: true, alive: true, ended: false, statuses: { strength: { stacks: 1 } }, stanceId: null, hand, drawCount: 5, discardCount: 2, flasks: [], flaskCharges: { capacity: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1 } },
@@ -2348,6 +2362,8 @@ function coopMapShot(steps = 0) {
   }
   return {
     actNumber: 1, floor, seedString: 'SHOWCASE', endless: false,
+    // The seat the plate names, as the real host sends it.
+    seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
     // Fenn has already voted; Wren (you) is still deciding.
     scene: { kind: 'map', votes: { p2: reachableIds[1] || reachableIds[0] } },
     // THE PARTY'S POSITION, and it has always been on the real snapshot
@@ -2373,6 +2389,7 @@ function coopShotParty() {
 function coopRewardShot() {
   return {
     actNumber: 1, floor: 4, seedString: 'SHOWCASE', endless: false,
+    seatOrder: ['weald', 'marches', 'reach'], seatId: 'weald', seatName: 'The Hollow Weald',
     scene: { kind: 'reward', pool: 'elite', chosen: {}, afterReward: null, offers: { p1: { pool: 'elite', cardIds: ['stomp', 'executioner', 'crimsonCleave'], cinders: 32, flaskId: 'crimsonFlask', relicId: 'forsakenMedallion' } } },
     party: coopShotParty(),
   };
