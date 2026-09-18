@@ -1851,6 +1851,13 @@ export const uiStrings = [
     "tip": "Choose"
   },
   {
+    "id": "dialogue.respond.hold",
+    "extends": "",
+    "short": "Hold to answer",
+    "full": "A binding response is held down rather than tapped; the tooltip and the screen reader say so instead of a word on the button.",
+    "tip": "Hold to answer"
+  },
+  {
     "id": "armoury.title",
     "extends": "",
     "short": "Armoury",

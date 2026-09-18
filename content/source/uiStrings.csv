@@ -311,6 +311,7 @@ dialogue.continue.combat,,Steel yourself,The conversation leads into a fight.,St
 dialogue.cannotAfford,,Cannot afford,You cannot pay for this response yet.,Cannot afford
 dialogue.respond.question,,Choose {label}?,,
 dialogue.respond.confirm,,Choose,Give this response.,Choose
+dialogue.respond.hold,,Hold to answer,A binding response is held down rather than tapped; the tooltip and the screen reader say so instead of a word on the button.,Hold to answer
 # ---- the Armoury (W1e / W1n) ----------------------------------------------
 armoury.title,,Armoury,"Your character, equipment, inventory and deck.",Armoury
 armoury.close,,Close Armoury,,

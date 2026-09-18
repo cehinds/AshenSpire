@@ -25,11 +25,19 @@
       "gapRem": "$bandGapRem",
       "maxLines": 2
     },
+    "hud": { "compactBelowHeightPx": 500 },
     "footer": { "heightVh": 6 }
   },
   "positioning": {
     "portraitSlot": { "insetVw": "$gutterVw", "topOffsetVh": "$insetVh" },
-    "portraits": { "visibleFraction": { "numerator": 1, "denominator": 3 }, "mirrorNpc": true },
+    "portraits": {
+      "visibleFraction": { "numerator": 1, "denominator": 3 },
+      "mirrorNpc": true,
+      "minGapVw": "$gapVw",
+      "fit": "shrinkToLane",
+      "anchor": "revealLine",
+      "listener": { "minOpacity": 0.62, "brightness": 0.8, "saturation": 0.55 }
+    },
     "context": { "insetVw": "$gutterVw", "insetVh": "$insetVh" },
     "footer": { "sideInsetVw": "$gutterVw", "gapVw": "$gapVw" }
   },
@@ -55,6 +63,7 @@
   "components": { "footer": { "actions": ["back", "skipSpeech", "continue"] } },
   "behavior": {
     "maxVisibleResponses": 4,
+    "responseHints": "tooltip",
     "responseLayouts": [
       { "columns": 1, "placement": "below" },
       { "columns": 2, "placement": "below" },

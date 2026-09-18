@@ -211,6 +211,12 @@ export function mountDialogue(app, options) {
     // Until the context has appeared a response is shown but not yet operable.
     // WCB0 full width of its grid cell; the label wraps inside the button to
     // sizing.responses.maxLines and the whole of it stays in the tooltip.
+    // WCB0 full width of its grid cell; the label wraps to
+    // sizing.responses.maxLines. With behavior.responseHints 'tooltip' the
+    // face carries the answer and nothing else: why a response cannot be
+    // taken, and that a binding one is held rather than tapped, are told in
+    // the tooltip and to a screen reader, and the press still shows itself.
+    const tooltipHints = layout.behavior.responseHints === 'tooltip';
     const btn = button({ label: '', className: 'dialogue-response', size: 'full-standard', disabled: !response.affordable || !entered });
     btn.title = response.label;
     btn.appendChild(el('span', { class: 'dialogue-response-label', text: response.label }));
@@ -218,12 +224,24 @@ export function mountDialogue(app, options) {
     if (response.binding) btn.dataset.binding = '1';
     if (!response.affordable) {
       btn.dataset.requires = '1';
-      btn.appendChild(el('span', { class: 'dialogue-response-note', text: t('dialogue.cannotAfford') }));
+      const reason = t('dialogue.cannotAfford');
+      if (tooltipHints) {
+        btn.title = `${response.label} — ${reason}`;
+        btn.setAttribute('aria-description', reason);
+      } else {
+        btn.appendChild(el('span', { class: 'dialogue-response-note', text: reason }));
+      }
       return btn;
     }
     if (!entered) return btn;
+    if (tooltipHints && response.binding) {
+      const held = t('dialogue.respond.hold');
+      btn.title = `${response.label} — ${held}`;
+      btn.setAttribute('aria-description', held);
+    }
     disarmers.push(arm(btn, 'eventChoice', {
       ctx: { binding: response.binding },
+      showHint: !tooltipHints,
       question: t('dialogue.respond.question', { label: response.label }),
       detailHtml: response.resultText ? `<p>${esc(response.resultText)}</p>` : '',
       confirmLabel: t('dialogue.respond.confirm'),

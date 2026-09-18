@@ -19,7 +19,7 @@
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
 // source content/config/ui/scenes/w4b-map.json 8a143af520e1e040
-// source content/config/ui/scenes/w4c-dialogue.json 4d1f8507597a6662
+// source content/config/ui/scenes/w4c-dialogue.json 9136780826a283d6
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
@@ -295,6 +295,9 @@ export const uiConfig = deepFreeze({
           "gapRem": 0.25,
           "maxLines": 2
         },
+        "hud": {
+          "compactBelowHeightPx": 500
+        },
         "footer": {
           "heightVh": 6
         }
@@ -306,7 +309,15 @@ export const uiConfig = deepFreeze({
         },
         "portraits": {
           "visibleFraction": 0.3333333333333333,
-          "mirrorNpc": true
+          "mirrorNpc": true,
+          "minGapVw": 1.5,
+          "fit": "shrinkToLane",
+          "anchor": "revealLine",
+          "listener": {
+            "minOpacity": 0.62,
+            "brightness": 0.8,
+            "saturation": 0.55
+          }
         },
         "context": {
           "insetVw": 2.5,
@@ -399,6 +410,7 @@ export const uiConfig = deepFreeze({
       },
       "behavior": {
         "maxVisibleResponses": 4,
+        "responseHints": "tooltip",
         "responseLayouts": [
           {
             "columns": 1,
