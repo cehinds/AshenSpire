@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1133",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Two changes that landed without a mention now have one",
+    "detail": "Nothing you see changes in play. Two changes had already landed without a line in this list, so the changelog you can read in the game did not mention them: a separate editing tool for the people who build the game, and a clear-out of twenty-one written notes nothing referred to any more. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.80",
+    "pullRequest": 1133,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1133"
+  },
+  {
     "id": "pr-1124",
     "date": "2026-09-18",
     "group": "2026-09-18",
@@ -51,6 +61,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.77",
     "pullRequest": 1120,
     "url": "https://github.com/cehinds/AshenSpire/pull/1120"
+  },
+  {
+    "id": "pr-1119",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The game now comes with its own editor for the people who make it",
+    "detail": "Nothing you see changes, and nothing here reaches the game you play. The project gained a separate local editor, AshenSpire Studio, for whoever is building the game: it opens in a browser window of its own and lets them search and preview the artwork, play a run of frames in order, and edit the tables that hold the cards, enemies and everything else, without hand-editing the files. It needs nothing installed beyond Node and has no account or key to set up. It is not part of the game that ships, it never changes which branch is being worked on, and it commits, publishes and merges nothing by itself.",
+    "build": "0.7.1.77",
+    "pullRequest": 1119,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1119"
+  },
+  {
+    "id": "pr-1122",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Twenty-one written notes nothing pointed at any more were cleared out",
+    "detail": "Nothing you see changes. The project keeps written notes beside the game — review write-ups, quality checks, and plans for work now finished. Twenty-one of them had stopped being referred to by anything: old proposals, superseded plans and checks for screens that have since been rebuilt. They have been removed, so what is left is the writing still in use. Every one of them remains in the project’s history.",
+    "build": "0.7.1.77",
+    "pullRequest": 1122,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1122"
   },
   {
     "id": "pr-1113",
