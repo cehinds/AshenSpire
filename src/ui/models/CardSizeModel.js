@@ -310,11 +310,15 @@ export function cardSizingExport(levels) {
   // But a bare `{ levels: … }` was wrong too, and for the opposite reason: the
   // widths live at `sizing.levels`, not at the root, so text that LOOKED like a
   // whole card.json would have produced a file with no `sizing` block at all
-  // and the config builder would have refused it. Nesting it under `sizing`
-  // costs one line and makes the destination unambiguous — it reads as the
-  // fragment it is, not as a file. `cardSizingExportPath` names that path for
-  // whatever is doing the copying, so the UI and this function cannot drift
-  // about where the text belongs.
+  // and the config builder would have refused it.
+  //
+  // So it is nested to match the file's own shape and MERGED AT THE ROOT. The
+  // first attempt at this got the instruction wrong in the other direction —
+  // the settings row said "paste it over `sizing.levels`", which with this
+  // nesting yields `sizing.levels.sizing.levels` and no tuned rows at all.
+  // Shape and instruction have to agree, so `cardSizingExportPath` states the
+  // destination once and the UI row reads from the same idea rather than
+  // describing it again in its own words.
   return JSON.stringify({ sizing: { levels: out } }, null, 2);
 }
 
@@ -355,4 +359,4 @@ export function restingWidthPx(viewportWidthPx, levels, tokens = uiConfig.tokens
 }
 
 /** Where `cardSizingExport`'s text belongs, for whatever presents the copy. */
-export const cardSizingExportPath = 'content/config/ui/components/card.json → sizing.levels';
+export const cardSizingExportPath = 'merge at the root of content/config/ui/components/card.json (replaces sizing.levels)';

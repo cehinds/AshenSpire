@@ -467,7 +467,7 @@ const ROWS = [
     note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
     label: 'Export card sizes',
-    note: 'Copies the current sizes as the `sizing.levels` block of content/config/ui/components/card.json. It is that block, not the whole file — paste it over `sizing.levels`, or send it on as it stands.' },
+    note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
   { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
