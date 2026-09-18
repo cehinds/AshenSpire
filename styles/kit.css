@@ -4333,6 +4333,50 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 .card-inspection-modal .modal-body { overflow: hidden; min-height: 0; }
 .card-inspection-modal .card-inspection-details { min-height: 0; overflow-y: auto; overflow-x: hidden; }
+/* THE READING DOOR STACKS WHEN TWO COLUMNS NO LONGER FIT.
+   Two separate faults put this here, and both are worth naming because they
+   are the same shape as each other:
+   1. The two-column rule pinned the art track to the authored inspect width
+      and sat AFTER the `max-width: 600px` collapses further up this file —
+      same specificity, later in source — so it won at every width. On a 390px
+      phone the card took 320 and the details took a sliver.
+   2. The first fix for that repeated the mistake one level down: its mobile
+      overflow rules sat BEFORE `.modal-body { overflow: hidden }` and
+      `.card-inspection-details { overflow-y: auto }` just above, so the
+      details stayed an inner scrollport and the body stayed clipped. The
+      promised single scroll was not what shipped. Copilot caught it on #1162.
+   Hence its position here: after everything it has to beat.
+
+   THE THRESHOLD IS NOT A NUMBER IN THIS FILE. A media query cannot read a
+   custom property, so an earlier draft wrote `calc(20rem + 24rem)` and called
+   it derived — it was a second copy of the inspect width that would not have
+   moved when card.json did. `cardInspectionLayout()` in
+   src/ui/components/cardInspection.js measures against the authored width plus
+   the authored readable measure and sets `data-card-door`, so the one home
+   stays the config. It sits with the door rather than in `src/main.js`, which
+   four of the five pages that host this layout never load. */
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-layout {
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: max-content;
+  align-content: start;
+  height: auto;
+  gap: 1rem;
+}
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art {
+  max-width: 100%; margin-inline: auto;
+}
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .equipment-poker-card,
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-art > .card {
+  width: 100%; max-width: var(--card-w-inspect, 320px); margin-inline: auto;
+}
+/* The column scrolls as ONE: the details stop owning a scrollport of their own
+   and the body takes it, which is what "read down the page" means. */
+:root[data-card-door='stacked'] .card-inspection-modal .card-inspection-details {
+  overflow-y: visible; min-height: 0;
+}
+:root[data-card-door='stacked'] .card-inspection-modal .modal-body {
+  overflow-y: auto; overflow-x: hidden;
+}
 :root .combat[data-layout='formation'] .combatant .combatant-info { visibility: hidden; pointer-events: none; }
 :root .combat[data-layout='formation'] .combatant[data-inspect-ready='true'] .combatant-info { visibility: visible; pointer-events: auto; }
 /* Solo combat reads the configured selected-only list (WCM0, data-selected-only);

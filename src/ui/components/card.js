@@ -201,9 +201,13 @@ export function renderCard(registries, ref, opts = {}) {
   // `cname` is not a region, for the same reason `.epc-name` is not: the title
   // is what tells one card from another and shows at every level.
   const identity = model.instanceId || model.id;
-  const floor = opts.inspection === false ? 'inspect' : (opts.level || 'glance');
+  // See equipmentCard.js: `inspection: false` means "no door on this face",
+  // not "this face says everything". An explicit level wins over the inert
+  // default so a caller that binds the door to a wrapper still gets a resting
+  // card at resting size.
+  const floor = opts.level || (opts.inspection === false ? 'inspect' : 'glance');
   const levelNow = () => resolveCardLevel({
-    floor, lit: litCard() === identity, inspecting: opts.inspection === false,
+    floor, lit: litCard() === identity,
   });
   let drawn = levelNow();
   const paint = (at) => {
@@ -356,7 +360,7 @@ export function renderCard(registries, ref, opts = {}) {
         lore.append(summary, text);
         details.append(lore);
       }
-      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false });
+      const face = renderCard(registries, ref, { ...opts, tooltip: false, inspection: false, level: 'inspect' });
       details.classList.add('playing-card-details');
       // NO DEFAULT VERB. This line used to read
       //   `opts.inspectionAction || (() => ({ enabled: false, reason: 'Play cards from your combat hand.' }))`
