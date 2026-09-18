@@ -34,7 +34,7 @@ try {
           actors:[...document.querySelectorAll('.combatant')].map(e=>{
             const s=e.querySelector('.sprite').getBoundingClientRect(),m=e.querySelector('.meters').getBoundingClientRect();
             return {id:e.dataset.eid,ratio:Number(e.dataset.spriteRatio),height:Number(e.dataset.spriteVisibleHeight),
-              row:e.dataset.formationRow,feet:s.bottom,ground:f.top+f.height*Number(e.dataset.groundRatio),hpY:m.y,hpWidth:m.width,spriteTop:s.top};
+              depth:e.dataset.formationDepth,feet:s.bottom,ground:f.top+f.height*Number(e.dataset.groundRatio),hpY:m.y,hpWidth:m.width,spriteTop:s.top};
           })};
       });
       const [player,enemy]=geometry.actors;

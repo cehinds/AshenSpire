@@ -135,12 +135,12 @@ try {
       const b=e.querySelector('.combatant-leading').getBoundingClientRect();
       const s=e.querySelector('.sprite').getBoundingClientRect();
       const m=e.querySelector('.meters').getBoundingClientRect();
-      return { top:b.top, bottom:b.bottom, spriteTop:s.bottom-Number(e.dataset.spriteVisibleHeight), feet:s.bottom, hp:m.top, row:e.dataset.formationRow };
+      return { top:b.top, bottom:b.bottom, spriteTop:s.bottom-Number(e.dataset.spriteVisibleHeight), feet:s.bottom, hp:m.top, depth:e.dataset.formationDepth };
     }));
     for (const row of rows) {
       assert(row.top >= 0, 'overhead stays onscreen');
       assert(Math.abs(row.spriteTop-row.bottom-6)<2, 'overhead follows visible idle top');
-      const peer=rows.find(r=>r.row===row.row);
+      const peer=rows.find(r=>r.depth===row.depth);
       assert(Math.abs(peer.feet-row.feet)<1 && Math.abs(peer.hp-row.hp)<1, 'feet and bars stay aligned');
     }
     await page.screenshot({ path: resolve(out, `targeting-${width}.png`) });

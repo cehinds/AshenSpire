@@ -22,7 +22,7 @@ async function geometry(page, label) {
         const s = e.querySelector('.sprite').getBoundingClientRect();
         const n = e.querySelector('.nm').getBoundingClientRect();
         const m = e.querySelector('.meters').getBoundingClientRect();
-        return { id: e.dataset.eid, row: e.dataset.formationRow, x: s.x + s.width / 2,
+        return { id: e.dataset.eid, depth: e.dataset.formationDepth, x: s.x + s.width / 2,
           feet: s.bottom, expectedFeet: f.top + f.height * Number(e.dataset.groundRatio), nameY: n.y, hpY: m.y,
           hpWidth: m.width, bottom: m.bottom };
       }),
@@ -37,8 +37,8 @@ async function geometry(page, label) {
   if (g.actors.some(a => Math.abs(a.feet - a.expectedFeet) > 1 || a.feet < g.fieldTop + (g.fieldBottom-g.fieldTop)*.4)) fail('feet off ground');
   if (g.actors.some(a => a.bottom > g.fieldBottom + 2)) fail('health meters outside field');
   if (g.overflow) fail('horizontal overflow');
-  for (const row of new Set(g.actors.map(a => a.row))) {
-    const actors = g.actors.filter(a => a.row === row);
+  for (const depth of new Set(g.actors.map(a => a.depth))) {
+    const actors = g.actors.filter(a => a.depth === depth);
     if (Math.max(...actors.map(a=>a.hpY)) - Math.min(...actors.map(a=>a.hpY)) > 1) fail('health bars misaligned');
   }
   results.push({ label, ...g });
