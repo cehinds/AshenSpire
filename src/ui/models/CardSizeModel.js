@@ -166,3 +166,24 @@ export function cardLevelCssProperties(config) {
   }
   return Object.freeze(out);
 }
+
+/**
+ * The width below which the reading door must stop being two columns.
+ *
+ * A media query cannot read a custom property, so a stylesheet that wants this
+ * threshold has to be TOLD it — an earlier attempt wrote the inspect width out
+ * again as `calc(20rem + 24rem)` and called that derived, which it was not: it
+ * would not have moved when card.json did. Both terms are authored, so the
+ * config stays the one home and `src/main.js` only has to compare.
+ */
+export function cardDoorStackBelowPx(config = uiConfig.components.card.sizing) {
+  const inspect = Number(config?.levels?.inspect?.widthPx);
+  const readable = Number(config?.doorReadableMinPx);
+  if (!Number.isFinite(inspect) || inspect <= 0) {
+    throw new Error(`card sizing.levels.inspect.widthPx must be a positive number, got ${JSON.stringify(config?.levels?.inspect?.widthPx)}`);
+  }
+  if (!Number.isFinite(readable) || readable <= 0) {
+    throw new Error(`card sizing.doorReadableMinPx must be a positive number, got ${JSON.stringify(config?.doorReadableMinPx)}`);
+  }
+  return inspect + readable;
+}

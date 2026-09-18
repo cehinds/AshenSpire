@@ -76,7 +76,7 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties, cardShapeCssProperties } from './ui/models/CardSizeModel.js';
+import { cardLevelCssProperties, cardShapeCssProperties, cardDoorStackBelowPx } from './ui/models/CardSizeModel.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -292,6 +292,20 @@ document.documentElement.style.setProperty('--selection-glow', selectionGlowFilt
 for (const [name, value] of Object.entries({ ...cardLevelCssProperties(), ...cardShapeCssProperties() })) {
   document.documentElement.style.setProperty(name, value);
 }
+// THE READING DOOR'S SHAPE, DECIDED AGAINST THE AUTHORED GEOMETRY.
+// Below the inspect card's own width plus the readable measure beside it there
+// is no room for two columns, and the door reads top to bottom instead. A media
+// query cannot read a custom property, so the comparison happens here and the
+// stylesheet keys on `data-card-door` — which keeps card.json the one home for
+// both numbers rather than having the breakpoint restate one of them.
+const cardDoorStackBelow = cardDoorStackBelowPx();
+const applyCardDoorShape = () => {
+  const stacked = window.innerWidth < cardDoorStackBelow;
+  document.documentElement.dataset.cardDoor = stacked ? 'stacked' : 'beside';
+};
+applyCardDoorShape();
+window.addEventListener('resize', applyCardDoorShape);
+
 const HUD_PRESENTATION = UI.hudPresentation || {};
 const projectHudToken = (key, min, max, cssName, unit) => {
   const value = Number(HUD_PRESENTATION[key]);
