@@ -116,8 +116,8 @@ function decideCardDoorShape(widthPx, layout = document.querySelector('.card-ins
   }
 }
 function applyCardDoorShape() {
-  const node = narrowestDoorWidth();
-  if (node) decideCardDoorShape(node.clientWidth, node);
+  const slimmest = narrowestDoorWidth();
+  if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
   else decideCardDoorShape(window.innerWidth, null);
 }
 // A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
@@ -132,22 +132,54 @@ function applyCardDoorShape() {
 // still connected: if any layout in the door cannot hold two columns, the door
 // stacks. Detached nodes are skipped rather than held — a layout from a closed
 // door must not vote, and must not be kept alive by being watched.
+// THE TRACKS LIVE IN THE CONTENT BOX, SO THAT IS WHAT IS MEASURED. `clientWidth`
+// includes the layout's horizontal padding, and the grid columns and the
+// percentage gap are resolved inside the padding — so a 720px layout with the
+// `1rem` padding kit.css gives it read as 720 against a 704 threshold and sat
+// `beside` with about 354px of details. The ResizeObserver hands back a content
+// box already; this is the same number for the querySelector path.
+function contentWidthOf(node) {
+  const cs = getComputedStyle(node);
+  const pad = (Number.parseFloat(cs.paddingLeft) || 0) + (Number.parseFloat(cs.paddingRight) || 0);
+  return Math.max(0, node.clientWidth - pad);
+}
 function narrowestDoorWidth() {
-  const layouts = [...document.querySelectorAll('.card-inspection-layout')]
-    .filter((node) => node.isConnected && node.clientWidth > 0);
-  if (!layouts.length) return null;
-  return layouts.reduce((slimmest, node) =>
-    (slimmest === null || node.clientWidth < slimmest.clientWidth ? node : slimmest), null);
+  let slimmest = null;
+  let width = 0;
+  for (const node of document.querySelectorAll('.card-inspection-layout')) {
+    if (!node.isConnected) continue;
+    const w = contentWidthOf(node);
+    if (w <= 0) continue;
+    if (slimmest === null || w < width) { slimmest = node; width = w; }
+  }
+  return slimmest ? { node: slimmest, width } : null;
+}
+// AND A CLOSED DOOR'S LAYOUT IS RELEASED, NOT MERELY IGNORED. Skipping detached
+// nodes in `narrowestDoorWidth` stopped them voting but left them observed, and
+// an observer holds its targets — so every card you opened kept its whole
+// layout subtree alive for the rest of the session. Each pass drops the ones
+// that have left the document.
+const doorWatched = new Set();
+function releaseDetachedLayouts() {
+  for (const node of doorWatched) {
+    if (!node.isConnected) {
+      doorObserver?.unobserve(node);
+      doorWatched.delete(node);
+    }
+  }
 }
 function observeDoorWidth(layout) {
   if (typeof ResizeObserver !== 'function') return;
   if (!doorObserver) {
     doorObserver = new ResizeObserver(() => {
-      const node = narrowestDoorWidth();
-      if (node) decideCardDoorShape(node.clientWidth, node);
+      releaseDetachedLayouts();
+      const slimmest = narrowestDoorWidth();
+      if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
     });
   }
+  releaseDetachedLayouts();
   doorObserver.observe(layout);
+  doorWatched.add(layout);
 }
 function watchCardDoorShape() {
   applyCardDoorShape();
