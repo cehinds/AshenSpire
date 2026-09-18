@@ -18,10 +18,15 @@
 //      still agree on the day it is written. Same shape as the wireframeUi
 //      guard in tests/ui-config.test.mjs.
 //
-// THE ONE DIFFERENCE THIS ALLOWS, and only in one direction: the compiled
-// config is DEEP-frozen and `Object.freeze` in the old modules was shallow, so
-// nested rows that were mutable are now frozen. That is a strengthening — it
-// closes a hole rather than opening one — and nothing else is permitted.
+// NOTHING IS ALLOWED TO DIFFER, including how deeply a table is frozen. The
+// compiled config is deep-frozen; several of these tables were shallow-frozen
+// or not frozen at all, so the shims hand out copies shaped to match — see
+// src/config/authored.js. That is not fussiness. tools/surfaces.mjs's known-bad
+// corpus plants each defect by mutating ONE table in memory, "exactly the way
+// an author would by hand", and against a deep-frozen MENU_TABS that plant
+// raises a TypeError instead of the red it exists to produce. A migration that
+// changes what a consumer may do with what it is handed has not kept the
+// consumer, however much safer the new rule sounds.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -43,14 +48,10 @@ function differences(want, got, path = '') {
   return [...keys].flatMap((k) => differences(want[k], got[k], `${path}.${k}`));
 }
 
-// A shallow Object.freeze left nested rows mutable; deepFreeze does not.
-const isFreezeDeepening = (line) => line.endsWith('.frozen: false -> true');
-
 for (const rel of MIGRATED) {
   test(`${rel} exports exactly what it exported before the move`, async () => {
     assert.ok(baseline[rel], `${rel} is in the baseline fixture`);
-    const found = differences(baseline[rel], await captureModule(rel));
-    const changed = found.filter((line) => !isFreezeDeepening(line));
+    const changed = differences(baseline[rel], await captureModule(rel));
     assert.deepEqual(changed, [], `${rel} must be identical to dev:\n  ${changed.join('\n  ')}`);
   });
 }

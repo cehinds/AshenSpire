@@ -7,6 +7,7 @@
 
 import { balance } from '../content/balance.js';
 import { uiConfig } from '../config/generated/ui.js';
+import { thaw, shallowFrozen } from '../config/authored.js';
 
 // THE TABLES NOW LIVE IN content/config/ui/presentation/uiContent.json and are
 // compiled into src/config/generated/ui.js. What stays in this file is the
@@ -82,14 +83,14 @@ export function statusInstanceSemanticAttrs(presentation) {
 }
 
 // ---- map node types ---------------------------------------------------------
-export const NODE_TYPES = components.nodeTypes;
+export const NODE_TYPES = thaw(components.nodeTypes);
 export const nodeIcon = (type) => (NODE_TYPES[type] || {}).icon || copy.nodeIconFallback;
 export const nodeName = (type) => (NODE_TYPES[type] || {}).name || String(type);
 export const nodeBlurb = (type) => (NODE_TYPES[type] || {}).blurb || '';
 
 // Tints for the map glyphs. Here rather than in the map's markup for the reason
 // this file already claims in its header — one source, or they diverge.
-export const NODE_TINT = components.nodeTint;
+export const NODE_TINT = thaw(components.nodeTint);
 
 /**
  * legendEntries() → [{ icon, name, tint }], one row per distinct glyph.
@@ -118,14 +119,14 @@ export function legendEntries() {
 }
 
 // ---- act titles -------------------------------------------------------------
-export const ACT_NAMES = components.actNames;
+export const ACT_NAMES = thaw(components.actNames);
 // Endless Spire: acts past 3 reuse the act 1-3 names with a "· CYCLE n" marker.
 // The cycling arithmetic is `actPlate` (below, with the per-act art it now also
 // serves) and the count is the NUMBER OF NAMES WRITTEN, asked rather than typed —
 // this line held a literal `3` beside a table of three, which is one fact in two
 // places and would have gone wrong the day a fourth act was named.
 export const ACT_NAME_COUNT = Object.keys(ACT_NAMES).length;
-const TIER_NUMERALS = components.tierNumerals;
+const TIER_NUMERALS = thaw(components.tierNumerals);
 /**
  * actTitle(actNumber, seatName?) — with a seat name the title is the TIER and
  * the SEAT (SPEC §13.2: `Act <tier> · <seat name>`), e.g. `ACT II — THE PALE
@@ -144,7 +145,7 @@ export function actTitle(actNumber, seatName = null) {
 // ---- enemy intents ----------------------------------------------------------
 // `iv` is a preview/snapshot intent:
 //   { kind, moveId?, damage?, hits?, block?, delayed?, pending?, totalDamage? }
-export const INTENT_ICONS = components.intentIcons;
+export const INTENT_ICONS = thaw(components.intentIcons);
 
 // Solo (previewIntent) supplies { kind, damage, hits, block, delayed, pending,
 // totalDamage } and marks unknown via kind:'unknown'; the co-op snapshot intent
@@ -292,9 +293,9 @@ export function actPlate(actNumber, plates) {
 // The production order is identical in all three contexts. Four stable bands
 // separate navigation, comfort, Armoury destinations, and run lifecycle so
 // placement never changes under muscle memory.
-export const MENU_TABS = components.menuTabs;
+export const MENU_TABS = thaw(components.menuTabs);
 
-const QUICK_MENU_ROWS = components.quickMenuRows;
+const QUICK_MENU_ROWS = thaw(components.quickMenuRows);
 
 export const MENU = {
   map: QUICK_MENU_ROWS,
@@ -307,7 +308,7 @@ export const MENU = {
   overlay: QUICK_MENU_ROWS,
 };
 
-const BANDS = behavior.bands;
+const BANDS = thaw(behavior.bands);
 
 // The acts a MENU row may name — the vocabulary, beside the table it governs.
 // It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
@@ -334,7 +335,7 @@ const BANDS = behavior.bands;
 // that opens the three contexts can subtract what was drawn from what is
 // declared here. That instrument is Bjorn's lens and is not written yet — this
 // comment is the statement of the gap, not a claim it is closed.
-export const MENU_ACTS = behavior.menuActs;
+export const MENU_ACTS = thaw(behavior.menuActs);
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
@@ -405,7 +406,7 @@ export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {
 // controls screen wants a readable word; these lived as two near-identical
 // tables (input.js PAD_LABELS / controls.js BUTTON_NAMES) that agreed on
 // buttons 0-11 and silently disagreed on the d-pad and guide.
-export const PAD_BUTTONS = components.padButtons;
+export const PAD_BUTTONS = thaw(components.padButtons);
 /** Compact glyph for the hint bar; falls back to B<n> for unmapped buttons. */
 export function padGlyph(btn) {
   const b = PAD_BUTTONS[btn];
@@ -433,7 +434,7 @@ export function padName(btn) {
 // A row's own `hint` from unlocks.csv always wins over LOCK_COPY.unearned —
 // that is the whole point of the hint column. This is what is said when the
 // table has nothing to say.
-export const LOCK_COPY = behavior.lockCopy;
+export const LOCK_COPY = shallowFrozen(behavior.lockCopy);
 
 // ---- what a kind of armament is called in the plural ------------------------
 // The Compendium's section headings. A LABEL is a word, not a derivation:
@@ -443,7 +444,7 @@ export const LOCK_COPY = behavior.lockCopy;
 // rather than a broken screen, and says so in the console so the plausible one
 // is not mistaken for an authored one (Law 0 clause 5: a generated thing that is
 // wrong but reasonable is the invisible failure).
-const ARMAMENT_KIND_LABELS = behavior.armamentKindLabels;
+const ARMAMENT_KIND_LABELS = thaw(behavior.armamentKindLabels);
 export function armamentKindLabel(kind) {
   const known = ARMAMENT_KIND_LABELS[kind];
   if (known) return known;

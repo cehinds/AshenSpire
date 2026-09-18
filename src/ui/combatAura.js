@@ -7,10 +7,11 @@
 // bare fallbacks inside the expression that picks them.
 import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
 import { uiConfig } from '../config/generated/ui.js';
+import { shallowFrozen } from '../config/authored.js';
 
 const { components, behavior, sizing } = uiConfig.presentation.combatAura;
 
-export const POWER_FRAMES = components.powerFrames;
+export const POWER_FRAMES = shallowFrozen(components.powerFrames);
 const colors = components.colors;
 
 export function resourceAura(card = {}, receipt) {
