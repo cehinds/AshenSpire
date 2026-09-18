@@ -23,13 +23,25 @@ import { cardDoorStackBelowPx } from '../models/CardSizeModel.js';
 // stylesheet keys on `data-card-door` — which keeps card.json the one home for
 // both numbers rather than having a breakpoint restate one of them.
 //
-// This lived in `src/main.js` and was WRONG THERE, measured rather than argued:
-// the reading door is a shared component with three hosts, and only one of them
-// boots `main.js`. `weapon-cards-preview.html` and the wireframe gallery load
-// this module directly, so on those pages the attribute was never written and
-// the door kept two columns at every width — at 390 the details column measured
-// 24.969px, which is not a column, it is a seam. The fix was in the app and the
-// defect was in the component.
+// This lived in `src/main.js` and was WRONG THERE, measured rather than argued.
+// Walking the import graph from every module script in every page at the repo
+// root, FIVE pages reach this module and only ONE of them boots `main.js`:
+//
+//   index.html                  -> src/main.js                  door + main
+//   armament-kits-preview.html  -> inline module script          door, no main
+//   item-cards-preview.html     -> src/ui/previews/itemCards.js  door, no main
+//   tooltip-review-scene.html   -> .../tooltipReviewEntry.js     door, no main
+//   weapon-cards-preview.html   -> .../weaponCards.js            door, no main
+//
+// On those four the attribute was never written, so the door kept two columns
+// at every width — measured on weapon-cards-preview.html at 390x844, the
+// details column was 24.969px. That is not a column, it is a seam. The fix was
+// in the app and the defect was in the component.
+//
+// (An earlier version of this comment named `docs/architecture-handoff/wireframe-gallery.html`
+// as a host. It is not one and never was: it has a single CLASSIC script tag
+// and no module script at all, and its 86 mentions of this file are embedded
+// source-listing TEXT, not imports. The list above is the measured one.)
 //
 // So the decision sits beside the layout it governs. One listener for this
 // module's life rather than one per door: the attribute is on `:root`, one door

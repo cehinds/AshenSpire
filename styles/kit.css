@@ -4350,9 +4350,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
    THE THRESHOLD IS NOT A NUMBER IN THIS FILE. A media query cannot read a
    custom property, so an earlier draft wrote `calc(20rem + 24rem)` and called
    it derived — it was a second copy of the inspect width that would not have
-   moved when card.json did. `src/main.js` measures against the authored width
-   plus the authored readable measure and sets `data-card-door`, so the one
-   home stays the config. */
+   moved when card.json did. `cardInspectionLayout()` in
+   src/ui/components/cardInspection.js measures against the authored width plus
+   the authored readable measure and sets `data-card-door`, so the one home
+   stays the config. It sits with the door rather than in `src/main.js`, which
+   four of the five pages that host this layout never load. */
 :root[data-card-door='stacked'] .card-inspection-modal .card-inspection-layout {
   grid-template-columns: minmax(0, 1fr);
   grid-auto-rows: max-content;
