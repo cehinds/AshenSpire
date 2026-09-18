@@ -178,6 +178,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         framing: port.dataset.framing,
         framingMiss: Number(port.dataset.framingMiss),
         cameraRestore: port.dataset.cameraRestore,
+        cameraViewport: port.dataset.cameraViewport || null,
       };
     })()`);
 
@@ -254,8 +255,28 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }
     }
 
-    // Fit is computed from viewport geometry. Prove that a desktop Fit is not
-    // treated as a portable camera when the same run remounts on a phone.
+    // Fit is a VIEWPORT PROMISE, not a portable camera. The run this case owns
+    // is the one the promise is for: a climb framed on a desktop, put down,
+    // and picked up again on a phone. The saved fit must not be applied there.
+    //
+    // THE VIEWPORT CHANGES WHILE NO BOARD IS MOUNTED, and that is the whole
+    // shape of this drive rather than a convenience. The earlier version
+    // switched the emulation under a LIVE map and remounted through Armaments,
+    // and it could not hold a verdict: map.js re-fits a live board on `resize`
+    // two animation frames later, so the run may legitimately hold a
+    // phone-solved fit by the time Armaments closes — `restored` is then the
+    // RIGHT answer — and which of `restored` and `recomputed` landed depended
+    // on whether those frames beat the tap, and on which stage of the emulated
+    // resize's two-stage layout they caught. Measured on an unchanged tree it
+    // flipped run to run, and with the guard itself removed the case still went
+    // green, because the live re-fit had already replaced the desktop camera
+    // this case exists to catch travelling. A plant that a race can rescue is
+    // not a plant. Through the title there is no live board to re-fit anything:
+    // what the phone mounts is exactly what the desktop wrote down.
+    //
+    // The exit is the player's own — Menu, then "Save & Quit to Title", the
+    // same door the #243 case drives — because the saved camera is the subject
+    // and only a real save writes one.
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 1200, height: 730, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
@@ -264,30 +285,63 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
     }, sessionId);
     await waitForMount('desktop fit camera', `(() => {
       const port = document.querySelector('.map-scroll');
-      return !!(port && port.dataset.framing && port.dataset.cameraRestore);
+      return !!(port && port.dataset.framing && port.dataset.cameraRestore
+        && port.dataset.cameraViewport);
     })()`);
-    await wait(220);
+    await wait(220); // outlast the board's 120 ms camera backstop
     const desktopFit = await readState();
+    await evaluate(`document.querySelector('#open-menu').click()`);
+    await waitFor('the save-and-quit row in the quick menu',
+      `!!document.querySelector('.qn-row[data-act="saveQuit"]')`);
+    await evaluate(`document.querySelector('.qn-row[data-act="saveQuit"]').click()`);
+    await waitFor('the title after Save & Quit', `(() => !document.querySelector('.map-scroll')
+      && !!(document.querySelector('.startup-gate') || document.querySelector('.title-menu')))()`);
+    // No map is mounted from here until Continue, so nothing can re-fit the
+    // saved camera before the phone reads it back.
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
     }, sessionId);
-    await evaluate(`document.querySelector('#open-armoury').click()`);
-    await waitFor('cross-viewport Armaments overlay', `!!document.querySelector('.armoury-overlay')`);
-    await cdp.send('Input.dispatchKeyEvent', {
-      type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
-    }, sessionId);
-    await cdp.send('Input.dispatchKeyEvent', {
-      type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
-    }, sessionId);
-    await waitFor('phone map after cross-viewport remount', `(() => {
+    await wait(220);
+    await evaluate(`document.querySelector('.startup-gate')?.click()`);
+    await waitFor('the folded title and its Continue door',
+      `!!document.querySelector('.title-menu .slot-continue:not([disabled])')`);
+    await evaluate(`document.querySelector('.title-menu .slot-continue').click()`);
+    await waitFor('the phone map the desktop run resumed into', `(() => {
       const port = document.querySelector('.map-scroll');
-      return !document.querySelector('.armoury-overlay') && !!(port && port.dataset.cameraRestore);
+      return !!(port && port.dataset.framing && port.dataset.cameraRestore
+        && port.dataset.cameraViewport);
     })()`);
     await wait(220);
     const phoneFit = await readState();
+    const solvedShape = (state) => {
+      const [width, height] = String(state.cameraViewport || '').split('x').map(Number);
+      return Number.isFinite(width) && Number.isFinite(height) ? { width, height } : null;
+    };
+    const desktopSolve = solvedShape(desktopFit);
+    const phoneSolve = solvedShape(phoneFit);
     results.fitViewport = {
+      // The shapes really did differ — without that there is nothing to own —
+      // the desktop board was solved for the desktop it was on, the phone did
+      // NOT take the saved camera as given, and what it is looking through was
+      // measured against a viewport the phone can actually show.
+      //
+      // FITS IN, rather than matches exactly, and the asymmetry is the subject:
+      // the harm in a travelling fit is a frame sized for a wider screen and so
+      // cut off on a narrower one. An exact match would also fail the board for
+      // solving against an early stage of this shape's OWN layout — the app
+      // scales its root before the map settles, so a mount can land on 390x405
+      // of an eventual 433x643 and never re-fit, `recenter`'s observer being
+      // one-shot with no window `resize` to follow the app's own scaling. That
+      // is a real wart, and it is one shape mis-measuring itself rather than a
+      // desktop camera on a phone. It belongs to its own gate; folded in here
+      // it would only put this verdict back on a race.
       pass: desktopFit.viewportWidth > phoneFit.viewportWidth
+        && !!desktopSolve && !!phoneSolve
+        && Math.abs(desktopSolve.width - desktopFit.viewportWidth) <= 1
+        && Math.abs(desktopSolve.height - desktopFit.viewportHeight) <= 1
         && phoneFit.cameraRestore === 'recomputed'
+        && phoneSolve.width <= phoneFit.viewportWidth + 1
+        && phoneSolve.height <= phoneFit.viewportHeight + 1
         && phoneFit.framing === 'fit',
       before: desktopFit,
       after: phoneFit,
@@ -735,7 +789,10 @@ if (SELFTEST) {
   }
   const fit = results.fitViewport;
   console.log(`${fit && fit.pass ? 'PASS' : 'FAIL'} fit viewport ownership: `
-    + `${fit ? fit.before.viewportWidth : '?'} -> ${fit ? fit.after.viewportWidth : '?'}; `
+    + `${fit ? fit.before.viewportWidth : '?'}x${fit ? fit.before.viewportHeight : '?'} `
+    + `(solved ${fit ? fit.before.cameraViewport : '?'}) -> `
+    + `${fit ? fit.after.viewportWidth : '?'}x${fit ? fit.after.viewportHeight : '?'} `
+    + `(solved ${fit ? fit.after.cameraViewport : '?'}); `
     + `restore=${fit ? fit.after.cameraRestore : '?'}`);
   judge(fit && fit.pass);
   const race = results.debounceRace;
