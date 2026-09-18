@@ -13,7 +13,7 @@
 How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
 Review or approval may permit integration to `dev`; only the owner merges to
-`main`, creates a release tag, or publishes a release.
+`release` or `main`, creates a release tag, or publishes a release.
 
 ## Branch model
 
@@ -27,7 +27,7 @@ feature/* ──► dev ──► release ──► main
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Cut from `dev` when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`. |
-| `test` | Sandbox for balance experiments and playtest builds. Branch from `dev`, cherry-pick winners back. Force-pushes allowed here and nowhere else. |
+| `test` | Sandbox for balance experiments and playtest builds. Branch from `dev`, cherry-pick winners back. Force-pushes allowed here, and on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
 ## Commits & PRs
@@ -36,6 +36,39 @@ feature/* ──► dev ──► release ──► main
 - PRs into `dev` include: what changed, how it was verified (which tests / manual steps), and a screenshot or GIF for UI changes.
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning (spec §9 M3 targets: ~35–50% experienced-player win rate).
+
+### A pull request is not done until the owner can merge it with one click
+
+Owner's rule, 2026-09-18, for every session and agent working here. The
+owner reads the PR list and merges; nothing else is theirs to do there.
+
+1. **Open it ready for review, never as a draft.** Say in the body what is
+   unverified rather than hiding it behind draft status.
+2. **Have it reviewed before you call it done.** Spawn a review agent, or
+   message another live session, with the PR number; verify each finding
+   against the diff, fix what stands, push, and note the review's outcome in
+   the PR (who reviewed, what changed, what was declined and why).
+3. **Keep it mergeable.** Whenever anything else lands on the base branch,
+   merge the base into your branch (or rebase, on a branch only you have
+   pushed to), resolve every conflict yourself, and regenerate the derived
+   files with the tooling, never by hand, in the order the CHANGELOG.md
+   header gives. The *receipt* is the PR's CHANGELOG.md entry, which names
+   the build it shipped in; the *box* is `buildordinal.json`, which the
+   rebuild writes. So: `node tools/launch.mjs --build-only`, re-point the
+   receipt to the box's ordinal plus one, `node tools/about-changelog.mjs
+   --write`, rebuild again — the box and the receipt now agree — and push.
+   The owner never resolves a conflict.
+4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
+   "flake" is not a diagnosis. Never skip or quarantine a test to get green.
+5. **Keep checking after you open it.** Until it is merged or closed, re-check
+   it after every merge to the base branch and on a check-in you schedule
+   yourself (an hour apart is enough);
+   if two open PRs touch the same code, message the other session and agree
+   who lands first and who rebases.
+6. **Leave the merge to the owner.** A finished PR waits in the list for
+   the owner to merge; merge it to `dev` yourself only when the owner has
+   asked you to land work, and never to `release` or `main` (see
+   [Coordination and release boundary](#coordination-and-release-boundary)).
 
 ## Adding content (quick reference)
 

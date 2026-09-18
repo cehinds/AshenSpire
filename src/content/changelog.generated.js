@@ -23,6 +23,26 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1134"
   },
   {
+    "id": "pr-1137",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "The checks that prove this game’s other checks can still fail were themselves broken on Windows",
+    "detail": "Nothing a player sees changes. Before any check on this game is trusted, it is first made to fail on purpose: a known fault is planted into the real files and the check must catch it. On Windows, where the invisible character that ends each line of a file differs from the one the build servers use, a planted fault that spanned more than one line was never really planted at all — and the tool then reported that the fault’s location had moved, rather than that it had failed to plant it. Twenty-three plants across eighteen checks were affected, so those checks read as broken on every Windows run while the build servers saw nothing wrong. A plant is now read the way the file it lands in is actually written, whichever machine it is on, and the planter itself has gained a check of its own that runs on every change.",
+    "build": "0.7.1.85",
+    "pullRequest": 1137,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1137"
+  },
+  {
+    "id": "pr-1133",
+    "date": "2026-09-18",
+    "group": "2026-09-18",
+    "summary": "Two more changes that landed without a mention now have one",
+    "detail": "Nothing you see changes in play. Two changes had already landed without a line in this list, so the changelog you can read in the game did not mention them: a separate editing tool for the people who build the game, and a clear-out of twenty-one written notes nothing referred to any more. Each now has its line, with the build it shipped in.",
+    "build": "0.7.1.81",
+    "pullRequest": 1133,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1133"
+  },
+  {
     "id": "pr-1132",
     "date": "2026-09-18",
     "group": "2026-09-18",
