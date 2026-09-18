@@ -3213,8 +3213,10 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    `.cc-card-selectors` used to be matched here by `:has(.poker-equipment-choice)`
    — a content sniff. `:has()` takes the specificity of its most specific
    argument, so that selector (0,3,0) and the section's own (0,4,0) both
-   outranked `.as-options[data-view="grid"]` (0,2,0), which is the ONLY rule
-   `data-view` drives. The screen wrote the player's choice onto the container
+   outranked `.as-options[data-view="grid"]` (0,2,0) — which, before this
+   change, was the only rule in the kit that `data-view` drove at all (the
+   picker's own two branches below are the rules this change adds).
+   The screen wrote the player's choice onto the container
    (customize.js) and the stylesheet then ignored it, so List and Grid rendered
    the same grid — and there was no `[data-view="list"]` rule anywhere, so even
    at equal specificity List had nothing to apply. The toggle had one authored
