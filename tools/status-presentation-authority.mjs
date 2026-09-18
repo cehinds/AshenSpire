@@ -24,7 +24,7 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the presenter infers percent from the status NAME again',
         file: 'src/ui/uiContent.js',
-        find: "const valueToken = def.instancePresentation?.valueToken || 'stacks';",
+        find: 'const valueToken = def.instancePresentation?.valueToken || s.defaultValueToken;',
         replace: "const valueToken = /magic|vulnerable/i.test(def.name) ? 'percent' : 'stacks';",
         expectRed: /FAIL (shared presenter contains no status-id\/name regex branch|misleading id\/name cannot infer percent semantics)/,
       },

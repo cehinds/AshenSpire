@@ -53,7 +53,7 @@ function renderSceneComposition(id,mode,config,notify){
    sky.style.height=floorLine+'px';ground.style.top=floorLine+'px';
    const slot=portraits.slot,compact=mode!=='wide';
    // Each figure keeps to its lane: half the frame less the insets and the minimum gap.
-   const inset=W*slot.insetVw/100,gap=W*portraits.minGapVw/100,lane=(W-2*inset-gap)/2;
+   const inset=W*slot.insetVw/100,gap=Math.max(W*portraits.minGapVw/100,portraits.minGapPx),lane=(W-2*inset-gap)/2;
    const width=Math.min(W*(compact?slot.compactWidthVw:slot.widthVw)/100,lane),top=hudHeight+H*slot.topOffsetVh/100;
    const fraction=portraits.visibleFraction,share=fraction.numerator/fraction.denominator,zoomed=(reveal-top)/share;
    for(const host of figures){
