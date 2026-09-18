@@ -97,6 +97,70 @@ rendered text and each trigger's behavior are byte-identical before and after
   inside the pass that sets it; mounting them in one loop outside filed every
   seat's relics under one owner. Engine test 24 is what says so.
 
+## Phase T — The tag tree (1 PR, landed between 2 and 3)
+
+**Owner's direction, 2026-09-18:** every object carries property tags that say
+what it is and how the game may use it; the vocabulary is one tree, in third
+normal form; a node carries no numbers, only variables the owner assigns.
+
+**What the review found before building:** the tree already existed, for
+cards only — `content/framework/properties.json`, 58 nodes with `parentId`,
+read by `hasProperty()` — beside the flat 13-domain registry
+(`tags.csv`, all 435 objects) and the `property` rules inside it. Three
+systems for one question. The phase folds them into one and keeps every
+answer.
+
+| Change | Where |
+|---|---|
+| `nodes.csv` — every tag is a node; parent is `parentId` only; roots are domains; `domain`/`aside` on roots only; ids kept verbatim as opaque keys | `content/source/nodes.csv` |
+| `nodeRelations.csv` — `REQUIRES · CONFLICTS_WITH · PERMITS · INHERITS · REPLACES · SUPPRESSES`; a rule's old `requires`/`excludes` cells become rows | `content/source/nodeRelations.csv`, `NODE_RELATIONS` in `schemas.js` |
+| `familyNodes.csv` — family × subtree root; **every family may carry `property`**, every collection-backed family carries `classification` | replaces `tagFamilyDomains.csv`; `PROPERTY_CARRIER_FAMILIES` retired |
+| `nodeVariables.csv` + `variableBindings.csv` + `nodeEffects.json` — a node's effects name variables; a binding says which `balance.js` row a variable reads, per scope (`instance › upgrade › class › default`); a literal number in a binding is refused | 64 numeric leaves became 66 variables; the 48 relics' literals moved to `balance.powers` |
+| `nodeTerms.csv` — player-facing words: framework term ids, a conferring node's sentence | |
+| 435 classification rows — one per object, `classification.<type>` for cards, `classification.<family>` otherwise; stamped as `kindIds`, never `tags` | `tagging.csv`; `registries.js` `objectKinds` |
+| Derivations — `tags`, `tagDomains`, `tagFamilyDomains`, `propertyRules`, `propertyRuleEffects`, and `src/framework/data/{properties,relations}.js` are compiled from the tree; `run-node.mjs` runs `content-build --check` as the drift gate, since the framework module bakes the default balance bindings in | `tools/content-build.mjs`; six old sources deleted, `propertyRuleEffects.json` renamed to `nodeEffects.json` |
+| Readers — `registries.tree` (`nodeTree`: parent, root, children, the dotted path from labels), `resolveVariable` ladder (live at runtime through `nodeTokens` for the relic sentences; only `default` rows ship, the other scopes are declared and validated), `cardKind` in `src/model/tree.js`; `objectKinds`/`objectIsKind` in `src/model/registries.js` | |
+| Validation — parents, cycles, edges, families, variables ⇔ effects ⇔ bindings, balance paths, kinds ⇔ collections ⇔ card types | `treeProblems`, hooked into `validateContent` |
+
+**Feel-neutrality, proved not claimed:** `tests/tree-equivalence.test.mjs`
+compares everything the tree derives against three fixtures recorded before
+the fold — 50 property rules resolved to their numbers, 58 framework rows with
+`defaultParameters`, 137 tags / 13 domains / 56 pairings — row for row, and
+names the additions (nine roots, 61 framework nodes now registered, 435 kind
+rows, 24 pairings).
+
+**Two switches, in the same phase (owner's ask):**
+
+- *Templates bind by variable name.* A rule's sentence and a relic's sentence
+  read a power's numbers as `{variable}` → `resolveVariable` (`tree.js`
+  `nodeTokens`; `relicTokens(def, rules, registries)`), never by counting op
+  positions; `{restoreMana.2}` is the variable `restoreMana_2`. The validator
+  binds the same way (`nodeVariableBindings`) and keeps the "every
+  player-visible number is stated" guard by carrying the op that reads each
+  variable. Only a relic's own passives, which are not nodes, still bind by op.
+- *Readers ask the kind, not the collection.* `cardKind(def)` reads the kind
+  tag; the attack counter (`combat.js`, `coopCombat.js`), the card ref and
+  `cardPlayed` receipt, the `cardTypeIs` predicate, `combatAnimation`, the
+  combat screen's skill highlight, `consequence.js` and the framework
+  importer's classification (`cardPropertyInstances`, from the junction's
+  kind row) no longer touch `def.type`. A def with no kind row answers null,
+  never quietly its type — so every fixture carries its kind rows too.
+
+**A trade-off stated, not hidden:** the 435 kind rows restate what the
+collection and `card.type` already say, and the validator calls that "one fact
+stated twice" and checks it. They are kept authored because the owner's rule
+is that the tag is the authority and the collection the check — a derived row
+would make the tree the copy again — at the cost that every fixture and
+prototype carries its rows (`withKindRows`, `combatBuilds.js`, the Add-edge
+probe). `classification.strike/guard/weaponArt` are kinds no object carries
+under the exactly-one rule; the importer derives them from the card's own kind
+and the framework's relations.
+
+**Not done here, deliberately:** the two `bound` nodes (`item/bound`,
+`equipment.bound`) and the `presentation` mirror of the card schools are not
+merged; `def.type` still exists on the card row as the authored word the kind
+row is checked against.
+
 ## Phase 3 — Cards in zones; collection and deck (3 PRs)
 
 **PR 3a: zones in run state.**

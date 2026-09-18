@@ -18,6 +18,7 @@ import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
@@ -856,9 +857,13 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     if (!target) throw new Error('No living enemy to target');
   }
 
+  // WHAT THE CARD IS comes from its kind tag (model/tree.js cardKind), never
+  // from `def.type` — every reader downstream (the attack counter, the
+  // cardTypeIs predicate, the cardPlayed receipt) sees the kind.
+  const kind = cardKind(def);
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -887,7 +892,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
   };
-  if (def.type === 'attack') {
+  if (kind === 'attack') {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
@@ -897,7 +902,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   combat.emit('cardPlayed', {
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
-    cardType: def.type,
+    cardType: kind,
     targetId: target ? target.id : null,
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,

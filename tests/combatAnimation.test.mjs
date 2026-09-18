@@ -18,11 +18,16 @@ test('real shield equipment selects bash; dagger and lighting tools do not',()=>
   assert.equal(route(card('defend','shieldGuard'),items(['parryDagger'])).technique,'parry');
   assert.equal(route({...card('strike','shieldAttack'),sourceArmamentId:'parryDagger'},items(['parryDagger','buckler'])).technique,'attack');
 });
-test('attack and Power type precede guard tags; untagged skill casts',()=>{
-  assert.equal(route({type:'attack',tags:['guard']}).group,'attack');
-  assert.equal(route({type:'power',tags:['guard']}).rest,'cast');
-  assert.equal(route({type:'skill',tags:[]}).technique,'cast');
-  assert.equal(route({type:'skill',tags:['block']}).rest,'guard');
+test('attack and Power kind precede guard tags; untagged skill casts',()=>{
+  // The router reads a card's KIND TAG (model/tree.js cardKind), never its
+  // `type` field, so a synthetic card states its kind the way a stamped def
+  // does. A card with no kind row is no kind — it casts.
+  const kind=(type,tags)=>({type,kindIds:[{attack:'classification.attack',power:'classification.power',skill:'classification.skill'}[type]],tags});
+  assert.equal(route(kind('attack',['guard'])).group,'attack');
+  assert.equal(route(kind('power',['guard'])).rest,'cast');
+  assert.equal(route(kind('skill',[])).technique,'cast');
+  assert.equal(route(kind('skill',['block'])).rest,'guard');
+  assert.equal(route({type:'attack',tags:['guard']}).group,'cast','a type with no kind row is not quietly an attack');
 });
 test('rest reducer is owner-relative and paced/flush reduction agree',()=>{
   const events=[{type:'cardPlayed',playerId:'a'},{type:'cardPlayed',playerId:'a'},{type:'playerTurnStart',playerId:'b'},{type:'playerTurnStart',playerId:'a'}];

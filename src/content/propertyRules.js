@@ -1,12 +1,16 @@
 // src/content/propertyRules.js — the property rules table, indexed by tag.
 //
-// A property tag (domain `property`, content/source/tagDomains.csv) is the one
-// kind of tag that CONFERS behaviour, and what it confers is exactly one row of
-// this table (docs/proposal-progression-and-property-system.md §3). Two
-// sources, compiled by tools/content-build.mjs and joined here by tag:
+// A property tag (a node under the `property` root of content/source/nodes.csv)
+// is the one kind of tag that CONFERS behaviour, and what it confers is exactly
+// one row of this table (docs/proposal-progression-and-property-system.md §3).
+// Both generated inputs are VIEWS of the tree, derived by tools/content-build.mjs:
 //
-//   content/source/propertyRules.csv        tag, requires, excludes, textTemplate
-//   content/source/propertyRuleEffects.json { [tag]: { passives?, triggers? } }
+//   propertyRules        the conferring nodes: tag, requires/excludes (from
+//                        nodeRelations.csv REQUIRES/CONFLICTS_WITH), textTemplate
+//                        (from nodeTerms.csv)
+//   propertyRuleEffects  nodeEffects.json with every { variable } replaced by
+//                        the balance path its default binding names
+//                        (variableBindings.csv) — a node carries no numbers
 //
 // The sidecar holds the relic-shaped trees (a trigger list is not a CSV cell);
 // SCHEMAS.propertyRule is built from the same passives/triggers nodes a relic

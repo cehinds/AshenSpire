@@ -4,12 +4,15 @@
 // weapon's identity, a creature's kind, a class's leaning — all of it is rows
 // in one set of tables, and nothing may carry a tag that is not registered.
 // Tagging anything is a spreadsheet row, never a code change. Five tables,
-// compiled by tools/content-build.mjs:
+// which since the tag tree are VIEWS: tools/content-build.mjs derives the first
+// three from content/source/nodes.csv (every tag is a node; a root is what
+// these tables call a domain) and familyNodes.csv, and the readers below keep
+// their contract unchanged:
 //
-//   content/source/tagDomains.csv       what a tag can be ABOUT (the lookup)
-//   content/source/tags.csv             the vocabulary — id, domain FK, chip
+//   tagDomains        the roots of nodes.csv — what a tag can be ABOUT
+//   tags              every non-root node — id, domain (its root), chip
 //   content/source/tagFamilies.csv      what can be tagged — source, scopeField
-//   content/source/tagFamilyDomains.csv family x domain — who may carry what
+//   tagFamilyDomains  familyNodes.csv lifted to roots — who may carry what
 //   content/source/tagging.csv          family, scope, objectId, tagId
 //
 // WHY FIVE TABLES AND NOT TWO. The first cut had a `domains` list on the family
@@ -127,7 +130,9 @@ export function scopeOf(family, object) {
  * scopeField; every other family keys on the id alone.
  */
 export function objectTagIds(family, objectId, scope = '') {
-  return (BY_OBJECT.get(key(family, scope, objectId)) || []).filter(id=>BY_ID.get(id)?.domain!=='presentation');
+  // A tag in an aside domain (nodes.csv, root `aside`) has a reader of its own
+  // and never joins the list — see model/tags.js asideDomainIds.
+  return (BY_OBJECT.get(key(family, scope, objectId)) || []).filter((id) => !DOMAIN_BY_ID.get(BY_ID.get(id)?.domain)?.aside);
 }
 
 /**

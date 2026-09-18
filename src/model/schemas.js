@@ -175,12 +175,54 @@ export const PREDICATES = Object.freeze([
   'not',
 ]);
 
-// The families that may carry a `property` tag — the carriers of
-// docs/proposal-progression-and-property-system.md §3. A card is never one: its
-// behaviour is its own effect list. validate.js refuses a tagFamilyDomains or
-// tagging row that pairs `property` with any other family, by name. Phase 7
-// adds `location`.
-export const PROPERTY_CARRIER_FAMILIES = Object.freeze(['armament', 'armour', 'relic', 'class']);
+// THE TREE (content/source/nodes.csv and its companions). Every tag is a node;
+// a node's parent is its parentId and nothing else; the five tag tables, the
+// property rules and the framework's property rows are views derived from it
+// by tools/content-build.mjs. These are the closed sets its rows draw from.
+//
+// The verbs an edge may carry (nodeRelations.csv). The framework's own list
+// (framework/schema.js RELATION_KINDS), stated here because the tree is
+// authored in the content layer and validated in the model layer, neither of
+// which may import the framework. tests/engine.test.js pins the two lists to
+// each other.
+export const NODE_RELATIONS = Object.freeze([
+  'REQUIRES', 'CONFLICTS_WITH', 'PERMITS', 'INHERITS', 'REPLACES', 'SUPPRESSES',
+]);
+
+// The framework's visibility and domain words a node may carry (nodes.csv),
+// stated here for the same reason NODE_RELATIONS is: the tree is validated in
+// the model layer, which may not import the framework. tests/engine.test.js
+// pins them to framework/schema.js PROPERTY_VISIBILITIES / PROPERTY_DOMAINS.
+export const NODE_VISIBILITIES = Object.freeze(['PRIMARY', 'SECONDARY', 'CONTEXTUAL', 'INTERNAL', 'DEBUG']);
+export const NODE_DOMAINS = Object.freeze([
+  'CLASSIFICATION', 'DAMAGE', 'ACTION_ROLE', 'COST', 'TARGETING',
+  'LIFECYCLE', 'SCALING', 'EQUIPMENT', 'STATUS', 'PRESENTATION', 'INTERNAL',
+]);
+
+// The columns each tree table may carry — a mis-spelt column (`parentid`)
+// would otherwise make its node a silent root. validate.js's "Unknown field"
+// discipline, for the seven tables.
+export const TREE_COLUMNS = Object.freeze({
+  nodes: ['id', 'parentId', 'label', 'color', 'glyph', 'visibility', 'priority', 'domain', 'aside', 'blurb'],
+  nodeRelations: ['sourceId', 'relation', 'targetId', 'precedence'],
+  familyNodes: ['family', 'nodeId'],
+  nodeTerms: ['nodeId', 'playerTermId', 'tooltipTermId', 'template'],
+  nodeVariables: ['nodeId', 'variable', 'role'],
+  variableBindings: ['scope', 'scopeId', 'nodeId', 'variable', 'balancePath'],
+});
+
+// The scopes a variable binding may name (variableBindings.csv), in resolution
+// order — highest wins. `default` is the shipped tuning and the only scope with
+// rows today; the others are the shape per-copy tuning (a smithed relic, a
+// class's own number) needs, declared and validated before anything writes one.
+export const VARIABLE_SCOPES = Object.freeze(['default', 'class', 'upgrade', 'instance']);
+
+// WHO MAY CARRY A PROPERTY TAG: every family. The four-carrier gate that lived
+// here (armament, armour, relic, class — "a card never") is gone: a property
+// tag is how the game is told what an object is and how it may be used, so
+// there is no family it could not apply to. What the mount path can HOLD is a
+// narrower, engine-side fact (engine/properties.js MOUNTABLE_KINDS) — a kind
+// gains a mount by gaining a hold window, not by joining a list here.
 
 // Relic passive keys — data the run systems (rewards, shops, shrines, map)
 // and cost/flask math consult. Closed set; each key is generic capability,
@@ -285,7 +327,7 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
 // Creature tags used to be a frozen array here, and then a field on the enemy
-// def. They are now rows in the one tag registry (content/source/tags.csv)
+// def. They are now nodes in the one tag tree (content/source/nodes.csv)
 // carrying domain 'creature', authored in content/source/tagging.csv like every
 // other tag and stamped onto the enemy at boot. Nothing about them is a schema
 // field any more, which is why neither the enemy nor the profile declares one.
@@ -652,7 +694,7 @@ export const SCHEMAS = Object.freeze({
     pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
     // OPTIONAL SINCE PLAN PHASE 2, AND EMPTY ON EVERY SHIPPED RELIC: a relic's
-    // triggers are a property rule now (content/source/propertyRules.csv), and
+    // triggers are a property rule now (content/source/nodeEffects.json), and
     // it carries them through the same mount path equipment does. The field
     // stays declared for one release so a relic authored against the old shape
     // is refused BY NAME here instead of loading with its triggers silently
@@ -677,7 +719,7 @@ export const SCHEMAS = Object.freeze({
     script: opt(ref('scripts')),
   }),
 
-  // One row of content/source/propertyRules.csv joined with its sidecar entry
+  // One conferring node of content/source/nodes.csv joined with its nodeEffects.json entry
   // (src/content/propertyRules.js). Built from the relic's nodes: the same
   // passives fields (PASSIVE_TYPES, via passiveFields) and the same triggers
   // node, so a property can confer nothing a relic could not. Relic `modifiers`
