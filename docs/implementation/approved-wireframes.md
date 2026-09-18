@@ -160,10 +160,11 @@ player selects away — the map moving up and auto-recentring on both.
   than letting it float over the map.
 - **The minis stand ABOVE the button and come out on hover**: hidden at rest,
   they fade and rise 0.7rem out of its top edge, nearest one first, 40 ms
-  apart. Nothing is drawn behind them — the flask's own art over the map, with
-  only the count keeping its pill, because a number with no ground behind it
-  cannot be read on parchment. THE WAIT IS THE PLAYER'S OWN tooltip delay and the tooltip's
-  fade (`model/tooltipSettings.js`: 0.25/0.5/1/1.5 s by their setting, 160 ms),
+  apart. Nothing is drawn behind them — the flask's own art over the map, and
+  the count is a small plain number above each flask, holding itself up with an
+  ink shadow rather than a pill, because a plate in the corner read as chrome.
+  THE WAIT IS THE PLAYER'S OWN tooltip delay and the tooltip's fade
+  (`model/tooltipSettings.js`: 0.25/0.5/1/1.5 s by their setting, 160 ms),
   handed to the CSS as `--potion-reveal-delay` and `--potion-reveal-fade` —
   hovering Potions feels like hovering anything else on the screen. Going back
   has no wait. They keep their space while hidden, so the button never moves
