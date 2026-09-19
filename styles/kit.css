@@ -4865,10 +4865,10 @@ button[data-button-size] {
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-preview-host,
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-divider { display: none; }
 .customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
-.customize .cz-class.unfolded { flex-wrap: wrap; height: var(--creation-unfold-height); align-content: flex-start; overflow: hidden; }
-.customize .cz-class.unfolded > .cc-class-unfold { flex: 1 1 100%; min-height: 0; align-self: stretch; display: grid; grid-template-columns: var(--creation-unfold-portrait) minmax(0, var(--creation-unfold-summary)); gap: var(--creation-head-tools-gap); overflow: hidden; }
-.customize .cc-unfold-portrait { display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
-.customize .cc-unfold-portrait > .figure.cc-unfold-art { width: 100%; height: 100%; max-width: none; min-height: 0; }
+.customize .cz-class.unfolded { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: center; height: var(--creation-unfold-height); overflow: hidden; }
+.customize .cz-class.unfolded > .cc-class-unfold { grid-column: 1 / -1; min-height: 0; height: 100%; align-self: stretch; display: grid; grid-template-columns: var(--creation-unfold-portrait) minmax(0, var(--creation-unfold-summary)); gap: var(--creation-head-tools-gap); overflow: hidden; }
+.customize .cc-unfold-portrait { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 0; overflow: hidden; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art { height: 100% !important; width: auto !important; aspect-ratio: 1 / 1; max-width: 100%; max-height: 100%; min-height: 0; min-width: 0; }
 .customize .cc-unfold-portrait > .figure.cc-unfold-art > * { width: 100%; height: 100%; object-fit: contain; }
 .customize .cc-unfold-summary { display: flex; flex-direction: column; justify-content: center; gap: var(--creation-head-tools-gap); min-width: 0; min-height: 0; overflow: hidden; text-align: start; font-weight: 400; }
 .customize .cc-unfold-relic { display: inline-flex; align-items: center; gap: var(--creation-rail-gap); color: var(--ink-dim); font-size: calc(1em * var(--creation-rail-value-scale)); }
