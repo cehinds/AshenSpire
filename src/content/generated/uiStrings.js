@@ -2418,6 +2418,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "creation.unfold.label",
+    "extends": "",
+    "short": "Class summary",
+    "full": "The chosen class's portrait and starting resources.",
+    "tip": ""
+  },
+  {
     "id": "creation.catalog.portrait",
     "extends": "",
     "short": "Live portrait (W1c head)",

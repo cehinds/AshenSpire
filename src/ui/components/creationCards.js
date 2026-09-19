@@ -189,6 +189,27 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   return markUiComponent(pane, UI.classPreviewPane);
 }
 
+/**
+ * classUnfold({ cls, sprite, resources, relic, label }) → what the chosen
+ * class card opens to hold (owner, 2026-09-19): the portrait on the left,
+ * the summary stats on the right, never past the card's box. Appended
+ * inside the card, so it is the card that unfolds; the shares and the
+ * height are the screen's --creation-unfold-* (creation.json).
+ */
+export function classUnfold({ cls, sprite = null, resources = null, relic = null, label = '' }) {
+  const art = artWell({ glyph: '', attrs: { class: 'figure cc-unfold-art' } });
+  art.removeAttribute('aria-hidden');
+  if (sprite) art.appendChild(sprite);
+  const node = el('span', { class: 'cc-class-unfold', role: 'group', 'aria-label': label || cls.name, dataset: { class: cls.id } }, [
+    el('span', { class: 'cc-unfold-portrait' }, art),
+    el('span', { class: 'cc-unfold-summary' }, [
+      resources,
+      relic ? el('span', { class: 'cc-unfold-relic' }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null,
+    ]),
+  ]);
+  return markUiComponent(node, UI.classPreviewPane);
+}
+
 /** The five starting resources: a StatStrip of Chips. */
 export function classResourceGrid(rows) {
   const strip = statStrip(rows.map((entry) => chip({

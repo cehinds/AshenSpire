@@ -46,7 +46,7 @@ import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
   tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, viewModeSwitch,
-  booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
+  booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
 import {
@@ -54,7 +54,7 @@ import {
   button, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
 } from '../kit/index.js';
 import {
-  creationCategories, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices,
+  creationCategories, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices, creationClassPreview,
 } from '../models/CreationWorkspaceModel.js';
 // The fold's own sentence is a row in content/source/uiStrings.csv, which is
 // where #991 put the words this game says. This screen still carries plenty of
@@ -238,7 +238,7 @@ export function mountCustomize(app, {
   });
   const rail = el('div', { class: 'as-rail cz-rail', role: 'tablist', 'aria-label': t('creation.categories'), 'aria-orientation': 'vertical', dataset: { surface: 'creationCategory' } }, railItems);
   const paneHost = el('div', { id: 'cz-pane', class: 'as-pane flush cz-pane', role: 'tabpanel' });
-  const railed = el('div', { class: 'as-railed cz-railed' }, [rail, paneHost]);
+  const railed = el('div', { class: 'as-railed cz-railed', dataset: { classPreview: creationClassPreview() } }, [rail, paneHost]);
 
   // W1c head: one title, the small portrait, the exit. No eyebrow.
   const head = modalHead({
@@ -482,9 +482,20 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
+    const resources = classResourceGrid(projection.derived.slice(0, 5));
+    if (!catalog && creationClassPreview() === 'unfold') {
+      // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
+      // picked card opens to the portrait and the summary. Before a pick the
+      // pointer-follow has nothing to draw.
+      for (const open of classBox.querySelectorAll('.cz-class.unfolded')) { open.classList.remove('unfolded'); open.querySelector('.cc-class-unfold')?.remove(); }
+      const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
+      if (card) { card.classList.add('unfolded'); card.append(classUnfold({ cls, sprite, resources, relic, label: t('creation.unfold.label') })); }
+      $('#cz-class-preview-host').replaceChildren();
+      return;
+    }
     const previewPane = classPreviewPane({
       cls, sprite,
-      resources: classResourceGrid(projection.derived.slice(0, 5)),
+      resources,
       relic,
       relicDescription: relicText(relic, registries),
     });

@@ -14,7 +14,10 @@
     "compactPadRem": 0.4,
     "compactGapRem": 0.4,
     "barePadRem": 0.3,
-    "bareGapRem": 0.3
+    "bareGapRem": 0.3,
+    "unfoldPortraitShare": 30,
+    "unfoldSummaryShare": 70,
+    "unfoldHeightVh": 30
   },
   "sizing": {
     "headPortraitRem": "$portraitRem",
@@ -33,7 +36,10 @@
     "choiceCompactPadRem": "$compactPadRem",
     "choiceCompactGapRem": "$compactGapRem",
     "choiceBarePadRem": "$barePadRem",
-    "choiceBareGapRem": "$bareGapRem"
+    "choiceBareGapRem": "$bareGapRem",
+    "unfoldPortraitShare": "$unfoldPortraitShare",
+    "unfoldSummaryShare": "$unfoldSummaryShare",
+    "unfoldHeightVh": "$unfoldHeightVh"
   },
   "behavior": {
     "categories": [
@@ -42,6 +48,7 @@
       "equipment",
       "review"
     ],
-    "fitChoicesToPane": true
+    "fitChoicesToPane": true,
+    "classPreview": "unfold"
   }
 }
