@@ -114,3 +114,34 @@ for (const [id, classId, skillId, school] of [
   }
 }
 console.log('PASS new weapon skill schools and first-level drafts in intended classes');
+import { applyLevelUp, awardLevelXp, xpToNext as characterXpToNext } from '../src/model/levelup.js';
+
+for (const [id, classId, slot, pool] of [
+  ['waywatcher', 'rogue', 'armor', 'stamina'],
+  ['duskChime', 'herald', 'rightHand', 'mana'],
+  ['bastion', 'reaver', 'armor', 'stamina'],
+]) {
+  const run = createRunState({ seed: 17, classId, registries: r });
+  assert.ok(equipPiece(r, run.loadout, slot, 0, id, owns, { inCombat: false, attributes: run.attributes }));
+  stampDeck(r, run);
+  const maxKey = pool === 'mana' ? 'maxMana' : 'maxStamina';
+  const initialMax = run[maxKey];
+  const deficit = Math.min(2, initialMax);
+  run[pool] = initialMax - deficit;
+  const bonuses = { ...run.equipmentPoolBonuses };
+  for (let level = 2; level <= 6; level++) {
+    const receipt = awardLevelXp(r, run, characterXpToNext(r, run.level.level));
+    assert.equal(run.level.level, level);
+    assert.equal(run[maxKey], initialMax + (level === 6 ? 1 : 0), `${id}: final equipped maximum at level ${level}`);
+    assert.equal(run[maxKey] - run[pool], deficit, `${id}: leveling carries spent ${pool} at level ${level}`);
+    assert.deepEqual(run.equipmentPoolBonuses, bonuses, `${id}: leveling preserves signed equipment bonuses`);
+    assert.equal(receipt.thresholds, level === 6 ? 3 : 0, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
+  }
+  const beforeAssignment = run[maxKey];
+  for (let point = 0; point < 5; point++) {
+    applyLevelUp(r, run, pool === 'mana' ? 'wisdom' : 'constitution');
+    assert.equal(run[maxKey] - run[pool], deficit, `${id}: shrine assignment preserves spent ${pool}`);
+  }
+  assert.equal(run[maxKey], beforeAssignment + 1, `${id}: five assigned points increase the equipped pool once`);
+}
+console.log('PASS level gains preserve positive and negative equipment pool deficits through the level-six increase');
