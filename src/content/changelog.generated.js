@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Resting is now something a place does, not something the Shrine does",
     "detail": "Every stop on the road — the Shrine, a rough camp off an Unknown node, a town's inn, its chapel — carries its own set of what it restores: the Shrine heals part of your HP, refills your flasks on arrival and offers the Smith and Level-up; a camp heals less and offers nothing; an inn heals you and your Mana to full. Every rest recovers Mana now, by default to half your maximum or to full if you already stand there. Ember Fragment reads \"Resting heals 15% more\" and works everywhere; the Wyrm Heart still forbids the Shrine's rest but lets you sleep at an inn. Seeded routes hold at most one town per act.",
-    "build": "0.7.1.244",
+    "build": "0.7.1.248",
     "pullRequest": 1195,
     "url": "https://github.com/cehinds/AshenSpire/pull/1195"
   },
@@ -71,6 +71,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.192",
     "pullRequest": 1189,
     "url": "https://github.com/cehinds/AshenSpire/pull/1189"
+  },
+  {
+    "id": "pr-1187",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Last Lantern opens a new quest, and the road offers new gear",
+    "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium. Reward cards now have fixed resource costs distributed by rarity: about 30%, 50% and 70% of Common, Uncommon and Rare cards use Stamina, including 15%, 30% and 50% using both Mana and Stamina. Most weapon attacks still cost Actions only; caster rewards favor higher rarities once unlocked.",
+    "build": "0.7.1.226",
+    "pullRequest": 1187,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1187"
   },
   {
     "id": "pr-1186",

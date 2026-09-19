@@ -61,6 +61,14 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
   return Math.floor(base * passiveMult(registries, relicIds, 'runeGainMult'));
 }
 
+/** Shared authored reward odds; Chaos always bypasses class and pool weights. */
+export function cardRewardRarityWeights(registries, { classId, pool = 'normal', flatRarity = false } = {}) {
+  if (flatRarity) return { common: 1, uncommon: 1, rare: 1 };
+  const rewards = registries.balance.rewards;
+  const poolId = Object.hasOwn(rewards.rarityWeights, pool) ? pool : 'normal';
+  return rewards.rarityWeightsByClass?.[classId]?.[poolId] || rewards.rarityWeights[poolId];
+}
+
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
@@ -73,16 +81,15 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
   const cardPool = registries.classes.get(classId).cardPool;
   // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
   // gives every rarity equal odds — far more rares than normal.
-  const weights = flatRarity
-    ? { common: 1, uncommon: 1, rare: 1 }
-    : bal.rarityWeights[pool] || bal.rarityWeights.normal;
+  const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
   const byRarity = {};
   for (const id of cardPool) {
     const def = registries.cards.get(id);
     (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
   }
-  const rarities = Object.keys(weights).filter((r) => byRarity[r] && byRarity[r].length);
+  const rarities = Object.keys(weights).filter((r) => byRarity[r] && byRarity[r].length && weights[r] > 0);
   const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!total) return [];
 
   const picks = [];
   let guard = 0;
@@ -120,8 +127,7 @@ export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, 
   const schools = new Set(skillSchools(registries, loadout, skillId));
   const unlocked = rarityUnlockedAt(registries, level);
   if (!schools.size || !unlocked.length || !(count > 0)) return [];
-  const bal = registries.balance.rewards;
-  const weights = flatRarity ? { common: 1, uncommon: 1, rare: 1 } : (bal.rarityWeights[pool] || bal.rarityWeights.normal);
+  const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
   const byRarity = {};
   for (const id of registries.classes.get(classId).cardPool) {
     const def = registries.cards.get(id);

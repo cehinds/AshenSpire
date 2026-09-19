@@ -215,6 +215,22 @@
     "name": "Forsaken Warflag",
     "text": "At the start of each turn, apply 1 Weak to ALL enemies."
   },
+  "wayfarersKnot": {
+    "name": "Wayfarer's Knot",
+    "text": "Gain 10% more Cinders from combats. Resting heals 10% more."
+  },
+  "prismaticThorn": {
+    "name": "Prismatic Thorn",
+    "text": "Your hits build 25% more Arcane Exposure. Flasks are 25% weaker (rounded up)."
+  },
+  "restlessClasp": {
+    "name": "Restless Clasp",
+    "text": "Flasks are 100% stronger. Resting heals 50% less."
+  },
+  "paupersDiadem": {
+    "name": "Pauper's Diadem",
+    "text": "Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats."
+  },
   "wrathCoil": {
     "name": "Wrath Coil",
     "text": "Whenever you lose HP, deal 3 damage to a random enemy."

@@ -1,3 +1,4 @@
+import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // src/ui/assets.js — asset lookup + placeholder generator (SPEC §2.4)
@@ -7,7 +8,7 @@ import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
-import { armourMenuAsset } from '../model/paintedOutfitArt.js';
+import { armourMenuAsset, armourArtKey } from '../model/paintedOutfitArt.js';
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
@@ -495,6 +496,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // 'rendered' remains a separate painted still so an explicit choice never
   // swaps art styles mid-swing. A class with no shipped frames falls through
   // to the painting, so the default is never a blank figure.
+  armourId = armourArtKey(classId, armourId);
   const outfitPoseId = armourId && armourId !== 'default' ? `${classId}-${armourId}` : classId;
   const poseId = hasPoses(outfitPoseId, tintId) ? outfitPoseId : classId;
   if (style === 'animated' && hasPoses(poseId, tintId)) {
@@ -592,7 +594,7 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
-  layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
+  layer(assetUrl(`assets/equipment/body_${classId}_${armourArtKey(classId, armourId)}.webp`), 1);
   // The worn layers the slot split added (plan phase 3b): feet under hands
   // under head, all over the body and under whatever is held. The file is
   // `<slot>_<id>.webp`; when it does not exist the image's error handler above
@@ -711,11 +713,11 @@ export function classGlyph(classId) {
   return classGlyphs[classId] || '❖';
 }
 
-/* Inventory artwork uses item identity, never the character rig's artKey. */
+/* Inventory artwork uses item identity or its explicit icon alias, independently of rig artKey. */
 export function equipmentCardArt(piece) {
   return assetUrl(piece.kind === 'armor'
     ? armourMenuAsset(piece.classId, piece.id)
-    : `assets/equipment/icon_${piece.id}.webp`);
+    : armamentIconAsset(piece));
 }
 
 export function combatEffectFrames(kind) { return (Object.hasOwn(COMBAT_EFFECT_ART,kind) ? COMBAT_EFFECT_ART[kind] : Object.hasOwn(POSE_EFFECT_ART,kind) ? POSE_EFFECT_ART[kind] : []).map(assetUrl); }

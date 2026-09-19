@@ -1,3 +1,4 @@
+import { armamentIconAsset } from '../../model/equipmentArt.js';
 // src/ui/screens/compendium.js — the Compendium: everything the Spire keeps.
 //
 // Constantine, verbatim: *"the potential weapons to unlock should be in its own
@@ -178,7 +179,7 @@ function cell(piece, { state, hint, gate }, modFields, tags = []) {
       dataset: { member: piece.id, rarity: piece.rarity || 'common', state },
     },
   });
-  const art = artWell({ src: assetUrl(`assets/equipment/icon_${piece.id}.webp`), alt: '', small: true });
+  const art = artWell({ src: assetUrl(armamentIconAsset(piece)), alt: '', small: true });
   art.querySelector('img').addEventListener('error', (e) => e.target.remove());
   card.insertBefore(art, card.firstChild);
 
@@ -287,7 +288,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
       tags: registries.tags || [],
       lockCopy: LOCK_COPY,
     });
-    const art = artWell({ src: assetUrl(`assets/equipment/icon_${facts.id}.webp`), alt: '' });
+    const art = artWell({ src: assetUrl(armamentIconAsset(piece)), alt: '' });
     art.querySelector('img').addEventListener('error', (e) => e.target.remove());
     detail.dataset.state = facts.state;
     detail.dataset.rarity = facts.rarity;

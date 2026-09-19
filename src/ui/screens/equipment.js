@@ -1,4 +1,5 @@
 import { characterLevel } from '../../model/levelup.js';
+import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
@@ -420,7 +421,7 @@ function figureFor(registries, run, cz) {
 function thumbSrc(piece) {
   return piece.kind === 'armor'
     ? assetUrl(armourMenuAsset(piece.classId, piece.id))
-    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
+    : assetUrl(armamentIconAsset(piece));
 }
 
 /** A piece's mods, written the way a player reads them. */

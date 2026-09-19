@@ -1,3 +1,4 @@
+import { armamentIconAsset } from '../../model/equipmentArt.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
@@ -140,7 +141,7 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
       artAsset: row.item?.kind === 'armor'
         ? armourMenuAsset(row.item.classId, row.item.id)
         : ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)
-          ? `assets/equipment/icon_${row.id}.webp`
+          ? armamentIconAsset(row.item || row)
           : row.item?.artAsset || null,
       icon: row.item?.icon || '◆',
       category: row.category,

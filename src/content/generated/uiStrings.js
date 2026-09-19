@@ -507,6 +507,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "possession.stat.exposureBuildupMult",
+    "extends": "",
+    "short": "Arcane Exposure buildup",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "possession.stat.revealUnknown",
     "extends": "",
     "short": "Unknown locations",

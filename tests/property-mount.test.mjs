@@ -59,7 +59,10 @@ function playIntoBreak(combat, card, { value = null, extra = {}, startMana = 0 }
   enemy.hp = enemy.maxHp;
   enemy.block = 0;
   cfg.value = value == null ? cfg.threshold - 1 : value;
-  p.mana = startMana;
+  // startMana is the intended pool after payment, before any siphon refund.
+  p.mana = startMana + (card.manaCost || 0);
+  p.stamina = card.staminaCost || 0;
+  p.maxStamina = Math.max(p.maxStamina || 0, p.stamina);
   p.energy = 99;
   const inst = { instanceId: `tProperty${++played}`, cardId: card.id, upgraded: false, ...extra };
   combat.piles.hand.push(inst);
