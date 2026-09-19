@@ -18,7 +18,7 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 2, manaCost: 1, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "The fragment fell burning; by morning it was cold. — Astronomer's chart margin",
     keywords: [], icon: '💎',
     effects: [

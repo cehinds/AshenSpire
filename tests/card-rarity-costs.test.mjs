@@ -19,9 +19,12 @@ test('combat reward costs meet inclusive rounded rarity shares, including upgrad
     assert.equal(cards.filter(c => c.manaCost > 0).length, Math.round(count * dualShare));
     for (const c of cards) {
       assert.ok(!c.manaCost || c.staminaCost, `${c.id}: dual costs include stamina`);
-      // 0–2: a signature art costs 2 stamina beside its Mana (plan phase 8).
-      assert.ok(profile(c).every(n => n >= 0 && n <= 2), `${c.id}: authored small resource costs`);
-      assert.deepEqual(profile(resolveCard(reg, { cardId: c.id, upgraded: true })), profile(c), `${c.id}: upgrade preserves profile`);
+      assert.ok(profile(c).every(n => n === 0 || n === 1), `${c.id}: authored small resource costs`);
+      // An upgrade may LIFT a secondary cost (plan phase 8: a Mana power's
+      // upgrade drops its Mana line, since its action line has a floor), never
+      // add one.
+      const up = profile(resolveCard(reg, { cardId: c.id, upgraded: true }));
+      assert.ok(up.every((n, i) => n <= profile(c)[i]), `${c.id}: upgrade never adds a secondary cost (${up} vs ${profile(c)})`);
     }
     const weaponAttacks = cards.filter(c => c.type === 'attack' && c.tags.includes('source:weapon'));
     assert.ok(weaponAttacks.filter(c => profile(c).every(n => n === 0)).length > weaponAttacks.length / 2,
@@ -35,7 +38,7 @@ test('weapon basics, merchant-only cards and starter exceptions retain their cos
   }
   assert.deepEqual(profile(reg.cards.get('katanaDrawCut')), [1, 0]);
   assert.deepEqual(profile(reg.cards.get('greatswordSunderingHew')), [1, 0]);
-  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [2, 1], 'a signature art: 2 stamina beside its Mana (plan phase 8)');
+  assert.deepEqual(profile(reg.cards.get('starstonePebble')), [1, 1], 'a signature art costs stamina beside its Mana (plan phase 8): Mana is never the first cost line');
   assert.deepEqual(profile(reg.cards.get('dodgeRoll')), [1, 0]);
 });
 

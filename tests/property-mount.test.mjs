@@ -157,8 +157,8 @@ test('a wand\'s overcharge multiplies buildup per hit by balance.exposure.overch
 
 test('a staff\'s staggerBreak batters the broken foe\'s Poise by balance.exposure.staggerBreakPoise, and refunds nothing (plan phase 8)', () => {
   const { combat, card } = fight({ classId: 'starseer' });
-  const STAFF_KEY = 'armament:armament/starstoneStaff';
-  assert.deepEqual(mountedKeys(combat), [STAFF_KEY], 'the Starstone Staff is the starseer\'s focus');
+  const STAFF_KEY = 'armament:armament/ashStaff';
+  assert.deepEqual(mountedKeys(combat), [STAFF_KEY], 'the Ash Staff is the starseer\'s focus');
   assert.deepEqual(combat.propertyMounts.player[STAFF_KEY].rules.map((r) => r.tag), ['staggerBreak'], 'and it carries staggerBreak, not siphon');
   const enemy = combat.enemies[0];
   const poiseBefore = enemy.poiseMeter.value;

@@ -158,7 +158,7 @@ const TEST_CARDS = [
   { id: 'tKeep', name: 'T Keep', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['retain'], effects: [], textTemplate: 'Retain.' },
   { id: 'tPoise', name: 'T Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'enemy', amount: 10 }], textTemplate: '{poiseDamage} Poise damage.' },
   // Plan phase 8: the player's own meter, filled by a self-aimed pour.
-  { id: 'tSelfPoise', name: 'T Self Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'player', amount: 5 }], textTemplate: '{poiseDamage} Poise damage to you.' },
+  { id: 'tSelfPoise', name: 'T Self Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'self', amount: 5 }], textTemplate: '{poiseDamage} Poise damage to you.' },
   { id: 'tCharge', name: 'T Charge', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'applyStatus', target: 'self', status: 'testCharge', stacks: 3 }], textTemplate: 'Gain {testCharge} Charge.' },
   // #61 fixtures: proc appliers + a tagged hit for the vulnerability lane.
   { id: 'tFrost10', name: 'T Frost', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {frost} Frost.' },
@@ -1578,7 +1578,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const spellDeck = Array.from({ length: 5 }, (_, i) => ({ instanceId: `sm${i}`, cardId: 'starstonePebble', upgraded: false }));
     const soloMagic = createCombat({
       registries: REG, rng: createRng(0x57a2),
-      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+      player: { classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
         energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
         relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
       enemyIds: ['tGiant'],
@@ -1593,7 +1593,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const coopMagic = createCoopCombat({
       registries: REG, rng: createRng(0xc002),
       players: [
-        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0,
+        { id: 'p1', classId: 'starseer', maxHp: starRun.maxHp, hp: starRun.hp, maxMana: starRun.maxMana, mana: 0, stamina: 2, maxStamina: 2,
           energyMax: starRun.energyMax, drawPerTurn: starRun.drawPerTurn, deck: spellDeck,
           relicIds: starRun.relics, damageBySchoolAdd: starRun.damageBySchoolAdd },
         { id: 'p2', classId: 'reaver', maxHp: 96, hp: 96, maxMana: 2, mana: 2, energyMax: 3, drawPerTurn: 5,
@@ -9438,7 +9438,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
     assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
-    eq(REG.cards.get('gorefireSlash').staminaCost, 2, 'the signature art costs 2 stamina beside its Mana');
+    eq(REG.cards.get('gorefireSlash').staminaCost, 1, 'the signature art costs stamina beside its Mana');
 
     // THE PLAYER'S METER: a fill applies the row's statuses and takes one
     // action off the next turn, once; the meter grows as an enemy's does.
