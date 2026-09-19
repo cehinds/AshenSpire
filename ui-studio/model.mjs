@@ -495,6 +495,24 @@ export function jsonSpans(text) {
 // ---------------------------------------------------------------------------
 
 /**
+ * sceneBandsPlan(bands, height, { footerMinPx, contextMinPx, resolve }) → the
+ * heights a W4 scene's four bands get, in physical px: a port of
+ * CombatLayout.allocateSceneBands, which DialogueModel.dialogueBands also
+ * goes through. The hud keeps its share; the context and footer keep their
+ * shares or their physical minimums, whichever is larger; the scene absorbs
+ * the difference (never below zero).
+ */
+export function sceneBandsPlan(bands, height, { footerMinPx = 0, contextMinPx = 0, resolve = (v) => v } = {}) {
+  const num = (v) => { const r = resolve(v); return typeof r === 'number' && Number.isFinite(r) ? r : 0; };
+  const share = (id) => num((bands || {})[id]) / 100;
+  const hud = height * share('hud');
+  const context = Math.max(height * share('context'), contextMinPx);
+  const footer = Math.max(height * share('footer'), footerMinPx);
+  const scene = Math.max(0, height - hud - context - footer);
+  return { hud, scene, context, footer, footerRaised: footer > height * share('footer') + 1e-9, contextRaised: context > height * share('context') + 1e-9, nominalScene: height * share('scene') };
+}
+
+/**
  * combatPlan(data, parent, { width, height, zoom, rem, cardRatio, tokens }) →
  * the combat bands the game will draw, in PHYSICAL px: a port of
  * src/ui/models/CombatLayout.js allocateCombatBands / packCombatRails /
@@ -600,15 +618,18 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
   };
   const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' && Number.isFinite(r) ? r : fallback; };
 
-  const drawBands = (bands, bandsPath) => {
+  const drawBands = (bands, bandsPath, plan = null) => {
     let y = 0;
     const entries = bandEntries(bands);
     entries.forEach((b, i) => {
       // Drawn from the resolved number (a band may read "$name", which the
-      // compiler resolves before it checks the sum); the authored value stays
-      // on the region so the inspector shows what the file says.
-      const h = vh(num(b.percent));
-      push({ id: `band.${b.id}`, label: `${b.id} ${isRef(b.percent) ? `${b.percent} = ` : ''}${num(b.percent)}%`, x: 0, y, w: W, h, band: b.id, percent: b.percent,
+      // compiler resolves before it checks the sum) — or from the scene plan
+      // when the W4 parent's physical minimums apply; the authored value
+      // stays on the region so the inspector shows what the file says.
+      const nominal = vh(num(b.percent));
+      const h = plan && plan[b.id] != null ? plan[b.id] : nominal;
+      const drawn = Math.abs(h - nominal) > 0.5 ? ` → ${round(h, 0)}px drawn` : '';
+      push({ id: `band.${b.id}`, label: `${b.id} ${isRef(b.percent) ? `${b.percent} = ` : ''}${num(b.percent)}%${drawn}`, x: 0, y, w: W, h, band: b.id, percent: b.percent,
         edit: i < entries.length - 1 ? { kind: 'bandEdge', index: i, path: bandsPath } : null });
       y += h;
     });
@@ -671,8 +692,15 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       const narrowHost = W < compactBelowPx;
       const shortHost = H < num(getPath(sizing, 'hud.compactBelowHeightPx'), 0);
       const compactBands = (narrowHost || shortHost) && sizing.bandsCompact;
-      drawBands(compactBands ? sizing.bandsCompact : sizing.bands, compactBands ? 'sizing.bandsCompact' : 'sizing.bands');
+      const chosen = compactBands ? sizing.bandsCompact : sizing.bands;
+      // DialogueModel.dialogueBands hands the split to allocateSceneBands: the
+      // footer keeps the W4 parent's physical minimum and the scene absorbs it.
+      const footerMinPx = num(getPath(parent || {}, 'sizing.minimums.footerPx'));
+      const plan = sceneBandsPlan(chosen, H, { footerMinPx, resolve });
+      drawBands(chosen, compactBands ? 'sizing.bandsCompact' : 'sizing.bands', plan);
       const scene = out.find((r) => r.band === 'scene');
+      const footerBand = out.find((r) => r.band === 'footer');
+      if (footerBand && plan.footerRaised) footerBand.note = `raised to the W4 minimum ${footerMinPx}px; the scene gives up ${round(plan.nominalScene - plan.scene, 0)}px`;
       if (scene && typeof sizing.floorPercent === 'number') {
         push({ id: 'floor', label: `floor ${sizing.floorPercent}%`, x: 0, y: scene.y + scene.h * sizing.floorPercent / 100, w: W, h: 1, line: true, edit: { kind: 'path', path: 'sizing.floorPercent', unit: 'percentOf', of: 'band.scene' } });
       }

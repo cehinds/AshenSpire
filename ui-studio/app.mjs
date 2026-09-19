@@ -768,10 +768,12 @@ function guideSets(vp, others, s) {
 function onKey(e) {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable;
   const mod = e.ctrlKey || e.metaKey;
-  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
-  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
+  // Ctrl+S saves from anywhere; every other shortcut yields to a text field,
+  // so Ctrl+Z in an input or the raw JSON editor is the browser's own undo.
   if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); if (state.mode === 'sketch' && state.api) saveSketch(); else if (state.api && dirtyFiles().length) saveConfig(); else { state.tab = 'files'; renderRight(); } return; }
   if (typing) return;
+  if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+  if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); return; }
   if (mod && e.key.toLowerCase() === 'd') { e.preventDefault(); duplicateSelection(); return; }
   if (e.key === 'Delete' || e.key === 'Backspace') { deleteSelection(); return; }
   if (e.key === 'Escape') { state.selection.clear(); state.tool = 'select'; renderAll(); return; }
@@ -843,7 +845,15 @@ async function saveSketch() {
 }
 async function openSketch(name) {
   if (sketchDirty() && !confirm('Discard the current sketch?')) return;
-  try { const r = await api(`sketch?name=${encodeURIComponent(name)}`); loadSketch(r.sketch, r.name, r.hash); } catch (e) { toast(e.message, true); }
+  // The document may change while the file is fetched (an edit, or another
+  // open); what was confirmed is what was seen, so a changed one is asked again.
+  const seen = JSON.stringify(state.sketch.present), revision = state.sketchRevision;
+  try {
+    const r = await api(`sketch?name=${encodeURIComponent(name)}`);
+    const changed = state.sketchRevision !== revision || JSON.stringify(state.sketch.present) !== seen;
+    if (changed && sketchDirty() && !confirm('The sketch changed while loading. Discard those changes too?')) return;
+    loadSketch(r.sketch, r.name, r.hash);
+  } catch (e) { toast(e.message, true); }
 }
 function loadSketch(sketch, name = '', hash = null) {
   const problems = M.sketchProblems(sketch);

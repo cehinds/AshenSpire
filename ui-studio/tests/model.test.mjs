@@ -490,3 +490,22 @@ test('settingsProblems names a device that is not an object instead of throwing'
   const problems = M.settingsProblems({ ...M.DEFAULT_SETTINGS, devices: [null, 7] });
   assert.deepEqual(problems.filter((p) => p.startsWith('devices[')), ['devices[0] must be an object', 'devices[1] must be an object']);
 });
+
+test('the dialogue footer keeps the W4 physical minimum and the scene gives up the difference', () => {
+  const w4c = readConfig('ui/scenes/w4c-dialogue.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4c');
+  // Galaxy S23 landscape, 780x360: short, so the compact split (hud 12, scene 40, context 33, footer 15);
+  // 15% of 360 is 54, under the 56 px footer minimum, so the footer is 56 and the scene 144 - 2.
+  const regs = M.regionsFor(wf, w4c, { width: 780, height: 360 }, { parent: w4, tokens });
+  const band = (id) => regs.find((r) => r.band === id);
+  assert.equal(band('footer').h, 56);
+  assert.equal(band('scene').h, 360 * 0.4 - 2);
+  assert.match(band('footer').note, /raised to the W4 minimum 56px; the scene gives up 2px/);
+  assert.equal(band('hud').h + band('scene').h + band('context').h + band('footer').h, 360);
+  // At 1280x800 nothing is raised and the bands are their shares.
+  const wide = M.regionsFor(wf, w4c, { width: 1280, height: 800 }, { parent: w4, tokens });
+  assert.deepEqual(wide.filter((r) => r.band).map((r) => r.h), [80, 320, 280, 120]);
+  assert.equal(wide.find((r) => r.band === 'footer').note, undefined);
+  const plan = M.sceneBandsPlan({ hud: 10, scene: 40, context: 35, footer: 15 }, 300, { footerMinPx: 56 });
+  assert.deepEqual([plan.hud, plan.context, plan.footer, plan.scene, plan.footerRaised], [30, 105, 56, 109, true]);
+});
