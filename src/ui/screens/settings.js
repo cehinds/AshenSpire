@@ -809,6 +809,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'choice') {
     const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
     const cur = r.choices.includes(stored) ? stored : r.def;
+    if (r.choices.length > 3) {
+      const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
+      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}">${options}</select></span></div>`;
+    }
     const opts = r.choices
       .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${r.choiceLabels?.[c] || c}</button>`)
       .join('');
@@ -1957,6 +1961,18 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
           : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
       settledRefusal ? 'card-size' : '');
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
+  });
+
+  container.querySelectorAll('.set-choice-select').forEach(select => {
+    select.addEventListener('change', () => {
+      const wasAt = select.getBoundingClientRect().top;
+      settings[select.dataset.key] = select.value;
+      onChange({ [select.dataset.key]: select.value });
+      if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      refreshApplied(container, settings);
+      refreshConditionNotes(container, settings);
+      anchorPressed(container, select, wasAt);
     });
   });
 
