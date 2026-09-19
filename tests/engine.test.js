@@ -8306,11 +8306,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spec2.feetId, 'probeBoots', 'and the feet slot the feet layer');
     eq(spec2.handsId, null, 'an empty slot is no layer');
 
-    // The deck's floor: balance.deck through deckMinimum, level 0 until phase 6.
-    eq(deckMinimum(REG, run), REG.balance.deck.minimum, 'the floor at level 0 is balance.deck.minimum');
-    eq(deckMinimum(REG, { ...run, characterLevel: 2 }), REG.balance.deck.minimum + 1, 'and one more every two levels');
-    eq(deckMinimum(REG, { ...run, characterLevel: 3 }), REG.balance.deck.minimum + 1, 'three levels is still one step');
-    eq(deckMinimum(REG, { ...run, characterLevel: 4 }), REG.balance.deck.minimum + 2);
+    // The deck's floor: balance.deck through deckMinimum, at the ledger's
+    // character level (plan phase 6; a fresh run is level 1).
+    eq(deckMinimum(REG, run), REG.balance.deck.minimum, 'the floor at level 1 is balance.deck.minimum');
+    const atLevel = (level) => ({ ...run, level: { xp: 0, level, unspentPoints: 0 } });
+    eq(deckMinimum(REG, atLevel(2)), REG.balance.deck.minimum + 1, 'and one more every two levels');
+    eq(deckMinimum(REG, atLevel(3)), REG.balance.deck.minimum + 1, 'three levels is still one step');
+    eq(deckMinimum(REG, atLevel(4)), REG.balance.deck.minimum + 2);
+    eq(deckMinimum(REG, { ...run, level: undefined, characterLevel: 2 }), REG.balance.deck.minimum + 1, 'a caller without the ledger may still name the level');
     const badDeck = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, deck: { ...contentBundle.balance.deck, minimum: 7.5 } } });
     assert(!badDeck.ok && said(badDeck).some((e) => /balance\.deck\.minimum/.test(e)), 'a fractional floor is refused by name');
     // The door: leaving under the floor is refused with both numbers; a deficit

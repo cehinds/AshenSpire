@@ -2448,7 +2448,12 @@ export function healMissingSlotCells(registries, loadout) {
  */
 export function deckMinimum(registries, run) {
   const cfg = (((registries || {}).balance || {}).deck) || {};
-  const level = run && Number.isInteger(run.characterLevel) && run.characterLevel > 0 ? run.characterLevel : 0;
+  // The character level is the ledger's (plan phase 6, `run.level.level`;
+  // a fresh run is level 1); `characterLevel` is the field the floor read
+  // before the ledger existed, kept for a caller that still names it.
+  const ledger = run && run.level && Number.isInteger(run.level.level) && run.level.level > 0 ? run.level.level : null;
+  const level = ledger !== null ? ledger
+    : (run && Number.isInteger(run.characterLevel) && run.characterLevel > 0 ? run.characterLevel : 0);
   const step = Number.isInteger(cfg.minimumStepLevels) && cfg.minimumStepLevels > 0 ? cfg.minimumStepLevels : 1;
   const base = Number.isInteger(cfg.minimum) ? cfg.minimum : 0;
   const perStep = Number.isInteger(cfg.minimumPerStep) ? cfg.minimumPerStep : 0;

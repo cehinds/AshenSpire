@@ -1259,6 +1259,10 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
+      // The seat's character ledger (plan phase 6), so a client can show the
+      // level and the points waiting; assigning them in co-op waits with the
+      // co-op class draft (the session pays, the shrine does not yet offer).
+      level: m.run.level ? structuredClone(m.run.level) : null,
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       smithingStones: m.run.smithingStones,

@@ -210,7 +210,7 @@ function progressionRows(bundle) {
       min: 0.05, max: 20, def: 1,
       key: `${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`,
       label: 'Experience gain multiplier',
-      note: 'Multiply the XP a won fight, a kill and a quest pay toward your character level. 1 keeps authored awards. Applies from the next fight, in any run.',
+      note: 'Multiply the XP a won fight, a kill and a quest pay toward your character level. 1 keeps authored awards. Applies to a new run.',
       specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
