@@ -879,8 +879,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         // until the timeline flushed, and two hits that filled it replayed the
         // fill against a bar that had never moved (Codex, #1203).
         case 'impactDealt':
-          if (t && t.poiseMeter && e.amount > 0) {
-            t.poiseMeter.value = Math.min(t.poiseMeter.max, t.poiseMeter.value + e.amount);
+          // SET, NEVER ADD. The engine deals the Poise damage BEFORE it emits
+          // this, so on a filling blow meterFilled has already emptied the
+          // displayed bar; adding the amount here would show a bar that never
+          // filled and lose both the carry and the widened max. The receipt
+          // carries the meter the engine ended on, and that is what shows.
+          if (t && t.poiseMeter && Number.isFinite(e.meterValue)) {
+            if (Number.isFinite(e.meterMax)) t.poiseMeter.max = e.meterMax;
+            t.poiseMeter.value = Math.max(0, Math.min(t.poiseMeter.max, e.meterValue));
           }
           break;
         case 'meterFilled':

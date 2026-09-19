@@ -9478,6 +9478,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(logOf(hit, 'impactDealt').some((e) => e.targetId === 'player' && e.amount === perHit), 'and says so');
     dispatch(hit, { type: 'endTurn' });
     eq(logOf(hit, 'playerStaggered').length, 1, 'the second fills the meter and Staggers');
+    // AND THE RECEIPT CARRIES THE METER THE ENGINE ENDED ON. The Poise damage
+    // lands before the receipt is emitted, so a paced view that added the
+    // amount would draw a bar that never filled; the reader SETS from these.
+    const filling = logOf(hit, 'impactDealt').filter((e) => e.targetId === 'player').pop();
+    eq(filling.meterValue, hit.player.poiseMeter.value, 'the impact names the meter value the engine ended on');
+    eq(filling.meterMax, hit.player.poiseMeter.max, 'and the max, which the fill widened');
     eq(hit.player.energy, hit.player.energyMax - stagger.actionLoss, 'the turn after the enemy\'s opens one action short');
     // AND THE WIDENED VESSEL SURVIVES A RESTAMP. A fill grows the max by
     // balance.poise.growthMult; the receipt only knows the base, so an

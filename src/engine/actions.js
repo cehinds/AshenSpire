@@ -602,7 +602,16 @@ function runOpcode(ctx, action, eff) {
             const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
             if (Number.isInteger(perHit) && perHit > 0) {
               dealPoiseDamage(ctx, t, perHit);
-              ctx.emit('impactDealt', { sourceId: action.source.id, targetId: t.id, amount: perHit, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
+              // THE RESOLVED METER RIDES WITH THE RECEIPT. dealPoiseDamage runs
+              // first and emits meterFilled on a fill, so a paced view that
+              // merely ADDED the amount would end on `perHit` over an emptied
+              // bar and lose the carry and the widened max. The reader sets
+              // from these instead of adding (Codex, #1210).
+              ctx.emit('impactDealt', {
+                sourceId: action.source.id, targetId: t.id, amount: perHit,
+                ...(t.poiseMeter ? { meterValue: t.poiseMeter.value, meterMax: t.poiseMeter.max } : {}),
+                ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}),
+              });
             }
           }
           if (ctx.foundation && !evaded && t.alive && !(action.meta?.foundationAncestry?.length)) {
@@ -610,7 +619,11 @@ function runOpcode(ctx, action, eff) {
             dealPoiseDamage(ctx, t, resistedImpact);
             // The player's meter is real too (plan phase 8): the receipt is
             // emitted for every target, and the armour skill hooks read it.
-            ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
+            ctx.emit('impactDealt', {
+              sourceId: action.source?.id, targetId: t.id, amount: resistedImpact,
+              ...(t.poiseMeter ? { meterValue: t.poiseMeter.value, meterMax: t.poiseMeter.max } : {}),
+              ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}),
+            });
             // Only the resolved source contributes contact buildup. A focus
             // can own effects too; the other hand's sword is never consulted.
             const weaponBuildup = F.foundationSource(ctx, action.source, carrier).buildup || [];
