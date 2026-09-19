@@ -1372,8 +1372,7 @@
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
-/* Advanced presentation dials only change the painted figure. Combat boxes,
-   meters and targeting remain in their authored formation cells. */
+/* Grid geometry and actor placement share the formation model. */
 .formation-grid {
   display: none; position: absolute; inset: 0; z-index: 8;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1385,37 +1384,29 @@
   position: absolute;
   transform: translateY(-50%);
   min-width: 0; box-sizing: border-box;
-  --grid-stroke: #d5cc63b0; --grid-fill: #71822912;
+  --grid-stroke: var(--player-grid-color, #d5cc63);
 }
 .formation-grid-cell::after {
   content: '+'; position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%); color: #fff2bb; font-weight: bold;
 }
-.formation-grid-cell[data-side='enemy'] { --grid-stroke: #e1a679b0; --grid-fill: #9c552512; }
-.formation-grid-cell[data-occupied='true'] { --grid-fill: #cab14c40; }
+.formation-grid-cell[data-side='enemy'] { --grid-stroke: var(--enemy-grid-color, #e1a679); }
 .formation-grid-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.formation-grid-outline polygon { fill: var(--grid-fill); stroke: var(--grid-stroke); stroke-width: 1; }
-.formation-grid-cell[data-occupied='true'] polygon { stroke-width: 2; }
+.formation-grid-outline > * { display: none; fill: var(--grid-stroke); fill-opacity: .07; stroke: var(--grid-stroke); stroke-width: 1; }
+.formation-grid[data-shape='rhombus'] polygon,
+.formation-grid[data-shape='wide-rhombus'] polygon,
+.formation-grid[data-shape='square'] rect,
+.formation-grid[data-shape='rectangle'] rect,
+.formation-grid[data-shape='circle'] ellipse,
+.formation-grid[data-shape='ellipse'] ellipse { display: block; }
+.formation-grid-cell[data-occupied='true'] .formation-grid-outline > * { stroke-width: 2; fill-opacity: .25; }
 .formation-grid-cell span {
   position: absolute; left: 50%; top: 100%; transform: translateX(-50%); white-space: nowrap;
   display: inline-block; background: #14110de6; color: #fff2bb;
   font: 700 .7rem/1.4 var(--font-ui, sans-serif); padding: .1rem .25rem;
   border-radius: .2rem;
 }
-:root .combat .combatant.player .sprite {
-  scale: var(--player-sprite-scale, .9);
-  translate: var(--player-spawn-column-offset, 0) var(--player-spawn-row-offset, 0);
-}
-:root .combat .combatant.enemy .sprite {
-  scale: var(--enemy-sprite-scale, .9);
-  translate: var(--enemy-spawn-column-offset, 0) var(--enemy-spawn-row-offset, 0);
-}
-:root[data-player-spawn-row='A'] { --player-spawn-row-offset: -12%; }
-:root[data-player-spawn-row='C'] { --player-spawn-row-offset: 12%; }
-:root[data-enemy-spawn-row='A'] { --enemy-spawn-row-offset: -12%; }
-:root[data-enemy-spawn-row='C'] { --enemy-spawn-row-offset: 12%; }
-:root[data-player-spawn-column='2'] { --player-spawn-column-offset: 14%; }
-:root[data-enemy-spawn-column='3'] { --enemy-spawn-column-offset: -14%; }
+:root .combat .combatant .sprite { scale: none; translate: none; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {

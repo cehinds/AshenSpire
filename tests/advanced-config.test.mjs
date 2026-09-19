@@ -96,6 +96,23 @@ test('formation defaults put the player at C2 and enemies at C3', () => {
   assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'C3');
 });
 
+test('formation appearance validates scales, colors, shapes and offsets', () => {
+  const config = presentationConfig({
+    'gameConfig.presentation.rowAScale': 50,
+    'gameConfig.presentation.rowBScale': -1,
+    'gameConfig.presentation.frontOffsetX': 500,
+    'gameConfig.presentation.gridShape': 'triangle',
+    'gameConfig.presentation.playerGridColor': '#00ff88',
+    'gameConfig.presentation.enemyGridColor': 'url(invalid)',
+  });
+  assert.equal(config.rowAScale, 3);
+  assert.equal(config.rowBScale, .25);
+  assert.equal(config.frontOffsetX, 150);
+  assert.equal(config.gridShape, 'wide-rhombus');
+  assert.equal(config.playerGridColor, '#00ff88');
+  assert.equal(config.enemyGridColor, '#e1a679');
+});
+
 test('legacy row and column names migrate to the six-cell formation grid', () => {
   const config = presentationConfig({
     'gameConfig.presentation.playerSpawnRow': 'front',

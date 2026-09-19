@@ -13,6 +13,12 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   playerSpawnColumn: '2',
   enemySpawnColumn: '3',
   showFormationGrid: false,
+  rowAScale: 1, rowBScale: 1, rowCScale: 1,
+  frontOffsetX: 0, frontOffsetY: 0, backOffsetX: 0, backOffsetY: 0,
+  frontLayer: 0, backLayer: 200,
+  rowALayer: 0, rowBLayer: 0, rowCLayer: 0,
+  gridShape: 'wide-rhombus', gridLayer: 'behind',
+  playerGridColor: '#d5cc63', enemyGridColor: '#e1a679',
   settingsWidthPercent: 100,
   settingsHeightPercent: 100,
 });
@@ -105,6 +111,15 @@ function explicitRows(bundle) {
 }
 
 const PRESENTATION_ROWS = Object.freeze([
+  ...['A', 'B', 'C'].flatMap(row => [
+    { key: `row${row}Scale`, label: `Row ${row} character scale multiplier`, min: 0.25, max: 3, step: 0.05, integer: false, note: 'Multiplies the character size for this row. Feet remain anchored to their tile.' },
+    { key: `row${row}Layer`, label: `Row ${row} layer adjustment`, min: -500, max: 500, step: 1, integer: true, note: 'Added to the front/back character layer. Higher numbers draw above lower numbers.' },
+  ]),
+  ...['front', 'back'].flatMap(column => [
+    { key: `${column}OffsetX`, label: `${word(column)} column horizontal offset`, min: -150, max: 150, step: 1, integer: true, note: 'Screen pixels; positive moves inward toward the opponent, negative moves outward. Applies to both sides and their tiles; limited at battlefield edges.' },
+    { key: `${column}OffsetY`, label: `${word(column)} column vertical offset`, min: -100, max: 100, step: 1, integer: true, note: 'Screen pixels; positive moves down, negative moves up. Moves characters and their tiles together.' },
+    { key: `${column}Layer`, label: `${word(column)} column character layer`, min: 0, max: 500, step: 1, integer: true, note: 'Higher layers draw above lower layers. Row layer adjustments are added to this value.' },
+  ]),
   { key: 'playerSpriteScale', label: 'Player sprite scale', min: 0.5, max: 2, step: 0.05, integer: false, note: 'Scale the player figure without changing its combat footprint.' },
   { key: 'enemySpriteScale', label: 'Enemy sprite scale', min: 0.5, max: 2, step: 0.05, integer: false, note: 'Scale enemy figures without changing targeting or combat rules.' },
   { key: 'settingsWidthPercent', label: 'Settings window width', min: 60, max: 100, step: 1, integer: true, suffix: '%', note: 'How much of the safe viewport the Settings window may use.' },
@@ -113,6 +128,25 @@ const PRESENTATION_ROWS = Object.freeze([
 
 function presentationRows() {
   return [
+    {
+      cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.gridShape`, presentationKey: 'gridShape',
+      def: 'wide-rhombus', choices: ['square', 'rectangle', 'rhombus', 'wide-rhombus', 'circle', 'ellipse'],
+      choiceLabels: { 'wide-rhombus': 'rectangular rhombus' },
+      label: 'Formation tile shape', note: 'Changes the tile outline while keeping its placement anchor fixed.', slider: true,
+    },
+    {
+      cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.gridLayer`, presentationKey: 'gridLayer',
+      def: 'behind', choices: ['behind', 'above'], label: 'Formation grid layer',
+      note: 'Draw the grid behind characters or above them for checking positions. The grid never blocks clicks.',
+    },
+    ...['player', 'enemy'].map(side => ({
+      cat: 'Advanced', advancedGroup: 'Interface', type: 'color',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}GridColor`, presentationKey: `${side}GridColor`,
+      def: PRESENTATION_DEFAULTS[`${side}GridColor`], label: `${word(side)} tile color`,
+      note: 'Outline and highlight color for this side of the formation grid.',
+    })),
     {
       cat: 'Advanced', advancedGroup: 'Interface',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
@@ -135,7 +169,7 @@ function presentationRows() {
         ? { front: 'A', middle: 'B', back: 'C' }
         : { front: 'C', middle: 'B', back: 'A' },
       label: `${word(side)} default row (A–C)`,
-      note: `Global formation row: A is top, B is middle, C is bottom. This changes placement, not combat targeting.`,
+      note: `First character's row: A is top, B is middle, C is bottom. Additional characters fill the other column, then earlier rows. Updates the current battle immediately; combat range rules are unchanged.`,
     })),
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
@@ -321,6 +355,8 @@ export function presentationConfig(settings = {}) {
     if (row.type === 'choice') {
       const normalized = row.legacyChoices?.[raw] ?? raw;
       if (row.choices.includes(normalized)) values[row.presentationKey] = normalized;
+    } else if (row.type === 'color') {
+      if (typeof raw === 'string' && /^#[0-9a-f]{6}$/i.test(raw)) values[row.presentationKey] = raw;
     } else if (typeof row.def === 'boolean') {
       values[row.presentationKey] = raw === true;
     } else {

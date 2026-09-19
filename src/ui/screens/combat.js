@@ -143,7 +143,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="formation-grid" aria-hidden="true">
-          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<div class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></div>`)).join('')}
+          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<div class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /><rect width="100" height="100" vector-effect="non-scaling-stroke" /><ellipse cx="50" cy="50" rx="50" ry="50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></div>`)).join('')}
         </div>
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>

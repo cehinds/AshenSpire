@@ -750,6 +750,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
   const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
+  if (r.type === 'color') {
+    const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
+    return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+  }
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `${rowOpen('set-row-wide')}
@@ -1495,6 +1499,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     };
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);
+  });
+
+  container.querySelectorAll('.set-color').forEach(input => {
+    input.addEventListener('input', () => {
+      settings[input.dataset.key] = input.value;
+      onChange({ [input.dataset.key]: input.value });
+    });
   });
 
   // 'number' rows: the typed field and its slider are ONE value.
