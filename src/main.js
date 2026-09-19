@@ -1561,9 +1561,9 @@ function showDraft() {
  * NAMED KEYS, NOT "any settings change": a blanket re-mount would redraw the act
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
- * model/mapknowledge.js and it is these two.
+ * model/mapknowledge.js and mapboard.js, and they are the keys below.
  */
-const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom'];
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
   if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
