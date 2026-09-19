@@ -247,7 +247,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // disabled, not open.
       shrineVisits.clear();
       for (const member of [...members.values()].filter((m) => m.alive)) {
-        shrineVisits.set(member.id, createLocationVisit({ run: member.run, registries, rng }, 'shrine', { arrived: true }));
+        shrineVisits.set(member.id, createLocationVisit({ run: member.run, registries, rng: member.rng }, 'shrine', { arrived: true }));
       }
       session.scene = {
         ...session.scene,
@@ -862,7 +862,10 @@ export function createSession({ registries, seedString, endless = false, restore
     // beside the scene, not in it — the scene is what clients are shown.
     shrineVisits.clear();
     for (const m of livingMembers()) {
-      const visit = createLocationVisit({ run: m.run, registries, rng }, 'shrine');
+      // Each visit rolls on ITS MEMBER'S streams (the seat's rng, as their
+      // rewards do), so a rolling rule's preview and its Rest read the same
+      // roll whatever order the party chooses in.
+      const visit = createLocationVisit({ run: m.run, registries, rng: m.rng }, 'shrine');
       arriveAt(visit);
       shrineVisits.set(m.id, visit);
     }
@@ -891,7 +894,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // is rebuilt already arrived and kept for the leave below.
       let visit = shrineVisits.get(memberId);
       if (!visit) {
-        visit = createLocationVisit({ run: m.run, registries, rng }, 'shrine', { arrived: true });
+        visit = createLocationVisit({ run: m.run, registries, rng: m.rng }, 'shrine', { arrived: true });
         shrineVisits.set(memberId, visit);
       }
       if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };
