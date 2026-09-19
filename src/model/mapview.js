@@ -77,6 +77,14 @@ export const ZOOM_MAX = ZOOM_STEPS[ZOOM_STEPS.length - 1];
  */
 export const MAP_ZOOM_DEFAULT = 'Fit';
 
+/** Horizontal map travel is player-configurable. New profiles opt in; storing
+ * `false` restores the previous vertical-only camera without a migration. */
+export const MAP_FREE_PAN_DEFAULT = true;
+
+export function resolveMapFreePan(meta) {
+  return ((meta && meta.settings) || {}).mapFreePan !== false;
+}
+
 /**
  * THE REFERENCE UI ZOOM — `--ui-zoom` at the shape that decides, measured, not
  * assumed. 390x844 resolves to 0.90; 320x640 to 0.74. Mobile decides, so 0.90 is

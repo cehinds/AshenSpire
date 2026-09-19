@@ -21,6 +21,10 @@
   touch-action: pan-y pinch-zoom;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
+.mapscreen .map-scroll[data-pan-axis='both'] {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
 /* THE UNLIT GROUND IS A LANTERN, NOT A FIELD. Fog-only, decorative, and inert:
    it takes no pointer events, so it cannot repeat #28's untappable nodes, and
    tools/mapreach.mjs is what proves that. In px because a vignette must NOT
