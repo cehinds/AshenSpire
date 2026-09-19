@@ -27,6 +27,7 @@
 // source content/config/ui/presentation/combatFormationModel.json 81e83684b1160d5d
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
+// source content/config/ui/presentation/equipmentAnimations.json 4b57264c7bf70caf
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -2961,6 +2962,349 @@ export const uiConfig = deepFreeze({
           1024
         ],
         "mapTerrainRevealRadius": 74
+      }
+    },
+    "equipmentAnimations": {
+      "components": {
+        "weaponGroups": {
+          "sword": [
+            "straightSword",
+            "katana"
+          ],
+          "greatsword": [
+            "greatsword"
+          ],
+          "dagger": [
+            "dagger",
+            "parryDagger"
+          ],
+          "bow": [
+            "shortbow"
+          ],
+          "polearm": [
+            "halberd",
+            "frostSpear"
+          ],
+          "hammer": [
+            "warhammer"
+          ],
+          "twinblade": [
+            "twinblade"
+          ],
+          "axe": [
+            "battleaxe",
+            "cinderAxe"
+          ],
+          "shield": [
+            "buckler",
+            "kiteShield",
+            "towerShield",
+            "roundShield",
+            "spikedShield"
+          ],
+          "lantern": [
+            "lantern"
+          ],
+          "torch": [
+            "torch"
+          ],
+          "staff": [
+            "ashStaff",
+            "starstoneStaff"
+          ],
+          "sceptre": [
+            "boneSceptre",
+            "emberlightSceptre",
+            "goldboughBranch",
+            "blightRod",
+            "gorefireBrand",
+            "wyrmhornStaff",
+            "duskChime"
+          ]
+        },
+        "bindings": [
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "greatsword",
+            "leftGroup": "empty",
+            "setId": "reaverGreatsword"
+          }
+        ],
+        "sets": {
+          "reaverGreatsword": {
+            "normalLungeMs": 260,
+            "frames": {
+              "ATK-01": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-01.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 261,
+                  "x1": 480,
+                  "y1": 599
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-02.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 146,
+                  "x1": 484,
+                  "y1": 598
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 104,
+                  "x1": 481,
+                  "y1": 599
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-04.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 120,
+                  "x1": 494,
+                  "y1": 599
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-05.webp",
+                "box": {
+                  "x0": 34,
+                  "y0": 251,
+                  "x1": 558,
+                  "y1": 599
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-06.webp",
+                "box": {
+                  "x0": 28,
+                  "y0": 286,
+                  "x1": 577,
+                  "y1": 599
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/reaver/greatsword-v2/ATK-07.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 118,
+                  "x1": 480,
+                  "y1": 599
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/reaver/greatsword-v2/BUFF.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 302,
+                  "x1": 480,
+                  "y1": 599
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/reaver/greatsword-v2/CAST.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 159,
+                  "x1": 525,
+                  "y1": 599
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/reaver/greatsword-v2/DEFEND.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 146,
+                  "x1": 484,
+                  "y1": 599
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/reaver/greatsword-v2/HURT.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 159,
+                  "x1": 487,
+                  "y1": 599
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/reaver/greatsword-v2/PORTRAIT.webp",
+                "box": {
+                  "x0": 0,
+                  "y0": 10,
+                  "x1": 629,
+                  "y1": 639
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/reaver/greatsword-v2/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 250,
+                  "x1": 629,
+                  "y1": 599
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/reaver/greatsword-v2/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 219,
+                  "x1": 427,
+                  "y1": 599
+                }
+              },
+              "STANCE-READY": {
+                "file": "assets/animations/reaver/greatsword-v2/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 140,
+                  "x1": 543,
+                  "y1": 599
+                }
+              }
+            },
+            "clips": {
+              "ready": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "defend": {
+                "frames": [
+                  "DEFEND"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "hurt": {
+                "frames": [
+                  "HURT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "cast": {
+                "frames": [
+                  "CAST"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "buff": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "aggressive": {
+                "frames": [
+                  "STANCE-AGGRESSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "defensive": {
+                "frames": [
+                  "STANCE-DEFENSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "portrait": {
+                "frames": [
+                  "PORTRAIT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "greatswordAttack": {
+                "frames": [
+                  "STANCE-READY",
+                  "ATK-07",
+                  "ATK-04",
+                  "ATK-02",
+                  "ATK-03",
+                  "ATK-05",
+                  "ATK-01",
+                  "ATK-04",
+                  "STANCE-READY"
+                ],
+                "frameMs": 100,
+                "impactIndex": 5
+              },
+              "enterStance": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 180,
+                "impactIndex": 0
+              },
+              "leaveStance": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 180,
+                "impactIndex": 0
+              }
+            },
+            "references": {
+              "idle": "ready",
+              "attack": "greatswordAttack",
+              "defend": "defend",
+              "buff": "buff",
+              "hurt": "hurt",
+              "cast": "cast",
+              "stanceActivate": "enterStance",
+              "stanceDeactivate": "leaveStance",
+              "aggressiveStance": "aggressive",
+              "defensiveStance": "defensive",
+              "conversation": "ready",
+              "portrait": "portrait",
+              "menu": "ready",
+              "detail": "portrait",
+              "dodge": null,
+              "victory": null,
+              "defeat": null,
+              "revive": null
+            },
+            "poseRoles": {
+              "idle": "idle",
+              "stand": "menu",
+              "attack": "attack",
+              "attack1": "attack",
+              "attack2": "attack",
+              "attack3": "attack",
+              "attack4": "attack",
+              "guard": "defend",
+              "shieldGuard": "defend",
+              "shieldGuard3": "defend",
+              "parry": "defend",
+              "shieldBash": "attack",
+              "hit": "hurt",
+              "power": "buff",
+              "cast": "cast",
+              "gorefire": "aggressiveStance",
+              "bulwark": "defensiveStance",
+              "prepared": "defensiveStance",
+              "starstoneCharge": "defensiveStance",
+              "bloodRite": "buff",
+              "prototypeGuardStance": "defensiveStance",
+              "prototypeFocusStance": "defensiveStance",
+              "defeated": "defeat"
+            }
+          }
+        }
       }
     },
     "localMapPresentation": {
