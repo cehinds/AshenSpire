@@ -1894,7 +1894,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       onConfirm: () => {
         if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
-        if (pv.needsTarget || dragTargetMode === 'all') {
+        // Only a card that asks for ONE enemy waits for the choice. A card
+        // that sweeps every enemy has nothing to choose (previewCard reports
+        // needsTarget false for it), so a completed hold plays it, as the tap
+        // path's confirm always has.
+        if (pv.needsTarget) {
           select();
           focusTargeting();
           return;

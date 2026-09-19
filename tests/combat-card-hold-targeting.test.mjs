@@ -22,8 +22,10 @@ ok(/onHoldStart:\s*\(\)\s*=>\s*\{\s*el\.dispatchEvent\(new CustomEvent\('cardhol
   'starting the visible hold preserves the shared card-selection signal without arming combat early');
 
 const completion = hold?.[1].match(/onConfirm:\s*\(\)\s*=>\s*\{([\s\S]*)\n      \},?/)?.[1] || '';
-ok(/if \(pv\.needsTarget \|\| dragTargetMode === 'all'\) \{\s*select\(\);\s*focusTargeting\(\);\s*return;\s*\}/.test(completion),
-  'a completed hold on a targeted card arms the existing target-selection flow');
+ok(/if \(pv\.needsTarget\) \{\s*select\(\);\s*focusTargeting\(\);\s*return;\s*\}/.test(completion),
+  'a completed hold on a single-target card arms the existing target-selection flow');
+ok(!/dragTargetMode === 'all'/.test(completion),
+  'a card that sweeps every enemy has no target to choose, so its completed hold plays it');
 ok(/playCard\(inst\.instanceId, null\);/.test(completion),
   'a completed hold on an untargeted card retains direct play');
 ok(!/confirm\(\)/.test(completion),
