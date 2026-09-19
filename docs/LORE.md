@@ -464,8 +464,21 @@ plan and is stated there, not here.
 Narrative is ambient (GDD §4). The main channel is **one line of flavor text
 on a card**, shown in card inspection, never on the playable face and never in
 place of rule text. The card schema already accepts an optional `flavor`
-string on every card (`src/model/schemas.js`); four colorless cards and three
-co-op cards carry one today, and card inspection does not yet render it.
+string on every card (`src/model/schemas.js`). Card inspection renders it in
+the optional **Flavor** disclosure; the playable face keeps only rules.
+
+The first integration pass adds 37 attributed fragments to the four class
+pools, including each class's signature starter. Reaver lines come from the
+Warden's field-book, Rogue lines from frozen-dock cant, Starseer lines from
+the Astronomer's chart margins, and Herald lines from Chapel liturgy. Each
+fragment is at most twelve words, followed by its source attribution. These
+are authored directly beside their cards in `src/content/cards/`.
+
+The seed lines below are writing prompts, not verbatim shipping copy: shorten
+them to the rules and preserve §2's reveal boundary. In particular, Astral
+Insight hints at the fourth hearth rather than quoting the hearth-room page.
+Events, boss parleys, companions, and the ending remain later integration
+passes; card flavor does not imply those systems have shipped.
 
 ### Rules
 

@@ -2698,6 +2698,21 @@ body.pad-mode .as-keycap.float { display: none; }
   border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
   transform: translateY(-50%) rotate(45deg);
 }
+
+/* Map context follows the shared HUD instead of being compressed into it. */
+.mapscreen > .act-route-strip {
+  box-sizing: border-box; flex-direction: column; align-items: center; gap: 3px;
+  width: 80%; margin-inline: auto; padding: 12px 12px 6px;
+  border-bottom: 1px solid var(--line); background: var(--bg-raise);
+  pointer-events: none; user-select: none; cursor: default;
+}
+.mapscreen > .act-route-strip > .as-title-s { font-size: 1.1rem; letter-spacing: 0.2em; }
+@media (max-width: 700px) {
+  .mapscreen > .act-route-strip {
+    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
+    margin-left: auto; margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+  }
+}
 /* THE ZOOM BAR is a Band on the foot of the map with four IconButtons in it,
    BESIDE the board and never over it (styles/map.css says why). The bar has no
    reserved height: it is a flex item, so the band is its buttons' own height

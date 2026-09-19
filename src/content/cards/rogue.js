@@ -17,6 +17,7 @@ export const rogueCards = [
   // ---- Non-reward cards: signature + two generated tools -----------------
   {
     id: 'ambush', name: 'Ambush', class: 'rogue', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    flavor: "Under the bridge, even the surgeon walked quickly. — Frozen-dock cant",
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -112,12 +113,14 @@ export const rogueCards = [
   },
   {
     id: 'pilfer', name: 'Pilfer', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: [], icon: '🖐',
+    flavor: "The Court branded wrists; nobody counted the missing purses. — Frozen-dock cant",
     effects: [{ op: 'draw', amount: 2 }, { op: 'discard', amount: 1, random: true }],
     textTemplate: 'Draw {draw} cards. Discard 1 card at random.',
     upgrade: { effects: [{ op: 'draw', amount: 3 }, { op: 'discard', amount: 1, random: true }] },
   },
   {
     id: 'vanish', name: 'Vanish', class: 'rogue', rarity: 'common', cost: 1, type: 'skill', keywords: ['exhaust'], icon: '◌',
+    flavor: "Nothing under the bridge but ice, if anyone asks. — Frozen-dock cant",
     effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }],
     textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand. Exhaust.',
     upgrade: { keywords: [], effects: [{ op: 'block', target: 'self', amount: 8 }, prepare(), { op: 'addCard', card: 'smokePellet', pile: 'hand' }], textTemplate: 'Gain {block} Block. Become Prepared. Add a Smoke Pellet to your hand.' },
@@ -138,6 +141,7 @@ export const rogueCards = [
   },
   {
     id: 'garrote', name: 'Garrote', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'attack', keywords: [], icon: '➰',
+    flavor: "Courtiers' thread; the surgeons never asked what it was for. — Frozen-dock cant",
     effects: [{ op: 'damage', target: 'enemy', amount: 4 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 5 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }],
     textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed and {weak} Weak.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 6 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }] },
@@ -174,6 +178,7 @@ export const rogueCards = [
   },
   {
     id: 'sap', name: 'Sap', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'attack', keywords: [], icon: '♠',
+    flavor: "Cut the Marionette strings; the dancer keeps dancing a while. — Frozen-dock cant",
     effects: [{ op: 'damage', target: 'enemy', amount: 4 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 }, { op: 'poiseDamage', target: 'enemy', amount: 4 }],
     textTemplate: 'Deal {damage} damage. Apply {weak} Weak. Deal {poiseDamage} Poise damage.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 3 }, { op: 'poiseDamage', target: 'enemy', amount: 5 }] },
@@ -198,12 +203,14 @@ export const rogueCards = [
   },
   {
     id: 'venomcoat', name: 'Venomcoat', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '🐍',
+    flavor: "Sedative, the surgeon called it, sold by the vial. — Frozen-dock cant",
     effects: [{ op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 4 }, prepare()],
     textTemplate: 'Apply {venom} Venom. Become Prepared.',
     upgrade: { effects: [{ op: 'applyStatus', target: 'enemy', status: 'venom', stacks: 6 }, prepare()] },
   },
   {
     id: 'misdirect', name: 'Misdirect', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'skill', keywords: [], icon: '↪',
+    flavor: "The Decree said dawn; the bridge watch had other arrangements. — Frozen-dock cant",
     effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }, prepare()],
     textTemplate: 'Gain {block} Block. Apply {weak} Weak to ALL enemies. Become Prepared.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 9 }, { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 1 }, prepare()] },
@@ -260,12 +267,14 @@ export const rogueCards = [
   },
   {
     id: 'perfectHeist', name: 'Perfect Heist', class: 'rogue', rarity: 'rare', cost: 0, type: 'skill', keywords: ['exhaust'], icon: '💎',
+    flavor: "The Regent's mirrors: every one accounted for, every one gone. — Frozen-dock cant",
     effects: [{ op: 'draw', amount: 3 }, { op: 'gainEnergy', amount: 1 }],
     textTemplate: 'Draw {draw} cards. Gain {gainEnergy} Energy. Exhaust.',
     upgrade: { effects: [{ op: 'draw', amount: 4 }, { op: 'gainEnergy', amount: 1 }] },
   },
   {
     id: 'deathblow', name: 'Deathblow', class: 'rogue', rarity: 'rare', cost: 3, type: 'attack', keywords: [], icon: '☠',
+    flavor: "Cold work; the river keeps what the surgeon leaves. — Frozen-dock cant",
     effects: [
       { op: 'damage', target: 'enemy', amount: 24 },
       { op: 'damage', target: 'enemy', amount: 10, if: TARGET_BLEED },

@@ -41,7 +41,6 @@ import { mountRunPotions } from '../components/runPotions.js';
 import { button, el, popover, row } from '../kit/index.js';
 import { t } from '../strings.js';
 import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
-import { MAP_HEADER_LAYOUT, sizeMapHeader } from '../components/mapHeader.js';
 import { reducedMotionRequested } from '../motion.js';
 
 /**
@@ -108,11 +107,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
-      <!-- W4b: in its 10 vh map context, with the route strip laid out inside it (components/mapHeader.js). -->
       ${runHudHtml({
-        registries, run, meta, place: 'map', headerClass: 'map-header', layout: MAP_HEADER_LAYOUT,
-        orientationHtml: actRouteStripHtml({ title: actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) }),
+        registries, run, meta, place: 'map', headerClass: 'map-header',
       })}
+      ${actRouteStripHtml({ title: actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   // Bars, relics, Armoury and Menu: components/runHud.js fills the band for
@@ -121,10 +119,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   wireRunHud(app, {
     registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount,
   });
-  // W4b's 10 vh header takes its height NOW, before the board mounts: the
-  // board checks a saved fit camera against the scene's height (see below).
-  sizeMapHeader(app);
-
   // ---- THE BOARD -------------------------------------------------------
   //
   // ONE RENDERER, and this is the whole of the map on this screen. Everything
@@ -134,8 +128,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   //
   // ---- THE MAP TRAY (owner, 2026-09-14) -------------------------------------
   //
-  // One row at the foot of the map: the zoom bar left, the hint bar centred,
-  // Potions in the corner where combat's footer keeps it. The row is the only
+  // One row at the foot of the map holds only the centred action buttons. The
+  // unboxed Potions control belongs to the map frame's far-right corner. The row is the only
   // part of the tray that takes layout height, so the scene's height, and the
   // camera framed against it, never change while the tray works.
   //
@@ -166,8 +160,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // The tray and the hint bar are built BEFORE the board mounts: the board
   // checks a saved fit camera against the scene's height, so everything that
   // takes height must already have it, or every remount would discard the
-  // player's pan. The zoom bar, which is the board's, joins the row once it
-  // exists; it is no taller than Potions, so that changes no height.
+  // player's pan. The zoom bar and Potions stay inside opposite corners of the
+  // map frame as separate, unboxed controls and therefore add no footer height.
   const screen = app.querySelector('.mapscreen');
   let selection = { selectedId: null };
   const readings = new Map();
@@ -179,7 +173,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const potionsHost = el('div', { class: 'map-potions' });
   const trayRow = el('div', { class: 'map-tray-row' });
   trayRow.insertAdjacentHTML('beforeend', hintBarHtml('map'));
-  trayRow.appendChild(potionsHost);
   const tray = el('div', { class: 'map-tray', dataset: { open: 'false', shown: 'false' } }, [trayReveal, trayRow]);
   mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { onSave?.(); remount(); } });
   screen.append(tray);
@@ -201,8 +194,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },
   });
+  const mapFrame = screen.querySelector('.map-frame');
   const zoomBar = app.querySelector('.map-zoom');
-  if (zoomBar) trayRow.prepend(zoomBar);
+  if (zoomBar) mapFrame?.appendChild(zoomBar);
+  mapFrame?.appendChild(potionsHost);
   // Below the board and its notes; moving it changes no height.
   screen.append(tray);
   // Live only after the resting text is in place: a mount announces nothing.
@@ -368,9 +363,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   let frameA = 0;
   let frameB = 0;
   const recenterAfterSettle = () => {
-    // The header follows the viewport first, so the camera settles against
-    // the scene height it will actually have.
-    if (app.querySelector('.mapscreen')) sizeMapHeader(app);
     cancelAnimationFrame(frameA);
     cancelAnimationFrame(frameB);
     frameA = requestAnimationFrame(() => {

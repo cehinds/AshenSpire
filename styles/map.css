@@ -1,17 +1,17 @@
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
 
-.mapscreen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-/* `position` is deliberately NOT set here. It was `relative`, and the one thing
-   that used it was the floating zoom stack — now a sibling in the flow rather
-   than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
-   by itself, but it is the anchor the next overlay would reach for, so the
-   absence is the note. */
-/* The box the scrollport and its overlay share. It exists so the vignette has
-   something to be bounded BY (Law 2 — every positioned element names its
-   container): `inset: 0` against this, never against the viewport, so there is
-   no shape at which it covers a control that is not the map. `min-height: 0` is
-   the flex-item clamp the scrollport needs to be allowed to shrink — without it
-   a tall canvas pushes the zoom bar off the bottom. */
+.mapscreen {
+  flex: none; display: flex; flex-direction: column; overflow: hidden;
+  /* Body is zoomed. A percentage-height screen is therefore only a zoomed
+     fraction of the glass, leaving the apparent "footer" as empty page below
+     it. This is the same viewport compensation used by the combat frame. */
+  width: calc(100vw / var(--ui-zoom, 1));
+  height: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1));
+}
+/* The box the scrollport and its map-only overlays share. The vignette and the
+   compact zoom cluster are bounded by this frame, never by the viewport.
+   `min-height: 0` is the flex-item clamp the scrollport needs in order to yield
+   to the narrow footer and to the expanding location panel. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
 
 .mapscreen .map-scroll {
@@ -66,17 +66,9 @@
   background: radial-gradient(ellipse at center, transparent 65%, rgba(45, 30, 13, 0.2));
 }
 
-/* THE MAP'S HINT BAR JOINS THE FLOW, and only the map's.
-   .hint-bar (styles/ui.css) is `position: fixed` to the bottom of the VIEWPORT
-   and centred. That was invisible while the map's bottom edge belonged to a
-   floating overlay; the moment the zoom buttons became real layout, the fixed
-   pill sat on top of the − and the ⊙ at 390x844 and 412x915. Unreadable, and
-   not unreachable — the pill is pointer-events: none, so every reach sweep was
-   correctly green and only an eye could see it (Sunna's, on the shot).
-   In the flow it stacks above the zoom bar instead of over it, and the map's
-   bottom chrome ends up one column with NO reserved height on either side.
-   Scoped to .mapscreen: combat pins its own copy to the top (.hint-combat) and
-   every other screen keeps the fixed pill. `body.hide-hints` still wins. */
+/* The map's action buttons belong to its footer flow; the map controls remain
+   a separate cluster inside the map frame. Scoped here so other hint bars keep
+   their screen-specific positioning. */
 .mapscreen .hint-bar {
   position: static; transform: none; align-self: center;
   margin: 0 auto 0.6rem; max-width: 96%;
@@ -132,40 +124,44 @@
    PAINTS and this one paints 35% wider than its own radius eight times a
    second. One home, two readers (the keyframe below, and mountMap). */
 .mapscreen { --halo-peak: 1.35; }
-/* THE MAP TRAY (owner, 2026-09-14; screens/map.js). One row takes layout height
-   — the zoom bar left, the hint bar centred, Potions in the corner — so the
-   scene, and the camera framed against it, never change while the tray works.
+/* THE MAP TRAY (owner, 2026-09-14; screens/map.js). One compact row takes layout
+   height for the centred action buttons. Potions is independent in the map's
+   far-right corner, so it never creates a footer container of its own.
    Picking a lit node slides the reveal up OVER the foot of the map: the node's
    context (a FIXED height, so a long blurb scrolls instead of growing) and Back
    / Enter, centred and held clear of the Potions column. Row + reveal stay
    within the bottom band this replaced. The height is written by map.js from
    the reveal's own content, so there is no second copy of it here. */
-.mapscreen > .map-tray { position: relative; z-index: 30; flex: 0 0 auto; container: map-tray / inline-size; background: var(--panel); border-top: 1px solid var(--line); }
+.mapscreen > .map-tray { position: relative; z-index: 30; flex: 0 0 auto; container: map-tray / inline-size; background: transparent; border: 0; }
 .map-tray-row {
   /* A DEFINITE middle track, not auto: the hint bar is a kit ButtonRow whose
      width is min(100%, its steps), and a percentage against a content-sized
      column has nothing to resolve against — every chip collapsed to 12 px. */
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 64rem) minmax(0, 1fr); grid-template-areas: "zoom hint pots";
-  align-items: center; gap: 0 1rem;
-  min-height: max(calc(var(--iconbtn-size) + 1rem), calc(var(--map-potions-size) + 0.8rem));
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+  min-height: calc(var(--iconbtn-size) + 1rem);
   padding: .5rem 1.4rem calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
 }
-.map-tray-row > .map-zoom { grid-area: zoom; justify-self: start; gap: .6rem; padding: 0; border: 0; background: none; }
-.mapscreen .map-tray-row > .hint-bar { grid-area: hint; justify-self: center; margin: 0; width: 100%; max-width: 100%; }
+.map-frame > .map-zoom {
+  position: absolute; z-index: 3; left: 1.4rem; bottom: 1.4rem;
+  gap: .6rem; width: max-content; padding: 0; border: 0; background: none;
+}
+.mapscreen .map-tray-row > .hint-bar {
+  margin: 0; width: min(100%, 54rem); max-width: 54rem;
+}
 /* POTIONS IS THE BIG CONTROL IN THIS CORNER (owner, 2026-09-17): 1.6x the
    touch row, and the minis stand ABOVE it rather than beside it. The host is
    the button's own box, so the minis hang off its top edge and the row's
    height is what holds it. */
 .mapscreen { --map-potions-size: calc(var(--iconbtn-size) + 3.2rem); }
-.map-tray-row > .map-potions {
-  grid-area: pots; justify-self: end; align-self: center; position: relative;
+.map-frame > .map-potions {
+  position: absolute; z-index: 4; right: 1.4rem; bottom: 1.4rem;
   width: var(--map-potions-size); height: var(--map-potions-size);
 }
-/* Too narrow for one line: the hint bar takes its own line above the other two. */
+/* The row stays compact at every width; location details expand above it. */
 @container map-tray (max-width: 104rem) {
-  .map-tray-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "hint hint" "zoom pots"; }
-  .mapscreen .map-tray-row > .hint-bar { margin-bottom: .5rem; }
+  .map-tray-row { gap: .5rem; }
 }
+:root[data-layout='narrow'] .mapscreen .map-tray-row { display: none; }
 /* Potions, as in combat's footer: a round control, its minis (the shared icon
    tray) beside it, --icon-tray-slots of them wide before the +N tile. */
 .map-potions .run-potions-btn {
