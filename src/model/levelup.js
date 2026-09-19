@@ -151,23 +151,18 @@ function rederivePools(registries, run, why) {
   const rules = run.derivedStatRuleSnapshot.rules;
   const classDef = registries.classes.get(run.class);
   const level = characterLevel(run);
-  const before = { maxMana: run.maxMana, maxStamina: run.maxStamina, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn };
+  const before = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina };
   let moved = 0;
-  for (const [key, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina'], ['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
+  for (const [key, statId] of [['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
     if (run[key] === undefined) continue;
     const next = deriveStat(rules, statId, { attributes: run.attributes, classDef, level }).value;
     if (next !== run[key]) moved += 1;
     run[key] = next;
   }
-  if (run.mana !== undefined && before.maxMana !== undefined) {
-    run.mana = Math.min(run.maxMana, run.mana + Math.max(0, run.maxMana - before.maxMana));
-  }
-  if (run.stamina !== undefined && before.maxStamina !== undefined) {
-    run.stamina = Math.min(run.maxStamina, run.stamina + Math.max(0, run.maxStamina - before.maxStamina));
-  }
-  const hpBefore = run.maxHp;
+  // Reconcile from the original equipped maxima exactly once. Writing bare
+  // derived maxima first would make the equipment bonus look like a refill.
   reconcileRunLoadoutHp(registries, run);
-  if (run.maxHp !== hpBefore) moved += 1;
+  for (const key of Object.keys(before)) if (run[key] !== before[key]) moved += 1;
   return moved;
 }
 

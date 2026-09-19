@@ -25,7 +25,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 5,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "greatsword",
@@ -54,7 +55,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 8,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "dagger",
@@ -79,7 +81,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 3,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "shortbow",
@@ -104,7 +107,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 2,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "katana",
@@ -132,7 +136,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 5,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "halberd",
@@ -161,7 +166,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 7,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "warhammer",
@@ -189,7 +195,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 9,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "twinblade",
@@ -218,7 +225,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 5,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "battleaxe",
@@ -246,7 +254,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 7,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "buckler",
@@ -271,7 +280,8 @@ export const weapons = [
     "defenseRating": 5,
     "weight": 4,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "kiteShield",
@@ -299,7 +309,8 @@ export const weapons = [
     "defenseRating": 6,
     "weight": 8,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "towerShield",
@@ -328,7 +339,8 @@ export const weapons = [
     "defenseRating": 9,
     "weight": 12,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "roundShield",
@@ -353,7 +365,8 @@ export const weapons = [
     "defenseRating": 5,
     "weight": 7,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "spikedShield",
@@ -381,7 +394,8 @@ export const weapons = [
     "defenseRating": 5,
     "weight": 8,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "lantern",
@@ -409,7 +423,8 @@ export const weapons = [
     "defenseRating": 4,
     "weight": 2,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "torch",
@@ -434,7 +449,8 @@ export const weapons = [
     "defenseRating": 3,
     "weight": 2,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "parryDagger",
@@ -462,7 +478,8 @@ export const weapons = [
     "defenseRating": 4,
     "weight": 3,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "ashStaff",
@@ -487,7 +504,8 @@ export const weapons = [
     "defenseRating": 1,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "starstoneStaff",
@@ -516,7 +534,8 @@ export const weapons = [
     "defenseRating": 1,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "boneSceptre",
@@ -544,7 +563,8 @@ export const weapons = [
     "defenseRating": 1,
     "weight": 4,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "emberlightSceptre",
@@ -569,7 +589,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 4,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "goldboughBranch",
@@ -597,7 +618,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 4,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "blightRod",
@@ -625,7 +647,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "gorefireBrand",
@@ -653,7 +676,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "wyrmhornStaff",
@@ -682,6 +706,96 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 5,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
+  },
+  {
+    "id": "frostSpear",
+    "name": "Frost Spear",
+    "kind": "weapon",
+    "hand": "either",
+    "rarity": "uncommon",
+    "geom": "polearm",
+    "scale": 1,
+    "metal": "A8A090",
+    "accent": "C9A227",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
+    "mods": [
+      "strike.damage=+1",
+      "strike.frost=+2"
+    ],
+    "unlock": "",
+    "blurb": "A rimed point that slows the next advance.",
+    "dropWeight": 7,
+    "artKey": "halberd",
+    "poiseThreshold": 6,
+    "attackRating": 6,
+    "defenseRating": 2,
+    "weight": 6,
+    "weaponArtManaCost": 0,
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "halberd"
+  },
+  {
+    "id": "cinderAxe",
+    "name": "Cinder Axe",
+    "kind": "weapon",
+    "hand": "either",
+    "rarity": "uncommon",
+    "geom": "axe",
+    "scale": 1,
+    "metal": "A8A090",
+    "accent": "C9502E",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
+    "mods": [
+      "strike.damage=+2",
+      "strike.cost=+1",
+      "strike.burn=+3"
+    ],
+    "unlock": "",
+    "blurb": "A furnace edge bought with a slower swing.",
+    "dropWeight": 7,
+    "artKey": "battleaxe",
+    "poiseThreshold": 7,
+    "attackRating": 7,
+    "defenseRating": 2,
+    "weight": 7,
+    "weaponArtManaCost": 0,
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "battleaxe"
+  },
+  {
+    "id": "duskChime",
+    "name": "Dusk Chime",
+    "kind": "staff",
+    "hand": "either",
+    "rarity": "rare",
+    "geom": "staffSkull",
+    "scale": 1,
+    "metal": "B8AE98",
+    "accent": "B5541C",
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "sceptreGuard",
+    "techniqueProfile": "staffTechnique",
+    "mods": [
+      "strike.blight=+1",
+      "defend.block=+1",
+      "self.maxMana=+1"
+    ],
+    "unlock": "",
+    "blurb": "Its last note settles into a sheltering hush.",
+    "dropWeight": 4,
+    "artKey": "boneSceptre",
+    "poiseThreshold": 3,
+    "attackRating": 2,
+    "defenseRating": 1,
+    "weight": 3,
+    "weaponArtManaCost": 1,
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "boneSceptre"
   }
 ];

@@ -27,4 +27,73 @@ export const armamentCards = [
     textTemplate: 'Gain {block} Block. Deal {damage} damage. Apply {bleed} Bleed.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 6 }, { op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
   },
+  {
+    id: 'rimeThrust',
+    name: 'Rime Thrust',
+    class: 'colorless',
+    rarity: 'special',
+    cost: 1,
+    type: 'attack',
+    keywords: [],
+    icon: '❄',
+    damageSchool: 'physical',
+    exposureBuildupPerHit: 0,
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3 }
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {frost} Frost.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 7 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 4 }
+      ]
+    }
+  },
+  {
+    id: 'kilnCleave',
+    name: 'Kiln Cleave',
+    class: 'colorless',
+    rarity: 'special',
+    cost: 2,
+    type: 'attack',
+    keywords: [],
+    icon: '🔥',
+    damageSchool: 'physical',
+    exposureBuildupPerHit: 0,
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 10 },
+      { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 4 },
+      { op: 'poiseDamage', target: 'enemy', amount: 3 }
+    ],
+    textTemplate: 'Deal {damage} damage. Apply {burn} Burn. Deal {poiseDamage} Poise damage.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 13 },
+        { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 5 },
+        { op: 'poiseDamage', target: 'enemy', amount: 4 }
+      ]
+    }
+  },
+  {
+    id: 'vesperWard',
+    name: 'Vesper Ward',
+    class: 'colorless',
+    rarity: 'special',
+    cost: 1,
+    type: 'skill',
+    keywords: [ 'exhaust' ],
+    icon: '◈',
+    effects: [
+      { op: 'block', target: 'self', amount: 7 },
+      { op: 'applyStatus', target: 'self', status: 'regen', stacks: 1 }
+    ],
+    textTemplate: 'Gain {block} Block. Gain {regen} Regen. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 10 },
+        { op: 'applyStatus', target: 'self', status: 'regen', stacks: 1 }
+      ]
+    }
+  },
 ];

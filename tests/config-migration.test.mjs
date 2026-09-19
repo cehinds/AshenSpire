@@ -56,6 +56,9 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //     arc, so a wider card needs less height: 80/0.625 + 33.6 = 161.6 became
 //     80/(5/7) + 33.6 = 145.6. #1146 and #1140 merged 74 seconds apart, so
 //     neither could see the other's effect and dev went red on the pair.
+//   · CombatFormationModel probes now include #1180's grid cells, rowSpacing,
+//     cell labels and fitGround. Its slots keep their previous coordinates;
+//     only that module's entry is refreshed for the approved added outputs.
 
 /** Every path at which `want` and `got` differ, as readable lines. */
 function differences(want, got, path = '') {
@@ -117,7 +120,9 @@ const ARITHMETIC = new Map([
   ['0', 'zero — an origin, an empty count, the floor of a clamp'],
   ['1', 'the unit — a whole, a full opacity, the next index'],
   ['2', 'a midpoint: the centre of a box is half its width, and a pair has two ends'],
+  ['3', 'the three battlefield rows A/B/C; the enemy front column is column three'],
   ['4', 'a count of things that exist — the four gaps in the footer, the four columns of the battlefield'],
+  ['6', 'the six cells on each side of the battlefield: three rows by two columns'],
   ['16', 'the CSS reference root font size in px; a rem is defined against it, so it is a platform fact and not a choice'],
   ['100', 'percent — the unit the layer is written in'],
   ['180', 'a half turn in degrees'],
