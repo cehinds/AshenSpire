@@ -902,7 +902,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .settings-modal > .set-body > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
 .settings-modal .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
 .settings-modal .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
-.settings-modal .set-tabs { overflow: visible; }
+[data-settings-host] .set-tabs { overflow-y: auto; }
+[data-settings-host] .set-tabs > * { flex-shrink: 0; }
+[data-settings-host] .set-tabs > .set-advanced-head { margin-left: .8rem; padding-left: .6rem; border-left: 1px solid var(--line); }
+[data-settings-host] .set-tabs .set-subtabs { display: flex; flex-direction: column; gap: .4rem; width: 100%; }
+[data-settings-host] .set-tabs .set-subtab { width: 100%; min-width: 0; text-align: left; white-space: normal; font-size: 1.1rem; }
+[data-settings-host] .set-subtab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+[data-settings-host] .set-panel .set-subtabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
 .settings-modal .set-subtabs { display: flex; flex-wrap: wrap; }
 .settings-modal .set-subtabs > button { flex: 1 0 auto; }
 .set-advanced-tools { display: flex; align-items: end; gap: .8rem; flex-wrap: wrap; margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); }
