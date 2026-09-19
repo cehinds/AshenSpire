@@ -1533,13 +1533,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       //     either order, so the newer text loses to the older. That one is
       //     preventable: while a write is outstanding the button refuses to
       //     start another, and says why.
+      // REFUSING THE WRITE IS NOT REFUSING THE EXPORT, and the first version of
+      // this guard confused the two. `writeText` that NEVER settles — the very
+      // case the timeout exists for — leaves the flag raised for the rest of
+      // the session, because only `write.then` lowers it. Returning early there
+      // meant the second click did nothing at all: no console block, no button
+      // change, and a slider moved afterwards could not be exported by ANY
+      // route. So a held clipboard now takes the fallback path instead of the
+      // door: the block is serialised and logged exactly as an unreachable
+      // clipboard's is, and only the second WRITE is withheld.
       const CLIPBOARD_WAIT_MS = 1200;
       let copied = false;
-      if (exportWritePending) {
-        showSettingsNotice('A copy is still with the clipboard — waiting for it rather than starting a second one that could land out of order.', 'card-size');
-        return;
-      }
-      if (typeof navigator.clipboard?.writeText === 'function') {
+      const held = exportWritePending;
+      if (!held && typeof navigator.clipboard?.writeText === 'function') {
         const write = navigator.clipboard.writeText(text).then(() => true, () => false);
         exportWritePending = true;
         // ASK THE TIMER, NOT THE RESULT, WHETHER THIS WAS LATE. Keying the
@@ -1623,7 +1629,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // whether this notice is about a refusal, not who happened to post it.
       showSettingsNotice(copied
         ? `Copied ${what}.`
-        : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
+        : held
+          ? `A copy is still with the clipboard, so this one is in the browser console instead — ${what}. Starting a second write could land out of order.`
+          : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
       settledRefusal ? 'card-size' : '');
       setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
     });

@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-18",
     "summary": "You can try card sizes out yourself, and hand me back the numbers you settled on",
     "detail": "Under Advanced there are now four sliders for how big an item card is drawn: the size it rests at while you browse, that same size on a phone, the size it grows to when you pick it up, and the size it opens to when you read it. Move one and every weapon, armour, relic and flask card on the screen follows immediately — nothing to rebuild and nothing to reload. The playing cards you fight with follow only the last of those four — the size a card opens to when you read it, since they share that same window. Their size everywhere else, in your hand and on the merchant's shelves, is still written into the stylesheets rather than read from the settings, and that is being fixed separately. A button copies the sizes you arrived at in the exact form the game's own settings file wants, so you can paste them back or send them on without anyone retyping a number. Nothing moves until you move it: the game ships at the sizes it always had, on a phone as well as a desktop. And a set of sizes that would make a card you opened to read smaller than one you were browsing past is refused outright, naming the one that is wrong, rather than being quietly corrected into something you did not ask for.",
-    "build": "0.7.1.162",
+    "build": "0.7.1.163",
     "pullRequest": 1166,
     "url": "https://github.com/cehinds/AshenSpire/pull/1166"
   },
