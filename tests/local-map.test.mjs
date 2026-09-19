@@ -6,6 +6,7 @@ import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';
 import { createRunState, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
+import { createRng } from '../src/engine/rng.js';
 import { generateJourney, journeyGraph } from '../src/model/worldAtlas.js';
 import { createLocationVisit, previewRest } from '../src/engine/locations.js';
 import { smithingPlan } from '../src/model/smithing.js';
@@ -39,6 +40,13 @@ test('service inspection derives real plans without changing inventory or rollin
   const reduced=localServiceModel({handlerId:'rest',registries,run,state,nodeId:'crownfall/chapel',serviceTypeId:'chapel',healMult:.5});
   assert.ok(reduced.benefit.includes(`recover ${expect('chapel',{healMult:.5})} HP`));
   assert.ok(expect('chapel',{healMult:.5})<expect('chapel'));
+  // Handed the run's live streams, the preview reads their position and
+  // advances nothing (the rest itself will roll where the preview rolled).
+  const live=createRng(123,{misc:7});
+  const before7=JSON.stringify(live.getCounters());
+  const withRng=localServiceModel({handlerId:'rest',registries,run,state,nodeId:'crownfall/inn',serviceTypeId:'inn',rng:live});
+  assert.ok(withRng.benefit.includes(`recover ${expect('inn')} HP`));
+  assert.equal(JSON.stringify(live.getCounters()),before7);
   const smith=localServiceModel({handlerId:'smith',registries,run,state});
   const plan=smithingPlan(registries,run);
   assert.ok(smith.facts[0].includes(`${plan.stones} Smithing Stones`));

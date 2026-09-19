@@ -1686,6 +1686,9 @@ function showMap() {
     serviceContext: {
       healMult: run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1,
       refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
+      // The run's live streams: the rest preview copies their position, so a
+      // rolling rule shows the roll the visit will make and advances nothing.
+      rng,
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,

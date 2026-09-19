@@ -6,16 +6,18 @@ import { graceRefillPlan, flaskChargePlan, refillFlaskCharges } from '../../mode
 
 // Read-only projection of the same plans used when a service is activated.
 // No stock rolls, resource changes, completion writes, or node-specific rules.
-export function localServiceModel({ handlerId, registries, run, state = {}, healMult = 1, refillCounts = {}, nodeId = null, serviceTypeId = null }) {
+export function localServiceModel({ handlerId, registries, run, state = {}, healMult = 1, refillCounts = {}, nodeId = null, serviceTypeId = null, rng = null }) {
   const result = { benefit: '', facts: [], action: 'Inspect service', used: !!state.used };
   if (!registries) return { ...result, benefit: 'Open this service in an active run to see your benefits, costs, and availability.' };
   if (state.used) result.facts.push('This visit has been used.');
   if (handlerId === 'rest') {
     // The place is a carrier (plan phase 7): the point's own row, else its
     // service type's, else the classic Shrine. The preview runs its rules on
-    // a clone — the same answer the Rest button gives, nothing written.
+    // a clone — the same answer the Rest button gives, nothing written — and
+    // on a COPY of the run's live streams when the caller hands them (the
+    // atlas does), so a rolling rule previews the roll the visit will make.
     const locationId = resolveLocationId(registries, { nodeId, serviceTypeId }) || 'shrine';
-    const visit = createLocationVisit({ run, registries, rng: null }, locationId, { healMult });
+    const visit = createLocationVisit({ run, registries, rng }, locationId, { healMult });
     const noRest = !!visit.restDenied;
     const rest = noRest ? null : previewRest(visit);
     leaveLocation(visit);

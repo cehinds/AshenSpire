@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Resting is now something a place does, not something the Shrine does",
     "detail": "Every stop on the road — the Shrine, a rough camp off an Unknown node, a town's inn, its chapel — carries its own set of what it restores: the Shrine heals part of your HP, refills your flasks on arrival and offers the Smith and Level-up; a camp heals less and offers nothing; an inn heals you and your Mana to full. Every rest recovers Mana now, by default to half your maximum or to full if you already stand there. Ember Fragment reads \"Resting heals 15% more\" and works everywhere; the Wyrm Heart still forbids the Shrine's rest but lets you sleep at an inn. Seeded routes hold at most one town per act.",
-    "build": "0.7.1.258",
+    "build": "0.7.1.260",
     "pullRequest": 1195,
     "url": "https://github.com/cehinds/AshenSpire/pull/1195"
   },
