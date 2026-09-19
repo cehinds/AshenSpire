@@ -873,6 +873,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
             t.poiseMeter.value = Math.min(t.poiseMeter.max, t.poiseMeter.value + e.poiseDamage);
           }
           break;
+        // M7b: IMPACT MOVES THE BAR ON ITS OWN BEAT. The player's Poise meter
+        // is live (plan phase 8) and every impact says so, but the paced view
+        // had no case for the receipt: a sub-threshold hit left the bar still
+        // until the timeline flushed, and two hits that filled it replayed the
+        // fill against a bar that had never moved (Codex, #1203).
+        case 'impactDealt':
+          if (t && t.poiseMeter && e.amount > 0) {
+            t.poiseMeter.value = Math.min(t.poiseMeter.max, t.poiseMeter.value + e.amount);
+          }
+          break;
         case 'meterFilled':
           if (t && e.meter === 'poise' && t.poiseMeter) t.poiseMeter.value = 0;
           break;

@@ -610,7 +610,7 @@ function runOpcode(ctx, action, eff) {
             dealPoiseDamage(ctx, t, resistedImpact);
             // The player's meter is real too (plan phase 8): the receipt is
             // emitted for every target, and the armour skill hooks read it.
-            ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact });
+            ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
             // Only the resolved source contributes contact buildup. A focus
             // can own effects too; the other hand's sword is never consulted.
             const weaponBuildup = F.foundationSource(ctx, action.source, carrier).buildup || [];
