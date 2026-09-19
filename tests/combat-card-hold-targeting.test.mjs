@@ -36,4 +36,13 @@ ok(/const plan = dropPlan\(up, true\);\s*if \(plan\.legal\) playCard\(inst\.inst
 ok(/if \(selected\) playCard\(selected, enemy\.id\);/.test(combat),
   'choosing an enemy after the hold still commits through the existing selected-card route');
 
+// A hold lights the card from pointer-down; a press that becomes a drag was
+// never a selection, so the inspection layer puts that light out again and
+// leaves a card lit before the press alone.
+const inspection = strip(readFileSync(new URL('../src/ui/components/cardInspection.js', import.meta.url), 'utf8'));
+ok(/card\.addEventListener\('cardholdstart', \(\) => \{ litByHold = litCard\(\) !== identity; select\(\); \}\);/.test(inspection),
+  'the inspection layer remembers whether the hold, not an earlier tap, lit the card');
+ok(/card\.addEventListener\('carddragstart', \(\) => \{ if \(litByHold && litCard\(\) === identity\) clearSelection\(\); litByHold = false; \}\);/.test(inspection),
+  'a hold that becomes a drag douses the light it lent and no other');
+
 console.log(`PASS ${checks}/${checks}; combat-card holds arm targeting without replacing tap or drag`);
