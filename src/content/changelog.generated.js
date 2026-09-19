@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "One tap readies a combat card for its target",
     "detail": "Clicking a card title now fully selects it on the first tap, so the next click on a valid target plays it immediately. The card no longer stops at an inspection highlight when its text redraws under the pointer. Press-and-hold and flick-to-play keep working, and cancelled or moved presses do not become selecting taps.",
-    "build": "0.7.1.284",
+    "build": "0.7.1.286",
     "pullRequest": 1208,
     "url": "https://github.com/cehinds/AshenSpire/pull/1208"
+  },
+  {
+    "id": "pr-1206",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Four more relics have painted identities, and every relic has a lore-and-size preview",
+    "detail": "Ivory Comb, Blessed Dew, Gravetender's Bell and Wyrm Heart now use their own artwork throughout the shared relic displays. The review gallery includes all 63 relics in four sizes, existing lore and source notes, search, artwork filters and working vertical scrolling. Effects, drop rules and saves are unchanged.",
+    "build": "0.7.1.284",
+    "pullRequest": 1206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1206"
   },
   {
     "id": "pr-1205",
