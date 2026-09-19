@@ -25,7 +25,7 @@ export const legacyDungeons = {
           "id": "BS-01",
           "number": 1,
           "x": 36,
-          "y": 72,
+          "y": 84,
           "kind": "entrance",
           "name": "Gate of Unkept Names",
           "speaker": "You",
@@ -316,6 +316,10 @@ export const legacyDungeons = {
           "b": "BS-02",
           "via": [
             [
+              36,
+              72
+            ],
+            [
               35,
               69
             ],
@@ -468,6 +472,10 @@ export const legacyDungeons = {
           "a": "BS-01",
           "b": "BS-12",
           "via": [
+            [
+              36,
+              72
+            ],
             [
               39,
               68
@@ -666,8 +674,8 @@ export const legacyDungeons = {
         {
           "id": "HM-01",
           "number": 1,
-          "x": 18,
-          "y": 80,
+          "x": 16,
+          "y": 86,
           "kind": "entrance",
           "name": "Gate of Second Faces",
           "speaker": "You",
@@ -958,6 +966,10 @@ export const legacyDungeons = {
           "b": "HM-02",
           "via": [
             [
+              18,
+              80
+            ],
+            [
               17,
               76
             ],
@@ -1101,6 +1113,10 @@ export const legacyDungeons = {
           "a": "HM-01",
           "b": "HM-12",
           "via": [
+            [
+              18,
+              80
+            ],
             [
               23,
               81
@@ -1269,8 +1285,8 @@ export const legacyDungeons = {
         {
           "id": "FC-01",
           "number": 1,
-          "x": 74,
-          "y": 76,
+          "x": 77,
+          "y": 91,
           "kind": "entrance",
           "name": "Gate of Banked Coals",
           "speaker": "You",
@@ -1561,6 +1577,10 @@ export const legacyDungeons = {
           "b": "FC-02",
           "via": [
             [
+              74,
+              76
+            ],
+            [
               71,
               74
             ],
@@ -1713,6 +1733,10 @@ export const legacyDungeons = {
           "a": "FC-01",
           "b": "FC-12",
           "via": [
+            [
+              74,
+              76
+            ],
             [
               74,
               72

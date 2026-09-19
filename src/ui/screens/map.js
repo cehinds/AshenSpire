@@ -64,19 +64,19 @@ let liveMapKeys = null;
 let liveMapBoard = null;
 let liveMapViewportRelease = null;
 
+export function releaseMapScreen() {
+  if (liveMapKeys) removeEventListener('keydown', liveMapKeys);
+  liveMapKeys = null;
+  liveMapBoard?.teardown();
+  liveMapBoard = null;
+  liveMapViewportRelease?.();
+  liveMapViewportRelease = null;
+}
+
 export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
-  if (liveMapKeys) {
-    removeEventListener('keydown', liveMapKeys);
-    liveMapKeys = null;
-  }
-  if (liveMapBoard) {
-    liveMapBoard.teardown();
-    liveMapBoard = null;
-  }
-  liveMapViewportRelease?.();
-  liveMapViewportRelease = null;
+  releaseMapScreen();
   const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls });
   const map = run.mapGraph;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this

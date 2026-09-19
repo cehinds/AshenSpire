@@ -1,2 +1,28 @@
-.legacy-dungeon{--mist:#263320;--gold:#cfb987;background:#111412;color:#eee5d3;min-height:100%;padding:22px;box-sizing:border-box;overflow:auto;font-family:Georgia,serif}.legacy-dungeon[data-theme=indigo]{--mist:#242341}.legacy-dungeon[data-theme=ember]{--mist:#4a2218}.legacy-dungeon header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.legacy-dungeon h1{font-size:30px;margin:4px 0}.legacy-eyebrow{font:11px system-ui;text-transform:uppercase;letter-spacing:2px;color:var(--gold)}.legacy-tools{display:flex;align-items:center;gap:10px;font:13px system-ui}.legacy-dungeon button{background:#21251f;color:#eee5d3;border:1px solid #75694d;padding:10px 14px;border-radius:4px;cursor:pointer;font:14px Georgia,serif}.legacy-dungeon button:disabled{opacity:.5;cursor:default}.legacy-dungeon button:focus-visible{outline:3px solid #f4d58d;outline-offset:3px}.legacy-layout{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:24px;max-width:1600px;margin:auto}.legacy-atlas{position:relative;aspect-ratio:1.5;align-self:start;border:1px solid #695f49;border-radius:8px;overflow:hidden}.legacy-atlas svg{display:block;width:100%;height:100%}.legacy-fog{fill:var(--mist);opacity:.96}.legacy-roads polyline{fill:none;stroke:#bea777;stroke-width:2;opacity:.6;stroke-dasharray:5 5}.legacy-roads .walked{stroke:#efcf8c;opacity:1;stroke-dasharray:none}.legacy-dungeon .legacy-node{position:absolute;transform:translate(-50%,-50%);border-radius:50%;width:30px;height:30px;padding:0;font:12px system-ui;background:#151b16;box-shadow:0 2px 8px #000}.legacy-node.resolved{background:#51583c}.legacy-dungeon .legacy-node.current{outline:3px solid #f0d18c;outline-offset:4px;background:#806237;opacity:1}.legacy-dungeon .legacy-node.boss{border-color:#d47463;color:#ffb59e}.legacy-layout aside{padding:10px 0}.legacy-layout h2{font-size:25px;line-height:1.2;margin:12px 0}.legacy-layout p{font-size:16px;line-height:1.6;color:#cfc7b5}.legacy-dungeon .legacy-primary{background:#bda778;color:#111610;width:100%;padding:13px}.legacy-layout .legacy-hint{font:13px/1.6 system-ui;color:#a69f90;margin:20px 0}.legacy-layout nav{display:grid;gap:9px;margin-bottom:22px}.legacy-layout nav button{text-align:left;display:flex;justify-content:space-between}.legacy-layout footer{border-top:1px solid #454334;padding-top:16px;color:#a29b86;font:12px/1.8 system-ui}@media(max-width:800px){.legacy-dungeon{padding:12px}.legacy-layout{grid-template-columns:1fr;gap:12px}.legacy-dungeon header{align-items:start}.legacy-tools{flex-wrap:wrap;justify-content:flex-end}.legacy-tools>span{flex-basis:100%;text-align:right}.legacy-dungeon h1{font-size:23px}.legacy-layout aside{padding:8px}.legacy-dungeon .legacy-node{width:24px;height:24px;font-size:10px}}
-.legacy-dungeon .legacy-layout{width:100%;margin:0 auto}.legacy-dungeon.mapscreen{display:block;height:auto;min-height:100vh}.legacy-dungeon .legacy-tools>span{font-family:system-ui,sans-serif}
+.legacy-dungeon{--legacy-mist:#090c09;background:#0d100d;color:var(--parchment)}
+.legacy-dungeon[data-theme=indigo]{--legacy-mist:#0b0b12}
+.legacy-dungeon[data-theme=ember]{--legacy-mist:#130b09}
+.legacy-dungeon .legacy-scroll{display:block;padding:12px;box-sizing:border-box;background:#090b09}
+.legacy-atlas{position:relative;aspect-ratio:1.5;margin:auto;flex:none;border:1px solid #544e3b;border-radius:6px;overflow:hidden;box-sizing:border-box}
+.legacy-atlas svg{display:block;width:100%;height:100%}
+.legacy-fog{fill:var(--legacy-mist);opacity:.98}
+.legacy-smoke{opacity:.5;mix-blend-mode:screen}
+.legacy-path-haze polyline{fill:none;stroke:#725332;stroke-width:25;opacity:.38}
+.legacy-roads polyline{fill:none;stroke:#b1986b;stroke-width:1.6;opacity:.35;stroke-dasharray:5 5}
+.legacy-roads .walked{stroke:#dfbe7c;opacity:.85;stroke-dasharray:none}
+/* Equal minimums prevent the shared button tap-height stretching markers. */
+.legacy-dungeon .legacy-node{position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;display:grid;place-items:center;width:32px;height:32px;min-width:32px;min-height:32px;max-width:32px;max-height:32px;aspect-ratio:1;border-radius:50%;padding:0;line-height:1;font:12px system-ui;border:1px solid #a18c60;color:#eee0bd;background:#151710;box-shadow:0 2px 8px #000}
+.legacy-dungeon .legacy-node[hidden]{display:none}
+.legacy-node.resolved{background:#3d422e}
+.legacy-dungeon .legacy-node.current{outline:2px solid #e7c783;outline-offset:4px;background:#70572f;opacity:1}
+.legacy-dungeon .legacy-node.selected{border-color:#fff0bd;box-shadow:0 0 12px #d6b974}
+.legacy-dungeon .legacy-node.boss{border-color:#c87561;color:#ffb59e}
+.legacy-dungeon .legacy-node:disabled{opacity:.65}
+.legacy-dungeon .legacy-node:focus-visible{outline:3px solid white;outline-offset:4px}
+.legacy-dungeon .legacy-tray{background:var(--panel);border-top:1px solid var(--line);padding-bottom:.5rem}
+.legacy-tray .map-context{padding:.6rem 2rem 0;max-height:9rem;overflow:auto;text-align:center}
+.legacy-tray .map-context>*{margin:.15rem 0}
+.legacy-roads-list{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;padding:0 1rem}
+.legacy-roads-list .as-btn{font-size:1.1rem;min-width:0}
+.legacy-dungeon .legacy-zoom{display:flex}
+.legacy-zoom .as-btn{min-width:0;padding:.4rem .8rem;background:var(--panel)}
+@media(max-width:600px){.legacy-tray .map-context{max-height:8rem}.legacy-tray .map-context-line{font-size:1.15rem}.legacy-roads-list{flex-wrap:nowrap;overflow:auto;justify-content:flex-start}.legacy-roads-list .as-btn{flex:none}.legacy-dungeon .legacy-node{width:28px;height:28px;min-width:28px;min-height:28px;max-width:28px;max-height:28px;font-size:11px}}
