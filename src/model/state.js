@@ -1254,10 +1254,12 @@ export function stampPlayerPoiseMax(entity, max) {
     // receipt only ever knows the BASE, so a swap of armaments (or a
     // restored fight) would otherwise hand a staggered player their
     // opening threshold back and make the next break cheaper (Codex, #1203).
-    const growth = (entity.poiseMeter && entity.poiseMeter.growth) || 1;
-    const grownMax = growth !== 1 ? Math.ceil(max * growth) : max;
+    const growths = (entity.poiseMeter && entity.poiseMeter.growths) || 0;
+    const step = (entity.poiseMeter && entity.poiseMeter.growthMult) || 1.25;
+    let grownMax = max;
+    for (let i = 0; i < growths; i++) grownMax = Math.ceil(grownMax * step);
     const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, grownMax)) : 0;
-    entity.poiseMeter = { value, max: grownMax, ...(growth !== 1 ? { growth } : {}) };
+    entity.poiseMeter = { value, max: grownMax, ...(growths ? { growths, growthMult: step } : {}) };
   } else {
     delete entity.poiseMeter;
   }

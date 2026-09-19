@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Mana is never a card's only price, a focus decides what its break does, and you can be Staggered too",
     "detail": "Every card that costs Mana also costs an action and stamina — the signature arts now ask a point of stamina beside their Mana, and a few free upgraded powers drop their Mana line instead. Your staff, rod or branch now decides what breaking a foe's Arcane Exposure earns: the plain staves batter the broken foe's Poise, the Blight Rod and the Gorefire Brand build Exposure faster, the Goldbough Branch spreads half the break to every other foe. And your own Poise meter is live: enemy impact fills it, and when it fills you are Staggered — 2 Vulnerable, 2 Weak, and one fewer action next turn.",
-    "build": "0.7.1.287",
+    "build": "0.7.1.289",
     "pullRequest": 1203,
     "url": "https://github.com/cehinds/AshenSpire/pull/1203"
   },

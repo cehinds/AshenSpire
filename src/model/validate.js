@@ -957,7 +957,12 @@ function collectContentProblems(bundle, errors = []) {
         // (plan phase 8): its row carries at least balance.exposure.buildupPerManaSpell.
         const floor = b.balance && b.balance.exposure && b.balance.exposure.buildupPerManaSpell;
         const schoolMult = ((b.balance || {}).arcaneExposure || {}).schoolBuildupMultipliers || {};
-        if (row && Number.isInteger(floor) && Number.isInteger(card.manaCost) && card.manaCost > 0 && (schoolMult[row.damageSchool] || 0) > 0 && row.exposureBuildupPerHit < floor) {
+        // EITHER FACE COSTING MANA BINDS THE ROW. An upgrade that adds a Mana
+        // line was slipping past the floor while its buildup stayed at the
+        // base's (Codex, #1203); the row is one per card, so one face is enough.
+        const upgradedMana = card.upgrade && Number.isInteger(card.upgrade.manaCost) ? card.upgrade.manaCost : card.manaCost;
+        const costsMana = (Number.isInteger(card.manaCost) && card.manaCost > 0) || (Number.isInteger(upgradedMana) && upgradedMana > 0);
+        if (row && Number.isInteger(floor) && costsMana && (schoolMult[row.damageSchool] || 0) > 0 && row.exposureBuildupPerHit < floor) {
           err(`equipment.cardExposure.${card.id}.exposureBuildupPerHit`, `'${card.name || card.id}' costs Mana and builds Arcane Exposure, so it builds at least ${floor} per hit (balance.exposure.buildupPerManaSpell); it builds ${row.exposureBuildupPerHit}`);
         }
       }

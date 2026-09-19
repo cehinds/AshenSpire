@@ -376,9 +376,12 @@ export function dealPoiseDamage(ctx, entity, amount) {
     const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
     if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
       entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
-      // Recorded, so a later restamp from the receipt (an armament swap, a
-      // restored fight) rebuilds the GROWN vessel and not the opening one.
-      entity.poiseMeter.growth = (entity.poiseMeter.growth || 1) * growth;
+      // COUNTED, not multiplied. A later restamp from the receipt (an armament
+      // swap, a restored fight) replays the same rounded steps; one compound
+      // multiply would land a point low, because each live fill rounds up
+      // before the next (Codex, #1203).
+      entity.poiseMeter.growths = (entity.poiseMeter.growths || 0) + 1;
+      entity.poiseMeter.growthMult = growth;
     }
     if (ctx.foundation) { entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value); break; }
   }
@@ -786,11 +789,17 @@ function runOpcode(ctx, action, eff) {
       // threshold, or `amount` points; the school is the firing event's (a
       // break's), else arcane. Immune and locked targets refuse by name.
       const school = (action.meta && action.meta.event && action.meta.event.school) || 'arcane';
+      // A PERCENT IS OF THE FIRING EVENT'S THRESHOLD, not the recipient's: the
+      // Goldbough spreads half of the meter that just broke. Read from each
+      // recipient instead, breaking an 8-point meter poured 10 into a 20-point
+      // foe (Codex, #1203). Without an event to read, the recipient's own
+      // threshold is the only scale there is.
+      const firedThreshold = action.meta && action.meta.event && action.meta.event.threshold;
       for (const t of resolveTargets(ctx, action, eff.target)) {
         addArcaneExposure(ctx, action.source, t, {
           school,
           amountFor: (cfg) => (eff.pct !== undefined
-            ? Math.floor((cfg.threshold * evalNum(ctx, action, eff.pct, 0, t)) / 100)
+            ? Math.floor(((Number.isFinite(firedThreshold) ? firedThreshold : cfg.threshold) * evalNum(ctx, action, eff.pct, 0, t)) / 100)
             : evalNum(ctx, action, eff.amount, 0, t)),
         });
       }

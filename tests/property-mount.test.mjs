@@ -178,6 +178,11 @@ test('an orb\'s resonance pours balance.exposure.resonanceSpreadPct of the broke
   assert.deepEqual(combat.propertyMounts.player[BRANCH_KEY].rules.map((r) => r.tag), ['resonance'], 'and it carries resonance');
   const [first, second] = combat.enemies;
   second.arcaneExposure.value = 0;
+  // THE OTHER FOE'S OWN METER IS DELIBERATELY WIDER. The spread is a share of
+  // the meter that BROKE, so reading the recipient's threshold instead would
+  // pour more than the break was worth (Codex, #1203); two identical foes
+  // cannot tell the two readings apart.
+  second.arcaneExposure.threshold = first.arcaneExposure.threshold * 3;
   const r = playIntoBreak(combat, card, { startMana: combat.player.maxMana });
   assert.equal(r.breaks, 1, 'the hit breaks the first foe');
   const spread = Math.floor((first.arcaneExposure.threshold * EXPOSURE.resonanceSpreadPct) / 100);
