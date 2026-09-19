@@ -1382,9 +1382,16 @@
 }
 :root[data-formation-grid='true'] .formation-grid { display: grid; }
 .formation-grid-cell {
+  position: absolute;
+  transform: translateY(-50%);
   border: 1px solid #d5cc63b0; background: #71822912;
   min-width: 0; padding: .2rem; box-sizing: border-box;
 }
+.formation-grid-cell::after {
+  content: '+'; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%); color: #fff2bb; font-weight: bold;
+}
+.formation-grid-cell[data-occupied='true'] { background: #cab14c40; border-style: solid; border-width: 2px; }
 .formation-grid-cell[data-side='enemy'] { border-color: #e1a679b0; background: #9c552512; }
 .formation-grid-cell span {
   display: inline-block; background: #14110de6; color: #fff2bb;
