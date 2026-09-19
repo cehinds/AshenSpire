@@ -594,8 +594,10 @@ function collectContentProblems(bundle, errors = []) {
       }
     }
     const poise = b.balance.poise;
-    if (poise && typeof poise === 'object' && !Array.isArray(poise)) {
+    if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerPerConstitution, playerImpactPerHit } — the poise meters read it (plan phase 8)');
+    else {
       if (!(Number.isInteger(poise.playerPerConstitution) && poise.playerPerConstitution >= 0)) err('balance.poise.playerPerConstitution', `must be a non-negative integer, got ${JSON.stringify(poise.playerPerConstitution)}`);
+      if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
     }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {

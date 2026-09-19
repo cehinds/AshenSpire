@@ -514,7 +514,9 @@ the new opcode `arcaneBuildup` and target `otherEnemies`, carriers by item
 the brand overcharge, the branch rings out); the player's poise meter via
 `dealPoiseDamage` and `staggerPlayer`, `balance.stagger.player { actionLoss,
 statuses }` (a status map, so the engine names no status), the receipt's
-Constitution term as `balance.poise.playerPerConstitution`. Two deviations,
+Constitution term as `balance.poise.playerPerConstitution`; outside the
+foundation ruleset (the shipped fight has none) an enemy blow that draws
+blood rocks the player by `balance.poise.playerImpactPerHit`. Two deviations,
 both deferred to phase 9 on purpose: the signature arts cost 1 stamina / 1
 Mana, not 2 / 2 — under the current tiers the Reaver and the Rogue start
 with a one-point Mana pool and the Starseer and the Herald with one stamina,

@@ -3680,8 +3680,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(combat.loadout.sets.armor[0], 'default', 'armour can also be changed during the player turn');
     eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
       loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
-      itemUpgradeLevels: combat.itemUpgradeLevels,
-    }).value, 'changing armour immediately stamps the exact live Poise threshold');
+      itemUpgradeLevels: combat.itemUpgradeLevels, attributes: combat.attributes,
+    }).value, 'changing armour immediately stamps the exact live Poise threshold (Constitution included)');
     assert(combat.player.poiseMeter.max !== poiseBeforeArmour,
       'changing from Oathsworn armour to Wayfarer Plate visibly changes the Poise vessel');
     assert(armourChanged.events.some((event) => event.type === 'equipmentChanged'),
@@ -9461,6 +9461,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.player.pendingActionLoss, 0, 'and the debt is paid once');
     dispatch(c, { type: 'endTurn' });
     eq(c.player.energy, c.player.energyMax, 'the turn after is whole');
+
+    // THE SHIPPED FIGHT HAS NO RULESET: an enemy blow that draws blood rocks
+    // the player by balance.poise.playerImpactPerHit, and two blows fill a
+    // meter of twice that — the player is Staggered by ordinary enemy hits.
+    const perHit = bal.poise.playerImpactPerHit;
+    const hit = createCombat({
+      registries: REG, rng: createRng(7),
+      player: { classId: 'reaver', maxHp: 90, hp: 90, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: Array.from({ length: 5 }, (_, i) => ({ instanceId: `hk${i}`, cardId: 'tKeep', upgraded: false })), relicIds: [], flasks: [], poiseMax: perHit * 2 },
+      enemyIds: ['tHitter'],
+    });
+    assert(!hit.foundation, 'the fixture, like main.js, hands in no ruleset');
+    dispatch(hit, { type: 'endTurn' });
+    eq(hit.player.poiseMeter.value, perHit, 'the first enemy hit rocks the player by the row');
+    assert(logOf(hit, 'impactDealt').some((e) => e.targetId === 'player' && e.amount === perHit), 'and says so');
+    dispatch(hit, { type: 'endTurn' });
+    eq(logOf(hit, 'playerStaggered').length, 1, 'the second fills the meter and Staggers');
+    eq(hit.player.energy, hit.player.energyMax - stagger.actionLoss, 'the turn after the enemy\'s opens one action short');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, poise: { ...bal.poise, playerImpactPerHit: -1 } } })).some((e) => /balance\.poise\.playerImpactPerHit/.test(e)), 'a negative impact row is refused by name');
+    const { poise: _noPoise, ...sansPoise } = bal;
+    assert(said(validateContent({ ...contentBundle, balance: sansPoise })).some((e) => /^balance\.poise:/.test(e)), 'a bundle without the poise block is refused by name');
 
     // THE VESSEL'S MAX: Constitution × the row, the body armour, the relics.
     const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });

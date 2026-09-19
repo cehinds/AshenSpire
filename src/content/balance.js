@@ -64,6 +64,10 @@ export const balance = {
     // A derived-stat row for it waits for phase 9's ruleset, which rewrites
     // every derived formula at once; until then the coefficient lives here.
     playerPerConstitution: 1, // PROVISIONAL
+    // OUTSIDE the foundation ruleset (the shipped fight has none), an enemy
+    // blow that draws blood rocks the player by this much; the ruleset's
+    // weapon impact replaces it wherever a ruleset is handed in.
+    playerImpactPerHit: 2, // PROVISIONAL
   },
 
   // WHAT A PLAYER STAGGER COSTS (plan phase 8, proposal §7.3): the poise meter

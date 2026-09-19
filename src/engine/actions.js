@@ -337,7 +337,9 @@ export function staggerPlayer(ctx, player) {
     applied[status] = stacks;
   }
   player.pendingActionLoss = (player.pendingActionLoss || 0) + actionLoss;
-  ctx.emit('playerStaggered', { targetId: player.id, actionLoss, statuses: applied });
+  // The seat, in co-op: every player entity is `player`, so the receipt
+  // names the member as the other player-side events do.
+  ctx.emit('playerStaggered', { targetId: player.id, actionLoss, statuses: applied, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(player) } : {}) });
 }
 
 /**
@@ -362,7 +364,7 @@ export function dealPoiseDamage(ctx, entity, amount) {
   while (entity.poiseMeter.value >= entity.poiseMeter.max) {
     if (++guard > 100) throw new Error('Poise meter fill loop did not terminate');
     entity.poiseMeter.value -= entity.poiseMeter.max;
-    ctx.emit('meterFilled', { targetId: entity.id, meter: 'poise', threshold: entity.poiseMeter.max });
+    ctx.emit('meterFilled', { targetId: entity.id, meter: 'poise', threshold: entity.poiseMeter.max, ...(!isEnemy && ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
     if (isEnemy) {
       staggerEnemy(ctx, entity);
       for (const eff of cfg.onFill || []) {
@@ -583,7 +585,20 @@ function runOpcode(ctx, action, eff) {
           const base = evalNum(ctx, action, eff.amount, 0, t);
           const carrier = eff.attack ? { ...action.card, attack: eff.attack } : action.card;
           const evaded = ctx.foundation && t.evade > 0 && carrier?.attack?.dodgeable !== false;
+          const hpBefore = t.hp;
           applyAttackDamage(ctx, action.source, t, base, attackTags, carrier);
+          // OUTSIDE the foundation ruleset (the shipped game creates its combats
+          // without one), an enemy blow that draws blood rocks the player by
+          // balance.poise.playerImpactPerHit — the one impact the shipped
+          // fight has (plan phase 8, SPEC §13.4k). The ruleset's weapon impact
+          // below replaces it wherever a ruleset is handed in.
+          if (!ctx.foundation && t.kind === 'player' && action.source && action.source.kind === 'enemy' && t.alive && t.hp < hpBefore) {
+            const perHit = ((ctx.registries.balance || {}).poise || {}).playerImpactPerHit;
+            if (Number.isInteger(perHit) && perHit > 0) {
+              dealPoiseDamage(ctx, t, perHit);
+              ctx.emit('impactDealt', { sourceId: action.source.id, targetId: t.id, amount: perHit, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(t) } : {}) });
+            }
+          }
           if (ctx.foundation && !evaded && t.alive && !(action.meta?.foundationAncestry?.length)) {
             const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)));
             dealPoiseDamage(ctx, t, resistedImpact);

@@ -725,7 +725,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {} }).value);
+  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
@@ -827,6 +827,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     relics: p.relicIds || [],
     class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
+    attributes: combat.attributes || null,
   }).value);
 
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);

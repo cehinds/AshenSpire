@@ -31,7 +31,9 @@ function botTurn(combat, memberId) {
     const card = P.piles.hand.find((h) => {
       const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
       if ((def.keywords || []).includes('unplayable')) return false;
-      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana;
+      // Stamina is a price too (plan phase 8 put one on the signature arts):
+      // a play the pool cannot fund throws, and a throw ends the bot's turn.
+      return (def.cost === 'X' ? 0 : def.cost) <= P.entity.energy && (def.manaCost || 0) <= P.entity.mana && (def.staminaCost || 0) <= (P.entity.stamina || 0);
     });
     // A SELF-TARGETING CARD IS NOT AIMED AT AN ENEMY. The engine refuses one
     // that is ("Invalid self target"), and a refusal here used to end the bot's
@@ -784,7 +786,7 @@ try {
   // zero default.
   {
     const p1m = S.session.members.get('p1');
-    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {} }).value;
+    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {}, attributes: p1m.run.attributes }).value;
     // The entity carries it as its poise METER's max (state.js stampPlayerPoiseMax);
     // an absent meter is the engine's "no vessel" — the zero this fix removes.
     const meter = S.live.combat.players.get('p1').entity.poiseMeter;
