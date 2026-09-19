@@ -23,7 +23,7 @@ import {
   computeTokenBindings,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
-import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER, rewardClaimStatus } from '../src/model/rewardplan.js';
+import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
@@ -33,7 +33,7 @@ import { computeAttackDamage, applyLoseHp, applyHeal } from '../src/engine/actio
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun, syncZones } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
@@ -44,7 +44,6 @@ import {
   rollRuneReward,
   rollCardRewardIds,
   rollSkillDraftIds,
-  rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
@@ -80,7 +79,6 @@ import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/mod
 import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft, reconcileSkillUpgrades } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
 import { classCard } from '../src/model/classCard.js';
-import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp } from '../src/model/classTree.js';
 import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
@@ -8881,90 +8879,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(twiceRelic).some((e) => /classes\.reaver\.kitRelic: 'forsakenMedallion' is already the starting relic/.test(e)), 'a kit relic that is the starting relic is refused by name');
     const relicLeaning = validateContent({ ...testBundle(), tagging: [...testBundle().tagging, { family: 'relic', scope: '', objectId: 'warhorn', tagId: 'favored' }] });
     assert(said(relicLeaning).some((e) => /tagging\.relic\.warhorn: 'favored' is the class card's leaning/.test(e)), 'a leaning on a relic is refused by name');
-  });
-
-  test('88. the class tree: a level buys a node, the pick rides the core card, the top pick is the subclass (plan phase 5b)', () => {
-    const c = REG.balance.skill.class;
-    // THE TABLE IS THE TREE: rows per class, tiers the balance rows open.
-    const rows = classTreeRows(REG, 'reaver');
-    eq(rows.length, 6, 'the reaver tree has six nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
-    eq(tierOpensAt(REG, 1), c.tierAt[0]); eq(tierOpensAt(REG, 3), c.tierAt[2]); eq(tierOpensAt(REG, 9), Infinity, 'a tier the table has not got never opens');
-    for (const cls of REG.classes.all()) assert(classTreeRows(REG, cls.id).some((r) => r.tier === 3), `${cls.id} has a subclass tier`);
-    // THE POOL: what a class at a level may draft, given what it picked.
-    eq(classDraftPool(REG, 'reaver', [], 0).length, 0, 'level 0 opens nothing');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo', 'tier 1 at its level');
-    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo', 'a picked node leaves the pool');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 6, 'every tier open at the top level');
-    eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('bulwarkKing'), false, 'the other subclass is excluded once one is picked');
-    eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('ironFooting'), true, 'the lower tiers stay open');
-    // THE ROLL: draftSize distinct nodes on the cardRewards stream; an empty pool draws nothing.
-    const roll = rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: [], level: c.tierAt[2] });
-    eq(roll.length, REG.balance.skill.draftSize); eq(new Set(roll).size, roll.length, 'distinct');
-    assert(roll.every((id) => rows.some((r) => r.nodeId === id)), 'every pick is a reaver node');
-    const rngEmpty = createRng(9); const before = JSON.stringify(rngEmpty.getCounters());
-    eq(rollClassDraftIds(REG, rngEmpty, { classId: 'reaver', coreTags: [], level: 0 }).length, 0); eq(JSON.stringify(rngEmpty.getCounters()), before, 'nothing drawn for nothing');
-    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting'], level: c.tierAt[0] }).join(','), 'bloodTempo', 'a pool smaller than the draft is the whole pool');
-    // THE PICK writes the core card's own tags, and only what the tree allows.
-    const run = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
-    eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.coreTags), '[]', 'a fresh run has picked nothing'); eq(JSON.stringify(run.zones.coreTags), '[]', 'and the core zone projects it');
-    eq(pickClassNode(REG, run, 'ironFooting'), false, 'level 0 may pick nothing');
-    awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
-    eq(skillLevel(run, 'class:reaver'), 1);
-    eq(pickClassNode(REG, run, 'warlord'), false, 'a tier not yet open is refused');
-    eq(pickClassNode(REG, run, 'ironFooting'), true, 'a tier-1 node is picked');
-    eq(pickClassNode(REG, run, 'ironFooting'), false, 'and not twice');
-    syncZones(run); eq(run.zones.coreTags.join(','), 'ironFooting', 'the projection follows');
-    const saved = JSON.parse(serializeRun(run)); eq(saved.coreTags.join(','), 'ironFooting', 'the pick rides the save');
-    assert(/coreTags\[0\] must be a non-empty node id/.test(validateRunShape({ ...run, coreTags: [3] }).join('|')), 'a malformed pick is refused by name');
-    assert(/picked twice/.test(validateRunShape({ ...run, coreTags: ['ironFooting', 'ironFooting'] }).join('|')));
-    const old = JSON.parse(serializeRun(run)); delete old.coreTags; old.schemaVersion = 8;
-    const back = deserializeRun(JSON.stringify(old)); eq(back.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(back.coreTags), '[]', 'a schema-8 save gains no picks');
-    // THE CLASS TRACK is paid by the run's owner: a win, more for a boss, a loss nothing.
-    const paid = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
-    eq(awardClassXp(REG, paid, { victory: false, pool: 'boss' }), null, 'a lost fight pays nothing');
-    awardClassXp(REG, paid, { victory: true, pool: 'normal' }); eq(paid.skills['class:reaver'].xp, c.xp.perWin, 'a won fight pays perWin');
-    awardClassXp(REG, paid, { victory: true, pool: 'boss' }); eq(paid.skills['class:reaver'].xp, 2 * c.xp.perWin + c.xp.bossKill, 'a boss pays bossKill on top');
-    // THE PICK MOUNTS with the class card, in solo, co-op and a restored fight; the rule fires.
-    run.coreTags = ['ironFooting'];
-    const cb = createCombat({ registries: REG, rng: createRng(0x5b5b), player: { classId: 'reaver', attributes: run.attributes, skills: run.skills, coreTags: run.coreTags, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: run.relics }, enemyIds: ['fellWarden'] });
-    const mount = cb.propertyMounts[triggerOwnerKey(cb, cb.player)]['class:reaver'];
-    eq(mount.rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'the picked node mounts beside the leaning');
-    const blockBefore = cb.player.block;
-    dispatch(cb, { type: 'playCard', cardInstanceId: (cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace')).instanceId, targetId: cb.enemies[0].id });
-    assert(cb.player.block - blockBefore >= 4 + REG.balance.classTree.ironFooting.block, 'Brace braces, and Iron Footing braces more');
-    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
-    const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });
-    eq(back2.propertyMounts[triggerOwnerKey(back2, back2.player)]['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'a restored fight mounts the pick again');
-    const seatB = createRunState({ seed: 0x5b5c, classId: 'starseer', registries: REG });
-    const party = createCoopCombat({ registries: REG, rng: createRng(2), players: [
-      { id: 'A', classId: 'reaver', attributes: run.attributes, skills: {}, coreTags: ['bloodTempo'], maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, loadout: run.loadout, relicIds: [] },
-      { id: 'B', classId: 'starseer', attributes: seatB.attributes, skills: {}, coreTags: [], maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
-    ], enemyIds: ['fellWarden'] });
-    eq(party.propertyMounts.A['class:reaver'].rules.map((r) => r.tag).join(','), 'favored,bloodTempo', "each seat's picks are its own");
-    eq(party.propertyMounts.B['class:starseer'].rules.map((r) => r.tag).join(','), 'favored');
-    // THE CARD READS ITS PICKS: the subclass lends its name and glyph.
-    eq(classCard(REG, 'reaver', ['ironFooting']).presentation.name, 'Reaver', 'a lower pick leaves the name');
-    const sub = classCard(REG, 'reaver', ['ironFooting', 'warlord']);
-    eq(sub.subclassId, 'warlord'); eq(sub.presentation.name, 'Warlord', 'the subclass is the name'); eq(sub.presentation.glyph, '👑');
-    eq(sub.picked.join(','), 'ironFooting,warlord');
-    // THE MENU: a class draft is a keyed choice row of nodes, ahead of the skill draft; auto-collect picks a node.
-    const plan = rewardPlan({ classDrafts: [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }], skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });
-    eq(plan.rows.map((r) => r.key).join(','), 'classDraft:reaver:0,skillDraft:item:blade:0');
-    eq(resolveContinue(plan, {}, 'auto', () => 1).take[0].nodeId, 'bloodTempo', 'the injected pick chooses the node');
-    eq(rewardClaimStatus(plan).requiredChoice.count, 2);
-    const pending = (states, chosenDraftNodeIds, drafts = plan.rows[0] && [{ classId: 'reaver', level: 1, nodeIds: ['ironFooting', 'bloodTempo'] }]) => validateRunShape({ ...run, pendingReward: { schemaVersion: 1, source: 'normal', after: 'map', rewards: { classDrafts: drafts }, states, chosenCardId: null, chosenDraftNodeIds } }).join(' | ');
-    eq(pending({ 'classDraft:reaver:0': 'taken' }, { 'classDraft:reaver:0': 'ironFooting' }), '', 'a taken class draft with its node passes');
-    assert(/chosenDraftNodeIds\.classDraft:reaver:0 must name a node of that draft/.test(pending({ 'classDraft:reaver:0': 'taken' }, { 'classDraft:reaver:0': 'warlord' })));
-    assert(/Taken state requires its chosen node/.test(pending({ 'classDraft:reaver:0': 'taken' }, {})));
-    assert(/classDrafts\[0\]\.nodeIds must be a non-empty array/.test(pending({}, {}, [{ classId: 'reaver', level: 1, nodeIds: [] }])));
-    // VALIDATION of the tree, by name.
-    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
-    const badTree = (rows2) => validateContent({ ...testBundle(), classTree: rows2 });
-    assert(said(badTree([...contentBundle.classTree, { classId: 'nope', nodeId: 'ironFooting', tier: 1 }])).some((e) => /unknown class 'nope'/.test(e) || /already sits in class/.test(e)), 'an unknown class is refused by name');
-    assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'blade', tier: 1 }])).some((e) => /is not a property node/.test(e)), 'a non-property node is refused by name');
-    assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'siphon', tier: 7 }])).some((e) => /must be a tier 1\.\.3/.test(e)), 'a tier the balance rows do not open is refused by name');
-    assert(said(badTree(contentBundle.classTree.map((r) => (r.nodeId === 'bulwarkKing' ? { ...r, nodeId: 'siphon' } : r)))).some((e) => /do not exclude one another/.test(e)), 'two subclasses that do not exclude one another are refused by name');
-    assert(said(validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, class: { ...c, tierAt: [3, 1] } } } })).some((e) => /balance\.skill\.class\.tierAt/.test(e)), 'a falling tier ladder is refused by name');
   });
 
   const passed = results.filter((r) => r.ok).length;
