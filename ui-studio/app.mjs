@@ -107,7 +107,9 @@ async function boot() {
     await tryStaticConfig();
   }
   const drafts = store.get(LS.drafts, {});
-  for (const [rel, draft] of Object.entries(drafts)) { const f = fileOf(rel); if (f && draft.hash === f.hash) f.history = new M.History(draft.data); }
+  // A draft is only restored onto the file it was made from, and only as an
+  // object: anything else (an older session's shape) is dropped, never drawn.
+  for (const [rel, draft] of Object.entries(drafts)) { const f = fileOf(rel); if (f && draft && draft.hash === f.hash && M.isObject(draft.data)) f.history = new M.History(draft.data); }
   const sketch = store.get(LS.sketch);
   if (sketch && !M.sketchProblems(sketch.sketch).length) { state.sketch = new M.History(sketch.sketch); state.sketchName = sketch.name || ''; state.sketchHash = sketch.hash || null; state.sketchSaved = sketch.saved || null; }
   else state.sketchSaved = M.clone(state.sketch.present);
@@ -662,7 +664,7 @@ function onRightClick(e) {
   if (act === 'import-settings') { state.pendingImport = 'settings'; $('#open-json').click(); }
   if (act === 'raw-on') { state.raw = true; renderRight(); }
   if (act === 'raw-off') { state.raw = false; renderRight(); }
-  if (act === 'raw-apply') { try { const data = JSON.parse($('#raw-json').value); state.raw = false; commitFile(activeRel(), data); } catch (err) { $('#raw-problems').textContent = err.message; } }
+  if (act === 'raw-apply') { try { const data = JSON.parse($('#raw-json').value); if (!M.isObject(data)) throw Error('A config file is a JSON object ({ ... }); the draft was not applied'); state.raw = false; commitFile(activeRel(), data); } catch (err) { $('#raw-problems').textContent = err.message; } }
   if (act === 'add-value') addValuePrompt();
   if (act === 'validate') validateConfig();
   if (act === 'save-config') saveConfig();
@@ -890,7 +892,7 @@ async function openJsonFiles(e) {
     if (data && data.schema === M.SKETCH_SCHEMA) { loadSketch(data, file.name.replace(/\.sketch\.json$|\.json$/, '')); continue; }
     const m = /^(ui__(?:tokens|(?:scenes|components|screens|presentation)__[\w-]+)\.json)$/.exec(file.name) || /(ui\/(?:tokens|(?:scenes|components|screens|presentation)\/[\w-]+)\.json)$/.exec(file.name);
     const rel = m ? m[1].replace(/__/g, '/') : null;
-    if (rel) { if (fileOf(rel)) { fileOf(rel).history.push(data); } else loadFile({ rel, text, hash: null }); toast(`Loaded ${rel}`); const w = state.settings.wireframes.find((x) => x.file === rel); if (w) state.wireframeId = w.id; renderAll(); continue; }
+    if (rel) { if (!M.isObject(data)) { toast(`${file.name}: a config file is a JSON object`, true); continue; } if (fileOf(rel)) { fileOf(rel).history.push(data); } else loadFile({ rel, text, hash: null }); toast(`Loaded ${rel}`); const w = state.settings.wireframes.find((x) => x.file === rel); if (w) state.wireframeId = w.id; renderAll(); continue; }
     if (data && data.sizing || data && data.vars) { const rel = prompt(`Which config file is ${file.name}? (ui/scenes/w4a-combat.json, ui/tokens.json, …)`); if (rel && /^ui\//.test(rel)) { if (fileOf(rel)) fileOf(rel).history.push(data); else loadFile({ rel, text, hash: null }); renderAll(); } continue; }
     toast(`${file.name}: not a config file or a sketch`, true);
   }

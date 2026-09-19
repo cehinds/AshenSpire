@@ -17,7 +17,7 @@
 export const SETTINGS_SCHEMA = 'ashenspire.ui-studio-settings/1';
 export const SKETCH_SCHEMA = 'ashenspire.ui-sketch/1';
 
-const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+export const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 export const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 export const round = (v, places = 2) => Math.round(v * 10 ** places) / 10 ** places;
 export const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
@@ -540,9 +540,12 @@ export function sceneBandsPlan(bands, height, { footerMinPx = 0, contextMinPx = 
  * combatant and behavior.shortHostRails is on, the footer folds into rails
  * beside the hand (footer 0) and the hand yields height to the field.
  */
+/** The rem the combat allocator measures with: the root rem, floored at 16 physical px as combatLayout.js does. */
+export const combatRem = (rem) => Math.max(16, rem);
+
 export function combatPlan(data, parent, { width, height, zoom = 1, rem = 10, cardRatio = 5 / 7, resolve = (v) => v } = {}) {
   const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' && Number.isFinite(r) ? r : fallback; };
-  const sizing = data.sizing || {}, hand = sizing.hand || {}, formation = sizing.formation || {}, footer = sizing.footer || {};
+  const sizing = (isObject(data) && data.sizing) || {}, hand = sizing.hand || {}, formation = sizing.formation || {}, footer = sizing.footer || {};
   const bands = sizing.bands || {};
   const share = (id) => num(bands[id]) / 100;
   const footerMinPx = num(getPath(parent || {}, 'sizing.minimums.footerPx'));
@@ -627,7 +630,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
     if (depth > 32) return NaN;
     if (isRef(v)) {
       const name = v.slice(1);
-      const vars = data.vars || {};
+      const vars = (isObject(data) && data.vars) || {};
       const owner = Object.prototype.hasOwnProperty.call(vars, name) ? vars[name] : tokens[name];
       return owner === undefined ? NaN : resolve(owner, depth + 1);
     }
@@ -661,7 +664,11 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       // hand. The band EDGES still edit the nominal percents.
       const cardData = configs['ui/components/card.json'];
       const cardRatio = cardData && cardData.sizing && cardData.sizing.ratio ? (() => { const r = resolve(cardData.sizing.ratio); return typeof r === 'number' && r > 0 ? r : 5 / 7; })() : 5 / 7;
-      const plan = combatPlan(data, parent, { width: W, height: H, zoom, rem, cardRatio, resolve });
+      // The live allocator (combatLayout.js) floors its rem at 16 local px
+      // (Math.max(16 / zoom, rootFontPx)): 16 physical px here, so a zoomed-
+      // out landscape phone keeps the battlefield, rail and hand minimums
+      // the game keeps rather than the smaller ones the root font alone gives.
+      const plan = combatPlan(data, parent, { width: W, height: H, zoom, rem: combatRem(rem), cardRatio, resolve });
       const entries = bandEntries(sizing.bands);
       const drawn = { hud: plan.hud, scene: plan.battlefield, context: plan.hand, footer: plan.footer };
       let y = 0;

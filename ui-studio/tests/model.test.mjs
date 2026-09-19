@@ -183,9 +183,24 @@ test('regionsFor draws the combat plan the game draws: physical minimums, the ha
   assert.equal(plan.supported, true);
   const short = M.regionsFor(wf, w4a, { width: 844, height: 390 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10, configs });
   assert.equal(short.find((r) => r.band === 'footer'), undefined, 'no footer band under rails');
-  assert.equal(short.find((r) => r.band === 'context').h, 208);
+  // Drawn with the allocator's floored rem (16 px, not 6.2): the battlefield keeps its 148 px floor and the hand gives up 5 px, as the game does.
+  assert.equal(short.find((r) => r.band === 'context').h, 203);
+  assert.equal(short.find((r) => r.band === 'scene').h, 148);
   assert.ok(short.some((r) => r.id === 'rail.left') && short.some((r) => r.id === 'rail.right'));
   assert.match(short.find((r) => r.band === 'scene').note, /rails/);
+  // regionsFor measures combat with the rem floored at 16 physical px, as the
+  // live allocator does (Math.max(16 / zoom, rootFontPx) local px): at 780x360
+  // (zoom 0.62, root rem 6.2 px) the battlefield keeps its 148 px floor where
+  // the unfloored rem would leave 116 px.
+  assert.equal(M.combatRem(6.2), 16); assert.equal(M.combatRem(17), 17);
+  const floored = M.combatPlan(w4a, w4, { width: 780, height: 360, zoom: 0.62, rem: M.combatRem(6.2), resolve });
+  assert.deepEqual([floored.battlefield, floored.hand], [148, 176]);
+  const drawn = M.regionsFor(wf, w4a, { width: 780, height: 360 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10, configs });
+  assert.equal(drawn.find((r) => r.band === 'scene').h, 148);
+  assert.equal(drawn.find((r) => r.band === 'context').h, 176);
+  // A draft that is not an object (raw JSON `null`) draws nothing rather than throwing.
+  assert.doesNotThrow(() => M.combatPlan(null, w4, { width: 780, height: 360, resolve }));
+  assert.doesNotThrow(() => M.regionsFor(wf, null, { width: 780, height: 360 }, { parent: w4, tokens, configs }));
   // With rails switched off in behavior, the stacked plan stands and is reported unsupported.
   const noRails = M.combatPlan({ ...w4a, behavior: { ...w4a.behavior, shortHostRails: false } }, w4, { width: 844, height: 390, zoom: 0.62, rem: 6.2, resolve });
   assert.deepEqual([noRails.arrangement, noRails.supported], ['stacked', false]);

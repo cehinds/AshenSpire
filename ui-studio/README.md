@@ -49,7 +49,10 @@ width against `wideMinRem`), the Armoury its own 760 px breakpoint, the Smith
 the category rail's minimum host width. Rem values are drawn in the game's own
 coordinate space: one rem is `rootFontPx` (10 at text size Auto) times the
 zoom the game applies at that device, so an iPad at zoom 0.64 keeps the
-Smith's rail where a phone at 0.9 folds it into a selector row.
+Smith's rail where a phone at 0.9 folds it into a selector row. The combat
+plan alone measures with that rem floored at 16 px, as `combatLayout.js`
+does, so a zoomed-out landscape phone keeps the battlefield, rail and hand
+minimums the game keeps.
 
 ## Grid and snapping
 
