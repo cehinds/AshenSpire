@@ -61,4 +61,3 @@ test('beacon work costs health and earns wages; strongbox instead adds its promi
     assert.ok(hasQuestCompletion(run, 'lastLantern'));
   }
 });
-
