@@ -514,8 +514,8 @@ async function selftest() {
         // heal. Only the wake fires.
         name: "the shipped writer drops a field, so this build's own saves need healing (premise-death)",
         file: 'src/engine/save.js',
-        find: '      storage.setItem(runKey(slot), serializeRun(run));',
-        replace: '      const _p = JSON.parse(serializeRun(run)); delete _p.loadout;\n      storage.setItem(runKey(slot), JSON.stringify(_p));',
+        find: 'storage.setItem(runKey(slot), serializeRun(run));',
+        replace: 'storage.setItem(runKey(slot), (() => { const _p = JSON.parse(serializeRun(run)); delete _p.loadout; return JSON.stringify(_p); })());',
         expectRed: /THE PREMISE HAS DIED/,
       },
     ],

@@ -2171,5 +2171,180 @@ export const uiStrings = [
     "short": "Piles",
     "full": "Choose which spent pile to read.",
     "tip": "Piles"
+  },
+  {
+    "id": "title.slots.door.new",
+    "extends": "",
+    "short": "New game",
+    "full": "Choose the slot a new climb will be saved in.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.door.load",
+    "extends": "",
+    "short": "Load game",
+    "full": "Choose the saved climb to continue.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.primary.new",
+    "extends": "",
+    "short": "Create character",
+    "full": "Go on to make the character that starts in the chosen slot.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.primary.load",
+    "extends": "",
+    "short": "Load",
+    "full": "Load the chosen saved climb.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.saved",
+    "extends": "",
+    "short": "Saved {when}",
+    "full": "When this slot was last written.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.seed",
+    "extends": "",
+    "short": "Seed {seed}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.start.occupied",
+    "extends": "",
+    "short": "Start in slot {slot}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.start.occupied.prompt",
+    "extends": "",
+    "short": "This slot holds a saved climb. Nothing changes until you begin the new one; you will be asked to replace it then.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.delete",
+    "extends": "",
+    "short": "Delete slot {slot}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.delete.message",
+    "extends": "",
+    "short": "The saved climb in slot {slot} is removed. It is not kept anywhere and cannot be recovered. Your profile stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.delete.confirm",
+    "extends": "",
+    "short": "DELETE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.replace",
+    "extends": "",
+    "short": "Replace this save?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.replace.message",
+    "extends": "",
+    "short": "Replacement: {className}, seed {seed}. The saved climb in slot {slot} is removed and cannot be recovered.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.replace.confirm",
+    "extends": "",
+    "short": "Replace",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.load",
+    "extends": "",
+    "short": "Load slot {slot}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.load.message",
+    "extends": "",
+    "short": "The saved climb replaces everything done since your last save.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.load.confirm",
+    "extends": "",
+    "short": "Load saved run",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.title",
+    "extends": "",
+    "short": "Save game",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.destination",
+    "extends": "",
+    "short": "Slot {slot}",
+    "full": "Where this run is saved.",
+    "tip": ""
+  },
+  {
+    "id": "save.status.lastSaved",
+    "extends": "",
+    "short": "Last saved {when}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.neverSaved",
+    "extends": "",
+    "short": "Not saved yet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.saved",
+    "extends": "",
+    "short": "Saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.failed",
+    "extends": "",
+    "short": "The save did not land: {reason}. Your run is unchanged; try the save again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.retry",
+    "extends": "",
+    "short": "Retry save",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.save",
+    "extends": "",
+    "short": "Save",
+    "full": "",
+    "tip": ""
   }
 ];

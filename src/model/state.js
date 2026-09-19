@@ -624,6 +624,7 @@ export const RUN_SHAPE = [
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
   { key: 'seedString', type: 'string', nullable: true },
+  { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
   // Optional, backward-compatible presentation state. It is owned by the run
