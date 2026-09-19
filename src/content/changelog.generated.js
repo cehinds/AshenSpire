@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Four more relics have painted identities, and every relic has a lore-and-size preview",
     "detail": "Ivory Comb, Blessed Dew, Gravetender's Bell and Wyrm Heart now use their own artwork throughout the shared relic displays. The review gallery includes all 63 relics in four sizes, existing lore and source notes, search, artwork filters and working vertical scrolling. Effects, drop rules and saves are unchanged.",
-    "build": "0.7.1.282",
+    "build": "0.7.1.284",
     "pullRequest": 1206,
     "url": "https://github.com/cehinds/AshenSpire/pull/1206"
+  },
+  {
+    "id": "pr-1205",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The roads tell the stories of the places they cross",
+    "detail": "The six existing surveys now have regional names, requests and reports when you return for your reward. The Second Cairn asks you to raise the fallen swords of the unwritten dead, and the Last Lantern names the hamlets waiting for its medicine. The Road Warden is distinct from the old marked Wardens. Quest choices, rewards and saved routes stay the same.",
+    "build": "0.7.1.282",
+    "pullRequest": 1205,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1205"
   },
   {
     "id": "pr-1204",
