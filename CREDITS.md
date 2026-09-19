@@ -6,11 +6,12 @@ Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
 
 ## Painted relic illustrations
 
-The eight 256px transparent WebPs in `assets/relics/` are project-owned
+The twelve 256px transparent WebPs in `assets/relics/` are project-owned
 AI-generated illustrations created with built-in OpenAI imagegen.
 Sources, exact prompts and export manifests are preserved in
-[relic pack 01](art/relic-icons-pack-01/README.md) and
-[relic pack 02](art/relic-icons-pack-02/README.md).
+[relic pack 01](art/relic-icons-pack-01/README.md),
+[relic pack 02](art/relic-icons-pack-02/README.md), and
+[relic pack 03](art/relic-icons-pack-03/README.md).
 No third-party artwork was used and no third-party license is claimed.
 
 ## Painted enemy sprites from the Unity fork

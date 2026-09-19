@@ -3,7 +3,7 @@
   "generator": "built-in image_gen",
   "date": "2026-09-19",
   "catalog": "src/content/relics.js",
-  "status": "review art; not wired into runtime",
+  "status": "256px exports integrated through src/model/relicArt.js",
   "assets": [
     {
       "id": "ivoryComb",

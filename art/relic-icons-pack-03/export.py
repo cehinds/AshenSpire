@@ -6,7 +6,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent
 items = json.loads((ROOT / "catalog-selection.json").read_text(encoding="utf-8"))
 manifest = {"pack": "relic-icons-pack-03", "generator": "built-in image_gen", "date": "2026-09-19",
-    "catalog": "src/content/relics.js", "status": "review art; not wired into runtime", "assets": []}
+    "catalog": "src/content/relics.js", "status": "256px exports integrated through src/model/relicArt.js", "assets": []}
 sheet = Image.new("RGB", (1200, 590), "#17171c")
 draw = ImageDraw.Draw(sheet)
 font = ImageFont.truetype("C:/Windows/Fonts/segoeui.ttf", 19)

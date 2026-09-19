@@ -30,11 +30,10 @@ notes.push(
   {id:'crownOfStitches',context:'The Court’s surgeons stitched knights and courtiers back to their posts after the Court Flame failed. This provides a thematic connection for the crown’s stitches and costly strength, but the relic is in the shared boss pool and is not assigned specifically to the Stitched King.',sources:[['Catalog lore and boss rarity','src/content/relics.js'],['The Court and its surgeons','docs/LORE.md'],['Shared boss reward pool','src/engine/encounters.js']]},
 );
 const host = document.querySelector('#relic-cards');
-const previewPainted = new Set(['ivoryComb','blessedDew','gravetendersBell','wyrmHeart']);
 const articles=[];
 for (const relic of registries.relics.all()) {
   const note=notes.find(n=>n.id===relic.id) || {context:relic.flavor ? 'This is the existing catalog lore. No additional origin or named owner is asserted in this preview.' : 'No flavor text is currently authored for this relic in the catalog. The cards retain the game’s current fallback text; a dedicated lore entry remains to be written.',sources:[['Catalog lore and effect','src/content/relics.js']]};
-  const painted=!!relicArtAsset(relic)||previewPainted.has(relic.id);
+  const painted=!!relicArtAsset(relic);
   const owners=registries.classes.all().filter(c=>c.startingRelic===relic.id||c.kitRelic===relic.id).map(c=>c.name);
   const acquisition=owners.length ? 'Class association: '+owners.join(', ')+'.' : relic.pool==='quest' ? 'Quest reward; excluded from generic relic rolls.' : relic.rarity==='boss' ? 'Shared boss reward pool; not assigned to a specific boss.' : 'Standard common/uncommon/rare reward pool; chance depends on the eligible unowned pool.';
   const article = document.createElement('article'); article.id = relic.id;
@@ -51,9 +50,7 @@ for (const relic of registries.relics.all()) {
     const figure=document.createElement('figure');figure.className='card-size-group';figure.dataset.sizeGroup=group.name;figure.style.setProperty('--sample-width',group.width+'px');
     const label=document.createElement('figcaption');label.textContent=group.name;
     const measure=document.createElement('small');measure.textContent=group.width+' px wide · '+group.level;label.append(measure);
-    // A preview-only art override; gameplay registries and runtime lookup stay intact.
-    const previewRelic=previewPainted.has(relic.id)?{...relic,artAsset:'art/relic-icons-pack-03/webp/'+relic.id+'-256.webp'}:relic;
-    const {card}=renderCollectibleCard(registries,previewRelic,'Relic',{level:group.level,interactive:false,inspection:false,identity:relic.id+'-'+group.name});
+    const {card}=renderCollectibleCard(registries,relic,'Relic',{level:group.level,interactive:false,inspection:false,identity:relic.id+'-'+group.name});
     figure.append(label,card);row.append(figure);
   }
   article.append(title,id,quote,context,source,artState,row);host.append(article);

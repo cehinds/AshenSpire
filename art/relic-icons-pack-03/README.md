@@ -33,4 +33,4 @@ Each relic has 512, 256, 128 and 64px transparent WebP exports. Source dimension
 
 Standard reward odds are 1/N for the eligible unowned pool. The bell is excluded from generic rolls and awarded by a specific quest choice; none of these is a boss-rarity reward.
 
-This pack is available for review and subsequent integration; the eight relics integrated by PR #1202 remain unchanged. Earlier galleries: [pack 01](../relic-icons-pack-01/preview.html), [pack 02](../relic-icons-pack-02/preview.html).
+The four 256px exports are integrated through the shared relic artwork lookup in `assets/relics/`, alongside the eight relics integrated by PR #1202. Existing lore, effects and acquisition rules are unchanged. Earlier galleries: [pack 01](../relic-icons-pack-01/preview.html), [pack 02](../relic-icons-pack-02/preview.html).

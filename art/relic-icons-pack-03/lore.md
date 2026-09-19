@@ -38,4 +38,4 @@ Source: [relic catalog](../../src/content/relics.js).
 
 ## Card sizes
 
-[cards.html](cards.html) uses the production collectible renderer with live relic effects and flavor, and reads widths from the game's card configuration: Compact 108 px (Glance variant), Glance 152 px, Focus 280 px, Inspect 320 px. These are the authored defaults, before player UI scaling or size overrides. Only Inspect includes the flavor row. The preview applies the new artwork locally without changing gameplay data.
+[cards.html](cards.html) uses the production collectible renderer with live relic effects and flavor, and reads widths from the game's card configuration: Compact 108 px (Glance variant), Glance 152 px, Focus 280 px, Inspect 320 px. These are the authored defaults, before player UI scaling or size overrides. Only Inspect includes the flavor row. The gallery uses the integrated game artwork lookup without changing gameplay data.
