@@ -358,3 +358,29 @@ test('applyResolvedRect moves the base by the change and leaves an override\'s o
   const right = M.alignBoxes(s, [box.id], 'right', vp, { breakpointId: 'narrow', scope: 'base' });
   assert.deepEqual([right.boxes[0].x, right.boxes[0].w], [10 + (50 - 50) + (100 - 50 - 10), 30]);
 });
+
+test('the Smith folds its candidate rail into a selector row under the category rail minimum host width', () => {
+  const smith = readConfig('ui/screens/smith.json'), nav = readConfig('ui/components/categoryNav.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-smith');
+  assert.equal(wf.parent, 'ui/components/categoryNav.json');
+  const wide = M.regionsFor(wf, smith, { width: 1280, height: 800 }, { parent: nav, tokens });
+  assert.equal(wide.find((r) => r.id === 'candidates').w, Math.min(Math.max(1280 * 0.44, 14 * 16), 60 * 16));
+  const phone = M.regionsFor(wf, smith, { width: 390, height: 844 }, { parent: nav, tokens });
+  assert.equal(phone.find((r) => r.id === 'candidates'), undefined);
+  const row = phone.find((r) => r.id === 'selector');
+  assert.deepEqual([row.x, row.y, row.w, row.h], [0, 0, 390, 2.75 * 16]);
+  assert.equal(phone.find((r) => r.id === 'detail').y, 2.75 * 16);
+  // 959 px is under 60rem; 960 is not.
+  assert.ok(M.regionsFor(wf, smith, { width: 959, height: 800 }, { parent: nav, tokens }).some((r) => r.id === 'selector'));
+  assert.ok(M.regionsFor(wf, smith, { width: 960, height: 800 }, { parent: nav, tokens }).some((r) => r.id === 'candidates'));
+});
+
+test('sketchProblems refuses a breakpoint that is not an object, unnamed, duplicated or non-numeric', () => {
+  const s = M.newSketch();
+  s.breakpoints = [null, { label: 'x' }, { id: 'narrow', maxWidth: '520' }, { id: 'narrow' }];
+  const problems = M.sketchProblems(s);
+  for (const needle of ['breakpoints[0] must be an object', 'breakpoints[1].id is required', 'breakpoints[2].maxWidth must be a number', 'breakpoints[3].id "narrow" is used twice']) {
+    assert.ok(problems.some((p) => p.includes(needle)), `${needle} in ${problems.join(' | ')}`);
+  }
+  assert.deepEqual(M.sketchProblems(M.newSketch()), []);
+});

@@ -771,7 +771,9 @@ async function saveConfig() {
   const list = changes(); if (!list.length) return;
   try {
     const result = await api('save', { changes: list });
-    for (const saved of result.files) { const f = fileOf(saved.rel); f.text = proposedText(f); f.hash = saved.hash; f.history = new M.History(f.history.present); }
+    // The baseline is the text that was SENT, not the draft as it is now: an
+    // edit made while the request was in flight stays dirty for the next save.
+    for (const saved of result.files) { const f = fileOf(saved.rel); const sent = list.find((c) => c.rel === saved.rel); f.text = sent.text; f.hash = saved.hash; }
     state.validation = null; persistDrafts();
     toast(`Saved ${result.files.length} file(s) (backup ${result.backup})`);
     if (state.settings.save.compileAfterSave) await compile();

@@ -67,7 +67,7 @@ export const DEFAULT_WIREFRAMES = [
   { id: 'w1-choice', label: 'W1 · Choice body (modal frame)', file: 'ui/components/choiceBody.json', draw: 'choiceBody', shot: 'settings' },
   { id: 'w1-armoury', label: 'W1 · Armoury', file: 'ui/screens/armoury.json', draw: 'armoury', shot: 'armoury' },
   { id: 'w1-shop', label: 'W1 · Shop', file: 'ui/screens/shop.json', draw: 'shop', shot: 'shop' },
-  { id: 'w1-smith', label: 'W1 · Smith', file: 'ui/screens/smith.json', draw: 'smith', shot: 'smith' },
+  { id: 'w1-smith', label: 'W1 · Smith', file: 'ui/screens/smith.json', parent: 'ui/components/categoryNav.json', draw: 'smith', shot: 'smith' },
   { id: 'card', label: 'Card face', file: 'ui/components/card.json', draw: 'card', shot: 'components' },
   { id: 'w4', label: 'W4 · Parent (minimums, breakpoint)', file: 'ui/scenes/w4.json', draw: 'generic', shot: 'combat' },
   { id: 'tokens', label: 'Design tokens', file: 'ui/tokens.json', draw: 'generic', shot: 'combat' },
@@ -609,9 +609,24 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       break;
     }
     case 'smith': {
-      const cw = clamp(W * num(sizing.candidatesWidth), num(sizing.candidatesMinRem) * rem, num(sizing.candidatesMaxRem) * rem);
-      push({ id: 'candidates', label: `candidates ${round(num(sizing.candidatesWidth) * 100)}% (${num(sizing.candidatesMinRem)}–${num(sizing.candidatesMaxRem)}rem)`, x: 0, y: 0, w: cw, h: H, edit: { kind: 'path', path: 'sizing.candidatesWidth', unit: 'fractionOfWidth', axis: 'w' } });
-      push({ id: 'detail', label: 'detail', x: cw, y: 0, w: W - cw, h: H });
+      // The Smith's candidates sit in the shared category rail
+      // (components/categoryNav.json, CategoryNavModel): a side column of
+      // candidatesWidth clamped to its rem bounds while the host is at least
+      // railMinHostWidthRem wide, otherwise one full-width selector row above
+      // the pane. `parent` is the categoryNav config when the catalog names it.
+      // categoryNavPlan also folds a rail whose items would not fit in
+      // bodyHeightFraction of the height; that depends on the category count,
+      // which no config file states, so only the width rule is drawn.
+      const railMinHost = num(parent ? getPath(parent, 'sizing.railMinHostWidthRem') : undefined, 60) * rem;
+      if (W >= railMinHost) {
+        const cw = clamp(W * num(sizing.candidatesWidth), num(sizing.candidatesMinRem) * rem, num(sizing.candidatesMaxRem) * rem);
+        push({ id: 'candidates', label: `candidates ${round(num(sizing.candidatesWidth) * 100)}% (${num(sizing.candidatesMinRem)}–${num(sizing.candidatesMaxRem)}rem)`, x: 0, y: 0, w: cw, h: H, edit: { kind: 'path', path: 'sizing.candidatesWidth', unit: 'fractionOfWidth', axis: 'w' } });
+        push({ id: 'detail', label: 'detail', x: cw, y: 0, w: W - cw, h: H });
+      } else {
+        const rowH = num(tokens.targetRem, 2.75) * rem;
+        push({ id: 'selector', label: `category selector (host under ${round(railMinHost / rem)}rem: the rail becomes a row)`, x: 0, y: 0, w: W, h: rowH });
+        push({ id: 'detail', label: 'pane', x: 0, y: rowH, w: W, h: H - rowH });
+      }
       break;
     }
     case 'card': {
@@ -696,8 +711,19 @@ export function sketchProblems(s) {
   if (typeof s.name !== 'string') out.push('name must be a string');
   if (!['percent', 'px'].includes(s.unit)) out.push('unit must be "percent" or "px"');
   if (!Array.isArray(s.breakpoints)) out.push('breakpoints must be an array');
+  else {
+    const seen = new Set();
+    for (const [i, b] of s.breakpoints.entries()) {
+      const at = `breakpoints[${i}]`;
+      if (!isObject(b)) { out.push(`${at} must be an object`); continue; }
+      if (typeof b.id !== 'string' || !b.id) out.push(`${at}.id is required`);
+      else if (seen.has(b.id)) out.push(`${at}.id "${b.id}" is used twice`);
+      else seen.add(b.id);
+      for (const k of ['minWidth', 'maxWidth', 'minHeight', 'maxHeight']) if (b[k] != null && !(typeof b[k] === 'number' && Number.isFinite(b[k]))) out.push(`${at}.${k} must be a number`);
+    }
+  }
   if (!Array.isArray(s.boxes)) return [...out, 'boxes must be an array'];
-  const ids = new Set(), bps = new Set((s.breakpoints || []).map((b) => b && b.id));
+  const ids = new Set(), bps = new Set((s.breakpoints || []).filter(isObject).map((b) => b.id));
   for (const [i, b] of s.boxes.entries()) {
     const at = `boxes[${i}]`;
     if (!isObject(b)) { out.push(`${at} must be an object`); continue; }
