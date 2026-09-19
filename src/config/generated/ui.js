@@ -43,6 +43,7 @@
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
+// source content/config/ui/screens/creation.json c02af0486359061f
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -722,6 +723,36 @@ export const uiConfig = deepFreeze({
       "sizing": {
         "collectionShare": 0.5,
         "compactCollectionShare": 0.5
+      }
+    },
+    "creation": {
+      "sizing": {
+        "headPortraitRem": 3.5,
+        "attributeColumnsWide": 2,
+        "attributeColumnsNarrow": 1,
+        "attributeNarrowBelowRem": 64,
+        "choiceDescriptionLines": 2,
+        "railGapPx": 2,
+        "railValueScale": 0.85,
+        "attributeGapPx": 8,
+        "reviewPadRem": 1.4,
+        "headToolsGapRem": 0.4,
+        "portraitGapRem": 0.6,
+        "viewSwitchPadRem": 0.6,
+        "viewSwitchGlyphRem": 1.6,
+        "choiceCompactPadRem": 0.4,
+        "choiceCompactGapRem": 0.4,
+        "choiceBarePadRem": 0.3,
+        "choiceBareGapRem": 0.3
+      },
+      "behavior": {
+        "categories": [
+          "class",
+          "character",
+          "equipment",
+          "review"
+        ],
+        "fitChoicesToPane": true
       }
     },
     "shop": {

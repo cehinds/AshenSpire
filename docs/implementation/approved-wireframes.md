@@ -2521,3 +2521,94 @@ Limits and owner decisions:
   shrunk files.
 - `tools/receipts.mjs --check` reports merged PRs without receipts on dev;
   none is this branch's.
+
+## Character creation on the W1 shell (W1c)
+
+Branch `feature/wireframe-creation`, based on dev `7d2c2f41`. The creation
+screen was a page door with four `<details>` folds and a scrolling body. It
+is now the W1 workspace the drawing asks for. No choice, gate, rule or saved
+identity changed; presentation only.
+
+- **Shell.** Head: the title ("Create character"), the small portrait beside
+  the exit (`sizing.headPortraitRem`), no eyebrow. Body: the kit's
+  `categoryNav` — a rail beside the pane, or one `[Category ▾]` selector
+  above it on a compact host (CategoryNavModel decides) — and one active
+  pane. Footer: Back and Next, then Begin on Review. Exactly two actions at
+  every step. The pane is the one scroll region; the page and body never
+  scroll.
+- **Categories.** `behavior.categories` in
+  `content/config/ui/screens/creation.json`: Class, Character, Equipment,
+  Review (the drawing's Class / Starting kit / Attributes / Review, mapped
+  onto the game's steps). Each rail item names its value (the class, the
+  name, the hands, the seed). Only the active category is in the document;
+  the others are built once at mount and kept off it with their draft.
+- **Footer.** Next refuses with the current category's unmet step
+  ("Choose a class.", "Choose a keepsake." …) and lands the cursor on the
+  next question; Back leaves on Class and steps back otherwise, keeping
+  every choice; the exit leaves. `CreationWorkspaceModel` owns the order,
+  the stepping and the footer plan.
+- **Attributes.** The grid takes `sizing.attributeColumnsWide` (2) columns
+  from `sizing.attributeNarrowBelowRem` (64 of the game's 10 px rem) and
+  `attributeColumnsNarrow` (1) under it, measured off the pane.
+- **Review.** Journey, seed, "Destination · Slot n" (main.js passes the
+  slot) and the equipment summary, filled on arrival.
+- **Copy.** `creation.*` rows in `uiStrings.csv`.
+- **Less chrome, every choice in view (owner, 2026-09-19).** The list/grid
+  toggle is one small button in the head (▦ / ☰), shown for the active
+  category only; the "Choose / Class" and "Choose / Starting equipment"
+  heads, the footer note and the "Class preview" eyebrow are gone. Class
+  descriptions clip to `sizing.choiceDescriptionLines` (2); when the list
+  still runs past its box the cards fold to one line, then the preview
+  column steps aside, then the descriptions go (`behavior.fitChoicesToPane`).
+  At 844×390 the fold alone brings all four classes into view.
+
+Browser evidence (in-app browser, source `index.html?shot=customize`):
+
+| Viewport | Nav | Head | Pane | Footer | Page scroll | Attr. columns |
+|---|---|---:|---|---:|---:|---:|
+| 1280×800 | rail 185 px | 75 px, portrait 37 px | 1083×620 | 105 px | 0 | 2 |
+| 844×390 | rail 107 px | 62 px | 650×248 | 80 px | 0 | 2 |
+| 390×844 | selector | 66 px | 388×579 | 86 px | 0 | 1 |
+| 375×667 | selector | 62 px | 288 wide | 86 px | 0 | 1 |
+| 360×780 | selector | 62 px | 358×579 | 86 px | 0 | 1 |
+
+- Flow at 1280×800: Reaver → Next → Standard, keepsake → Next → armour →
+  Next → Review (Begin shown, Next hidden, "Destination Slot 1", summary) →
+  Back to Equipment with the choices kept.
+- No control under 44 px at any size.
+
+Limits and owner decisions:
+- The sub-steps inside Character and Equipment (Standard / Assign points,
+  keepsake, each hand) keep their in-pane Continues; the footer's Next is
+  the category's way on.
+- Inactive categories are built at mount and detached, not left unmounted:
+  the renderers cross-reference each other and the draft must survive.
+- No paging: no choice collection exceeds five items.
+- `tools/character-creation-check.mjs` and `tools/uniform-stat-foldouts.mjs`
+  read the old `.cz-flow` fold and are owed a re-teach (neither is in
+  run-node).
+- WC3 / WC3a / WC3b (the class and starting-kit cards) are untouched here.
+
+Review round (QA agent on the push, 2026-09-19):
+- Every spacing the W1c CSS block reads (rail gap, rail value scale, attribute
+  gap, review padding, head-tool gap, portrait gap, view-switch padding and
+  glyph, the compact and bare fit densities) is a `sizing` key in
+  `creation.json`, projected as `--creation-*` by
+  `creationCssProperties` and written on the screen root in both branches;
+  `kit.css` names no number for this screen.
+- The rail is built from `creationRailItems`; a configured category the
+  screen cannot draw throws at mount instead of on activation.
+- A class pick re-runs the fit (the preview column changes the split's height
+  without moving the pane's box).
+- The view switch names its views through `creation.view.grid` /
+  `creation.view.list`.
+- The component catalogue (`?shot=components`) keeps its scrolling page and
+  shows the live portrait as a specimen; the workspace's `overflow: hidden`
+  body is scoped away from it.
+- Dead `sectionHead` / `nextRow` / `nextGates` removed.
+- Kept, as an owner decision: the third fit rung
+  (`data-choice-fit="bare"`, descriptions hidden). FRONTEND-WIREFRAMES W1c
+  allows the pane to scroll and asks that long descriptions reach the shared
+  detail view; the owner asked on 2026-09-19 for every class in view without
+  scrolling. The rung is reached only when one-line descriptions with the
+  preview column gone still overflow (no tested viewport reaches it).
