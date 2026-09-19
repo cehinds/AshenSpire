@@ -93,8 +93,10 @@ export function resolveLocationId(registries, { nodeId = null, serviceTypeId = n
 
 /**
  * locationRestTags(registries, tags) → the tag set with `restMana` replaced by
- * the tag the configured mode names. A fixed-mode tag already on the carrier
- * is kept as authored; `restMana` beside it is dropped rather than doubled.
+ * the tag the configured mode names. A fixed-mode tag authored on the carrier
+ * wins outright: `restMana` beside it is DROPPED, never resolved beside it,
+ * so one place restores Mana by one rule (validation refuses the pairing too,
+ * locationTaggingProblems).
  */
 export function locationRestTags(registries, tags) {
   return resolveRestTags(registries.balance.rest.mana.mode, tags);
@@ -104,13 +106,19 @@ export function locationRestTags(registries, tags) {
 export function resolveRestTags(mode, tags) {
   const fixed = REST_MANA_TAG_BY_MODE[mode];
   if (!fixed) throw new Error(`balance.rest.mana.mode '${mode}' names no rest tag (one of ${REST_MANA_MODES.join(', ')})`);
+  const fixedTags = Object.values(REST_MANA_TAG_BY_MODE);
+  const overridden = (tags || []).some((tag) => fixedTags.includes(tag));
   const out = [];
   for (const tag of tags || []) {
+    if (tag === REST_MANA_TAG && overridden) continue;
     const resolved = tag === REST_MANA_TAG ? fixed : tag;
     if (!out.includes(resolved)) out.push(resolved);
   }
   return out;
 }
+
+/** The Mana-rest tags a location may carry — at most one of them. */
+export const REST_MANA_TAGS = Object.freeze([REST_MANA_TAG, ...Object.values(REST_MANA_TAG_BY_MODE)]);
 
 /** Which services the screen offers at a place carrying `tags`. */
 export function locationServices(registries, tags) {
@@ -167,6 +175,13 @@ export function locationTaggingProblems(bundle, atlas = ATLAS) {
     for (const [mode, tag] of Object.entries(REST_MANA_TAG_BY_MODE)) {
       if (!rules.has(tag)) problems.push({ path: `propertyRules.${tag}`, message: `rest-mana mode '${mode}' resolves to '${tag}', which has no property rule` });
     }
+  }
+  // One Mana rule per place: `restMana` beside a fixed tag, or two fixed
+  // tags, would restore twice (the door drops the default, but the pairing
+  // says two things and is refused as content).
+  for (const [id, tags] of authored) {
+    const manaTags = tags.filter((tag) => REST_MANA_TAGS.includes(tag));
+    if (manaTags.length > 1) problems.push({ path: `tagging.${LOCATION_FAMILY}.${id}`, message: `carries ${manaTags.join(' and ')} — a place restores Mana by one rule: restMana for the configured mode, or exactly one fixed-mode tag` });
   }
   const mode = b.balance && b.balance.rest && b.balance.rest.mana ? b.balance.rest.mana.mode : null;
   const carried = new Set();
