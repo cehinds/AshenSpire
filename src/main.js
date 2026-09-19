@@ -1,4 +1,7 @@
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
+import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
+import { mountDialogue } from './ui/screens/dialogue.js';
 import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
@@ -1678,6 +1681,7 @@ function remountMapIfShowing(changed) {
 
 function showMap() {
   audio.music('map');
+  if (run.legacyDungeon) return showLegacyDungeon();
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
@@ -1903,13 +1907,64 @@ function combatMods(pool) {
   return { hpMult, enemyStatuses, playerStatuses };
 }
 
+function showLegacyDungeon() {
+  if (run.legacyDungeon.pending) return showDungeonDialogue();
+  mountLegacyDungeon(app, { run, onMenu: showOverlay, onSave: saveNow,
+    onTravel: id => { if (travelDungeon(run, id)) { persist(); showLegacyDungeon(); } },
+    onInspect: showDungeonDialogue, onLeave: leaveLegacyDungeon });
+}
+
+function showDungeonDialogue() {
+  const node = dungeonNode(run), pending = run.legacyDungeon.pending;
+  mountDialogue(app, { registries, run, meta: activeMeta, rng, eventId: node.id,
+    definition: { id: node.id, name: node.name, text: node.lore, choices: dungeonChoices(run) },
+    speaker: { id: node.id, name: node.speaker, portraitKey: node.kind === 'boss' ? registries.encounters.get(node.encounter).enemies[0] : null },
+    dialogueState: pending ? { beat: 0, generation: 0, resolved: true, choiceId: pending.choiceId, resultText: pending.text } : null,
+    hud: roomHud(showDungeonDialogue),
+    commitChoice: command => {
+      const receipt = chooseDungeon(run, command.choiceId, rng);
+      persist();
+      return { choice: { id: receipt.choiceId, resultText: receipt.text } };
+    },
+    onDone: () => {
+      const encounterId = dungeonNode(run).encounter;
+      const action = continueDungeon(run);
+      if (action === 'combat') return enterCombat(run.legacyDungeon.parentNodeId, encounterId);
+      persist(); showMap();
+    },
+  });
+}
+
+function leaveLegacyDungeon() {
+  if (!run.legacyDungeon?.cleared) return;
+  if (run.journey) completeJourneyNode(run.journey, run.legacyDungeon.parentNodeId);
+  delete run.legacyDungeon;
+  if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (!run.journey && run.actNumber >= 3 && !endlessOn())) {
+    audio.music('victory'); sendLanStatus({ victory: true }); saves.clearRun(activeSlot);
+    const earned = finishRun(true);
+    return mountGameOver(app, { registries, game: run, victory: true, earned, onTitle: showTitle, onHistory: showHistory });
+  }
+  if (run.journey) { persist(); showMap(); } else advanceAct();
+}
+
+function openLegacyEntrance(encounterId, nodeId) {
+  const def = dungeonForEncounter(encounterId);
+  if (!def) return false;
+  beginDungeon(run, def, nodeId); persist(); showMap(); return true;
+}
+
 function startFight(pool, nodeId) {
-  if (run.journey) return enterCombat(nodeId, journeyEncounter(run.journey, nodeId, registries).id);
+  if (run.journey) {
+    const enc = journeyEncounter(run.journey, nodeId, registries);
+    if (openLegacyEntrance(enc.id, nodeId)) return;
+    return enterCombat(nodeId, enc.id);
+  }
   // "Elite Gauntlet" chaos rule promotes ordinary monster nodes to elites.
   if (pool === 'normal' && run.custom && activeMods(run.custom).allElite) pool = 'elite';
   const encounterId = pool === 'boss'
     ? bossEncounterForNode(registries, run.mapGraph, nodeId, { seat: currentSeat(), tier: contentAct() })
     : rollEncounter(registries, rng, { pool, seat: currentSeat(), exclude: run.lastEncounters });
+  if (pool === 'boss' && openLegacyEntrance(encounterId, nodeId)) return;
   if (pool === 'normal') {
     run.lastEncounters.push(encounterId);
     if (run.lastEncounters.length > 2) run.lastEncounters.shift();
@@ -1932,7 +1987,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
   if (!resuming) persist();
-  const enc = run.journey ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
+  const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds }) : createCombat({
@@ -2129,13 +2184,14 @@ async function onCombatEnd(result, combat, enc) {
   await victoryBeat(app.querySelector('.combat'), { title: victoryTitle(enc), ms: registries.balance.ui.victoryBeat.ms });
 
   run.stats.fightsWon += 1;
-  if (run.journey) completeJourneyNode(run.journey);
+  if (run.legacyDungeon) resolveDungeonNode(run);
+  else if (run.journey) completeJourneyNode(run.journey);
   run.combatEntered = null;
   const smithingStoneReceipt = grantSmithingReward(
     registries,
     run,
     enc.pool,
-    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}:${enc.pool}`,
+    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}${run.legacyDungeon ? `:${run.legacyDungeon.current}` : ''}:${enc.pool}`,
   );
   // The Stone, its idempotent claim, the cleared combat receipt, every RNG
   // counter used to roll the offer, and the offer itself cross one persistence
@@ -2150,7 +2206,7 @@ async function onCombatEnd(result, combat, enc) {
     const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
     for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
     // Endless Spire: no summit — the climb loops until death.
-    if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn())) {
+    if (!run.legacyDungeon && ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn()))) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
       audio.music('victory');
       sendLanStatus({ victory: true });
@@ -2175,7 +2231,7 @@ async function onCombatEnd(result, combat, enc) {
       armamentId: bossArmament,
       smithingStoneReceipt,
     };
-    return beginPendingReward(bossRewards, { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
+    return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
 
   // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
@@ -2709,6 +2765,8 @@ if (shotState) {
     savedSmithingStones: saved?.smithingStones ?? null,
     pendingReward: run?.pendingReward ? structuredClone(run.pendingReward) : null,
     savedPendingReward: saved?.pendingReward ? structuredClone(saved.pendingReward) : null,
+    legacyDungeon: run?.legacyDungeon ? structuredClone(run.legacyDungeon) : null,
+    savedLegacyDungeon: saved?.legacyDungeon ? structuredClone(saved.legacyDungeon) : null,
     done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
@@ -2894,6 +2952,16 @@ if (shotState === 'combat-test') {
     run.floor = g.nodes[id].floor;
     run.path = walked;
     showMap();
+  }
+  // Memory-storage preview of a real dungeon: the same entry, dialogue,
+  // combat, rewards and saves as play, without touching the player's slots.
+  if (shotState === 'map' && shotParams.has('shotDungeon')) {
+    const def = LEGACY_DUNGEONS.find(d => d.id === shotParams.get('shotDungeon'));
+    if (!def) throw Error('shotDungeon must be BS, HM or FC');
+    const parent = Object.values(run.mapGraph.nodes).find(n => n.type === 'boss');
+    if (!parent) throw Error('Dungeon preview needs a boss entrance');
+    run.mapNodeId = parent.id; run.floor = parent.floor; run.path = [parent.id];
+    openLegacyEntrance(def.bossEncounter, parent.id);
   }
   if (shotState === 'death') {
     // A run that ended on floor 4 with a few fights behind it, so the stats
