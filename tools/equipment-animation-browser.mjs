@@ -38,6 +38,18 @@ try {
   observer.disconnect();
   const expected=animationClip(animation,'attack').frames;
   const checks={set:stage.animationSetId,observed:observed.slice(0,expected.length),expected,settled:stage.pose,timing,portrait:paintedPortraitUrl('reaver','default',animation),conversation:paintedPresentation('reaver','default','conversation',animation).src};
+  const {ARMOUR}=await import('/src/content/equipment.js');
+  checks.outfits=[];
+  for(const outfit of ARMOUR){
+    const selected=selectEquipmentAnimation({classId:outfit.classId,armourId:outfit.id,rightId:'greatsword',grip:'two'});
+    const variant=createPaintedStage(outfit.classId,outfit.id,{animation:selected});
+    document.body.append(variant.el);
+    const played=variant.play('attack',900);
+    const images=[...variant.el.querySelectorAll('img')].filter(img=>img.getAttribute('src'));
+    await Promise.all(images.map(img=>img.decode()));
+    checks.outfits.push({id:outfit.classId+'/'+outfit.id,set:variant.animationSetId,played,profile:selected.motionProfile});
+    variant.dispose();variant.el.remove();
+  }
   stage.play('power',100);checks.buff=stage.pose;stage.settle();
   stage.setPose('hit');checks.hurt=stage.pose;
   stage.setRestPose('bulwark');checks.stanceStart=stage.pose;
@@ -53,7 +65,8 @@ try {
  assert.equal(result.set,'reaverGreatsword');assert.deepEqual(result.observed,result.expected);assert.equal(result.settled,'STANCE-READY');
  assert.deepEqual(result.timing,{totalMs:900,impactMs:500});assert.equal(result.buff,'BUFF');assert.equal(result.hurt,'hit');
  assert.equal(result.stanceStart,'BUFF');assert.equal(result.stanceEnd,'STANCE-DEFENSIVE');assert.equal(result.stanceAfterAttack,'STANCE-DEFENSIVE');assert.ok(result.disposed);assert.equal(result.reducedPlayed,false);
- assert.match(result.portrait,/greatsword-v2\/PORTRAIT.webp$/);assert.match(result.conversation,/greatsword-v2\/STANCE-READY.webp$/);
+ assert.match(result.portrait,/greatsword-outfits\/reaver\/PORTRAIT.webp$/);assert.match(result.conversation,/greatsword-outfits\/reaver\/STANCE-READY.webp$/);
+ assert.equal(result.outfits.length,19);assert.ok(result.outfits.every(o=>o.set&&o.played&&o.profile==='greatswordTwoHand'));
  // Real combat renderer: load the screenshot fixture, change equipped hands, cause a render, then play a card.
  await page.goto(origin+'/?shot=combat');await page.waitForFunction(()=>window.__combat&&document.querySelector('.combatant.player'));
  const fixture=await page.evaluate(()=>Object.keys(window.__combat));

@@ -4,6 +4,9 @@ from PIL import Image
 import json
 root=Path(__file__).resolve().parents[2]
 pack=Path(__file__).resolve().parent
+current=root/'content/config/ui/presentation/equipmentAnimations.json'
+if current.exists() and json.loads(current.read_text()).get('components',{}).get('motionProfiles'):
+    raise SystemExit('Shared outfit profiles already exist. Use art/greatsword-outfits-2026-09-19/export.py --bind; this initial-sample exporter must not replace them.')
 coverage=json.loads((pack/'coverage.json').read_text())
 order=json.loads((pack/'sequences.json').read_text())['reaver__greatsword-twoHand']
 frames={}
