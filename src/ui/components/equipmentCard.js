@@ -5,7 +5,7 @@ import { litCard } from './cardSelection.js';
 import { equipmentCardArt } from '../assets.js';
 import { imageHintAttrs } from '../imageHints.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { cardLevelWidthPx } from '../models/CardSizeModel.js';
+import { cardLevelWidthCss } from '../models/CardSizeModel.js';
 import { configureTooltipGlossary, decorateKeywords, inspectionTag } from './tooltipGlossary.js';
 import { metadataFooter } from '../models/IdentityModel.js';
 import { possessionVariant } from '../models/PossessionVariantModel.js';
@@ -198,7 +198,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     card.dataset.level = at;
     applyCardTokens(card, tokensFor(at));
     card.dataset.cardLevel = at;
-    card.style.setProperty('--epc-level-w', `${cardLevelWidthPx(at)}px`);
+    card.style.setProperty('--epc-level-w', cardLevelWidthCss(at));
     card.querySelector('img')?.addEventListener('error', event => event.target.replaceWith(document.createTextNode(piece.icon || '◆')));
     card.querySelectorAll('[data-card-tip]').forEach(target => {
       const { label, explanation } = explanations[Number(target.dataset.cardTip)];

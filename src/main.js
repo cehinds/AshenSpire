@@ -63,7 +63,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -76,7 +76,8 @@ import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { selectionGlowFilter } from './ui/models/SelectionEffectModel.js';
 import { inspectControlCss } from './ui/models/InspectControlModel.js';
-import { cardLevelCssProperties, cardShapeCssProperties } from './ui/models/CardSizeModel.js';
+import { cardLevelCssProperties, cardShapeCssProperties, cardLevelsWithOverrides, cardLevelCssPropertiesFor, restingWidthPx } from './ui/models/CardSizeModel.js';
+import { refreshCardDoorShape } from './ui/components/cardInspection.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -624,7 +625,52 @@ if (typeof window !== 'undefined') {
   setTimeout(reflexAutoScale, 300);
 }
 
+// CARD SIZE IS TUNABLE WHILE YOU LOOK AT A CARD. The authored table in
+// content/config/ui/components/card.json is the default and the only thing
+// that ships; Settings > Advanced > Card size lays an override over it, and
+// re-projecting the same custom properties here means a slider moves every
+// card on screen rather than waiting for a reload. A set of numbers that
+// breaks `glance < focus < inspect` is refused by the model and the authored
+// table stands — the console says which key was wrong rather than the cards
+// silently going back to normal.
+function applyCardSizeSettings(settings) {
+  const { levels, refused } = cardLevelsWithOverrides(settings);
+  for (const [name, value] of Object.entries(cardLevelCssPropertiesFor(levels))) {
+    document.documentElement.style.setProperty(name, value);
+  }
+  // A RESTING CARD IS SIZED FOR THE VIEWPORT IT IS RESTING IN. `glance` is the
+  // browsing size and `glance.variants.mobile` is that size on a phone; the
+  // chosen one is written to the SAME property name, so a card, a stylesheet
+  // and a tool all keep asking one question. Redeclaring `--card-w-glance`
+  // inside a media query would have been the later-rule-wins shape that has
+  // already produced three defects in this component.
+  document.documentElement.style.setProperty('--card-w-glance', `${restingWidthPx(window.innerWidth, levels)}px`);
+  // The door's threshold reads `--card-w-inspect`, which has just moved. Its
+  // observer only sees the layout's own box change, and the modal layout is
+  // 100% x 100% — so a door standing open would keep its old shape until a
+  // resize or a reopen. Tell it the term it depends on has changed.
+  refreshCardDoorShape();
+  // A REFUSAL HAS TO ANSWER, NOT JUST BE LOGGED. The slider keeps the number
+  // that was typed, the game quietly goes back to the authored table, and the
+  // export copies the authored values — so from the player's chair the control
+  // moved and nothing happened. `showSettingsNotice` exists for exactly this
+  // ("a refused write can answer instead of being a silent no-op", #67), and
+  // leaving this one to `console.warn` reintroduced the defect that helper was
+  // written to prevent. It is a no-op when Settings is not open, which is the
+  // right shape for a refusal resolved at boot rather than at a slider.
+  if (refused) {
+    console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+    showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
+  } else {
+    // A refusal that has been resolved must stop being announced: moving a
+    // slider back into a valid ladder left the old notice standing while the
+    // tuned sizes were actually in force.
+    clearSettingsNotice('card-size');
+  }
+}
+
 function applyDisplaySettings(settings) {
+  applyCardSizeSettings(settings);
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
@@ -714,6 +760,10 @@ function applyDisplaySettings(settings) {
   }
 }
 applyDisplaySettings(activeSettings);
+// The resting width depends on the viewport, so it is re-resolved when the
+// viewport changes — a phone rotated into landscape crosses the compact
+// breakpoint, and a desktop window dragged narrow crosses it too.
+window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that

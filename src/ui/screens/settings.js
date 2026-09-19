@@ -26,8 +26,52 @@ import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } f
 import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
+import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 
 const UI_DEFAULTS = balance.ui;
+// The card's authored sizes, so the rows below state a DEFAULT they read
+// rather than a number typed twice. content/config/ui/components/card.json is
+// the one home; these rows lay a tuning override over it.
+const CARD_LEVELS = cardLevels();
+// The same authored range the model clamps to, so the control and the width it
+// produces cannot disagree about what is in bounds.
+const CARD_WIDTH_BOUNDS = cardWidthBounds();
+// A CLIPBOARD WRITE OUTLIVES THE PANEL THAT STARTED IT, so the guard against a
+// second export cannot live inside `renderSettings`. It did, and closing and
+// reopening Settings handed the button a fresh `false` while the first write
+// was still unsettled — two writes in flight again, free to land in either
+// order, which is the one thing the guard exists to prevent. It belongs to the
+// clipboard operation's lifetime, so it sits here.
+//
+// IT CARRIES NOTHING ELSE, AND THE REASON IS A CLAIM I GOT WRONG. It held the
+// block and the settings bag that produced it, so a late landing could say
+// whether that block was still the one on the sliders. I justified that with
+// "there is ONE bag" — and there is not: `persistSettingsChange`
+// (`src/main.js`) reassigns `activeSettings` from a fresh `saves.loadMeta()`
+// on every change, and `loadMeta` returns a NEW object each call. A render
+// therefore holds the bag it opened with, not the one in force later, so the
+// comparison could report the opposite of the truth. A notice that cannot be
+// made reliable should not be made at all, so the late landing now states only
+// what is always true: the block on the clipboard is the one from that copy.
+let exportWritePending = false;
+// THE BAG IN FRONT OF THE USER, which is not the one a handler closed over.
+// `persistSettingsChange` (`src/main.js`) reassigns `activeSettings` from a
+// fresh `saves.loadMeta()` on every change, so each render opens with a
+// DIFFERENT object: a panel writes into its own bag (`settings[key] = val`
+// below) and therefore stays right about itself, while a handler left over
+// from a CLOSED panel keeps reading a bag nobody writes to any more. Anything
+// that asks "what do the sliders read NOW" has to ask the live panel, so the
+// current render records itself here and the export's settlement reads this
+// rather than its own closure.
+let panelSettings = null;
+// A NOTICE POSTED TO A CLOSED PANEL IS LOST, and the late clipboard landing is
+// the only notice in this screen that can arrive after its panel has gone:
+// `showSettingsNotice` finds no `[data-settings-host]` and returns. So the
+// clipboard would be overwritten after the UI had said it was not, with the
+// announcement that was supposed to cover exactly that dropped on the floor.
+// It is held here instead and posted by the next render. The console gets it
+// either way, because a panel that is never reopened must not swallow it.
+let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
 // THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
@@ -439,6 +483,30 @@ const ROWS = [
   // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
   // `derivedStatRules.defaults` — its one home, one import away, so this row
   // cannot drift from the rule it turns.
+  // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
+  // content/config/ui/components/card.json and ship as the default; these rows
+  // lay an override over that table so a size can be tried against real cards
+  // without a rebuild, and `cardSizingExport` hands back the exact JSON block
+  // to paste into the file when a number is worth keeping.
+  //
+  // The ladder is the contract: a card you opened to read is never smaller
+  // than one you were browsing past. A set of numbers that breaks it is
+  // REFUSED and the authored table stands — see cardLevelsWithOverrides.
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance', type: 'number',
+    def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width',
+    note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance_mobile', type: 'number',
+    def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width, phone',
+    note: 'The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_focus', type: 'number',
+    def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Selected card width',
+    note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_inspect', type: 'number',
+    def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Reading card width',
+    note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
+  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
+    label: 'Export card sizes',
+    note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
   { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
@@ -496,6 +564,7 @@ const SECTIONS = {
 const ADVANCED_GROUPS = Object.freeze([
   { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
 ]);
@@ -897,11 +966,11 @@ function graceRefillAppliedHtml(settings, r) {
  */
 export function resolveNumberRow(settings, row) {
   if (!row) throw new Error('resolveNumberRow: no row');
-  const def = Number(row.def);
   const raw = (settings || {})[row.key];
-  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
-  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
-  return Math.min(row.max, Math.max(row.min, Math.floor(n)));
+  // The rule itself lives in CardSizeModel so the card-size model and this row
+  // cannot disagree about what a stored number means — they did, by a floor
+  // against a round.
+  return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
 }
 
 /**
@@ -1238,6 +1307,7 @@ function categoryHtml(cat, settings, saves) {
  * its place in the ring all follow from that one list.
  */
 export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null }) {
+  panelSettings = settings;
   let html = '';
   let cats = [];
   let current = null;
@@ -1411,6 +1481,185 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
+  });
+
+  // EXPORT WHAT THE FILE EXPECTS, AND SAY WHERE IT GOES. The block this copies
+  // is the shape content/config/ui/components/card.json already uses, so a size
+  // worth keeping is pasted in rather than transcribed — transcription is where
+  // a number would get changed on the way home.
+  //
+  // It is a FRAGMENT, nested at `sizing.levels`, and the row note says so. An
+  // earlier draft emitted a bare `{ levels: … }` and described it as the file:
+  // pasted over card.json that leaves no `sizing` block at all and the config
+  // builder refuses it. The path comes from `cardSizingExportPath` so this note
+  // and the model cannot drift about where the text belongs.
+  // A REFUSAL RESOLVED AT BOOT HAS NOBODY TO TELL, SO IT IS RE-ASKED HERE.
+  // `showSettingsNotice` is a no-op before this panel exists, and a bad ladder
+  // stored in a profile is decided at startup — so on reload the sliders showed
+  // the rejected numbers, the authored widths were in force, and nothing said
+  // why until the next edit. Re-running the pure validator when Settings opens
+  // costs nothing and closes that window; it reads the same settings bag the
+  // boot path did, so the two cannot disagree.
+  {
+    const { refused } = cardLevelsWithOverrides(settings);
+    if (refused) showSettingsNotice(`Card sizes unchanged: ${refused}. The authored sizes are in use, and Export will copy those.`, 'card-size');
+    else clearSettingsNotice('card-size');
+  }
+  // A LATE CLIPBOARD LANDING THAT HAD NO PANEL TO SPEAK TO WAITS HERE FOR ONE,
+  // and it waits until AFTER the refusal check above: that check clears the
+  // `card-size` tag when the ladder is valid, so flushing any earlier would
+  // have posted the held notice and wiped it in the same render.
+  if (deferredCardSizeNotice) {
+    const held = deferredCardSizeNotice;
+    deferredCardSizeNotice = null;
+    showSettingsNotice(held.msg);
+  }
+  container.querySelectorAll('[data-btn="cardSizeExport"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const { levels, refused } = cardLevelsWithOverrides(settings);
+      const text = cardSizingExport(levels);
+      // A CLIPBOARD THAT NEVER ANSWERS IS NOT THE SAME AS ONE THAT REFUSES, AND
+      // ONLY THE SECOND WAS HANDLED. `catch` covers a rejection; it does not
+      // cover a promise that simply never settles, which is what
+      // `navigator.clipboard.writeText` does here — measured in headless
+      // Chromium on a secure context with the API present: still `pending`
+      // after 1.5s, never resolved, never rejected. The `await` then never
+      // returned, so nothing below it ran: no notice, no console fallback, and
+      // the button sat on "Copy" for ever. The export had no failure path at
+      // all on such a browser, only the appearance of one.
+      //
+      // So the wait is bounded, and a clipboard that has not answered in time
+      // is treated exactly like one that said no.
+      // NO API IS A FAILURE, NOT A SUCCESS. Wrapping the call in
+      // `Promise.resolve(...)` to bound the wait turned the MISSING-clipboard
+      // case into a pass: `navigator.clipboard?.writeText(text)` is `undefined`
+      // on an insecure context or an older browser, and
+      // `Promise.resolve(undefined).then(() => true)` says it worked. The button
+      // would read "Copied", the notice would agree, and the console fallback
+      // would be skipped — leaving no export anywhere. The API is checked before
+      // the race rather than inferred from it.
+      // A RACE DOES NOT CANCEL THE LOSER. `writeText` cannot be aborted, so a
+      // write that is merely SLOW — a browser holding it while it asks for
+      // clipboard permission — still lands after the timeout has declared it
+      // failed. Two consequences, and only the second can be prevented:
+      //
+      //   * The clipboard ends up holding this block after the UI said it did
+      //     not. Nothing in the platform can undo that, so it is SAID rather
+      //     than hidden: a late landing posts a notice naming what arrived.
+      //   * Two exports could otherwise be in flight at once and land in
+      //     either order, so the newer text loses to the older. That one is
+      //     preventable: while a write is outstanding the button refuses to
+      //     start another, and says why.
+      // REFUSING THE WRITE IS NOT REFUSING THE EXPORT, and the first version of
+      // this guard confused the two. `writeText` that NEVER settles — the very
+      // case the timeout exists for — leaves the flag raised for the rest of
+      // the session, because only `write.then` lowers it. Returning early there
+      // meant the second click did nothing at all: no console block, no button
+      // change, and a slider moved afterwards could not be exported by ANY
+      // route. So a held clipboard now takes the fallback path instead of the
+      // door: the block is serialised and logged exactly as an unreachable
+      // clipboard's is, and only the second WRITE is withheld.
+      const CLIPBOARD_WAIT_MS = 1200;
+      let copied = false;
+      const held = exportWritePending;
+      if (!held && typeof navigator.clipboard?.writeText === 'function') {
+        const write = navigator.clipboard.writeText(text).then(() => true, () => false);
+        exportWritePending = true;
+        // ASK THE TIMER, NOT THE RESULT, WHETHER THIS WAS LATE. Keying the
+        // announcement on `copied` was wrong by one microtask: this handler is
+        // subscribed to `write` BEFORE `Promise.race` is, so on an ordinary
+        // fast copy it runs while `copied` is still its initial `false` and
+        // announced a late landing that never happened. The timeout callback
+        // runs before the race resolves, so its own flag is the honest witness.
+        let timedOut = false;
+        const timeout = new Promise((settle) => setTimeout(() => { timedOut = true; settle(false); }, CLIPBOARD_WAIT_MS));
+        // Whenever it settles — before or long after the timeout — the flag is
+        // released, and a landing the user was told had failed is announced. By
+        // then the panel may have been closed and reopened and the sliders
+        // moved, and this callback CANNOT TELL: the bag it could compare
+        // against is the one its own render opened with. So it names what it
+        // knows — the block is the one from that copy, not a fresh read of the
+        // sliders — and leaves the reader to look at them.
+        write.then((landed) => {
+          exportWritePending = false;
+          if (!landed || !timedOut) return;
+          // UNTAGGED ON PURPOSE. The `card-size` tag exists so a REFUSAL can be
+          // withdrawn once the ladder is valid — and `applyCardSizeSettings`
+          // (`src/main.js`) clears that tag on every settings change, so a
+          // tagged announcement was wiped by the next tab click: measured as an
+          // EMPTY notice element after reopening Settings. This is news, not a
+          // standing claim about the sliders, so nothing should withdraw it.
+          const msg = 'The clipboard answered late: it now holds the block from that copy, not a fresh read of the sliders.';
+          console.warn(`card sizes: ${msg}`);
+          if (!showSettingsNotice(msg)) deferredCardSizeNotice = { msg };
+        });
+        try {
+          copied = await Promise.race([write, timeout]);
+        } catch {
+          copied = false;
+        }
+      }
+      btn.textContent = copied ? 'Copied' : 'See log';
+      if (!copied) console.log(`${cardSizingExportPath}\n${text}`);
+      // "Copied" WHEN NOTHING WAS COPIED IS THE WORST OF THE THREE OUTCOMES.
+      // The notice below said it regardless, so a browser that refuses the
+      // clipboard produced a confident lie. The wording now follows `copied`.
+      // SAY WHAT WAS COPIED WHEN IT IS NOT WHAT IS ON THE SLIDERS. A refused
+      // ladder falls back to the authored table, so this button hands over the
+      // AUTHORED numbers while the controls still show the rejected ones —
+      // silently, until now. Copying the wrong sizes and passing them on as a
+      // new default is the one outcome this feature must not produce quietly.
+      // THE WAIT IS A WINDOW, AND THE SIZES CAN MOVE INSIDE IT. Bounding the
+      // clipboard wait made this visible: the notice is posted up to
+      // CLIPBOARD_WAIT_MS after the click, and a slider moved in between left it
+      // announcing "the AUTHORED sizes are in use" while the tuned ones were
+      // live — the same lie as the stale refusal, arriving late instead of
+      // staying behind. So the ladder is re-asked at the moment of speaking, and
+      // when it has changed the notice says the text is stale rather than
+      // describing a state that has passed.
+      // ASK THE LIVE PANEL, NOT THIS CLOSURE. Within one render the captured
+      // bag is right — the rows write into it before calling `onChange` — but
+      // a panel closed and reopened inside this wait leaves this handler
+      // holding a bag the new panel never touches, so it would compare the
+      // copied block against numbers nobody is looking at and could call it
+      // current while the visible sliders say otherwise.
+      const settled = cardLevelsWithOverrides(panelSettings || settings);
+      const settledRefusal = settled.refused;
+      // COMPARE THE THING, NOT A PROXY FOR IT. The first version of this asked
+      // whether the REFUSAL MESSAGE had changed, which cannot see one valid
+      // ladder replaced by another — both are `null`, so a slider moved from
+      // 300 to 320 inside the wait left the notice claiming the tuned sizes
+      // were copied while `text` still held the old ones. The question is
+      // whether the block that was serialised is still the block the settings
+      // would produce, so that is what is asked.
+      // BOTH HALVES, because either alone has a blind spot. Comparing only the
+      // block misses valid -> INVALID: a refused ladder falls back to the
+      // authored table, so an export that started from the authored defaults
+      // serialises identically and `moved` stays false — then the captured
+      // `refused` (null) says "Copied the tuned sizes" while the controls are
+      // being rejected. Comparing only the verdict misses valid -> valid, which
+      // is what the previous commit fixed. The pair covers both.
+      const moved = settledRefusal !== refused || cardSizingExport(settled.levels) !== text;
+      const what = moved
+        ? 'sizes that have since changed — copy again'
+        : settledRefusal
+          ? `the AUTHORED sizes, not the ones shown: ${settledRefusal}`
+          : `the tuned sizes — ${cardSizingExportPath}`;
+      if (refused) console.warn(`card sizes: override refused — ${refused}; the authored table is in use.`);
+      // TAGGED WHEN IT SPEAKS ABOUT A REFUSAL, because an untagged notice cannot
+      // be withdrawn by the one that posted it. Exporting under a broken ladder
+      // replaced the tagged refusal with an untagged one, and then correcting
+      // the slider could not clear it — Settings went on claiming the authored
+      // sizes had been copied while the tuned ones were live. The tag follows
+      // whether this notice is about a refusal, not who happened to post it.
+      showSettingsNotice(copied
+        ? `Copied ${what}.`
+        : held
+          ? `A copy is still with the clipboard, so this one is in the browser console instead — ${what}. Starting a second write could land out of order.`
+          : `Could not reach the clipboard. The block is in the browser console — ${what}.`,
+      settledRefusal ? 'card-size' : '');
+      setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    });
   });
 
   container.querySelectorAll('.choice').forEach((btn) => {
@@ -1588,13 +1837,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
  * a refused write can answer instead of being a silent no-op (#67); no-op when
  * Settings is not open.
  */
-export function showSettingsNotice(msg) {
+export function showSettingsNotice(msg, tag = '') {
   // BOTH doors. This used to look only for the modal's own body, so on the
   // in-run overlay it would have been a silent no-op — the very defect it
   // exists to fix, one layer down (#67, Sunna's D18). renderSettings marks
   // whatever container it filled, so the notice lands wherever Settings is.
   const host = document.querySelector('[data-settings-host]');
-  if (!host) return;
+  // RETURNS WHETHER IT SPOKE, because one caller — the late clipboard landing —
+  // has to know: its news arrives after its panel may have closed, and a false
+  // here is what sends it to the deferred slot instead of nowhere.
+  if (!host) return false;
   let el = host.querySelector('.set-notice');
   if (!el) {
     el = document.createElement('p');
@@ -1603,6 +1855,26 @@ export function showSettingsNotice(msg) {
     host.prepend(el);
   }
   el.textContent = msg;
+  if (tag) el.dataset.noticeTag = tag; else delete el.dataset.noticeTag;
+  return true;
+}
+
+/**
+ * Withdraw a notice this caller put up, and only that one.
+ *
+ * A refusal that has since been resolved must stop being announced — a slider
+ * moved back into a valid ladder left "the authored sizes are in use" standing
+ * while the tuned sizes were in force. Clearing unconditionally would wipe
+ * whatever else had spoken last, so a notice carries its owner's tag and only
+ * its owner can take it down.
+ */
+export function clearSettingsNotice(tag) {
+  const host = document.querySelector('[data-settings-host]');
+  const el = host?.querySelector('.set-notice');
+  if (el && el.dataset.noticeTag === tag) {
+    el.textContent = '';
+    delete el.dataset.noticeTag;
+  }
 }
 
 export function openSettings({ meta, onChange, saves = null, onOffline = null }) {

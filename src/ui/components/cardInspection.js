@@ -3,7 +3,7 @@ import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
 import { lightCard, countBeat, spendSelectingBeat, litCard } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
-import { cardDoorStackBelowPx } from '../models/CardSizeModel.js';
+import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 
 // WHICH CARD IS LIT AND HOW MANY BEATS IT HAS SPENT now live in
 // ./cardSelection.js. They were two module-level `let`s here — shared by every
@@ -46,11 +46,163 @@ import { cardDoorStackBelowPx } from '../models/CardSizeModel.js';
 // So the decision sits beside the layout it governs. One listener for this
 // module's life rather than one per door: the attribute is on `:root`, one door
 // is open at a time, and a per-door listener would be a leak with no reader.
-const cardDoorStackBelow = cardDoorStackBelowPx();
+// THE THRESHOLD IS READ, NOT REMEMBERED. It was a module-level `const`
+// computed once from the authored config, which was fine while the widths were
+// authored-only and wrong the moment they became tunable: turning the inspect
+// slider up moved `--card-w-inspect` and left the breakpoint at the old 704, so
+// the door would sit beside a card too wide to fit next to it. The effective
+// inspect width is whatever has been projected onto `:root`; the authored sum
+// is the fallback for a page that projects nothing.
 let doorShapeWatched = false;
+// PIXELS OR NOTHING. A custom property is UNREGISTERED here, so
+// `getPropertyValue` hands back the token exactly as it was written rather than
+// a resolved length — and `parseFloat` is happy to read `20rem` as 20 and `50%`
+// as 50. That would have silently put the threshold at 404 instead of 704 and
+// looked like it was working. Only a bare px length is read; anything else
+// falls back to the authored sum rather than being half-understood.
+const PX = /^(\d+(?:\.\d+)?)px$/;
+function doorStackBelowPx() {
+  const projected = getComputedStyle(document.documentElement).getPropertyValue('--card-w-inspect').trim();
+  const match = PX.exec(projected);
+  const inspect = match ? Number(match[1]) : NaN;
+  if (!Number.isFinite(inspect) || inspect <= 0) return cardDoorStackBelowPx();
+  return inspect + doorReadableMinPx();
+}
+// MEASURE THE DOOR, NOT THE WINDOW. This compared `window.innerWidth`, and the
+// door is not the window: the reading modal is `size: 'lg'`, capped at 76rem,
+// so at a 1440px viewport the layout is 748px whatever the screen does. While
+// the inspect width was authored-only that gap was merely conservative and I
+// wrote it down as an accepted caveat. Making the width TUNABLE turned it into
+// the original defect, reachable from the new slider — measured at 1440:
+//
+//   inspect 320 (authored) -> beside, details 393px   fine
+//   inspect 560            -> beside, details 153px   squeezed
+//   inspect 800            -> beside, details   0px   gone
+//
+// So the comparison is against the layout's OWN width. A ResizeObserver is the
+// honest instrument: the layout's width is set by the modal and does not depend
+// on the columns we choose, so reading it and then changing
+// `grid-template-columns` cannot feed back into itself. Before the layout is in
+// the DOM there is nothing to measure, so the viewport still answers the first
+// call and the observer corrects it on the first frame it has a box.
+let doorObserver = null;
+
+// THE GAP IS PART OF WHAT TWO COLUMNS COST. The layout reserves `column-gap: 2%`
+// between the card and the details, and the threshold counted only the two
+// tracks. Measured with the content box forced to 710px and the authored 320px
+// card: 710 > 704, so `beside` — and the details track came out 375.8px, eight
+// pixels under the authored 384 minimum. The sum has to include everything the
+// two-column layout spends, not just the parts with names.
+//
+// `column-gap` computes as the authored token, so `2%` arrives as "2%" rather
+// than resolved pixels; a percentage gap is a percentage of the content box, so
+// it is resolved against the width being judged.
+function columnGapPx(layout, widthPx) {
+  if (!layout) return 0;
+  const raw = getComputedStyle(layout).columnGap.trim();
+  if (raw.endsWith('%')) {
+    const pct = Number.parseFloat(raw);
+    return Number.isFinite(pct) ? (widthPx * pct) / 100 : 0;
+  }
+  const px = PX.exec(raw);
+  return px ? Number(px[1]) : 0;
+}
+
+function decideCardDoorShape(widthPx, layout = document.querySelector('.card-inspection-layout')) {
+  const stacked = (widthPx - columnGapPx(layout, widthPx)) < doorStackBelowPx();
+  const next = stacked ? 'stacked' : 'beside';
+  if (document.documentElement.dataset.cardDoor !== next) {
+    document.documentElement.dataset.cardDoor = next;
+  }
+}
 function applyCardDoorShape() {
-  const stacked = window.innerWidth < cardDoorStackBelow;
-  document.documentElement.dataset.cardDoor = stacked ? 'stacked' : 'beside';
+  const slimmest = narrowestDoorWidth();
+  if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
+  else decideCardDoorShape(window.innerWidth, null);
+}
+// A DOOR CAN HOLD MORE THAN ONE LAYOUT, AND THE FIRST VERSION OF THIS WATCHED
+// THE WRONG ONE. `disconnect()` before `observe()` meant only the most recently
+// built layout was measured, while `applyCardDoorShape`'s `querySelector` read
+// the FIRST in the document — two different elements. Measured on the weapon
+// preview: two `.card-inspection-layout` nodes, both inside the modal; forcing
+// the first to a 700px content box left `data-card-door` at `beside`, because
+// the observer was watching the second and never saw the change.
+//
+// So every layout is observed, and the decision is taken from the NARROWEST one
+// still connected: if any layout in the door cannot hold two columns, the door
+// stacks. Detached nodes are skipped rather than held — a layout from a closed
+// door must not vote, and must not be kept alive by being watched.
+// THE TRACKS LIVE IN THE CONTENT BOX, SO THAT IS WHAT IS MEASURED. `clientWidth`
+// includes the layout's horizontal padding, and the grid columns and the
+// percentage gap are resolved inside the padding — so a 720px layout with the
+// `1rem` padding kit.css gives it read as 720 against a 704 threshold and sat
+// `beside` with about 354px of details. The ResizeObserver hands back a content
+// box already; this is the same number for the querySelector path.
+function contentWidthOf(node) {
+  const cs = getComputedStyle(node);
+  const pad = (Number.parseFloat(cs.paddingLeft) || 0) + (Number.parseFloat(cs.paddingRight) || 0);
+  return Math.max(0, node.clientWidth - pad);
+}
+// ONLY THE LAYOUTS THE ATTRIBUTE ACTUALLY GOVERNS GET A VOTE. Every
+// `data-card-door` rule in the stylesheet is scoped under
+// `.card-inspection-modal`, so an EMBEDDED inspection — the Armoury's detail
+// pane, a non-modal host — is not governed by this decision at all. Letting one
+// vote meant a narrow pane sitting behind a newly opened modal could force a
+// desktop door with ample room into the stacked layout, on the strength of a
+// measurement of something the rule never touches. "Narrowest wins" is the
+// right rule among the door's OWN layouts and the wrong one across unrelated
+// surfaces.
+function narrowestDoorWidth() {
+  let slimmest = null;
+  let width = 0;
+  for (const node of document.querySelectorAll('.card-inspection-modal .card-inspection-layout')) {
+    if (!node.isConnected) continue;
+    const w = contentWidthOf(node);
+    if (w <= 0) continue;
+    if (slimmest === null || w < width) { slimmest = node; width = w; }
+  }
+  return slimmest ? { node: slimmest, width } : null;
+}
+
+/**
+ * Re-decide the door's shape because something OTHER than its box moved.
+ *
+ * The observer watches the layout's own size, and the modal layout is
+ * `width: 100%; height: 100%` — so tuning the inspect width changes the
+ * threshold without changing anything the observer can see, and a door standing
+ * open kept its old shape until a resize or a reopen. Whoever moves an authored
+ * or tuned term calls this; `src/main.js` does it when the card-size settings
+ * are applied.
+ */
+export function refreshCardDoorShape() {
+  applyCardDoorShape();
+}
+// AND A CLOSED DOOR'S LAYOUT IS RELEASED, NOT MERELY IGNORED. Skipping detached
+// nodes in `narrowestDoorWidth` stopped them voting but left them observed, and
+// an observer holds its targets — so every card you opened kept its whole
+// layout subtree alive for the rest of the session. Each pass drops the ones
+// that have left the document.
+const doorWatched = new Set();
+function releaseDetachedLayouts() {
+  for (const node of doorWatched) {
+    if (!node.isConnected) {
+      doorObserver?.unobserve(node);
+      doorWatched.delete(node);
+    }
+  }
+}
+function observeDoorWidth(layout) {
+  if (typeof ResizeObserver !== 'function') return;
+  if (!doorObserver) {
+    doorObserver = new ResizeObserver(() => {
+      releaseDetachedLayouts();
+      const slimmest = narrowestDoorWidth();
+      if (slimmest) decideCardDoorShape(slimmest.width, slimmest.node);
+    });
+  }
+  releaseDetachedLayouts();
+  doorObserver.observe(layout);
+  doorWatched.add(layout);
 }
 function watchCardDoorShape() {
   applyCardDoorShape();
@@ -66,6 +218,9 @@ export function cardInspectionLayout(card, details) {
   watchCardDoorShape();
   const body = document.createElement('section');
   body.className = 'card-inspection-layout';
+  // The first decision is made on the viewport because this node has no box
+  // yet; the observer re-decides against the real one as soon as it does.
+  observeDoorWidth(body);
   const art = document.createElement('div');
   art.className = 'card-inspection-art';
   art.append(card);

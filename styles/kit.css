@@ -3554,15 +3554,28 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    it reads the same in either view. */
 .cc-card-selectors[data-view="list"] { display:flex; flex-direction:column; gap:10px; padding:var(--cc-choice-head,80px) 6px 14px; align-content:start; }
 .cc-card-selectors[data-view="list"] .poker-equipment-choice {
-  position:relative; display:grid; grid-template-columns:108px minmax(0,1fr); gap:12px;
+  position:relative; display:grid; grid-template-columns:var(--card-w-glance-compact, 108px) minmax(0,1fr); gap:12px;
   align-items:center; width:100%; min-width:0; max-width:none; padding:8px;
   border:1px solid var(--line-soft, #5e4c32); border-radius:10px;
 }
 .cc-card-selectors[data-view="list"] .poker-equipment-choice.on { border-color:var(--gold, #c9a227); }
 /* The list view sets its cards beside their own text, so it reads a narrower
-   glance — `sizing.levels.glance.variants.compact` in card.json, not a number
-   invented here. */
-.cc-card-selectors[data-view="list"] .equipment-poker-card { width:100%; max-width:var(--card-w-glance-compact, 108px); transform-origin:center left; }
+   width — `sizing.levels.glance.variants.compact` in card.json, not a number
+   invented here. The TRACK above reads the same token, so the column and the
+   card it holds cannot disagree; a literal there would cap whatever the card
+   asked for, which is how the shop's oversized frame happened (#1167).
+   THE VIEW DECIDES THIS WIDTH, NOT THE LEVEL, and keying it on `[data-level]`
+   was wrong: `levelForView('list')` returns `focus` (src/model/cardFields.js),
+   so EVERY card in this view is `focus`, selected or not — measured in the
+   real picker, not inferred. A `[data-level="glance"]` key therefore matched
+   nothing here and the rule was dead on its only surface.
+   That is also why writing it unconditionally does not bring back the defect
+   it was keyed to avoid: nothing in this view promotes on selection, so there
+   is no card here that this cap would hold at a resting size. The level still
+   chooses the FIELD SET the card shows — which is the whole point of a list
+   row, name and effects legible beside the card — while the view chooses how
+   wide it is drawn. */
+.cc-card-selectors[data-view="list"] .equipment-poker-card { width:100%; transform-origin:center left; max-width:var(--card-w-glance-compact, 108px); }
 .cc-card-selectors[data-view="list"] .equipment-choose {
   position:static; width:100%; margin-top:0; min-height:var(--tap-floor); font-size:14px;
 }
