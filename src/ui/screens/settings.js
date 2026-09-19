@@ -598,7 +598,7 @@ const ADVANCED_GROUPS = Object.freeze([
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-export const CATEGORY_ORDER = ['General', 'Advanced'];
+export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
 
 // W1a names the first category Display, as its id already is. (It read "Game"
 // from f17d9a2e; restoring that is one entry here.)
@@ -616,7 +616,7 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: ROWS.filter(row => ['Display', 'Audio', 'Accessibility'].includes(row.cat)) };
+  if (cat === 'General') return { rows: ROWS.filter(row => ['Display', 'Audio'].includes(row.cat)) };
   if (SECTIONS[cat]) return SECTIONS[cat];
   const rows = ROWS.filter((r) => r.cat === cat);
   return rows.length ? { rows } : null;
@@ -635,7 +635,7 @@ export function categoryHandler(cat) {
  * derived from it, so the two cannot drift.
  */
 export function filedCategories() {
-  return ['General', 'Advanced'];
+  return ['General', 'Accessibility', 'Advanced'];
 }
 
 /** Every category that exists, in the order it is drawn. Derived, one home. */
@@ -1299,14 +1299,15 @@ function generalGroups(category) {
 }
 
 function categoryHtml(cat, settings, saves) {
-  if (cat === 'General') {
-    const groups = ['Display', 'Audio', 'Accessibility'];
-    const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : 'Display';
+  if (cat === 'General' || cat === 'Accessibility') {
+    const groups = cat === 'Accessibility' ? ['Accessibility'] : ['Display', 'Audio'];
+    const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
     const topics = generalGroups(selected);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
-    return `<div class="set-general-pickers"><select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>`
-      + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="General option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
+    return '<div class="set-general-pickers">'
+      + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
+      + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
       + `</div><div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
   }
   const h = categoryHandler(cat);
@@ -1503,7 +1504,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
-    const key = `settingsGeneralTopic.${settings.settingsGeneralCategory || 'Display'}`;
+    const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : ['Display', 'Audio'].includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : 'Display'}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
     renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools });
@@ -1642,8 +1643,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const groups = advancedSubgroups(ROWS, currentGroup);
       const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
       const rows = button.dataset.resetConfig === 'all' ? ROWS
-        : current === 'General' ? (() => {
-          const section = settings.settingsGeneralCategory || 'Display';
+        : current === 'General' || current === 'Accessibility' ? (() => {
+          const section = current === 'Accessibility' ? 'Accessibility' : ['Display', 'Audio'].includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : 'Display';
           const topics = generalGroups(section);
           return topics.get(settings[`settingsGeneralTopic.${section}`]) || topics.values().next().value;
         })()

@@ -98,7 +98,9 @@ test('the real rows: a self-evident row draws no hint, a subtle one keeps it', (
   }
 });
 
-test('Settings has two top-level categories and General retains all ordinary controls', () => {
-  assert.deepEqual(settingsCategories(), ['General', 'Advanced']);
-  assert.deepEqual(new Set(categoryHandler('General').rows.map(row => row.cat)), new Set(['Display', 'Audio', 'Accessibility']));
+test('Accessibility has its own tab while General contains Display and Audio', () => {
+  assert.deepEqual(settingsCategories(), ['General', 'Accessibility', 'Advanced']);
+  assert.deepEqual(new Set(categoryHandler('General').rows.map(row => row.cat)), new Set(['Display', 'Audio']));
+  assert.ok(categoryHandler('Accessibility').rows.length > 0);
+  assert.ok(categoryHandler('Accessibility').rows.every(row => row.cat === 'Accessibility'));
 });
