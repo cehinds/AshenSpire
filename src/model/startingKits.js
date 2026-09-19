@@ -216,6 +216,8 @@ function armourRows(registries, classId) {
  */
 export function armourIsStartingEligible(row, meta, registries, classId) {
   if (!row) return false;
+  // Shared sets are equipped in the Armoury, where current attributes are checked.
+  if (row.sharedSet) return false;
   if (row.unlock === '') return true;
   if ((classCreationConfig(registries, classId).armourIds || []).includes(row.id)) return true;
   return new Set((meta && meta.unlocked) || []).has(row.unlock);
@@ -237,7 +239,7 @@ export function startingArmourViews(registries, classId, meta = {}) {
  */
 export function resolveStartingArmour(registries, classId, requestedId, meta = {}) {
   const rows = armourRows(registries, classId);
-  const free = rows.find((row) => row.unlock === '');
+  const free = rows.find((row) => row.unlock === '' && !row.sharedSet);
   if (!requestedId) {
     if (!free) throw new Error(`class '${classId}' has no free starting armour set`);
     return free;

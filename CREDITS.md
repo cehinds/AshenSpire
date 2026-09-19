@@ -187,3 +187,6 @@ controlled independently from the doorway and sconces.
 `assets/bg/tower-city-background-unlit.webp` is a generated lighting edit of
 that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
+
+### Shared armor inventory art (2026-09-19)
+Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed. Equipped appearances reuse the corresponding existing painted outfit sprites.

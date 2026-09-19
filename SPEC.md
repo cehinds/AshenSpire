@@ -1904,3 +1904,8 @@ The shared generator and manifest contract are suitable for host-authoritative
 co-op. A client must never independently reroll a party route or gain travel
 permission by opening a location dialog. Classic co-op remains supported while
 World Journey uses only explicitly implemented host actions.
+
+### Shared armor sets (2026-09-19)
+Four sharedSet outfits are available in every class's Armoury after creation. They use the existing class-scoped armor save keys, with one identical authored row per wearer class. Empty unlock means owned; sharedSet excludes these rows from starting-armour selection and the exactly-one-baseline rule. Equip enforces current attributes at 12: Wayfarer Plate STR, Nightweave INT, Rite Vestments WIS, Gutter Leathers DEX. Existing starting outfits and saves remain valid.
+
+Bonuses are authored in outfits.csv using existing modifiers: Wayfarer +2 Defend Block/+4 max HP; Nightweave +1 class-power Potency/+1 max Mana; Rite +1 Defend Block/+6 max HP; Gutter +1 Strike Damage/+1 max Stamina. These are modest initial alternatives, not a claim of completed balance playtesting. Tags remain in tagging.csv. inventoryArtKey selects the item illustration; artClassId plus artKey selects the complete corresponding outfit sprite collection without changing gameplay class. No new character animation assets are authored.

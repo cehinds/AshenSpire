@@ -1,7 +1,15 @@
-# Optional attribute minima for equipping an owned armament. Hand and category
+# Optional attribute minima for equipping an owned equipment item. Hand and category
 # continue to live on weapons.csv and equipSlots.csv; this table adds no class.
 itemId,attributeId,minimum
 straightSword,strength,10
 greatsword,strength,12
 dagger,dexterity,11
 ashStaff,intelligence,12
+
+wayfarerPlate,strength,12
+
+nightweave,intelligence,12
+
+riteVestments,wisdom,12
+
+gutterLeathers,dexterity,12

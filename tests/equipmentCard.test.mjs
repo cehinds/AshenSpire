@@ -5,6 +5,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { equipmentCardModel, equipmentCardTokens } from '../src/model/equipmentCard.js';
 import { armourMenuAsset } from '../src/model/paintedOutfitArt.js';
+import { armamentIconAsset } from '../src/model/equipmentArt.js';
 const r = createRegistries(contentBundle);
 test('every canonical equipment item has complete card facts, bonuses and available painted identity', () => {
   for (const p of [...r.equipment.armaments, ...r.equipment.armour]) {
@@ -14,7 +15,7 @@ test('every canonical equipment item has complete card facts, bonuses and availa
     assert.equal(m.tags.length, p.tags.length);
     assert.ok(m.facts.every(f => Number.isFinite(f.value) && f.explanation));
     assert.ok(m.bonuses.every(b => b.explanation && !b.label.includes('undefined')));
-    assert.ok(existsSync(p.kind === 'armor' ? armourMenuAsset(p.classId,p.id) : `assets/equipment/icon_${p.id}.webp`), p.id);
+    assert.ok(existsSync(p.kind === 'armor' ? armourMenuAsset(p.classId,p.id) : armamentIconAsset(p)), p.id);
   }
 });
 test('modifier copy preserves assignment versus signed changes and authored mechanics', () => {
