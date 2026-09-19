@@ -98,6 +98,9 @@ test('the real rows: a self-evident row draws no hint, a subtle one keeps it', (
   }
 });
 
-test('the first four categories are the W1a rail, in order', () => {
-  assert.deepEqual(settingsCategories().slice(0, 4), ['Display', 'Audio', 'Accessibility', 'Advanced']);
+test('Accessibility has its own tab while General contains Display and Audio', () => {
+  assert.deepEqual(settingsCategories(), ['General', 'Accessibility', 'Advanced']);
+  assert.deepEqual(new Set(categoryHandler('General').rows.map(row => row.cat)), new Set(['Display', 'Audio']));
+  assert.ok(categoryHandler('Accessibility').rows.length > 0);
+  assert.ok(categoryHandler('Accessibility').rows.every(row => row.cat === 'Accessibility'));
 });
