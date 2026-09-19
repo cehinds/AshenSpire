@@ -23,6 +23,19 @@ export const UNLOCK_CONDITIONS = Object.freeze({
   winAsClass: (u, p) => (p.wonClasses || []).includes(String(u.param)),
   beatBoss: (u, p) => (p.bosses || []).includes(String(u.param)),
   reachAct: (u, p) => (p.maxAct || 0) >= Number(u.param),
+  // Plan phase 5c: the class-card unlocks.
+  //   classLevel     param = level              reached that class level in any run
+  //   bossWithGroup  param = enemyId:itemType   felled that boss holding a piece of that type
+  classLevel: (u, p) => (p.maxClassLevel || 0) >= Number(u.param),
+  bossWithGroup: (u, p) => {
+    // `<enemyId>:<itemType>` — the item type carries its own colon
+    // (`item:blade`), so the split is on the first.
+    const param = String(u.param);
+    const at = param.indexOf(':');
+    const enemyId = at < 0 ? param : param.slice(0, at);
+    const group = at < 0 ? '' : param.slice(at + 1);
+    return ((p.bossGroups || {})[enemyId] || []).includes(group);
+  },
   winRuns: (u, p) => (p.wins || 0) >= Number(u.param),
 });
 
@@ -149,7 +162,7 @@ export function pieceReveal(piece, { owned, unlockById, drops = {} }) {
 
 /** A fresh, empty progress tally. */
 export function emptyProgress() {
-  return { runs: 0, wins: 0, maxAct: 1, bosses: [], wonClasses: [] };
+  return { runs: 0, wins: 0, maxAct: 1, bosses: [], wonClasses: [], maxClassLevel: 0, bossGroups: {} };
 }
 
 function addOnce(list, value) {
@@ -170,11 +183,32 @@ export function recordProgress(progress, result) {
   p.runs += 1;
   p.maxAct = Math.max(p.maxAct, Number(result.act) || 1);
   for (const id of result.bosses || []) addOnce(p.bosses, String(id));
+  // Plan phase 5c: the class level reached and the groups each boss fell to.
+  p.maxClassLevel = Math.max(p.maxClassLevel || 0, Number(result.maxClassLevel) || 0);
+  for (const [enemyId, groups] of Object.entries(result.bossGroups || {})) {
+    if (!p.bossGroups[enemyId]) p.bossGroups[enemyId] = [];
+    for (const g of groups || []) addOnce(p.bossGroups[enemyId], String(g));
+  }
   if (result.victory) {
     p.wins += 1;
     addOnce(p.wonClasses, String(result.class));
   }
   return p;
+}
+
+/**
+ * classUnlockRow(unlocks, classId) → the unlock row that gates a class card
+ * (kind 'class', ref the class id), or null when the class is free — every
+ * shipped class is, so the gate is a table the owner may fill.
+ */
+export function classUnlockRow(unlocks, classId) {
+  return (unlocks || []).find((u) => u && u.kind === 'class' && u.ref === classId) || null;
+}
+
+/** classAvailable(unlocks, classId, meta) → true when no row gates the class, or its row is earned. */
+export function classAvailable(unlocks, classId, meta) {
+  const row = classUnlockRow(unlocks, classId);
+  return !row || ((meta && meta.unlocked) || []).includes(row.id);
 }
 
 /**

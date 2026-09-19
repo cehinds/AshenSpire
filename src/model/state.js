@@ -604,6 +604,9 @@ export const RUN_SHAPE = [
   // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
   // with no picks at the migration door.
   { key: 'coreTags', type: 'array' },
+  // Plan phase 5c: the item types in hand as each boss fell, for the
+  // bossWithGroup unlock; optional, written at the boss door.
+  { key: 'bossGroups', type: 'object', optional: true },
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },

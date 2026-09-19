@@ -8,6 +8,25 @@
 
 export const events = [
   {
+    // Plan phase 5c: the one shipped door to the class swap — an event, never
+    // a menu. The glass shows another calling; the run keeps its deck, relics,
+    // hands and weapon skills, and starts its class over.
+    id: 'turncoatMirror',
+    name: "The Turncoat's Mirror",
+    art: '🪞',
+    text:
+      'A standing mirror in a ruined chapel, its silver gone to smoke. In it you are someone else: ' +
+      'the same hands, the same scars, another calling. It waits to see whether you will step through.',
+    choices: [
+      {
+        label: 'Step through (take up another class; your class levels start over)',
+        effects: [{ op: 'swapClass', random: true }],
+        resultText: 'The glass gives like water. On the far side your weight sits differently, and the old name will not come.',
+      },
+      { label: 'Turn away', effects: [], resultText: 'The figure in the glass turns away too, a moment after you do.' },
+    ],
+  },
+  {
     id: 'goldboughAvatar',
     name: 'Goldbough Avatar',
     art: '🌳',
@@ -547,6 +566,7 @@ export const events = [
 // Stable history ids live beside event content without widening the validated
 // event opcode schema. Labels may change; these ids are durable save facts.
 export const eventChoiceIds = Object.freeze({
+  turncoatMirror: ['lookIntoTheGlass', 'turnAway'],
   goldboughAvatar: ['offerCard', 'pray', 'leave'],
   abandonedCart: ['lootStrongbox', 'leave'],
   weepingPilgrim: ['giveCinders', 'refuse'],

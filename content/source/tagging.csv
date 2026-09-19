@@ -1471,6 +1471,7 @@ keepsake,,whetstoneMemory,classification.keepsake
 event,,goldboughAvatar,classification.event
 event,,abandonedCart,classification.event
 event,,weepingPilgrim,classification.event
+event,,turncoatMirror,classification.event
 event,,bloodstainedAltar,classification.event
 event,,wanderingPhysician,classification.event
 event,,goldenMoth,classification.event

@@ -82,6 +82,9 @@ import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skill
 import { classCard, runClassIdentity } from '../src/model/classCard.js';
 import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
 import { classCarrier } from '../src/engine/properties.js';
+import { swapRunClass } from '../src/model/classSwap.js';
+import { classAvailable, classUnlockRow } from '../src/model/unlocks.js';
+import { eventChoicesWithHistory } from '../src/content/events.js';
 import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
@@ -9019,6 +9022,59 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(badTree([...contentBundle.classTree, { classId: 'reaver', nodeId: 'siphon', tier: 7 }])).some((e) => /must be a tier 1\.\.3/.test(e)), 'a tier the balance rows do not open is refused by name');
     assert(said(badTree(contentBundle.classTree.map((r) => (r.nodeId === 'bulwarkKing' ? { ...r, nodeId: 'siphon' } : r)))).some((e) => /do not exclude one another/.test(e)), 'two subclasses that do not exclude one another are refused by name');
     assert(said(validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, class: { ...c, tierAt: [3, 1] } } } })).some((e) => /balance\.skill\.class\.tierAt/.test(e)), 'a falling tier ladder is refused by name');
+  });
+
+  test('89. unlocks and the swap: a class card is gated by a profile row, and the mirror replaces the core card (plan phase 5c)', () => {
+    // THE UNLOCK TABLE: a class row gates the card; every shipped class is free.
+    for (const cls of REG.classes.all()) assert(classAvailable(REG.unlocks, cls.id, {}), `${cls.id} is free`);
+    const gate = { id: 'rogueUnlock', kind: 'class', ref: 'rogue', name: 'The Rogue', condition: 'classLevel', param: 3, reveal: 'listed', hint: 'Reach class level 3.' };
+    const unlocks = [...REG.unlocks, gate];
+    eq(classUnlockRow(unlocks, 'rogue').id, 'rogueUnlock'); eq(classUnlockRow(unlocks, 'reaver'), null);
+    eq(classAvailable(unlocks, 'rogue', { unlocked: [] }), false, 'a gated class waits for its row');
+    eq(classAvailable(unlocks, 'rogue', { unlocked: ['rogueUnlock'] }), true, 'and is free once earned');
+    // THE CONDITIONS read the progress tally the run end records.
+    const progress = recordProgress(emptyProgress(), { victory: false, class: 'reaver', act: 2, bosses: ['fellWarden'], maxClassLevel: 2, bossGroups: { fellWarden: ['item:blade'] } });
+    eq(progress.maxClassLevel, 2); eq(progress.bossGroups.fellWarden.join(','), 'item:blade');
+    eq(evaluateUnlocks(unlocks, { progress, unlocked: [] }).includes('rogueUnlock'), false, 'level 2 is not level 3');
+    recordProgress(progress, { victory: true, class: 'reaver', act: 3, bosses: ['fellWarden'], maxClassLevel: 3, bossGroups: { fellWarden: ['item:shield'] } });
+    eq(progress.maxClassLevel, 3, 'the tally only grows'); eq(progress.bossGroups.fellWarden.join(','), 'item:blade,item:shield', 'groups accrue per boss');
+    assert(evaluateUnlocks(unlocks, { progress, unlocked: [] }).includes('rogueUnlock'), 'level 3 earns the card');
+    const bossGate = { ...gate, id: 'heraldUnlock', ref: 'herald', condition: 'bossWithGroup', param: 'fellWarden:item:shield' };
+    eq(evaluateUnlocks([bossGate], { progress, unlocked: [] }).join(','), 'heraldUnlock', 'a boss felled with the group earns it');
+    eq(evaluateUnlocks([{ ...bossGate, param: 'fellWarden:item:magic-focus' }], { progress, unlocked: [] }).length, 0, 'the wrong group does not');
+    // THE SWAP replaces the core card and prunes what the new class has no seat for.
+    const run = createRunState({ seed: 0x5c5c, classId: 'reaver', registries: REG });
+    awardSkillXp(REG, run, 'item:blade', 50); awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
+    eq(pickClassNode(REG, run, 'ironFooting'), true);
+    const deckBefore = run.deck.map((c) => c.instanceId).join(','); const relicsBefore = run.relics.join(',');
+    const receipt = swapRunClass(REG, run, 'rogue');
+    eq(receipt.from, 'reaver'); eq(receipt.to, 'rogue'); eq(receipt.droppedTags.join(','), 'ironFooting', "the reaver's pick has no seat in the rogue tree"); eq(receipt.resetTracks.join(','), 'class:reaver');
+    eq(run.class, 'rogue'); eq(run.zones.core, 'rogue', 'the core zone follows'); eq(JSON.stringify(run.coreTags), '[]'); eq(JSON.stringify(run.zones.coreTags), '[]');
+    eq(skillLevel(run, 'class:reaver'), 0, 'the class track starts over'); assert(run.skills['class:reaver'] === undefined);
+    assert(run.skills['item:blade'].xp === 50 || run.skills['item:blade'].level >= 1, 'the weapon skill is kept');
+    eq(run.deck.map((c) => c.instanceId).join(','), deckBefore, 'the deck is the run\'s'); eq(run.relics.join(','), relicsBefore, 'so are the relics');
+    eq(run.history.filter((h) => h.kind === 'classSwapped').length, 1, 'the swap is a history row');
+    eq(swapRunClass(REG, run, 'rogue').droppedTags.length, 0, 'a swap to the same class changes nothing');
+    let threw = null; try { swapRunClass(REG, run, 'nope'); } catch (e) { threw = e.message; }
+    assert(/unknown class 'nope'/.test(threw || ''), 'an unknown class is refused by name');
+    assert(validateRunShape(run).length === 0, 'the swapped run is a sound save');
+    eq(deserializeRun(serializeRun(run)).class, 'rogue', 'and rides the save');
+    // THE OPCODE runs through the run-effect door; random never lands on the run's own class.
+    const door = createRunState({ seed: 0x5c5d, classId: 'starseer', registries: REG });
+    executeRunEffects({ run: door, registries: REG, rng: createRng(4) }, [{ op: 'swapClass', classId: 'herald' }]);
+    eq(door.class, 'herald', 'a named swap lands');
+    for (let i = 0; i < 6; i++) {
+      const before = door.class;
+      executeRunEffects({ run: door, registries: REG, rng: createRng(10 + i) }, [{ op: 'swapClass', random: true }]);
+      assert(door.class !== before, `a random swap is another class (${before} → ${door.class})`);
+    }
+    // THE MIRROR ships as an event with the opcode, its choices durable.
+    const mirror = REG.events.get('turncoatMirror');
+    eq(mirror.choices[0].effects[0].op, 'swapClass'); eq(eventChoicesWithHistory(mirror).map((c) => c.id).join(','), 'lookIntoTheGlass,turnAway');
+    // VALIDATION: the opcode's shape, by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const badRef = validateContent({ ...testBundle(), events: contentBundle.events.map((ev) => (ev.id === 'turncoatMirror' ? { ...ev, choices: [{ ...ev.choices[0], effects: [{ op: 'swapClass', classId: 'nope' }] }, ev.choices[1]] } : ev)) });
+    assert(said(badRef).some((e) => /nope/.test(e)), 'a swap to an unknown class is refused by name');
   });
 
   const passed = results.filter((r) => r.ok).length;
