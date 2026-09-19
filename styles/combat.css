@@ -1380,11 +1380,22 @@
   pointer-events: none; user-select: none;
 }
 :root[data-formation-grid='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid-cell:not(:disabled) { pointer-events: auto; cursor: pointer; }
+.formation-grid-cell.formation-selected { --grid-stroke: var(--selection-color, #59bd75); }
+.formation-grid-cell.formation-selected .formation-grid-outline > * { fill-opacity: .4; stroke-width: 3; }
+.formation-move-controls { position: absolute; z-index: 2500; top: 36px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.formation-move-controls[hidden] { display: none; }
+.formation-move-controls button { min-height: 44px; background: #191710; white-space: nowrap; }
 .formation-grid-cell {
+  border: 0; border-radius: 0; padding: 0; background: transparent; color: inherit; opacity: 1; box-shadow: none;
   position: absolute;
   transform: translateY(-50%);
   min-width: 0; box-sizing: border-box;
   --grid-stroke: var(--player-grid-color, #d5cc63);
+}
+:root .formation-grid-cell, :root .formation-grid-cell:disabled, :root .formation-grid-cell:hover, :root .formation-grid-cell:focus-visible {
+  background: transparent; border: 0; box-shadow: none; opacity: 1; filter: none; overflow: visible;
 }
 .formation-grid-cell::after {
   content: '+'; position: absolute; left: 50%; top: 50%;

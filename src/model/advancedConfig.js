@@ -13,6 +13,8 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   playerSpawnColumn: '2',
   enemySpawnColumn: '3',
   showFormationGrid: false,
+  movementEnabled: false, movementNeedsSelection: true, movementCostsAction: true,
+  tileActivation: 'tap', moveActivation: 'hold', selectionColor: '#59bd75',
   rowAScale: 1, rowBScale: 1, rowCScale: 1,
   frontOffsetX: 0, frontOffsetY: 0, backOffsetX: 0, backOffsetY: 0,
   frontLayer: 0, backLayer: 200,
@@ -128,6 +130,18 @@ const PRESENTATION_ROWS = Object.freeze([
 
 function presentationRows() {
   return [
+    ...[
+      ['movementEnabled', 'Enable formation movement', 'Make empty player-side tiles interactive in combat.'],
+      ['movementNeedsSelection', 'Select a tile before moving', 'Select a destination, then use Move. When off, activating a tile moves immediately.'],
+      ['movementCostsAction', 'Movement costs an action', 'Spend one action per move. When off, movement is free.'],
+    ].map(([key, label, note]) => ({ cat: 'Advanced', advancedGroup: 'Interface', key: `${ADVANCED_CONFIG_PREFIX}presentation.${key}`, presentationKey: key, def: PRESENTATION_DEFAULTS[key], label, note })),
+    ...[['tileActivation', 'Tile activation'], ['moveActivation', 'Move button activation']].map(([key, label]) => ({
+      cat: 'Advanced', advancedGroup: 'Interface', type: 'choice', key: `${ADVANCED_CONFIG_PREFIX}presentation.${key}`, presentationKey: key,
+      def: PRESENTATION_DEFAULTS[key], choices: ['tap', 'hold'], label,
+      note: 'Hold uses the shared hold-confirm delay. Tap commits on a click, touch or keyboard activation.',
+    })),
+    { cat: 'Advanced', advancedGroup: 'Interface', type: 'color', key: `${ADVANCED_CONFIG_PREFIX}presentation.selectionColor`, presentationKey: 'selectionColor',
+      def: PRESENTATION_DEFAULTS.selectionColor, label: 'Shared selection color', note: 'Highlight selected tiles, cards, characters and selected menu choices with this color.' },
     {
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.gridShape`, presentationKey: 'gridShape',

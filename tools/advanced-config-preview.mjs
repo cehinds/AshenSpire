@@ -58,13 +58,61 @@ async function main() {
       if (await evaluate(expression)) return;
       await wait(80);
     }
-    throw new Error(`Timed out waiting for ${label}`);
+    const diagnostic = await evaluate(`({url:location.href, text:document.body.innerText.slice(0,1200), tiles:[...document.querySelectorAll('[data-cell]')].map(t=>[t.dataset.cell,t.disabled]), settings:document.documentElement.dataset.formationSettings})`);
+    throw new Error(`Timed out waiting for ${label}: ${JSON.stringify(diagnostic)}`);
   };
   const capture = async (name) => {
     const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
     writeFileSync(resolve(OUT, `${name}.png`), Buffer.from(shot.data, 'base64'));
   };
   try {
+    if (process.argv.includes('--movement-only')) {
+      for (const [name, width, height] of [['desktop', 1440, 900], ['phone', 390, 844]]) {
+        await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 500 }, sessionId);
+        const settings = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.movementEnabled': true, 'gameConfig.presentation.selectionColor': '#00ee88' }));
+        await cdp.send('Page.navigate', { url: `${previewURL}?shot=combat&shotSettings=${settings}` }, sessionId);
+        await until("document.querySelector('[data-cell=A1]')?.disabled === false", 'movable tiles');
+        await evaluate(`(() => {
+          window.movementErrors = [];
+          window.addEventListener('error', event => { if (event.message.includes('overhead stack')) window.movementErrors.push(event.message); });
+          const sprite = document.querySelector('.combatant.player .sprite');
+          sprite.style.display = 'none';
+          document.documentElement.setAttribute('data-formation-settings', document.documentElement.dataset.formationSettings);
+        })()`);
+        await evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+        await evaluate("document.querySelector('.combatant.player .sprite').style.removeProperty('display')");
+        await until("document.querySelector('.combatant.player .sprite').getBoundingClientRect().height > 0", 'sprite retry');
+        await evaluate("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
+        await until(`(() => { const tile = document.querySelector('[data-cell=A1]'); const r = tile.getBoundingClientRect(); return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('[data-cell]') === tile; })()`, 'destination hit target');
+        if (await evaluate('window.movementErrors.length')) throw new Error('Unmeasured sprite crashed overhead positioning');
+        const point = selector => evaluate(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return {x:r.x+r.width/2,y:r.y+r.height/2}; })()`);
+        const press = async selector => { const p = await point(selector); await cdp.send('Input.dispatchMouseEvent', {type:'mousePressed',button:'left',clickCount:1,...p}, sessionId); return p; };
+        const release = p => cdp.send('Input.dispatchMouseEvent', {type:'mouseReleased',button:'left',clickCount:1,...p}, sessionId);
+        await release(await press('[data-cell=A1]'));
+        await until("document.querySelector('[data-cell=A1]').getAttribute('aria-pressed') === 'true'", 'selected destination');
+        if (await evaluate("document.querySelector('.combatant.player').dataset.formationCell") !== 'C2') throw new Error('Selection moved the player prematurely');
+        await capture(`${name}-movement-selected`);
+        await release(await press('[data-formation-move]'));
+        if (await evaluate("document.querySelector('.combatant.player').dataset.formationCell") !== 'C2') throw new Error('Early release committed movement');
+        const held = await press('[data-formation-move]');
+        await until("document.querySelector('.combatant.player').dataset.formationCell === 'A1'", 'confirmed movement');
+        await release(held);
+        await until("document.querySelector('[data-cell=B1]').disabled === false", 'movement unlocks after its timeline');
+        if (await evaluate("document.querySelector('.energy-orb').getAttribute('aria-label')") !== 'Actions 2 of 3') throw new Error('Move did not cost exactly one action');
+        if (!await evaluate("document.querySelector('.formation-move-controls').hidden && document.querySelector('[data-cell=A1]').disabled && document.querySelector('[data-cell=A3]').disabled")) throw new Error('Move controls did not reset');
+        await capture(`${name}-movement-complete`);
+        console.log(`PASS ${name} movement: select, cancel early hold, full hold commit, occupied/enemy tiles blocked`);
+        const direct = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.movementEnabled': true, 'gameConfig.presentation.movementNeedsSelection': false, 'gameConfig.presentation.movementCostsAction': false, 'gameConfig.presentation.tileActivation': 'tap' }));
+        await cdp.send('Page.navigate', { url: `${previewURL}?shot=combat&shotSettings=${direct}` }, sessionId);
+        await until("document.querySelector('[data-cell=B1]')?.disabled === false", 'direct movement');
+        await release(await press('[data-cell=B1]'));
+        await until("document.querySelector('.combatant.player').dataset.formationCell === 'B1'", 'direct move applied');
+        await until("document.querySelector('[data-cell=A1]').disabled === false", 'direct movement unlocks');
+        if (await evaluate("document.querySelector('.energy-orb').getAttribute('aria-label')") !== 'Actions 3 of 3') throw new Error('Free movement spent an action');
+        console.log(`PASS ${name} direct tap movement without selection or action cost`);
+      }
+      return;
+    }
     for (const shape of [
       { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
       { name: 'desktop-classes', width: 1440, height: 900, group: 'Classes', mobile: false },

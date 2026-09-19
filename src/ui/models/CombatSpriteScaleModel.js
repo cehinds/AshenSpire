@@ -10,6 +10,10 @@ export function combatSpriteRatio(stature, enemyId) {
 // Fit once for the formation. Fitting each actor independently cancels stature
 // on cramped screens. Depth is applied to every actor in the same row.
 export function fitCombatSprites({ width, height, actors }) {
+  // Newly mounted artwork may not have a layout box yet. It must not poison
+  // the shared fit with 0/0; the stage retries on image load / resize.
+  actors = actors.filter(a => Number.isFinite(a.visibleHeight) && a.visibleHeight > 0
+    && Number.isFinite(a.visibleWidth) && a.visibleWidth > 0);
   // The shared reference is the formation's figure ceiling (its one home),
   // not a flat 150: the figures grow with the stage.
   let base = Math.min(figureCeiling({ width, height }), height * .52);
