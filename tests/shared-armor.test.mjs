@@ -12,6 +12,24 @@ import { validateContent } from '../src/model/validate.js';
 const r = createRegistries(contentBundle);
 const ids = ['wayfarerPlate', 'nightweave', 'riteVestments', 'gutterLeathers'];
 
+test('all sixteen class/outfit combinations have distinct complete sprite sets', () => {
+  const menuFiles = new Set();
+  const defeatFiles = new Set();
+  for (const cls of r.classes.ids()) for (const id of ids) {
+    const art = paintedOutfit(cls, id);
+    menuFiles.add(art.menu.stand);
+    defeatFiles.add(art.defeated.file);
+    for (const pose of ['idle', 'guard', 'attack1', 'attack2', 'attack3', 'attack4', 'power1', 'power2', 'power3', 'hit', 'prepared', 'starstoneCharge', 'bloodRite', 'shieldGuard3', 'parry3', 'shieldBash3']) {
+      const frame = art.frames[pose];
+      assert.ok(frame, `${cls}/${id} has ${pose}`);
+      assert.match(frame.file, new RegExp(`shared-${cls}-${id}/`));
+      assert.ok(frame.box.x0 >= 0 && frame.box.y0 >= 0 && frame.box.x1 < 640 && frame.box.y1 === 599);
+    }
+  }
+  assert.equal(menuFiles.size, 16);
+  assert.equal(defeatFiles.size, 16);
+});
+
 test('shared armor validates and preserves existing creation choices', () => {
   assert.equal(validateContent(contentBundle).ok, true);
   assert.deepEqual(validateEquipment(r), []);
@@ -60,6 +78,12 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   assert.equal(card.tags.length, 2);
   assert.ok(existsSync(armourMenuAsset(cls, id)));
   const visual = paintedOutfit(cls, id);
-  assert.equal(visual, paintedOutfit(armourArtClass(cls, id), 'default'));
+  assert.equal(armourArtClass(cls, id), cls, 'outfit preserves wearer identity');
+  assert.equal(visual.classId, cls);
+  assert.equal(visual.outfitId, id);
+  assert.notEqual(visual, paintedOutfit(cls, 'default'));
+  assert.ok(existsSync(visual.defeated.file));
+  assert.deepEqual(visual.readiness, {}, 'no fallback to another costume for readiness');
+  assert.equal(new Set(Object.values(visual.frames).map(f => f.file)).size, 7);
   for (const frame of Object.values(visual.frames)) assert.ok(existsSync(frame.file));
 });

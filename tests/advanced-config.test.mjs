@@ -153,6 +153,30 @@ test('legacy row and column names migrate to the six-cell formation grid', () =>
   }, { player: 'A2', enemy: 'C3' });
 });
 
+test('a renamed balance path keeps its stored override, and the new key wins when both are stored', () => {
+  const legacy = 'gameConfig.balance.shrine.healPct';
+  const current = 'gameConfig.balance.rest.hpPartialPct';
+  assert.equal(configuredContentBundle(contentBundle, { [legacy]: 50 }).balance.rest.hpPartialPct, 50,
+    'a profile written before the rename still tunes the partial rest');
+  assert.equal(configuredContentBundle(contentBundle, { [legacy]: 50, [current]: 60 }).balance.rest.hpPartialPct, 60,
+    'the current key wins over the legacy one');
+  assert.deepEqual(advancedConfigSnapshot({ [legacy]: 50 }).overrides, { [current]: 50 },
+    'a snapshot carries the current key, never the retired one');
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ [legacy]: 50 }), contentBundle), { [current]: 50 },
+    'an exported file naming the retired key imports under the current one');
+});
+
+test('percent rows are bounded to 100 and the town cap to at least 1, as validation will insist', () => {
+  const rows = new Map(advancedConfigRows(contentBundle).map((row) => [row.key, row]));
+  for (const path of ['rest.hpSmallPct', 'rest.hpPartialPct', 'rest.mana.floorPct']) {
+    const row = rows.get(`gameConfig.balance.${path}`);
+    assert.deepEqual([row.min, row.max, row.integer], [0, 100, true], `${path} is a whole percent`);
+  }
+  assert.equal(rows.get('gameConfig.balance.atlas.townsPerActMax').min, 1, 'a route must hold its hub');
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ 'gameConfig.balance.rest.hpPartialPct': 135 }), contentBundle),
+    'a percent past 100 is refused at import');
+});
+
 test('desktop export uses Save As and writes the deterministic JSON', async () => {
   let written = '';
   const result = await saveAdvancedConfigFile({ 'gameConfig.balance.startingCinders': 7 }, {

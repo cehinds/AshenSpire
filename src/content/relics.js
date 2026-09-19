@@ -199,8 +199,8 @@ export const relics = [
     name: 'Ember Fragment',
     rarity: 'uncommon',
     icon: '✨',
-    passives: { shrineHealMult: 1.15 },
-    textTemplate: 'Resting at Shrines heals 15% more.',
+    passives: { restHealMult: 1.15 },
+    textTemplate: 'Resting heals 15% more.',
   },
   {
     id: 'twinnedArmor',
@@ -279,8 +279,10 @@ export const relics = [
     name: 'Wyrm Heart',
     rarity: 'rare',
     icon: '🫀',
-    passives: { shrineNoRest: true },
-    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines no longer offer Rest.',
+    // Denies the shrine's Rest (and any place whose set holds the partial
+    // rest) — a town's bed and a camp's rough rest stay open (plan phase 7).
+    passives: { restDenied: ['restHpPartial'] },
+    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines and chapels no longer offer Rest.',
     flavor: 'It still beats. It expects something of you.',
   },
   {
@@ -542,8 +544,8 @@ export const relics = [
     name: "Wayfarer's Knot",
     rarity: 'common',
     icon: '🪢',
-    passives: { runeGainMult: 1.1, shrineHealMult: 1.1 },
-    textTemplate: 'Gain 10% more Cinders from combats. Resting at Shrines heals 10% more.',
+    passives: { runeGainMult: 1.1, restHealMult: 1.1 },
+    textTemplate: 'Gain 10% more Cinders from combats. Resting heals 10% more.',
     flavor: 'One knot for the road ahead. One for the breath to walk it.',
   },
   {
@@ -560,8 +562,8 @@ export const relics = [
     name: 'Restless Clasp',
     rarity: 'rare',
     icon: '🧷',
-    passives: { flaskPowerMult: 2, shrineHealMult: 0.5 },
-    textTemplate: 'Flasks are 100% stronger. Resting at Shrines heals 50% less.',
+    passives: { flaskPowerMult: 2, restHealMult: 0.5 },
+    textTemplate: 'Flasks are 100% stronger. Resting heals 50% less.',
     flavor: 'It keeps the medicine close and sleep far away.',
   },
   {

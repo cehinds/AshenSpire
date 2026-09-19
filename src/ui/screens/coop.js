@@ -1070,12 +1070,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const smith = snap.scene.smithing?.[me];
     const candidates = smith?.candidates || [];
     const stones = mm?.smithingStones || 0;
+    // The host's word on this member's Rest (tools/session.mjs restView): what
+    // it restores here, or the relic that forbids it — the option is disabled
+    // with the reason rather than sent to be refused.
+    const rest = snap.scene.rest?.[me] || null;
+    const restDenied = rest?.denied || '';
+    const restCopy = rest && !restDenied ? `Heal ${rest.heal} HP${rest.mana > 0 ? ` and restore ${rest.mana} Mana` : ''}.` : 'Heal yourself.';
     sceneDoor({
       title: 'Shrine of Emberlight',
       children: done ? [waiting('Waiting for the party…')] : [options([
-        choice({ glyph: '✚', name: 'Rest', description: 'Heal yourself.', attrs: { dataset: { shrine: 'rest' } } }),
+        choice({ glyph: '✚', name: 'Rest', description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
         choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
         ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
+        // A denied Rest is not a way on: the member leaves instead, and the
+        // host counts the leave as their choice (as the solo screen's LEAVE).
+        ...(restDenied ? [choice({ glyph: '→', name: 'Leave', description: 'Take nothing here and move on with the party.', attrs: { dataset: { shrine: 'leave' } } })] : []),
       ], { class: 'coop-choices' })],
     });
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));

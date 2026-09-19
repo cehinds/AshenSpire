@@ -673,5 +673,33 @@ export const variableBindings = [
     "nodeId": "shadow",
     "variable": "block",
     "balancePath": "classTree.shadow.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restHpSmall",
+    "variable": "pct",
+    "balancePath": "rest.hpSmallPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restHpPartial",
+    "variable": "pct",
+    "balancePath": "rest.hpPartialPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restManaFlat",
+    "variable": "restoreMana",
+    "balancePath": "rest.mana.flat"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restManaFloor",
+    "variable": "floorPct",
+    "balancePath": "rest.mana.floorPct"
   }
 ];

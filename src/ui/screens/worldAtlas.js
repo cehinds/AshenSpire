@@ -1,3 +1,4 @@
+import { surveyQuestPresentation } from '../models/SurveyQuestModel.js';
 import { locationScene } from '../../content/locationScenes.js';
 import { mountLocalMapCamera } from '../components/localMapCamera.js';
 import { localServiceModel } from '../models/LocalServiceModel.js';
@@ -287,7 +288,7 @@ export function mountWorldAtlas(
         const def = a.services[s.serviceId],
           used = j.serviceStates[pointId]?.used;
         const preview = localServiceModel({ handlerId: a.serviceTypes[def.serviceTypeId].handlerId,
-          registries, run, state: j.serviceStates[pointId], ...serviceContext });
+          registries, run, state: j.serviceStates[pointId], nodeId: pointId, serviceTypeId: def.serviceTypeId, ...serviceContext });
         html += `<div class="atlas-service-benefits">${def.displayName === point.displayName ? "" : `<h4>${esc(def.displayName)}</h4>`}<p class="atlas-service-benefit">${esc(preview.benefit)}</p><ul>${preview.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;
         html += button(
           used ? "Visit used" : preview.action,
@@ -297,7 +298,8 @@ export function mountWorldAtlas(
       for (const q of quests) {
         const def = a.quests[q.questId],
           action = questAction(j, q.questId);
-        html += `<h4>${esc(def.displayName)}</h4><p>${esc(def.description)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
+        const writing = surveyQuestPresentation(def, j);
+        html += `<h4>${esc(writing.title)}</h4><p>${esc(writing.text)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
       }
       if (gate) {
         const available = reachable.has(gate.destinationNodeId);

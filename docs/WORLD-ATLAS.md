@@ -110,6 +110,37 @@ plans. Crownfall has a separate transparent landmark illustration; other major
 places lift a feathered crop of their own world location. Combat retains all 20
 approved scenery choices, with the current journey region selecting its biome.
 
+## Regional survey writing
+
+The six existing surveys are Road Warden assignments: visit the objective and
+return to claim 25 cinders once. Availability still requires the objective to be
+active in the journey. Their names and reports make each region distinct without
+adding quest steps or changing objectives.
+
+| Stable quest ID | Player-facing title | Survey objective |
+| --- | --- | --- |
+| `survey:crownfall` | The Empty Channel | Old Aqueduct (`ashen-crown:04:0`) |
+| `survey:bellhaven` | A Road for the Uncounted | Old Aqueduct (`ashen-crown:04:0`) |
+| `survey:lantern-haven` | A Spring That Will Not Turn | Drowned Hamlet (`hollow-weald:04:0`) |
+| `survey:frostgate` | Ice Without a Thaw | Frozen Camp (`pale-marches:04:0`) |
+| `survey:emberhold` | The Mountain Stirs | Caldera Rim (`cinder-reach:04:0`) |
+| `survey:saltwatch` | The High-Water Marks | Drowned Orchard (`drowned-coast:04:0`) |
+
+Author survey titles, offers and claimed reports in
+[`src/content/surveyQuestLore.js`](../src/content/surveyQuestLore.js), keyed by
+stable quest ID. [`SurveyQuestModel.js`](../src/ui/models/SurveyQuestModel.js)
+projects that writing for presentation: the offer appears until the saved state
+is `claimed`, then the report appears. Missing writing falls back to the atlas
+row's title and description. The helper does not own availability, completion or
+payment.
+
+Keep the atlas's legacy `displayName` and `description` fields unchanged for
+this writing pass: they participate in the persisted content revision. IDs,
+objective nodes and the 25-cinder rewards remain authored in
+`content/source/worldAtlas.json`. These shipped surveys are separate from the
+six future chains marked **planned** in [LORE-CAST.md](LORE-CAST.md#3-the-quest-givers);
+regional survey prose does not implement those chains.
+
 ## Save and compatibility contract
 
 Generation uses an isolated seed stream. It stores selected node/edge IDs, the main
