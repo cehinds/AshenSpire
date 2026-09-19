@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "A studio for the game's layout, with the phones and desktops it will be played on",
     "detail": "Nothing you see changes in play. A new local editor, beside the content editor and the pose studio, draws the combat, map, conversation and shop screens as the wireframes the layout file describes, at the real size of a desktop, an iPad, an iPhone or a Galaxy, and lets the numbers be dragged on a snapping grid rather than typed: how tall the top bar is, where the floor sits, how wide a portrait may be. Every size shows how the game itself will decide to lay out at that screen, the whole set can be compared side by side, and the real game can be opened at that size in the same window. A change is checked by the game's own build rule before it is written, and the file keeps its old bytes wherever it was not touched. Free wireframe sketches, with a different arrangement per screen size, save as their own files.",
-    "build": "0.7.1.228",
+    "build": "0.7.1.233",
     "pullRequest": 1198,
     "url": "https://github.com/cehinds/AshenSpire/pull/1198"
+  },
+  {
+    "id": "pr-1200",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Reaver draws the approved greatsword poses when that weapon is equipped",
+    "detail": "A greatsword with an empty off hand now uses the new ready stance, the chosen nine-step attack, defensive and buff poses, casting, hurt reactions and portrait. Each weapon combination can name its animation and view references in one settings file, selected by class, armour and the group held in each hand. Other combinations keep their existing art. The labeled four-class sprite review gallery and four new relic-icon candidates are saved for review; those additional candidates are not activated in play.",
+    "build": "0.7.1.232",
+    "pullRequest": 1200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1200"
+  },
+  {
+    "id": "pr-1199",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The HUD keeps its contents together, and you choose what stays visible",
+    "detail": "Health, Mana, Stamina and relics now fit inside a growing panel beside the menu controls. Display settings can hide resources, relics, Cinders, journey position or potion shortcuts and remember your choice. Combat potion minis now follow the map: hover or keyboard focus reveals them on desktop, while touch opens the full list from Potions. Reduced motion removes their slide.",
+    "build": "0.7.1.230",
+    "pullRequest": 1199,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1199"
   },
   {
     "id": "pr-1194",

@@ -1,4 +1,5 @@
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -700,6 +701,7 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
   document.documentElement.dataset.formationSettings = JSON.stringify(advancedPresentation);
@@ -1600,6 +1602,7 @@ function showCustomize(slot = 1, catalog = false) {
       ? { classId: shotParams.get('shotClass'), tint: shotParams.get('shotTint') }
       : null,
     onBack: showTitle,
+    slot,
     // W2c REPLACE, AT THE WRITE BOUNDARY (FRONTEND-WIREFRAMES W1l/W2c): choosing
     // an occupied slot on the title touched nothing; Begin is where the old
     // climb would be written over, so this is where it is asked, naming both
