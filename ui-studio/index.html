@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AshenSpire UI Studio</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="#" title="AshenSpire UI Studio"><span class="mark"></span>UI <strong>Studio</strong></a>
+  <nav class="modes" aria-label="Mode" id="modes">
+    <button data-mode="config" class="active">Config</button>
+    <button data-mode="sketch">Sketch</button>
+    <button data-mode="compare">Compare</button>
+    <button data-mode="game">Live game</button>
+  </nav>
+  <label class="field">Wireframe <select id="wireframe" aria-label="Wireframe"></select></label>
+  <label class="field">Device <select id="device" aria-label="Device"></select></label>
+  <span class="field responsive" id="responsive-size" hidden><input id="free-w" type="number" min="200" max="8192" aria-label="Width"> × <input id="free-h" type="number" min="200" max="8192" aria-label="Height"></span>
+  <button id="orientation" title="Rotate (portrait / landscape)">⟳ Rotate</button>
+  <label class="field">Zoom <select id="zoom" aria-label="Zoom"><option value="fit">Fit</option><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option><option value="1.5">150%</option><option value="2">200%</option></select></label>
+  <span class="spacer"></span>
+  <button id="undo" title="Undo (Ctrl+Z)">↶</button>
+  <button id="redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+  <button id="save" class="primary" title="Save (Ctrl+S)">Save <span id="dirty-count" class="count">0</span></button>
+</header>
+
+<div class="studio">
+  <aside class="panel left" id="left" aria-label="Files and layers"></aside>
+  <section class="stage" id="stage" aria-label="Canvas">
+    <div class="stage-head" id="stage-head"></div>
+    <div class="stage-body" id="stage-body"></div>
+  </section>
+  <aside class="panel right" id="right" aria-label="Inspector">
+    <nav class="tabs" id="right-tabs" aria-label="Inspector sections">
+      <button data-tab="selection" class="active">Selection</button>
+      <button data-tab="values">Values</button>
+      <button data-tab="settings">Settings</button>
+      <button data-tab="files">Save</button>
+    </nav>
+    <div class="tab-body" id="right-body"></div>
+  </aside>
+</div>
+
+<footer class="bar foot">
+  <span id="project">Connecting…</span>
+  <span id="layout-badge" class="badge"></span>
+  <span class="spacer"></span>
+  <span id="status" role="status">Ready</span>
+</footer>
+
+<dialog id="dialog"><div id="dialog-body"></div><form method="dialog" class="dialog-actions"><button class="dialog-close">Close</button></form></dialog>
+<div id="toast" role="status" hidden></div>
+<input id="open-json" type="file" accept="application/json,.json" hidden>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>
