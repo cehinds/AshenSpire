@@ -390,7 +390,7 @@ test('sketchProblems refuses an override that is not an object or carries non-fi
   const box = M.newBox(); box.overrides = { narrow: { x: 'oops', w: -5 }, wide: 7, compact: { h: 0, hidden: 'yes' } };
   s.boxes.push(box);
   const problems = M.sketchProblems(s);
-  for (const needle of ['overrides.narrow.x must be a finite number', 'overrides.narrow.w must be a finite number', 'overrides.wide must be an object', 'overrides.compact.h must be positive', 'overrides.compact.hidden must be true or false']) {
+  for (const needle of ['overrides.narrow.x must be a finite number', 'overrides.narrow.w must be positive', 'overrides.wide must be an object', 'overrides.compact.h must be positive', 'overrides.compact.hidden must be true or false']) {
     assert.ok(problems.some((p) => p.includes(needle)), `${needle} in ${problems.join(' | ')}`);
   }
   box.overrides = { narrow: { x: 0, w: 100, hidden: true } };
