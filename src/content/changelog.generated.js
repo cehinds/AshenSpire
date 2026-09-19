@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1192",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Your class now grows a tree of its own: every class level buys one node, and the top node names your subclass",
+    "detail": "Winning a fight pays your class ten points, a boss thirty more, and each level opens a draft of three nodes from your class's tree: six per class in three tiers, the first leaning on your ability card, the second on your kit relic, the third the two subclasses, of which you may take only one. A node you pick rides your core card, mounts beside your favoured weapon in every fight, and shows on the class card, whose name and glyph change to the subclass you chose. The draft sits ahead of the skill draft on the reward screen and saves with your run; an older save simply has no picks yet.",
+    "build": "0.7.1.203",
+    "pullRequest": 1192,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1192"
+  },
+  {
     "id": "pr-1191",
     "date": "2026-09-19",
     "group": "2026-09-19",
