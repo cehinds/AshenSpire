@@ -5,9 +5,10 @@ import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
+import { createRequire } from 'node:module';
 import { serve } from './serve.mjs';
 
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const output = resolve(process.env.CARD_HOLD_OUT || resolve(tmpdir(), 'ashenspire-card-hold-targeting'));
 const root = resolve(process.env.CARD_HOLD_ROOT || process.cwd());
 const entry = process.env.CARD_HOLD_ENTRY || 'index.html';
@@ -28,14 +29,16 @@ try {
       hasTouch: phone,
     });
     const page = await context.newPage();
+    page.setDefaultTimeout(60000);
+    page.setDefaultNavigationTimeout(60000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => {
       if (message.type() === 'error') errors.push(`${message.location().url || ''}: ${message.text()}`);
     });
     const cdp = await context.newCDPSession(page);
-    const poseCard = async () => {
-      await page.goto(`${base}/${entry}?shot=combat&shotSettings=${encodeURIComponent('{"holdConfirm":"normal"}')}`);
+    const poseCard = async (holdConfirm = 'normal') => {
+      await page.goto(`${base}/${entry}?shot=combat&shotSettings=${encodeURIComponent(JSON.stringify({ holdConfirm }))}`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('.hand .card');
       await page.evaluate(() => {
         const combat = window.__combat;
@@ -50,7 +53,7 @@ try {
       });
       await page.waitForFunction(() => document.querySelectorAll('.hand .card').length === 1);
       const card = page.locator('.hand .card');
-      const box = await card.boundingBox();
+      const box = await card.locator('.cname').boundingBox();
       const point = { x: box.x + box.width / 2, y: box.y + box.height * 0.55 };
       return {
         card,
@@ -73,6 +76,31 @@ try {
     await gesture.up();
     check(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardInstanceId === window.__holdTargetCard).length === 0),
       `${name} early release preserves tap-to-select without playing the card`);
+    check(await gesture.card.evaluate(element => element.classList.contains('selected')),
+      `${name} first title tap arms the card, beyond the inspection highlight`);
+    check(await page.locator('.enemy.targetable:not(.dead)').count() > 0,
+      `${name} first title tap exposes legal targets`);
+    await page.screenshot({ path: resolve(output, `${name}-first-tap-armed.png`) });
+    await page.locator('.enemy.targetable:not(.dead) .sprite').first().click();
+    await page.waitForFunction(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardInstanceId === window.__holdTargetCard).length === 1);
+    check(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardInstanceId === window.__holdTargetCard).length === 1),
+      `${name} one title tap followed by a target plays exactly once`);
+    await page.screenshot({ path: resolve(output, `${name}-first-tap-play.png`) });
+
+    gesture = await poseCard('off');
+    await gesture.down();
+    await gesture.up();
+    check(await gesture.card.evaluate(element => element.classList.contains('selected')),
+      `${name} first title tap also arms with hold confirmation off`);
+    check(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed').length === 0),
+      `${name} disabling hold does not play during selection`);
+
+    gesture = await poseCard();
+    await gesture.down();
+    if (phone) await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
+    else { await page.evaluate(() => window.dispatchEvent(new Event('blur'))); await gesture.up(); }
+    check(await page.locator('.hand .card.selected').count() === 0 && await page.locator('.enemy.targetable').count() === 0,
+      `${name} cancelled press does not arm targeting`);
 
     gesture = await poseCard();
     await gesture.down();
@@ -80,6 +108,8 @@ try {
     await gesture.up();
     check(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardInstanceId === window.__holdTargetCard).length === 0),
       `${name} moving beyond hold slop cancels without playing the card`);
+    check(await page.locator('.hand .card.selected').count() === 0,
+      `${name} moved press does not become a selecting tap`);
 
     gesture = await poseCard();
     const { card, down, up } = gesture;

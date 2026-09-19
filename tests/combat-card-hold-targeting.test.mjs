@@ -16,6 +16,8 @@ ok(!!wire, 'combat still owns one readable card-input function');
 
 const hold = wire?.[1].match(/return armHold\(el, \{([\s\S]*?)\n    \}\);/);
 ok(!!hold, 'combat cards still route holds through the shared hold control');
+ok(/tapOnPointerRelease:\s*true/.test(hold?.[1] || ''),
+  'combat selection completes on pointer release even if card repaint suppresses click');
 ok(!/settleMs\s*:/.test(hold?.[1] || ''),
   'combat-card progress starts immediately instead of waiting through an invisible drag settle');
 ok(/onHoldStart:\s*\(\)\s*=>\s*\{\s*el\.dispatchEvent\(new CustomEvent\('cardholdstart'\)\);\s*\}/.test(hold?.[1] || ''),

@@ -168,6 +168,9 @@ export function beatCue(phase, id, form) {
  * `onHoldStart` and `onHoldEnd` expose this one gesture's lifecycle to temporary
  * presentation such as a sustained-hold preview. The end hook runs on every
  * exit — early release, movement, cancellation, completion, Escape or disarm.
+ * `tapOnPointerRelease` lets a composite control deliver its safe early tap
+ * even when repainting the pressed child suppresses the browser's click.
+ * Requires `tapOnEarlyRelease`; movement and cancellation still abort.
  *
  * `ms <= 0` is the "off" position of the dial: one completed press commits.
  * It is not a hold with a zero timer, and it does not depend on a trailing
@@ -176,7 +179,7 @@ export function beatCue(phase, id, form) {
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null, showHint = true,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
-  onHoldStart = null, onHoldEnd = null, settleMs = 0,
+  onHoldStart = null, onHoldEnd = null, settleMs = 0, tapOnPointerRelease = false,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
   // Like `ms`, the settle may be a function so a surface can turn it off while
@@ -448,6 +451,17 @@ export function armHold(btn, {
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
       onEnd: (endEv, info) => {
+        // Combat may repaint the pressed card's children when the hold lights
+        // it. The browser can then omit its trailing click. Finish that safe
+        // selecting tap on release, and consume any click that does follow.
+        const releaseTap = () => {
+          if (!tapOnEarlyRelease || !onTap) return;
+          if (origin.source !== 'pointer') onTap(ev);
+          else if (tapOnPointerRelease && !info?.cancelled && !movedThisPress) {
+            committedThisPress = true;
+            onTap(endEv);
+          }
+        };
         // A cancelled end (pointercancel — a touch scroll) produces no click,
         // so the moved state must not outlive this press: the next activation
         // by key or pad would otherwise be swallowed as that press's click.
@@ -460,17 +474,18 @@ export function armHold(btn, {
         if (settleTimer) {
           clearTimeout(settleTimer);
           settleTimer = 0;
-          if (tapOnEarlyRelease && onTap && origin.source !== 'pointer') onTap(ev);
+          releaseTap();
           return true;
         }
         if (armed) {
           stop('idle');
-          // Pointer taps finish through the browser's trailing click so the
-          // click can be swallowed in one place. Keyboard and controller
+          // By default pointer taps finish through the trailing click; the
+          // release option above completes safe taps before that click.
+          // Keyboard and controller
           // releases have no click; option controls use this explicit seam to
           // give a short press its authored tap meaning while a completed hold
           // has already committed at full.
-          if (tapOnEarlyRelease && onTap && origin.source !== 'pointer') onTap(ev);
+          releaseTap();
         }
         return true;
       },

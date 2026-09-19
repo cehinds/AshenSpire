@@ -1890,7 +1890,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // chosen a target. Paint from pointer-down; crossing the shared movement
       // slop still cancels the hold and lets the drag path below continue.
       onHoldStart: () => { el.dispatchEvent(new CustomEvent('cardholdstart')); },
-      onTap: tap, tapOnEarlyRelease: true,
+      onTap: tap, tapOnEarlyRelease: true, tapOnPointerRelease: true,
       onConfirm: () => {
         if (!(holdMs(meta.settings || {}, registries.balance.ui.holdConfirm) > 0)) { tap(); return; }
         if (busy || !affordable || dragging) return;
