@@ -6,6 +6,11 @@
 #   beatBoss      param = enemyId      defeated that boss
 #   reachAct      param = act number   reached that act in any run
 #   winRuns       param = count        won at least N runs
+#   classLevel    param = level        reached that class level in any run (plan phase 5c)
+#   bossWithGroup param = enemyId:itemType   felled that boss holding a piece of that type
+#
+# kind: outfit (ref an armour set id), character, slot (ref a hand slot),
+#   class (ref a class id — the class card waits for the row; no shipped class is gated)
 #
 # reveal: how it appears BEFORE it is earned
 #   teased  silhouette + the hint below (something to chase)

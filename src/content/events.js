@@ -566,7 +566,7 @@ export const events = [
 // Stable history ids live beside event content without widening the validated
 // event opcode schema. Labels may change; these ids are durable save facts.
 export const eventChoiceIds = Object.freeze({
-  turncoatMirror: ['lookIntoTheGlass', 'turnAway'],
+  turncoatMirror: ['stepThrough', 'turnAway'],
   goldboughAvatar: ['offerCard', 'pray', 'leave'],
   abandonedCart: ['lootStrongbox', 'leave'],
   weepingPilgrim: ['giveCinders', 'refuse'],

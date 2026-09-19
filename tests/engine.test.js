@@ -83,6 +83,7 @@ import { classCard, runClassIdentity } from '../src/model/classCard.js';
 import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
 import { classCarrier } from '../src/engine/properties.js';
 import { swapRunClass, peakClassLevel } from '../src/model/classSwap.js';
+import { bornClassOf } from '../src/model/startingKits.js';
 import { classAvailable, classUnlockRow } from '../src/model/unlocks.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { gainBlock } from '../src/engine/actions.js';
@@ -9067,6 +9068,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/unknown class 'nope'/.test(threw || ''), 'an unknown class is refused by name');
     assert(validateRunShape(run).length === 0, 'the swapped run is a sound save');
     eq(deserializeRun(serializeRun(run)).class, 'rogue', 'and rides the save');
+    // THE LOAD DOOR (the session's review): the starting kit, its snapshot
+    // and the creation armour grant are the BIRTH's, held to the class the
+    // run was born as, so a swapped run — swapped twice — loads.
+    {
+      const st = createMemoryStorage(); const sv = createSaveManager(st);
+      sv.saveRun(run, createRng(1));
+      const back = sv.loadRun(REG);
+      assert(back && back.class === 'rogue', `the swapped run loads — ${JSON.stringify(sv.runStatus()).slice(0, 160)}`);
+      eq(bornClassOf(back), 'reaver', 'the birth class is the first swap\'s from');
+      swapRunClass(REG, back, 'herald');
+      sv.saveRun(back, createRng(2));
+      const twice = sv.loadRun(REG);
+      assert(twice && twice.class === 'herald', `a run swapped twice loads — ${JSON.stringify(sv.runStatus()).slice(0, 160)}`);
+      eq(bornClassOf(twice), 'reaver'); eq(peakClassLevel(twice), 1);
+      eq(equippedIn(REG, twice.loadout, twice.class, 'armor').classId, 'herald', "and wears the herald's free set");
+    }
     // THE OPCODE runs through the run-effect door; random never lands on the run's own class.
     const door = createRunState({ seed: 0x5c5d, classId: 'starseer', registries: REG });
     executeRunEffects({ run: door, registries: REG, rng: createRng(4) }, [{ op: 'swapClass', classId: 'herald' }]);
@@ -9078,7 +9095,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     // THE MIRROR ships as an event with the opcode, its choices durable.
     const mirror = REG.events.get('turncoatMirror');
-    eq(mirror.choices[0].effects[0].op, 'swapClass'); eq(eventChoicesWithHistory(mirror).map((c) => c.id).join(','), 'lookIntoTheGlass,turnAway');
+    eq(mirror.choices[0].effects[0].op, 'swapClass'); eq(eventChoicesWithHistory(mirror).map((c) => c.id).join(','), 'stepThrough,turnAway');
     // VALIDATION: the opcode's shape, by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const badRef = validateContent({ ...testBundle(), events: contentBundle.events.map((ev) => (ev.id === 'turncoatMirror' ? { ...ev, choices: [{ ...ev.choices[0], effects: [{ op: 'swapClass', classId: 'nope' }] }, ev.choices[1]] } : ev)) });

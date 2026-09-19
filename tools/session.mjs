@@ -1186,6 +1186,10 @@ export function createSession({ registries, seedString, endless = false, restore
         // live stream is not moved (Codex on #548).
         const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
         executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
+        // A CHOICE CAN SWAP THE CLASS (plan phase 5c, swapClass): the member's
+        // own copy of the class follows the run's, or the restore door refuses
+        // the seat and the reward and poise readers keep the old card.
+        if (m.run.class !== m.classId) m.classId = m.run.class;
         // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
         // the party did not meet is not in the entry (settleEvent) — and was
         // fought while this seat was away; a returning seat fights no room
