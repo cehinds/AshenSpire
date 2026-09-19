@@ -263,7 +263,7 @@ const REG_CHARM = {
 };
 
 // deck: array of cardId strings or { id, up: true }
-function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, relicIds = [], flasks = [] } = {}) {
+function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], hp = 78, maxHp = 78, mana = 2, maxMana = 2, stamina = 0, maxStamina = stamina, relicIds = [], flasks = [] } = {}) {
   const rng = createRng(seed >>> 0);
   const instances = deck.map((d, i) => {
     const isObj = typeof d === 'object';
@@ -272,7 +272,7 @@ function makeCombat({ seed = 0xc0ffee, deck = ['strike'], enemies = ['tDummy'], 
   return createCombat({
     registries: REG,
     rng,
-    player: { classId: 'reaver', maxHp, hp, mana, maxMana, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
+    player: { classId: 'reaver', maxHp, hp, mana, maxMana, stamina, maxStamina, energyMax: 3, drawPerTurn: 5, deck: instances, relicIds, flasks },
     enemyIds: enemies,
   });
 }
@@ -418,23 +418,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 6. Keywords + X-cost -----------------------------------------------------
   test('6. Exhaust / Ethereal / Retain / Innate / X-cost / upgrade removes Exhaust', () => {
-    const c = makeCombat({ deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] });
+    const c = makeCombat({ stamina: 4, deck: ['kickOff', 'lastStand', 'tKeep', 'strike', 'strike'] });
     playFromHand(c, 'kickOff');
     assert(c.piles.exhaust.some((x) => x.cardId === 'kickOff'), 'Exhaust card exhausted on play');
     dispatch(c, { type: 'endTurn' });
     assert(c.piles.exhaust.some((x) => x.cardId === 'lastStand'), 'Ethereal exhausted at turn end');
     assert(c.piles.hand.some((x) => x.cardId === 'tKeep'), 'Retain kept in hand');
 
-    const inn = makeCombat({ deck: ['warriorsVow', ...Array(9).fill('strike')], seed: 0xbeef });
+    const inn = makeCombat({ stamina: 4, deck: ['warriorsVow', ...Array(9).fill('strike')], seed: 0xbeef });
     assert(inn.piles.hand.some((x) => x.cardId === 'warriorsVow'), 'Innate in opening hand');
 
-    const x = makeCombat({ deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
+    const x = makeCombat({ stamina: 4, deck: ['stitchedArms', 'strike', 'strike', 'strike', 'strike'] });
     playFromHand(x, 'stitchedArms');
     eq(x.player.energy, 0, 'X-cost consumed all energy');
     eq(logOf(x, 'damageDealt').filter((e) => e.sourceId === 'player').length, 3, '3 energy → 3 hits');
 
     // X = 0 whiffs entirely (StS): playable, but zero hits.
-    const x0 = makeCombat({ deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
+    const x0 = makeCombat({ stamina: 4, deck: ['stitchedArms', 'defend', 'defend', 'defend', 'strike'] });
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
     playFromHand(x0, 'defend');
@@ -619,7 +619,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('7e3. Unraveled changes a real Blight hit through tagging.csv', () => {
-    const c = makeCombat({ deck: ['blightTouch'], enemies: ['tGiant'] });
+    const c = makeCombat({ stamina: 4, deck: ['blightTouch'], enemies: ['tGiant'] });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('blightTouch');
     assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Blight Touch damage does not hand-copy CSV tags');
@@ -782,7 +782,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 10. Stances -------------------------------------------------------------
   test('10. stance exclusivity; Gorefire per-hit Bleed; Bulwark on-Skill block', () => {
-    const c = makeCombat({ deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
+    const c = makeCombat({ stamina: 4, deck: ['enterGorefire', 'twinbladeFlurry', 'enterBulwark', 'defend', 'strike'] });
     playFromHand(c, 'enterGorefire');
     eq(c.player.stanceId, 'gorefire', 'entered gorefire');
     eq(c.player.hp, 76, 'entering Gorefire cost 2 HP (ignores block)');
@@ -8478,7 +8478,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // carries the same derived tag there.
     const coopRun = createRunState({ seed: 0x3c3c, classId: 'rogue', registries: REG });
     coopRun.loadout.sets.leftHand[0] = 'straightSword'; stampDeck(REG, coopRun);
-    const coop = createCoopCombat({ registries: REG, rng: createRng(0x3c3c), players: [{ id: 'p1', classId: 'rogue', attributes: coopRun.attributes, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: coopRun.energyMax, drawPerTurn: coopRun.drawPerTurn, deck: coopRun.deck, loadout: coopRun.loadout, relicIds: [] }], enemyIds: ['fellWarden'] });
+    const coop = createCoopCombat({ registries: REG, rng: createRng(0x3c3c), players: [{ id: 'p1', classId: 'rogue', attributes: coopRun.attributes, maxHp: 60, hp: 60, maxMana: 2, mana: 2, maxStamina: 2, stamina: 2, energyMax: coopRun.energyMax, drawPerTurn: coopRun.drawPerTurn, deck: coopRun.deck, loadout: coopRun.loadout, relicIds: [] }], enemyIds: ['fellWarden'] });
     const coopHand = coop.players.get('p1').piles.hand;
     const coopCard = coopHand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && (def.manaCost || 0) === 0 && def.cost <= 3; });
     assert(coopCard, 'the co-op hand holds a playable card');

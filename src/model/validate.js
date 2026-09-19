@@ -512,6 +512,28 @@ function collectContentProblems(bundle, errors = []) {
   // types a fraction or a negative is refused by name, never clamped.
   // The character level (plan phase 6): the curve, the awards and what a
   // level grants — each a closed set, each number refused by name.
+  if (b.balance?.rewards?.rarityWeightsByClass !== undefined) {
+    const overrides = b.balance.rewards.rarityWeightsByClass;
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    const root = 'balance.rewards.rarityWeightsByClass';
+    if (!object(overrides)) err(root, 'must be an object keyed by class id');
+    else for (const [classId, pools] of Object.entries(overrides)) {
+      const path = `${root}.${classId}`;
+      if (!(b.classes || []).some(cls => cls.id === classId)) err(path, 'unknown class id');
+      if (!object(pools)) { err(path, 'must be an object keyed by reward pool'); continue; }
+      for (const [pool, weights] of Object.entries(pools)) {
+        const poolPath = `${path}.${pool}`;
+        if (!['normal', 'elite', 'boss'].includes(pool)) err(poolPath, 'unknown reward pool');
+        if (!object(weights)) { err(poolPath, 'must be a rarity weight object'); continue; }
+        for (const rarity of Object.keys(weights)) if (!['common', 'uncommon', 'rare'].includes(rarity)) err(`${poolPath}.${rarity}`, 'unknown reward rarity');
+        for (const rarity of ['common', 'uncommon', 'rare']) {
+          if (!Number.isFinite(weights[rarity]) || weights[rarity] < 0) err(`${poolPath}.${rarity}`, 'must be a finite non-negative weight');
+        }
+        if (!(weights.common + weights.uncommon + weights.rare > 0)) err(poolPath, 'must have a positive total weight');
+      }
+    }
+  }
+
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');

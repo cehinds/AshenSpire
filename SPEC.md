@@ -640,6 +640,16 @@ go red is `unknown`, not green.
 
 ## 4. Combat rules (Slay-the-Spire-faithful)
 
+**Reward-card cost tuning (2026-09-19).** Resource costs remain explicit card
+data, paid together with Actions; rarity does not roll a cost at play time.
+Across the union of class reward pools, Common/Uncommon/Rare cards target
+30/50/70 percent with a Stamina cost, including 15/30/50 percent with both
+Stamina and Mana, rounded to whole cards. Starter and equipment-only cards
+are outside that census. Class-specific reward rarity weights may override
+the default encounter weights; Chaos Rewards and skill rarity unlocks retain
+precedence. See [the balance receipt](docs/card-resource-balance.md) for counts,
+scope and verification.
+
 ### 4.1 Turn loop
 
 1. **Combat start:** shuffle deck into draw pile; `Innate` cards go to top. `combatStart` triggers fire.

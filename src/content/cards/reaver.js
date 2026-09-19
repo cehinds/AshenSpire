@@ -79,7 +79,7 @@ export const reaverCards = [
 
   // ---- Commons ---------------------------------------------------------------
   {
-    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, type: 'attack',
+    id: 'crimsonCleave', name: 'Crimson Cleave', class: 'reaver', rarity: 'common', cost: 2, staminaCost: 1, type: 'attack',
     keywords: [], icon: '🪓',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 8 },
@@ -94,7 +94,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
+    id: 'shieldBash', name: 'Shield Bash', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
     keywords: [], icon: '🛡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -109,7 +109,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
+    id: 'quickstep', name: 'Quickstep', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
     keywords: [], icon: '👣',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -124,7 +124,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, type: 'attack',
+    id: 'guardCounter', name: 'Guard Counter', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'attack',
     keywords: [], icon: '↩',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4, if: { p: 'not', pred: { p: 'hasBlock', of: 'self' } } },
@@ -243,7 +243,7 @@ export const reaverCards = [
 
   // ---- Uncommons --------------------------------------------------------------
   {
-    id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'stomp', name: 'Stomp', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
     keywords: [], icon: '🦶',
     effects: [
       { op: 'damage', target: 'enemy', amount: 12 },
@@ -269,7 +269,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'warSurgeon', name: 'War Surgeon', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
     flavor: "Stitch it standing; the stool is for the dead. — Warden's field-book",
     keywords: ['exhaust'], icon: '⚕',
     effects: [
@@ -302,14 +302,14 @@ export const reaverCards = [
     },
   },
   {
-    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'twinbladeFlurry', name: 'Twinblade Flurry', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
     textTemplate: 'Deal {damage} damage {hits} times.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 4, hits: 3 }] },
   },
   {
-    id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'skill',
+    id: 'shieldwall', name: 'Shieldwall', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'skill',
     keywords: [], icon: '🧱',
     effects: [
       { op: 'block', target: 'self', amount: 12 },
@@ -324,7 +324,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, type: 'attack',
+    id: 'kickOff', name: 'Kick Off', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'attack',
     keywords: ['exhaust'], icon: '🥾',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -341,7 +341,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'wardingLunge', name: 'Warding Lunge', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 8 },
@@ -371,7 +371,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, type: 'skill',
+    id: 'warcry', name: 'Warcry', class: 'reaver', rarity: 'uncommon', cost: 0, staminaCost: 1, type: 'skill',
     keywords: ['exhaust'], icon: '📣',
     effects: [
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1 },
@@ -386,7 +386,7 @@ export const reaverCards = [
 
   // ---- Rares -------------------------------------------------------------------
   {
-    id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'executioner', name: 'Executioner', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, type: 'attack',
     flavor: "The Warden's cane was a blade once; remember that. — Warden's field-book",
     keywords: [], icon: '⚰',
     effects: [
@@ -419,14 +419,14 @@ export const reaverCards = [
     },
   },
   {
-    id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'stitchedArms', name: 'Stitched Arms', class: 'reaver', rarity: 'rare', cost: 'X', staminaCost: 1, type: 'attack',
     keywords: [], icon: '🦾',
     effects: [{ op: 'damage', target: 'randomEnemy', amount: 6, hits: { f: 'energySpent' } }],
     textTemplate: 'Deal {damage} damage to a random enemy once per Energy spent.',
     upgrade: { effects: [{ op: 'damage', target: 'randomEnemy', amount: 8, hits: { f: 'energySpent' } }] },
   },
   {
-    id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, type: 'skill',
+    id: 'lastStand', name: 'Last Stand', class: 'reaver', rarity: 'rare', cost: 1, staminaCost: 1, type: 'skill',
     flavor: "The Fell Courtyard: one gate, one man, still one man. — Warden's field-book",
     keywords: ['ethereal'], icon: '🕯',
     effects: [{ op: 'block', target: 'self', amount: { f: 'missingHp', of: 'self', max: 20 } }],
@@ -437,7 +437,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, type: 'skill',
+    id: 'warriorsVow', name: "Warrior's Vow", class: 'reaver', rarity: 'rare', cost: 0, staminaCost: 1, type: 'skill',
     keywords: ['innate', 'exhaust'], icon: '📜',
     effects: [{ op: 'enterStance', stance: 'gorefire' }],
     textTemplate: 'Innate. Enter Gorefire Stance. Exhaust.',
@@ -480,7 +480,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, type: 'power',
+    id: 'sanguinePactCard', name: 'Sanguine Pact', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🩸',
     effects: [{ op: 'applyStatus', target: 'self', status: 'sanguinePact', stacks: one }],
     textTemplate: 'Whenever Bleed bursts on an enemy, gain 2 Strength.',
@@ -507,7 +507,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, type: 'skill',
+    id: 'bracingStance', name: 'Bracing Stance', class: 'reaver', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill',
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
