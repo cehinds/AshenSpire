@@ -281,13 +281,19 @@ event bus (`engine/skillXp.js`) pays a receipt on the combat, keyed by seat;
 the run is written once by its owner through `applySkillXp` — main.js,
 tools/session.mjs and tools/runsim.mjs — so combat never writes a run.
 `damageDealt` and `blockGained` now carry the card (`cardInstanceId`,
-`sourceHand`, `grantedBy`) so a hook can pay the piece that lent it. Heavy
-armour's XP is wired to `impactDealt` on the wearer and is dormant until
-phase 8 gives the player poise (impact is dealt to enemies only today); light
-armour's `attackEvaded` and the focus track's buildup are live. Balance rows
-are named for what they are (`impactPerXp`, `evadeXp`, `buildupPerXp`) rather
-than the proposal's "1 per 5" prose. `pendingDrafts` accrues and nothing yet
-spends it (4b). SPEC §13.4d; engine test 85.
+`sourceHand`, `grantedBy`) so a hook can pay the piece that lent it — kit,
+package and weapon-art cards name their piece by the bare id the loadout
+stamps, normalised through `cardMounts.ownerItemRef`. ALL THREE ARMOUR TRACKS
+ARE DORMANT today: heavy's `impactDealt` fires for enemies only until phase 8
+gives the player poise, and light's `attackEvaded` fires only under a
+foundation ruleset, which no shipped door passes; the focus track's buildup
+is live. Balance rows are named for what they are (`impactPerXp`, `evadeXp`,
+`buildupPerXp`) rather than the proposal's "1 per 5" prose. The combat
+snapshot carries the ledger and the receipt, so a fight resumed from a save
+keeps what it earned. The shipped Siphon gate was re-pointed from `focus` to
+the derived track id `item:magic-focus`, and `validate.js` now refuses a
+gate on a name no track has. `pendingDrafts` accrues and nothing yet spends
+it (4b). SPEC §13.4d; engine test 85.
 
 **PR 4b: drafts and rarity.**
 

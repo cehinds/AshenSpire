@@ -28,6 +28,7 @@ import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
@@ -75,7 +76,8 @@ import {
 import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
 import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS } from '../src/model/skills.js';
-import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
+import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
@@ -8126,11 +8128,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a balance reference naming no row is refused by name');
     // 80.11 — the progression predicates are closed-set members, checked for shape,
     // and answer false until the phase-4 skill/class ledger exists.
-    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'skillLevelAtLeast', skill: 'focus', level: 0 }, do: [] }] })]),
+    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'skillLevelAtLeast', skill: 'item:magic-focus', level: 0 }, do: [] }] })]),
       /propertyRules\.fxGate\.triggers\[0\]\.if\.level: level must be a positive integer/, 'a non-positive skill level is refused by name');
     refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'classLevelAtLeast' }, do: [] }] })]),
       /if\.level: level must be a positive integer/, 'a class-level gate with no level is refused by name');
-    assert(validateContent(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'skillLevelAtLeast', skill: 'focus', level: 7 }] }, do: [] }] })])).ok,
+    assert(validateContent(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'skillLevelAtLeast', skill: 'item:magic-focus', level: 7 }] }, do: [] }] })])).ok,
       'a well-formed skill gate validates');
     eq(evalPredicate({}, { p: 'skillLevelAtLeast', skill: 'focus', level: 1 }), false, 'skillLevelAtLeast is false until the skill ledger exists');
     eq(evalPredicate({}, { p: 'classLevelAtLeast', level: 1 }), false, 'classLevelAtLeast is false until the class ledger exists');
@@ -8536,17 +8538,32 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       if (playable && target) dispatch(cb, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id }); else dispatch(cb, { type: 'endTurn' });
     }
     assert(cb.result, 'the bot finished the fight');
-    const hits = cb.eventLog.filter((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && e.sourceHand === 'right').length;
-    const blocks = cb.eventLog.filter((e) => e.type === 'blockGained' && e.targetId === 'player' && e.amount > 0 && e.sourceHand === 'left').length;
-    assert(hits > 0, 'the sword landed hits'); 
+    // The group of an event's card, read from the log alone: the hand it was
+    // swung from, or the piece a kit/package card names (bare id or ref).
+    const groupOfEvent = (e) => {
+      if (e.sourceHand === 'right') return 'item:blade';
+      if (e.sourceHand === 'left') return 'item:shield';
+      const id = typeof e.grantedBy === 'string' ? e.grantedBy.replace(/^armament\//, '') : null;
+      const piece = id ? REG.equipment.armaments.find((a) => a.id === id) : null;
+      return piece ? (piece.itemTypeTags || []).find((t) => t !== 'item:armor') || null : null;
+    };
+    // Every hit landed and every block gained by a card the piece lent is one
+    // payment to that piece's group — a sword's guard art pays the blade, a
+    // shield's bash pays the shield.
+    const paid = (group) => cb.eventLog.filter((e) => e.amount > 0 && groupOfEvent(e) === group
+      && ((e.type === 'damageDealt' && e.sourceId === 'player') || (e.type === 'blockGained' && e.targetId === 'player'))).length;
+    const hits = cb.eventLog.filter((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && groupOfEvent(e) === 'item:blade').length;
+    assert(hits > 0, 'the sword landed hits');
+    assert(cb.eventLog.some((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && !e.sourceHand && groupOfEvent(e)), 'a kit or art card, named by its piece alone, landed too');
     const receipt = skillXpReceipt(cb);
     const rows = REG.balance.skill.xp;
     if (cb.result === 'victory') {
       const killGroup = cb.skillXp.player.killGroup;
-      eq(receipt['item:blade'], hits * rows.perHit + rows.perWinEquipped * (killGroup === 'item:blade' ? rows.killMult : 1), 'blade is paid per hit plus the win, more for the kill');
-      eq(receipt['item:shield'], blocks * rows.perHit + rows.perWinEquipped * (killGroup === 'item:shield' ? rows.killMult : 1), 'shield is paid per block plus the win');
+      assert(killGroup === 'item:blade' || killGroup === 'item:shield', `the killing hit names its group — got ${killGroup}`);
+      eq(receipt['item:blade'], Math.floor(paid('item:blade') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:blade' ? rows.killMult : 1)), 'blade is paid per hit and block plus the win, more for the kill');
+      eq(receipt['item:shield'], Math.floor(paid('item:shield') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:shield' ? rows.killMult : 1)), 'shield is paid per hit and block plus the win');
     } else {
-      eq(receipt['item:blade'], hits * rows.perHit, 'a lost fight still pays the hits');
+      eq(receipt['item:blade'], paid('item:blade') * rows.perHit, 'a lost fight still pays the hits');
     }
     assert(!('dualWield' in receipt), 'sword and shield is not dual-wielding');
     assert(!Object.keys(receipt).some((k) => k.startsWith('class:')), 'no class XP source until phase 5b');
@@ -8576,6 +8593,55 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const bad = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, xp: { ...contentBundle.balance.skill.xp, growth: 0.5 } } } });
     assert(!bad.ok && said(bad).some((e) => /balance\.skill\.xp\.growth/.test(e)), 'a shrinking curve is refused by name');
+    // Review round. A granted card names its piece in whichever spelling the
+    // loadout stamped (bare id for kits, packages and arts; namespaced refs);
+    // an armour piece's card and a run card have no group.
+    const probe = createCombat({ registries: REG, rng: createRng(3), player: { classId: 'reaver', attributes: fresh.attributes, skills: {}, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    const foe = probe.enemies[0];
+    const hit = (extra) => recordSkillXp(probe, { type: 'damageDealt', sourceId: 'player', targetId: foe.id, amount: 3, ...extra });
+    hit({ grantedBy: 'straightSword' }); eq(probe.skillXp.player.xp['item:blade'], rows.perHit, 'a bare armament id pays its group');
+    hit({ grantedBy: 'armament/straightSword' }); eq(probe.skillXp.player.xp['item:blade'], 2 * rows.perHit, 'the namespaced ref pays the same group');
+    hit({ grantedBy: 'armor/reaver/ironPlate' }); hit({ grantedBy: 'unarmed:leftHand' }); hit({});
+    eq(probe.skillXp.player.xp['item:blade'], 2 * rows.perHit, 'armour, the empty hand and a run card pay nothing');
+    // The killing hit is read from the HP it left, not from a flag set later.
+    eq(probe.skillXp.player.killGroup, null);
+    foe.hp = 0; hit({ sourceHand: 'right' });
+    eq(probe.skillXp.player.killGroup, 'item:blade', 'the hit that emptied the HP is the kill');
+    // A fight saved and resumed keeps its ledger and receipt, and keeps recording.
+    const before = JSON.stringify(probe.skillXp);
+    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(probe)));
+    eq(JSON.stringify(stored.skillXp), before, 'the receipt is in the snapshot'); eq(JSON.stringify(stored.skills), '{}', 'so is the ledger');
+    const resumed = restoreCombatSnapshot({ registries: REG, rng: createRng(3), snapshot: stored });
+    eq(JSON.stringify(resumed.skillXp), before, 'the receipt survives the load');
+    resumed.emit('damageDealt', { sourceId: 'player', targetId: foe.id, amount: 3, grantedBy: 'straightSword' });
+    eq(resumed.skillXp.player.xp['item:blade'], 4 * rows.perHit, 'the listener is hooked again after the load');
+    const gatedStore = JSON.parse(JSON.stringify(serializeCombatSnapshot(gated)));
+    eq(evalPredicate(restoreCombatSnapshot({ registries: REG, rng: createRng(2), snapshot: gatedStore }), { p: 'skillLevelAtLeast', skill: 'item:blade', level: 3 }), true, 'a restored fight gates on the ledger it was handed');
+    delete stored.skills; delete stored.skillXp;
+    const older = restoreCombatSnapshot({ registries: REG, rng: createRng(3), snapshot: stored });
+    eq(JSON.stringify(older.skills), '{}'); eq(JSON.stringify(older.skillXp), '{}', 'a pre-ledger snapshot resumes with an empty one');
+    assert(/skillXp\.player\.xp\.item:blade must be a non-negative number/.test(combatSnapshotProblems({ ...stored, skillXp: { player: { xp: { 'item:blade': -1 }, killGroup: null } } }).join('|')), 'a malformed receipt is refused by name');
+    // A gate names a derived track, or is refused: the shipped Siphon reads the focus track.
+    const shipped = JSON.stringify(contentBundle.nodeEffects.siphon);
+    assert(shipped.includes('"skill":"item:magic-focus"') && !shipped.includes('"skill":"focus"'), 'siphon gates on the focus track by its derived id');
+    // (The bundle validates the derived propertyRules, which content-build joins from nodeEffects.)
+    const ghostGate = validateContent({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => r.tag === 'siphon' ? JSON.parse(JSON.stringify(r).replace(/item:magic-focus/g, 'focus')) : r) });
+    assert(!ghostGate.ok && said(ghostGate).some((e) => /Unknown skill track 'focus'/.test(e)), 'a gate on a name no track has is refused by name');
+    // Co-op: a guard one seat casts on another is the caster's work, and a
+    // seat's gates read that seat's own ledger, not the active one's.
+    const seatA = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    const seatB = createRunState({ seed: 0x4a4b, classId: 'rogue', registries: REG });
+    const party = createCoopCombat({ registries: REG, rng: createRng(0x4a4a), players: [
+      { id: 'A', classId: 'reaver', attributes: seatA.attributes, skills: { 'item:blade': { xp: 0, level: 5, pendingDrafts: 0 } }, maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: seatA.energyMax, drawPerTurn: seatA.drawPerTurn, deck: seatA.deck, loadout: seatA.loadout, relicIds: [] },
+      { id: 'B', classId: 'rogue', attributes: seatB.attributes, skills: {}, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
+    ], enemyIds: ['fellWarden'] });
+    const entB = party.players.get('B').entity;
+    const caster = party.playerKey, ally = caster === 'A' ? 'B' : 'A';
+    gainBlock(party, party.players.get(ally).entity, 4, { instanceId: 'kit:roundShield:guard', grantedBy: 'roundShield' });
+    eq(party.skillXp[caster] && party.skillXp[caster].xp['item:shield'], rows.perHit, "the active seat's shield is paid for the guard it cast on its ally");
+    assert(!party.skillXp[ally], 'the ally guarded is paid nothing');
+    eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 5 }, { owner: party.players.get('A').entity }), true, "a seat's gate reads its own ledger");
+    eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
   });
 
   const passed = results.filter((r) => r.ok).length;

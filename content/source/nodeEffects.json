@@ -13,7 +13,7 @@
               "p": "not",
               "pred": {
                 "p": "skillLevelAtLeast",
-                "skill": "focus",
+                "skill": "item:magic-focus",
                 "level": {
                   "variable": "siphonMasteryLevel"
                 }
@@ -41,7 +41,7 @@
             },
             {
               "p": "skillLevelAtLeast",
-              "skill": "focus",
+              "skill": "item:magic-focus",
               "level": {
                 "variable": "siphonMasteryLevel"
               }

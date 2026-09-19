@@ -263,6 +263,20 @@ function firePhase(ctx, enemy, phase, index, event) {
  * pctx = { owner?, source?, target?, card?, meta?, event? } — the evaluation
  * context of the gated effect or trigger.
  */
+/**
+ * The skill ledger a gate reads for `owner`: in co-op the seat that owns the
+ * carrier (its own copy of run.skills), else the combat's — the active seat's
+ * in co-op, the one player's in solo.
+ */
+function ledgerFor(ctx, owner) {
+  if (owner && ctx.players instanceof Map && typeof ctx.playerIdForEntity === 'function') {
+    const id = ctx.playerIdForEntity(owner);
+    const seat = id ? ctx.players.get(id) : null;
+    if (seat && seat.skills) return seat.skills;
+  }
+  return ctx.skills;
+}
+
 export function evalPredicate(ctx, pred, pctx = {}) {
   switch (pred.p) {
     case 'inStance':
@@ -335,13 +349,16 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     // been reached, so both answer false rather than guessing its shape — a
     // property branch gated on them is inert, never half-live.
     case 'skillLevelAtLeast': {
-      // The ledger the combat was handed (plan phase 4a): a copy of run.skills.
-      const row = ctx.skills && ctx.skills[pred.skill];
+      // The ledger the combat was handed (plan phase 4a): a copy of run.skills,
+      // the OWNER's own in co-op.
+      const skills = ledgerFor(ctx, pctx.owner);
+      const row = skills && skills[pred.skill];
       return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
     }
     case 'classLevelAtLeast': {
       const classId = pctx.owner && pctx.owner.classId ? pctx.owner.classId : (ctx.player && ctx.player.classId);
-      const row = ctx.skills && classId ? ctx.skills[`class:${classId}`] : null;
+      const skills = ledgerFor(ctx, pctx.owner);
+      const row = skills && classId ? skills[`class:${classId}`] : null;
       return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
     }
     case 'all':

@@ -43,7 +43,10 @@ export function skillTracks(registries) {
     tracks.push({ id: armourSkillId(cls.id), kind: 'armour', label: `${cls.label || cls.id} armour` });
   }
   tracks.push({ id: DUAL_WIELD_SKILL, kind: 'dual', label: 'Dual-wield' });
-  const classes = registries && registries.classes && typeof registries.classes.all === 'function' ? registries.classes.all() : [];
+  // Runtime registries hand the classes as a registry, the content bundle
+  // (validate.js) as the authored array; both are the same rows.
+  const classes = registries && Array.isArray(registries.classes) ? registries.classes
+    : registries && registries.classes && typeof registries.classes.all === 'function' ? registries.classes.all() : [];
   for (const cls of classes) tracks.push({ id: classSkillId(cls.id), kind: 'class', label: cls.name || cls.id });
   return tracks;
 }

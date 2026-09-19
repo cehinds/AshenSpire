@@ -22,6 +22,7 @@
 // same key triggers.js gates on), so a party's hits do not pool.
 
 import { equippedIn, slotHand, gripOf } from '../model/loadout.js';
+import { ownerItemRef } from '../model/cardMounts.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { awardSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../model/skills.js';
 
@@ -62,13 +63,18 @@ function pieceInHand(combat, hand, loadout = combat.loadout, classId = combat.pl
 
 /**
  * The group a card belongs to: the piece that lent it. `sourceHand` names the
- * hand (a weapon's attack or guard card), `grantedBy` the piece ref
- * (`armament/<id>`, a bound card). A card no piece lent has no group.
+ * hand (a weapon's attack or guard card); otherwise `grantedBy` names the
+ * piece, in whichever spelling the loadout stamped it — the bare armament id
+ * of a kit, package or weapon-art card, or the namespaced `armament/<id>` /
+ * `armor/<class>/<id>` ref — normalised once by cardMounts.ownerItemRef. A
+ * card no item lent (a run card, the empty hand's Dodge Roll) and a card an
+ * armour piece lent (armour is no weapon group) have no group.
  */
 function groupOfCard(combat, event) {
   if (event.sourceHand === 'right' || event.sourceHand === 'left') return groupOfPiece(pieceInHand(combat, event.sourceHand));
-  if (typeof event.grantedBy === 'string' && event.grantedBy.startsWith('armament/')) {
-    const id = event.grantedBy.slice('armament/'.length);
+  const ref = ownerItemRef({ grantedBy: event.grantedBy });
+  if (ref && ref.startsWith('armament/')) {
+    const id = ref.slice('armament/'.length);
     const piece = (((combat.registries || {}).equipment || {}).armaments || []).find((a) => a.id === id);
     return groupOfPiece(piece);
   }
@@ -116,13 +122,17 @@ export function recordSkillXp(combat, event) {
       const receipt = receiptFor(combat, owner);
       pay(receipt, group, rows.perHit);
       if (isDual(combat)) pay(receipt, DUAL_WIELD_SKILL, rows.perHit);
+      // damageDealt fires after HP is taken and before afterHpChange marks
+      // the death, so the kill is read from the HP, not the flag.
       const target = (combat.enemies || []).find((e) => e.id === event.targetId);
-      if (target && !target.alive) receipt.killGroup = group;
+      if (target && (target.hp <= 0 || !target.alive)) receipt.killGroup = group;
       return;
     }
     case 'blockGained': {
-      const owner = ownerKeyOf(combat, event.targetId, event.targetPlayerId);
-      if (!owner || !(event.amount > 0)) return;
+      // Paid to the seat that PLAYED the card (its hands lent it), which in
+      // co-op may differ from the ally it guarded; an enemy's block pays no one.
+      if (!ownerKeyOf(combat, event.targetId, event.targetPlayerId) || !(event.amount > 0)) return;
+      const owner = event.sourcePlayerId || combat.playerKey || 'player';
       const group = groupOfCard(combat, event);
       if (!group) return;
       const receipt = receiptFor(combat, owner);

@@ -40,6 +40,7 @@ import {
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
 import { wornZoneOf, handZoneOf } from './zones.js';
+import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
@@ -596,7 +597,10 @@ function collectContentProblems(bundle, errors = []) {
   const creatureTagIds = tagIdsInDomain(b, 'creature');
   // Every node of the tree, for the predicate that may ask about any of them.
   const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
-  const vctx = { ids, err, tagIds, nodeIds };
+  // The skill tracks, derived (model/skills.js): the ids a progression gate
+  // may name are exactly the ones the ledger can hold.
+  const skillIds = new Set(skillTracks(b).map((t) => t.id));
+  const vctx = { ids, err, tagIds, nodeIds, skillIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -2066,11 +2070,13 @@ export function validatePredicate(pred, path, vctx) {
     case 'random':
       if (typeof pred.pct !== 'number') err(`${path}.pct`, 'pct must be a number');
       break;
-    // The skill ids themselves are derived from the tag registry in phase 4;
-    // until then the id is checked for shape only.
+    // The skill id is one of the derived tracks (model/skills.js): a gate on
+    // a name the ledger never holds would be false forever, silently.
     case 'skillLevelAtLeast':
       if (typeof pred.skill !== 'string' || !pred.skill) {
         err(`${path}.skill`, `skillLevelAtLeast names a skill track id, got ${describe(pred.skill)}`);
+      } else if (vctx.skillIds && !vctx.skillIds.has(pred.skill)) {
+        err(`${path}.skill`, `Unknown skill track '${pred.skill}' — the tracks are ${[...vctx.skillIds].join(', ')}`);
       }
       if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;

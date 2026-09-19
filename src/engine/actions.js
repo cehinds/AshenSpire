@@ -225,8 +225,11 @@ export function gainBlock(ctx, entity, base, card = null) {
   ctx.emit('blockGained', {
     targetId: entity.id, amount: amt,
     ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
-    // The card that raised it, when one did (engine/skillXp.js pays its piece's group).
-    ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy } : {}),
+    // The card that raised it, when one did (engine/skillXp.js pays its piece's
+    // group), and in co-op the seat that played it — a guard cast on an ally
+    // is the caster's shield work, not the ally's.
+    ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy,
+      ...(ctx.playerIdForEntity && ctx.playerKey ? { sourcePlayerId: ctx.playerKey } : {}) } : {}),
   });
   return amt;
 }
