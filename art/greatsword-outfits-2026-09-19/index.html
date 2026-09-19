@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire · Greatsword outfit previews</title>
+<style>
+:root{color-scheme:dark;font:15px/1.5 system-ui;background:#111216;color:#e7e4dc}*{box-sizing:border-box}body{margin:0}main{max-width:1500px;margin:auto;padding:24px}h1,h2{font-family:Georgia;color:#ead2a0}h1{font-size:36px;margin-bottom:8px}h2{font-size:22px;margin:0}p{color:#bab7bc}a{color:#dfc18a}button,select,input{font:inherit}button,select{background:#25262d;color:inherit;border:1px solid #58515a;padding:9px;border-radius:7px}button{cursor:pointer}.controls{position:sticky;top:0;z-index:2;display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:#191a20f5;padding:16px;margin:20px 0;border:1px solid #48414a;border-radius:10px}.controls label{display:flex;align-items:center;gap:8px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.card{min-width:0;border:1px solid #39383e;background:#1b1d22;border-radius:12px;overflow:hidden}.sprite{width:100%;aspect-ratio:1;object-fit:contain;background:repeating-conic-gradient(#202228 0 25%,#24262c 0 50%) 0/20px 20px}.light .sprite{background:#ddd9d1}.info{padding:14px}.portrait{width:58px;height:58px;object-fit:contain;float:right}.step{font:16px ui-monospace,monospace;color:#efd099}.source,.alias{font-size:12px;color:#aaa4ad}.copy{width:100%;margin-top:12px}#selection{width:100%;background:#24252b;color:#ead2a0;border:1px solid #555;padding:12px;margin-bottom:20px}#timeline{overflow-wrap:anywhere}.hidden{display:none}@media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){main{padding:12px}.grid{gap:9px}.info{padding:10px}h1{font-size:28px}h2{font-size:18px}.portrait{width:40px;height:40px}.controls{position:static}.controls label{flex-wrap:wrap}}
+</style></head><body><main>
+<a href="../webp-pack-2026-09-19/index.html">← Art preview desk</a>
+<h1>Two-handed greatsword · Every outfit</h1>
+<p id="summary"></p><p id="timeline">Ready → ATK-01 → ATK-02 → ATK-03 → ATK-04 → ATK-05 → ATK-06 → ATK-07 → Ready</p>
+<p>All outfits follow the same timing and attack order. Attack labels describe playback steps; source pose IDs stay stable. Each set also includes defend, hurt, cast, buff, stances and portrait.</p>
+<div class="controls"><label>Class <select id="classFilter"><option value="">All classes</option><option value="reaver">Reaver</option><option value="starseer">Starseer</option><option value="rogue">Rogue</option><option value="herald">Herald</option></select></label><label>Action <select id="action"><option value="attack">Attack sequence</option><option value="STANCE-READY">Ready stance</option><option value="DEFEND">Defend</option><option value="HURT">Hurt</option><option value="CAST">Cast</option><option value="BUFF">Buff</option><option value="STANCE-AGGRESSIVE">Aggressive stance</option><option value="STANCE-DEFENSIVE">Defensive stance</option><option value="PORTRAIT">Portrait</option></select></label><button id="pause">Pause</button><label>Speed <select id="speed"><option value="160">Slow</option><option value="100" selected>Normal</option><option value="65">Fast</option></select></label><label>Step <input type="range" id="step" min="0" max="8" value="0" aria-label="Attack step"></label><button id="background">Light background</button></div>
+<input readonly id="selection" aria-label="Selected pose reference" placeholder="Copy any outfit and pose reference for a revision order">
+<div id="grid" class="grid"></div>
+<p><a href="manifest.json">Asset manifest</a> · <a href="prompts.json">Generation prompts</a></p>
+<script src="data.js"></script><script>
+const data=GREATSWORD_ART,$=id=>document.getElementById(id),cards=[];
+let paused=false,step=0,last=0;
+const title=s=>s[0].toUpperCase()+s.slice(1),label=i=>i===0||i===8?'READY':`ATK-${String(i).padStart(2,'0')}`;
+$('summary').textContent=`${data.outfits.length} armor entries · ${data.groups.length} distinct appearances · 4 classes · one shared greatsword animation profile.`;
+for(const outfit of data.outfits){
+ const artId=outfit.artKey||outfit.id;
+ const group=data.groups.find(g=>g.classId===outfit.classId&&g.armourId===outfit.id)||data.groups.find(g=>g.classId===outfit.classId&&g.armourId===artId);if(!group)continue;
+ const card=document.createElement('article');card.className='card';card.dataset.class=outfit.classId;card.dataset.armor=outfit.id;
+ card.innerHTML=`<img class="sprite" src="${group.directory}/STANCE-READY.webp" alt="${title(outfit.classId)} ${outfit.name} greatsword pose"><div class="info"><img class="portrait" src="${group.directory}/PORTRAIT.webp" alt="${outfit.name} portrait"><div>${title(outfit.classId)}</div><h2>${outfit.name}</h2><div class="step">READY</div><div class="source">Source: STANCE-READY</div>${group.armourId!==outfit.id?`<p class="alias">Shares ${data.groups.find(g=>g.id===group.id).name} artwork.</p>`:''}<p><a href="${group.directory}/labeled-sheet.webp" target="_blank">All labeled poses</a> · <a href="${group.directory}/attack-preview.webp" target="_blank">Animated WebP</a></p><button class="copy">Copy reference</button></div>`;
+ const item={outfit,group,card,img:card.querySelector('.sprite'),step:card.querySelector('.step'),source:card.querySelector('.source')};
+ card.querySelector('.copy').onclick=()=>{const ref=`${outfit.classId.toUpperCase()} / ${outfit.name} (${outfit.id}) / TWO-HANDED GREATSWORD / ${item.step.textContent} / ${item.source.textContent}`;$('selection').value=ref;navigator.clipboard?.writeText(ref).catch(()=>{});};
+ cards.push(item);$('grid').append(card);
+ // Decode the full sequence before playback to avoid transient empty attack frames.
+ for(const pose of new Set(group.sequence)){const image=new Image();image.src=`${group.directory}/${pose}.webp`;}
+}
+function paint(){const action=$('action').value,pose=action==='attack'?data.sequence[step]:action;for(const item of cards){item.img.src=`${item.group.directory}/${pose}.webp`;item.step.textContent=action==='attack'?label(step):action;item.source.textContent='Source: '+pose;} $('step').value=step;}
+$('classFilter').onchange=()=>cards.forEach(c=>c.card.hidden=Boolean($('classFilter').value&&c.outfit.classId!==$('classFilter').value));
+$('action').onchange=()=>{$('step').disabled=$('action').value!=='attack';paint();};
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'Play':'Pause';};
+$('step').oninput=()=>{paused=true;$('pause').textContent='Play';step=Number($('step').value);paint();};
+$('background').onclick=()=>{document.body.classList.toggle('light');$('background').textContent=document.body.classList.contains('light')?'Dark background':'Light background';};
+function tick(t){if(!paused&&$('action').value==='attack'&&t-last>=Number($('speed').value)){last=t;step=(step+1)%data.sequence.length;paint();}requestAnimationFrame(tick);}paint();requestAnimationFrame(tick);
+</script></main></body></html>
