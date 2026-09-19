@@ -565,7 +565,7 @@ function collectContentProblems(bundle, errors = []) {
   // a kind is a node in nodes.csv rather than an edit to a frozen array.
   const creatureTagIds = tagIdsInDomain(b, 'creature');
   // Every node of the tree, for the predicate that may ask about any of them.
-  const nodeIds = new Set((b.nodes || []).map((n) => n && n.id).filter(Boolean));
+  const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
   const vctx = { ids, err, tagIds, nodeIds };
 
   // Equipment profiles are nested tables, but receive the same strict central

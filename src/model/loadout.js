@@ -2374,12 +2374,13 @@ export function gripTags(grip) {
  * the sentence that refuses the grip the hands would be left in. The one
  * illegal grip today is a two-handed piece beside an occupied other hand;
  * `dual` is legal on its own (its attribute gate is plan phase 9's row). The
- * candidate is judged as the active piece of its OWN slot, against the other
- * hand's active piece: the active pair is the invariant, and it is also held
- * by the deck plan's gate (buildEquippedWeaponCardPlan throws on a two-hander
- * beside an occupied off-hand, which cycleSet and equipPiece both run). This
- * is the same rule asked EARLIER — at canEquip, with a sentence — so the
- * Armoury can say why before the act rather than after it.
+ * loadout is judged AS THE EDIT LEAVES IT — the candidate in its cell, every
+ * active index unchanged — against the other hand's active piece: the active
+ * pair is the invariant, and it is also held by the deck plan's gate
+ * (buildEquippedWeaponCardPlan throws on a two-hander beside an occupied
+ * off-hand, which cycleSet and equipPiece both run). This is the same rule
+ * asked EARLIER — at canEquip, with a sentence — so the Armoury can say why
+ * before the act rather than after it.
  *
  * A MOVE IS NOT A SECOND COPY: equipping a piece that is already in the
  * other hand moves it (applyEquipTransition clears the old cell), so the
@@ -2396,7 +2397,12 @@ export function gripRefusal(registries, loadout, classId, slotId, setIndex, item
   for (const hand of slots.filter((row) => slotHand(row))) {
     trial.sets[hand.id] = [...(trial.sets[hand.id] || [])].map((held) => (itemId && held === itemId ? null : held));
   }
-  if (Number.isInteger(setIndex) && setIndex >= 0) { trial.sets[slotId][setIndex] = itemId || null; trial.active[slotId] = setIndex; }
+  // THE ACTIVE INDEX IS NOT MOVED: equipPiece edits the cell and never
+  // activates it, so a two-hander laid in a prepared set beside an occupied
+  // active hand is a legal edit here; the day the player cycles to it, the
+  // deck plan's gate at cycleSet refuses the pair. Judging the loadout as it
+  // will actually be is the only reading that cannot refuse a legal edit.
+  if (Number.isInteger(setIndex) && setIndex >= 0) trial.sets[slotId][setIndex] = itemId || null;
   const right = handHeld(registries, trial, classId, 'right');
   const left = handHeld(registries, trial, classId, 'left');
   if ((right.twoHanded && left.piece) || (left.twoHanded && right.piece)) {

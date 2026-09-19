@@ -295,8 +295,11 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       // `pctx.card` is the action's card snapshot; the cardPlayed event carries
       // the same two lists for the triggers that fire on it. A tag the grip
       // derived (equipment.dualWield) answers here and appears on no card row.
+      // `authoredTags` where the snapshot carries them: a foundation carrier
+      // rewrites `tags` into the resolved attack tags (a Defend inherits the
+      // sword's `blade`), and the question here is what the CARD says.
       const lists = pctx.card
-        ? [pctx.card.tags, pctx.card.derivedTags]
+        ? [pctx.card.authoredTags ?? pctx.card.tags, pctx.card.derivedTags]
         : pctx.event ? [pctx.event.cardTags, pctx.event.derivedTags] : [];
       return lists.some((list) => Array.isArray(list) && list.includes(pred.tag));
     }

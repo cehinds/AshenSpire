@@ -418,6 +418,10 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
     derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };

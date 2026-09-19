@@ -8379,6 +8379,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(equipPiece(twoHanded, reaver.loadout, 'rightHand', 0, 'greatsword', { has: () => true }, equipCtx), false, 'equipPiece refuses the grip');
     eq(reaver.loadout.sets.rightHand[0], 'straightSword', 'and the hand is unchanged');
     eq(canEquip(twoHanded, 'rightHand', { inCombat: false }).ok, true, 'a bare "may this slot change" question keeps its answer');
+    // A prepared (inactive) set may hold the two-hander beside an occupied
+    // active hand: the edit does not activate it, and cycleSet's plan gate
+    // refuses the pair the day the player reaches for it.
+    eq(gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 1, 'greatsword'), '', 'an inactive-set edit is judged with the active index unchanged');
     reaver.loadout.sets.leftHand[0] = null;
     eq(gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword'), '', 'with the other hand free, the two-hander goes in');
     // A move is not a second copy: the two-hander in the LEFT hand may be
@@ -8413,8 +8417,22 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const preview = previewCard(c, c.piles.hand[0] ? c.piles.hand[0].instanceId : playable.instanceId, target.id);
     assert(preview, 'a preview still answers');
 
-    // The predicate reads the card's tags ∪ the derived tags, on the action
-    // card and on the event alike.
+    // Co-op builds its own snapshot and its own cardPlayed: the same dual grip
+    // carries the same derived tag there.
+    const coopRun = createRunState({ seed: 0x3c3c, classId: 'rogue', registries: REG });
+    coopRun.loadout.sets.leftHand[0] = 'straightSword'; stampDeck(REG, coopRun);
+    const coop = createCoopCombat({ registries: REG, rng: createRng(0x3c3c), players: [{ id: 'p1', classId: 'rogue', attributes: coopRun.attributes, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: coopRun.energyMax, drawPerTurn: coopRun.drawPerTurn, deck: coopRun.deck, loadout: coopRun.loadout, relicIds: [] }], enemyIds: ['fellWarden'] });
+    const coopHand = coop.players.get('p1').piles.hand;
+    const coopCard = coopHand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && (def.manaCost || 0) === 0 && def.cost <= 3; });
+    assert(coopCard, 'the co-op hand holds a playable card');
+    const coopPlayed = playCoopCard(coop, 'p1', coopCard.instanceId, coop.enemies.find((e) => e.alive).id).events.find((e) => e.type === 'cardPlayed');
+    assert(coopPlayed && (coopPlayed.derivedTags || []).join('|') === 'equipment.dualWield', `the co-op event carries the grip's tag — got ${JSON.stringify(coopPlayed && coopPlayed.derivedTags)}`);
+    assert(!(coopPlayed.cardTags || []).includes('equipment.dualWield'), 'and not among the card\'s own tags');
+    // The predicate reads the card's AUTHORED tags ∪ the derived tags, on the
+    // action card and on the event alike — never the resolved attack tags a
+    // foundation carrier rewrites `tags` into.
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'blade' }, { card: { tags: ['blade', 'guard'], authoredTags: ['guard'], derivedTags: [] } }), false, 'a tag the weapon lent to the resolved attack is not the card\'s');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'guard' }, { card: { tags: ['blade', 'guard'], authoredTags: ['guard'], derivedTags: [] } }), true, 'the authored tag is');
     eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), true, 'a derived tag answers on the card snapshot');
     eq(evalPredicate(c, { p: 'cardTagIs', tag: 'blade' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), true, 'an authored tag answers');
     eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.twoHanded' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), false, 'a tag in neither list does not');
