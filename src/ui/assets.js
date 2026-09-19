@@ -19,6 +19,29 @@ import { assetUrl } from './assetmap.js';
 import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';
+import { relicArtAsset } from '../model/relicArt.js';
+
+export function relicArtUrl(relic) {
+  const path = relicArtAsset(relic);
+  return path ? assetUrl(path) : null;
+}
+
+/** Decorative identity art; the containing control owns its accessible name. */
+export function relicIcon(relic) {
+  const src = relicArtUrl(relic);
+  if (!src) return null;
+  const icon = document.createElement('span');
+  icon.className = 'og relic-art';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;aspect-ratio:1;';
+  const img = hintImage(document.createElement('img'));
+  img.src = src;
+  img.alt = '';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  img.addEventListener('error', () => { icon.textContent = relic.icon || '◆'; }, { once: true });
+  icon.append(img);
+  return icon;
+}
 
 export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 

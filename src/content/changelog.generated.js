@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1202",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Eight relics now have painted artwork throughout the game",
+    "detail": "Forsaken Medallion, Starstone Shard, Cutpurse's Coin, Gold Figurine, Golden Sprout, Cracked Lantern, Bloodstained Chalice and Crown of Stitches show their own art in cards, the HUD, character creation and smithing. Relic inspection shows the original lore. Other relics retain their glyphs; effects and drop rules are unchanged.",
+    "build": "0.7.1.235",
+    "pullRequest": 1202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1202"
+  },
+  {
     "id": "pr-1200",
     "date": "2026-09-19",
     "group": "2026-09-19",
