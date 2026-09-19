@@ -174,25 +174,37 @@ function applyArcaneExposure(ctx, source, target, carrier) {
   const perHit = carrier.exposureBuildupPerHit;
   const mapped = Number.isFinite(schoolMult[school]) ? schoolMult[school] : 0;
   if (!Number.isInteger(perHit) || perHit <= 0 || mapped <= 0) return;
-  const cfg = target.arcaneExposure;
-  if (cfg.mode === 'immune') {
-    ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'immune', school, attempted: perHit });
-    return;
-  }
-  if (cfg.mode !== 'configured') return;
-  if (statuses.hasStatus(target, cfg.onBreak.status)) {
-    ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'locked', school, attempted: perHit });
-    return;
-  }
   // The hit's SOURCE may multiply its buildup: an `exposureBuildupMult` passive
   // on a relic it owns or a property it has mounted (a wand's `overcharge`).
   // Exactly 1 when neither carries one, so every existing hit is unchanged.
   const sourceMult = passiveMult(ctx.registries, (source && source.relicIds) || [], 'exposureBuildupMult', propertyMountsOf(ctx, source));
-  const amount = Math.floor(perHit * mapped * cfg.buildupMultiplier * sourceMult);
-  if (amount <= 0) return;
+  addArcaneExposure(ctx, source, target, { school, attempted: perHit, amountFor: (cfg) => Math.floor(perHit * mapped * cfg.buildupMultiplier * sourceMult) });
+}
+
+/**
+ * addArcaneExposure(ctx, source, target, { school, attempted, amountFor }) —
+ * THE ONE PATH buildup reaches a meter: a hit's (applyArcaneExposure) and a
+ * direct pour's (the `arcaneBuildup` opcode, plan phase 8). Immune and locked
+ * targets refuse by name; the amount is read off the target's own config once
+ * it is known to be configured; a fill resets to zero and breaks.
+ */
+export function addArcaneExposure(ctx, source, target, { school, attempted = null, amountFor }) {
+  if (!target || target.kind !== 'enemy' || !target.arcaneExposure) return 0;
+  const cfg = target.arcaneExposure;
+  if (cfg.mode === 'immune') {
+    ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'immune', school, attempted });
+    return 0;
+  }
+  if (cfg.mode !== 'configured') return 0;
+  if (statuses.hasStatus(target, cfg.onBreak.status)) {
+    ctx.emit('arcaneExposureRefused', { targetId: target.id, sourceId: source && source.id, reason: 'locked', school, attempted });
+    return 0;
+  }
+  const amount = Math.floor(amountFor(cfg));
+  if (amount <= 0) return 0;
   cfg.value += amount;
   ctx.emit('arcaneExposureChanged', { targetId: target.id, sourceId: source && source.id, school, amount, value: cfg.value, threshold: cfg.threshold });
-  if (cfg.value < cfg.threshold) return;
+  if (cfg.value < cfg.threshold) return amount;
   cfg.value = 0; // authored resetMode=zero; overflowPolicy=discard
   ctx.emit('arcaneBreak', {
     targetId: target.id, sourceId: source && source.id, school,
@@ -201,6 +213,7 @@ function applyArcaneExposure(ctx, source, target, carrier) {
   });
   statuses.applyStatus(ctx, target, cfg.onBreak.status, cfg.onBreak.value, source);
   if (target.statuses[cfg.onBreak.status]) target.statuses[cfg.onBreak.status].duration = cfg.onBreak.duration;
+  return amount;
 }
 
 /**
@@ -307,29 +320,62 @@ export function staggerEnemy(ctx, enemy) {
   ctx.emit('enemyStaggered', { targetId: enemy.id, enemyId: enemy.enemyId, cancelledMove: cancelled });
 }
 
-export function dealPoiseDamage(ctx, enemy, amount) {
-  if (!enemy || enemy.kind !== 'enemy' || !enemy.alive) return;
+/**
+ * staggerPlayer(ctx, player) — the player's poise meter filled (plan phase 8,
+ * SPEC §13.4k): the NEXT turn opens with balance.stagger.player.actionLoss
+ * fewer actions, and each status the row names is applied at its stacks
+ * (ordinary decay). The engine names no status; the row does. Emits
+ * `playerStaggered` with what it took.
+ */
+export function staggerPlayer(ctx, player) {
+  const cfg = (((ctx.registries.balance || {}).stagger || {}).player) || {};
+  const actionLoss = Number.isInteger(cfg.actionLoss) ? cfg.actionLoss : 0;
+  const applied = {};
+  for (const [status, stacks] of Object.entries(cfg.statuses || {})) {
+    if (!(stacks > 0)) continue;
+    statuses.applyStatus(ctx, player, status, stacks, null);
+    applied[status] = stacks;
+  }
+  player.pendingActionLoss = (player.pendingActionLoss || 0) + actionLoss;
+  ctx.emit('playerStaggered', { targetId: player.id, actionLoss, statuses: applied });
+}
+
+/**
+ * dealPoiseDamage(ctx, entity, amount) — an enemy's meter or the PLAYER's
+ * (plan phase 8: the player's vessel is real once its max is stamped; an
+ * entity with no meter, or a 0 max, takes nothing). A fill Staggers an enemy
+ * (staggerEnemy + balance.poise.onFill) or the player (staggerPlayer), and the
+ * meter grows by balance.poise.growthMult either way.
+ */
+export function dealPoiseDamage(ctx, entity, amount) {
+  if (!entity || !entity.alive || (entity.kind !== 'enemy' && entity.kind !== 'player')) return;
+  if (!entity.poiseMeter || !(entity.poiseMeter.max > 0)) return;
+  const isEnemy = entity.kind === 'enemy';
   const n = Math.max(0, Math.floor(amount));
-  if (ctx.foundation && enemy.impactProtectedUntil >= ctx.turn) {
-    enemy.poiseMeter.value = Math.min(enemy.poiseMeter.max - 1, enemy.poiseMeter.value + n);
+  if (ctx.foundation && isEnemy && entity.impactProtectedUntil >= ctx.turn) {
+    entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value + n);
     return;
   }
-  enemy.poiseMeter.value += n;
+  entity.poiseMeter.value += n;
   const cfg = (ctx.registries.balance && ctx.registries.balance.poise) || {};
   let guard = 0;
-  while (enemy.poiseMeter.value >= enemy.poiseMeter.max) {
+  while (entity.poiseMeter.value >= entity.poiseMeter.max) {
     if (++guard > 100) throw new Error('Poise meter fill loop did not terminate');
-    enemy.poiseMeter.value -= enemy.poiseMeter.max;
-    ctx.emit('meterFilled', { targetId: enemy.id, meter: 'poise', threshold: enemy.poiseMeter.max });
-    staggerEnemy(ctx, enemy);
-    for (const eff of cfg.onFill || []) {
-      ctx.enqueue({ effect: eff, source: enemy, owner: enemy, target: enemy, meta: {} });
+    entity.poiseMeter.value -= entity.poiseMeter.max;
+    ctx.emit('meterFilled', { targetId: entity.id, meter: 'poise', threshold: entity.poiseMeter.max });
+    if (isEnemy) {
+      staggerEnemy(ctx, entity);
+      for (const eff of cfg.onFill || []) {
+        ctx.enqueue({ effect: eff, source: entity, owner: entity, target: entity, meta: {} });
+      }
+    } else {
+      staggerPlayer(ctx, entity);
     }
     const growth = cfg.growthMult != null ? cfg.growthMult : 1.25;
     if (growth !== 1 && !statuses.anyCombatantFlag(ctx, 'meterMaxGrowthDisabled')) {
-      enemy.poiseMeter.max = Math.ceil(enemy.poiseMeter.max * growth);
+      entity.poiseMeter.max = Math.ceil(entity.poiseMeter.max * growth);
     }
-    if (ctx.foundation) { enemy.poiseMeter.value = Math.min(enemy.poiseMeter.max - 1, enemy.poiseMeter.value); break; }
+    if (ctx.foundation) { entity.poiseMeter.value = Math.min(entity.poiseMeter.max - 1, entity.poiseMeter.value); break; }
   }
 }
 
@@ -414,6 +460,12 @@ export function resolveTargets(ctx, action, targetSpec) {
     }
     case 'allEnemies':
       return livingEnemies(ctx);
+    case 'otherEnemies': {
+      // Every living enemy but the one the firing event names (and the
+      // action's own target): a break's ripple reaches the others.
+      const named = action.meta && action.meta.event ? action.meta.event.targetId : null;
+      return livingEnemies(ctx).filter((e) => e !== action.target && e.id !== named);
+    }
     case 'randomEnemy': {
       const living = livingEnemies(ctx);
       return living.length ? [ctx.rng.pick('misc', living)] : [];
@@ -535,7 +587,9 @@ function runOpcode(ctx, action, eff) {
           if (ctx.foundation && !evaded && t.alive && !(action.meta?.foundationAncestry?.length)) {
             const resistedImpact = Math.floor((impact[h] || 0) * (1 - (F.foundationProfile(ctx, t).impactResistance || 0)));
             dealPoiseDamage(ctx, t, resistedImpact);
-            if (t.kind === 'enemy') ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact });
+            // The player's meter is real too (plan phase 8): the receipt is
+            // emitted for every target, and the armour skill hooks read it.
+            ctx.emit('impactDealt', { sourceId: action.source?.id, targetId: t.id, amount: resistedImpact });
             // Only the resolved source contributes contact buildup. A focus
             // can own effects too; the other hand's sword is never consulted.
             const weaponBuildup = F.foundationSource(ctx, action.source, carrier).buildup || [];
@@ -706,6 +760,21 @@ function runOpcode(ctx, action, eff) {
     case 'stagger': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
         staggerEnemy(ctx, t);
+      }
+      break;
+    }
+    case 'arcaneBuildup': {
+      // Buildup poured directly (plan phase 8): `pct` of each target's OWN
+      // threshold, or `amount` points; the school is the firing event's (a
+      // break's), else arcane. Immune and locked targets refuse by name.
+      const school = (action.meta && action.meta.event && action.meta.event.school) || 'arcane';
+      for (const t of resolveTargets(ctx, action, eff.target)) {
+        addArcaneExposure(ctx, action.source, t, {
+          school,
+          amountFor: (cfg) => (eff.pct !== undefined
+            ? Math.floor((cfg.threshold * evalNum(ctx, action, eff.pct, 0, t)) / 100)
+            : evalNum(ctx, action, eff.amount, 0, t)),
+        });
       }
       break;
     }

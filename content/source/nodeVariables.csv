@@ -14,6 +14,8 @@ siphon,restoreMana,amount
 siphon,restoreMana_2,amount
 siphon,siphonMasteryLevel,level
 overcharge,overchargeBuildupMult,exposureBuildupMult
+staggerBreak,poiseDamage,amount
+resonance,spreadPct,pct
 forsakenMedallion,poiseDamage,amount
 starstoneShard,starstoneCharge,stacks
 starstoneShard,restoreMana,amount

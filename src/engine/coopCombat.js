@@ -336,7 +336,9 @@ function startPlayerPhase(C) {
     e.counters.staminaSpentThisTurn = 0;
     if (!S.getFlag(C, e, 'retainBlock')) e.block = 0;
     else { const cap = S.getCap(C, e, 'blockCap'); if (cap != null) e.block = Math.min(e.block, cap); }
-    e.energy = e.energyMax;
+    // Less what a Stagger took (plan phase 8): owed to this next turn only.
+    e.energy = Math.max(0, e.energyMax - (e.pendingActionLoss || 0));
+    e.pendingActionLoss = 0;
     A.drawCards(C, e.drawPerTurn);
     C.emit('playerTurnStart', { turn: C.turn, playerId: P.id });
     fireOwnerHooks(C, e, 'ownerTurnStart');

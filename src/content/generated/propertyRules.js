@@ -15,6 +15,18 @@ export const propertyRules = [
     "textTemplate": "Your hits build Arcane Exposure faster."
   },
   {
+    "tag": "staggerBreak",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Breaking a foe's Arcane Exposure deals {poiseDamage} Poise damage to it."
+  },
+  {
+    "tag": "resonance",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Breaking a foe's Arcane Exposure builds {spreadPct}% of its threshold on every other foe."
+  },
+  {
     "tag": "forsakenMedallion",
     "requires": "",
     "excludes": "",

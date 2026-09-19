@@ -19,6 +19,8 @@ default,,siphon,restoreMana,exposure.siphonRefund
 default,,siphon,restoreMana_2,exposure.siphonRefundMastered
 default,,siphon,siphonMasteryLevel,exposure.siphonMasteryLevel
 default,,overcharge,overchargeBuildupMult,exposure.overchargeBuildupMult
+default,,staggerBreak,poiseDamage,exposure.staggerBreakPoise
+default,,resonance,spreadPct,exposure.resonanceSpreadPct
 default,,forsakenMedallion,poiseDamage,powers.forsakenMedallion.poiseDamage
 default,,starstoneShard,starstoneCharge,powers.starstoneShard.starstoneCharge
 default,,starstoneShard,restoreMana,powers.starstoneShard.restoreMana

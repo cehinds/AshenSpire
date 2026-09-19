@@ -30,7 +30,7 @@ function exposureCard(registries, classId) {
   return card;
 }
 
-function fight({ registries = REG, classId = 'herald', rightHandSets = null, storage = [] } = {}) {
+function fight({ registries = REG, classId = 'herald', rightHandSets = null, storage = [], enemyIds = ['wanderingSoldier'] } = {}) {
   const run = createRunState({ seed: 4242, classId, registries });
   if (rightHandSets) run.loadout.sets.rightHand = [...rightHandSets];
   run.loadout.storage = [...storage];
@@ -41,7 +41,7 @@ function fight({ registries = REG, classId = 'herald', rightHandSets = null, sto
       classId, attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: 0,
       energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout,
     },
-    enemyIds: ['wanderingSoldier'],
+    enemyIds,
   });
   return { run, combat, card: exposureCard(registries, classId) };
 }
@@ -155,13 +155,36 @@ test('a wand\'s overcharge multiplies buildup per hit by balance.exposure.overch
   assert.notEqual(boosted[0], base[0], 'and the multiplier is visible at this buildup');
 });
 
-test('a focus without siphon is unchanged: a starseer\'s staff break restores nothing', () => {
+test('a staff\'s staggerBreak batters the broken foe\'s Poise by balance.exposure.staggerBreakPoise, and refunds nothing (plan phase 8)', () => {
   const { combat, card } = fight({ classId: 'starseer' });
-  assert.deepEqual(mountedKeys(combat), [], 'the Ash Staff carries no property');
+  const STAFF_KEY = 'armament:armament/starstoneStaff';
+  assert.deepEqual(mountedKeys(combat), [STAFF_KEY], 'the Starstone Staff is the starseer\'s focus');
+  assert.deepEqual(combat.propertyMounts.player[STAFF_KEY].rules.map((r) => r.tag), ['staggerBreak'], 'and it carries staggerBreak, not siphon');
+  const enemy = combat.enemies[0];
+  const poiseBefore = enemy.poiseMeter.value;
   // The starseer's spell costs Mana, so it is cast from a full pool.
   const r = playIntoBreak(combat, card, { startMana: combat.player.maxMana });
   assert.equal(r.breaks, 1, 'the starseer breaks the enemy');
   assert.equal(r.restored, 0, 'and nothing is refunded');
+  const poiseEvents = combat.eventLog.filter((e) => e.type === 'meterFilled' && e.meter === 'poise' && e.targetId === enemy.id);
+  assert.ok(enemy.poiseMeter.value >= poiseBefore + EXPOSURE.staggerBreakPoise || poiseEvents.length > 0,
+    `the break dealt ${EXPOSURE.staggerBreakPoise} Poise damage to the broken foe (meter ${poiseBefore} → ${enemy.poiseMeter.value}, fills ${poiseEvents.length})`);
+});
+
+test('an orb\'s resonance pours balance.exposure.resonanceSpreadPct of the broken foe\'s threshold into every OTHER foe (plan phase 8)', () => {
+  const { combat, card } = fight({ rightHandSets: ['goldboughBranch'], enemyIds: ['wanderingSoldier', 'wanderingSoldier'] });
+  const BRANCH_KEY = 'armament:armament/goldboughBranch';
+  assert.deepEqual(mountedKeys(combat), [BRANCH_KEY], 'the Goldbough Branch is in hand');
+  assert.deepEqual(combat.propertyMounts.player[BRANCH_KEY].rules.map((r) => r.tag), ['resonance'], 'and it carries resonance');
+  const [first, second] = combat.enemies;
+  second.arcaneExposure.value = 0;
+  const r = playIntoBreak(combat, card, { startMana: combat.player.maxMana });
+  assert.equal(r.breaks, 1, 'the hit breaks the first foe');
+  const spread = Math.floor((first.arcaneExposure.threshold * EXPOSURE.resonanceSpreadPct) / 100);
+  assert.equal(second.arcaneExposure.value, spread, 'the other foe took the spread as buildup');
+  assert.equal(first.arcaneExposure.value, 0, 'the broken foe itself took none (its own meter reset and locked)');
+  const poured = combat.eventLog.filter((e) => e.type === 'arcaneExposureChanged' && e.targetId === second.id);
+  assert.deepEqual(poured.map((e) => e.amount), [spread], 'one receipt names the pour');
 });
 
 test('a saved fight restores with siphon mounted from its loadout, never from the save', () => {

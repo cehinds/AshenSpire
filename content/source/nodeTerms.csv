@@ -57,6 +57,8 @@ targeting.ally,term.targetAlly,term.tooltip.targetAlly,
 internal.unplayable,term.unplayable,term.tooltip.unplayable,
 siphon,,,"Breaking a foe's Arcane Exposure restores {restoreMana} Mana, or {restoreMana.2} once your focus skill is mastered."
 overcharge,,,Your hits build Arcane Exposure faster.
+staggerBreak,,,"Breaking a foe's Arcane Exposure deals {poiseDamage} Poise damage to it."
+resonance,,,"Breaking a foe's Arcane Exposure builds {spreadPct}% of its threshold on every other foe."
 ironFooting,,,"Entering a stance grants {block} Block."
 bloodTempo,,,"The first stance you enter each turn draws {draw} card."
 ashenReserve,,,"At the start of your turn, recover {restoreStamina} Stamina."

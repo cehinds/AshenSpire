@@ -16,7 +16,7 @@ const spendPrepared = () => ({ op: 'removeStatus', target: 'self', status: 'prep
 export const rogueCards = [
   // ---- Non-reward cards: signature + two generated tools -----------------
   {
-    id: 'ambush', name: 'Ambush', class: 'rogue', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    id: 'ambush', name: 'Ambush', class: 'rogue', rarity: 'starter', cost: 1, staminaCost: 2, manaCost: 1, type: 'attack',
     flavor: "Under the bridge, even the surgeon walked quickly. — Frozen-dock cant",
     keywords: [], icon: '🗡',
     effects: [

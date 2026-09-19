@@ -157,6 +157,8 @@ const TEST_CARDS = [
   { id: 'tBigDraw', name: 'T Big Draw', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'draw', amount: 10 }], textTemplate: 'Draw {draw} cards.' },
   { id: 'tKeep', name: 'T Keep', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['retain'], effects: [], textTemplate: 'Retain.' },
   { id: 'tPoise', name: 'T Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'enemy', amount: 10 }], textTemplate: '{poiseDamage} Poise damage.' },
+  // Plan phase 8: the player's own meter, filled by a self-aimed pour.
+  { id: 'tSelfPoise', name: 'T Self Poise', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'poiseDamage', target: 'player', amount: 5 }], textTemplate: '{poiseDamage} Poise damage to you.' },
   { id: 'tCharge', name: 'T Charge', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: ['innate'], effects: [{ op: 'applyStatus', target: 'self', status: 'testCharge', stacks: 3 }], textTemplate: 'Gain {testCharge} Charge.' },
   // #61 fixtures: proc appliers + a tagged hit for the vulnerability lane.
   { id: 'tFrost10', name: 'T Frost', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects: [{ op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 10 }], textTemplate: 'Apply {frost} Frost.' },
@@ -459,7 +461,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (Constantine, "let rune pick the threshold against the sim") — the
     // contract under test is the mechanism, not the current pick.
     const T = REG.statuses.get('bleed').proc.threshold;
-    const c = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), stamina: 6 });
     const e1 = getEntity(c, 'e1');
     S.applyStatus(c, e1, 'bleed', T - 3); // sub-threshold build-up
     eq(S.getStacks(e1, 'bleed'), T - 3, 'bleed accumulated, no decay');
@@ -482,7 +484,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(e1.statuses.bleed.meter.max, T, 'threshold CONSTANT — no ×1.5 (pre-#61 behavior gone)');
     eq(e1.poiseMeter.value, poiseBefore + 3, 'fixed 3 poise damage per proc (PROVISIONAL knob)');
 
-    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'] });
+    const g = makeCombat({ deck: Array(8).fill('gorefireSlash'), enemies: ['tGiant'], stamina: 6 });
     S.applyStatus(g, getEntity(g, 'e1'), 'bleed', T - 3);
     playFromHand(g, 'gorefireSlash'); // → T → proc on the giant
     const gb = logOf(g, 'procBurst').filter((e) => e.targetId === 'e1').pop();
@@ -491,7 +493,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // Overflow is DROPPED at proc (reset-to-zero, his words) — (T-1) + 3
     // procs once and leaves 0, not 2. This is the anti-stranding delta the
     // #61 falsifier measures.
-    const o = makeCombat({ deck: Array(6).fill('gorefireSlash') });
+    const o = makeCombat({ deck: Array(6).fill('gorefireSlash'), stamina: 6 });
     S.applyStatus(o, getEntity(o, 'e1'), 'bleed', T - 1);
     playFromHand(o, 'gorefireSlash'); // T-1+3 = T+2 ≥ T → proc
     eq(logOf(o, 'procBurst').filter((e) => e.targetId === 'e1').length, 1, 'single proc');
@@ -536,7 +538,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // inside a dispatch (card play) so the enqueued resistance drains.
     // Threshold-derived like test 7 — the knob is provisional.
     const T = REG.statuses.get('bleed').proc.threshold;
-    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'] });
+    const c = makeCombat({ deck: Array(6).fill('gorefireSlash'), enemies: ['tBeast'], stamina: 6 });
     const e1 = getEntity(c, 'e1');
     S.applyStatus(c, e1, 'bleed', T - 3);
     playFromHand(c, 'gorefireSlash'); // +3 → T → proc
@@ -608,7 +610,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // `tags` field, so green here proves the real card door derives the hit's
   // identity rather than preserving the old test-only tagged-effect fixture.
   test('7e2. Frost-Exposed changes a real Starstone hit through tagging.csv', () => {
-    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'] });
+    const c = makeCombat({ deck: ['starstonePebble'], enemies: ['tGiant'], stamina: 2 });
     const e1 = getEntity(c, 'e1');
     const def = REG.cards.get('starstonePebble');
     assert(def.effects.filter((eff) => eff.op === 'damage').every((eff) => eff.tags === undefined), 'Starstone Pebble damage does not hand-copy CSV tags');
@@ -1558,7 +1560,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(REG.classes.ids().join(','), 'reaver,starseer,rogue,herald', 'the four registered classes include Rogue in authored order');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
-    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
+    const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3, stamina: 6 });
     playFromHand(a, 'starstonePebble');
     let hits = logOf(a, 'damageDealt').map((e) => e.amount);
     eq(hits.join(','), '6', 'first spell: no bonus');
@@ -1606,7 +1608,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'co-op live magic damage uses the same host-stamped +1');
 
     // Starstone Shard: combat starts pre-charged → the FIRST spell combos.
-    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'] });
+    const s = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], relicIds: ['starstoneShard'], stamina: 2 });
     playFromHand(s, 'starstonePebble');
     eq(logOf(s, 'damageDealt').map((e) => e.amount).join(','), '6,3', 'Shard pre-charges the opener');
 
@@ -1620,7 +1622,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(p.piles.hand.length, handBefore, 'drew 1 (played 1, drew 1)');
 
     // Gold Figurine: your heals armor you (even at full HP); enemy heals do not.
-    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'] });
+    const g = makeCombat({ deck: ['urgentHeal', 'strike', 'strike', 'strike', 'strike'], relicIds: ['goldFigurine'], enemies: ['tRegen'], stamina: 2 });
     playFromHand(g, 'urgentHeal'); // at full HP → 0 healed, still armors
     eq(g.player.block, 2, 'overheal converted to Block');
     dispatch(g, { type: 'endTurn' }); // tRegen heals itself
@@ -1699,7 +1701,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     });
     assert(!badCost.ok && badCost.errors.some((e) => e.path === 'cards.gorefireSlash.manaCost'), 'negative manaCost cannot mint mana');
 
-    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2 });
+    const spend = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 2, maxMana: 2, stamina: 2 });
     const sig = spend.piles.hand[0];
     const pv = previewCard(spend, sig.instanceId);
     eq(pv.manaCost, 1, 'preview exposes the same mana cost execution charges');
@@ -1707,7 +1709,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spend.player.mana, 1, 'signature starter spends 1 mana');
     assert(logOf(spend, 'manaSpent').some((e) => e.amount === 1), 'mana spend emits a receipt');
 
-    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2 });
+    const empty = makeCombat({ deck: Array(5).fill('gorefireSlash'), enemies: ['tGiant'], mana: 0, maxMana: 2, stamina: 2 });
     empty.player.mana = 0;
     const beforeHand = empty.piles.hand.length;
     let refused = '';
@@ -9414,6 +9416,62 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(again.events.length, 0, 'a second arrival fires nothing');
     eq(again.refill, first.refill, 'and answers with the first receipt');
     assert(validateContent(contentBundle).ok, 'the shipped bundle stays green');
+  });
+
+  // ---- 92. Plan phase 8: Mana costing, focus breaks, the player's Poise ----
+  test('92. Mana is the third cost line, and the player has a Poise meter that Staggers (plan phase 8)', () => {
+    const bal = contentBundle.balance;
+    const said = (r) => (r.errors || []).map((e) => `${e.path}: ${e.msg ?? e.message}`);
+    const withCards = (mut) => validateContent({ ...contentBundle, cards: contentBundle.cards.map(mut) });
+    // THE COST RULE: a card that costs Mana costs the floors too, base and upgrade.
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, staminaCost: 0 } : c))).some((e) => /cards\.gorefireSlash\.staminaCost: .*at least 1 stamina/.test(e)), 'a Mana card with no stamina line is refused by name');
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, cost: 0 } : c))).some((e) => /cards\.gorefireSlash\.cost: .*at least 1 action/.test(e)), 'a Mana card with no action line is refused by name');
+    assert(said(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', cost: 0 } } : c))).some((e) => /cards\.gorefireSlash\.upgrade\.cost/.test(e)), 'an upgrade that drops the action line under a Mana cost is refused by name');
+    assert(withCards((c) => (c.id === 'gorefireSlash' ? { ...c, upgrade: { name: 'Gorefire Slash+', manaCost: 0, cost: 0, staminaCost: 0 } } : c)).ok, 'an upgrade that drops the Mana line may drop the others too');
+    assert(REG.cards.get('supernova').cost === 'X' && REG.cards.get('supernova').manaCost > 0, 'an X-cost Mana card ships, and passes: X is at least one action');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, mana: { minActionCost: -1, minStaminaCost: 1 } } })).some((e) => /balance\.mana\.minActionCost/.test(e)), 'a negative floor is refused by name');
+    const { mana: _noMana, ...sansMana } = bal;
+    assert(said(validateContent({ ...contentBundle, balance: sansMana })).some((e) => /^balance\.mana:/.test(e)), 'a bundle without the Mana floor is refused by name');
+    assert(said(validateContent({ ...contentBundle, balance: { ...bal, stagger: { player: { actionLoss: 1, statuses: { sleepy: 2 } } } } })).some((e) => /balance\.stagger\.player\.statuses\.sleepy/.test(e)), 'a stagger status the bundle lacks is refused by name');
+    const lowRow = { ...contentBundle, equipment: { ...contentBundle.equipment, cardExposure: contentBundle.equipment.cardExposure.map((r) => (r.cardId === 'starstonePebble' ? { ...r, exposureBuildupPerHit: 1 } : r)) } };
+    assert(said(validateContent(lowRow)).some((e) => /cardExposure\.starstonePebble\.exposureBuildupPerHit: .*at least 5 per hit/.test(e)), 'a Mana spell building less than buildupPerManaSpell is refused by name');
+    const pour = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzPour', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Pour.' }] });
+    assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies' }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with neither selector is refused');
+    assert(said(pour([{ op: 'arcaneBuildup', target: 'allEnemies', amount: 2, pct: 50 }])).some((e) => /exactly one of 'amount' or 'pct'/.test(e)), 'arcaneBuildup with both is refused');
+    eq(REG.cards.get('gorefireSlash').staminaCost, 2, 'the signature art costs 2 stamina beside its Mana');
+
+    // THE PLAYER'S METER: a fill applies the row's statuses and takes one
+    // action off the next turn, once; the meter grows as an enemy's does.
+    const c = createCombat({
+      registries: REG, rng: createRng(7),
+      player: { classId: 'reaver', maxHp: 50, hp: 50, mana: 0, maxMana: 0, stamina: 0, maxStamina: 0, energyMax: 3, drawPerTurn: 5, deck: [{ instanceId: 'sp1', cardId: 'tSelfPoise', upgraded: false }], relicIds: [], flasks: [], poiseMax: 5 },
+      enemyIds: ['tDummy'],
+    });
+    eq(c.player.poiseMeter.max, 5, 'the stamped max is the vessel');
+    playFromHand(c, 'tSelfPoise');
+    const stagger = bal.stagger.player;
+    for (const [status, stacks] of Object.entries(stagger.statuses)) eq(S.getStacks(c.player, status), stacks, `the fill applies ${stacks} ${status}`);
+    const told = logOf(c, 'playerStaggered');
+    eq(told.length, 1, 'one playerStaggered receipt');
+    eq(told[0].actionLoss, stagger.actionLoss, 'which names the action it took');
+    assert(logOf(c, 'meterFilled').some((e) => e.targetId === 'player' && e.meter === 'poise'), 'the fill is a meterFilled on the player');
+    eq(c.player.poiseMeter.max, Math.ceil(5 * bal.poise.growthMult), 'the meter grows as an enemy\'s does');
+    dispatch(c, { type: 'endTurn' });
+    eq(c.player.energy, c.player.energyMax - stagger.actionLoss, 'the next turn opens one action short');
+    eq(c.player.pendingActionLoss, 0, 'and the debt is paid once');
+    dispatch(c, { type: 'endTurn' });
+    eq(c.player.energy, c.player.energyMax, 'the turn after is whole');
+
+    // THE VESSEL'S MAX: Constitution × the row, the body armour, the relics.
+    const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });
+    const receipt = playerPoiseThresholdReceipt(REG, run);
+    eq(receipt.attribute, run.attributes.constitution * bal.poise.playerPerConstitution, 'Constitution × balance.poise.playerPerConstitution');
+    assert(receipt.sources.some((s) => s.kind === 'attribute' && s.id === 'constitution'), 'and the receipt names it');
+    assert(receipt.sources.filter((s) => s.kind === 'equipment').every((s) => s.classId), 'only the body armour counts among the equipment — a weapon\'s poiseThreshold is its weight');
+    eq(receipt.value, receipt.attribute + receipt.equipment + receipt.relic, 'the three sum to the max');
+    assert(receipt.active, 'and the receipt is live: the combat entity stamps it and impact fills it');
+    const born = createCombat({ registries: REG, rng: createRng(7), player: { classId: 'reaver', attributes: run.attributes, maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: 0, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck, relicIds: [], loadout: run.loadout }, enemyIds: ['tDummy'] });
+    eq(born.player.poiseMeter.max, receipt.value, 'createCombat stamps the receipt as the meter\'s max');
   });
 
   const passed = results.filter((r) => r.ok).length;

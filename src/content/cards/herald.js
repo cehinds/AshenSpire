@@ -15,7 +15,7 @@ const one = { f: 'add', args: [1] };
 export const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
+    id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, staminaCost: 2, manaCost: 1, type: 'skill',
     flavor: "We bind the wound beneath the unspent brand. — Chapel liturgy",
     keywords: [], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
@@ -237,7 +237,7 @@ export const heraldCards = [
     keywords: [], icon: '🌿',
     effects: [{ op: 'applyStatus', target: 'self', status: 'thornHalo', stacks: one }],
     textTemplate: 'At the start of your turn, apply 1 Crimson Blight to ALL enemies.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
   {
     id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
@@ -300,7 +300,7 @@ export const heraldCards = [
     keywords: [], icon: '🩹',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stigmata', stacks: one }],
     textTemplate: 'Whenever you lose HP, heal 2 HP.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
   {
     id: 'scourge', name: 'Scourge', class: 'herald', rarity: 'uncommon', cost: 2, type: 'attack',
@@ -364,7 +364,7 @@ export const heraldCards = [
     keywords: [], icon: '⚰',
     effects: [{ op: 'applyStatus', target: 'self', status: 'lifeTithe', stacks: one }],
     textTemplate: 'Whenever an enemy dies, heal 8 HP.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
   {
     id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',

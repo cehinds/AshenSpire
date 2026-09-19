@@ -1325,6 +1325,42 @@ export const tagging = [
   {
     "family": "armament",
     "scope": "",
+    "objectId": "ashStaff",
+    "tagId": "staggerBreak"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "starstoneStaff",
+    "tagId": "staggerBreak"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "wyrmhornStaff",
+    "tagId": "staggerBreak"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "blightRod",
+    "tagId": "overcharge"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "gorefireBrand",
+    "tagId": "overcharge"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "goldboughBranch",
+    "tagId": "resonance"
+  },
+  {
+    "family": "armament",
+    "scope": "",
     "objectId": "goldboughBranch",
     "tagId": "item:magic-focus"
   },

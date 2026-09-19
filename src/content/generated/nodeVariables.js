@@ -23,6 +23,16 @@ export const nodeVariables = [
     "role": "exposureBuildupMult"
   },
   {
+    "nodeId": "staggerBreak",
+    "variable": "poiseDamage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "resonance",
+    "variable": "spreadPct",
+    "role": "pct"
+  },
+  {
     "nodeId": "forsakenMedallion",
     "variable": "poiseDamage",
     "role": "amount"
