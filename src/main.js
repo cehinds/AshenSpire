@@ -692,10 +692,9 @@ function applyCardSizeSettings(settings) {
 function applyDisplaySettings(settings) {
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
+  document.documentElement.dataset.formationSettings = JSON.stringify(advancedPresentation);
   document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
   const rootStyle = document.documentElement.style;
-  rootStyle.setProperty('--player-sprite-scale', String(advancedPresentation.playerSpriteScale));
-  rootStyle.setProperty('--enemy-sprite-scale', String(advancedPresentation.enemySpriteScale));
   rootStyle.setProperty('--settings-window-width', `${advancedPresentation.settingsWidthPercent}vw`);
   rootStyle.setProperty('--settings-window-height', `${advancedPresentation.settingsHeightPercent}dvh`);
   document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;

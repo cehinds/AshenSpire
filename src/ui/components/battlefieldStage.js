@@ -8,6 +8,7 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 import { overheadStackBottom } from '../models/CombatOverlayModel.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
+import { presentationConfig } from '../../model/advancedConfig.js';
 
 let releaseActiveStage = null;
 export function wireBattlefieldStage(field, model) {
@@ -39,23 +40,31 @@ export function wireBattlefieldStage(field, model) {
     const ceiling = hudBand ? Math.max(0, (hudBand.getBoundingClientRect().bottom - fieldRect.top) / zoom) : 0;
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
+    const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
-      footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 64,
+      presentation,
+      footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 0,
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
     const grid = field.querySelector('.formation-grid');
     if (grid) {
+      grid.dataset.shape = presentation.gridShape;
+      grid.style.zIndex = String(presentation.gridLayer === 'above' ? 2000 : Math.min(-1, ...plan.slots.map(slot => slot.layer - 1)));
+      grid.style.setProperty('--player-grid-color', presentation.playerGridColor);
+      grid.style.setProperty('--enemy-grid-color', presentation.enemyGridColor);
       const occupied = new Set(plan.slots.map(slot => slot.cell));
-      const grounds = [...new Set(plan.cells.map(cell => cell.ground))].sort((a, b) => a - b);
-      const tileHeight = Math.max(1, Math.min(...grounds.slice(1).map((ground, i) => ground - grounds[i])) * .7);
+      // Offsets and edge clamping must not resize the reference tiles.
+      const tileHeight = Math.max(1, plan.rowSpacing * .7);
       for (const cell of plan.cells) {
         const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
         if (!tile) continue;
-        tile.style.left = `${(cell.x - cell.width / 2) / zoom}px`;
+        const compact = ['square', 'rhombus', 'circle'].includes(presentation.gridShape);
+        const tileWidth = compact ? Math.min(cell.width, tileHeight) : cell.width;
+        tile.style.left = `${(cell.x - tileWidth / 2) / zoom}px`;
         tile.style.top = `${cell.ground / zoom}px`;
-        tile.style.width = `${cell.width / zoom}px`;
-        tile.style.height = `${tileHeight / zoom}px`;
+        tile.style.width = `${tileWidth / zoom}px`;
+        tile.style.height = `${(compact ? tileWidth : tileHeight) / zoom}px`;
         tile.dataset.occupied = String(occupied.has(cell.cell));
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
@@ -76,12 +85,13 @@ export function wireBattlefieldStage(field, model) {
       const enemyId = sprite.firstElementChild.dataset.enemyId;
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
+      const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
       return { slot, frame, stack, sprite, ratio, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
-        leadingHeight: leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0,
+        leadingHeight,
         // Reading controls do not change the unselected fitting envelope.
-        leading: Math.min(66, fieldRect.height * .25) };
+        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + window.innerHeight * model.tokens.hudClearanceViewportPct / 100) };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
     for (const actor of actors) {
@@ -90,9 +100,10 @@ export function wireBattlefieldStage(field, model) {
       if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
       const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[slot.row] : 1;
-      const scale = fitted.scale * wireframeUi.formation.displayScale * growth;
+      const multiplier = presentation[`row${'ABC'[slot.row]}Scale`] * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale);
+      const scale = fitted.scale * wireframeUi.formation.displayScale * growth * multiplier;
       const x = fitted.x;
-      const visibleHeight = fitted.visibleHeight * wireframeUi.formation.displayScale * growth;
+      const visibleHeight = fitted.visibleHeight * wireframeUi.formation.displayScale * growth * multiplier;
       sprite.style.zoom = String(scale / zoom);
       sprite.firstElementChild.style.top = `${footOffset}px`;
       const paintedHeight = boxHeight * scale;
@@ -105,6 +116,8 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
       frame.dataset.baseSpriteScale = String(fitted.scale);
+      frame.dataset.presentationScale = String(multiplier);
+      frame.dataset.formationX = String(slot.x);
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
@@ -158,7 +171,7 @@ export function wireBattlefieldStage(field, model) {
   // element's unzoomed content box. Refit after responsive UI settings settle.
   const layoutObserver = new MutationObserver(schedule);
   layoutObserver.observe(document.documentElement, {
-    attributes: true, attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition'],
+    attributes: true, attributeFilter: ['style', 'data-layout', 'data-short', 'data-composition', 'data-formation-settings'],
   });
   window.addEventListener('resize', schedule);
   const detachObserver = new MutationObserver(() => {
