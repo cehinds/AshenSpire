@@ -13,7 +13,7 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 import { note } from './healLedger.js';
 import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
-import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf } from './zones.js';
+import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS } from './zones.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -2294,7 +2294,12 @@ export function figureSpec(registries, loadout, classId) {
   // save cannot disagree about what is worn or held: body ← zones.worn.body,
   // the three new layers ← zones.worn.head/hands/feet, the hands ← zones.hands.
   const { zones } = projectZones({ class: classId, loadout, relics: [], deck: [] });
-  if (zones.worn.body) spec.armourId = zones.worn.body;
+  // The body layer is the RESOLVED armour row for this class, as it always
+  // was: a raw id the table does not know (a stale save, a co-op member's
+  // loadout that never crossed the load door) keeps the default body rather
+  // than asking for art that does not exist.
+  const body = zones.worn.body ? equippedIn(registries, loadout, classId, WORN_SLOT_IDS.body) : null;
+  if (body) spec.armourId = body.id;
   spec.headId = zones.worn.head;
   spec.handsId = zones.worn.hands;
   spec.feetId = zones.worn.feet;
@@ -2316,6 +2321,119 @@ export function figureSpec(registries, loadout, classId) {
     }
   }
   return spec;
+}
+
+/**
+ * GRIP (plan phase 3c, proposal §5). How the hands hold what they hold, READ
+ * off the loadout and never stored: a grip is a function of the two hand
+ * slots, so a stored grip would be a second home for one fact (3NF), and the
+ * moment the player gains a grip CHOICE (two-handing a one-hander) that
+ * choice becomes the stored intent and this the reader of it.
+ *
+ *   two   either hand holds a piece whose package requires both hands
+ *   dual  both hands hold a piece, neither two-handed, sharing an item
+ *         type tag (item:blade, item:shield, …) — the "same armament group"
+ *   one   anything else, including empty hands
+ *
+ * gripOf(registries, loadout, classId) → { mode, group, right, left } where
+ * `group` is the shared item type tag under `dual` and null otherwise, and
+ * right/left are the held piece ids (null when empty).
+ */
+export const GRIP_MODES = Object.freeze(['one', 'two', 'dual']);
+
+function handHeld(registries, loadout, classId, hand) {
+  const slot = (((registries || {}).equipment || {}).slots || []).find((row) => slotHand(row) === hand);
+  if (!slot || !loadout) return { piece: null, twoHanded: false };
+  const piece = equippedIn(registries, loadout, classId, slot.id);
+  const pkg = piece ? WeaponCardPackageModel.fromPiece(registries, piece) : null;
+  return { piece, twoHanded: Boolean(pkg && pkg.handsRequired === 2) };
+}
+
+export function gripOf(registries, loadout, classId) {
+  const right = handHeld(registries, loadout, classId, 'right');
+  const left = handHeld(registries, loadout, classId, 'left');
+  const out = { mode: 'one', group: null, right: right.piece ? right.piece.id : null, left: left.piece ? left.piece.id : null };
+  if (right.twoHanded || left.twoHanded) return { ...out, mode: 'two' };
+  if (right.piece && left.piece) {
+    const shared = (right.piece.itemTypeTags || []).find((tag) => (left.piece.itemTypeTags || []).includes(tag));
+    if (shared) return { ...out, mode: 'dual', group: shared };
+  }
+  return out;
+}
+
+/** The framework tags a grip derives — read at the action snapshot, written to no card. */
+export const GRIP_TAGS = Object.freeze({ one: Object.freeze([]), two: Object.freeze(['equipment.twoHanded']), dual: Object.freeze(['equipment.dualWield']) });
+export function gripTags(grip) {
+  const mode = grip && grip.mode;
+  if (!GRIP_MODES.includes(mode)) throw new Error(`gripTags: '${mode}' is not a grip mode (${GRIP_MODES.join(', ')})`);
+  return [...GRIP_TAGS[mode]];
+}
+
+/**
+ * gripRefusal(registries, loadout, classId, slotId, setIndex, itemId) → '' or
+ * the sentence that refuses the grip the hands would be left in. The one
+ * illegal grip today is a two-handed piece beside an occupied other hand;
+ * `dual` is legal on its own (its attribute gate is plan phase 9's row). The
+ * loadout is judged AS THE EDIT LEAVES IT — the candidate in its cell, every
+ * active index unchanged — against the other hand's active piece: the active
+ * pair is the invariant, and it is also held by the deck plan's gate
+ * (buildEquippedWeaponCardPlan throws on a two-hander beside an occupied
+ * off-hand, which cycleSet and equipPiece both run). This is the same rule
+ * asked EARLIER — at canEquip, with a sentence — so the Armoury can say why
+ * before the act rather than after it.
+ *
+ * A MOVE IS NOT A SECOND COPY: equipping a piece that is already in the
+ * other hand moves it (applyEquipTransition clears the old cell), so the
+ * trial clears every other hand cell holding the candidate before it reads
+ * the hands — else a two-hander moved from left to right would be refused
+ * for being beside itself.
+ */
+export function gripRefusal(registries, loadout, classId, slotId, setIndex, itemId) {
+  const slots = (((registries || {}).equipment || {}).slots || []);
+  const slot = slots.find((row) => row.id === slotId);
+  if (!slot || !slotHand(slot) || !loadout) return '';
+  const trial = structuredClone(loadout);
+  trial.sets = trial.sets || {}; trial.active = trial.active || {};
+  for (const hand of slots.filter((row) => slotHand(row))) {
+    trial.sets[hand.id] = [...(trial.sets[hand.id] || [])].map((held) => (itemId && held === itemId ? null : held));
+  }
+  // THE ACTIVE INDEX IS NOT MOVED: equipPiece edits the cell and never
+  // activates it, so a two-hander laid in a prepared set beside an occupied
+  // active hand is a legal edit here; the day the player cycles to it, the
+  // deck plan's gate at cycleSet refuses the pair. Judging the loadout as it
+  // will actually be is the only reading that cannot refuse a legal edit.
+  if (Number.isInteger(setIndex) && setIndex >= 0) trial.sets[slotId][setIndex] = itemId || null;
+  const right = handHeld(registries, trial, classId, 'right');
+  const left = handHeld(registries, trial, classId, 'left');
+  if ((right.twoHanded && left.piece) || (left.twoHanded && right.piece)) {
+    const two = right.twoHanded ? right.piece : left.piece;
+    const other = right.twoHanded ? left.piece : right.piece;
+    return `${two.name || two.id} needs both hands, and ${other.name || other.id} is in the other one. Free that hand first.`;
+  }
+  return '';
+}
+
+/**
+ * healMissingSlotCells(registries, loadout) → the ids of the slots whose cells
+ * were absent and are now present, empty. A save written before a slot row
+ * existed (phase 3b added head, hands and feet) carries no cells for it, so
+ * the Armoury drew no position and equipPiece refused the slot; this gives it
+ * what createLoadout gives a fresh run, and nothing else. Both load doors
+ * call it (save.js loadRun, which notes it on the ledger; tools/session.mjs
+ * restoreSession, which has no ledger).
+ */
+export function healMissingSlotCells(registries, loadout) {
+  if (!loadout || typeof loadout !== 'object') return [];
+  loadout.sets = loadout.sets || {};
+  loadout.active = loadout.active || {};
+  const added = [];
+  for (const slot of (((registries || {}).equipment || {}).slots || [])) {
+    if (Array.isArray(loadout.sets[slot.id])) continue;
+    loadout.sets[slot.id] = new Array(Math.max(1, slot.sets || 1)).fill(null);
+    loadout.active[slot.id] = 0;
+    added.push(slot.id);
+  }
+  return added;
 }
 
 /**
@@ -3016,6 +3134,13 @@ export function canEquip(registries, slotId, ctx) {
   if (ctx.inCombat && cfg.allowChangesInCombat !== true) {
     return { ok: false, reason: COMBAT_EQUIPMENT_CHANGE_DISABLED };
   }
+  // THE GRIP THE HANDS WOULD BE LEFT IN (plan phase 3c). Asked only when the
+  // caller says what it is about to put where — equipPiece does; a bare
+  // "may this slot change at all" question keeps its old answer.
+  if (ctx.loadout && ctx.itemId !== undefined) {
+    const refusal = gripRefusal(registries, ctx.loadout, ctx.classId || null, slotId, ctx.setIndex, ctx.itemId);
+    if (refusal) return { ok: false, reason: refusal };
+  }
   return { ok: true, reason: '' };
 }
 
@@ -3301,7 +3426,7 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // Passed through, NOT coerced. `!!ctx.inCombat` would turn a value this
   // function had just refused into a legal one, so if the check above is ever
   // loosened canEquip's own check is a real second gate rather than an echo.
-  const permission = canEquip(registries, slotId, { inCombat: ctx.inCombat });
+  const permission = canEquip(registries, slotId, { inCombat: ctx.inCombat, loadout, classId: ctx.classId || null, setIndex, itemId });
   if (!permission.ok) return false;
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);

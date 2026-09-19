@@ -1425,7 +1425,9 @@ export function mountEquipment(host, {
       let eligibility = null;
       if (target) {
         const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
-        const seal = canEquip(registries, target.slot.id, { inCombat });
+        // With the candidate named, the seal carries the grip's sentence too
+        // (model/loadout.js gripRefusal) — the player reads why before the act.
+        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId });
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );

@@ -190,7 +190,7 @@ plan's four because the slot table already declares it. SPEC §13.4a.
 | `src/content/equipment.js` armament and armour rows gain `cardType: 'equipment'`, `slot` (existing `SLOTS`), and are registered in the card registry with a `zone` field; `SCHEMAS.card` gains `zone?: en('draw','core','worn','hands','passive')` | schemas, registries |
 | Armour slots split: `body`, `head`, `hands`, `feet` in `SLOTS`; existing armour rows map to `body`; new head/hands/feet rows ship as data with the slot→layer table from proposal §4 as mods | content |
 | `reconcileGrantedCards` (`loadout.js:2011`) and `reconcileGrantedCardsInCombat` (`:2212`) reconcile against `collection`, and mark granted instances `locked: true` while their source is equipped | |
-| Deck minimum: `balance.deck.minimum`, `balance.deck.minimumPerLevel`; `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
+| Deck minimum: `balance.deck.minimum`, `balance.deck.minimumStepLevels`, `balance.deck.minimumPerStep` (as built); `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
 | `figureSpec` (`loadout.js:2280`) reads `zones.worn` and `zones.hands`; `equippedFigure` (`assets.js:558`) accepts head/hands/feet layer ids and falls back to nothing when art is missing | |
 
 **3b AS BUILT (2026-09-19):** the half of 3b that is feel-neutral shipped;
@@ -239,6 +239,24 @@ Acceptance: loadout screen edits a deck against the minimum; a base card
 locks on equip and unlocks on unequip; dual daggers show `dual` in the
 snapshot and not on the card definition; `figureSpec` test covers four worn
 slots.
+
+**3c AS BUILT (2026-09-19):** the grip is READ, not stored. `gripOf` derives
+`one`/`two`/`dual` from the two hand slots (a stored grip would be a second
+home for a fact the hands already hold); the moment a grip CHOICE exists
+(two-handing a one-hander) that choice becomes the stored intent and `gripOf`
+its reader. The derived tags are framework nodes — `equipment.twoHanded`
+(already authored) and `equipment.dualWield` (new) — so the predicate that
+asks about them is validated against the tree like any tag. They ride the
+card snapshot in solo and co-op combat as `derivedTags`, and the `cardPlayed`
+event carries `cardTags` and `derivedTags`; the preview builds its card the
+same way (and now reads the kind tag, which the tree phase had left at
+`def.type` on that one site). `canEquip` refuses the one illegal grip (a
+two-hander beside an occupied hand) when told what is going where — the same
+rule the deck plan's gate already held at `cycleSet`/`equipPiece` by throwing,
+asked earlier and with a sentence the Armoury's seal can show; the DEX gate on
+`dual` is phase 9's row, as the plan sequences it. No shipped package
+requires two hands, so `two` is dormant and proven with a probe registry;
+`dual` is live (knife and sword). SPEC §13.4c; engine test 84.
 
 ## Phase 4 — Skill tracks (2 PRs)
 

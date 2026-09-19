@@ -39,6 +39,7 @@ import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
+import { gripOf, gripTags } from '../model/loadout.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
 
 const QUEUE_GUARD = 10000;
@@ -411,9 +412,16 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   // The kind tag, not def.type (model/tree.js cardKind) — as solo combat reads it.
   const kind = cardKind(def);
+  // The grip's derived tags ride the snapshot, as in solo combat (plan phase 3c).
+  const derivedTags = gripTags(gripOf(C.registries, C.loadout, p.classId));
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -442,7 +450,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
   C.emit('cardPlayed', {
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
-    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind,
+    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });

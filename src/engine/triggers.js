@@ -290,6 +290,19 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       if (meta.attackOrdinal != null) return meta.attackOrdinal === 1;
       return ctx.player.counters.attacksPlayedThisCombat === 0;
     }
+    case 'cardTagIs': {
+      // The card's own tags ∪ the snapshot's derived tags (plan phase 3c).
+      // `pctx.card` is the action's card snapshot; the cardPlayed event carries
+      // the same two lists for the triggers that fire on it. A tag the grip
+      // derived (equipment.dualWield) answers here and appears on no card row.
+      // `authoredTags` where the snapshot carries them: a foundation carrier
+      // rewrites `tags` into the resolved attack tags (a Defend inherits the
+      // sword's `blade`), and the question here is what the CARD says.
+      const lists = pctx.card
+        ? [pctx.card.authoredTags ?? pctx.card.tags, pctx.card.derivedTags]
+        : pctx.event ? [pctx.event.cardTags, pctx.event.derivedTags] : [];
+      return lists.some((list) => Array.isArray(list) && list.includes(pred.tag));
+    }
     case 'cardTypeIs': {
       // `card.type` and `event.cardType` are the card's KIND (model/tree.js
       // cardKind), set where the card ref and the cardPlayed receipt are built

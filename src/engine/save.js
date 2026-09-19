@@ -32,6 +32,7 @@ import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLoc
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { healMissingSlotCells } from '../model/loadout.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
@@ -618,6 +619,25 @@ export function createSaveManager(storage) {
           was: undefined,
           now: { sets: run.loadout.sets },
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
+      }
+      // A slot row that arrived after this save was written (phase 3b: head,
+      // hands, feet) has no cells in it. Give each its empty cells, as a fresh
+      // run has them, and say so — a position the Armoury cannot draw is a
+      // piece the player could never equip.
+      // The active-combat snapshot carries its own loadout (the fight's
+      // authority, SPEC §13.3) and is healed the same way, in the same row.
+      const slotsAdded = healMissingSlotCells(registries, run.loadout);
+      const snapshotSlotsAdded = run.combatEntered && run.combatEntered.snapshot
+        ? healMissingSlotCells(registries, run.combatEntered.snapshot.loadout) : [];
+      if (slotsAdded.length || snapshotSlotsAdded.length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'loadout.sets',
+          was: undefined,
+          now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
+          why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
         });
       }
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);

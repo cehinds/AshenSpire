@@ -19,7 +19,7 @@ import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
-import { stampDeck } from '../src/model/loadout.js';
+import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
@@ -193,6 +193,7 @@ export function createSession({ registries, seedString, endless = false, restore
         validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
         initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
         initializeRunSmithing(registries, md.run);
+        healMissingSlotCells(registries, md.run.loadout); // a slot row newer than the record gets its empty cells (phase 3b)
         stampDeck(registries, md.run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
         initializeRunFlaskCharges(md.run, registries);
         syncZones(md.run); // the restore re-stamped the deck; the projection follows it (plan phase 3a)

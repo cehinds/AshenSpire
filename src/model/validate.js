@@ -564,7 +564,9 @@ function collectContentProblems(bundle, errors = []) {
   // Creature identity is the creature domain of that same registry, so adding
   // a kind is a node in nodes.csv rather than an edit to a frozen array.
   const creatureTagIds = tagIdsInDomain(b, 'creature');
-  const vctx = { ids, err, tagIds };
+  // Every node of the tree, for the predicate that may ask about any of them.
+  const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
+  const vctx = { ids, err, tagIds, nodeIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -1973,6 +1975,7 @@ const PREDICATE_FIELDS = {
   firstCardThisTurn: [],
   firstAttackThisCombat: [],
   cardTypeIs: ['type'],
+  cardTagIs: ['tag'],
   everyNthCardThisCombat: ['n'],
   random: ['pct'],
   eventIsAttack: [],
@@ -2019,6 +2022,13 @@ export function validatePredicate(pred, path, vctx) {
       break;
     case 'cardTypeIs':
       if (!CARD_TYPES.includes(pred.type)) err(`${path}.type`, `Unknown card type '${pred.type}'`);
+      break;
+    case 'cardTagIs':
+      // Any node of the tree may be asked about: a card's authored tags and
+      // the grip's derived framework tags (equipment.dualWield) alike.
+      if (typeof pred.tag !== 'string' || !vctx.nodeIds || !vctx.nodeIds.has(pred.tag)) {
+        err(`${path}.tag`, `Unknown tag '${pred.tag}' — not a node in content/source/nodes.csv`);
+      }
       break;
     case 'everyNthCardThisCombat':
       if (!Number.isInteger(pred.n) || pred.n < 1) err(`${path}.n`, 'n must be a positive integer');

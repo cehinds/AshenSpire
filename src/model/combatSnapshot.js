@@ -136,6 +136,13 @@ export function assertCombatSnapshot(snapshot) {
 }
 
 /** Validate content references after registries exist at the run load door. */
+/** True when some authored piece fits the slot — a slot nothing can fill yet cannot have lost anything. */
+function slotCanHoldAnything(slot, equipment) {
+  const kinds = Array.isArray(slot.kinds) ? slot.kinds : [];
+  if (kinds.includes('armor') && (equipment.armour || []).length) return true;
+  return (equipment.armaments || []).some((piece) => kinds.includes(piece.kind));
+}
+
 export function combatSnapshotReferenceProblems(snapshot, registries) {
   if (snapshot == null) return [];
   const problems = [];
@@ -208,6 +215,16 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     for (const slot of slots) {
       const ids = record(loadout.sets) ? loadout.sets[slot.id] : undefined;
       const active = record(loadout.active) ? loadout.active[slot.id] : undefined;
+      // A slot the snapshot never knew (the row was authored after the fight
+      // was saved — phase 3b's head, hands, feet) is not a malformed
+      // reference: it has no cells and no active index at all, AND nothing in
+      // the content could ever have been in it — no authored piece fits its
+      // kinds. That second clause is what keeps this from excusing a current
+      // save that lost a hand: a slot a weapon can fill is held to the shape
+      // whether or not the snapshot names it. The load door gives an excused
+      // slot its empty cells (model/loadout.js healMissingSlotCells) after
+      // this check proves the rest.
+      if (ids === undefined && active === undefined && !slotCanHoldAnything(slot, equipment)) continue;
       if (!Array.isArray(ids)) {
         problems.push(`loadout.sets.${slot.id} must be an array`);
       } else {

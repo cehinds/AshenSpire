@@ -398,6 +398,13 @@ export const properties = {
       "priority": 15
     },
     {
+      "id": "equipment.dualWield",
+      "parentId": "equipment",
+      "domain": "EQUIPMENT",
+      "visibility": "SECONDARY",
+      "priority": 16
+    },
+    {
       "id": "utility",
       "domain": "ACTION_ROLE",
       "visibility": "INTERNAL",
