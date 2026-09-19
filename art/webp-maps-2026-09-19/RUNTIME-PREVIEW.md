@@ -1,9 +1,22 @@
 # Playable legacy dungeons
 
 The dungeon integration is merged into local `dev`. `AshenSpire-LegacyPreview.html`
-at the repository root is a compiled external-art preview (0.7.1.238), using
+at the repository root is a compiled external-art preview (0.7.1.241), using
 the repository's `assets/` folder. It is separate from the normal build aliases
 so concurrent settings/build work remains intact.
+
+Map revision: the shared game HUD, Potions, orientation strip, map frame,
+location tray and Back/Enter controls now surround the authored map. Circular
+markers keep equal width/height at desktop, mobile and zoomed sizes. Entrances
+are on the road in front of each gate, with their connecting roads preserved.
+Fog is darker and textured like smoke; brown haze is confined to the roads.
+The standard standalone build aliases were also refreshed for this revision.
+
+Revised checks: all three desktop maps and the 390 × 844 mobile map passed
+circle geometry, zoom, visible Enter control, selection without immediate
+travel, Back/Enter, dialogue and saved travel checks, with zero page errors.
+Dungeon, map selection/tray and shared HUD tests passed. All six packaging
+checks passed. Screenshots are in `runtime-screenshots/` beside this document.
 
 Open through the local game server:
 
