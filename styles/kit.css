@@ -3947,6 +3947,22 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 :is(.reward-row, .mount-card-list, .armoury-card-gallery, .pile-body .grid):has(.card-inspection-target) {
   padding-top: 64px; row-gap: 64px;
 }
+/* Reward-card status stack, top to bottom: Information, NEW, card.
+   These three variables are the only placement knobs a theme or future card
+   size needs. The empty Information lane is reserved so revealing it never
+   pushes the row or the card under the player's pointer. */
+.reward-door .reward-row {
+  --reward-status-gap: 6px;
+  --reward-new-badge-height: calc(1.08rem + 6px);
+  --reward-status-stack-height: calc(var(--inspect-size, calc(2.75 * max(16px / var(--ui-zoom, 1), 1rem))) + var(--reward-new-badge-height) + var(--reward-status-gap) + var(--reward-status-gap));
+}
+.reward-door .reward-row:has(.card[data-new='1']) {
+  padding-top: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
+  row-gap: calc(var(--reward-status-stack-height) + var(--reward-status-gap));
+}
+.reward-door .reward-row .card[data-new='1'] > .card-info-button {
+  top: calc(-1 * var(--reward-status-stack-height));
+}
 .mount-row.card-inspection-target { position: relative; padding-right: 54px; }
 .mount-row.card-inspection-target > .card-info-button {
   top: 50%; right: 8px; left: auto; transform: translateY(-50%);

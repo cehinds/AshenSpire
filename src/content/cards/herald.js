@@ -16,6 +16,7 @@ export const heraldCards = [
   // ---- Starter ---------------------------------------------------------------
   {
     id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
+    flavor: "We bind the wound beneath the unspent brand. — Chapel liturgy",
     keywords: [], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
     textTemplate: 'Heal {heal} HP.',
@@ -25,6 +26,7 @@ export const heraldCards = [
   // ---- Commons ----------------------------------------------------------------
   {
     id: 'bloodPact', name: 'Blood Pact', class: 'herald', rarity: 'common', cost: 0, type: 'skill',
+    flavor: "We press the promise into each newborn wrist. — Chapel liturgy",
     keywords: [], icon: '🩸',
     effects: [
       { op: 'loseHp', target: 'self', amount: 2 },
@@ -97,6 +99,7 @@ export const heraldCards = [
     // threshold to fill, so a common has to be able to start it.
     // Numbers PROVISIONAL, like the row's.
     id: 'litany', name: 'Litany', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "We close the ledger and thank the warmth. — Chapel liturgy",
     keywords: [], icon: '📿',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 2 },
@@ -171,6 +174,7 @@ export const heraldCards = [
   },
   {
     id: 'blightward', name: 'Blightward', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "We cover the unfinished brand and call it mercy. — Chapel liturgy",
     keywords: [], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
@@ -214,6 +218,7 @@ export const heraldCards = [
   },
   {
     id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, type: 'attack',
+    flavor: "We gild the sickle and bless what it takes. — Chapel liturgy",
     keywords: [], icon: '🌾',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -236,6 +241,7 @@ export const heraldCards = [
   },
   {
     id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, type: 'power',
+    flavor: "We watched from Tidebound Chapel and never saw the heresy lit. — Chapel liturgy",
     keywords: [], icon: '🕊',
     effects: [{ op: 'applyStatus', target: 'self', status: 'communion', stacks: one }],
     textTemplate: 'At the start of your turn, heal 3 HP.',
@@ -243,6 +249,7 @@ export const heraldCards = [
   },
   {
     id: 'gildedOath', name: 'Gilded Oath', class: 'herald', rarity: 'uncommon', cost: 2, type: 'skill',
+    flavor: "Three flames on three twigs; we swear to the branch. — Chapel liturgy",
     keywords: [], icon: '🌞',
     effects: [
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 },
@@ -353,6 +360,7 @@ export const heraldCards = [
   },
   {
     id: 'lifeTitheCard', name: 'Life Tithe', class: 'herald', rarity: 'rare', cost: 1, type: 'power',
+    flavor: "We bring the cradle where the bier once stood. — Chapel liturgy",
     keywords: [], icon: '⚰',
     effects: [{ op: 'applyStatus', target: 'self', status: 'lifeTithe', stacks: one }],
     textTemplate: 'Whenever an enemy dies, heal 8 HP.',
@@ -390,6 +398,7 @@ export const heraldCards = [
   },
   {
     id: 'lastRites', name: 'Last Rites', class: 'herald', rarity: 'rare', cost: 2, type: 'skill',
+    flavor: "We leave no name upon the cold headstone. — Chapel liturgy",
     keywords: ['exhaust'], icon: '🕯',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 20 } },
@@ -475,6 +484,7 @@ export const heraldCards = [
   },
   {
     id: 'emberTideCard', name: 'Ember Tide', class: 'herald', rarity: 'uncommon', cost: 1, type: 'power',
+    flavor: "We kept the censer swinging when the hearth went dark. — Chapel liturgy",
     keywords: [], icon: '🌊',
     effects: [{ op: 'applyStatus', target: 'self', status: 'emberTide', stacks: one }],
     textTemplate: 'Whenever you heal, gain 1 Strength.',

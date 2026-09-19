@@ -4,12 +4,12 @@ const boundsCache = new Map();
 function imageBounds(img, refresh) {
   const key = img.currentSrc || img.src;
   if (!key) return null;
-  if (boundsCache.has(key)) return boundsCache.get(key);
   if (!img.complete || !img.naturalWidth) {
     img.addEventListener('load', refresh, { once: true });
     img.addEventListener('error', refresh, { once: true });
     return null;
   }
+  if (boundsCache.has(key)) return boundsCache.get(key);
   let bounds = null;
   try {
     const canvas = document.createElement('canvas');

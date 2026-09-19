@@ -2,6 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combatFormation, COMBAT_LAYOUT } from '../src/ui/models/CombatFormationModel.js';
 const ids = (prefix,n) => Array.from({length:n},(_,i)=>prefix+i);
+test('every preferred row and column places actors on the matching named grid anchor', () => {
+  for (const row of 'ABC') for (const playerColumn of ['1', '2']) for (const enemyColumn of ['3', '4']) {
+    const plan = combatFormation({ width: 390, height: 380, friends: ids('p', 6), enemies: ids('e', 6), presentation: {
+      playerSpawnRow: row, enemySpawnRow: row, playerSpawnColumn: playerColumn, enemySpawnColumn: enemyColumn,
+      frontOffsetX: 12, frontOffsetY: -10, backOffsetX: -8, backOffsetY: 5,
+      frontLayer: 300, backLayer: 100, rowBLayer: 25,
+    } });
+    assert.equal(plan.slots[0].cell, row + playerColumn);
+    assert.equal(plan.slots[6].cell, row + enemyColumn);
+    assert.equal(new Set(plan.slots.map(s => s.cell)).size, 12);
+    for (const slot of plan.slots) {
+      const cell = plan.cells.find(c => c.cell === slot.cell);
+      for (const key of ['x', 'ground', 'layer', 'row', 'column']) assert.equal(slot[key], cell[key]);
+      assert.equal(slot.layer, (slot.column ? 300 : 100) + (slot.row === 1 ? 25 : 0));
+    }
+  }
+});
 test('six reserved mirrored slots keep empty encounter positions stable',()=>{
   for(const width of [320,360,375,794,1440]) {
     const full=combatFormation({width,height:380,friends:ids('p',6),enemies:ids('e',6)});
