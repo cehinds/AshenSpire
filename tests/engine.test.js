@@ -116,7 +116,9 @@ import {
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
 // at the top of this file still holds.
 import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
-import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/model/levelup.js';
+import { levelUpPlan, applyLevelUp, awardLevelXp, xpToNext as xpToNextLevel, combatLevelXp, questLevelXp, characterLevel } from '../src/model/levelup.js';
+import { levelProblems } from '../src/model/state.js';
+import { playerLevel } from '../src/model/levels.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
@@ -6252,13 +6254,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
-    eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '50/10', 'the measured ramp (E13, re-measured at the ×3 faucet: 15.4 level-ups per full run for a greedy bot) — five purchases cost 350');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,120,130,150,170,200,230,270,310,350', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 350, 'five purchases cost 350 on the measured 50 + 10 ramp and end at displayed level 6');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 2030, '2,030 XP reaches level 11 — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
@@ -6677,62 +6679,69 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   // ---- 60. levelling at a shrine -------------------------------------------
-  test('60. a level is one attribute point bought with cinders, and the pools follow', () => {
+  test('60. a level is earned with XP, grants a point, and the pools follow the point (plan phase 6)', () => {
     const run = createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG });
     const startCon = run.attributes.constitution;
     const startHp = run.maxHp;
-    const plan = levelUpPlan(REG, run);
-    eq(plan.levelsTaken, 0, 'a fresh run has taken no levels');
-    eq(plan.cost, REG.balance.levelUp.firstCost, 'the first level costs the authored first price');
+    let plan = levelUpPlan(REG, run);
+    eq(plan.level, 1, 'a fresh run is level 1'); eq(plan.xp, 0); eq(plan.xpToNext, REG.balance.level.xp.base, 'the first step costs the curve base');
     eq(plan.attributes.length, REG.attributes.all().length,
       'every authored attribute is offered — the shrine names no stat itself (the Law 0 falsifier)');
 
-    // THE EMPTY EDGE: no cinders, no offer, and both refusals are BY NAME.
-    run.cinders = 0;
-    assert(!levelUpPlan(REG, run).offerable, 'with an empty purse the shrine offers nothing');
+    // THE EMPTY EDGE: no point waiting, no offer, and both refusals are BY NAME.
+    assert(!plan.offerable, 'with nothing earned the shrine offers nothing'); eq(plan.blockedBy, 'points');
     let refused = '';
     try { applyLevelUp(REG, run, 'constitution'); } catch (e) { refused = e.message; }
-    assert(/cinders needed/.test(refused), `an unaffordable level is refused by name (got: ${refused})`);
+    assert(/no attribute point waiting/.test(refused), `an unearned point is refused by name (got: ${refused})`);
     let badId = '';
     try { applyLevelUp(REG, run, 'charisma'); } catch (e) { badId = e.message; }
     assert(/not an attribute id/.test(badId), `a stat that does not exist is refused by name (got: ${badId})`);
 
-    // THE PURCHASE.
-    run.cinders = 10000;
-    const purse = run.cinders;
-    const manaBefore = run.maxMana;
-    const got = applyLevelUp(REG, run, 'constitution');
-    eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat that was bought');
-    eq(run.cinders, purse - plan.cost, 'the cinders are gone, exactly the priced amount');
-    eq(run.levelUps, 1, 'the purchase is recorded — this is the number the load door reads');
-    eq(got.level, 1, 'the receipt names the level bought');
-    eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
+    // THE CLIMB: XP buys the level, the level grants the point, the point waits.
+    const got = awardLevelXp(REG, run, REG.balance.level.xp.base);
+    eq(got.levelUps, 1); eq(got.points, 1); eq(run.level.level, 2); eq(run.level.xp, 0); eq(run.level.unspentPoints, 1, 'the point waits on the ledger');
+    eq(run.attributes.constitution, startCon, 'no stat moved yet — the shrine assigns, the fight does not');
+    eq(run.cinders, createRunState({ seed: 0x1e7e1, classId: 'reaver', registries: REG }).cinders, 'no cinder was touched');
+    plan = levelUpPlan(REG, run); assert(plan.offerable); eq(plan.blockedBy, null); eq(plan.points, 1);
+    eq(awardLevelXp(REG, run, 0).levelUps, 0, 'nothing is nothing'); eq(awardLevelXp(REG, run, -5).levelUps, 0);
 
+    // THE ASSIGNMENT.
+    const manaBefore = run.maxMana;
+    const spent = applyLevelUp(REG, run, 'constitution');
+    eq(run.attributes.constitution, startCon + 1, 'the point lands on the stat it was assigned to');
+    eq(run.level.unspentPoints, 0, 'and leaves the ledger'); eq(spent.points, 0);
+    eq(run.levelUps, 1, 'the assignment is recorded — this is the number the load door reads'); eq(run.levelPoints, 1);
+    eq(run.maxMana, manaBefore, 'the pool CON does not feed did not move');
     eq(run.maxHp, startHp + 2, 'one CON point adds the configured two HP immediately');
-    const conAt = run.attributes.constitution;
-    applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 4, `CON ${conAt + 1} adds a second two-HP step`);
-    applyLevelUp(REG, run, 'constitution');
-    eq(run.maxHp, startHp + 6, `CON ${conAt + 2} adds a third two-HP step`);
-    eq(run.levelUps, 3, 'three levels bought and three points spent');
+    awardLevelXp(REG, run, xpToNextLevel(REG, 2) + xpToNextLevel(REG, 3));
+    eq(run.level.level, 4, 'enough XP for two steps climbs two'); eq(run.level.unspentPoints, 2);
+    applyLevelUp(REG, run, 'constitution'); applyLevelUp(REG, run, 'constitution');
+    eq(run.maxHp, startHp + 6, 'three CON points, three two-HP steps');
+    eq(run.levelUps, 3, 'three points assigned');
 
     // A LEVEL IS NOT A REST: the pool grows and the deficit is carried. The
     // shrine sells the heal at the next panel; a level that healed would make
     // that panel pointless at the same counter.
     const hurt = createRunState({ seed: 0x4c4e, classId: 'reaver', registries: REG });
-    hurt.cinders = 5000;
     hurt.hp = hurt.maxHp - 10;
     const hurtMax = hurt.maxHp;
-    applyLevelUp(REG, hurt, 'constitution');
-    eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the levels — levelling does not heal');
+    awardLevelXp(REG, hurt, xpToNextLevel(REG, 1)); applyLevelUp(REG, hurt, 'constitution');
+    eq(hurt.maxHp - hurt.hp, 10, 'the 10-HP deficit is carried across the level — levelling does not heal');
     assert(hurt.maxHp > hurtMax, 'and the ceiling still rose (the probe has a referent)');
 
-    // THE RAMP, and the only half of his acceptance test this suite can hold.
-    eq(levelCost(REG, 1) - levelCost(REG, 0), REG.balance.levelUp.costStep, 'each level costs one step more');
-    eq(levelsAffordable(REG, 350), 5, '350 cinders buys five levels and reaches displayed level 6');
-    eq(levelsAffordable(REG, 349), 4, 'and one cinder short buys four — the ramp is exact, not generous');
-    eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 350, 'the measured 50 + 10 ramp totals 350 for five purchases');
-    eq(levelsAffordable(REG, 0), 0, 'the empty edge: no cinders, no levels');
+    // THE AWARDS: a won fight, each kill by the door's pool; a loss keeps its kills.
+    const xp = REG.balance.xp;
+    eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), xp.combatWin + 2 * xp.kill.normal);
+    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), xp.combatWin + xp.kill.boss);
+    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), xp.kill.elite, 'a lost fight pays its kills and no win');
+    eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), xp.combatWin + xp.kill.normal, 'an unknown pool pays the normal rate');
+    eq(questLevelXp(REG), xp.quest);
+
+    // THE CAP holds the level and keeps the XP.
+    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 2 } } };
+    const roof = createRunState({ seed: 0x1e7e2, classId: 'reaver', registries: REG });
+    awardLevelXp(capped, roof, 10000);
+    eq(roof.level.level, 2, 'the cap holds'); assert(roof.level.xp > 0, 'the XP past it stays on the ledger'); eq(levelUpPlan(capped, roof).capped, true);
   });
 
   // ---- 60b. a levelled run comes back through the real save door ------------
@@ -6743,10 +6752,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // level-up that only incremented `run.attributes` would look
     // perfect on screen and destroy the player's run at the next load.
     const run = createRunState({ seed: 0x5a7ed, classId: 'reaver', registries: REG });
-    run.cinders = 10000;
     run.seedString = 'LEVELS';
+    awardLevelXp(REG, run, [1, 2, 3, 4, 5, 6].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 7, 'six levels earned'); eq(run.level.unspentPoints, 6);
     for (let i = 0; i < 6; i++) applyLevelUp(REG, run, 'constitution');
-    eq(run.levelUps, 6, 'six levels bought');
+    eq(run.levelUps, 6, 'six points assigned');
     assert(run.attributes.constitution > 15, 'and the stat is past the creation ceiling of 15');
 
     const storage = createMemoryStorage();
@@ -6756,6 +6766,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(back.attributes.constitution, run.attributes.constitution, 'the levelled points survive the door');
     eq(back.levelUps, 6, 'and so does the count that makes them legal');
     eq(back.maxHp, run.maxHp, 'the derived pool the levels moved is accepted, not re-derived away');
+    eq(back.level.level, 7, 'the character level rides the save'); eq(back.maxHp, run.maxHp);
+    assert(back.maxHp >= 62 + 12 + 5, `level 7 carries the level-6 threshold bump beside the six CON points — got ${back.maxHp}`);
 
     // THE e05be89 SAVE SHAPE, AND IT MUST LOAD. That build recorded `levelUps`
     // and no `levelPoints`, and it had exactly one possible level value, so for
@@ -6807,30 +6819,32 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // a level visible and the value that does not.
 
     // ---- DIAL 1: the level value ------------------------------------------
+    // The dial is read where the level is REACHED (plan phase 6): a level at
+    // value 1 grants one point to the ledger, at value 3 three; the shrine
+    // then assigns them one at a time.
     const one = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
-    one.cinders = 5000;
-    applyLevelUp(REG, one, 'constitution', { pointsPerLevel: 1 });
-    eq(one.attributes.constitution - 11, 1, 'at 1, a level grants one point');
-    eq(one.levelPoints, 1, 'and records one point granted');
+    awardLevelXp(REG, one, xpToNextLevel(REG, 1), { pointsPerLevel: 1 });
+    eq(one.level.unspentPoints, 1, 'at 1, a level grants one point');
+    applyLevelUp(REG, one, 'constitution');
+    eq(one.attributes.constitution - 11, 1); eq(one.levelPoints, 1, 'and records one point assigned');
 
     const three = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
-    three.cinders = 5000;
     const hpBefore = three.maxHp;
-    applyLevelUp(REG, three, 'constitution', { pointsPerLevel: 3 });
-    eq(three.attributes.constitution - 11, 3, 'at 3, one level grants three points');
-    eq(three.levelPoints, 3, 'and records three');
-    eq(three.levelUps, 1, 'while still being ONE purchase — the ramp indexes on purchases');
-    eq(three.cinders, one.cinders, 'and costs the same: the value is what a level GRANTS, not what it costs');
+    awardLevelXp(REG, three, xpToNextLevel(REG, 1), { pointsPerLevel: 3 });
+    eq(three.level.unspentPoints, 3, 'at 3, one level grants three points');
+    eq(three.level.level, one.level.level, 'and costs the same XP: the value is what a level GRANTS, not what it costs');
+    for (let i = 0; i < 3; i++) applyLevelUp(REG, three, 'constitution');
+    eq(three.attributes.constitution - 11, 3); eq(three.levelPoints, 3, 'and records three');
     // Both values are visible under the per-CON HP formula.
     assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
     eq(one.maxHp, hpBefore + 2, 'at 1, the same one level adds exactly two HP');
 
     // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
-    // moment he turns the dial mid-climb — and the case where the count and
-    // the points stop being the same number.
-    applyLevelUp(REG, three, 'wisdom', { pointsPerLevel: 1 });
-    eq(three.levelUps, 2, 'two purchases');
-    eq(three.levelPoints, 4, 'four points — the two numbers have diverged, as they must');
+    // moment he turns the dial mid-climb.
+    awardLevelXp(REG, three, xpToNextLevel(REG, 2), { pointsPerLevel: 1 });
+    applyLevelUp(REG, three, 'wisdom');
+    eq(three.level.level, 3, 'two levels');
+    eq(three.levelPoints, 4, 'four points assigned over two levels at two values');
     const mixedStore = createMemoryStorage();
     three.seedString = 'MIXED';
     createSaveManager(mixedStore).saveRun(three);
@@ -6905,14 +6919,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(byHand.rules.mana.pointsPerTier, 1, 'Mana inherits the edited fallback default');
     eq(byHand.rules.stamina.pointsPerTier, 1, 'Stamina inherits the edited fallback default');
 
-    // AND ONE LEVEL IS NOW VISIBLE, which is the sentence his ask is made of.
-    at1.cinders = 5000;
+    // AND ONE POINT IS NOW VISIBLE, which is the sentence his ask is made of.
+    awardLevelXp(REG, at1, xpToNextLevel(REG, 1));
     const at1Hp = at1.maxHp;
-    applyLevelUp(REG, at1, 'constitution', { pointsPerLevel: 1 });
+    applyLevelUp(REG, at1, 'constitution');
     assert(at1.maxHp > at1Hp, 'at a 2-point tier, CON 11 to 12 crosses the boundary and moves max HP');
-    at5.cinders = 5000;
+    awardLevelXp(REG, at5, xpToNextLevel(REG, 1));
     const at5Hp = at5.maxHp;
-    applyLevelUp(REG, at5, 'constitution', { pointsPerLevel: 1 });
+    applyLevelUp(REG, at5, 'constitution');
     eq(at5.maxHp, at5Hp + 2, 'under the shipping per-CON formula one point adds two HP');
 
     // A RUN IN PROGRESS KEEPS THE RULES IT WAS BORN UNDER. This is what the
@@ -6977,17 +6991,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // level bought — no new run, nothing snapshotted — which is the promise the
     // row's own note makes to him.
     const run = createRunState({ seed: 0x7ed, classId: 'reaver', registries: REG });
-    run.cinders = 5000;
     const typed = resolveLevelUpValue({ levelUpValue: '7' });
-    applyLevelUp(REG, run, 'constitution', { pointsPerLevel: typed });
-    eq(run.attributes.constitution - 11, 7, 'a level bought at a typed 7 grants seven points');
-    eq(run.levelPoints, 7, 'and records seven granted');
-    eq(run.levelUps, 1, 'as ONE purchase');
+    awardLevelXp(REG, run, xpToNextLevel(REG, 1), { pointsPerLevel: typed });
+    eq(run.level.unspentPoints, 7, 'a level reached at a typed 7 grants seven points');
+    for (let i = 0; i < 7; i++) applyLevelUp(REG, run, 'constitution');
+    eq(run.attributes.constitution - 11, 7, 'all seven assigned to one stat');
+    eq(run.levelPoints, 7, 'and records seven assigned');
+    eq(run.level.level, 2, 'from ONE level');
     // …mid-run, he changes his mind. The next level answers the new number and
-    // the run stays loadable, which is the pair of facts that made levelPoints a
-    // separate field in the first place.
-    applyLevelUp(REG, run, 'wisdom', { pointsPerLevel: resolveLevelUpValue({ levelUpValue: '2' }) });
-    eq(run.levelPoints, 9, 'nine points over two purchases at two different typed values');
+    // the run stays loadable.
+    awardLevelXp(REG, run, xpToNextLevel(REG, 2), { pointsPerLevel: resolveLevelUpValue({ levelUpValue: '2' }) });
+    eq(run.level.unspentPoints, 2);
+    applyLevelUp(REG, run, 'wisdom'); applyLevelUp(REG, run, 'wisdom');
+    eq(run.levelPoints, 9, 'nine points over two levels at two different typed values');
     run.seedString = 'TYPED';
     const store = createMemoryStorage();
     createSaveManager(store).saveRun(run);
@@ -6995,68 +7011,47 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'and the run still loads — typing a new value mid-climb cannot archive a save');
 
     // THE PLANT'S TARGET, named so the next reader can find it: with the clamp
-    // removed, `0` reaches the model and a level grants nothing while charging
-    // for it. Watched red (see the commit message).
+    // removed, `0` reaches the model and a level grants nothing. Watched red.
     const zero = resolveLevelUpValue({ levelUpValue: 0 });
-    assert(zero >= 1, 'the floor is what stops a paid level from granting nothing');
+    assert(zero >= 1, 'the floor is what stops an earned level from granting nothing');
   });
 
   // ---- 60e. the affordability predicate the fold reads ---------------------
-  test('60e. one derivation answers "can he afford a level", with a reason', () => {
+  test('60e. one derivation answers "may he assign a point", with a reason', () => {
     // Constantine: "make the flask and the level up collapsible (with level up
-    // being grayed out or not visible when there isn't enough cinders)". The
-    // fold and the grey-out belong to the player-experience seat; THE PREDICATE
-    // is this, and it is asserted here so she can consume it without inventing
-    // an affordability rule of her own.
+    // being grayed out or not visible when there isn't enough cinders)". Cinders
+    // buy no level now (plan phase 6); the fold greys the card when no earned
+    // point waits. THE PREDICATE is this, asserted so the fold consumes it
+    // without inventing a rule of its own.
     const run = createRunState({ seed: 0xa77, classId: 'reaver', registries: REG });
-    const first = REG.balance.levelUp.firstCost;
-
-    run.cinders = 0;
     let p = levelUpPlan(REG, run);
-    eq(p.affordable, false, 'an empty purse cannot afford a level');
-    eq(p.short, first, 'and `short` is the whole price, not a difference the caller computes');
-    eq(p.blockedBy, 'cinders', 'the reason is a TOKEN, so a label switches on a word and never on two numbers');
+    eq(p.points, 0, 'a fresh run has no point waiting');
+    eq(p.blockedBy, 'points', 'the reason is a TOKEN, so a label switches on a word and never on two numbers');
     eq(p.offerable, false, 'so it is not offerable');
+    eq(`${p.level}/${p.xp}/${p.xpToNext}`, `1/0/${xpToNextLevel(REG, 1)}`, 'and the card can say where the climb stands');
 
-    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one cinder either side of the price,
-    // adjacent, so moving the boundary one unit of its own flips a verdict.
-    run.cinders = first - 1;
+    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one XP either side of the step.
+    awardLevelXp(REG, run, xpToNextLevel(REG, 1) - 1);
     p = levelUpPlan(REG, run);
-    eq(p.affordable, false, `one cinder short of ${first} is short`);
-    eq(p.short, 1, 'and short says exactly one');
-    run.cinders = first;
+    eq(p.level, 1, 'one XP short is still level 1'); eq(p.xp, xpToNextLevel(REG, 1) - 1); eq(p.offerable, false);
+    awardLevelXp(REG, run, 1);
     p = levelUpPlan(REG, run);
-    eq(p.affordable, true, 'the exact price is affordable — the boundary is inclusive');
-    eq(p.short, 0, 'nothing is missing');
-    eq(p.blockedBy, null, 'and there is no reason, because there is no block');
+    eq(p.level, 2, 'the exact step climbs — the boundary is inclusive'); eq(p.xp, 0);
+    eq(p.points, 1); eq(p.blockedBy, null, 'and there is no reason, because there is no block'); eq(p.offerable, true);
 
-    // IT MOVES WITH THE RAMP, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT CACHE
-    // IT: the same purse that afforded level 1 may not afford level 2.
-    run.cinders = 5000;
+    // IT MOVES WITH THE LEDGER, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT
+    // CACHE IT: the point assigned, the offer closes.
     applyLevelUp(REG, run, 'constitution');
     const after = levelUpPlan(REG, run);
-    assert(after.cost > first, 'the next level costs more than the first');
-
-    // ⚠ AND IT IS INDIFFERENT TO THE TYPED LEVEL VALUE. The dispatch that asked
-    // for this predicate said the price now depends on the dial. IT DOES NOT:
-    // `levelCost` is firstCost + costStep × levelsTaken and takes no third
-    // argument. The dial decides what a level GRANTS, never what it COSTS.
-    const poor = createRunState({ seed: 0xa78, classId: 'reaver', registries: REG });
-    poor.cinders = first - 1;
-    for (const value of [1, 2, 7, 20]) {
-      const q = levelUpPlan(REG, poor, { pointsPerLevel: value });
-      eq(q.cost, first, `at a typed ${value} the price is unchanged`);
-      eq(q.short, 1, `and so is how short he is`);
-      eq(q.blockedBy, 'cinders', 'affordability does not move with the dial');
-    }
+    eq(after.offerable, false); eq(after.blockedBy, 'points');
+    assert(after.xpToNext > xpToNextLevel(REG, 1), 'the next step costs more than the first');
 
     // A CAP IS A DIFFERENT SENTENCE TO A PLAYER, so it is a different token —
-    // and it outranks the purse, because being told to earn cinders you cannot
-    // spend is worse than being told nothing.
-    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 0 } } };
-    const c = levelUpPlan(capped, poor);
-    eq(c.capped, true, 'a cap of zero caps a fresh run');
-    eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty purse');
+    // once the points are spent; a point waiting is still assignable at the cap.
+    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 1 } } };
+    const c = levelUpPlan(capped, createRunState({ seed: 0xa78, classId: 'reaver', registries: REG }));
+    eq(c.capped, true, 'a cap of one caps a fresh run');
+    eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty ledger');
     eq(c.offerable, false, 'either block closes the offer');
   });
 
@@ -8311,11 +8306,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(spec2.feetId, 'probeBoots', 'and the feet slot the feet layer');
     eq(spec2.handsId, null, 'an empty slot is no layer');
 
-    // The deck's floor: balance.deck through deckMinimum, level 0 until phase 6.
-    eq(deckMinimum(REG, run), REG.balance.deck.minimum, 'the floor at level 0 is balance.deck.minimum');
-    eq(deckMinimum(REG, { ...run, characterLevel: 2 }), REG.balance.deck.minimum + 1, 'and one more every two levels');
-    eq(deckMinimum(REG, { ...run, characterLevel: 3 }), REG.balance.deck.minimum + 1, 'three levels is still one step');
-    eq(deckMinimum(REG, { ...run, characterLevel: 4 }), REG.balance.deck.minimum + 2);
+    // The deck's floor: balance.deck through deckMinimum, at the ledger's
+    // character level (plan phase 6; a fresh run is level 1).
+    eq(deckMinimum(REG, run), REG.balance.deck.minimum, 'the floor at level 1 is balance.deck.minimum');
+    const atLevel = (level) => ({ ...run, level: { xp: 0, level, unspentPoints: 0 } });
+    eq(deckMinimum(REG, atLevel(2)), REG.balance.deck.minimum + 1, 'and one more every two levels');
+    eq(deckMinimum(REG, atLevel(3)), REG.balance.deck.minimum + 1, 'three levels is still one step');
+    eq(deckMinimum(REG, atLevel(4)), REG.balance.deck.minimum + 2);
+    eq(deckMinimum(REG, { ...run, level: undefined, characterLevel: 2 }), REG.balance.deck.minimum + 1, 'a caller without the ledger may still name the level');
     const badDeck = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, deck: { ...contentBundle.balance.deck, minimum: 7.5 } } });
     assert(!badDeck.ok && said(badDeck).some((e) => /balance\.deck\.minimum/.test(e)), 'a fractional floor is refused by name');
     // The door: leaving under the floor is refused with both numbers; a deficit
@@ -9118,6 +9116,78 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(mirrorWith([{ op: 'swapClass', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false is refused by name');
     assert(said(mirrorWith([{ op: 'swapClass', classId: 'rogue', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false beside a name is refused by name');
     assert(!said(mirrorWith([{ op: 'swapClass', classId: 'rogue' }])).some((e) => /swapClass/.test(e)), 'a named swap passes');
+  });
+
+  test('90. the character level is earned: the ledger, the thresholds, the migration and the doors (plan phase 6)', () => {
+    // THE THRESHOLDS: every five levels past the first the maxima bump — the
+    // snapshot's own perLevel rows — beside whatever the points bought; the
+    // deficit is carried, the current pools ride up.
+    const run = createRunState({ seed: 0x6a6a, classId: 'reaver', registries: REG });
+    const rules = run.derivedStatRuleSnapshot.rules.rules;
+    eq(`${rules.hp.perLevel.every}/${rules.hp.perLevel.gain}`, '5/5', 'the HP row carries its level term in the snapshot');
+    const born = { maxHp: run.maxHp, maxMana: run.maxMana, maxStamina: run.maxStamina, drawPerTurn: run.drawPerTurn };
+    run.hp = run.maxHp - 7;
+    awardLevelXp(REG, run, [1, 2, 3, 4].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 5); eq(run.maxHp, born.maxHp, 'level 5 is below the first threshold');
+    const got = awardLevelXp(REG, run, xpToNextLevel(REG, 5));
+    eq(run.level.level, 6); assert(got.thresholds > 0, 'the step to 6 moved a maximum');
+    eq(run.maxHp, born.maxHp + rules.hp.perLevel.gain, 'level 6 adds the HP term'); eq(run.maxHp - run.hp, 7, 'the deficit is carried');
+    eq(run.maxMana, born.maxMana + rules.mana.perLevel.gain); eq(run.maxStamina, born.maxStamina + rules.stamina.perLevel.gain);
+    eq(run.drawPerTurn, born.drawPerTurn, 'the hand waits for level 11');
+    awardLevelXp(REG, run, [6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
+    eq(run.level.level, 11); eq(run.drawPerTurn, born.drawPerTurn + 1, 'level 11 draws one more'); eq(run.maxHp, born.maxHp + 2 * rules.hp.perLevel.gain);
+    eq(characterLevel(run), 11, 'the readers read the ledger'); eq(playerLevel(REG, run), 11, 'and so does the hidden player level');
+    // THE PROJECTION SHOWS THE TERM IT COUNTS (the review of #1194): the
+    // formula's addends equal its result once the level term is non-zero.
+    const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
+    eq(shown.levelBonus, 2 * rules.hp.perLevel.gain); assert(/\+ 10 level/.test(shown.formula), `the HP formula names the level term — ${shown.formula}`);
+    eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
+    const drawShown = statProjection(REG, run).derived.find((row) => row.id === 'draw');
+    assert(/\+ 1 level = /.test(drawShown.formula), `the Hand formula names its one level card — ${drawShown.formula}`);
+    eq(statProjection(REG, createRunState({ seed: 3, classId: 'reaver', registries: REG })).derived.find((row) => row.id === 'hp').formula.includes('level'), false, 'and at level 1 there is no term to show');
+
+    // THE LOAD DOOR accepts the bumped pools (they are the snapshot's own
+    // arithmetic at the run's level) and refuses a malformed ledger by name.
+    run.seedString = 'THRESH';
+    const storage = createMemoryStorage(); const saves = createSaveManager(storage);
+    saves.saveRun(run, createRng(1));
+    const back = saves.loadRun(REG);
+    assert(back && back.level.level === 11 && back.maxHp === run.maxHp, `a run at level 11 loads with its bumped pools — ${JSON.stringify(saves.runStatus()).slice(0, 160)}`);
+    eq(back.level.unspentPoints, 10, 'the ten points wait through the save');
+    assert(/level\.level must be an integer of at least 1/.test(levelProblems({ xp: 0, level: 0, unspentPoints: 0 }).join('|')));
+    assert(/level\.xp must be a non-negative integer/.test(levelProblems({ xp: -1, level: 1, unspentPoints: 0 }).join('|')));
+    assert(/is not a field of the level ledger/.test(levelProblems({ xp: 0, level: 1, unspentPoints: 0, cinders: 3 }).join('|')));
+    assert(/level must be/.test(levelProblems([]).join('|')));
+    assert(/level\.unspentPoints/.test(validateRunShape({ ...run, level: { xp: 0, level: 1, unspentPoints: 1.5 } }).join('|')), 'the shape door reads the ledger');
+
+    // THE MIGRATION: a schema-9 save bought its levels with cinders and counted
+    // them in levelUps; it arrives at the level those purchases reached, no
+    // XP toward the next, nothing waiting — and, born under a snapshot with
+    // no level term, gains no bump.
+    const bought = createRunState({ seed: 0x6a6b, classId: 'reaver', registries: REG });
+    bought.seedString = 'BOUGHT';
+    const st2 = createMemoryStorage(); const sv2 = createSaveManager(st2);
+    sv2.saveRun(bought, createRng(2));
+    const old = JSON.parse(st2.getItem(RUN_KEY));
+    // Three CON points bought with cinders, as that build wrote them: the
+    // count, the points, the stat, and the pools those points had already moved.
+    delete old.level; old.schemaVersion = 9; old.levelUps = 3; old.levelPoints = 3; old.attributes.constitution += 3; old.maxHp += 6; old.hp = old.maxHp;
+    for (const row of Object.values(old.derivedStatRuleSnapshot.rules.rules)) delete row.perLevel;
+    const migrated = deserializeRun(JSON.stringify(old));
+    eq(migrated.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(migrated.level), JSON.stringify({ xp: 0, level: 4, unspentPoints: 0 }), 'three purchases are level 4');
+    st2.setItem(RUN_KEY, JSON.stringify(old));
+    const loaded = sv2.loadRun(REG);
+    assert(loaded && loaded.level.level === 4, `the schema-9 save loads at level 4 — ${JSON.stringify(sv2.runStatus()).slice(0, 200)}`);
+    eq(loaded.derivedStatRuleSnapshot.rules.rules.hp.perLevel, undefined, 'and keeps the snapshot it was born under, with no level term');
+
+    // THE CONTENT DOOR: the curve, the awards and the grant are closed sets.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
+    assert(said(bal({ level: { xp: { base: 0, growth: 1.15, roundTo: 10 } } })).some((e) => /balance\.level\.xp\.base/.test(e)), 'a zero base is refused by name');
+    assert(said(bal({ level: { xp: { base: 100, growth: 0.9, roundTo: 10 } } })).some((e) => /balance\.level\.xp\.growth/.test(e)), 'a falling curve is refused by name');
+    assert(said(bal({ xp: { ...contentBundle.balance.xp, kill: { normal: 10, elite: 30 } } })).some((e) => /balance\.xp\.kill\.boss/.test(e)), 'a missing kill rate is refused by name');
+    assert(said(bal({ levelUp: { ...contentBundle.balance.levelUp, firstCost: 50 } })).some((e) => /balance\.levelUp\.firstCost/.test(e)), 'the cinder ladder is refused by name');
+    assert(said(validateContent({ ...testBundle(), derivedStatRules: { ...contentBundle.derivedStatRules, rules: { ...contentBundle.derivedStatRules.rules, hp: { ...contentBundle.derivedStatRules.rules.hp, perLevel: { every: 0, gain: 5 } } } } })).some((e) => /perLevel\.every/.test(e)), 'a zero cadence is refused by name');
   });
 
   const passed = results.filter((r) => r.ok).length;

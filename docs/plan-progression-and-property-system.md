@@ -426,6 +426,25 @@ mounted; class swap removes disallowed tags and keeps weapon skills.
 Acceptance: simulator measures levels per run in band; no code path spends
 cinders on a level.
 
+**6 AS BUILT (2026-09-19):** `run.level = { xp, level, unspentPoints }` at
+schema 10 (a ≤ 9 save arrives at `1 + levelUps`, nothing waiting);
+`model/levelup.js` owns the curve (`xpToNext` on `balance.level.xp`, the
+skills' shape), the climb (`awardLevelXp`, the dial's points per level to
+the ledger, `maxLevels` the cap) and the assignment (`applyLevelUp` spends
+one waiting point; `levelUps`/`levelPoints` still count every assignment for
+the load door). The run's owner pays `combatLevelXp` — a win, each kill by
+the door's pool — in `main.js`, `tools/session.mjs` and `tools/runsim.mjs`;
+`questLevelXp` names the quest award for 10a's door. The threshold bumps are
+NOT a `perLevelThreshold` object on the table but a `perLevel: { every,
+gain }` term per derived-stat row, snapshotted with the row and read by
+`deriveStat` at the run's level (HP/Mana/Stamina every five, Hand every
+ten), so no old save is re-priced. The shrine's Level-up card assigns the
+waiting points and names no cinder; `levelCost`/`levelsAffordable` and
+`balance.levelUp.firstCost/costStep` are gone, `--level-cost` is
+`--xp-levels` with the band line. The proposal's awards paid 6.7 levels a
+full run on this map; raised ×2.5 they measure 11.5, in band. SPEC §13.4i;
+engine tests 60–60e, 90.
+
 ## Phase 7 — Recovery as location properties (1 PR)
 
 | Change | Where |

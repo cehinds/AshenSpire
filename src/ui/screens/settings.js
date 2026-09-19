@@ -515,7 +515,7 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
-    note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
+    note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
     min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
     label: 'Stat points per tier', applied: numberAppliedHtml,

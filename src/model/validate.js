@@ -510,6 +510,45 @@ function collectContentProblems(bundle, errors = []) {
   // The deck's floor (plan phase 3b): balance.deck is read by model/loadout.js
   // deckMinimum and nowhere else; the shape is held here so a retune that
   // types a fraction or a negative is refused by name, never clamped.
+  // The character level (plan phase 6): the curve, the awards and what a
+  // level grants — each a closed set, each number refused by name.
+  if (b.balance && b.balance.level !== undefined) {
+    const lv = b.balance.level;
+    if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');
+    else {
+      for (const key of Object.keys(lv)) if (!['xp'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      const xp = lv.xp;
+      if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.level.xp', 'must be an object { base, growth, roundTo }');
+      else {
+        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        if (!(Number.isFinite(xp.base) && xp.base > 0)) err('balance.level.xp.base', `must be a positive number, got ${JSON.stringify(xp.base)}`);
+        if (!(Number.isFinite(xp.growth) && xp.growth >= 1)) err('balance.level.xp.growth', `must be a number of at least 1, got ${JSON.stringify(xp.growth)}`);
+        if (!(Number.isInteger(xp.roundTo) && xp.roundTo > 0)) err('balance.level.xp.roundTo', `must be a positive integer, got ${JSON.stringify(xp.roundTo)}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.xp !== undefined) {
+    const xp = b.balance.xp;
+    if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, kill, quest }');
+    else {
+      for (const key of Object.keys(xp)) if (!['combatWin', 'kill', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
+      for (const key of ['combatWin', 'quest']) if (!(Number.isInteger(xp[key]) && xp[key] >= 0)) err(`balance.xp.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp[key])}`);
+      if (!xp.kill || typeof xp.kill !== 'object' || Array.isArray(xp.kill)) err('balance.xp.kill', 'must be an object { normal, elite, boss }');
+      else {
+        for (const key of Object.keys(xp.kill)) if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.kill.${key}`, 'Unknown field');
+        for (const key of ['normal', 'elite', 'boss']) if (!(Number.isInteger(xp.kill[key]) && xp.kill[key] >= 0)) err(`balance.xp.kill.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp.kill[key])}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.levelUp !== undefined) {
+    const lu = b.balance.levelUp;
+    if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
+    else {
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'tierSizeMin', 'tierSizeMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
+      if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
+    }
+  }
   if (b.balance && b.balance.deck !== undefined) {
     const deck = b.balance.deck;
     if (!deck || typeof deck !== 'object' || Array.isArray(deck)) err('balance.deck', 'must be an object { minimum, minimumStepLevels, minimumPerStep }');

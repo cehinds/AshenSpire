@@ -1,3 +1,4 @@
+import { characterLevel } from '../../model/levelup.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
@@ -1590,7 +1591,7 @@ export function mountEquipment(host, {
     const runStats = run.stats || {};
     const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
     const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
-      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${run.level || 1}`, attrs: { class: 'armoury-stats-identity' } }),
+      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
       group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
       group('Resources', [['Actions', derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
@@ -1774,7 +1775,7 @@ export function mountEquipment(host, {
   function characterSummaryPanel() {
     const cls = registries.classes.get(run.class);
     return el('header', { class: 'character-summary as-labelstack' }, [
-      eyebrow(`Forsaken · ${cls.name} · Level ${Number(run.level || 1)}`, { class: 'character-kicker' }),
+      eyebrow(`Forsaken · ${cls.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
       titleS(cls.name, { tag: 'h3' }),
       subtitle(cls.description || ''),
     ]);

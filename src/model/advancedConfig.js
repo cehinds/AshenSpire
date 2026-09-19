@@ -208,10 +208,10 @@ function progressionRows(bundle) {
     {
       cat: 'Advanced', advancedGroup: 'Progression', type: 'number', integer: false, step: 0.05,
       min: 0.05, max: 20, def: 1,
-      key: `${ADVANCED_CONFIG_PREFIX}progression.levelCostMultiplier`,
-      label: 'Level cost multiplier',
-      note: 'Multiply the first level cost and every later cost step. 1 keeps authored costs. Applies to a new run.',
-      specialKey: 'levelCostMultiplier', searchPath: 'progression experience required cost multiplier',
+      key: `${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`,
+      label: 'Experience gain multiplier',
+      note: 'Multiply the XP a won fight, a kill and a quest pay toward your character level. 1 keeps authored awards. Applies to a new run.',
+      specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
       cat: 'Advanced', advancedGroup: 'Progression', type: 'number', integer: false, step: 0.05,
@@ -283,10 +283,11 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       : configured;
     setPath(root, row.configPath, value);
   }
-  const levelCostMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.levelCostMultiplier`]);
-  if (Number.isFinite(levelCostMultiplier)) {
-    configured.balance.levelUp.firstCost = Math.max(0, Math.round(configured.balance.levelUp.firstCost * levelCostMultiplier));
-    configured.balance.levelUp.costStep = Math.max(0, Math.round(configured.balance.levelUp.costStep * levelCostMultiplier));
+  const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
+  if (Number.isFinite(xpMultiplier) && configured.balance.xp) {
+    const xp = configured.balance.xp;
+    for (const key of ['combatWin', 'quest']) if (Number.isFinite(xp[key])) xp[key] = Math.max(0, Math.round(xp[key] * xpMultiplier));
+    for (const key of Object.keys(xp.kill || {})) xp.kill[key] = Math.max(0, Math.round(xp.kill[key] * xpMultiplier));
   }
   const rewardMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`]);
   if (Number.isFinite(rewardMultiplier) && configured.balance.rewards?.cinders) {

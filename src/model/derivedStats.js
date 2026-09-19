@@ -21,7 +21,8 @@ export const DERIVED_STAT_SNAPSHOT_VERSIONS = Object.freeze([1, 2]);
 const ROOT_FIELDS = ['rulesetVersion', 'defaults', 'rules', 'presentation'];
 const PRESENTATION_FIELDS = ['label', 'faceLabel', 'order', 'disclosure', 'sense'];
 const DEFAULT_FIELDS = ['pointsPerTier', 'rounding', 'cap'];
-const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap'];
+const RULE_FIELDS = ['base', 'sourceStat', 'pointsPerTier', 'gainPerTier', 'rounding', 'cap', 'perLevel'];
+const PER_LEVEL_FIELDS = ['every', 'gain'];
 const OVERRIDE_FIELDS = ['defaults', 'rules'];
 const BASE_FIELDS = ['strategy', 'field'];
 const plainObject = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -82,6 +83,20 @@ function validateBase(out, value, path, { required, classFields }) {
   }
 }
 
+/**
+ * `perLevel: { every, gain }` — the character-level term (plan phase 6): every
+ * `every` levels past the first, the row's maximum gains `gain`. Optional per
+ * row; a row without it never moves with the level. Snapshotted with the
+ * row, so a run keeps the cadence it was born under.
+ */
+function validatePerLevel(out, value, path) {
+  if (value === undefined) return;
+  if (!plainObject(value)) { problem(out, path, 'must be { every, gain }'); return; }
+  unknownFields(out, value, PER_LEVEL_FIELDS, path);
+  if (!Number.isInteger(value.every) || value.every <= 0) problem(out, `${path}.every`, 'must be a positive integer number of levels');
+  if (!Number.isFinite(value.gain) || value.gain < 0) problem(out, `${path}.gain`, 'must be a finite number >= 0');
+}
+
 function validateDefaults(out, value, path, { partial }) {
   if (!plainObject(value)) {
     problem(out, path, 'must be a plain object');
@@ -118,6 +133,7 @@ function validateRule(out, value, path, options, partial) {
   validateGain(out, value.gainPerTier, `${path}.gainPerTier`, !partial, options.classFields);
   validateRounding(out, value.rounding, `${path}.rounding`, false);
   validateCap(out, value.cap, `${path}.cap`, false);
+  validatePerLevel(out, value.perLevel, `${path}.perLevel`);
 }
 
 function normalizedOptions(options = {}) {
@@ -285,16 +301,34 @@ export function deriveAttributeTierReceipt(rule, { attributes, sourceStat = rule
   };
 }
 
-/** Pure calculation. The returned receipt distinguishes base, tier, raw and cap. */
-export function deriveStat(resolved, statId, { attributes, classDef } = {}) {
+/**
+ * levelBonus(row, level) → what the row's `perLevel` term adds at a character
+ * level: `floor((level − 1) / every) × gain`; 0 for a row without the term,
+ * for no level, or for level 1.
+ */
+export function levelBonus(row, level) {
+  const term = row && row.perLevel;
+  if (!plainObject(term) || !Number.isInteger(level) || level <= 1) return 0;
+  if (!Number.isInteger(term.every) || term.every <= 0 || !Number.isFinite(term.gain)) return 0;
+  return Math.floor((level - 1) / term.every) * term.gain;
+}
+
+/**
+ * Pure calculation. The returned receipt distinguishes base, tier, level
+ * bonus, raw and cap. `level` is the character level (plan phase 6); a
+ * caller that computes a run's pools passes it, a ceiling or a table probe
+ * leaves it out and reads the attribute term alone.
+ */
+export function deriveStat(resolved, statId, { attributes, classDef, level = undefined } = {}) {
   const row = resolved && resolved.rules && resolved.rules[statId];
   if (!row) throw new Error(`Unknown derived stat '${statId}'`);
   const tierReceipt = deriveAttributeTierReceipt(row, { attributes, classDef, statId });
   const { points, tier } = tierReceipt;
   const base = baseValue(row.base, classDef, statId);
-  const raw = base + tier * tierReceipt.gainPerTier;
+  const bonus = levelBonus(row, level);
+  const raw = base + tier * tierReceipt.gainPerTier + bonus;
   const value = row.cap === null ? raw : Math.min(raw, row.cap);
-  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, raw, cap: row.cap, value };
+  return { id: statId, sourceStat: row.sourceStat, points, pointsPerTier: row.pointsPerTier, tier, base, gainPerTier: tierReceipt.gainPerTier, level: Number.isInteger(level) ? level : null, levelBonus: bonus, raw, cap: row.cap, value };
 }
 
 /** One compatibility contract for folding an authored relic tier into a rule. */

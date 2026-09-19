@@ -18,6 +18,7 @@ import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/co
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { runClassIdentity } from '../../model/classCard.js';
+import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -638,7 +639,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return {
         role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
-        subtitle: `${classDef.name} · Level ${run.level ?? 1}`,
+        subtitle: `${classDef.name} · Level ${characterLevel(run)}`,
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },

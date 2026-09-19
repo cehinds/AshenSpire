@@ -95,11 +95,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
@@ -131,15 +131,15 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // offer; every row, every disabled state and every reason below is read off
   // this plan, and none of them is decided here (model/gracerefill.js).
   const charge = flaskChargePlan(registries, run.flaskCharges);
-  // "also at graces, players should have the option to level up their character
-  // (per run) by trading cinders to level up." The screen asks the model what
-  // it may offer and prices nothing itself.
-  // The shrine assignment card grants exactly one point. The model still owns
-  // pricing, caps, persistence, and pool reconciliation; the screen only fixes
-  // the size of this one interaction.
-  const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
-  // How many levels IN A ROW the purse covers — the card offers them all at
-  // once and commits them one ladder step at a time (model/levelup.js).
+  // THE LEVEL IS EARNED, NOT BOUGHT (plan phase 6): fights pay XP, each level
+  // grants attribute points, and this card is where the points waiting on
+  // the run's ledger are assigned. The screen asks the model what it may
+  // offer and prices nothing — there is no price. The model owns the ledger,
+  // the cap, persistence and pool reconciliation; the screen only fixes the
+  // size of this one interaction.
+  const level = levelUpPlan(registries, run);
+  // How many points wait — the card offers them all at once and commits them
+  // one applyLevelUp at a time (model/levelup.js).
   const budget = levelUpBudget(registries, run);
   const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
   const authoredShrineLayout = shrinePresentation.optionLayout;
@@ -168,13 +168,14 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       }),
     });
   }));
-  // THE CINDER LINE: what you hold, what a level costs, and — once a point is
-  // pending — what remains, as the kit's delta.
-  const cinderLineHtml = level.capped ? '' : html(el('p', { class: 'as-kitline level-cinder-preview', dataset: { levelCinderPreview: '' } }, [
-    statPair({ key: 'You hold', value: String(level.cinders) }),
-    el('strong', { class: 'level-cinder-cost', text: `− ${level.cost} cinders` }),
-    el('span', { class: 'as-delta level-cinder-result', dataset: { levelCinderResult: '', dir: 'down' }, hidden: true }, [
-      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - level.cost} remaining` }),
+  // THE LEVEL LINE: where the climb stands — the level, the XP toward the
+  // next — and, once a point is pending, how many remain, as the kit's delta.
+  // No cinder is named here: a level costs nothing but the fights it took.
+  const levelLineHtml = html(el('p', { class: 'as-kitline level-xp-preview', dataset: { levelXpPreview: '' } }, [
+    statPair({ key: `Level ${level.level}`, value: `${level.xp} / ${level.xpToNext} XP` }),
+    el('strong', { class: 'level-points-waiting', text: `${level.points} point${level.points === 1 ? '' : 's'} to assign` }),
+    el('span', { class: 'as-delta level-points-result', dataset: { levelPointsResult: '', dir: 'down' }, hidden: true }, [
+      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.points} remaining` }),
     ]),
   ]));
 
@@ -247,16 +248,17 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
           </div>
         </details>
-        <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
+        <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
-             cinders)". The fold and the grey-out are the player-experience
-             seat's; the PREDICATE is model/levelup.js's, and these attributes
-             are the seam between them. A styling seat reads data-affordable,
-             data-blocked-by and data-short and never subtracts a cost from a
-             purse - the day it did there would be two answers to "can he afford
-             this" and the screen would eventually disagree with the commit path
-             below.
+             cinders)". Cinders buy no level now (plan phase 6): the card is
+             greyed when no earned point waits. The fold and the grey-out are
+             the player-experience seat's; the PREDICATE is model/levelup.js's,
+             and these attributes are the seam between them. A styling seat
+             reads data-points and data-blocked-by and never re-derives the
+             ledger - the day it did there would be two answers to "may he
+             assign a point" and the screen would eventually disagree with the
+             commit path below.
              THE SAME OBJECT DRIVES BOTH: the locked class and these attributes
              come off ONE level plan, computed once per mount, so a disabled card
              and a refused purchase cannot diverge. An instrument reads them too,
@@ -270,13 +272,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
              role="button" tabindex="0" aria-haspopup="dialog"
              aria-disabled="${level.offerable ? 'false' : 'true'}"
-             data-affordable="${level.affordable ? '1' : '0'}"
+             data-points="${level.points}"
              data-blocked-by="${level.blockedBy || ''}"
-             data-cost="${level.cost}" data-short="${level.short}">
+             data-level="${level.level}" data-xp="${level.xp}" data-xp-to-next="${level.xpToNext}">
           <div class="glyph">✦</div>
           <div class="cp-body">
             <h3>Level up</h3>
-            <p>${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</p>
+            <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
         </div>
       </div>
@@ -393,8 +395,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // policy: existing values are immutable, affordable points may be assigned,
   // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    // Pending points per attribute. Up to `budget.levels` in total; each one
-    // is a level, so Done walks the ladder once per point, in order.
+    // Pending points per attribute. Up to `budget.points` in total — the
+    // points the run has earned and not yet assigned; Done commits them one
+    // applyLevelUp at a time, in order.
     const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
     const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
     const option = app.querySelector('#level-opt');
@@ -402,7 +405,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     let allocation = null;
     const drawLevelCard = () => {
       const count = pendingTotal();
-      const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
         run.attributes[attr.id] + pending[attr.id],
@@ -413,12 +415,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       const spec = {
         title: 'Level up',
         modal: true,
-        remaining: budget.levels - count,
-        note: budget.levels === 1
+        remaining: budget.points - count,
+        note: budget.points === 1
           ? 'Choose one attribute. Existing points cannot be reduced.'
-          : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
+          : 'Each point was earned by a level; assign as many as you like now and keep the rest. Existing points cannot be reduced.',
         cancelLabel: 'Cancel',
-        doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
+        doneLabel: count > 1 ? `Assign ×${count}` : 'Assign',
         doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
           id: attr.id,
@@ -427,7 +429,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           value: values[attr.id],
           card: cards.get(attr.id),
           canDecrease: pending[attr.id] > 0,
-          canIncrease: count < budget.levels,
+          canIncrease: count < budget.points,
         })),
         onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
         onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
@@ -441,7 +443,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         onDone: () => {
           if (!pendingTotal()) return;
           for (const attr of level.attributes) {
-            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
+            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id);
           }
           allocation.close();
           sfx.play('shrine');
@@ -468,7 +470,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         shrineScreen.inert = true;
         allocation = renderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
-        allocation.card.querySelector('.se-pool').after(el('div', { html: cinderLineHtml }));
+        allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
         allocation.card.addEventListener('keydown', (event) => {
           if (event.key !== 'Tab') return;
           const controls = [...allocation.card.querySelectorAll('button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
@@ -482,10 +484,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           }
         });
       }
-      allocation.card.querySelector('.level-cinder-cost').textContent = `− ${spend} cinders`;
-      const result = allocation.card.querySelector('[data-level-cinder-result]');
+      const result = allocation.card.querySelector('[data-level-points-result]');
       result.hidden = false;
-      result.querySelector('.d-to').textContent = `${level.cinders - spend} remaining`;
+      result.querySelector('.d-to').textContent = `${level.points - count} remaining`;
     };
     const openLevel = () => { if (!allocation) { option.focus(); drawLevelCard(); } };
     option.addEventListener('click', openLevel);
