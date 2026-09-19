@@ -239,15 +239,15 @@ export function createSession({ registries, seedString, endless = false, restore
     // trusted serialized client-facing bytes. Rebuild them on restore so an
     // older saved Shrine cannot disable Smithing after the run itself heals.
     if (session.scene?.kind === 'shrine') {
-      // The visits are rebuilt with the plans (engine/locations.js): each
-      // living member arrives again — the refill is a top-up, so the restore
-      // pours nothing twice — and the rest view is read off the rebuilt visit,
-      // so a restored save at a shrine shows a denied Rest disabled, not open.
+      // The visits are rebuilt with the plans (engine/locations.js) as
+      // ALREADY ARRIVED: the save was written after the members arrived, so
+      // the arrival's rules (the refill, or any content a later row authors)
+      // do not run again on a host restart. The rest view is read off the
+      // rebuilt visit, so a restored save at a shrine shows a denied Rest
+      // disabled, not open.
       shrineVisits.clear();
       for (const member of [...members.values()].filter((m) => m.alive)) {
-        const visit = createLocationVisit({ run: member.run, registries, rng }, 'shrine');
-        arriveAt(visit);
-        shrineVisits.set(member.id, visit);
+        shrineVisits.set(member.id, createLocationVisit({ run: member.run, registries, rng }, 'shrine', { arrived: true }));
       }
       session.scene = {
         ...session.scene,
@@ -886,13 +886,12 @@ export function createSession({ registries, seedString, endless = false, restore
       reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
       return { ok: true, allocation: { ...m.run.flaskCharges } };
     } else if (choice === 'rest') {
-      // A restored session keeps the shrine scene but not the visits: the
-      // member's is rebuilt here, arrived (the refill is a top-up, so the
-      // restore pours nothing twice) and kept for the leave below.
+      // A member whose visit is missing (a save from before the visits, or a
+      // member revived at the stop) arrived when the scene opened: the visit
+      // is rebuilt already arrived and kept for the leave below.
       let visit = shrineVisits.get(memberId);
       if (!visit) {
-        visit = createLocationVisit({ run: m.run, registries, rng }, 'shrine');
-        arriveAt(visit);
+        visit = createLocationVisit({ run: m.run, registries, rng }, 'shrine', { arrived: true });
         shrineVisits.set(memberId, visit);
       }
       if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };

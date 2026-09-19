@@ -48,7 +48,7 @@ export function locationCarrier(registries, locationId) {
  * The visit's rules are mounted on creation; nothing is emitted until
  * arriveAt. `restDenied` names the relic forbidding the Rest here, or null.
  */
-export function createLocationVisit({ run, registries, rng }, locationId, { healMult = 1, refillCounts = null } = {}) {
+export function createLocationVisit({ run, registries, rng }, locationId, { healMult = 1, refillCounts = null, arrived = false } = {}) {
   const carrier = locationCarrier(registries, locationId);
   const mult = healMult * passiveMult(registries, run.relics || [], 'restHealMult');
   const ctx = createRunContext({ run, registries, rng }, {
@@ -64,7 +64,12 @@ export function createLocationVisit({ run, registries, rng }, locationId, { heal
     restDenied: restDeniedBy(registries, run, carrier.tagIds),
     opts: { healMult, refillCounts },
     ctx,
-    arrived: false,
+    // `arrived: true` REBUILDS a visit whose arrival already happened — a
+    // saved session restored at the place (tools/session.mjs) — so `arrived`
+    // is not emitted again: a rule that pours, grants or rolls on arrival
+    // runs once per stay, not once per host restart. The refill receipt of
+    // that first arrival is not saved, so a rebuilt visit reports none.
+    arrived: !!arrived,
     rested: false,
     refill: null,
   };
@@ -120,7 +125,12 @@ export function previewRest(visit) {
   // The dry run rolls on a COPY of the streams (same seed, same counters), so
   // a preview — or a screen re-mounting — advances nothing the real rest
   // will read, and the two agree when a rule happens to roll.
-  const dryRng = rng && typeof rng.getCounters === 'function' ? createRng(rng.seed, rng.getCounters()) : rng;
+  // A caller holding no stream (the atlas preview, the screen's fallback)
+  // gets one seeded from the run — deterministic, preview-only — so a rule
+  // that rolls (`random`) renders its preview instead of throwing.
+  const dryRng = rng && typeof rng.getCounters === 'function'
+    ? createRng(rng.seed, rng.getCounters())
+    : createRng((visit.ctx.run.seed ?? 0) >>> 0);
   const dry = createLocationVisit({ run: clone, registries, rng: dryRng }, visit.locationId, visit.opts);
   dry.restDenied = null;
   const receipt = restAt(dry);

@@ -9238,6 +9238,27 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     restAt(shrine);
     eq(shrineRun.mana, shrineRun.maxMana, 'Mana at the floor fills to full');
     assert(leaveLocation(shrine), 'leaving unmounts');
+
+    // A REBUILT VISIT (a saved session restored at the place) arrives no
+    // second time: nothing pours, nothing fires, and arriveAt is a no-op.
+    const restoredRun = fresh();
+    const restored = visitTo(restoredRun, 'shrine', { arrived: true });
+    eq(restoredRun.flaskCharges.hpCurrent, 0, 'rebuilding a visit as arrived pours nothing');
+    eq(arriveAt(restored).events.length, 0, 'and arriving at it again fires nothing');
+    eq(restored.refill, null, 'a rebuilt visit reports no refill receipt');
+    leaveLocation(restored);
+
+    // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
+    // stream seeded from the run instead of throwing (the atlas inspection).
+    const rollingEffects = structuredClone(contentBundle.nodeEffects);
+    rollingEffects.restHpPartial.triggers[0].if = { p: 'random', pct: 100 };
+    const rollingReg = createRegistries({ ...testBundle(), nodeEffects: rollingEffects });
+    const rollingRun = createRunState({ seed: 4, classId: 'herald', registries: rollingReg });
+    rollingRun.hp = 10;
+    const rolling = createLocationVisit({ run: rollingRun, registries: rollingReg, rng: null }, 'shrine');
+    eq(previewRest(rolling).heal, Math.floor((rollingRun.maxHp * rest.hpPartialPct) / 100), 'a preview with no live stream still rolls the rule');
+    eq(rollingRun.hp, 10, 'and writes nothing');
+    leaveLocation(rolling);
     assert(!shrine.ctx.propertyMounts.player, 'nothing stays mounted after the visit');
 
     // THE CAMP: a small rest, the same Mana mode, no refill and no services.
