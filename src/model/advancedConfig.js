@@ -10,6 +10,8 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   enemySpriteScale: 0.9,
   playerSpawnRow: 'middle',
   enemySpawnRow: 'middle',
+  playerSpawnColumn: 'center',
+  enemySpawnColumn: 'center',
   settingsWidthPercent: 100,
   settingsHeightPercent: 100,
 });
@@ -122,6 +124,13 @@ function presentationRows() {
       presentationKey: `${side}SpawnRow`, def: 'middle', choices: ['front', 'middle', 'back'],
       label: `${word(side)} default row`,
       note: `Default visual formation row for the ${side} side. This changes placement, not combat targeting.`,
+    })),
+    ...['player', 'enemy'].map((side) => ({
+      cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnColumn`,
+      presentationKey: `${side}SpawnColumn`, def: 'center', choices: ['left', 'center', 'right'],
+      label: `${word(side)} default column`,
+      note: `Default visual formation column for the ${side} side. This changes placement, not combat targeting.`,
     })),
   ];
 }

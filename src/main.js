@@ -699,6 +699,8 @@ function applyDisplaySettings(settings) {
   rootStyle.setProperty('--settings-window-height', `${advancedPresentation.settingsHeightPercent}dvh`);
   document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;
   document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
+  document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
+  document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();

@@ -1336,7 +1336,7 @@ The editor groups the complete inventory into stable nested sections:
   registry-derived, so adding a class cannot create an invisible default. Per-class values must
   still satisfy the selected creation mode's bounds and total-allocation rules; invalid
   combinations are explained and cannot be applied silently.
-- **Combat and actors:** default player and enemy spawn row/slot, formation spacing, player and
+- **Combat and actors:** default player and enemy spawn row and column, formation spacing, player and
   enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
   data-owned combat presentation values that do not alter asset identity.
 - **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
