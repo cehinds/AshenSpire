@@ -148,6 +148,19 @@ async function main() {
     }
     console.log('PASS combat-presentation — sprite scales and default rows and columns applied');
     await capture('combat-presentation');
+    for (const [name, width, height] of [['desktop-grid', 1440, 900], ['phone-grid', 390, 844]]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: width < 500 }, sessionId);
+      const settings = encodeURIComponent(JSON.stringify({ 'gameConfig.presentation.showFormationGrid': true }));
+      await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=combat&shotSettings=${settings}` }, sessionId);
+      await until("document.querySelectorAll('.formation-grid-cell').length === 12", 'formation grid');
+      await wait(350);
+      const grid = await evaluate(`(() => { const grid = document.querySelector('.formation-grid'); return { display: getComputedStyle(grid).display, pointer: getComputedStyle(grid).pointerEvents, labels: [...grid.children].map(el => el.textContent) }; })()`);
+      if (grid.display !== 'grid' || grid.pointer !== 'none' || !grid.labels[0].startsWith('A1') || !grid.labels[11].startsWith('C4')) throw new Error(JSON.stringify(grid));
+      await capture(name);
+      await evaluate("document.documentElement.dataset.formationGrid = 'false'");
+      if (await evaluate("getComputedStyle(document.querySelector('.formation-grid')).display") !== 'none') throw new Error('Grid did not hide');
+      console.log(`PASS ${name}: 12 labeled cells, pointer passthrough, toggle off`);
+    }
   } finally {
     cdp.close();
     await browser.close();

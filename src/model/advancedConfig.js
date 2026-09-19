@@ -12,6 +12,7 @@ const PRESENTATION_DEFAULTS = Object.freeze({
   enemySpawnRow: 'C',
   playerSpawnColumn: '2',
   enemySpawnColumn: '3',
+  showFormationGrid: false,
   settingsWidthPercent: 100,
   settingsHeightPercent: 100,
 });
@@ -112,6 +113,13 @@ const PRESENTATION_ROWS = Object.freeze([
 
 function presentationRows() {
   return [
+    {
+      cat: 'Advanced', advancedGroup: 'Interface',
+      key: `${ADVANCED_CONFIG_PREFIX}presentation.showFormationGrid`,
+      presentationKey: 'showFormationGrid', def: false,
+      label: 'Show formation grid',
+      note: 'Overlay A1–C4 reference cells in combat to check visible positions. Columns 1–2 are your side; 3–4 are the enemy side.',
+    },
     ...PRESENTATION_ROWS.map((row) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'number',
       ...row, def: PRESENTATION_DEFAULTS[row.key],
@@ -313,6 +321,8 @@ export function presentationConfig(settings = {}) {
     if (row.type === 'choice') {
       const normalized = row.legacyChoices?.[raw] ?? raw;
       if (row.choices.includes(normalized)) values[row.presentationKey] = normalized;
+    } else if (typeof row.def === 'boolean') {
+      values[row.presentationKey] = raw === true;
     } else {
       const number = Number(raw);
       if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, number));
