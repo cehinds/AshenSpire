@@ -693,6 +693,8 @@ function applyDisplaySettings(settings) {
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
   document.documentElement.dataset.formationSettings = JSON.stringify(advancedPresentation);
+  document.documentElement.dataset.formationMovement = String(advancedPresentation.movementEnabled);
+  document.documentElement.style.setProperty('--selection-color', advancedPresentation.selectionColor);
   document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
   const rootStyle = document.documentElement.style;
   rootStyle.setProperty('--settings-window-width', `${advancedPresentation.settingsWidthPercent}vw`);

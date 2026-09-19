@@ -1,3 +1,4 @@
+import { formationMovePlan } from '../model/formationMovement.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
 //
@@ -554,6 +555,16 @@ export function dispatch(combat, intent) {
   combat._buffer = [];
   try {
     switch (intent.type) {
+      case 'moveCharacter': {
+        const move = formationMovePlan(combat, intent.cell, intent.settings);
+        if (!move.ok) throw new Error(move.reason);
+        combat.player.energy -= move.cost;
+        combat.player.formationCell = move.cell;
+        if (move.cost) combat.emit('energySpent', { amount: move.cost });
+        combat.emit('characterMoved', { sourceId: combat.player.id, from: move.current, to: move.cell });
+        drainQueue(combat);
+        break;
+      }
       case 'playCard':
         doPlayCard(combat, intent);
         break;

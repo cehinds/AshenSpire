@@ -976,6 +976,26 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:var(--tap-floor); }
 .set-num-reset { grid-column:2; grid-row:1; }
 .set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
+:root .choice.on, :root [role='tab'][aria-selected='true'], :root .mount-row.selected,
+:root .hand .card.selected { border-color: var(--selection-color, #59bd75); }
+:root .combatant.context-selected .sprite { --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75)); }
+:root .combatant.context-selected .nm { color: var(--selection-color, #59bd75); }
+:root .card.selected, :root .card[data-selected='true'], :root .as-card[data-selected='true'],
+:root .as-option[aria-checked='true'], :root .as-option[aria-pressed='true'], :root .as-option.is-selected,
+:root .class-pick.selected, :root .class-pick[aria-checked='true'], :root .as-railitem[aria-current='true'] {
+  border-color: var(--selection-color, #59bd75);
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75));
+}
+:root .choice.on, :root [role='tab'][aria-selected='true'], :root .as-railitem[aria-current='true'] { color: var(--selection-color, #59bd75); }
+/* Existing selection treatments share a color without recoloring rarity or
+   unselected gold ornamentation elsewhere in the game. */
+:root :is(.selected, .is-selected, .reward-selected, .selected-target, .skill-selected,
+  .tooltip-selected, [data-selected='true'], [aria-selected='true'], .choice.on,
+  .modal-tab.on, .as-tab.on, .as-railitem.on, .as-railitem[aria-current='true'],
+  .as-option[aria-checked='true'], .as-option[aria-pressed='true'], .class-pick[aria-checked='true']) {
+  --gold: var(--selection-color, #59bd75);
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75));
+}
 .set-row:has(.flick-practice) { display:flex; flex-wrap:wrap; }
 .set-row:has(.flick-practice) > .as-labelstack { flex-basis:100%; }
 .flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }

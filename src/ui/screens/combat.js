@@ -84,6 +84,8 @@ import { wireCombatLayout } from '../components/combatLayout.js';
 import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
+import { wireFormationMovement } from '../components/formationMovement.js';
+import { formationMovePlan } from '../../model/formationMovement.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -115,6 +117,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // a `let` that reads null rather than a `const` in its temporal dead zone —
   // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
   let endTurnBeat = null;
+  let formationMovement = null;
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
   app.innerHTML = `
@@ -143,7 +146,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="formation-grid" aria-hidden="true">
-          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<div class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /><rect width="100" height="100" vector-effect="non-scaling-stroke" /><ellipse cx="50" cy="50" rx="50" ry="50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></div>`)).join('')}
+          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<button type="button" disabled tabindex="-1" aria-label="Position ${row}${column}" class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /><rect width="100" height="100" vector-effect="non-scaling-stroke" /><ellipse cx="50" cy="50" rx="50" ry="50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></button>`)).join('')}
         </div>
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
@@ -888,12 +891,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage() {
+    $('.field').dataset.playerCell = combat.player.formationCell || '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
     renderPlayer();
     renderEnemies();
     battlefieldStage.refresh();
+    formationMovement?.refresh();
   }
 
   function render() {
@@ -2448,6 +2453,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   render();
 
+  formationMovement = wireFormationMovement($('.field'), {
+    readSettings, holdConfig: registries.balance.ui.holdConfirm,
+    available: () => !busy && !selected && !selfArm && selectedFlask == null,
+    plan: cell => formationMovePlan(combat, cell, readSettings()),
+    move: cell => {
+      if (busy) return;
+      try {
+        disp = takeSnapshot();
+        const out = dispatch(combat, { type: 'moveCharacter', cell, settings: readSettings() });
+        dlog('dispatch', `moveCharacter ${cell}`, { events: out.events.length });
+        busy = true;
+        afterDispatch(out.events);
+      } catch (error) { disp = null; busy = false; dlog('rejected', 'moveCharacter', error.message); render(); }
+    },
+  });
+
   // Veils mount beside #app, not inside it. Watch that ownership boundary plus
   // the originating combat mount itself: #app is reused across screens and
   // fights, so finding *a* later `.combat` must never keep this mount's captured
@@ -2462,6 +2483,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         enemyFrames.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
+        formationMovement?.release();
         combatLayout.release();
         aimObserver?.disconnect();
         releaseSelectionWatch();

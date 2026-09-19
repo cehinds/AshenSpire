@@ -41,6 +41,10 @@ export function wireBattlefieldStage(field, model) {
     const frames = [...field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]')];
     if (!frames.length || fieldRect.width <= 0 || fieldRect.height <= 0) return;
     const presentation = { ...presentationConfig(), ...JSON.parse(document.documentElement.dataset.formationSettings || '{}') };
+    if (/^[ABC][12]$/.test(field.dataset.playerCell || '')) {
+      presentation.playerSpawnRow = field.dataset.playerCell[0];
+      presentation.playerSpawnColumn = field.dataset.playerCell[1];
+    }
     const plan = combatFormation({ width: fieldRect.width, height: fieldRect.height,
       presentation,
       footerClearance: window.innerHeight <= 480 && window.innerWidth >= 600 ? 48 : 0,
@@ -76,6 +80,7 @@ export function wireBattlefieldStage(field, model) {
     const slotFrames = plan.slots.map(slot => {
       const frame = frames.find(f => f.dataset.eid === slot.id);
       const sprite = frame.querySelector('.combatant-card > .sprite');
+      resizeObserver.observe(sprite);
       sprite.style.zoom = '1';
       return { slot, frame, sprite };
     });
@@ -99,6 +104,7 @@ export function wireBattlefieldStage(field, model) {
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
       if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
+      if (!fitted) continue;
       const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[slot.row] : 1;
       const multiplier = presentation[`row${'ABC'[slot.row]}Scale`] * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale);
       const scale = fitted.scale * wireframeUi.formation.displayScale * growth * multiplier;
