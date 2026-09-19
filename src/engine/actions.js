@@ -28,7 +28,7 @@ import { allocateInteger } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
 import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
-import { evalPredicate, checkPhases } from './triggers.js';
+import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
@@ -917,8 +917,13 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     healMult,
     refillOpts,
     receipts: {},
+    // An effect's own event (`healed`, `manaRestored`, …) rides the trigger
+    // bus, so a rule mounted on this context — a location's (engine/locations.js)
+    // — hears what another rule did, as combat properties do. With nothing
+    // mounted and no relics on the facade the scan finds no source and the
+    // event is simply logged, as before.
     emit(type, payload) {
-      events.push({ type, ...payload });
+      emitEvent(ctx, type, payload);
     },
     enqueue(a) {
       ctx.queue.push(a);

@@ -19,6 +19,7 @@
 // characteristics; this screen names its actions.
 
 import { createLocationVisit, previewRest, restAt } from '../../engine/locations.js';
+import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
@@ -95,9 +96,16 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-/** The place's own title row when one is authored; the Shrine's otherwise. */
+/**
+ * The place's own title row when one is authored, else its rest service type's
+ * (an atlas point resolved by its own tagging row is still an inn), else the
+ * Shrine's.
+ */
 function locationTitle(locationId) {
-  return has(`location.${locationId}.title`) ? t(`location.${locationId}.title`) : t('rest.title');
+  for (const id of [locationId, locationServiceTypeId(locationId)]) {
+    if (has(`location.${id}.title`)) return t(`location.${id}.title`);
+  }
+  return t('rest.title');
 }
 
 export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null }) {

@@ -72,6 +72,24 @@ export function locationIds(atlas = ATLAS) {
   return ids;
 }
 
+/**
+ * locationServiceTypeId(locationId, atlas) → the id that NAMES the place for
+ * a player: an atlas point's own row resolves the visit to the point's id
+ * (`crownfall/inn`), but the point is still an inn — its rest service's type
+ * carries the title. A service type, a node type or the camp names itself.
+ */
+export function locationServiceTypeId(locationId, atlas = ATLAS) {
+  const services = (atlas && atlas.services) || {};
+  const serviceTypes = (atlas && atlas.serviceTypes) || {};
+  const rows = ((atlas && atlas.nodeServices) || {})[locationId] || [];
+  for (const row of rows) {
+    const service = services[row.serviceId];
+    const type = service && serviceTypes[service.serviceTypeId];
+    if (type && type.handlerId === 'rest') return service.serviceTypeId;
+  }
+  return locationId;
+}
+
 /** The tags tagging.csv hands a location, in file order; [] for an untagged id. */
 export function locationTags(registries, locationId) {
   const rows = Array.isArray(registries.tagging) ? registries.tagging : [];

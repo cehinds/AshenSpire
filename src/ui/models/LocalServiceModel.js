@@ -32,7 +32,10 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     const level = levelUpPlan(registries, run);
     const refills = visit.services.flasks;
     const refill = !refills || state.refilled || run.flaskCharges ? null : graceRefillPlan(registries, run, { counts: refillCounts });
-    result.benefit = noRest ? `The ${registries.relics.get(visit.restDenied).name} will not let you rest here.` : heal ? `Rest to recover ${heal} HP: ${run.hp} → ${run.hp + heal} / ${run.maxHp}${manaGain ? ` and ${manaGain} Mana` : ''}.` : manaGain ? `Rest to recover ${manaGain} Mana: ${run.mana} → ${run.mana + manaGain} / ${run.maxMana}.` : run.hp >= run.maxHp ? 'Your health is already full.' : 'Your current modifiers allow no healing from rest.';
+    // The pools the sentence starts from are the POST-ARRIVAL ones (dryRun):
+    // entry arrives before the Rest is offered, so an arrival rule that heals
+    // or restores has already landed when the player reads the Rest line.
+    result.benefit = noRest ? `The ${registries.relics.get(visit.restDenied).name} will not let you rest here.` : heal ? `Rest to recover ${heal} HP: ${dryRun.hp} → ${dryRun.hp + heal} / ${dryRun.maxHp}${manaGain ? ` and ${manaGain} Mana` : ''}.` : manaGain ? `Rest to recover ${manaGain} Mana: ${dryRun.mana} → ${dryRun.mana + manaGain} / ${dryRun.maxMana}.` : dryRun.hp >= dryRun.maxHp ? 'Your health is already full.' : 'Your current modifiers allow no healing from rest.';
     result.facts.push('Rest costs no cinders. One visit at this site; other services show their own costs.');
     if (!refills) result.facts.push('This place refills no flasks.');
     else if (run.flaskCharges && !state.refilled) {

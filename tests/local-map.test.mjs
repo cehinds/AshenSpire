@@ -50,10 +50,11 @@ test('service inspection derives real plans without changing inventory or rollin
   // The preview arrives before it rests, as entry does: with a rule that
   // rolls on arrival and one that rolls on rest, the preview and the real
   // visit agree from every starting position of the stream.
-  const rolling=structuredClone(contentBundle.nodeEffects);
-  rolling.restFlasks.triggers[0].if={p:'random',pct:50};
-  rolling.restHpFull.triggers[0].if={p:'random',pct:50};
-  const rollingReg=createRegistries({...contentBundle,nodeEffects:rolling});
+  const rollingRules=contentBundle.propertyRules.map((r)=>{
+    if(r.tag!=='restFlasks'&&r.tag!=='restHpFull')return r;
+    const row=structuredClone(r); row.triggers[0].if={p:'random',pct:50}; return row;
+  });
+  const rollingReg=createRegistries({...contentBundle,propertyRules:rollingRules});
   for(let k=0;k<12;k+=1){
     const real=structuredClone(run);
     const visit=createLocationVisit({run:real,registries:rollingReg,rng:createRng(1,{misc:k})},'inn');

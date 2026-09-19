@@ -98,7 +98,16 @@ export function arriveAt(visit) {
   const events = emitAndDrain(visit, 'arrived');
   visit.arrived = true;
   visit.refill = visit.ctx.receipts.refill || null;
+  // An arrival rule may hand the run a relic (`addRelic`), and a relic may
+  // deny this very Rest: the denial is re-read off the run as it now stands.
+  refreshRestDenied(visit);
   return { events, refill: visit.refill };
+}
+
+/** The denial as the run stands NOW — re-read after arrival and before a rest. */
+export function refreshRestDenied(visit) {
+  visit.restDenied = restDeniedBy(visit.ctx.registries, visit.ctx.run, visit.carrier.tagIds);
+  return visit.restDenied;
 }
 
 /**
@@ -106,6 +115,7 @@ export function arriveAt(visit) {
  * `rested`; refuses, by relic name, a Rest the run's relics deny.
  */
 export function restAt(visit) {
+  refreshRestDenied(visit);
   if (visit.restDenied) throw new Error(`Rest at '${visit.locationId}' is denied by relic '${visit.restDenied}'`);
   const { run } = visit.ctx;
   const before = { hp: run.hp, mana: run.mana };
@@ -132,7 +142,10 @@ export function previewRest(visit) {
     ? createRng(rng.seed, rng.getCounters())
     : createRng((visit.ctx.run.seed ?? 0) >>> 0);
   const dry = createLocationVisit({ run: clone, registries, rng: dryRng }, visit.locationId, visit.opts);
-  dry.restDenied = null;
+  // The dry run answers "what would the rest restore", denial aside: the
+  // clone carries no relics the run lacks, and restAt re-reads the denial,
+  // so the clone's relics are set aside for the roll.
+  dry.ctx.run.relics = (dry.ctx.run.relics || []).filter((id) => !restDeniedBy(registries, { ...dry.ctx.run, relics: [id] }, dry.carrier.tagIds));
   const receipt = restAt(dry);
   leaveLocation(dry);
   return receipt;

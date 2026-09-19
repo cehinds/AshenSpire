@@ -40,7 +40,7 @@ import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
-import { locationTags, resolveLocationId, restDeniedBy } from '../src/model/locations.js';
+import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
 import { generateJourney } from '../src/model/worldAtlas.js';
 import {
   rollEncounter,
@@ -9261,9 +9261,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
     // stream seeded from the run instead of throwing (the atlas inspection).
-    const rollingEffects = structuredClone(contentBundle.nodeEffects);
-    rollingEffects.restHpPartial.triggers[0].if = { p: 'random', pct: 100 };
-    const rollingReg = createRegistries({ ...testBundle(), nodeEffects: rollingEffects });
+    // The runtime reads a tag's rule off `propertyRules` (content-build's
+    // balance-resolved row), so a test that changes a rule changes that row.
+    const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
+    const rollingReg = createRegistries(withRule('restHpPartial', (r) => { r.triggers[0].if = { p: 'random', pct: 100 }; return r; }));
     const rollingRun = createRunState({ seed: 4, classId: 'herald', registries: rollingReg });
     rollingRun.hp = 10;
     const rolling = createLocationVisit({ run: rollingRun, registries: rollingReg, rng: null }, 'shrine');
@@ -9323,6 +9324,34 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const wyrmInn = visitTo(wyrmRun, 'inn');
     restAt(wyrmInn);
     eq(wyrmRun.hp, wyrmRun.maxHp, 'the town rest still heals a Wyrm Heart holder');
+
+    // THE DENIAL IS READ AS THE RUN STANDS: an arrival rule that hands the
+    // run the Wyrm Heart denies the Rest at the same place, after arrival.
+    const grantingReg = createRegistries(withRule('restFlasks', (r) => { r.triggers[0].do.push({ op: 'addRelic', id: 'wyrmHeart' }); return r; }));
+    const grantedRun = createRunState({ seed: 4, classId: 'herald', registries: grantingReg });
+    const granted = createLocationVisit({ run: grantedRun, registries: grantingReg, rng: createRng(1) }, 'shrine');
+    eq(granted.restDenied, null, 'before arrival nothing denies the Rest');
+    arriveAt(granted);
+    assert(grantedRun.relics.includes('wyrmHeart'), 'the arrival rule handed the run the relic');
+    eq(granted.restDenied, 'wyrmHeart', 'and the visit re-read the denial off the run');
+    refuses(() => restAt(granted), /denied by relic 'wyrmHeart'/, 'so the Rest is refused by name');
+    leaveLocation(granted);
+
+    // RULES COMPOSE THROUGH THEIR OWN EVENTS: a rule on `healed` mounted by the
+    // place hears the rest's heal, as a combat property would.
+    const composingReg = createRegistries(withRule('restHpSmall', (r) => { r.triggers.push({ on: 'healed', do: [{ op: 'restoreMana', target: 'self', amount: 1 }] }); return r; }));
+    const composingRun = createRunState({ seed: 4, classId: 'herald', registries: composingReg });
+    composingRun.hp = 10; composingRun.mana = 0;
+    const composing = createLocationVisit({ run: composingRun, registries: composingReg, rng: createRng(1) }, 'camp');
+    const composed = restAt(composing);
+    assert(composed.events.some((e) => e.type === 'healed'), 'the heal\'s own event rides the bus');
+    eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
+    leaveLocation(composing);
+
+    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
+    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
+    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
+    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
     const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
     eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
 
