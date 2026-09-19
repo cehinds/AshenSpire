@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1189",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The game now keeps a ledger of how well you fight with each kind of weapon",
+    "detail": "Nothing you see changes yet. Every hit or block a weapon's card lands, every fight you win with it in hand, every blow your armour turns aside, every spark of arcane buildup your focus deals: each is now counted toward a skill in that weapon's kind, in your armour's weight, in your focus, in fighting with two blades. The counts climb a ladder whose rungs get longer as you rise, and every rung climbed sets aside a reward that the next change will let you draw. A relic or an event can already ask what rung you stand on. The ledger rides your save, and an older save simply starts at the foot of every ladder.",
+    "build": "0.7.1.192",
+    "pullRequest": 1189,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1189"
+  },
+  {
     "id": "pr-1186",
     "date": "2026-09-19",
     "group": "2026-09-19",
