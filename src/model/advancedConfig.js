@@ -255,6 +255,32 @@ export function advancedConfigProblems(bundle, settings = {}) {
       problems.push(`${classDef.name}: starting attributes must each be ${floor}–${mode.maximum} and total ${expected}; current total ${total}. Authored defaults stay active until the set is valid.`);
     }
   }
+  return [...problems, ...advancedConfigStructuralProblems(bundle, settings)];
+}
+
+export function advancedConfigStructuralProblems(bundle, settings = {}) {
+  const configured = configuredContentBundle(bundle, settings);
+  const problems = [];
+  const walk = (value, path = []) => {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      if (value.length === 2 && value.every(Number.isFinite) && value[0] > value[1]) {
+        problems.push(`${path.join('.')} must keep its first value at or below its second value.`);
+      }
+      value.forEach((child, index) => walk(child, [...path, String(index)]));
+      return;
+    }
+    for (const [key, child] of Object.entries(value)) {
+      if (key.endsWith('Min')) {
+        const maxKey = `${key.slice(0, -3)}Max`;
+        if (Number.isFinite(child) && Number.isFinite(value[maxKey]) && child > value[maxKey]) {
+          problems.push(`${[...path, key].join('.')} must stay at or below ${[...path, maxKey].join('.')}.`);
+        }
+      }
+      walk(child, [...path, key]);
+    }
+  };
+  walk(configured.balance, ['balance']);
   return problems;
 }
 

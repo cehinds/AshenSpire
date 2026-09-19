@@ -12,7 +12,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
@@ -152,7 +152,18 @@ configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
 function rebuildRegistries(configuration = {}) {
-  registries = createRegistries(configuredContentBundle(contentBundle, configuration));
+  const configured = configuredContentBundle(contentBundle, configuration);
+  const result = validateContent(configured);
+  const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  if (!result.ok || structuralProblems.length) {
+    const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
+    const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
+    console.warn('[advanced-config]', message, result.errors, structuralProblems);
+    if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
+    registries = createRegistries(contentBundle);
+  } else {
+    registries = createRegistries(configured);
+  }
   configureTooltipGlossary(registries);
   setClassGlyphs(registries.classes.all());
   return registries;

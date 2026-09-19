@@ -4,6 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import {
   advancedConfigRows,
   advancedConfigProblems,
+  advancedConfigStructuralProblems,
   advancedConfigSnapshot,
   advancedConfigExport,
   configuredContentBundle,
@@ -45,6 +46,12 @@ test('an incomplete class-stat edit is named and keeps the last valid authored p
   assert.match(advancedConfigProblems(contentBundle, settings)[0], /Reaver.*total 55/);
   const configured = configuredContentBundle(contentBundle, settings);
   assert.deepEqual(configured.attributeRules.presets.tuned.reaver, contentBundle.attributeRules.presets.tuned.reaver);
+});
+
+test('cross-field ranges are refused instead of reaching a new run inverted', () => {
+  const settings = { 'gameConfig.balance.rewards.cinders.normal.0': 100 };
+  assert.match(advancedConfigStructuralProblems(contentBundle, settings)[0], /rewards\.cinders\.normal/);
+  assert.match(advancedConfigProblems(contentBundle, settings)[0], /first value/);
 });
 
 test('snapshot and export contain only versioned game-config overrides in deterministic order', () => {
