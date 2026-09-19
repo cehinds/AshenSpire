@@ -154,6 +154,9 @@ export function restDeniedBy(registries, run, tags) {
  * mode's tag, since that is the set restDeniedBy reads (a filter naming
  * `restMana` itself would match nothing and is refused).
  */
+/** The location ids the classic map opens without asking the atlas. */
+export const REQUIRED_LOCATIONS = Object.freeze([...VISITED_NODE_TYPES, CAMP_LOCATION]);
+
 export function locationTaggingProblems(bundle, atlas = ATLAS) {
   const problems = [];
   const b = bundle || {};
@@ -167,6 +170,17 @@ export function locationTaggingProblems(bundle, atlas = ATLAS) {
       problems.push({
         path: `tagging.${LOCATION_FAMILY}.${row.objectId}`,
         message: `'${row.objectId}' is not a location — a classic node type the door visits (${VISITED_NODE_TYPES.join(', ')}), '${CAMP_LOCATION}', an atlas rest service's type or an atlas point offering one`,
+      });
+    }
+  }
+  // The classic map opens the shrine node and the revealed Unknown node's camp
+  // by their hard-coded ids (main.js), so a bundle without a row for either
+  // would validate and throw at the door ("carries no tags"): refused here.
+  for (const id of REQUIRED_LOCATIONS) {
+    if (!authored.has(id)) {
+      problems.push({
+        path: `tagging.${LOCATION_FAMILY}.${id}`,
+        message: `carries no tags — the classic map opens '${id}' unconditionally (content/source/tagging.csv needs at least one location row for it)`,
       });
     }
   }

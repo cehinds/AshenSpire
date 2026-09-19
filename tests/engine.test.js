@@ -9375,6 +9375,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(validateContent({ ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restManaFloor'] } } : r)) }).ok, 'a filter naming the resolved mode tag is a location\'s effective tag');
     assert(said(validateContent({ ...testBundle(), statuses: contentBundle.statuses.map((st, i) => (i === 0 ? { ...st, hooks: [...(st.hooks || []), { on: 'rested', do: [] }] } : st)) })).some((e) => /statuses\..*hooks\[\d+\]\.on/.test(e)), 'a status hooked on a run-level event is refused by name');
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'boss', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.boss/.test(e)), 'a node type the door never visits is not a location');
+    for (const id of ['shrine', 'camp']) {
+      const without = validateContent({ ...testBundle(), tagging: contentBundle.tagging.filter((r) => !(r.family === 'location' && r.objectId === id)) });
+      assert(said(without).some((e) => new RegExp(`tagging\\.location\\.${id}: carries no tags`).test(e)), `a bundle without a row for '${id}' — a place the classic map opens unconditionally — is refused by name, not at the door`);
+    }
     const twice = visitTo(fresh(), 'shrine');
     const first = arriveAt(twice);
     const again = arriveAt(twice);
