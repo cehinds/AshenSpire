@@ -345,6 +345,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   const handPages = [$('.hand-prev'), $('.hand-next')];
 
   function selectCombatant(id) {
+    if (id && !getEntity(combat, id)?.alive) return;
     selectedCombatantId = id;
     selectCombatantInfo(combatEl, id);
   }
@@ -482,7 +483,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
     if (selectedFlask != null) {
       const el = $('.combatant.enemy.hover-target') || $('.combatant.enemy.gp-focus');
-      return el ? [{ el, kind: 'enemy' }] : [];
+      return el && getEntity(combat, el.dataset.eid)?.alive ? [{ el, kind: 'enemy' }] : [];
     }
     return [];
   }
@@ -1392,12 +1393,15 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       // The name is the way into the full read on touch, where there is no `I`.
       // It stops the frame's own click so tapping the name never plays a card
       // or retargets — the door is a reading, not a move.
-      nm.classList.add('nm-inspect');
-      nm.setAttribute('role', 'button');
-      nm.tabIndex = 0;
-      nm.setAttribute('aria-label', `${def.name} — the full read`);
+      if (enemy.alive) {
+        nm.classList.add('nm-inspect');
+        nm.setAttribute('role', 'button');
+        nm.tabIndex = 0;
+        nm.setAttribute('aria-label', `${def.name} — the full read`);
+      }
       const openThisRead = (event) => {
         event.stopPropagation();
+        if (!getEntity(combat, enemy.id)?.alive) return;
         if (selected) playCard(selected, enemy.id);
         else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
         else openCombatantDoor(combatantSubject('enemy', enemy));
@@ -1422,22 +1426,35 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);
       stageFor(box)?.setState?.({ ...dv(enemy), maxHp: enemy.maxHp });
       box.dataset.stature = statureFor(registries, def.id);
-      if (enemy.alive && !record) {
+      if (!record) {
         wireCombatantContext(box, combatantSubject('enemy', enemy));
         box.addEventListener('click', (event) => {
           event.stopPropagation();
+          if (!getEntity(combat, enemy.id)?.alive) return;
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
           else {
             selectCombatant(enemy.id);
           }
         });
-        box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
+        box.addEventListener('pointerenter', () => getEntity(combat, enemy.id)?.alive && (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
       }
       box.setAttribute('aria-pressed', String(selectedCombatantId === enemy.id));
-      if (!enemy.alive) { delete box.dataset.focusable; box.removeAttribute('tabindex'); box.setAttribute('aria-disabled', 'true'); }
-      else box.removeAttribute('aria-disabled');
+      // Frames and their listeners survive death for the defeat animation.
+      // Disable descendants too: nameplates/tooltips can opt back into pointer
+      // events even when the frame's .dead style disables its own hit area.
+      box.inert = !enemy.alive;
+      if (!enemy.alive) {
+        delete box.dataset.focusable;
+        box.removeAttribute('tabindex');
+        box.setAttribute('aria-disabled', 'true');
+        box.classList.remove('hover-target', 'gp-focus', 'aiming', 'aim-enemy');
+        box.querySelectorAll('.aim-silho').forEach(node => node.remove());
+      } else {
+        refreshCombatantContext(box, combatantSubject('enemy', enemy));
+        box.removeAttribute('aria-disabled');
+      }
       if (!record) row.appendChild(box);
       enemyFrames.set(enemy.id, { key: artKey, renderKey, box });
     }
@@ -2047,6 +2064,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function useFlask(slot, targetId, chargeKind = null) {
+    if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       dlog('ignored', `useFlask slot=${slot}`, { busy, result: combat.result, phase: combat.phase });
       return;
@@ -2239,6 +2257,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   }
 
   function playCard(instanceId, targetId) {
+    if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       const why = { busy, result: combat.result, phase: combat.phase };
       console.debug('[combat] playCard ignored:', JSON.stringify(why));
