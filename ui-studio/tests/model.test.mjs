@@ -303,24 +303,34 @@ test('the dialogue folds its bands on a short OR narrow host and its slot on a n
 });
 
 test('the shop stacks below wideMinRem with the rail on top, as ShopWorkspaceModel does', () => {
-  const shop = readConfig('ui/screens/shop.json'), tokens = readConfig('ui/tokens.json').vars;
+  const shop = readConfig('ui/screens/shop.json'), tokens = readConfig('ui/tokens.json').vars, nav = readConfig('ui/components/categoryNav.json');
   const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-shop');
+  const configs = { 'ui/components/categoryNav.json': nav };
   // 1280x800: the game zooms 1.07, so one rem is 10.7 physical px.
   const rem = 10 * 1.07;
-  const wide = M.regionsFor(wf, shop, { width: 1280, height: 800 }, { tokens, zoom: 1.07, rootFontPx: 10 });
+  const wide = M.regionsFor(wf, shop, { width: 1280, height: 800 }, { tokens, zoom: 1.07, rootFontPx: 10, configs });
   const rail = wide.find((r) => r.id === 'rail');
   assert.equal(rail.w, Math.round(Math.min(Math.max(1280 * 21.6 / 95, 11 * rem), 28 * rem)));
   assert.equal(rail.h, 800);
   const offers = wide.find((r) => r.id === 'offers'), detail = wide.find((r) => r.id === 'detail');
   assert.equal(offers.w, detail.w, 'offersFraction 0.5 splits the rest evenly');
   // 390x844 at zoom 0.9: 60rem is 540 physical px, so the rail spans the top, the panes stack, the detail takes at most half the height.
-  const phone = M.regionsFor(wf, shop, { width: 390, height: 844 }, { tokens, zoom: 0.9, rootFontPx: 10 });
+  const phone = M.regionsFor(wf, shop, { width: 390, height: 844 }, { tokens, zoom: 0.9, rootFontPx: 10, configs });
   const top = phone.find((r) => r.id === 'rail');
   assert.deepEqual([top.x, top.y, top.w], [0, 0, 390]);
   const stacked = phone.find((r) => r.id === 'detail');
   assert.equal(stacked.w, 390);
   assert.equal(stacked.h, Math.floor((844 - 3 * 9 - 9) * 0.5));
   assert.equal(stacked.y + stacked.h, 844);
+  // 844x390 at zoom 0.62 is wide by width (372 px is 60rem) but seven 44 px items plus gaps and insets
+  // (348 px) do not fit 70% of 390 (273): the category rail folds into a selector row above the columns.
+  const short = M.regionsFor(wf, shop, { width: 844, height: 390 }, { tokens, zoom: 0.62, rootFontPx: 10, configs, screens: { shopCategoryCount: 7, railItemMinPx: 44 } });
+  assert.equal(short.find((r) => r.id === 'rail'), undefined);
+  const row = short.find((r) => r.id === 'selector');
+  assert.deepEqual([row.x, row.y, row.w], [0, 0, 844]);
+  assert.equal(short.find((r) => r.id === 'offers').y, row.h);
+  const fit = M.categoryRailFits(nav, { width: 844, height: 390, rem: 6.2, count: 7, itemMinPx: 44 });
+  assert.deepEqual([fit.fitsWidth, fit.fitsHeight, fit.fits], [true, false, false]);
 });
 
 test('a centred region moves its value twice the drag; a bottom-anchored one the other way', () => {
@@ -396,6 +406,10 @@ test('the Smith folds its candidate rail into a selector row under the category 
   // An iPad at 768x1024 zooms to 0.64: a 1200 px local host keeps the rail, as the live categoryNav does.
   assert.equal(M.gameLayoutFor({ width: 768, height: 1024 }, M.DEFAULT_SETTINGS.gameLayout).zoom, 0.64);
   assert.ok(at(768, 1024).some((r) => r.id === 'candidates'));
+  // 844x390 at 0.62 is wide enough (372 px) but six 44 px items do not fit 70% of 390: the height rule folds the rail.
+  const short = M.regionsFor(wf, smith, { width: 844, height: 390 }, { parent: nav, tokens, zoom: 0.62, rootFontPx: 10, screens: { smithCandidateCount: 6, railItemMinPx: 44 } });
+  assert.ok(short.some((r) => r.id === 'selector'));
+  assert.match(short.find((r) => r.id === 'selector').label, /items need/);
 });
 
 test('sketchProblems refuses a breakpoint that is not an object, unnamed, duplicated or non-numeric', () => {
@@ -455,4 +469,23 @@ test('a key with a dot in it survives the path round trip', () => {
   assert.deepEqual(next.motion.entrance.holdDurations, { '0.3s': 400, plain: 1 }, 'the dotted key is written, not split');
   assert.equal(M.unitOf(dotted.path), '');
   assert.deepEqual(M.splitPath(['a', 'b.c']), ['a', 'b.c'], 'an array path is taken as given');
+});
+
+test('a band that reads a variable is drawn from the resolved number and not dragged', () => {
+  const w4c = readConfig('ui/scenes/w4c-dialogue.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4c');
+  const viaVar = { ...w4c, vars: { ...w4c.vars, hudShare: 10 }, sizing: { ...w4c.sizing, bands: { ...w4c.sizing.bands, hud: '$hudShare' } } };
+  const vp = { width: 1280, height: 800 };
+  const regs = M.regionsFor(wf, viaVar, vp, { parent: w4, tokens });
+  const hud = regs.find((r) => r.band === 'hud');
+  assert.equal(hud.h, 80);
+  assert.equal(hud.percent, '$hudShare', 'the authored value stays on the region');
+  assert.match(hud.label, /\$hudShare = 10%/);
+  for (const r of regs) assert.ok(Number.isFinite(r.y + r.h), `${r.id} has finite geometry`);
+  assert.deepEqual(M.applyRegionDrag(viaVar, hud, 40, vp, { grid: { bandStepPercent: 1 }, regions: regs }), viaVar, 'a "$name" band is edited by hand, never dragged over');
+});
+
+test('settingsProblems names a device that is not an object instead of throwing', () => {
+  const problems = M.settingsProblems({ ...M.DEFAULT_SETTINGS, devices: [null, 7] });
+  assert.deepEqual(problems.filter((p) => p.startsWith('devices[')), ['devices[0] must be an object', 'devices[1] must be an object']);
 });

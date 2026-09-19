@@ -93,6 +93,10 @@ test('settings merge over the defaults and refuse a broken shape; sketches valid
   t.after(async () => { if (had === null) await fs.rm(settingsFile, { force: true }); else await fs.writeFile(settingsFile, had); });
   await workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 12 } });
   assert.equal((await workspace.settings()).grid.sizePx, 12);
+  // Two settings writes at once are serialized: the file parses and holds one of them whole.
+  await Promise.all([workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 13 } }), workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 14 } })]);
+  const parsed = JSON.parse(await fs.readFile(settingsFile, 'utf8'));
+  assert.ok([13, 14].includes(parsed.grid.sizePx));
   await assert.rejects(workspace.saveSketch('Bad Name', {}), /lower-case/);
   await assert.rejects(workspace.saveSketch('ok', { schema: 'x' }), /Sketch refused/);
   const sketchFile = path.join(dir, 'sketches', 'ui-studio-test-sketch.json');

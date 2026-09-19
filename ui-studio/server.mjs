@@ -71,6 +71,10 @@ export class Workspace {
       if (balance && balance.ui && balance.ui.uiScale) merged.gameLayout = { ...merged.gameLayout, ...balance.ui.uiScale };
     } catch { /* an older checkout, or a headless import that fails: the defaults stand */ }
     try {
+      const { SHOP_CATEGORIES } = await import(pathToFileURL(path.join(this.root, 'src/ui/models/ShopWorkspaceModel.js')).href);
+      if (Array.isArray(SHOP_CATEGORIES) && SHOP_CATEGORIES.length) merged.screens = { ...merged.screens, shopCategoryCount: SHOP_CATEGORIES.length };
+    } catch { /* an older checkout: the default stands */ }
+    try {
       const armoury = JSON.parse(await fs.readFile(path.join(this.root, 'content/source/armouryUi.json'), 'utf8'));
       const breakpoint = armoury && armoury.layout && armoury.layout.responsive && armoury.layout.responsive.breakpoint;
       if (Number.isFinite(breakpoint)) merged.screens = { ...merged.screens, armouryBreakpointPx: breakpoint };
@@ -81,9 +85,13 @@ export class Workspace {
   async saveSettings(settings) {
     const problems = settingsProblems(settings);
     if (problems.length) throw Error(`Settings refused: ${problems.join('; ')}`);
-    await fs.mkdir(this.workspaceDir, { recursive: true });
-    await fs.writeFile(path.join(this.workspaceDir, 'settings.json'), `${JSON.stringify(settings, null, 2)}\n`);
-    return { ok: true };
+    // Through the write queue, like config and sketch writes: two quick edits
+    // or two tabs must never interleave bytes in the one settings file.
+    return this.serialize(async () => {
+      await fs.mkdir(this.workspaceDir, { recursive: true });
+      await fs.writeFile(path.join(this.workspaceDir, 'settings.json'), `${JSON.stringify(settings, null, 2)}\n`);
+      return { ok: true };
+    });
   }
 
   async config() {

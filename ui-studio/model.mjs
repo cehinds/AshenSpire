@@ -95,7 +95,12 @@ export const DEFAULT_SETTINGS = {
   // Screens that ask their own width question. The Armoury reads
   // content/source/armouryUi.json layout.responsive.breakpoint (phone at or
   // below it); the server replaces this with the live value when it can.
-  screens: { armouryBreakpointPx: 760 },
+  // The category rail (components/categoryNav.json) also folds into a
+  // selector row when its items would not fit bodyHeightFraction of the
+  // height: the shop's count is its category list (ShopWorkspaceModel
+  // SHOP_CATEGORIES, read by the server), the Smith's is however many items
+  // the player carries, so that one is a what-if; each item is one tap target.
+  screens: { armouryBreakpointPx: 760, shopCategoryCount: 7, smithCandidateCount: 6, railItemMinPx: 44 },
   save: { compileAfterSave: true, keepBackups: 40 },
 };
 
@@ -123,6 +128,7 @@ export function settingsProblems(s) {
   const z = isObject(s.gameLayout) ? s.gameLayout : {};
   for (const k of ['designW', 'designH', 'min', 'max', 'rootFontPx']) if (!(z[k] > 0)) out.push(`gameLayout.${k} must be a positive number`);
   if (!(isObject(s.screens) && s.screens.armouryBreakpointPx > 0)) out.push('screens.armouryBreakpointPx must be a positive number');
+  if (isObject(s.screens)) for (const k of ['shopCategoryCount', 'smithCandidateCount', 'railItemMinPx']) if (s.screens[k] != null && !(s.screens[k] > 0)) out.push(`screens.${k} must be a positive number`);
   if (!(g.sizePx > 0)) out.push('grid.sizePx must be a positive number');
   if (!(Number.isInteger(g.subdivisions) && g.subdivisions >= 1)) out.push('grid.subdivisions must be an integer of at least 1');
   if (!(g.thresholdPx >= 0)) out.push('grid.thresholdPx must be 0 or more');
@@ -132,7 +138,8 @@ export function settingsProblems(s) {
     const ids = new Set();
     for (const [i, d] of s.devices.entries()) {
       const at = `devices[${i}]`;
-      if (!d || typeof d.id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(d.id)) out.push(`${at}.id must be lower-case letters, digits and dashes`);
+      if (!isObject(d)) { out.push(`${at} must be an object`); continue; }
+      if (typeof d.id !== 'string' || !/^[a-z0-9][a-z0-9-]*$/.test(d.id)) out.push(`${at}.id must be lower-case letters, digits and dashes`);
       else if (ids.has(d.id)) out.push(`${at}.id "${d.id}" is used twice`);
       else ids.add(d.id);
       if (!(d.width >= 200 && d.width <= 8192)) out.push(`${at}.width must be 200–8192`);
@@ -529,6 +536,22 @@ export function combatPlan(data, parent, { width, height, zoom = 1, rem = 10, ca
 }
 
 /**
+ * categoryRailFits(nav, { width, height, rem, count, itemMinPx }) → whether
+ * the shared category rail stays a side rail, as CategoryNavModel decides:
+ * the host must be at least railMinHostWidthRem wide AND the items must fit
+ * in bodyHeightFraction of the height. Physical px throughout (the rail item
+ * is one tap target: --tap-floor is the target divided by the zoom, local).
+ */
+export function categoryRailFits(nav, { width, height, rem, count = 0, itemMinPx = 44 } = {}) {
+  const n = (path, fallback) => { const v = getPath(nav || {}, path); return typeof v === 'number' && Number.isFinite(v) ? v : fallback; };
+  const minWidthPx = n('sizing.railMinHostWidthRem', 60) * rem;
+  const railHeightPx = count * itemMinPx + Math.max(0, count - 1) * n('positioning.railGapRem', 0.6) * rem + 2 * n('positioning.railInsetRem', 1.4) * rem;
+  const bodyHeightPx = height * n('sizing.bodyHeightFraction', 0.7);
+  const fitsWidth = width >= minWidthPx, fitsHeight = bodyHeightPx >= railHeightPx;
+  return { fits: fitsWidth && fitsHeight, fitsWidth, fitsHeight, minWidthPx, railHeightPx, bodyHeightPx };
+}
+
+/**
  * regionsFor(wireframe, data, viewport, { parent, tokens, layoutMode, screens, zoom, rootFontPx }) →
  * [{ id, label, x, y, w, h, kind, edit? }]. `edit` says what dragging the
  * region's lower edge changes: { kind: 'bandEdge', index } or { kind: 'path',
@@ -573,8 +596,11 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
     let y = 0;
     const entries = bandEntries(bands);
     entries.forEach((b, i) => {
-      const h = vh(b.percent);
-      push({ id: `band.${b.id}`, label: `${b.id} ${b.percent}%`, x: 0, y, w: W, h, band: b.id, percent: b.percent,
+      // Drawn from the resolved number (a band may read "$name", which the
+      // compiler resolves before it checks the sum); the authored value stays
+      // on the region so the inspector shows what the file says.
+      const h = vh(num(b.percent));
+      push({ id: `band.${b.id}`, label: `${b.id} ${isRef(b.percent) ? `${b.percent} = ` : ''}${num(b.percent)}%`, x: 0, y, w: W, h, band: b.id, percent: b.percent,
         edit: i < entries.length - 1 ? { kind: 'bandEdge', index: i, path: bandsPath } : null });
       y += h;
     });
@@ -593,10 +619,10 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       const drawn = { hud: plan.hud, scene: plan.battlefield, context: plan.hand, footer: plan.footer };
       let y = 0;
       entries.forEach((b, i) => {
-        const h = drawn[b.id] != null ? drawn[b.id] : vh(b.percent);
+        const h = drawn[b.id] != null ? drawn[b.id] : vh(num(b.percent));
         if (b.id === 'footer' && plan.arrangement === 'rails') return;
-        const nominal = vh(b.percent);
-        const label = `${b.id} ${b.percent}%${Math.abs(h - nominal) > 0.5 ? ` → ${round(h, 0)}px drawn` : ''}`;
+        const nominal = vh(num(b.percent));
+        const label = `${b.id} ${num(b.percent)}%${Math.abs(h - nominal) > 0.5 ? ` → ${round(h, 0)}px drawn` : ''}`;
         push({ id: `band.${b.id}`, label, x: 0, y, w: W, h, band: b.id, percent: b.percent,
           edit: i < entries.length - 1 ? { kind: 'bandEdge', index: i, path: 'sizing.bands' } : null });
         y += h;
@@ -680,18 +706,30 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       // WHOLE width reaches wideMinRem; then the rail is a clamped side column
       // and offers/detail share the rest. Otherwise the rail sits on top at
       // full width (its height is its content's) and the panes stack, the
-      // detail capped at detailMaxFraction of the height.
+      // detail capped at detailMaxFraction of the height. The rail itself is
+      // the shared category rail, which folds into a selector row on its own
+      // width AND height rule (categoryRailFits) whatever the shop decides.
       const gap = num((positioning || {}).gapRem) * rem;
       const wide = W >= num(sizing.wideMinRem) * rem;
-      if (wide) {
+      const nav = configs['ui/components/categoryNav.json'] || null;
+      const rail = categoryRailFits(nav, { width: W, height: H, rem, count: num(screens.shopCategoryCount, 7), itemMinPx: num(screens.railItemMinPx, 44) });
+      const railH = 3 * rem;
+      if (wide && rail.fits) {
         const railW = Math.round(clamp(W * num(sizing.railFraction), num(sizing.railMinRem) * rem, num(sizing.railMaxRem) * rem));
         push({ id: 'rail', label: `rail ${round(num(sizing.railFraction) * 100, 1)}% (${num(sizing.railMinRem)}–${num(sizing.railMaxRem)}rem)`, x: 0, y: 0, w: railW, h: H, edit: { kind: 'path', path: 'sizing.railFraction', unit: 'fractionOfWidth', axis: 'w' } });
         const rest = W - railW - gap;
         const offersW = rest * num(sizing.offersFraction, 0.5);
         push({ id: 'offers', label: `offers ${round(num(sizing.offersFraction) * 100)}%`, x: railW + gap, y: 0, w: offersW, h: H, edit: { kind: 'path', path: 'sizing.offersFraction', unit: 'fractionOf', of: 'offers+detail', axis: 'w' } });
         push({ id: 'detail', label: `detail ${round((1 - num(sizing.offersFraction, 0.5)) * 100)}%`, x: railW + gap + offersW, y: 0, w: rest - offersW, h: H, dashed: true });
+      } else if (wide) {
+        // The shop keeps its columns, but the category rail could not fit its
+        // items in bodyHeightFraction of the height: a selector row above them.
+        push({ id: 'selector', label: `category selector (${num(screens.shopCategoryCount, 7)} items need ${round(rail.railHeightPx, 0)}px, ${round(rail.bodyHeightPx, 0)} available)`, x: 0, y: 0, w: W, h: railH });
+        const rest = W - gap;
+        const offersW = rest * num(sizing.offersFraction, 0.5);
+        push({ id: 'offers', label: `offers ${round(num(sizing.offersFraction) * 100)}%`, x: 0, y: railH, w: offersW, h: H - railH, edit: { kind: 'path', path: 'sizing.offersFraction', unit: 'fractionOf', of: 'offers+detail', axis: 'w' } });
+        push({ id: 'detail', label: `detail ${round((1 - num(sizing.offersFraction, 0.5)) * 100)}%`, x: offersW + gap, y: railH, w: rest - offersW, h: H - railH, dashed: true });
       } else {
-        const railH = 3 * rem;
         push({ id: 'rail', label: `rail on top (host under ${num(sizing.wideMinRem)}rem = ${round(num(sizing.wideMinRem) * rem, 0)}px at zoom ${zoom})`, x: 0, y: 0, w: W, h: railH });
         const detailH = Math.floor((H - railH - gap) * num(sizing.detailMaxFraction, 0.5));
         push({ id: 'offers', label: 'offers (stacked)', x: 0, y: railH + gap, w: W, h: H - railH - gap - detailH });
@@ -719,19 +757,20 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       // The Smith's candidates sit in the shared category rail
       // (components/categoryNav.json, CategoryNavModel): a side column of
       // candidatesWidth clamped to its rem bounds while the host is at least
-      // railMinHostWidthRem wide, otherwise one full-width selector row above
-      // the pane. `parent` is the categoryNav config when the catalog names it.
-      // categoryNavPlan also folds a rail whose items would not fit in
-      // bodyHeightFraction of the height; that depends on the category count,
-      // which no config file states, so only the width rule is drawn.
-      const railMinHost = num(parent ? getPath(parent, 'sizing.railMinHostWidthRem') : undefined, 60) * rem;
-      if (W >= railMinHost) {
+      // railMinHostWidthRem wide AND the items fit bodyHeightFraction of the
+      // height, otherwise one full-width selector row above the pane. The
+      // item count is however many the player carries; screens.smithCandidateCount
+      // stands in for it. `parent` is the categoryNav config when the catalog names it.
+      const nav = parent || configs['ui/components/categoryNav.json'] || null;
+      const rail = categoryRailFits(nav, { width: W, height: H, rem, count: num(screens.smithCandidateCount, 6), itemMinPx: num(screens.railItemMinPx, 44) });
+      if (rail.fits) {
         const cw = clamp(W * num(sizing.candidatesWidth), num(sizing.candidatesMinRem) * rem, num(sizing.candidatesMaxRem) * rem);
         push({ id: 'candidates', label: `candidates ${round(num(sizing.candidatesWidth) * 100)}% (${num(sizing.candidatesMinRem)}–${num(sizing.candidatesMaxRem)}rem)`, x: 0, y: 0, w: cw, h: H, edit: { kind: 'path', path: 'sizing.candidatesWidth', unit: 'fractionOfWidth', axis: 'w' } });
         push({ id: 'detail', label: 'detail', x: cw, y: 0, w: W - cw, h: H });
       } else {
         const rowH = num(tokens.targetRem, 2.75) * rem;
-        push({ id: 'selector', label: `category selector (host under ${round(railMinHost / rem)}rem = ${round(railMinHost, 0)}px at zoom ${zoom}: the rail becomes a row)`, x: 0, y: 0, w: W, h: rowH });
+        const why = !rail.fitsWidth ? `host under ${round(rail.minWidthPx / rem)}rem = ${round(rail.minWidthPx, 0)}px at zoom ${zoom}` : `${num(screens.smithCandidateCount, 6)} items need ${round(rail.railHeightPx, 0)}px, ${round(rail.bodyHeightPx, 0)} available`;
+        push({ id: 'selector', label: `category selector (${why}: the rail becomes a row)`, x: 0, y: 0, w: W, h: rowH });
         push({ id: 'detail', label: 'pane', x: 0, y: rowH, w: W, h: H - rowH });
       }
       break;
@@ -765,6 +804,7 @@ export function applyRegionDrag(data, region, deltaPx, viewport, { grid, regions
   const step = grid ? grid.bandStepPercent : 1;
   if (edit.kind === 'bandEdge') {
     const bands = getPath(data, edit.path);
+    if (!isObject(bands) || Object.values(bands).some((v) => typeof v !== 'number')) return data; // a "$name" band is edited by hand
     return setPath(data, edit.path, moveBandEdge(bands, edit.index, (deltaPx / H) * 100, { step, minPercent: 0 }));
   }
   const current = getPath(data, edit.path);
