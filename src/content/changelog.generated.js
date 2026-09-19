@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1198",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "A studio for the game's layout, with the phones and desktops it will be played on",
+    "detail": "Nothing you see changes in play. A new local editor, beside the content editor and the pose studio, draws the combat, map, conversation and shop screens as the wireframes the layout file describes, at the real size of a desktop, an iPad, an iPhone or a Galaxy, and lets the numbers be dragged on a snapping grid rather than typed: how tall the top bar is, where the floor sits, how wide a portrait may be. Every size shows how the game itself will decide to lay out at that screen, the whole set can be compared side by side, and the real game can be opened at that size in the same window. A change is checked by the game's own build rule before it is written, and the file keeps its old bytes wherever it was not touched. Free wireframe sketches, with a different arrangement per screen size, save as their own files.",
+    "build": "0.7.1.275",
+    "pullRequest": 1198,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1198"
+  },
+  {
+    "id": "pr-1195",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Resting is now something a place does, not something the Shrine does",
+    "detail": "Every stop on the road — the Shrine, a rough camp off an Unknown node, a town's inn, its chapel — carries its own set of what it restores: the Shrine heals part of your HP, refills your flasks on arrival and offers the Smith and Level-up; a camp heals less and offers nothing; an inn heals you and your Mana to full. Every rest recovers Mana now, by default to half your maximum or to full if you already stand there. Ember Fragment reads \"Resting heals 15% more\" and works everywhere; the Wyrm Heart still forbids the Shrine's rest but lets you sleep at an inn. Seeded routes hold at most one town per act.",
+    "build": "0.7.1.274",
+    "pullRequest": 1195,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1195"
+  },
+  {
+    "id": "pr-1202",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Eight relics now have painted artwork throughout the game",
+    "detail": "Forsaken Medallion, Starstone Shard, Cutpurse's Coin, Gold Figurine, Golden Sprout, Cracked Lantern, Bloodstained Chalice and Crown of Stitches show their own art in cards, the HUD, character creation and smithing. Relic inspection shows the original lore. Other relics retain their glyphs; effects and drop rules are unchanged.",
+    "build": "0.7.1.235",
+    "pullRequest": 1202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1202"
+  },
+  {
     "id": "pr-1200",
     "date": "2026-09-19",
     "group": "2026-09-19",

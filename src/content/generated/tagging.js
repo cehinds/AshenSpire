@@ -10171,5 +10171,479 @@ export const tagging = [
     "scope": "",
     "objectId": "harbingerOfBlightCard",
     "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "wayfarerPlate",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "wayfarerPlate",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "wayfarerPlate",
+    "tagId": "heavy"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "wayfarerPlate",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "wayfarerPlate",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "wayfarerPlate",
+    "tagId": "heavy"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "wayfarerPlate",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "wayfarerPlate",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "wayfarerPlate",
+    "tagId": "heavy"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "wayfarerPlate",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "wayfarerPlate",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "wayfarerPlate",
+    "tagId": "heavy"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "nightweave",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "nightweave",
+    "tagId": "starstone"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "nightweave",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "nightweave",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "nightweave",
+    "tagId": "starstone"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "nightweave",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "nightweave",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "nightweave",
+    "tagId": "starstone"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "nightweave",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "nightweave",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "nightweave",
+    "tagId": "starstone"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "nightweave",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "riteVestments",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "riteVestments",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "riteVestments",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "riteVestments",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "riteVestments",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "riteVestments",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "riteVestments",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "riteVestments",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "riteVestments",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "riteVestments",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "riteVestments",
+    "tagId": "ritual"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "riteVestments",
+    "tagId": "guard"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "gutterLeathers",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "gutterLeathers",
+    "tagId": "flourish"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "gutterLeathers",
+    "tagId": "pierce"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "gutterLeathers",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "gutterLeathers",
+    "tagId": "flourish"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "gutterLeathers",
+    "tagId": "pierce"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "gutterLeathers",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "gutterLeathers",
+    "tagId": "flourish"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "gutterLeathers",
+    "tagId": "pierce"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "gutterLeathers",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "gutterLeathers",
+    "tagId": "flourish"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "gutterLeathers",
+    "tagId": "pierce"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "wayfarerPlate",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "nightweave",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "riteVestments",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "gutterLeathers",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "wayfarerPlate",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "nightweave",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "riteVestments",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "gutterLeathers",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "wayfarerPlate",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "nightweave",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "riteVestments",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "herald",
+    "objectId": "gutterLeathers",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "wayfarerPlate",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "nightweave",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "riteVestments",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "gutterLeathers",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "restHpPartial"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "restMana"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "restFlasks"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "smith"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "levelUp"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "camp",
+    "tagId": "restHpSmall"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "camp",
+    "tagId": "restMana"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "restHpFull"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "restManaFull"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "restFlasks"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "levelUp"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "restHpPartial"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "restMana"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "restFlasks"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "levelUp"
   }
 ];

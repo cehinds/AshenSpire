@@ -21,5 +21,25 @@ export const equipmentRequirements = [
     "itemId": "ashStaff",
     "attributeId": "intelligence",
     "minimum": 12
+  },
+  {
+    "itemId": "wayfarerPlate",
+    "attributeId": "strength",
+    "minimum": 12
+  },
+  {
+    "itemId": "nightweave",
+    "attributeId": "intelligence",
+    "minimum": 12
+  },
+  {
+    "itemId": "riteVestments",
+    "attributeId": "wisdom",
+    "minimum": 12
+  },
+  {
+    "itemId": "gutterLeathers",
+    "attributeId": "dexterity",
+    "minimum": 12
   }
 ];

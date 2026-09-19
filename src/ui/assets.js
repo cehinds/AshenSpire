@@ -8,7 +8,8 @@ import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
-import { armourMenuAsset, armourArtKey } from '../model/paintedOutfitArt.js';
+import { armourMenuAsset, armourArtKey, armourArtClass } from '../model/paintedOutfitArt.js';
+import { armourById } from '../content/equipment.js';
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
@@ -18,6 +19,29 @@ import { assetUrl } from './assetmap.js';
 import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';
+import { relicArtAsset } from '../model/relicArt.js';
+
+export function relicArtUrl(relic) {
+  const path = relicArtAsset(relic);
+  return path ? assetUrl(path) : null;
+}
+
+/** Decorative identity art; the containing control owns its accessible name. */
+export function relicIcon(relic) {
+  const src = relicArtUrl(relic);
+  if (!src) return null;
+  const icon = document.createElement('span');
+  icon.className = 'og relic-art';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;aspect-ratio:1;';
+  const img = hintImage(document.createElement('img'));
+  img.src = src;
+  img.alt = '';
+  img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+  img.addEventListener('error', () => { icon.textContent = relic.icon || '◆'; }, { once: true });
+  icon.append(img);
+  return icon;
+}
 
 export { DEFAULT_SPRITE_STYLE, SPRITE_STYLES };
 
@@ -419,6 +443,10 @@ export function paintedFigure(classId, tint, sigil, armourId = 'default', pose =
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
 export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default', presentation = {}) {
+  const visualClass = armourArtClass(classId, armourId);
+  if (visualClass !== classId) {
+    return classSprite(visualClass, tint, sigil, tintId, style, figureId, armourArtKey(classId, armourId), presentation);
+  }
   const build = CLASS_SVG[classId];
   if (!build) return null;
   // THE SIGIL DOES NOT RIDE THE FIGURE. Owner's call, 2026-09-07: the chosen
@@ -558,6 +586,12 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false, headId = null, handsId = null, feetId = null }) {
+  // The classic layered rig retains its authored body alias; painted sprites
+  // have their own class-specific outfit art and are selected by the caller.
+  const piece = armourById(classId, armourId);
+  const visualClass = piece?.artClassId || classId;
+  armourId = piece?.artKey || armourId;
+  classId = visualClass;
   // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
   // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
   // these two lines and returned a single standing frame, so the armament layers

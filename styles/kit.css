@@ -346,6 +346,8 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
 }
 .as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.as-option .relic-art { width: 3rem; height: 3rem; }
+.tray-icon > .relic-art { width: 100%; height: 100%; }
 .as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .as-option .on { display: flex; align-items: center; gap: 0.75rem; font: 600 1.65rem/1.2 var(--font-display); letter-spacing: 0.03em; color: var(--gold); white-space: nowrap; }
 .as-option .od { margin: 0; color: var(--ink-dim); font-size: 1.35rem; line-height: 1.4; }
@@ -4855,3 +4857,19 @@ button[data-button-size] {
   grid-template-areas: "info info" "meters actions" "rail actions";
 }
 :root[data-layout='narrow'] .shared-hud .hud-control-grid { align-self: start; }
+/* W1c, the chosen card unfolds (owner, 2026-09-19): with
+   behavior.classPreview "unfold" the preview column is gone and the picked
+   class card opens to --creation-unfold-height, the portrait taking
+   --creation-unfold-portrait of its width and the summary the rest, nothing
+   past the card's box. The card is a flex row; the unfold wraps under it. */
+.customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-preview-host,
+.customize .cz-railed[data-class-preview="unfold"] .cc-class-split > .cc-class-divider { display: none; }
+.customize .cz-railed[data-class-preview="unfold"] .cc-class-split { grid-template-columns: minmax(0, 1fr); }
+.customize .cz-class.unfolded { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); align-items: center; height: max(var(--creation-unfold-height), var(--creation-unfold-min)); overflow: hidden; }
+.customize .cz-class.unfolded > .cc-class-unfold { grid-column: 1 / -1; min-height: 0; height: 100%; align-self: stretch; display: grid; grid-template-columns: var(--creation-unfold-portrait) minmax(0, var(--creation-unfold-summary)); gap: var(--creation-head-tools-gap); overflow: hidden; }
+.customize .cc-unfold-portrait { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 0; overflow: hidden; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art { display: block; height: 100% !important; width: auto !important; aspect-ratio: 1 / 1; max-width: 100%; max-height: 100%; min-height: 0; min-width: 0; }
+.customize .cc-unfold-portrait > .figure.cc-unfold-art > * { width: 100%; height: 100%; object-fit: contain; }
+.customize .cc-unfold-summary { display: flex; flex-direction: column; justify-content: center; gap: var(--creation-head-tools-gap); min-width: 0; min-height: 0; overflow: hidden; text-align: start; font-weight: normal; }
+.customize .cc-unfold-relic { display: inline-flex; align-items: center; gap: var(--creation-rail-gap); color: var(--ink-dim); font-size: calc(1em * var(--creation-rail-value-scale)); }
+.customize .cz-class.unfolded::after { display: none; }

@@ -17,6 +17,7 @@ export const FORMULA_OPS = Object.freeze([
   'mul',
   'percentMaxHp',
   'missingHp',
+  'missingMana',
   'stacks',
   'energySpent',
   'blockOf',
@@ -53,11 +54,21 @@ export function isFormula(v) {
  * final floor). Throws on unknown ops, unresolvable `of` refs, or NaN.
  */
 export function evaluate(formula, ctx = {}) {
+  return Math.floor(evaluateRaw(formula, ctx));
+}
+
+/**
+ * evaluateRaw(formula, ctx) → the UNFLOORED value (clamps applied). For the
+ * one reader that multiplies the result before flooring — the run door's
+ * heal under its multipliers (engine/actions.js) — so a percentage rest is
+ * floored once, after the multipliers, never twice.
+ */
+export function evaluateRaw(formula, ctx = {}) {
   const raw = evalNode(formula, ctx);
   if (typeof raw !== 'number' || Number.isNaN(raw)) {
     throw new Error(`Formula evaluated to a non-number: ${JSON.stringify(formula)}`);
   }
-  return Math.floor(raw);
+  return raw;
 }
 
 function evalNode(node, ctx) {
@@ -83,6 +94,13 @@ function evalNode(node, ctx) {
     case 'missingHp': {
       const ent = resolveOne(ctx, node.of, node.f);
       v = Math.max(0, ent.maxHp - ent.hp);
+      break;
+    }
+    case 'missingMana': {
+      // The pool's headroom, for a rule that restores it to full (plan phase
+      // 7's restManaFull) without stating a number the entity already knows.
+      const ent = resolveOne(ctx, node.of, node.f);
+      v = Math.max(0, (ent.maxMana || 0) - (ent.mana || 0));
       break;
     }
     case 'stacks': {

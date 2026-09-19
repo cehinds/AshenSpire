@@ -1317,6 +1317,96 @@ export const tags = [
     "blurb": "What falls feeds you."
   },
   {
+    "id": "restHpSmall",
+    "domain": "property",
+    "label": "Small rest",
+    "color": "7FA8C9",
+    "glyph": "♨",
+    "visibility": "",
+    "blurb": "A rough camp's rest: a small share of your max HP back."
+  },
+  {
+    "id": "restHpPartial",
+    "domain": "property",
+    "label": "Partial rest",
+    "color": "7FA8C9",
+    "glyph": "♨",
+    "visibility": "",
+    "blurb": "A shrine's rest: part of your max HP back."
+  },
+  {
+    "id": "restHpFull",
+    "domain": "property",
+    "label": "Full rest",
+    "color": "7FA8C9",
+    "glyph": "♨",
+    "visibility": "",
+    "blurb": "A town's bed: HP to full."
+  },
+  {
+    "id": "restMana",
+    "domain": "property",
+    "label": "Mana rest",
+    "color": "7FA8C9",
+    "glyph": "◈",
+    "visibility": "",
+    "blurb": "Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead."
+  },
+  {
+    "id": "restManaFlat",
+    "domain": "property",
+    "label": "Flat mana rest",
+    "color": "7FA8C9",
+    "glyph": "◈",
+    "visibility": "",
+    "blurb": "Mana back by a fixed amount."
+  },
+  {
+    "id": "restManaFloor",
+    "domain": "property",
+    "label": "Mana rest to a floor",
+    "color": "7FA8C9",
+    "glyph": "◈",
+    "visibility": "",
+    "blurb": "Mana back to a floor of max, or to full when already there."
+  },
+  {
+    "id": "restManaFull",
+    "domain": "property",
+    "label": "Full mana rest",
+    "color": "7FA8C9",
+    "glyph": "◈",
+    "visibility": "",
+    "blurb": "Mana to full."
+  },
+  {
+    "id": "restFlasks",
+    "domain": "property",
+    "label": "Flask refill",
+    "color": "7FA8C9",
+    "glyph": "⚗",
+    "visibility": "",
+    "blurb": "Arriving refills your flask charges (the grace refill)."
+  },
+  {
+    "id": "smith",
+    "domain": "property",
+    "label": "Smith",
+    "color": "9A9A9A",
+    "glyph": "⚒",
+    "visibility": "",
+    "blurb": "The place offers a smith: upgrade, extract, install (balance.smithing.services says which)."
+  },
+  {
+    "id": "levelUp",
+    "domain": "property",
+    "label": "Level-up",
+    "color": "9A9A9A",
+    "glyph": "✦",
+    "visibility": "",
+    "blurb": "The place is where waiting attribute points are assigned."
+  },
+  {
     "id": "warlord",
     "domain": "property",
     "label": "Warlord",

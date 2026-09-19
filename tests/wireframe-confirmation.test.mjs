@@ -66,11 +66,11 @@ test('W2a sale and Shrine rest fill every slot', () => {
     assertW2(review, `sell ${kind}`);
     assert.match(review.message, /30 cinders/);
   }
-  const leave = restReview({ shrine: 'Shrine of Ember', heal: 12, hp: 40, maxHp: 62, mana: 3, maxMana: 10, multiUse: false });
+  const leave = restReview({ shrine: 'Shrine of Ember', heal: 12, manaGain: 7, hp: 40, maxHp: 62, mana: 3, maxMana: 10, multiUse: false });
   assertW2(leave, 'rest');
   assert.equal(leave.target, 'Shrine of Ember · 40/62 HP · 3/10 Mana');
-  assert.match(leave.message, /Heal 12 HP/);
-  assert.match(leave.message, /leave this Shrine/);
+  assert.match(leave.message, /Heal 12 HP and restore 7 Mana/);
+  assert.match(leave.message, /then leave/);
   assert.match(restReview({ shrine: 'S', heal: 0, hp: 1, maxHp: 1, mana: 1, maxMana: 1, multiUse: true }).message, /You stay/);
 });
 

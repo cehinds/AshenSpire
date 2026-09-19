@@ -287,7 +287,7 @@ export function mountWorldAtlas(
         const def = a.services[s.serviceId],
           used = j.serviceStates[pointId]?.used;
         const preview = localServiceModel({ handlerId: a.serviceTypes[def.serviceTypeId].handlerId,
-          registries, run, state: j.serviceStates[pointId], ...serviceContext });
+          registries, run, state: j.serviceStates[pointId], nodeId: pointId, serviceTypeId: def.serviceTypeId, ...serviceContext });
         html += `<div class="atlas-service-benefits">${def.displayName === point.displayName ? "" : `<h4>${esc(def.displayName)}</h4>`}<p class="atlas-service-benefit">${esc(preview.benefit)}</p><ul>${preview.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;
         html += button(
           used ? "Visit used" : preview.action,

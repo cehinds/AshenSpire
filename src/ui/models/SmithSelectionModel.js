@@ -1,4 +1,5 @@
 import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { relicArtAsset } from '../../model/relicArt.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the Shrine armament Smith transaction.
 // Selection is reversible; only the modal's explicit Confirm command commits.
@@ -81,7 +82,7 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       ? armourMenuAsset(candidate.classId, piece.id)
       : itemKind === 'armament'
         ? armamentIconAsset(piece)
-        : null;
+        : relicArtAsset(piece);
     const itemTypes = (piece.itemTypes || []).map((type) => freeze({ ...type }));
     return freeze({
       itemRef,

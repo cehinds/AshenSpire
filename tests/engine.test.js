@@ -39,6 +39,9 @@ import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects, useRunChargeFlask } from '../src/engine/actions.js';
+import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
+import { locationTags, resolveLocationId, restDeniedBy, locationServiceTypeId } from '../src/model/locations.js';
+import { generateJourney } from '../src/model/worldAtlas.js';
 import {
   rollEncounter,
   rollRuneReward,
@@ -49,7 +52,6 @@ import {
   rollRelicReward,
   buildShopStock,
   resolveUnknownNode,
-  shrineHealAmount,
   rollArmamentDrop,
 } from '../src/engine/encounters.js';
 import {
@@ -1524,12 +1526,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     useRunChargeFlask({ run: rn3, registries: REG, rng: createRng(5), kind: 'mana' });
     eq(rn3.mana, 1, 'run-level flask effects copy restored Mana back to the run');
     eq(rn3.flaskCharges.manaCurrent, manaBefore - 1, 'out-of-combat use spends its charge without touching utility slots');
-
-    const rn4 = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    rn4.hp = 10;
-    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35) / 100), 'shrine heal 35%');
-    rn4.relics.push('emberFragment');
-    eq(shrineHealAmount(REG, rn4), Math.floor((rn4.maxHp * 35 * 1.15) / 100), 'Ember Fragment ×1.15');
   });
 
   // ---- 19. Keepsakes (character creation boons) -------------------------------------------
@@ -3542,9 +3538,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
       const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
-      eq(mine.length, additions[id] ? 5 : 4, `class '${id}' has its full armour roster`);
+      eq(mine.length, additions[id] ? 9 : 8, `class '${id}' has its full armour roster including four shared sets`);
       if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
-      eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
+      eq(mine.filter((o) => o.unlock === '' && !o.sharedSet).length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
       checkItemTypes(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
@@ -4658,10 +4654,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
-      'a fresh profile is offered exactly its one starting set');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
+      'a fresh profile owns its starting set and four attribute-gated shared sets');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => earned.has(p)).length, 2, 'earning one unlock adds exactly one set');
+    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5205,7 +5201,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     for (const o of REG.equipment.armour) {
       const key = `${o.classId}/${o.id}`;
-      const artKey = `${o.classId}/${o.artKey || o.id}`;
+      const artKey = `${o.artClassId || o.classId}/${o.artKey || o.id}`;
       const entry = manifest.armour[artKey];
       if (!entry) {
         stale.push(`${key}: no art rendered`);
@@ -5231,7 +5227,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // pass every assertion above by having nothing to disagree with.
     const authoredArtKeys = new Set(REG.equipment.armaments.map((a) => a.artKey || a.id));
     eq(Object.keys(manifest.armaments).length, authoredArtKeys.size, 'every distinct armament art key is covered');
-    const armourArtKeys = new Set(REG.equipment.armour.map(o => `${o.classId}/${o.artKey || o.id}`));
+    const armourArtKeys = new Set(REG.equipment.armour.map(o => `${o.artClassId || o.classId}/${o.artKey || o.id}`));
     eq(Object.keys(manifest.armour).length, armourArtKeys.size, 'every distinct armour art key is covered');
   });
 
@@ -9199,6 +9195,225 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(bal({ xp: { ...contentBundle.balance.xp, kill: { normal: 10, elite: 30 } } })).some((e) => /balance\.xp\.kill\.boss/.test(e)), 'a missing kill rate is refused by name');
     assert(said(bal({ levelUp: { ...contentBundle.balance.levelUp, firstCost: 50 } })).some((e) => /balance\.levelUp\.firstCost/.test(e)), 'the cinder ladder is refused by name');
     assert(said(validateContent({ ...testBundle(), derivedStatRules: { ...contentBundle.derivedStatRules, rules: { ...contentBundle.derivedStatRules.rules, hp: { ...contentBundle.derivedStatRules.rules.hp, perLevel: { every: 0, gain: 5 } } } } })).some((e) => /perLevel\.every/.test(e)), 'a zero cadence is refused by name');
+  });
+
+  // ---- 91. Recovery as location properties (plan phase 7) ----------------------------------
+  test('91. recovery as location properties: a place restores exactly its tag set, the mode resolves, a relic denies by tag (plan phase 7)', () => {
+    const rest = contentBundle.balance.rest;
+    const fresh = (classId = 'herald') => {
+      const run = createRunState({ seed: 4, classId, registries: REG });
+      run.hp = 10;
+      run.mana = 0;
+      run.fullHpCharges = run.flaskCharges.hpCurrent;
+      run.flaskCharges.hpCurrent = 0;
+      return run;
+    };
+    const visitTo = (run, id, opts) => createLocationVisit({ run, registries: REG, rng: createRng(1) }, id, opts);
+    const refuses = (fn, re, why) => {
+      let said = null;
+      try { fn(); } catch (e) { said = e.message; }
+      assert(said !== null && re.test(said), `${why}${said === null ? ' (did not throw)' : ` (got: ${said})`}`);
+    };
+
+    // THE TAG SETS ARE CONTENT, AND THE DOOR RESOLVES THE MODE.
+    eq(locationTags(REG, 'shrine').join(','), 'restHpPartial,restMana,restFlasks,smith,levelUp', 'the shrine carries the proposal\'s set');
+    eq(locationTags(REG, 'camp').join(','), 'restHpSmall,restMana', 'the field camp: a small rest and Mana, no services');
+    eq(locationTags(REG, 'inn').join(','), 'restHpFull,restManaFull,restFlasks,levelUp', 'the town\'s inn restores everything');
+    eq(resolveLocationId(REG, { nodeId: 'crownfall/inn', serviceTypeId: 'inn' }), 'inn', 'an untagged point falls back to its service type');
+    eq(resolveLocationId(REG, { nodeId: 'nowhere', serviceTypeId: 'shop' }), null, 'a point of no location kind resolves to nothing');
+    refuses(() => visitTo(fresh(), 'merchant'), /carries no tags/, 'an untagged id is refused by name');
+
+    // THE SHRINE: partial heal, Mana by the default mode (floorOrFull), the
+    // flasks refilled on arrival, the smith and the level-up offered.
+    const shrineRun = fresh();
+    const shrine = visitTo(shrineRun, 'shrine');
+    eq(shrine.tags.join(','), 'restHpPartial,restManaFloor,restFlasks,smith,levelUp', 'restMana resolves to the mode\'s own tag at the carrier');
+    eq(JSON.stringify(shrine.services), JSON.stringify({ smith: true, levelUp: true, flasks: true }), 'the services read off the set');
+    assert(shrine.ctx.propertyMounts.player['location:shrine'], 'the place is mounted under its owner');
+    const arrival = arriveAt(shrine);
+    assert(arrival.events.some((e) => e.type === 'arrived' && e.locationId === 'shrine'), '`arrived` is emitted with the place');
+    eq(shrineRun.flaskCharges.hpCurrent, shrineRun.fullHpCharges, 'the restFlasks rule refilled the charges on arrival');
+    eq(shrineRun.hp, 10, 'arriving heals nothing');
+    const countersBefore = JSON.stringify(shrine.ctx.rng.getCounters());
+    const preview = previewRest(shrine);
+    eq(JSON.stringify(shrine.ctx.rng.getCounters()), countersBefore, 'the preview rolls on a copy of the streams');
+    const floor = Math.floor((shrineRun.maxMana * rest.mana.floorPct) / 100);
+    eq(preview.heal, Math.floor((shrineRun.maxHp * rest.hpPartialPct) / 100), 'the preview reads the partial rest\'s row');
+    eq(preview.manaAfter, floor, 'the preview reads the floor');
+    eq(shrineRun.hp, 10, 'the preview writes nothing');
+    const rested = restAt(shrine);
+    assert(rested.events.some((e) => e.type === 'rested'), '`rested` is emitted');
+    eq(shrineRun.hp, 10 + preview.heal, 'the shrine heals exactly its tag\'s share');
+    eq(shrineRun.mana, floor, 'Mana rises to the floor when below it');
+    shrineRun.mana = floor;
+    restAt(shrine);
+    eq(shrineRun.mana, shrineRun.maxMana, 'Mana at the floor fills to full');
+    assert(leaveLocation(shrine), 'leaving unmounts');
+
+    // A REBUILT VISIT (a saved session restored at the place) arrives no
+    // second time: nothing pours, nothing fires, and arriveAt is a no-op.
+    const restoredRun = fresh();
+    const restored = visitTo(restoredRun, 'shrine', { arrived: true });
+    eq(restoredRun.flaskCharges.hpCurrent, 0, 'rebuilding a visit as arrived pours nothing');
+    eq(arriveAt(restored).events.length, 0, 'and arriving at it again fires nothing');
+    eq(restored.refill, null, 'a rebuilt visit reports no refill receipt');
+    leaveLocation(restored);
+
+    // A PREVIEW WITHOUT A STREAM: a rule that rolls renders its preview on a
+    // stream seeded from the run instead of throwing (the atlas inspection).
+    // The runtime reads a tag's rule off `propertyRules` (content-build's
+    // balance-resolved row), so a test that changes a rule changes that row.
+    const withRule = (tag, mutate) => ({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => (r.tag === tag ? mutate(structuredClone(r)) : r)) });
+    const rollingReg = createRegistries(withRule('restHpPartial', (r) => { r.triggers[0].if = { p: 'random', pct: 100 }; return r; }));
+    const rollingRun = createRunState({ seed: 4, classId: 'herald', registries: rollingReg });
+    rollingRun.hp = 10;
+    const rolling = createLocationVisit({ run: rollingRun, registries: rollingReg, rng: null }, 'shrine');
+    eq(previewRest(rolling).heal, Math.floor((rollingRun.maxHp * rest.hpPartialPct) / 100), 'a preview with no live stream still rolls the rule');
+    eq(rollingRun.hp, 10, 'and writes nothing');
+    leaveLocation(rolling);
+    assert(!shrine.ctx.propertyMounts.player, 'nothing stays mounted after the visit');
+
+    // THE CAMP: a small rest, the same Mana mode, no refill and no services.
+    const campRun = fresh();
+    const camp = visitTo(campRun, 'camp');
+    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false }), 'the camp offers nothing');
+    eq(arriveAt(camp).refill, null, 'no refill rule, no receipt');
+    eq(campRun.flaskCharges.hpCurrent, 0, 'the camp refills no flask');
+    restAt(camp);
+    eq(campRun.hp, 10 + Math.floor((campRun.maxHp * rest.hpSmallPct) / 100), 'the camp heals its small share');
+    eq(campRun.mana, floor, 'the camp restores Mana by the default mode');
+
+    // THE TOWN: everything, and Mana to full.
+    const innRun = fresh();
+    const inn = visitTo(innRun, 'inn');
+    arriveAt(inn);
+    restAt(inn);
+    eq(innRun.hp, innRun.maxHp, 'the inn heals to full');
+    eq(innRun.mana, innRun.maxMana, 'the inn restores Mana to full');
+    eq(innRun.flaskCharges.hpCurrent, innRun.fullHpCharges, 'the inn refills the flasks');
+
+    // THE FIXED MODES: a flat rest and the full rest override the default.
+    const flatReg = createRegistries({ ...testBundle(), balance: { ...contentBundle.balance, rest: { ...rest, mana: { ...rest.mana, mode: 'flat' } } } });
+    const flatRun = createRunState({ seed: 4, classId: 'herald', registries: flatReg });
+    flatRun.hp = 10; flatRun.mana = 0;
+    const flat = createLocationVisit({ run: flatRun, registries: flatReg, rng: createRng(1) }, 'camp');
+    eq(flat.tags.join(','), 'restHpSmall,restManaFlat', 'the flat mode resolves to its tag');
+    restAt(flat);
+    eq(flatRun.mana, Math.min(flatRun.maxMana, rest.mana.flat), 'the flat rest restores its row');
+
+    // THE MULTIPLIERS: the custom mod scales the heal, the relic passive
+    // multiplies it, and neither touches Mana.
+    const emberRun = fresh();
+    emberRun.relics.push('emberFragment');
+    const ember = visitTo(emberRun, 'shrine', { healMult: 0.5 });
+    restAt(ember);
+    eq(emberRun.hp, 10 + Math.floor(((emberRun.maxHp * rest.hpPartialPct) / 100) * 0.5 * 1.15), 'Ember Fragment ×1.15 and the mod ×0.5 scale the heal, floored once after them');
+    eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
+
+    // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the
+    // shrine and the chapel — and leaves the town's bed and the camp open.
+    const wyrmRun = fresh();
+    wyrmRun.relics.push('wyrmHeart');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'shrine')), 'wyrmHeart', 'the shrine\'s rest is denied');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'chapel')), 'wyrmHeart', 'the chapel\'s too');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'inn')), null, 'the inn\'s is not');
+    eq(restDeniedBy(REG, wyrmRun, locationTags(REG, 'camp')), null, 'nor the camp\'s');
+    const wyrmShrine = visitTo(wyrmRun, 'shrine');
+    eq(wyrmShrine.restDenied, 'wyrmHeart', 'the visit names the relic');
+    refuses(() => restAt(wyrmShrine), /denied by relic 'wyrmHeart'/, 'resting there is refused by name');
+    const wyrmInn = visitTo(wyrmRun, 'inn');
+    restAt(wyrmInn);
+    eq(wyrmRun.hp, wyrmRun.maxHp, 'the town rest still heals a Wyrm Heart holder');
+
+    // THE DENIAL IS READ AS THE RUN STANDS: an arrival rule that hands the
+    // run the Wyrm Heart denies the Rest at the same place, after arrival.
+    const grantingReg = createRegistries(withRule('restFlasks', (r) => { r.triggers[0].do.push({ op: 'addRelic', id: 'wyrmHeart' }); return r; }));
+    const grantedRun = createRunState({ seed: 4, classId: 'herald', registries: grantingReg });
+    const granted = createLocationVisit({ run: grantedRun, registries: grantingReg, rng: createRng(1) }, 'shrine');
+    eq(granted.restDenied, null, 'before arrival nothing denies the Rest');
+    arriveAt(granted);
+    assert(grantedRun.relics.includes('wyrmHeart'), 'the arrival rule handed the run the relic');
+    eq(granted.restDenied, 'wyrmHeart', 'and the visit re-read the denial off the run');
+    refuses(() => restAt(granted), /denied by relic 'wyrmHeart'/, 'so the Rest is refused by name');
+    leaveLocation(granted);
+
+    // RULES COMPOSE THROUGH THEIR OWN EVENTS: a rule on `healed` mounted by the
+    // place hears the rest's heal, as a combat property would.
+    const composingReg = createRegistries(withRule('restHpSmall', (r) => { r.triggers.push({ on: 'healed', do: [{ op: 'restoreMana', target: 'self', amount: 1 }] }); return r; }));
+    const composingRun = createRunState({ seed: 4, classId: 'herald', registries: composingReg });
+    composingRun.hp = 10; composingRun.mana = 0;
+    const composing = createLocationVisit({ run: composingRun, registries: composingReg, rng: createRng(1) }, 'camp');
+    const composed = restAt(composing);
+    assert(composed.events.some((e) => e.type === 'healed'), 'the heal\'s own event rides the bus');
+    eq(composingRun.mana, Math.min(composingRun.maxMana, Math.floor((composingRun.maxMana * rest.mana.floorPct) / 100) + 1), 'the healed rule restored one more Mana after the floor');
+    leaveLocation(composing);
+
+    // A POINT NAMES ITSELF BY ITS SERVICE: a node-id row still titles as the inn.
+    eq(locationServiceTypeId('crownfall/inn'), 'inn', 'an atlas rest point is titled by its rest service type');
+    eq(locationServiceTypeId('shrine'), 'shrine', 'a node type names itself');
+    eq(locationServiceTypeId('camp'), 'camp', 'so does the camp');
+    const allReg = createRegistries({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: true } } : r)) });
+    eq(restDeniedBy(allReg, wyrmRun, locationTags(allReg, 'inn')), 'wyrmHeart', 'an unfiltered restDenied denies every rest');
+
+    // THE VISIT RE-READS THE RUN: a door between arrival and rest (a level
+    // point's re-derived maximum) is not overwritten by a stale facade.
+    const lateRun = fresh();
+    const late = visitTo(lateRun, 'inn');
+    arriveAt(late);
+    lateRun.maxHp += 10;
+    lateRun.hp = 20;
+    restAt(late);
+    eq(lateRun.hp, lateRun.maxHp, 'the rest heals to the maximum the run holds now');
+
+    // THE ATLAS TOWN BUDGET: the default leaves every seeded route as it was,
+    // a cap the map cannot meet is refused by name.
+    eq(JSON.stringify(generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: contentBundle.balance.atlas.townsPerActMax })), JSON.stringify(generateJourney('ATLAS7')), 'the shipped cap changes no seeded route');
+    refuses(() => generateJourney('ATLAS7', 'wanderer', undefined, { townsPerActMax: 0 }), /more than 0 town/, 'a zero cap is refused by name');
+
+    // THE REFUSALS: an unknown location id, a restoreMana with neither or
+    // both selectors, a bad rest mode, a restDenied naming no carried tag.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg ?? e.message}`);
+    const tagged = (rows) => validateContent({ ...contentBundle, tagging: [...contentBundle.tagging, ...rows] });
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'tavern', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.tavern/.test(e)), 'an id the map lacks is refused by name');
+    const innRow = tagged([{ family: 'location', scope: '', objectId: 'crownfall/inn', tagId: 'restHpFull' }]);
+    assert(innRow.ok, `an atlas node id is a location (${said(innRow).join(' | ')})`);
+    const bal = (patch) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, ...patch } });
+    assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
+    assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
+    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
+    const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'camp', tagId: 'restManaFlat' }])).some((e) => /tagging\.location\.camp.*one rule/.test(e)), 'restMana beside a fixed-mode tag is refused by name');
+    const overrideReg = createRegistries({ ...testBundle(), tagging: contentBundle.tagging.map((r) => (r.family === 'location' && r.objectId === 'camp' && r.tagId === 'restMana' ? { ...r, tagId: 'restManaFlat' } : r)) });
+    const overrideRun = createRunState({ seed: 4, classId: 'herald', registries: overrideReg });
+    overrideRun.hp = 10; overrideRun.mana = 0;
+    const override = createLocationVisit({ run: overrideRun, registries: overrideReg, rng: createRng(1) }, 'camp');
+    eq(override.tags.join(','), 'restHpSmall,restManaFlat', 'a fixed-mode tag overrides the default outright');
+    restAt(override);
+    eq(overrideRun.mana, Math.min(overrideRun.maxMana, rest.mana.flat), 'and the place restores Mana by that one rule');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/market', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/market/.test(e)), 'a point offering no rest is not a location');
+    const withCard = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzMana', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Rest.' }] });
+    assert(said(withCard([{ op: 'restoreMana', target: 'self' }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with neither selector is refused');
+    assert(said(withCard([{ op: 'restoreMana', target: 'self', amount: 2, toFloorPct: 50 }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with both is refused');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restSauna'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming a tag no location carries is refused by name');
+    assert(said(validateContent({ ...testBundle(), relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restMana'] } } : r)) })).some((e) => /relics\.wyrmHeart\.passives\.restDenied/.test(e)), 'a filter naming the unresolved restMana is refused: a visit never holds it');
+    assert(validateContent({ ...contentBundle, relics: contentBundle.relics.map((r) => (r.id === 'wyrmHeart' ? { ...r, passives: { restDenied: ['restManaFloor'] } } : r)) }).ok, 'a filter naming the resolved mode tag is a location\'s effective tag');
+    assert(said(validateContent({ ...testBundle(), statuses: contentBundle.statuses.map((st, i) => (i === 0 ? { ...st, hooks: [...(st.hooks || []), { on: 'rested', do: [] }] } : st)) })).some((e) => /statuses\..*hooks\[\d+\]\.on/.test(e)), 'a status hooked on a run-level event is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'boss', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.boss/.test(e)), 'a node type the door never visits is not a location');
+    for (const id of ['shrine', 'camp']) {
+      const without = validateContent({ ...testBundle(), tagging: contentBundle.tagging.filter((r) => !(r.family === 'location' && r.objectId === id)) });
+      assert(said(without).some((e) => new RegExp(`tagging\\.location\\.${id}: carries no tags`).test(e)), `a bundle without a row for '${id}' — a place the classic map opens unconditionally — is refused by name, not at the door`);
+    }
+    const twice = visitTo(fresh(), 'shrine');
+    const first = arriveAt(twice);
+    const again = arriveAt(twice);
+    eq(again.events.length, 0, 'a second arrival fires nothing');
+    eq(again.refill, first.refill, 'and answers with the first receipt');
+    assert(validateContent(contentBundle).ok, 'the shipped bundle stays green');
   });
 
   const passed = results.filter((r) => r.ok).length;
