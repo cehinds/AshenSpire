@@ -32,6 +32,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-19
 
+- **One tap readies a combat card for its target** ([#1208](https://github.com/cehinds/AshenSpire/pull/1208), `0.7.1.288`). Clicking a card title now fully selects it on the first tap, so the next click on a valid target plays it immediately. The card no longer stops at an inspection highlight when its text redraws under the pointer. Press-and-hold and flick-to-play keep working, and cancelled or moved presses do not become selecting taps.
+
 - **Four more relics have painted identities, and every relic has a lore-and-size preview** ([#1206](https://github.com/cehinds/AshenSpire/pull/1206), `0.7.1.284`). Ivory Comb, Blessed Dew, Gravetender's Bell and Wyrm Heart now use their own artwork throughout the shared relic displays. The review gallery includes all 63 relics in four sizes, existing lore and source notes, search, artwork filters and working vertical scrolling. Effects, drop rules and saves are unchanged.
 - **The roads tell the stories of the places they cross** ([#1205](https://github.com/cehinds/AshenSpire/pull/1205), `0.7.1.282`). The six existing surveys now have regional names, requests and reports when you return for your reward. The Second Cairn asks you to raise the fallen swords of the unwritten dead, and the Last Lantern names the hamlets waiting for its medicine. The Road Warden is distinct from the old marked Wardens. Quest choices, rewards and saved routes stay the same.
 
