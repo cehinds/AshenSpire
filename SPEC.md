@@ -1950,3 +1950,21 @@ World Journey uses only explicitly implemented host actions.
 Four sharedSet outfits are available in every class's Armoury after creation. They use the existing class-scoped armor save keys, with one identical authored row per wearer class. Empty unlock means owned; sharedSet excludes these rows from starting-armour selection and the exactly-one-baseline rule. Equip enforces current attributes at 12: Wayfarer Plate STR, Nightweave INT, Rite Vestments WIS, Gutter Leathers DEX. Existing starting outfits and saves remain valid.
 
 Bonuses are authored in outfits.csv using existing modifiers: Wayfarer +2 Defend Block/+4 max HP; Nightweave +1 class-power Potency/+1 max Mana; Rite +1 Defend Block/+6 max HP; Gutter +1 Strike Damage/+1 max Stamina. These are modest initial alternatives, not a claim of completed balance playtesting. Tags remain in tagging.csv. inventoryArtKey selects the item illustration. sharedOutfitArt.js selects a distinct painted sprite collection for each of the sixteen class/outfit combinations, including readiness and defeat. artClassId plus artKey remains the fallback for the classic composited rig. The card review page shows all four wearers per outfit with selectable combat poses.
+
+# Legacy dungeon integration (2026-09-19)
+
+The Thorn Matriarch, Glass Regent, and Furnace Saint boss entrances open their
+authored legacy dungeon before combat. Each contains 24 connected locations,
+two entrance roads, node lore, and four paired floor/background scene plates.
+Travel follows authored edges and requires resolving the current location.
+Conversations use the shared dialogue view. Hostile choices enter ordinary
+combat and its existing reward/checkpoint flow. Escape rolls 1–100 against
+clamp(40 + 3 × (Dexterity − 10), 10, 85), using the saved events RNG stream;
+success retreats unresolved, failure commits combat. Choices and rewards
+cannot be repeated by revisiting. Boss victory clears fog and enables leaving
+the dungeon, which performs the original boss location's progression.
+Optional run.legacyDungeon stores version, dungeon/parent identifiers,
+current/previous nodes, visited/resolved sets, cleared state and pending choice.
+Old saves without this field retain their original behavior. A saved combat
+inside a dungeon resumes the dungeon encounter, including in World Journey.
+Scene draw order is floor, background, actors, then interface.

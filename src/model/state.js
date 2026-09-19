@@ -736,6 +736,7 @@ export function levelProblems(level) {
 
 export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags } = {}) {
   const problems = [];
+  problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
@@ -1294,3 +1295,4 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
   return entity;
 }
+import { legacyDungeonProblems } from './legacyDungeon.js';
