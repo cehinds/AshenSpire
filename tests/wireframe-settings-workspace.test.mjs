@@ -98,6 +98,7 @@ test('the real rows: a self-evident row draws no hint, a subtle one keeps it', (
   }
 });
 
-test('the first four categories are the W1a rail, in order', () => {
-  assert.deepEqual(settingsCategories().slice(0, 4), ['Display', 'Audio', 'Accessibility', 'Advanced']);
+test('Settings has two top-level categories and General retains all ordinary controls', () => {
+  assert.deepEqual(settingsCategories(), ['General', 'Advanced']);
+  assert.deepEqual(new Set(categoryHandler('General').rows.map(row => row.cat)), new Set(['Display', 'Audio', 'Accessibility']));
 });
