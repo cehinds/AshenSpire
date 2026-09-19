@@ -30,6 +30,13 @@ compiles it into `src/config/generated/ui.js` (`uiConfig`), and
 the generated module wasn't compiled from. `src/content/wireframeUi.js` is now
 a compatibility shim composed from `uiConfig`, so change the JSON, never the
 shim or the generated module.
+`ui-studio/` is a standalone local editor for that JSON (see
+[ui-studio/README.md](ui-studio/README.md)): `node ui-studio/server.mjs` draws
+the approved wireframes at real device sizes on a snapping grid, edits any
+value with its unit and variables, validates the tree with `compileEntries`
+before writing, keeps backups, and opens the live game at the chosen size.
+`node --test ui-studio/tests/*.test.mjs` covers the model and the server;
+`node ui-studio/tests/browser.mjs` drives the page in headless Chromium.
 `node tools/combat-prototypes-browser.mjs` checks real workshop input at desktop
 and phone sizes; `node tools/combat-prototypes.mjs --seeds=100` records the shared
 three-build policy through the actual combat engine. Ordinary runs do not select
