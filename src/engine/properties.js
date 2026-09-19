@@ -2,7 +2,8 @@
 // (docs/proposal-progression-and-property-system.md §3, plan phase 1b)
 //
 // A property tag confers behaviour only while a CARRIER holds it: the equipped
-// weapon, the worn armour — later a relic, the class card, a location. This
+// weapon, the worn armour, a held relic, the class card, the place the run
+// stands at (engine/locations.js). This
 // file is the single door. mountProperties installs a carrier's rules into
 // ctx.propertyMounts[ownerKey][sourceKey]; unmountProperties removes them; and
 // the fourth scan in triggers.js plus the passive readers in model/registries.js
@@ -41,10 +42,11 @@ import { triggerOwnerKey } from './triggers.js';
 const LOADOUT_KINDS = new Set(['armament', 'armour']);
 
 // The holders this path can mount, and why the list is short: a mount needs a
-// WINDOW — the span over which the holder is held — and these four are the
-// holders whose window the engine knows (worn, worn, owned, chosen). A kind
+// WINDOW — the span over which the holder is held — and these five are the
+// holders whose window the engine knows (worn, worn, owned, chosen, and a
+// location's arrival-to-departure — engine/locations.js, plan phase 7). A kind
 // gains a mount by gaining a window here, never by a content row.
-const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class']);
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {

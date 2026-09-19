@@ -115,9 +115,16 @@ const rowsFor = (data, name, profile) =>
   data[name].filter((r) => r.profileId === profile.profileId);
 
 /** Bounded search over authored edges, independent of combat RNG. Never relaxes a profile. */
-export function generateJourney(seed, profileId = "wanderer", atlas = ATLAS) {
+export function generateJourney(
+  seed,
+  profileId = "wanderer",
+  atlas = ATLAS,
+  { townsPerActMax = Infinity } = {},
+) {
   const p = atlas.profiles[profileId];
   if (!p) throw Error(`Unknown world profile ${profileId}`);
+  if (!(Number.isInteger(townsPerActMax) && townsPerActMax >= 0) && townsPerActMax !== Infinity)
+    throw Error(`townsPerActMax must be a non-negative integer, got ${JSON.stringify(townsPerActMax)}`);
   const d = atlas.data,
     rng = random(
       `${seed}:${p.profileId}:${p.profileVersion}:${atlas.revision}`,
@@ -251,6 +258,22 @@ export function generateJourney(seed, profileId = "wanderer", atlas = ATLAS) {
       branches > p.branchesMax
     ) {
       last = "active node or alternative budget cannot be met";
+      continue;
+    }
+    // THE TOWN BUDGET (plan phase 7, balance.atlas.townsPerActMax): the city
+    // nodes a route stops at are capped per difficulty act, so attrition
+    // between towns is the run's tension. The start is where the run begins,
+    // not a stop on the road, so it is not counted. A route over the cap is
+    // rolled again like any other budget miss; the default (no cap) leaves
+    // every seeded route exactly as it was.
+    const townsByAct = Object.create(null);
+    for (const id of selected) {
+      if (atlas.nodes[id].nodeTypeId !== "city") continue;
+      const act = atlas.world[id].difficultyAct;
+      townsByAct[act] = (townsByAct[act] || 0) + 1;
+    }
+    if (Object.values(townsByAct).some((n) => n > townsPerActMax)) {
+      last = `more than ${townsPerActMax} town(s) in one act`;
       continue;
     }
     const activeEdges = edges.filter(
