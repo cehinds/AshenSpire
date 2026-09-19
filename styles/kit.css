@@ -4234,15 +4234,11 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .w4-frame > .topbar { grid-row: 1; min-height: var(--w4-band-hud, 0px); height: auto; box-sizing: border-box; overflow: visible; }
 :root .combat[data-layout='formation'] {
   --w4-context-fallback: max(calc(208px / var(--ui-zoom, 1)), 30%);
-  --w4-footer-fallback: max(calc(68px / var(--ui-zoom, 1)), 5%);
-}
-/* Footer allocation must include the 52px controls and both 8px insets. */
-:root .combat[data-layout='formation'] {
-  grid-template-rows: auto minmax(0, 1fr) var(--w4-band-context, var(--w4-context-fallback)) max(calc(68px / var(--ui-zoom, 1)), var(--w4-band-footer, var(--w4-footer-fallback)));
+  --w4-footer-fallback: max(calc(56px / var(--ui-zoom, 1)), 5%);
 }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3 / span 2;
-  grid-template-rows: minmax(0, 1fr) max(calc(68px / var(--ui-zoom, 1)), var(--w4-band-footer, 14.2857%));
+  grid-template-rows: minmax(0, 1fr) var(--w4-band-footer, max(calc(56px / var(--ui-zoom, 1)), 14.2857%));
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] {
   position: relative; display: block; padding: 0; overflow-x: auto; overflow-y: hidden;

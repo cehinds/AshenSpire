@@ -165,6 +165,8 @@ for(const shape of SHAPES) {
  const page=await openTarget(shape);
  await cdp.send('Page.navigate',{url:server.url+(STANDALONE?'AshenSpire.html':'')+'?shot=combat'},page.sessionId);
  await page.until('!!window.__combat && !!document.querySelector(".combat-potions")','combat');
+ // Geometry belongs to the settled screen, after its entry translation.
+ await page.evaluate('Promise.all(document.querySelector(".combat").getAnimations().map(animation => animation.finished.catch(() => {})))');
  const geom=await page.evaluate(`[...document.querySelectorAll('.combat-action-row > :is(button, .energy-orb)')].map(el=>{const r=el.getBoundingClientRect();return {text:el.textContent,width:r.width,height:r.height,left:r.left,right:r.right,top:r.top,bottom:r.bottom};})`);
  check(geom.length===5 && geom.every(r=>r.width>=43.5&&r.height>=43.5&&r.left>=0&&r.right<=shape.width&&r.bottom<=shape.height&&Math.abs((r.top+r.bottom)-(geom[0].top+geom[0].bottom))<2),shape.name+': five reachable 44px action cells',geom);
  check(await page.evaluate('[...document.querySelectorAll(".combat-action-row > button")].at(-1).matches(".combat-potions")'),shape.name+': potions far right');

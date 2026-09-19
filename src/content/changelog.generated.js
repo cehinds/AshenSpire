@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1199",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The HUD keeps its contents together, and you choose what stays visible",
+    "detail": "Health, Mana, Stamina and relics now fit inside a growing panel beside the menu controls. Display settings can hide resources, relics, Cinders, journey position or potion shortcuts and remember your choice. Combat potion minis now follow the map: hover or keyboard focus reveals them on desktop, while touch opens the full list from Potions. Reduced motion removes their slide.",
+    "build": "0.7.1.229",
+    "pullRequest": 1199,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1199"
+  },
+  {
     "id": "pr-1194",
     "date": "2026-09-19",
     "group": "2026-09-19",
