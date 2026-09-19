@@ -8355,6 +8355,31 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     const healRow = (saves2.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'loadout.sets');
     assert(healRow && healRow.kind === 'heal' && /head, hands, feet/.test(healRow.why), `the ledger names the slots that were filled — got ${JSON.stringify(healRow).slice(0, 200)}`);
+    // A pre-split save captured MID-FIGHT carries a second loadout in its
+    // combat snapshot. The reference check passes a slot the snapshot never
+    // knew, the door heals that loadout too, and the run resumes rather than
+    // being archived.
+    const midFight = createRunState({ seed: 0x3b3b, classId: 'reaver', registries: REG });
+    const fight = createCombat({
+      registries: REG, rng: createRng(0x3b3b), enemyIds: ['fellWarden'],
+      player: { classId: midFight.class, attributes: midFight.attributes, maxHp: midFight.maxHp, hp: midFight.hp, maxMana: midFight.maxMana, mana: midFight.mana, maxStamina: midFight.maxStamina, stamina: midFight.stamina, energyMax: midFight.energyMax, drawPerTurn: midFight.drawPerTurn, damageBySchoolAdd: midFight.damageBySchoolAdd, equipmentProfileRuleSnapshot: midFight.equipmentProfileRuleSnapshot, equipmentAttackSlotCount: midFight.equipmentAttackSlotCount, equipmentPoolDeficits: midFight.equipmentPoolDeficits, itemUpgradeLevels: midFight.itemUpgradeLevels, deck: midFight.deck, relicIds: midFight.relics, flasks: midFight.flasks, flaskCharges: midFight.flaskCharges, loadout: midFight.loadout },
+    });
+    commitCombatSnapshot({ run: midFight, combat: fight, nodeId: 'n1', encounterId: contentBundle.encounters[0].id });
+    const storage3 = createMemoryStorage();
+    const saves3 = createSaveManager(storage3);
+    saves3.saveRun(midFight, createRng(2));
+    const raw3 = JSON.parse(storage3.getItem(RUN_KEY));
+    for (const lo of [raw3.loadout, raw3.combatEntered.snapshot.loadout]) for (const id of ['head', 'hands', 'feet']) { delete lo.sets[id]; delete lo.active[id]; }
+    delete raw3.zones; delete raw3.collection; raw3.schemaVersion = 6;
+    storage3.setItem(RUN_KEY, JSON.stringify(raw3));
+    const resumed = saves3.loadRun(REG);
+    assert(resumed, `the pre-split mid-fight save loads rather than being archived — ${JSON.stringify(saves3.runStatus()).slice(0, 200)}`);
+    for (const id of ['head', 'hands', 'feet']) {
+      assert(Array.isArray(resumed.loadout.sets[id]), `the run's loadout gained ${id}`);
+      assert(Array.isArray(resumed.combatEntered.snapshot.loadout.sets[id]) && resumed.combatEntered.snapshot.loadout.active[id] === 0, `the saved fight's loadout gained ${id} too`);
+    }
+    const fightRow = (saves3.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'loadout.sets');
+    assert(fightRow && fightRow.now.snapshotSlots.includes('head') && /saved fight/.test(fightRow.why), `one row names both loadouts — got ${JSON.stringify(fightRow).slice(0, 220)}`);
   });
 
   test('84. the grip is read off the hands, its tags ride the action snapshot and no card, and cardTagIs reads both lists (plan phase 3c)', () => {

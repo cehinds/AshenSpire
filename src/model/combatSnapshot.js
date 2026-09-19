@@ -208,6 +208,13 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     for (const slot of slots) {
       const ids = record(loadout.sets) ? loadout.sets[slot.id] : undefined;
       const active = record(loadout.active) ? loadout.active[slot.id] : undefined;
+      // A slot the snapshot never knew (the row was authored after the fight
+      // was saved — phase 3b's head, hands, feet) is not a malformed
+      // reference: it has no cells and no active index at all. The load door
+      // gives it its empty cells (model/loadout.js healMissingSlotCells) after
+      // this check proves the rest; a slot the snapshot DOES name is held to
+      // the shape below.
+      if (ids === undefined && active === undefined) continue;
       if (!Array.isArray(ids)) {
         problems.push(`loadout.sets.${slot.id} must be an array`);
       } else {

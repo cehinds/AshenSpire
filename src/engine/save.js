@@ -625,15 +625,19 @@ export function createSaveManager(storage) {
       // hands, feet) has no cells in it. Give each its empty cells, as a fresh
       // run has them, and say so — a position the Armoury cannot draw is a
       // piece the player could never equip.
+      // The active-combat snapshot carries its own loadout (the fight's
+      // authority, SPEC §13.3) and is healed the same way, in the same row.
       const slotsAdded = healMissingSlotCells(registries, run.loadout);
-      if (slotsAdded.length) {
+      const snapshotSlotsAdded = run.combatEntered && run.combatEntered.snapshot
+        ? healMissingSlotCells(registries, run.combatEntered.snapshot.loadout) : [];
+      if (slotsAdded.length || snapshotSlotsAdded.length) {
         note(run, {
           kind: 'heal',
           site: 'save.js:loadRun',
           field: 'loadout.sets',
           was: undefined,
-          now: { slots: slotsAdded },
-          why: `the slot table gained ${slotsAdded.join(', ')} after this save was written; each has its empty cells now, as a fresh run does`,
+          now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
+          why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
         });
       }
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
