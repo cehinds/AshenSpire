@@ -65,10 +65,14 @@ export function wireBattlefieldStage(field, model) {
         if (!tile) continue;
         const compact = ['square', 'rhombus', 'circle'].includes(presentation.gridShape);
         const tileWidth = compact ? Math.min(cell.width, tileHeight) : cell.width;
-        tile.style.left = `${(cell.x - tileWidth / 2) / zoom}px`;
-        tile.style.top = `${cell.ground / zoom}px`;
-        tile.style.width = `${tileWidth / zoom}px`;
-        tile.style.height = `${(compact ? tileWidth : tileHeight) / zoom}px`;
+        const localTile = anchorLocalBox(VIEWPORT_ORIGIN, {
+          left: cell.x - tileWidth / 2, top: cell.ground,
+          width: tileWidth, height: compact ? tileWidth : tileHeight,
+        });
+        tile.style.left = `${localTile.left}px`;
+        tile.style.top = `${localTile.top}px`;
+        tile.style.width = `${localTile.width}px`;
+        tile.style.height = `${localTile.height}px`;
         tile.dataset.occupied = String(occupied.has(cell.cell));
         tile.dataset.anchorX = String(cell.x);
         tile.dataset.anchorY = String(cell.ground);
