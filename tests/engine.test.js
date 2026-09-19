@@ -8930,7 +8930,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const mount = cb.propertyMounts[triggerOwnerKey(cb, cb.player)]['class:reaver'];
     eq(mount.rules.map((r) => r.tag).join(','), 'favored,ironFooting', 'the picked node mounts beside the leaning');
     const blockBefore = cb.player.block;
-    dispatch(cb, { type: 'playCard', cardInstanceId: (cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace')).instanceId, targetId: cb.enemies[0].id });
+    cb.player.maxStamina = 3; cb.player.stamina = 3; // Brace costs a Stamina
+    const braceInst = cb.piles.hand.find((x) => x.cardId === 'brace') || cb.piles.draw.find((x) => x.cardId === 'brace');
+    if (!cb.piles.hand.includes(braceInst)) { cb.piles.draw.splice(cb.piles.draw.indexOf(braceInst), 1); cb.piles.hand.push(braceInst); }
+    dispatch(cb, { type: 'playCard', cardInstanceId: braceInst.instanceId, targetId: cb.enemies[0].id });
     assert(cb.player.block - blockBefore >= 4 + REG.balance.classTree.ironFooting.block, 'Brace braces, and Iron Footing braces more');
     const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(cb))); eq(stored.coreTags.join(','), 'ironFooting', 'the snapshot carries the picks');
     const back2 = restoreCombatSnapshot({ registries: REG, rng: createRng(1), snapshot: stored });
