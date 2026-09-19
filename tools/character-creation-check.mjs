@@ -289,7 +289,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('primary');
   // THE FLOW IS GATED (2026-09-11): Primary Stats opens on the Standard /
   // Assign points question alone, and the stat cards appear with the answer.
-  await click('#cz-statedit .se-mode[data-creation-mode="standard"]');
+  await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'standard'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   // `faces` reads A NATIVELY ACTIVATABLE FACE, not specifically a <button>:
   // every creation disclosure mounts with structure 'details' now, so each
   // face is the fold's own <summary> — focusable and activatable by keyboard
@@ -345,7 +345,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     && JSON.stringify(characterFold.resourceOrder.slice(0, 3)) === JSON.stringify(['cz-statedit', 'cz-primary-stats', 'cz-derived']),
   `${width}x${height}: Character nests modes, stats and keepsake one-open, with SPRITE beside the preview`);
   await open('primary');
-  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+  await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'pointbuy'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
   const refunded = await evaluate(`(() => ({
     remaining:document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim(),
@@ -394,10 +394,10 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await evaluate(`(() => { const overlay=document.querySelector('.cc-stat-overlay'); overlay.querySelector('button')?.focus(); return document.querySelector('.screen.customize').inert === true && overlay.contains(document.activeElement); })()`), `${width}x${height}: Assign Points scopes the screen and keeps focus inside the dialog`);
   await evaluate(`document.querySelector('.cc-stat-overlay').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points Escape close');
-  const escapeReceipt = await evaluate(`(() => ({inert:document.querySelector('.screen.customize').inert,active:document.activeElement?.dataset?.creationMode||'',chosen:document.querySelector('#cz-statedit .se-mode.chosen')?.dataset.creationMode||'',cursor:document.querySelector('#cz-statedit .se-mode.gp-focus')?.dataset.creationMode||''}))()`);
+  const escapeReceipt = await evaluate(`(() => ({inert:document.querySelector('.screen.customize').inert,active:document.activeElement?.value||'',chosen:document.querySelector('#cz-statedit .cc-mode-select')?.value||'',cursor:document.querySelector('#cz-statedit .cc-mode-select.gp-focus')?.value||''}))()`);
   assert(escapeReceipt.inert === false && escapeReceipt.active === 'standard' && escapeReceipt.chosen === 'standard' && escapeReceipt.cursor === 'standard', `${width}x${height}: Escape cancels Assign Points, clears the modal scope, and focuses Standard (${JSON.stringify(escapeReceipt)})`);
   await open('primary');
-  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+  await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'pointbuy'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points reopen');
   assert(await evaluate(`document.querySelector('.cc-stat-overlay .se-pool .sp-v')?.textContent.trim()==='10' && [...document.querySelectorAll('.cc-stat-overlay .se-value')].every((node)=>node.textContent.trim()==='10')`),
     `${width}x${height}: reopening Assign Points refunds the complete allocation again`);
@@ -425,7 +425,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     `${width}x${height}: incompatible equipment is rejected at its card or explained at its section's Continue (${JSON.stringify(incompatible)})`);
   await open('character');
   await open('primary');
-  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+  await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'pointbuy'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
   await click('.cc-stat-overlay [data-stat-done]');
   const modalRefusal = await evaluate(`(() => {
@@ -502,7 +502,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await setInput('#cz-name', 'Marya');
   await click('#cz-character-fold [data-face="primary"]');
   await open('primary');
-  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+  await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'pointbuy'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay');
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay .se-step').length`)) === 10, `${width}x${height}: Assign Points reuses five plus/minus rows in an overlay`);
   // SPEND THE POOL EVENLY, LOWEST FIRST, rather than piling it into two stats.
@@ -634,7 +634,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('character');
   const persisted = await evaluate(`(() => ({
     name:document.querySelector('#cz-name').value,
-    pointbuy:document.querySelector('#cz-statedit .se-mode[data-creation-mode="pointbuy"]').getAttribute('aria-pressed'),
+    pointbuy:String(document.querySelector('#cz-statedit .cc-mode-select').value === 'pointbuy'),
     keepsake:document.querySelector('#cz-keepsakes [data-keepsake-id="oldCinder"]').getAttribute('aria-pressed')
   }))()`);
   assert(persisted.name === 'Marya' && persisted.pointbuy === 'true' && persisted.keepsake === 'true', `${width}x${height}: character choices persist through section changes`);
@@ -707,7 +707,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
       } else {
         await open('character');
         await open('primary');
-        await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
+        await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'pointbuy'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
         if (await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points after a class change', 8000, false)) {
           // "Ash Staff needs intelligence 12 — you have 10." is the kit's own
           // requirement; reopening refunds the pool, so the named stat is
@@ -732,7 +732,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }
   const stillRefusing = entered ? null : await evaluate(`(() => ({
     tip: document.querySelector('#tooltip')?.textContent?.trim().slice(0, 200) || null,
-    mode: document.querySelector('#cz-statedit .se-mode[aria-pressed="true"]')?.dataset.creationMode ?? null,
+    mode: document.querySelector('#cz-statedit .cc-mode-select')?.value ?? null,
     overlay: !!document.querySelector('.cc-stat-overlay'),
     open: [...document.querySelectorAll('.disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(','),
   }))()`).catch((error) => ({ probe: error.message }));

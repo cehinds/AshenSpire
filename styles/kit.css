@@ -3554,13 +3554,8 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    is what keeps the first row's badge off the section face. So the derived
    head and gap stand exactly as they are, and only the track count and the
    card cap come across.
-   THE CHOOSE BUTTON OVERLAYS ITS CARD rather than standing under it. Under
-   it, the button's tap floor and 10px margin were charged to EVERY row —
-   a second row's worth of height across four cards — while only the focused
-   card ever shows one. Laid over the card's foot it still never moves the
-   grid (the slot it used to reserve is gone for every card alike), and it
-   covers the flavour line, which the detail pane prints in full. */
-.cc-card-selectors[data-view="grid"] .equipment-choose { position:absolute; left:6px; right:6px; bottom:6px; z-index:4; width:auto; margin-top:0; }
+   Choose appears below the selected card, in its own reserved action slot. */
+.cc-card-selectors[data-view="grid"] .equipment-choose { position:static; width:100%; margin-top:10px; }
 .cc-card-selectors .equipment-poker-card { position:relative; z-index:1; transform-origin:center bottom; transition:transform 180ms ease-out, box-shadow 180ms ease-out; }
 .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-6px) scale(1.05); z-index:3; box-shadow:0 12px 26px #0008,0 0 18px #d0ac5d55; border-radius:12px; }
 .cc-card-selectors .equipment-choose { white-space:normal; overflow-wrap:anywhere; line-height:1.2; padding:6px 4px; font-size:14px; }
@@ -3569,7 +3564,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
 
 /* ═══ THE SAME CHOICES AS A LIST ══════════════════════════════════════════
    Grid, above, is a browsing wall: the card is shrunk to 152px, the Choose
-   button is laid OVER its foot so no row reserves height for it, and both it
+   button follows its foot in a reserved action slot, and both it
    and the information badge are hidden until a card is focused — everything
    bought back is spent on fitting more cards in the glass (#996).
    List makes the opposite trade and is the honest counterpart the toggle
@@ -4873,3 +4868,72 @@ button[data-button-size] {
 .customize .cc-unfold-summary { display: flex; flex-direction: column; justify-content: center; gap: var(--creation-head-tools-gap); min-width: 0; min-height: 0; overflow: hidden; text-align: start; font-weight: normal; }
 .customize .cc-unfold-relic { display: inline-flex; align-items: center; gap: var(--creation-rail-gap); color: var(--ink-dim); font-size: calc(1em * var(--creation-rail-value-scale)); }
 .customize .cz-class.unfolded::after { display: none; }
+
+/* Creation is read top-to-bottom: compact stats, resources, then Continue.
+   Only the workspace pane scrolls when enlarged text needs more room. */
+.customize #cz-primary-stats { gap:4px; }
+.customize .cc-name-row { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:1rem; padding-block:.5rem; }
+.customize .cc-name-row > .r-trail { max-width:100%; width:100%; }
+.customize .cc-name-row .cz-name { width:100%; max-width:100%; }
+.customize #cz-primary-stats .cc-primary-stat.hosts-face > .as-row,
+.cc-stat-modal .cc-primary-stat.hosts-face > .as-row { min-height:var(--tap-floor); padding:.35rem .8rem; gap:.6rem; }
+.customize #cz-primary-stats .cc-primary-stat { min-height:var(--tap-floor); }
+.customize #cz-primary-stats .cc-primary-stat > .as-row { font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); }
+.customize #cz-primary-stats :is(.ls-label, .as-status) { font-size:inherit; }
+.customize #cz-primary-stats .ls-hint { font-size:max(.9em, calc(12px / var(--ui-zoom, 1))); line-height:1.25; }
+.customize #cz-primary-group { gap:.6rem; }
+.customize .cc-mode-select { width:100%; min-height:var(--tap-floor); padding:.4rem .8rem; font:inherit; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); color:var(--ink); background:var(--panel); border:1px solid var(--line); border-radius:var(--r-1); color-scheme:dark; }
+.customize .cz-stage .modal-btnrow.cc-primary-continue-row { position:static; margin-top:.5rem; padding:0; background:none; }
+.customize #cz-derived .cc-derived { display:flex; flex-wrap:wrap; gap:.35rem .75rem; }
+.customize #cz-derived .as-chip { padding:.15rem 0; font-size:max(1rem, calc(14px / var(--ui-zoom, 1))); }
+.customize #cz-derived .as-chip .cv { font-size:inherit; }
+.customize #cz-derived .as-chip .ck { font-size:max(.8em, calc(11px / var(--ui-zoom, 1))); letter-spacing:.03em; }
+.customize .cc-equipment-details:empty { display:none; }
+.customize .cc-equip-group:has(> .cc-equipment-details:empty) { grid-template-columns:minmax(0,1fr); }
+.customize .cc-equip-group > .cc-card-selectors { --cc-choice-head:14px; grid-row:auto; overflow:visible; max-height:none; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { padding-top:var(--cc-choice-head); gap:24px 12px; }
+.customize .cc-equip-group[data-equipment-section] { max-height:none; grid-template-rows:auto auto; gap:12px; }
+.customize .cc-equip-group > .cc-equipment-details { max-height:none; overflow:visible; }
+.customize .cc-equipment-continue { position:static; grid-column:1 / -1; grid-row:auto; }
+.customize .cc-card-selectors .equipment-choose { font-size:max(14px, calc(14px / var(--ui-zoom, 1))); }
+.customize .cc-card-selectors[data-view="list"] .equipment-choose { grid-column:1 / -1; }
+.customize .cc-card-selectors .poker-equipment-choice:not(.choice-focused) .equipment-choose { visibility:hidden; pointer-events:none; }
+.customize .card-info-button.creation-info-popover:popover-open {
+  position:fixed; inset:auto; margin:0; transform:none; visibility:visible; opacity:1;
+  pointer-events:auto; z-index:2147483647; overflow:visible;
+  box-shadow:0 0 16px #d0ac5d80;
+}
+
+/* Compact equipment selection: one header, one active section, one way forward. */
+.customize .cc-equipment-header { display:flex; align-items:center; gap:12px; padding:10px 6px; border-bottom:1px solid #74603c; }
+.customize .cc-equipment-header b { color:var(--gold,#c9a227); }
+.customize .cc-equipment-header select { flex:1; min-width:0; background:transparent; color:inherit; border:0; font:inherit; }
+.customize #cz-equipment-count { white-space:nowrap; font-size:12px; }
+.customize [data-creation-stage="equipment"] .as-catnav-toggle { display:none; }
+.customize #cz-equipment-fold > details:not([open]) { display:none; }
+.customize #cz-equipment-fold > details > summary { display:none; }
+.customize #cz-equipment-fold > details { border:0; padding:0; }
+.customize .cc-equip-group[data-equipment-section] { display:flex; flex-direction:column; gap:8px; padding:0; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,180px)); justify-content:center; padding:58px 6px 4px; gap:16px 12px; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="list"] { padding-top:58px; }
+.customize .cc-card-selectors .equipment-choose { display:none; }
+.customize .cc-equipment-details { border:0; padding:4px 8px; }
+.customize .cc-item-heading { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.customize .cc-item-heading h3 { margin:0 auto 0 0; font-size:1.25rem; }
+.customize .cc-item-heading .inspection-facts { display:flex; gap:6px; margin:0; }
+.customize .cc-compact-details { display:flex; flex-direction:column; gap:8px; }
+.customize .cc-compact-details .inspection-effect,.customize .cc-compact-details .inspection-requirement { margin:0; font-size:14px; }
+.customize .cc-compact-details .inspection-lore { margin:0; border:0; padding:0; }
+.customize .cc-compact-details .inspection-lore summary { padding:4px 0; font-size:12px; }
+.customize .cc-single-tags { display:flex; flex-wrap:nowrap; gap:5px; min-width:0; width:100%; }
+.customize .cc-single-tags > .inspection-tag { flex:none; white-space:nowrap; font-size:12px; padding:5px 7px; }
+.cc-single-tags > [hidden] { display:none!important; }
+.cc-tags-popup { position:fixed; inset:auto; margin:0; width:min(290px,calc(100vw - 24px)); padding:12px; background:#302719; border:1px solid #b79a4e; border-radius:8px; color:#e4d5af; box-shadow:0 8px 28px #000b; }
+.cc-tags-popup .inspection-tag { display:inline-block; margin:0 5px 5px 0; cursor:pointer; }
+.cc-tag-explanation { margin:6px 0 0; font-size:14px; line-height:1.4; }
+.customize .cc-equipment-continue { margin:2px 8px 8px; position:static; }
+.customize .cc-equipment-continue:not([aria-disabled="true"]),.customize .cz-next-stage:not([aria-disabled="true"]) { background:#245a3a; border-color:#76aa78; color:white; }
+.customize #cz-equipment-receipts,.customize .cc-move-note { display:none; }
+.customize .cc-card-selectors .epc-facts { display:flex; gap:16px; justify-content:center; }
+.customize .cc-card-selectors .epc-fact { display:flex; flex-direction:row; gap:5px; align-items:center; }
+.customize .cc-card-selectors .epc-heading { display:none; }

@@ -22,7 +22,7 @@
   },
   "sizing": {
     "headPortraitRem": "$portraitRem",
-    "attributeColumnsWide": 2,
+    "attributeColumnsWide": 1,
     "attributeColumnsNarrow": 1,
     "attributeNarrowBelowRem": "$narrowBelowRem",
     "choiceDescriptionLines": "$choiceLines",
