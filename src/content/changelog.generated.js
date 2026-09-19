@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1206",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Four more relics have painted identities, and every relic has a lore-and-size preview",
+    "detail": "Ivory Comb, Blessed Dew, Gravetender's Bell and Wyrm Heart now use their own artwork throughout the shared relic displays. The review gallery includes all 63 relics in four sizes, existing lore and source notes, search, artwork filters and working vertical scrolling. Effects, drop rules and saves are unchanged.",
+    "build": "0.7.1.282",
+    "pullRequest": 1206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1206"
+  },
+  {
     "id": "pr-1204",
     "date": "2026-09-19",
     "group": "2026-09-19",
