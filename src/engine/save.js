@@ -530,7 +530,11 @@ export function createSaveManager(storage) {
     saveRun(run, rng, slot = 1) {
       if (rng) run.streamCounters = rng.getCounters();
       ensureProfile(); // a stored run implies a stored profile — never the other way round
-      storage.setItem(runKey(slot), serializeRun(run));
+      // W1l–W1r: the slot says when it was last written. Stamped only when the
+      // write lands, so a full store cannot leave a run claiming a save it lost.
+      const previous = run.savedAt;
+      run.savedAt = new Date().toISOString();
+      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }
     },
 
     /**
@@ -849,6 +853,7 @@ export function createSaveManager(storage) {
           hp: r.hp,
           maxHp: r.maxHp,
           customization: r.customization,
+          savedAt: typeof r.savedAt === 'string' ? r.savedAt : null,
         };
       } catch (e) {
         return null;

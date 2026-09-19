@@ -6,7 +6,7 @@
     "src/ui/screens/shop.js",
     "src/ui/screens/compendium.js"
   ],
-  "sites": 436,
+  "sites": 431,
   "distinct": 365,
   "files": {
     "src/ui/screens/settings.js": 100,
@@ -22,7 +22,7 @@
     "src/ui/uiContent.js": 11,
     "src/ui/screens/profileArchive.js": 10,
     "src/ui/components/debugChrome.js": 9,
-    "src/ui/components/saveSlotSelector.js": 9,
+    "src/ui/components/saveSlotSelector.js": 6,
     "src/ui/components/smithUpgradeModal.js": 9,
     "src/ui/components/tutorial.js": 8,
     "src/ui/models/ArmouryModels.js": 8,
@@ -33,7 +33,7 @@
     "src/ui/models/MountServiceModel.js": 4,
     "src/ui/screens/gameover.js": 4,
     "src/ui/screens/history.js": 4,
-    "src/ui/screens/title.js": 4,
+    "src/ui/screens/title.js": 2,
     "src/ui/components/holdconfirm.js": 3,
     "src/ui/components/menuComponents.js": 3,
     "src/ui/models/QuickAccessPanelModel.js": 3,

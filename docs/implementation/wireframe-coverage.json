@@ -327,43 +327,77 @@
       "id": "W1l",
       "name": "New game slot selection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SaveSlotSelectionModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/engine/save.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs 7/7 and menu-slot-availability 7 checks; the door is slotDoor in saveSlotSelector.js, shared with W1m",
+        "wide": "Title New game / Load game doors at 1280x800: title is the door’s purpose, no sub-heading, primary reads Create character / Load; rows print the class, act · floor · HP and “Saved 12:29 AM”; the occupied row carries its ✕",
+        "compact": "844x390: the door is 366x376 px at (239, 14), inside the viewport; its three rows scroll 33 px inside the door body; every control ≥ 44 px. The title screen behind it scrolls 277 px (pre-existing)",
+        "iphoneSE": "375x667: door 361x404 px at (7, 139), inside the viewport, every control ≥ 44 px; the title screen behind it scrolls 177 px (pre-existing)",
+        "galaxyS24": "360x780: door 346x391 px at (7, 202), inside the viewport, no page scroll, every control ≥ 44 px. 390x844: 373x452 px at (9, 205), no page scroll",
+        "interactions": "Tap highlights a slot, a second tap (or Create character) opens its decision door; an empty slot asks “Start in slot n?”, an occupied one says nothing changes until Begin and continues without danger; Back returns with the slot still highlighted; Escape closes. Choosing an occupied slot wrote nothing (slot 1 still held the Reaver until Begin)"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The New game door is titled “New game” (no “Choose a slot” sub-heading, no eyebrow) and its primary is “Create character” (uiStrings title.slots.*). Rows print the class, act · floor · HP and “Saved …” from the new savedAt stamp saveRun writes when the write lands (engine/save.js; state.js admits the optional field). Selecting never overwrites: the old Overwrite door is gone; an occupied slot’s door only says the replacement is asked at Begin (W2c). Delete is the row’s ✕, the owner’s 2026-09-11 choice, not the drawing’s single “Delete selected” button — owner decision. The review doors an empty/occupied slot opens before creation are the owner’s 2026-09-04 request and are kept."
     },
     {
       "id": "W1m",
       "name": "Load game slot selection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SaveSlotSelectionModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/engine/save.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs 7/7; menu-slot-availability: empty slots are unselectable in the in-run list and selectable on the title",
+        "wide": "Title New game / Load game doors at 1280x800: title is the door’s purpose, no sub-heading, primary reads Create character / Load; rows print the class, act · floor · HP and “Saved 12:29 AM”; the occupied row carries its ✕; the in-run Load door (quick menu) is the same slotDoor with “Load game” and “Load” and no delete",
+        "compact": "844x390: the door is 366x376 px at (239, 14), inside the viewport; its three rows scroll 33 px inside the door body; every control ≥ 44 px. The title screen behind it scrolls 277 px (pre-existing)",
+        "iphoneSE": "375x667: door 361x404 px at (7, 139), inside the viewport, every control ≥ 44 px; the title screen behind it scrolls 177 px (pre-existing)",
+        "galaxyS24": "360x780: door 346x391 px at (7, 202), inside the viewport, no page scroll, every control ≥ 44 px. 390x844: 373x452 px at (9, 205), no page scroll",
+        "interactions": "Title: tap reviews, hold loads (unchanged); Load opens the review door, Load Save resumes. In-run: Load opens W2d. The ✕ opens W2b. Verified by real clicks at 1280x800"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The Load game door is titled “Load game” and its primary is “Load” (title and quick menu alike); rows carry “Saved …”. Empty rows on the title offer a new climb (“Start a new climb here”), in-run they are disabled (“No climb saved here”). The review card’s meta line is seed · saved time (slotMeta)."
     },
     {
       "id": "W1n",
@@ -469,22 +503,39 @@
       "id": "W1r",
       "name": "Save status",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SaveStatusModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/quicknav.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: saveStatusReview (destination, last saved, Saved / failed + Retry), savedAtLabel, saveRun stamps only a landed write",
+        "wide": "1280x800: with storage made to throw QuotaExceededError, Save Game in the quick menu opened “Save game”, 460x429 px: the run’s identity line, “The save did not land: … Your run is unchanged; try the save again.”, the DetailCard with SLOT 1 and “Last saved 12:27 AM”, Back and Retry save. Retry with storage restored closed the door and the slot held the run",
+        "compact": "pending: not measured at 844x390 (the door is the shared confirmation frame measured for W2b at 366x376)",
+        "iphoneSE": "pending: not measured at 375x667",
+        "galaxyS24": "pending: not measured at 360x780",
+        "interactions": "Retry saves again (saveNow → persist) and never repeats a gameplay action; a success says “Saved · Slot n” in place on the quick-menu row (owner rule) and opens no door; the row says nothing when the door is open"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). W1r exists for the failure the drawing names: an explicit Save that did not land. main.js saveNow wraps the four Save rows; autosave (persist) still throws so a boot path never hides a failure. The door is drawn by the shared confirmation frame (openSaveStatusReview in saveSlotSelector.js) with the W1 inspection body’s slots and no art; SaveStatusModel owns the words and the time format (today: the time; otherwise date and time; never Invalid Date). A successful Save keeps the owner’s in-place “Saved · Slot n” rather than opening a door — the drawing’s Saved state is that row."
     },
     {
       "id": "W1s",
@@ -652,64 +703,127 @@
       "id": "W2b",
       "name": "Delete save",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ConfirmationReviewModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: deleteSaveReview names the save, states the real policy (clearRun removes; nothing archives; profile stays), action.deleteSave is DESTRUCTIVE",
+        "wide": "alertdialog at 1280x800 with the CANNOT BE UNDONE eyebrow, the question, the save named as its slot row names it, the exact consequence, the DetailCard with seed and saved time, Back (focused) and the action-named danger primary; question “Delete slot 1?”, target “Reaver · Slot 1 · Act 1 · Floor 0 · 64/64 HP”, primary DELETE",
+        "compact": "844x390: 366x376 px at (239, 7), inside the viewport; focus on Back",
+        "iphoneSE": "375x667: 361x381 px at (7, 143), inside the viewport",
+        "galaxyS24": "360x780: 346x372 px at (7, 204), no page scroll. 390x844: 376x381 px at (7, 232)",
+        "interactions": "The ✕ taps into the review and holds to commit (beatArmer, unchanged); Back and Escape return to the list with the slot kept; DELETE clears the slot and reopens the door it came from"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The delete review used to print the generic “Review this change…” line. It now fills W2’s three slots from ConfirmationReviewModel.deleteSaveReview: the consequence is the save manager’s actual policy — clearRun removes the run and the archive keeps only saves that failed to load — and run deletion never implies profile deletion. The consequence tag stays as the eyebrow (the W2a owner decision)."
     },
     {
       "id": "W2c",
       "name": "Replace save",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ConfirmationReviewModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: replaceSaveReview names the existing save as target and the replacement (class, seed) in the consequence; action.overwriteSave is DESTRUCTIVE; an unnamed replacement throws",
+        "wide": "Begin on the creation screen over an occupied slot opened “Replace this save?” as an alertdialog: target “Reaver · Slot 1 · Act 1 · Floor 0 · 64/64 HP”, consequence “Replacement: Starseer, seed 1P1I6FU. The saved climb in slot 1 is removed and cannot be recovered.”, Back focused, Replace (danger). Replace began the Starseer in slot 1 (class reaver → starseer, savedAt stamped)",
+        "compact": "pending: not measured at 844x390 (same frame as W2b)",
+        "iphoneSE": "pending: not measured at 375x667",
+        "galaxyS24": "pending: not measured at 360x780",
+        "interactions": "Asked at the write boundary (showCustomize onStart), so Back keeps the old save and the draft; nothing about the slot changes before Replace. Selecting the slot on the title no longer asks"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). Moved the replacement confirmation from slot selection to Begin (FRONTEND-WIREFRAMES W1l/W2c: “perform the existing required replacement confirmation at the actual write boundary”), where the replacement can be named. main.js reads the title’s own slot record (class NAME) for the target. The title’s old “Overwrite slot n?” door is now a non-destructive notice (title.slots.start.occupied)."
     },
     {
       "id": "W2d",
       "name": "Load over active run",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ConfirmationReviewModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: loadOverRunReview names the saved climb and seed as target and the exact loss; action.loadSlot is DESTRUCTIVE; an empty slot yields no target rather than a throw",
+        "wide": "In-run Load → Load opened “Load slot 1?” as an alertdialog with the DISCARDS UNSAVED CHANGES eyebrow, target “Reaver · Slot 1 · Act 1 · Floor 0 · 64/64 HP · Seed 15ALNWH”, consequence “The saved climb replaces everything done since your last save.”, Back focused, Load saved run",
+        "compact": "pending: not measured at 844x390 (same frame as W2b)",
+        "iphoneSE": "pending: not measured at 375x667",
+        "galaxyS24": "pending: not measured at 360x780",
+        "interactions": "Back and Escape return to the Load door; Load saved run resumes the slot (unchanged path)"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The in-run load review (confirmSlotLoad) used to pack the climb and the consequence into one message. It now fills the W2 target slot with the saved climb and seed and the consequence slot with the exact loss (ConfirmationReviewModel.loadOverRunReview)."
     },
     {
       "id": "W2e",
