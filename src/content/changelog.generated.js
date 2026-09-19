@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1193",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "A class can now be something you earn, and the Turncoat's Mirror lets a run change its class midway",
+    "detail": "The unlock table can gate a class behind reaching a class level in any run or felling a boss while holding a certain kind of weapon; a gated class shows locked at character creation with a hint of how to earn it, and your profile now remembers your highest class level and which weapons each boss fell to. No class ships gated yet. A new event, the Turncoat's Mirror, offers to swap your class for another chosen at random: your deck, relics, gear, attributes and weapon skills stay yours, your class level starts over and any tree nodes the new class has no seat for are dropped, and the new class's starting kit is not dealt. Turn away and nothing changes.",
+    "build": "0.7.1.208",
+    "pullRequest": 1193,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1193"
+  },
+  {
     "id": "pr-1192",
     "date": "2026-09-19",
     "group": "2026-09-19",
