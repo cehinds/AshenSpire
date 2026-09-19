@@ -40,5 +40,7 @@ export function combatFormation({ width, height, friends, enemies, rem = 16 }) {
     };
   });
   return { ground: lastFoot, friendlyWidth: span, enemyWidth: span,
+    cells: [...group(Array.from({ length: 6 }, (_, i) => `grid-player-${i}`), false),
+      ...group(Array.from({ length: 6 }, (_, i) => `grid-enemy-${i}`), true)],
     slots: [...group(friends, false), ...group(enemies, true)] };
 }

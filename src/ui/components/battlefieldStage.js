@@ -44,6 +44,23 @@ export function wireBattlefieldStage(field, model) {
       friends: frames.filter(f => f.classList.contains('player')).map(f => f.dataset.eid),
       enemies: frames.filter(f => f.classList.contains('enemy')).map(f => f.dataset.eid) });
     const nameWidth = Math.min(...plan.slots.map(slot => slot.width));
+    const grid = field.querySelector('.formation-grid');
+    if (grid) {
+      const occupied = new Set(plan.slots.map(slot => slot.cell));
+      const grounds = [...new Set(plan.cells.map(cell => cell.ground))].sort((a, b) => a - b);
+      const tileHeight = Math.max(1, Math.min(...grounds.slice(1).map((ground, i) => ground - grounds[i])) * .7);
+      for (const cell of plan.cells) {
+        const tile = grid.querySelector(`[data-cell="${cell.cell}"]`);
+        if (!tile) continue;
+        tile.style.left = `${(cell.x - cell.width / 2) / zoom}px`;
+        tile.style.top = `${cell.ground / zoom}px`;
+        tile.style.width = `${cell.width / zoom}px`;
+        tile.style.height = `${tileHeight / zoom}px`;
+        tile.dataset.occupied = String(occupied.has(cell.cell));
+        tile.dataset.anchorX = String(cell.x);
+        tile.dataset.anchorY = String(cell.ground);
+      }
+    }
     // Writes first, then reads: resetting each sprite's zoom immediately before
     // measuring it forced one synchronous layout per combatant. One batch of
     // writes and one layout serve every measurement below.

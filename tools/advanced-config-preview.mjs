@@ -157,6 +157,19 @@ async function main() {
       const grid = await evaluate(`(() => { const grid = document.querySelector('.formation-grid'); return { display: getComputedStyle(grid).display, pointer: getComputedStyle(grid).pointerEvents, labels: [...grid.children].map(el => el.textContent) }; })()`);
       if (grid.display !== 'grid' || grid.pointer !== 'none' || !grid.labels[0].startsWith('A1') || !grid.labels[11].startsWith('C4')) throw new Error(JSON.stringify(grid));
       await capture(name);
+      const alignment = await evaluate(`(() => {
+        const field = document.querySelector('.field');
+        const rect = field.getBoundingClientRect();
+        return [...field.querySelectorAll('.combatant[data-formation-cell]')].map(actor => {
+          const tile = field.querySelector('[data-cell="' + actor.dataset.formationCell + '"]');
+          const box = tile.getBoundingClientRect();
+          return { cell: actor.dataset.formationCell, occupied: tile.dataset.occupied,
+            fieldTop: rect.top, gridTop: tile.parentElement.getBoundingClientRect().top, tileTop: box.top, tileHeight: box.height, css: tile.style.cssText, ground: actor.dataset.groundY, zoom: getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'),
+            y: (box.top + box.bottom) / 2 - rect.top - Number(actor.dataset.groundRatio) * rect.height,
+            x: (box.left + box.right) / 2 - rect.left - Number(tile.dataset.anchorX) };
+        });
+      })()`);
+      if (!alignment.length || alignment.some(a => a.occupied !== 'true' || Math.abs(a.x) > 1 || Math.abs(a.y) > 1)) throw new Error(name + ': grid differs from actual formation anchors ' + JSON.stringify(alignment));
       await evaluate("document.documentElement.dataset.formationGrid = 'false'");
       if (await evaluate("getComputedStyle(document.querySelector('.formation-grid')).display") !== 'none') throw new Error('Grid did not hide');
       console.log(`PASS ${name}: 12 labeled cells, pointer passthrough, toggle off`);
