@@ -105,9 +105,13 @@ export class Workspace {
   /** Write config files after the whole tree validates and every expected hash matches. */
   async save(changes) {
     if (!Array.isArray(changes) || !changes.length) throw Error('Nothing to save');
-    const { errors } = await this.validate(changes);
-    if (errors.length) throw Error(`The compiler refuses this tree:\n${errors.join('\n')}`);
     return this.serialize(async () => {
+      // Validated INSIDE the queue, against the tree as every earlier write
+      // left it: two tabs saving disjoint files could each pass against the
+      // old tree (one dropping a token, one adding a reference to it) and
+      // leave a combined tree the compiler refuses.
+      const { errors } = await this.validate(changes);
+      if (errors.length) throw Error(`The compiler refuses this tree:\n${errors.join('\n')}`);
       const targets = [];
       for (const c of changes) {
         const abs = await safePath(this.root, `${CONFIG_DIR}/${c.rel}`, { creating: true });

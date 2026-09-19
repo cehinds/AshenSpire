@@ -137,3 +137,22 @@ test('HTTP: token, origin and host checks; the preview origin cannot reach the A
   assert.equal((await fetch(`${app.url.replace('127.0.0.1', 'localhost')}/game/tools/config-build.mjs`)).status, 400, 'not a preview asset');
   assert.equal((await fetch(`${app.url}/api/config`, { method: 'DELETE', headers: { 'x-studio-token': token } })).status, 404);
 });
+
+test('two saves of disjoint files validate in turn: the second sees the first on disk', async (t) => {
+  const { root, workspace } = await fixture(t);
+  const [w4a, tokens] = await workspace.config();
+  // One tab drops the token; another, from the same old tree, adds a second reference to it. Each
+  // validates clean against the old tree; only serialized validation refuses the second.
+  const dropToken = '{\n  "vars": {}\n}\n';
+  const w4aWithoutRef = W4A.replace('"$targetPx"', '44');
+  const results = await Promise.allSettled([
+    workspace.save([{ rel: tokens.rel, text: dropToken, hash: tokens.hash }, { rel: w4a.rel, text: w4aWithoutRef, hash: w4a.hash }]),
+    workspace.save([{ rel: w4a.rel, text: W4A.replace('"exposedTargetPx": "$targetPx"', '"exposedTargetPx": "$targetPx", "minWidthPx": "$targetPx"'), hash: w4a.hash }]),
+  ]);
+  assert.equal(results[0].status, 'fulfilled');
+  assert.equal(results[1].status, 'rejected');
+  assert.match(String(results[1].reason.message), /changed on disk|compiler refuses/);
+  const onDisk = await fs.readFile(path.join(root, 'content/config', w4a.rel), 'utf8');
+  assert.equal(onDisk, w4aWithoutRef, 'the first write stands and the tree still compiles');
+  assert.deepEqual((await workspace.validate([])).errors, []);
+});

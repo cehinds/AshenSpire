@@ -157,6 +157,8 @@ test('regionsFor draws the combat bands, floor, hand and the footer floor note',
   assert.equal(floor.y, 80 + 440 * 0.8);
   const hand = regs.find((r) => r.id === 'hand');
   assert.equal(M.round(hand.w, 6), M.round(75 * 10 * 1.07, 6), 'wide hand width is wideWidthRem × rootFontPx × zoom');
+  const short = M.regionsFor(wf, w4a, { width: 844, height: 390 }, { parent: w4, tokens, layoutMode: 'short-wide', zoom: 0.62, rootFontPx: 10 }).find((r) => r.id === 'hand');
+  assert.equal(short.h, 208, 'the hand minimum is physical px, not scaled by the zoom');
   const narrow = M.regionsFor(wf, w4a, { width: 390, height: 844 }, { parent: w4, tokens, layoutMode: 'narrow', zoom: 0.9, rootFontPx: 10 }).find((r) => r.id === 'hand');
   assert.equal(narrow.w, 22 * 10 * 0.9);
 });

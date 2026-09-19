@@ -158,7 +158,13 @@ function deleteSelection() {
 function duplicateSelection() {
   if (state.mode !== 'sketch' || !state.selection.size) return;
   const s = M.clone(state.sketch.present); const ids = [];
-  for (const b of selectedBoxes()) { const c = { ...M.clone(b), id: M.newId(), label: `${b.label} copy`, x: b.x + 2, y: b.y + 2 }; s.boxes.push(c); ids.push(c.id); }
+  for (const b of selectedBoxes()) {
+    const c = { ...M.clone(b), id: M.newId(), label: `${b.label} copy`, x: b.x + 2, y: b.y + 2 };
+    // An override that pins x or y moves by the same offset, so the copy sits
+    // beside the original at every breakpoint, not only at the base.
+    for (const o of Object.values(c.overrides || {})) { if (typeof o.x === 'number') o.x += 2; if (typeof o.y === 'number') o.y += 2; }
+    s.boxes.push(c); ids.push(c.id);
+  }
   state.selection = new Set(ids); commitSketch(s);
 }
 function nudge(dx, dy) {

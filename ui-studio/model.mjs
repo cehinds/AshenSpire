@@ -495,7 +495,8 @@ export function jsonSpans(text) {
  * to the root font size (`rootFontPx`, 10 at text size Auto). So a rem
  * threshold or clamp (the shop's wideMinRem, the category rail's minimum
  * host width, the hand's rem widths) is compared here at rootFontPx × zoom
- * physical px, and a local px value (the hand's minimum height) at × zoom.
+ * physical px; a px value the game states as physical (the hand's minimum
+ * height, the W4 footer minimum, the map header floor) is used as written.
  */
 export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide', screens = {}, zoom = 1, rootFontPx = 10 } = {}) {
   const W = viewport.width, H = viewport.height, rem = rootFontPx * zoom;
@@ -545,7 +546,10 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
         const ctx = out.find((r) => r.band === 'context');
         const wide = num(hand.wideWidthRem) * rem, narrow = num(hand.narrowWidthRem) * rem;
         const width = Math.min(W, layoutMode === 'narrow' ? narrow : wide);
-        const height = Math.max(num(hand.minimumHeightPx) * zoom, ctx ? ctx.h : 0);
+        // minimumHeightPx is physical: CombatLayout.allocateSceneBands divides
+        // it by the zoom to get local px, so on this physical canvas it is
+        // used as written.
+        const height = Math.max(num(hand.minimumHeightPx), ctx ? ctx.h : 0);
         push({ id: 'hand', label: `hand ≥${num(hand.minimumHeightPx)}px, ${layoutMode === 'narrow' ? hand.narrowWidthRem : hand.wideWidthRem}rem wide`, x: (W - width) / 2, y: ctx ? ctx.y + ctx.h - height : H - height, w: width, h: height, dashed: true });
       }
       const footerMin = parent && num(getPath(parent, 'sizing.minimums.footerPx'));
