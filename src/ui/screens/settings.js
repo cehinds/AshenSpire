@@ -1310,7 +1310,7 @@ function categoryHtml(cat, settings, saves) {
         + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
         + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
     }).join('');
-    return `<div class="as-pane-head set-advanced-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
+    return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
       + '<div class="set-advanced-tools">'
       + '<label class="set-config-search"><span>Find a setting</span><input type="search" data-advanced-search placeholder="Search names or config paths" autocomplete="off"></label>'
       + '<span class="set-config-actions"><button type="button" class="as-btn" data-reset-config="group">Reset section</button><button type="button" class="as-btn" data-reset-config="all">Reset all game config</button></span>'
@@ -1428,7 +1428,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // switch — the old nodes go with the innerHTML that replaced them, so nothing
   // accumulates. The one listener that is NOT per-panel (the resize handler for
   // the applied-zoom readout) is installed once per open, below.
+  // Move one set of section tabs between the sidebar and compact content pane.
+  const placeAdvancedNavigation = (mode = container.querySelector('.set-railed')?.dataset.settingsNav) => {
+    const sections = container.querySelector('.set-advanced-head');
+    if (!sections) return;
+    const vertical = mode !== 'selector';
+    sections.querySelector('[role="tablist"]').setAttribute('aria-orientation', vertical ? 'vertical' : 'horizontal');
+    if (vertical) container.querySelector('.set-tabs [data-member="Advanced"]')?.after(sections);
+    else container.querySelector('.set-panel')?.prepend(sections);
+  };
   const wire = () => {
+  placeAdvancedNavigation();
   const reportAdvancedProblems = () => {
     const problems = advancedConfigProblems(contentBundle, settings);
     if (problems.length) showSettingsNotice(problems[0], 'game-config');
@@ -1441,6 +1451,20 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (changelogMount) renderChangelogSection(changelogMount);
 
   container.querySelectorAll('.set-subtab').forEach((button) => {
+    button.classList.add('as-railitem');
+    button.addEventListener('keydown', (event) => {
+      const tabs = [...container.querySelectorAll('.set-subtab')];
+      const vertical = button.closest('[role="tablist"]').getAttribute('aria-orientation') === 'vertical';
+      const delta = event.key === (vertical ? 'ArrowDown' : 'ArrowRight') ? 1
+        : event.key === (vertical ? 'ArrowUp' : 'ArrowLeft') ? -1 : 0;
+      const target = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1)
+        : delta ? tabs[(tabs.indexOf(button) + delta + tabs.length) % tabs.length] : null;
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+      target.click();
+      target.focus();
+    });
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
       settings[ADVANCED_CAT_KEY] = group;
@@ -1449,6 +1473,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         const selected = candidate.dataset.advancedGroup === group;
         candidate.classList.toggle('on', selected);
         candidate.setAttribute('aria-selected', String(selected));
+        candidate.setAttribute('aria-pressed', String(selected));
       });
       container.querySelectorAll('.set-advanced-group').forEach((panel) => {
         panel.hidden = panel.dataset.advancedPanel !== group;
@@ -1910,6 +1935,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     toggleId: 'set-cat-select',
     onChange: ({ mode, open }) => {
       railed.dataset.settingsNav = mode;
+      placeAdvancedNavigation(mode);
       railed.toggleAttribute('data-nav-open', open);
     },
   });
@@ -1933,6 +1959,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
     const panel = container.querySelector('.set-panel');
     if (!panel) return;
+    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
     panel.innerHTML = categoryHtml(cat, settings, saves);
     panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
     // A tab switch is a new screenful. Start it at the top, or the player lands
