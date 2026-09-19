@@ -9272,7 +9272,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     emberRun.relics.push('emberFragment');
     const ember = visitTo(emberRun, 'shrine', { healMult: 0.5 });
     restAt(ember);
-    eq(emberRun.hp, 10 + Math.floor(Math.floor((emberRun.maxHp * rest.hpPartialPct) / 100) * 0.5 * 1.15), 'Ember Fragment ×1.15 and the mod ×0.5 scale the heal');
+    eq(emberRun.hp, 10 + Math.floor(((emberRun.maxHp * rest.hpPartialPct) / 100) * 0.5 * 1.15), 'Ember Fragment ×1.15 and the mod ×0.5 scale the heal, floored once after them');
     eq(emberRun.mana, floor, 'the multipliers leave Mana alone');
 
     // THE DENIAL IS BY TAG: the Wyrm Heart forbids the partial rest — the

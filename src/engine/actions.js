@@ -26,7 +26,7 @@
 import * as F from './combatRules.js';
 import { allocateInteger } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
-import { evaluate, isFormula } from '../model/formulas.js';
+import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
 import { evalPredicate, checkPhases } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
@@ -459,6 +459,19 @@ function evalNum(ctx, action, value, dflt, target) {
   return v;
 }
 
+// The unfloored amount, for the one caller that multiplies before flooring
+// (the heal under ctx.healMult). The generic amount scaling applies as above.
+function evalRaw(ctx, action, value, dflt, target) {
+  if (value === undefined) return dflt;
+  let v;
+  if (typeof value === 'number') v = value;
+  else if (isFormula(value)) v = evaluateRaw(value, formulaCtxFor(ctx, action, target));
+  else throw new Error(`Expected number or formula, got ${JSON.stringify(value)}`);
+  const mult = action.meta && action.meta.amountMult;
+  if (typeof mult === 'number' && mult !== 1) v = Math.ceil(v * mult);
+  return v;
+}
+
 // ---------------------------------------------------------------------------
 // executeAction — the queue interpreter body
 // ---------------------------------------------------------------------------
@@ -653,10 +666,16 @@ function runOpcode(ctx, action, eff) {
     case 'heal': {
       // `ctx.healMult` is the run-level door's (createRunContext): a rest's
       // heal scaled by the custom mod and the restHealMult passive. A fight
-      // never sets it and reads 1.
+      // never sets it and reads 1. Under a multiplier the amount is floored
+      // ONCE, after it — a percentage of max HP floored first and again after
+      // the multiplier would heal less than the single-floor rule it replaces
+      // (the review of #1195: 50 × 35% × 1.15 is 20, not 19).
       const mult = typeof ctx.healMult === 'number' ? ctx.healMult : 1;
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        applyHeal(ctx, t, Math.floor(evalNum(ctx, action, eff.amount, 0, t) * mult));
+        const amount = mult === 1
+          ? evalNum(ctx, action, eff.amount, 0, t)
+          : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
+        applyHeal(ctx, t, amount);
       }
       break;
     }

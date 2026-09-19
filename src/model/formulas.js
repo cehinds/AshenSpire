@@ -54,11 +54,21 @@ export function isFormula(v) {
  * final floor). Throws on unknown ops, unresolvable `of` refs, or NaN.
  */
 export function evaluate(formula, ctx = {}) {
+  return Math.floor(evaluateRaw(formula, ctx));
+}
+
+/**
+ * evaluateRaw(formula, ctx) → the UNFLOORED value (clamps applied). For the
+ * one reader that multiplies the result before flooring — the run door's
+ * heal under its multipliers (engine/actions.js) — so a percentage rest is
+ * floored once, after the multipliers, never twice.
+ */
+export function evaluateRaw(formula, ctx = {}) {
   const raw = evalNode(formula, ctx);
   if (typeof raw !== 'number' || Number.isNaN(raw)) {
     throw new Error(`Formula evaluated to a non-number: ${JSON.stringify(formula)}`);
   }
-  return Math.floor(raw);
+  return raw;
 }
 
 function evalNode(node, ctx) {

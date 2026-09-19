@@ -42,7 +42,7 @@ import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
 } from '../src/engine/encounters.js';
-import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
+import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
@@ -825,6 +825,12 @@ export function createSession({ registries, seedString, endless = false, restore
   // ---- shrine / treasure / event (per-member, simplified for S2) -----------
   // Each member's open shrine visit (engine/locations.js), by member id.
   const shrineVisits = new Map();
+  function restView(visit) {
+    if (!visit) return null;
+    if (visit.restDenied) return { denied: registries.relics.get(visit.restDenied).name, heal: 0, mana: 0 };
+    const preview = previewRest(visit);
+    return { denied: null, heal: preview.heal, mana: preview.mana };
+  }
   function enterShrine() {
     // At every Grace, every character refills their fixed-capacity allocation.
     // In co-op the host owns that truth, not whichever client taps first. Every
@@ -850,6 +856,10 @@ export function createSession({ registries, seedString, endless = false, restore
       kind: 'shrine',
       done: {},
       smithing: Object.fromEntries(livingMembers().map((m) => [m.id, smithingPlan(registries, m.run)])),
+      // What each member's Rest would do here, and the relic that forbids it
+      // when one does — so the client can disable and explain the option
+      // rather than send a choice the host refuses (the review of #1195).
+      rest: Object.fromEntries(livingMembers().map((m) => [m.id, restView(shrineVisits.get(m.id))])),
       receipts: {},
     };
     return { ok: true };
