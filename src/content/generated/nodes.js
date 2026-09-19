@@ -1227,6 +1227,30 @@ export const nodes = [
     "blurb": "A focus that pushes harder: each hit builds more Arcane Exposure."
   },
   {
+    "id": "staggerBreak",
+    "parentId": "property",
+    "label": "Stagger Break",
+    "color": "C9A96B",
+    "glyph": "✦",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A focus that breaks harder: breaking a foe's Arcane Exposure batters its Poise."
+  },
+  {
+    "id": "resonance",
+    "parentId": "property",
+    "label": "Resonance",
+    "color": "9FC3E8",
+    "glyph": "◎",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A focus that rings out: breaking a foe's Arcane Exposure builds it on every other foe."
+  },
+  {
     "id": "forsakenMedallion",
     "parentId": "property",
     "label": "Forsaken Medallion",

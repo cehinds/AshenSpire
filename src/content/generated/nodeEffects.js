@@ -70,6 +70,43 @@ export const nodeEffects = {
       }
     }
   },
+  "staggerBreak": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "poiseDamage",
+            "amount": {
+              "variable": "poiseDamage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "resonance": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "arcaneBuildup",
+            "target": "otherEnemies",
+            "pct": {
+              "variable": "spreadPct"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "forsakenMedallion": {
     "triggers": [
       {

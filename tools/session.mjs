@@ -499,7 +499,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
       // upgraded armour's threshold bought at the Shrine did nothing here
       // while its weight still priced the seat's dodge (Codex, #528).
-      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {} }).value,
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes }).value,
     };
   }
 
@@ -647,6 +647,10 @@ export function createSession({ registries, seedString, endless = false, restore
         drawPerTurn: P.entity.drawPerTurn,
         connected: P.connected, alive: P.entity.alive, ended: P.ended,
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
+        // THE SEAT'S POISE VESSEL. The client renders Poise from this alone,
+        // so a live meter the host fills was invisible to every co-op player
+        // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
+        poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
