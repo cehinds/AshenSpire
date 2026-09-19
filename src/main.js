@@ -2364,10 +2364,14 @@ function showRest(openPanel = null, locationId = null) {
     openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
     // A resumed atlas visit arrived once already (the service state says so);
     // a resumed classic shrine arrives again, and the refill is a top-up so
-    // that pours nothing twice.
-    if (!restState?.refilled) arriveAt(openVisit);
-    if (restState && !restState.refilled) { restState.refilled = true; persist(); }
-    if (openVisit.refill && openVisit.refill.total) persist();
+    // that pours nothing twice. The arrival's effects — the refill, or any
+    // rule a later row authors on `arrived` — are written the moment they
+    // land, so a reload before the next action does not lose them.
+    if (!restState?.refilled) {
+      arriveAt(openVisit);
+      if (restState) restState.refilled = true;
+      persist();
+    }
   }
   const visit = openVisit;
   const refill = visit.refill;
