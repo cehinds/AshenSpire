@@ -147,7 +147,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const foldedCardWidthViewportPct = boundedNumber(shrinePresentation.foldedCardWidthViewportPct, 88, 60, 100);
   const foldedCardMaxWidthRem = boundedNumber(shrinePresentation.foldedCardMaxWidthRem, 44, 24, 72);
   const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
-  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
+  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 6.5, 4, 12);
 
   // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
   // trailing. THE STEPPER IS ONE UNIT AND WRAPS AS ONE — on a narrow shape the

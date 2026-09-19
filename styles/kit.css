@@ -1197,7 +1197,14 @@ input[type="range"] { min-height: var(--tap-floor); }
 .choice-body-columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: var(--choice-column-gap, 1.5rem); row-gap: var(--choice-row-gap, 1rem); align-items: start; }
 :root[data-layout='narrow'] .choice-body-columns { grid-template-columns: minmax(0, 1fr); }
 .choice-body-columns > * { min-width: 0; }
-.choice-body .class-row.shrine-option-list { width: 100%; max-width: none; margin-inline: 0; }
+.choice-body .class-row.shrine-option-list {
+  width: 100%; max-width: none; margin-inline: 0;
+  /* Six collapsed actions are the Shrine's initial menu, not overflow
+     content. Keep their rhythm compact enough to show the whole menu first;
+     the body still scrolls when a fold opens or the viewport is genuinely
+     short. */
+  gap: 0.8rem;
+}
 /* W1s availability column: what arrival restored, then each choice's state. */
 .choice-status { display: grid; gap: 0.6rem; align-content: start; }
 .screen .choice-status .rest-refill { margin: 0; max-width: none; text-align: left; }

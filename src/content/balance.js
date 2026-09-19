@@ -544,13 +544,14 @@ export const balance = {
     // screens still collapse it to a list for touch and readable labels.
     shrinePresentation: {
       optionLayout: 'list', // list | grid
-      // The four option faces share one folded footprint. Percentages own the
-      // responsive size; the bounds preserve the 44 px interaction floor and
-      // keep a wide monitor from turning a choice into a banner.
+      // The six option faces share one folded footprint. Percentages own the
+      // responsive size; the bounds preserve the interaction floor, keep a
+      // wide monitor from turning a choice into a banner, and let the complete
+      // collapsed menu fit before its body becomes a scrollport.
       foldedCardWidthViewportPct: 88,
       foldedCardMaxWidthRem: 44,
       foldedCardHeightViewportPct: 10,
-      foldedCardMaxHeightRem: 7,
+      foldedCardMaxHeightRem: 6.5,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
