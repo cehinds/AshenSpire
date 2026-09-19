@@ -121,6 +121,22 @@ export function viewModeToggle(value, onChoose, label = 'View choices') {
   return markUiComponent(group, UI.viewModeToggle);
 }
 
+/**
+ * viewModeSwitch(value, onChoose, label) → ONE small button that flips the
+ * view: it shows the arrangement a press would give (▦ from a list, ☰ from a
+ * grid) so the pane's width goes to the choices, not to a labelled pair
+ * (owner, 2026-09-19). `data-view-mode` is the mode a press selects.
+ */
+export function viewModeSwitch(value, onChoose, label = 'View choices') {
+  const next = value === 'grid' ? 'list' : 'grid';
+  const control = el('button', {
+    type: 'button', class: 'as-btn small cc-view-switch', text: next === 'grid' ? '\u25a6' : '\u2630',
+    dataset: { viewMode: next }, 'aria-label': `${label}: ${next === 'grid' ? 'Grid' : 'List'} view`, title: `${next === 'grid' ? 'Grid' : 'List'} view`,
+  });
+  control.addEventListener('click', () => onChoose?.(next));
+  return markUiComponent(control, UI.viewModeToggle);
+}
+
 /** A boolean setting: Row·setting with a LabelStack and a Toggle. */
 export function booleanSettingToggle(label, value, onChoose) {
   const control = toggle({ on: value, className: 'cc-switch', attrs: { 'aria-label': label } });
@@ -152,9 +168,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   art.removeAttribute('aria-hidden');
   if (sprite) art.appendChild(sprite);
   const pane = el('article', { class: 'as-pane cc-class-preview', 'aria-label': `${cls.name} class preview` }, [
-    eyebrow('Class preview'),
     titleM(cls.name, { tag: 'h3' }),
-    hairline(),
     el('div', { class: 'as-stack' }, [
       art,
       el('div', { class: 'as-stack tight' }, [
@@ -162,7 +176,6 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
         resources,
       ]),
       el('div', { class: 'as-stack tight' }, [
-        eyebrow('Class relic'),
         relic ? optionCard({
           glyph: relic.icon || '◆', name: relic.name, description: relicDescription,
           arrow: false, tag: 'div', className: 'cc-class-relic',

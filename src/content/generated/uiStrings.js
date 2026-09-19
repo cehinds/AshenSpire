@@ -2311,5 +2311,96 @@ export const uiStrings = [
     "short": "Save",
     "full": "",
     "tip": ""
+  },
+  {
+    "id": "creation.title",
+    "extends": "",
+    "short": "Create character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.categories",
+    "extends": "",
+    "short": "Creation steps",
+    "full": "The steps of making a character.",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.equipment",
+    "extends": "",
+    "short": "Equipment",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.review",
+    "extends": "",
+    "short": "Review",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.next",
+    "extends": "",
+    "short": "Next",
+    "full": "Go on to the next step.",
+    "tip": ""
+  },
+  {
+    "id": "creation.next.tip",
+    "extends": "",
+    "short": "On to {category}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.leave.tip",
+    "extends": "",
+    "short": "Back to the title screen. Nothing here is saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.previous.tip",
+    "extends": "",
+    "short": "Back to {category}. Your choices stay.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.destination",
+    "extends": "",
+    "short": "Destination",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.destination.hint",
+    "extends": "",
+    "short": "The save slot this climb will use.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.slot",
+    "extends": "",
+    "short": "Slot {slot}",
+    "full": "",
+    "tip": ""
   }
 ];

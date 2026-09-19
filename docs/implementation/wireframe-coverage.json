@@ -102,7 +102,7 @@
       "id": "W1c",
       "name": "Character creation",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -112,16 +112,33 @@
         {
           "file": "src/ui/components/statAllocationCard.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CreationWorkspaceModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/screens/creation.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-creation.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/kit/categoryNav.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-creation.test.mjs 6/6 (category order from config, Next/Back stepping, two-action footer, rail entries, attribute columns, portrait size); ui-config 28/28 with screens.creation; creation-continue-stacking 10/10; every number is in content/config/ui/screens/creation.json",
+        "wide": "1280x800 (?shot=customize): head 75 px with the title, a 37 px portrait and the exit; rail 185 px beside a 1083x620 pane; footer Back + Next (Begin hidden until Review); no page or body scroll, the pane is the one scroll region; attribute grid 2 columns",
+        "compact": "844x390: rail stays beside the pane (107 px rail, 650x248 pane), footer 80 px, no page scroll, every control ≥ 44 px, attribute grid 2 columns; the class list folds its descriptions to one line and all four classes are in view without scrolling",
+        "iphoneSE": "375x667: one [Class ▾] selector above the pane (selector mode), head 62 px, pane 288 wide, footer 86 px, no page scroll, controls ≥ 44 px",
+        "galaxyS24": "360x780: selector mode, pane 358x579, footer 86 px, no page scroll. 390x844: selector, pane 388x579, attribute grid 1 column, no page scroll",
+        "interactions": "Choose Reaver → Next (refused with “Choose a class.” until then) → Character: Standard, keepsake → Next → Equipment: armour → Next → Review shows journey, seed, Destination Slot 1 and the summary, Begin replaces Next; Back steps to Equipment with every choice kept; the rail names each step’s value (Reaver / Forsaken / Round Shield ⁄ Straight Sword / SHOWCASE). Keyboard rail/selector behaviour is the shared categoryNav’s"
+      },
+      "notes": "Branch feature/wireframe-creation (dev 7d2c2f41). Character creation is a W1 workspace: head with the title, the small portrait (sizing.headPortraitRem) and the exit; the kit’s categoryNav rail (a [Category ▾] selector on a compact host) listing Class, Character, Equipment and Review (behavior.categories); one active category in the pane, the others built once and kept off the document with their draft; a persistent footer of exactly two actions — Back (leaves on Class, steps back otherwise) and Next (refusing with the category’s unmet step) until Review, where Begin takes over. The attribute grid takes sizing.attributeColumnsWide columns from sizing.attributeNarrowBelowRem (the game’s 10 px rem) and the narrow count under it. Review carries the journey, the seed, the destination slot and the equipment summary. The list/grid switch is one small button in the head (only the active category’s shows); no “Choose” heads over the choice collections, no footer note, no “Class preview” eyebrow; choice descriptions clip to sizing.choiceDescriptionLines and, when the class list still runs past its box, fold to one line, then the preview column steps aside, then the descriptions go (behavior.fitChoicesToPane), so every class is in view without scrolling (owner, 2026-09-19). Deviations: the drawing’s categories (Class / Starting kit / Attributes / Review) are the game’s Class / Character / Equipment / Review; the per-section sub-steps (Standard/Assign points, keepsake, each hand) keep their in-pane Continues; inactive categories are built at mount and detached rather than never mounted; no paging (no collection exceeds five). tools/character-creation-check.mjs and tools/uniform-stat-foldouts.mjs still read the old .cz-flow fold and are owed a re-teach."
     },
     {
       "id": "W1d",

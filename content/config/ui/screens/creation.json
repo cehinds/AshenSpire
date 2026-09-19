@@ -1,0 +1,23 @@
+{
+  "vars": {
+    "portraitRem": 3.5,
+    "narrowBelowRem": 64,
+    "choiceLines": 2
+  },
+  "sizing": {
+    "headPortraitRem": "$portraitRem",
+    "attributeColumnsWide": 2,
+    "attributeColumnsNarrow": 1,
+    "attributeNarrowBelowRem": "$narrowBelowRem",
+    "choiceDescriptionLines": "$choiceLines"
+  },
+  "behavior": {
+    "categories": [
+      "class",
+      "character",
+      "equipment",
+      "review"
+    ],
+    "fitChoicesToPane": true
+  }
+}
