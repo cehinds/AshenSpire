@@ -8,7 +8,7 @@ import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // glyph + name). Swapping in real art later = mapping an id to a URL here,
 // with a CREDITS.md row — no game-code changes.
 
-import { armourMenuAsset, armourArtKey } from '../model/paintedOutfitArt.js';
+import { armourMenuAsset, armourArtKey, armourArtClass } from '../model/paintedOutfitArt.js';
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
@@ -419,6 +419,10 @@ export function paintedFigure(classId, tint, sigil, armourId = 'default', pose =
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
 export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
+  const visualClass = armourArtClass(classId, armourId);
+  if (visualClass !== classId) {
+    return classSprite(visualClass, tint, sigil, tintId, style, figureId, armourArtKey(classId, armourId));
+  }
   const build = CLASS_SVG[classId];
   if (!build) return null;
   // THE SIGIL DOES NOT RIDE THE FIGURE. Owner's call, 2026-09-07: the chosen
@@ -558,6 +562,9 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false, headId = null, handsId = null, feetId = null }) {
+  const visualClass = armourArtClass(classId, armourId);
+  armourId = armourArtKey(classId, armourId);
+  classId = visualClass;
   // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
   // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
   // these two lines and returned a single standing frame, so the armament layers

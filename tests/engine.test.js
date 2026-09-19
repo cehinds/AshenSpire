@@ -3542,9 +3542,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     for (const id of classIds) {
       const mine = outfits.filter((o) => o.classId === id);
       const additions = { reaver: 'bastion', starseer: 'rimeweave', rogue: 'waywatcher' };
-      eq(mine.length, additions[id] ? 5 : 4, `class '${id}' has its full armour roster`);
+      eq(mine.length, additions[id] ? 9 : 8, `class '${id}' has its full armour roster including four shared sets`);
       if (additions[id]) assert(mine.some(o => o.id === additions[id]), `class '${id}' includes its new set`);
-      eq(mine.filter((o) => o.unlock === '').length, 1, `class '${id}' has exactly one starting set`);
+      eq(mine.filter((o) => o.unlock === '' && !o.sharedSet).length, 1, `class '${id}' has exactly one starting set`);
     }
     for (const o of outfits) {
       checkItemTypes(tagIdsOf('armour', o), `${o.classId}/${o.id}`);
@@ -4658,10 +4658,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ---- 4. armour answers to the OTHER route, and it is not a kind test ---
     const armourPool = fits(armorSlot, eq_.armour.filter((o) => o.classId === 'reaver'));
     assert(armourPool.length > 1, `the reaver has an armour pool (${armourPool.length})`);
-    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default',
-      'a fresh profile is offered exactly its one starting set');
+    eq(armourPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'default,wayfarerPlate,nightweave,riteVestments,gutterLeathers',
+      'a fresh profile owns its starting set and four attribute-gated shared sets');
     const earned = ownership(REG, { meta: { unlocked: ['winAsReaver'] }, loadout: fresh });
-    eq(armourPool.filter((p) => earned.has(p)).length, 2, 'earning one unlock adds exactly one set');
+    eq(armourPool.filter((p) => earned.has(p)).length, 6, 'earning one unlock adds exactly one set');
     assert(!fromDropPool(armourPool[0]) && fromDropPool(rightPool[0]),
       'the pool question is asked of the piece, not spelled as an if on its kind');
 
@@ -5205,7 +5205,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     for (const o of REG.equipment.armour) {
       const key = `${o.classId}/${o.id}`;
-      const artKey = `${o.classId}/${o.artKey || o.id}`;
+      const artKey = `${o.artClassId || o.classId}/${o.artKey || o.id}`;
       const entry = manifest.armour[artKey];
       if (!entry) {
         stale.push(`${key}: no art rendered`);
@@ -5231,7 +5231,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // pass every assertion above by having nothing to disagree with.
     const authoredArtKeys = new Set(REG.equipment.armaments.map((a) => a.artKey || a.id));
     eq(Object.keys(manifest.armaments).length, authoredArtKeys.size, 'every distinct armament art key is covered');
-    const armourArtKeys = new Set(REG.equipment.armour.map(o => `${o.classId}/${o.artKey || o.id}`));
+    const armourArtKeys = new Set(REG.equipment.armour.map(o => `${o.artClassId || o.classId}/${o.artKey || o.id}`));
     eq(Object.keys(manifest.armour).length, armourArtKeys.size, 'every distinct armour art key is covered');
   });
 

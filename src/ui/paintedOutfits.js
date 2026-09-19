@@ -1,5 +1,5 @@
 import { DEFEATED_ART } from '../content/defeatedArt.js';
-import { paintedOutfit } from '../model/paintedOutfitArt.js';
+import { paintedOutfit, armourArtClass, armourArtKey } from '../model/paintedOutfitArt.js';
 import { auraFilter, POWER_FRAMES } from './combatAura.js';
 import { COMBAT_SEQUENCES } from '../model/combatAnimation.js';
 import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
@@ -44,6 +44,12 @@ export function paintedPresentation(classId, armourId = POSE.defaultArmourId, po
 // a fresh Image per outfit frame — nineteen per render for a painted class.
 
 export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { still = false } = {}) {
+  // Resolve the complete visual identity before choosing readiness/attack frames.
+  const visualClass = armourArtClass(classId, armourId);
+  const visualArmour = armourArtKey(classId, armourId);
+  if (visualClass !== classId || visualArmour !== armourId) {
+    return createPaintedStage(visualClass, visualArmour, { still });
+  }
   if (still) {
     const presentation = paintedPresentation(classId, armourId);
     const defeated = createPaintedStage(classId, armourId);

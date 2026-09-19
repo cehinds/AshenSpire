@@ -531,7 +531,7 @@ function collectEquipmentProblems(registries, problems = []) {
 
   for (const classId of registries.classes.ids()) {
     const sets = (eq.armour || []).filter((o) => o.classId === classId);
-    const starting = sets.filter((o) => o.unlock === '');
+    const starting = sets.filter((o) => o.unlock === '' && !o.sharedSet);
     if (starting.length !== 1) {
       problems.push(`class '${classId}' has ${starting.length} starting armour sets (need exactly 1)`);
     }
@@ -979,7 +979,7 @@ export function createLoadout(registries, classId, startingKit = null, startingA
   // id: an id validated here would be a second decider for one question.
   // Absent, the class's free set — byte-for-byte the old behaviour.
   const starting = startingArmour
-    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
+    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '' && !o.sharedSet);
   if (starting && sets.armor) sets.armor[0] = starting.id;
   const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
   for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {

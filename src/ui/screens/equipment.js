@@ -1,5 +1,6 @@
 import { characterLevel } from '../../model/levelup.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
@@ -964,6 +965,17 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    const piece = pieceId && (eq.slots.find(slot => slot.id === slotId)?.kinds.includes('armor')
+      ? eq.armour.find(row => row.classId === run.class && row.id === pieceId)
+      : eq.armaments.find(row => row.id === pieceId));
+    if (piece) {
+      const requirement = equipmentRequirementReceipt(registries, piece, run.attributes, run);
+      if (!requirement.ok) {
+        notice = `${piece.name} requires ${requirement.failures.map(row => `${registries.attributes.get(row.attributeId).label} ${row.required} (you have ${row.actual ?? '—'})`).join(', ')}.`;
+        draw();
+        return false;
+      }
+    }
     if (inCombat) {
       if (typeof onEquip !== 'function') {
         notice = 'Combat equipment changes are unavailable on this screen.';
