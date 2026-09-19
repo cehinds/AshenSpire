@@ -1,7 +1,7 @@
 import { contentBundle } from '../../content/index.js';
 import { createRegistries } from '../../model/registries.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
-import { paintedPresentation } from '../paintedOutfits.js';
+import { createPaintedStage } from '../paintedOutfits.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 const registries = createRegistries(contentBundle);
 const gallery = document.querySelector('#weapon-gallery');
@@ -21,10 +21,33 @@ for (const item of equipment) {
   const article = document.createElement('article');
   article.dataset.armorId = item.id;
   article.append(rendered.card, equipmentDetails(rendered.explanations));
-  const sprite = paintedPresentation(item.classId, item.id);
-  sprite.style.cssText = 'display:block;height:200px;max-width:100%;object-fit:contain;margin:auto';
-  sprite.alt = `${item.name} equipped sprite`;
-  article.append(sprite);
+  const figures = document.createElement('div');
+  figures.className = 'shared-outfit-figures';
+  for (const cls of registries.classes.all()) {
+    const figure = document.createElement('figure');
+    const stage = createPaintedStage(cls.id, item.id);
+    stage.el.style.cssText = 'position:relative;width:100%;height:160px';
+    stage.el.setAttribute('aria-label', `${cls.name} wearing ${item.name}`);
+    const caption = document.createElement('figcaption');
+    caption.textContent = cls.name;
+    figure.append(stage.el, caption);
+    figures.append(figure);
+    // The same stage renderer used by combat; keep its rest pose selectable for review.
+    figure.stage = stage;
+  }
+  const label = document.createElement('label');
+  label.textContent = 'Preview pose';
+  const select = document.createElement('select');
+  select.setAttribute('aria-label', `${item.name} preview pose`);
+  for (const [value, text] of [['idle', 'Standing'], ['guard', 'Guarding'], ['attack2', 'Attacking'], ['power2', 'Casting'], ['hit', 'Hurt'], ['defeated', 'Defeated'], ['prepared', 'Prepared'], ['bloodRite', 'Blood Rite']]) {
+    const option = document.createElement('option');
+    option.value = value; option.textContent = text; select.append(option);
+  }
+  select.addEventListener('change', () => {
+    for (const figure of figures.children) figure.stage.setRestPose(select.value, { immediate: true });
+  });
+  label.append(select);
+  article.append(figures, label);
   gallery.append(article);
 }
 if (!sharedArmor) {

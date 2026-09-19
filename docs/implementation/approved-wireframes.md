@@ -2612,3 +2612,32 @@ Review round (QA agent on the push, 2026-09-19):
   detail view; the owner asked on 2026-09-19 for every class in view without
   scrolling. The rung is reached only when one-line descriptions with the
   preview column gone still overflow (no tested viewport reaches it).
+
+Unfold (owner, 2026-09-19, "why not do this"):
+- `behavior.classPreview` in `creation.json` is `unfold`: no preview
+  column. Clicking a class opens its card to
+  `max(sizing.unfoldHeightVh, sizing.unfoldMinRem)` — the portrait in the
+  left `unfoldPortraitShare` of the card's width, the summary (the five
+  starting resources and the relic) in the right `unfoldSummaryShare`,
+  nothing past the card's box. `column` keeps the old preview pane.
+- The drawing's 30vw / 70vw are shares of the card's width: 100vw does not
+  fit beside the rail. The unfolded card is a two-row grid (head, then the
+  unfold spanning both columns) so the portrait is bound by the card's
+  height, not its width.
+- Before a pick nothing unfolds; a pick opens exactly one card
+  (`classUnfold` in `creationCards.js`, appended by `renderClassPreview`).
+
+| Viewport | Unfolded card | Portrait | Summary | Pane scroll |
+|---|---:|---:|---:|---:|
+| 1440×860 (headless) | 30vh | 186 px | resources + relic | 0 |
+| 1280×800 | 257 px | 186 px | 671 px wide | 0 |
+| 390×844 | 228 px | 95 px wide | 223 px wide | 0 |
+| 844×390 | rem floor | 75 px | in view | class list scrolls (fit rung bare) |
+
+- Phone captures: headless Chrome refuses a window under ~500 px, so
+  `tools/screenshot.mjs --viewport 390x844` crops a wider layout; the
+  evidence above is CDP device emulation (`Emulation.setDeviceMetricsOverride`,
+  2×) against the source server.
+- Seen on the way: at ~600 px wide the categoryNav still chooses the rail and
+  the rail squeezes to ~55 px with clipped labels. That is the shared
+  categoryNav threshold, not this screen's; owed a look.

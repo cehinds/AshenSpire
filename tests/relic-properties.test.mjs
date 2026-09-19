@@ -58,11 +58,11 @@ test('expedition relics reach the matching reward pool and owned copies are excl
 
 test('expedition passive benefits retain their authored costs through shared readers', () => {
   assert.equal(rollRuneReward(REG, { int: () => 21 }, 'normal', ['wayfarersKnot']), 23);
-  assert.equal(passiveMult(REG, ['wayfarersKnot'], 'shrineHealMult'), 1.1);
+  assert.equal(passiveMult(REG, ['wayfarersKnot'], 'restHealMult'), 1.1);
   assert.equal(passiveMult(REG, ['prismaticThorn'], 'exposureBuildupMult'), 1.25);
   assert.equal(passiveMult(REG, ['prismaticThorn', 'crackedTear'], 'flaskPowerMult'), 1.125);
   assert.equal(passiveMult(REG, ['restlessClasp'], 'flaskPowerMult'), 2);
-  assert.equal(passiveMult(REG, ['restlessClasp'], 'shrineHealMult'), 0.5);
+  assert.equal(passiveMult(REG, ['restlessClasp'], 'restHealMult'), 0.5);
   assert.equal(passiveSum(REG, ['paupersDiadem'], 'powerCostReduction'), 1);
   assert.equal(rollRuneReward(REG, { int: () => 21 }, 'normal', ['paupersDiadem']), 13);
 });

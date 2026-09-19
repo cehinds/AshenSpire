@@ -73,7 +73,7 @@
   },
   "emberFragment": {
     "name": "Ember Fragment",
-    "text": "Resting at Shrines heals 15% more."
+    "text": "Resting heals 15% more."
   },
   "twinnedArmor": {
     "name": "Twinned Armor",
@@ -113,7 +113,7 @@
   },
   "wyrmHeart": {
     "name": "Wyrm Heart",
-    "text": "Gain 1 extra Energy each turn. Shrines no longer offer Rest."
+    "text": "Gain 1 extra Energy each turn. Shrines and chapels no longer offer Rest."
   },
   "ancestralHorn": {
     "name": "Ancestral Horn",
@@ -217,7 +217,7 @@
   },
   "wayfarersKnot": {
     "name": "Wayfarer's Knot",
-    "text": "Gain 10% more Cinders from combats. Resting at Shrines heals 10% more."
+    "text": "Gain 10% more Cinders from combats. Resting heals 10% more."
   },
   "prismaticThorn": {
     "name": "Prismatic Thorn",
@@ -225,7 +225,7 @@
   },
   "restlessClasp": {
     "name": "Restless Clasp",
-    "text": "Flasks are 100% stronger. Resting at Shrines heals 50% less."
+    "text": "Flasks are 100% stronger. Resting heals 50% less."
   },
   "paupersDiadem": {
     "name": "Pauper's Diadem",

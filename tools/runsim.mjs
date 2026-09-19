@@ -38,8 +38,9 @@ import { availableEventChoices, recordEventChoice } from '../src/model/quests.js
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollClassDraftIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount, applyGraceRefill,
+  rollRelicReward,
 } from '../src/engine/encounters.js';
+import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 const argv = process.argv.slice(2);
@@ -428,9 +429,14 @@ function simulateRun(classId, seed, ds = null) {
           break; // act cleared
         }
       } else if (kind === 'shrine') {
-        // AUTOMATIC AND BEFORE THE CHOICE, exactly as src/main.js showRest does
-        // — a run that comes to smith is refilled like a run that comes to rest.
+        // THE SHRINE IS A LOCATION VISIT (plan phase 7, engine/locations.js):
+        // its tags' rules mount, `arrived` refills (the restFlasks rule —
+        // AUTOMATIC AND BEFORE THE CHOICE, exactly as src/main.js showRest
+        // does) and `rested` heals and restores Mana by the tag set. The bot
+        // walks the same door the game does, so a retune of the shrine's rows
+        // moves this measurement without an edit here.
         graces++;
+        const visit = createLocationVisit({ run, registries: REG, rng }, 'shrine');
         if (GRACE_ON) {
           // COUNT THE CHARGE MODEL, NOT ONLY THE GRANT MODEL. applyGraceRefill
           // returns `total: 0` BY CONSTRUCTION for a run on charge vessels — it
@@ -441,13 +447,15 @@ function simulateRun(classId, seed, ds = null) {
           // both sides"). The sustain was live; the counter was blind.
           const before = run.flaskCharges
             ? (run.flaskCharges.hpCurrent || 0) + (run.flaskCharges.manaCurrent || 0) : 0;
-          poured += applyGraceRefill(REG, run).total;
+          const arrival = arriveAt(visit);
+          poured += arrival.refill ? arrival.refill.total : 0;
           if (run.flaskCharges) {
             poured += Math.max(0, ((run.flaskCharges.hpCurrent || 0) + (run.flaskCharges.manaCurrent || 0)) - before);
           }
         }
-        if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
+        if (run.hp < run.maxHp * 0.6 && !visit.restDenied) restAt(visit);
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
+        leaveLocation(visit);
         // THE BOT ASSIGNS EVERY POINT IT HAS EARNED — the shrine is where the
         // level's points land (plan phase 6). Constitution every time: the
         // greedy pilot measures how many levels the climb pays, not which.

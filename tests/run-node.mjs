@@ -1048,6 +1048,12 @@ try {
   console.error('FAIL An armed card that stopped looking armed is still armed:', error);
 }
 try {
+  await import('./combat-card-hold-targeting.test.mjs');
+} catch (error) {
+  zoomExtra++;
+  console.error('FAIL Combat-card holds arm the existing targeting flow:', error);
+}
+try {
   await import('./creation-continue-stacking.test.mjs');
 } catch (error) {
   zoomExtra++;
