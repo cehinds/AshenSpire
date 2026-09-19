@@ -792,9 +792,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       </div>`;
   }
   if (r.type === 'choice') {
-    const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
+    const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
+    const cur = r.choices.includes(stored) ? stored : r.def;
     const opts = r.choices
-      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${c}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${r.choiceLabels?.[c] || c}</button>`)
       .join('');
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}

@@ -8,10 +8,10 @@ export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 const PRESENTATION_DEFAULTS = Object.freeze({
   playerSpriteScale: 0.9,
   enemySpriteScale: 0.9,
-  playerSpawnRow: 'middle',
-  enemySpawnRow: 'middle',
-  playerSpawnColumn: 'center',
-  enemySpawnColumn: 'center',
+  playerSpawnRow: 'C',
+  enemySpawnRow: 'C',
+  playerSpawnColumn: '2',
+  enemySpawnColumn: '3',
   settingsWidthPercent: 100,
   settingsHeightPercent: 100,
 });
@@ -121,16 +121,28 @@ function presentationRows() {
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnRow`,
-      presentationKey: `${side}SpawnRow`, def: 'middle', choices: ['front', 'middle', 'back'],
-      label: `${word(side)} default row`,
-      note: `Default visual formation row for the ${side} side. This changes placement, not combat targeting.`,
+      presentationKey: `${side}SpawnRow`, def: 'C', choices: ['A', 'B', 'C'],
+      choiceLabels: { A: 'A · top', B: 'B · middle', C: 'C · bottom' },
+      legacyChoices: side === 'player'
+        ? { front: 'A', middle: 'B', back: 'C' }
+        : { front: 'C', middle: 'B', back: 'A' },
+      label: `${word(side)} default row (A–C)`,
+      note: `Global formation row: A is top, B is middle, C is bottom. This changes placement, not combat targeting.`,
     })),
     ...['player', 'enemy'].map((side) => ({
       cat: 'Advanced', advancedGroup: 'Interface', type: 'choice',
       key: `${ADVANCED_CONFIG_PREFIX}presentation.${side}SpawnColumn`,
-      presentationKey: `${side}SpawnColumn`, def: 'center', choices: ['left', 'center', 'right'],
-      label: `${word(side)} default column`,
-      note: `Default visual formation column for the ${side} side. This changes placement, not combat targeting.`,
+      presentationKey: `${side}SpawnColumn`,
+      def: side === 'player' ? '2' : '3',
+      choices: side === 'player' ? ['1', '2'] : ['3', '4'],
+      choiceLabels: side === 'player'
+        ? { 1: '1 · back', 2: '2 · front' }
+        : { 3: '3 · front', 4: '4 · back' },
+      legacyChoices: side === 'player'
+        ? { left: '1', center: '2', right: '2' }
+        : { left: '3', center: '3', right: '4' },
+      label: `${word(side)} default column (${side === 'player' ? '1–2' : '3–4'})`,
+      note: `${word(side)} side uses only columns ${side === 'player' ? '1–2' : '3–4'}; front is nearer the arena center and back is nearer the outer edge.`,
     })),
   ];
 }
@@ -299,7 +311,8 @@ export function presentationConfig(settings = {}) {
     if (!(row.key in settings)) continue;
     const raw = settings[row.key];
     if (row.type === 'choice') {
-      if (row.choices.includes(raw)) values[row.presentationKey] = raw;
+      const normalized = row.legacyChoices?.[raw] ?? raw;
+      if (row.choices.includes(normalized)) values[row.presentationKey] = normalized;
     } else {
       const number = Number(raw);
       if (Number.isFinite(number)) values[row.presentationKey] = Math.min(row.max, Math.max(row.min, number));
