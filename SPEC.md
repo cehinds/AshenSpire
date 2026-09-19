@@ -1313,6 +1313,91 @@ keeps the same state and focus contract without meaningful animation.
 - **Energy orb:** bottom left, `n/3`. **End Turn** button bottom right — pulses if energy remains and any card is playable; confirm-free.
 - **Piles:** draw (bottom-left corner, count) / discard (bottom-right, count) / exhaust (small, appears once non-empty). Click opens a scrollable modal grid (draw pile view is order-shuffled for display, like StS).
 
+#### 7.2.1 Advanced game configuration
+
+Advanced Settings is the player-facing editor for the game's authored configuration, not a
+second balance table. Every safe gameplay flag, numeric tuning value, authored default and
+presentation size that can change without replacing content identities or invalidating the
+engine is discoverable there. A setting descriptor names the source path, label, explanation,
+type, domain, shipped default, reset behavior and application timing. The editor and runtime
+resolver consume that same descriptor; UI code must not retype a default, range, enum or formula.
+Adding an eligible descriptor therefore adds its control without another hand-authored settings
+row. A CI inventory compares eligible authored configuration paths with rendered descriptors and
+fails on an unexplained omission.
+
+The editor groups the complete inventory into stable nested sections:
+
+- **Progression:** starting level; experience/cinder gain multiplier; first level cost; cost
+  increase per purchase; optional maximum level; attribute points granted per level; and points
+  required for each derived-stat tier. The resolved level-price preview shows representative
+  purchases before a run starts.
+- **Class defaults:** each registered class exposes its starting STR, DEX, CON, WIS and INT,
+  starting resource/flask allocation, and other schema-valid starting values. Class controls are
+  registry-derived, so adding a class cannot create an invisible default. Per-class values must
+  still satisfy the selected creation mode's bounds and total-allocation rules; invalid
+  combinations are explained and cannot be applied silently.
+- **Combat and actors:** default player and enemy spawn row/slot, formation spacing, player and
+  enemy sprite scale, combatant bounds, animation timings, resource reference maxima, and other
+  data-owned combat presentation values that do not alter asset identity.
+- **Cards and windows:** resting, selected and reading card sizes; phone-specific sizes; modal,
+  tray, HUD and window dimensions; UI scale/layout thresholds; and other data-owned component
+  geometry. Dependent constraints are enforced together (for example, resting < selected <
+  reading) and the editor identifies the value preventing an invalid change.
+- **World, economy and rewards:** encounter/reward odds, currency and experience multipliers,
+  merchant and service pricing, map-generation tuning, and other global balance values whose
+  schema permits a runtime override.
+- **Rules and accessibility:** eligible boolean flags and closed-set modes used by gameplay or
+  presentation. Existing ordinary Display, Audio and Accessibility controls remain in their
+  approachable homes and appear in Advanced only when needed as part of the complete searchable
+  inventory; both surfaces resolve through one descriptor and one persisted value.
+- **Diagnostics:** development-only instrumentation and logs. Unsafe internals—content ids,
+  schema definitions, save-format versions, cryptographic/integrity values, file paths that are
+  not already an explicit user feature, and values whose mutation can only create invalid
+  state—are listed by the inventory check as excluded with a reason rather than exposed as dead
+  or dangerous controls.
+
+Search and section navigation remain available at every supported viewport and text size. Each
+row shows the shipped default, the currently resolved value, whether it affects the current run
+or only a new run, and a Reset action. A section can reset all its values after confirmation;
+the complete editor can reset all overrides after confirmation. Invalid legacy or manually
+edited stored values resolve to the authored default and are visibly reported instead of being
+accepted, discarded silently, or allowed to produce `NaN`/infinite state.
+
+Run-defining values are resolved and snapshotted when a new run is created. They never silently
+recalculate an in-progress run; a row may affect the current run only where its descriptor
+explicitly declares live application safe. Save validation accepts older runs without a snapshot
+by deriving the historical shipped defaults required by their version. Profile settings store
+only overrides, so changing a shipped default remains meaningful and Reset never writes a stale
+copy of that default.
+
+**Portable export.** Advanced Settings has one Export configuration action that serializes a
+versioned JSON document containing the schema/version marker, build/source information, explicit
+overrides and their resolved values. It never includes run saves, profile progress, unlocks,
+history, user file paths, or quarantine/archive data. Where the File System Access API is
+available on desktop, Export opens the browser's Save As picker with a `.json` filename; when it
+is unavailable or declined, including on mobile, it uses a normal browser download/share-capable
+file fallback that stores locally without replacing an existing export silently. Exporting makes
+no settings change. The format is deterministic and round-trippable by a future import surface,
+but this requirement does not invent Import before its validation and conflict policy are
+specified.
+
+**Settings door geometry.** The Settings door uses the maximum safe visual viewport after the
+shared outer inset instead of a fixed 90% height cap. Header, navigation and footer remain fixed;
+the active content pane is the single vertical scroll owner. Ancestors and nested section lists
+must not create a second vertical scrollport. On narrow screens the navigation becomes a compact
+section chooser while retaining the same destinations. Browser zoom and the game's UI-scale
+setting may change rendered size, but opening Settings never applies an additional private zoom.
+The active row, focus target, scroll cue, footer actions and close control remain reachable at
+the required desktop, landscape and phone shapes, including Text XL and the mobile on-screen
+keyboard.
+
+Delivery is one complete configuration feature rather than independently releasable slices.
+Implementation may be built subsection by subsection, but after each subsection the generated
+preview build is refreshed and desktop plus phone screenshots are recorded before work continues.
+The final change ships only when the complete eligible inventory, persistence/snapshot behavior,
+export fallback, single-scroll geometry, accessibility, and required repository checks pass
+together.
+
 ### 7.3 Input
 
 - **Card selection and information stay separate from play.** Preserve the current
