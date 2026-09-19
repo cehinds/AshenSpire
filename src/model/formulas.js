@@ -17,6 +17,7 @@ export const FORMULA_OPS = Object.freeze([
   'mul',
   'percentMaxHp',
   'missingHp',
+  'missingMana',
   'stacks',
   'energySpent',
   'blockOf',
@@ -83,6 +84,13 @@ function evalNode(node, ctx) {
     case 'missingHp': {
       const ent = resolveOne(ctx, node.of, node.f);
       v = Math.max(0, ent.maxHp - ent.hp);
+      break;
+    }
+    case 'missingMana': {
+      // The pool's headroom, for a rule that restores it to full (plan phase
+      // 7's restManaFull) without stating a number the entity already knows.
+      const ent = resolveOne(ctx, node.of, node.f);
+      v = Math.max(0, (ent.maxMana || 0) - (ent.mana || 0));
       break;
     }
     case 'stacks': {

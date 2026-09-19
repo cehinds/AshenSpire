@@ -147,7 +147,27 @@ export const balance = {
     sellFraction: 0.5,
   },
 
-  shrine: { healPct: 35 },
+  // WHAT A REST RESTORES is the location's tag set (plan phase 7): a place
+  // carries restHpSmall / restHpPartial / restHpFull and restMana, and each
+  // tag's rule reads its number here (variableBindings.csv). `mana.mode` is
+  // the default `restMana` behaviour, resolved at the door (engine/locations.js)
+  // to the fixed-mode tag it names:
+  //   flat         restore `flat` points
+  //   floorOrFull  restore TO `floorPct` of max, or to full when already there
+  //   full         restore to max
+  // A location that wants another amount carries restManaFlat / restManaFloor
+  // / restManaFull itself instead of restMana.
+  rest: {
+    hpSmallPct: 25,
+    hpPartialPct: 35,
+    mana: { mode: 'floorOrFull', flat: 3, floorPct: 50 },
+  },
+
+  // The seeded route's town budget (plan phase 7): at most this many towns —
+  // the atlas's start and city nodes — per difficulty act, so attrition
+  // between towns is the run's tension. generateJourney rejects a route over
+  // it and rolls again.
+  atlas: { townsPerActMax: 1 },
 
   // Smithing promotes the owned armament, not one card copy. The model owns
   // the transaction; balance owns the tier ceiling, price, and reward faucet.

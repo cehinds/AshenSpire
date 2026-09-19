@@ -558,7 +558,7 @@ validation refusals and the dialogue model.
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
 | Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
-| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, shrineHealMult, shrineNoRest, powerCostReduction |
+| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as

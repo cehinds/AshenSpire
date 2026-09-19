@@ -514,16 +514,16 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "possession.stat.shrineHealMult",
+    "id": "possession.stat.restHealMult",
     "extends": "",
-    "short": "Shrine healing",
+    "short": "Rest healing",
     "full": "",
     "tip": ""
   },
   {
-    "id": "possession.stat.shrineNoRest",
+    "id": "possession.stat.restDenied",
     "extends": "",
-    "short": "Shrine rest",
+    "short": "Rest",
     "full": "",
     "tip": ""
   },
@@ -1669,6 +1669,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "location.shrine.title",
+    "extends": "",
+    "short": "Shrine of Ember",
+    "full": "The Shrine you are resting at.",
+    "tip": ""
+  },
+  {
+    "id": "location.camp.title",
+    "extends": "",
+    "short": "Field Camp",
+    "full": "A rough camp off the road: a small rest and no services.",
+    "tip": ""
+  },
+  {
+    "id": "location.inn.title",
+    "extends": "",
+    "short": "Inn",
+    "full": "The town's inn: a full rest.",
+    "tip": ""
+  },
+  {
+    "id": "location.chapel.title",
+    "extends": "",
+    "short": "Chapel",
+    "full": "The town's chapel: a shrine's rest.",
+    "tip": ""
+  },
+  {
     "id": "rest.status.available",
     "extends": "",
     "short": "{available} of {total} available",
@@ -1678,7 +1706,7 @@ export const uiStrings = [
   {
     "id": "rest.review.question",
     "extends": "",
-    "short": "Rest at this Shrine?",
+    "short": "Rest here?",
     "full": "",
     "tip": ""
   },
@@ -1692,14 +1720,14 @@ export const uiStrings = [
   {
     "id": "rest.review.leave",
     "extends": "",
-    "short": "Heal {heal} HP and restore Mana, then leave this Shrine.",
+    "short": "Heal {heal} HP and restore {mana} Mana, then leave.",
     "full": "",
     "tip": ""
   },
   {
     "id": "rest.review.stay",
     "extends": "",
-    "short": "Heal {heal} HP and restore Mana. You stay at this Shrine and leave when you choose.",
+    "short": "Heal {heal} HP and restore {mana} Mana. You stay and leave when you choose.",
     "full": "",
     "tip": ""
   },

@@ -199,8 +199,8 @@ export const relics = [
     name: 'Ember Fragment',
     rarity: 'uncommon',
     icon: '✨',
-    passives: { shrineHealMult: 1.15 },
-    textTemplate: 'Resting at Shrines heals 15% more.',
+    passives: { restHealMult: 1.15 },
+    textTemplate: 'Resting heals 15% more.',
   },
   {
     id: 'twinnedArmor',
@@ -279,7 +279,9 @@ export const relics = [
     name: 'Wyrm Heart',
     rarity: 'rare',
     icon: '🫀',
-    passives: { shrineNoRest: true },
+    // Denies the shrine's Rest (and any place whose set holds the partial
+    // rest) — a town's bed and a camp's rough rest stay open (plan phase 7).
+    passives: { restDenied: ['restHpPartial'] },
     textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines no longer offer Rest.',
     flavor: 'It still beats. It expects something of you.',
   },

@@ -408,9 +408,3 @@ export function applyGraceRefill(registries, run, opts = {}) {
   return plan;
 }
 
-/** Shrine rest heal (SPEC shrine.healPct × shrineHealMult passives, floored). */
-export function shrineHealAmount(registries, run) {
-  const pct = registries.balance.shrine.healPct;
-  const mult = passiveMult(registries, run.relics, 'shrineHealMult');
-  return Math.min(run.maxHp - run.hp, Math.floor((run.maxHp * pct * mult) / 100));
-}

@@ -40,8 +40,9 @@ import { eventChoicesWithHistory } from '../src/content/events.js';
 import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount, applyGraceRefill,
+  rollRelicReward,
 } from '../src/engine/encounters.js';
+import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
@@ -822,6 +823,8 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- shrine / treasure / event (per-member, simplified for S2) -----------
+  // Each member's open shrine visit (engine/locations.js), by member id.
+  const shrineVisits = new Map();
   function enterShrine() {
     // At every Grace, every character refills their fixed-capacity allocation.
     // In co-op the host owns that truth, not whichever client taps first. Every
@@ -832,7 +835,17 @@ export function createSession({ registries, seedString, endless = false, restore
     // No settings override here on purpose. The server is authoritative and has
     // no browser to read `meta.settings` from; the counts are the authored
     // table. A per-session override is a lobby setting and a separate subject.
-    for (const m of livingMembers()) applyGraceRefill(registries, m.run);
+    //
+    // THE SHRINE IS A LOCATION VISIT (plan phase 7): every living member's
+    // visit mounts the shrine's rules and `arrived` runs the refill rule; the
+    // Rest choice below fires `rested` on that member's visit. The visits live
+    // beside the scene, not in it — the scene is what clients are shown.
+    shrineVisits.clear();
+    for (const m of livingMembers()) {
+      const visit = createLocationVisit({ run: m.run, registries, rng }, 'shrine');
+      arriveAt(visit);
+      shrineVisits.set(m.id, visit);
+    }
     session.scene = {
       kind: 'shrine',
       done: {},
@@ -849,8 +862,9 @@ export function createSession({ registries, seedString, endless = false, restore
       reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
       return { ok: true, allocation: { ...m.run.flaskCharges } };
     } else if (choice === 'rest') {
-      m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
-      m.run.mana = m.run.maxMana;
+      const visit = shrineVisits.get(memberId) || createLocationVisit({ run: m.run, registries, rng }, 'shrine');
+      if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };
+      restAt(visit);
     } else if (choice === 'mend') {
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);
@@ -872,7 +886,11 @@ export function createSession({ registries, seedString, endless = false, restore
     }
     session.scene.done[memberId] = true;
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
-    if (!waiting.length) advanceFromNode();
+    if (!waiting.length) {
+      for (const visit of shrineVisits.values()) leaveLocation(visit);
+      shrineVisits.clear();
+      advanceFromNode();
+    }
     return { ok: true };
   }
 

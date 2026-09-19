@@ -37,6 +37,7 @@ import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
 import { swapRunClass } from '../model/classSwap.js';
+import { applyGraceRefill } from './encounters.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -624,10 +625,19 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'restoreMana': {
-      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      // BY an amount, or TO a floor (plan phase 7's floorOrFull rest): a pool
+      // under the floor rises to it; one already at or above it fills.
+      const toFloor = eff.toFloorPct !== undefined;
+      const n = toFloor ? 0 : Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      const pct = toFloor ? Math.max(0, evalNum(ctx, action, eff.toFloorPct, 0)) : 0;
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const before = t.mana;
-        t.mana = Math.min(t.maxMana, t.mana + n);
+        if (toFloor) {
+          const floor = Math.min(t.maxMana, Math.floor((t.maxMana * pct) / 100));
+          t.mana = before >= floor ? t.maxMana : floor;
+        } else {
+          t.mana = Math.min(t.maxMana, t.mana + n);
+        }
         ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
       }
       break;
@@ -641,8 +651,12 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'heal': {
+      // `ctx.healMult` is the run-level door's (createRunContext): a rest's
+      // heal scaled by the custom mod and the restHealMult passive. A fight
+      // never sets it and reads 1.
+      const mult = typeof ctx.healMult === 'number' ? ctx.healMult : 1;
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        applyHeal(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        applyHeal(ctx, t, Math.floor(evalNum(ctx, action, eff.amount, 0, t) * mult));
       }
       break;
     }
@@ -823,19 +837,34 @@ function runRunOpcode(ctx, action, eff) {
       swapRunClass(ctx.registries, run, classId);
       break;
     }
+    case 'refillFlasks': {
+      // Plan phase 7: the grace refill is the `restFlasks` location rule's
+      // effect on `arrived`. A top-up by construction (engine/encounters.js),
+      // so a re-entry grants nothing twice; the receipt rides the context for
+      // the screen's refill line.
+      ctx.receipts = ctx.receipts || {};
+      ctx.receipts.refill = applyGraceRefill(ctx.registries, run, ctx.refillOpts || {});
+      break;
+    }
     default:
       throw new Error(`Run opcode '${eff.op}' has no implementation`);
   }
 }
 
 /**
- * executeRunEffects({ run, registries, rng }, effects) → { events }.
- * Executes run-level effect lists (event choices, shop purchases, rewards)
- * outside combat. Combat statistics ops are unavailable, but damage / loseHp /
- * heal apply to the run's HP through a player facade so events like
- * "take 6 damage" and "heal 20% max HP" work.
+ * createRunContext({ run, registries, rng }, opts) → the run-level door's
+ * context: a player FACADE over the run's pools (hp / mana) so heal, loseHp
+ * and restoreMana apply to the run through the same opcode bodies a fight
+ * uses, an empty enemy list, an action queue and a trigger-state map. Combat
+ * statistics ops are unavailable. Three doors share it: executeRunEffects
+ * (event choices, shop purchases, rewards, flasks on the map), and the
+ * location visit (engine/locations.js, plan phase 7), which mounts a place's
+ * property rules on it and emits `arrived` / `rested` through the trigger
+ * scan. `opts.healMult` scales every heal the context applies (the custom
+ * mod's lesser healing × the run's restHealMult passive); `opts.refillOpts`
+ * are handed to the refillFlasks opcode. Nothing here is persisted.
  */
-export function executeRunEffects({ run, registries, rng }, effects, meta = {}) {
+export function createRunContext({ run, registries, rng }, { healMult = 1, refillOpts = {} } = {}) {
   const events = [];
   const facade = {
     id: 'player',
@@ -866,6 +895,9 @@ export function executeRunEffects({ run, registries, rng }, effects, meta = {}) 
     turn: 0,
     triggerState: new Map(),
     _idCounter: 0,
+    healMult,
+    refillOpts,
+    receipts: {},
     emit(type, payload) {
       events.push({ type, ...payload });
     },
@@ -876,17 +908,52 @@ export function executeRunEffects({ run, registries, rng }, effects, meta = {}) 
       return `run${++ctx._idCounter}`;
     },
   };
-  for (const eff of effects) {
-    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta });
-  }
+  return ctx;
+}
+
+/**
+ * syncRunContext(ctx) — re-read the run's pools into the facade. A visit
+ * lives across other doors (a level point assigned re-derives maxHp; a flask
+ * charge moved), so a context that emits twice reads the run again before
+ * the second emission rather than committing a stale copy over it.
+ */
+export function syncRunContext(ctx) {
+  const { run, player } = ctx;
+  player.hp = run.hp;
+  player.maxHp = run.maxHp;
+  player.mana = run.mana;
+  player.maxMana = run.maxMana;
+  player.alive = run.hp > 0;
+  return ctx;
+}
+
+/** drainRunContext(ctx) — run the queue to empty (bounded), then write the facade back. */
+export function drainRunContext(ctx) {
   let guard = 0;
   while (ctx.queue.length) {
     if (++guard > 1000) throw new Error('Run effect queue did not drain');
     executeAction(ctx, ctx.queue.shift());
   }
-  run.hp = Math.min(facade.hp, run.maxHp);
-  run.mana = Math.min(facade.mana, run.maxMana);
-  return { events };
+  ctx.run.hp = Math.min(ctx.player.hp, ctx.run.maxHp);
+  ctx.run.mana = Math.min(ctx.player.mana, ctx.run.maxMana);
+  return ctx;
+}
+
+/**
+ * executeRunEffects({ run, registries, rng }, effects) → { events }.
+ * Executes run-level effect lists (event choices, shop purchases, rewards)
+ * outside combat. Combat statistics ops are unavailable, but damage / loseHp /
+ * heal apply to the run's HP through a player facade so events like
+ * "take 6 damage" and "heal 20% max HP" work.
+ */
+export function executeRunEffects({ run, registries, rng }, effects, meta = {}) {
+  const ctx = createRunContext({ run, registries, rng });
+  const facade = ctx.player;
+  for (const eff of effects) {
+    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta });
+  }
+  drainRunContext(ctx);
+  return { events: ctx.eventLog };
 }
 
 /** Spend one permanent restorative charge and apply its authored run effects. */

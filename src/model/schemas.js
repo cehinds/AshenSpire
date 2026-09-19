@@ -73,6 +73,10 @@ export const RUN_OPCODES = Object.freeze([
   'startCombat',
   // Plan phase 5c: the class swap — an event or a boss's gift, never a menu.
   'swapClass',
+  // Plan phase 7: the grace refill as a rule's effect — the `restFlasks`
+  // location tag fires it on `arrived`. Idempotent (a top-up), so a re-entry
+  // cannot double-pour.
+  'refillFlasks',
 ]);
 
 export const OPCODES = Object.freeze([...COMBAT_OPCODES, ...RUN_OPCODES]);
@@ -137,6 +141,13 @@ export const EVENTS = Object.freeze([
   // the quest door (engine/quests.js completeQuest), for an event chain's
   // completing choice and an atlas quest's claimed reward alike.
   'questCompleted',
+  // Plan phase 7: a location is a property carrier, mounted from arrival to
+  // departure (engine/locations.js). `arrived` fires when the run reaches it,
+  // `rested` when the player takes its Rest; what the place restores is the
+  // sum of its tags' rules on these two events. Run-level only: no fight
+  // emits either.
+  'arrived',
+  'rested',
   'flaskUsed',
   'relicTriggered',
 ]);
@@ -255,8 +266,12 @@ export const PASSIVE_TYPES = Object.freeze({
   eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
   flaskPowerMult: 'num', // flask effect amounts ×
   revealUnknown: 'bool', // flag: '?' map nodes show their resolved type
-  shrineHealMult: 'num', // shrine rest healing ×
-  shrineNoRest: 'bool', // flag: shrines offer Smith only
+  restHealMult: 'num', // rest healing × (every location's Rest; was shrineHealMult)
+  // Rest refused: `true` denies every location's Rest; a list of location
+  // tags (restHpPartial, …) denies only a place whose tag set holds one of
+  // them, so a relic can forbid the shrine's rest and still allow the town's
+  // (plan phase 7; was shrineNoRest, which had no filter).
+  restDenied: 'boolOrTags',
   powerCostReduction: 'num', // Power cards cost N less (min 0)
   // Inert character-sheet projection only. Player state and combat deliberately
   // have no poise meter; enemy poise remains a separate engine system.
@@ -282,7 +297,10 @@ export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
 // every schema that carries passives (a relic, a property rule), so there is
 // one home for what a passive may be and no second hand-typed copy to drift.
 const passiveFields = Object.freeze(Object.fromEntries(
-  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, { k: t === 'bool' ? 'bool' : 'num', opt: true }])
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, {
+    ...(t === 'bool' ? { k: 'bool' } : t === 'boolOrTags' ? { k: 'union', anyOf: [{ k: 'bool' }, { k: 'arr', of: { k: 'str' } }] } : { k: 'num' }),
+    opt: true,
+  }])
 ));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
@@ -452,7 +470,11 @@ export const EFFECT_SPECS = Object.freeze({
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
   restoreStamina: { allowed: [], required: ['amount'], refs: {} },
-  restoreMana: { allowed: [], required: ['amount'], refs: {} },
+  // `amount` restores that much; `toFloorPct` (plan phase 7, the rest's
+  // floorOrFull mode) restores TO that percent of max, or to full when the
+  // pool already stands at or above the floor. Exactly one of the two —
+  // validate.js refuses neither and both.
+  restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
@@ -472,6 +494,7 @@ export const EFFECT_SPECS = Object.freeze({
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
   // `classId` names the class; `random: true` picks any class but the run's own.
   swapClass: { allowed: ['classId', 'random'], required: [], refs: { classId: 'classes' } },
+  refillFlasks: { allowed: [], required: [], refs: {} },
 });
 
 // ---------------------------------------------------------------------------

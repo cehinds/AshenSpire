@@ -110,3 +110,7 @@ poisonedPouch,venom,stacks
 assassin,prepared,stacks
 assassin,draw,amount
 shadow,block,amount
+restHpSmall,pct,pct
+restHpPartial,pct,pct
+restManaFlat,restoreMana,amount
+restManaFloor,floorPct,toFloorPct

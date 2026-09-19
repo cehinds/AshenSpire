@@ -7,7 +7,7 @@ import { createRunState, serializeRun, deserializeRun } from '../src/model/state
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
 import { generateJourney, journeyGraph } from '../src/model/worldAtlas.js';
-import { shrineHealAmount } from '../src/engine/encounters.js';
+import { createLocationVisit, previewRest } from '../src/engine/locations.js';
 import { smithingPlan } from '../src/model/smithing.js';
 const policy = localMapPolicy('crownfall');
 
@@ -30,10 +30,15 @@ test('service inspection derives real plans without changing inventory or rollin
   const registries=createRegistries(contentBundle),run=createRunState({seed:123,classId:'reaver',registries});
   run.hp-=15;
   const before=JSON.stringify(run), state={};
-  const rest=localServiceModel({handlerId:'rest',registries,run,state});
-  assert.ok(rest.benefit.includes(`recover ${shrineHealAmount(registries,run)} HP`));
-  const reduced=localServiceModel({handlerId:'rest',registries,run,state,healMult:.5});
-  assert.ok(reduced.benefit.includes(`recover ${Math.floor(shrineHealAmount(registries,run)*.5)} HP`));
+  // The preview reads the place's own rules (plan phase 7): an inn point
+  // resolves to the town's full rest, the classic Shrine to its partial one.
+  const expect=(id,opts)=>previewRest(createLocationVisit({run:structuredClone(run),registries,rng:null},id,opts)).heal;
+  const rest=localServiceModel({handlerId:'rest',registries,run,state,nodeId:'crownfall/inn',serviceTypeId:'inn'});
+  assert.ok(rest.benefit.includes(`recover ${expect('inn')} HP`));
+  assert.equal(expect('inn'),15);
+  const reduced=localServiceModel({handlerId:'rest',registries,run,state,nodeId:'crownfall/chapel',serviceTypeId:'chapel',healMult:.5});
+  assert.ok(reduced.benefit.includes(`recover ${expect('chapel',{healMult:.5})} HP`));
+  assert.ok(expect('chapel',{healMult:.5})<expect('chapel'));
   const smith=localServiceModel({handlerId:'smith',registries,run,state});
   const plan=smithingPlan(registries,run);
   assert.ok(smith.facts[0].includes(`${plan.stones} Smithing Stones`));

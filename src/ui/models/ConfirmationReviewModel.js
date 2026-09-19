@@ -106,14 +106,14 @@ export function sellReview({ kind, name, price }) {
 }
 
 /** W2a Shrine rest: the Shrine and the player's pools, then the exact recovery. */
-export function restReview({ shrine, heal, hp, maxHp, mana, maxMana, multiUse = false }) {
+export function restReview({ shrine, heal, manaGain = 0, hp, maxHp, mana, maxMana, multiUse = false }) {
   return Object.freeze({
     question: t('rest.review.question'),
     target: t('rest.review.target', {
       shrine: String(shrine), hp: amount(hp, 'restReview hp'), maxHp: amount(maxHp, 'restReview maxHp'),
       mana: amount(mana, 'restReview mana'), maxMana: amount(maxMana, 'restReview maxMana'),
     }),
-    message: t(multiUse ? 'rest.review.stay' : 'rest.review.leave', { heal: amount(heal, 'restReview heal') }),
+    message: t(multiUse ? 'rest.review.stay' : 'rest.review.leave', { heal: amount(heal, 'restReview heal'), mana: amount(manaGain, 'restReview mana gain') }),
     confirmLabel: t('rest.review.confirm'),
     policyAction: null,
   });

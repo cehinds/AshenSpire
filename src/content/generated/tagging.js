@@ -9523,5 +9523,95 @@ export const tagging = [
     "scope": "",
     "objectId": "rogueReachCrown",
     "tagId": "classification.unlock"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "restHpPartial"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "restMana"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "restFlasks"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "smith"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "shrine",
+    "tagId": "levelUp"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "camp",
+    "tagId": "restHpSmall"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "camp",
+    "tagId": "restMana"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "restHpFull"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "restManaFull"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "restFlasks"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "inn",
+    "tagId": "levelUp"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "restHpPartial"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "restMana"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "restFlasks"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "levelUp"
   }
 ];

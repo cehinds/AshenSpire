@@ -40,6 +40,7 @@ import {
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
+import { REST_MANA_MODES, locationTaggingProblems } from './locations.js';
 import { wornZoneOf, handZoneOf } from './zones.js';
 import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
@@ -512,6 +513,35 @@ function collectContentProblems(bundle, errors = []) {
   // types a fraction or a negative is refused by name, never clamped.
   // The character level (plan phase 6): the curve, the awards and what a
   // level grants — each a closed set, each number refused by name.
+  // What a rest restores (plan phase 7): the location rules read these rows
+  // through their variable bindings, the door reads the mode. A retune that
+  // names an unknown mode or a percent off the scale is refused by name.
+  if (b.balance && b.balance.rest !== undefined) {
+    const rest = b.balance.rest;
+    if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana }');
+    else {
+      for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
+      for (const key of ['hpSmallPct', 'hpPartialPct']) {
+        if (!(Number.isInteger(rest[key]) && rest[key] >= 0 && rest[key] <= 100)) err(`balance.rest.${key}`, `must be an integer percent 0–100, got ${JSON.stringify(rest[key])}`);
+      }
+      const mana = rest.mana;
+      if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.rest.mana', 'must be an object { mode, flat, floorPct }');
+      else {
+        for (const key of Object.keys(mana)) if (!['mode', 'flat', 'floorPct'].includes(key)) err(`balance.rest.mana.${key}`, 'Unknown field');
+        if (!REST_MANA_MODES.includes(mana.mode)) err('balance.rest.mana.mode', `must be one of ${REST_MANA_MODES.join(', ')}, got ${JSON.stringify(mana.mode)}`);
+        if (!(Number.isInteger(mana.flat) && mana.flat >= 0)) err('balance.rest.mana.flat', `must be a non-negative integer, got ${JSON.stringify(mana.flat)}`);
+        if (!(Number.isInteger(mana.floorPct) && mana.floorPct >= 0 && mana.floorPct <= 100)) err('balance.rest.mana.floorPct', `must be an integer percent 0–100, got ${JSON.stringify(mana.floorPct)}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.atlas !== undefined) {
+    const atlas = b.balance.atlas;
+    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax }');
+    else {
+      for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
+      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 0)) err('balance.atlas.townsPerActMax', `must be a non-negative integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
+    }
+  }
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');
@@ -1035,6 +1065,9 @@ function collectContentProblems(bundle, errors = []) {
   // cycles, edges, families, variables against bindings, kinds against
   // collections (model/tree.js says what each refusal is).
   for (const p of treeProblems(b)) err(p.path, p.message);
+  // Locations (plan phase 7): a `location` tagging row names a map id, every
+  // rest-mana mode has its rule, and a restDenied filter names a carried tag.
+  for (const p of locationTaggingProblems(b)) err(p.path, p.message);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
     const base = `enemies.${enemy && enemy.id || '?'}`;
     const cfg = enemy && enemy.arcaneExposure;
@@ -2059,7 +2092,14 @@ export function validateEffects(effects, path, vctx) {
       if (named === random) err(p, `Opcode 'swapClass' takes exactly one of 'classId' or 'random: true'`);
       else if (named && typeof eff.classId !== 'string') err(`${p}.classId`, `'classId' must be a class id`);
     }
-    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat']) {
+    // restoreMana restores BY an amount or TO a floor (plan phase 7) — one
+    // selector, never neither (nothing to restore) nor both (one ignored).
+    if (eff.op === 'restoreMana') {
+      const by = eff.amount !== undefined;
+      const to = eff.toFloorPct !== undefined;
+      if (by === to) err(p, `Opcode 'restoreMana' takes exactly one of 'amount' or 'toFloorPct'`);
+    }
+    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat', 'toFloorPct']) {
       if (eff[numeric] !== undefined) validateFormula(eff[numeric], `${p}.${numeric}`, vctx);
     }
     if (eff.if !== undefined) validatePredicate(eff.if, `${p}.if`, vctx);
@@ -2240,6 +2280,7 @@ const FORMULA_FIELDS = {
   mul: ['args'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
+  missingMana: ['of', 'min', 'max'],
   stacks: ['status', 'of', 'per', 'min', 'max'],
   energySpent: ['per', 'min', 'max'],
   blockOf: ['of', 'min', 'max'],
@@ -2278,7 +2319,7 @@ export function validateFormula(value, path, vctx) {
     }
     if (value.of === undefined) err(`${path}.of`, "'stacks' requires 'of'");
   }
-  if (['percentMaxHp', 'missingHp', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
+  if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {

@@ -52,8 +52,9 @@ import {
   rollRelicReward,
   buildShopStock,
   rollArmamentDrop,
-  applyGraceRefill,
 } from './engine/encounters.js';
+import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
+import { resolveLocationId, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -955,7 +956,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   });
   run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
-  if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile);
+  if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
@@ -1080,7 +1081,7 @@ function resumeRun(slot = 1) {
   } else if (run.shopStock) {
     showShop();
   } else if (run.journey?.activeService?.handlerId === 'rest') {
-    showRest();
+    showRest(null, run.journey.activeService.locationId || 'shrine');
   } else {
     showMap();
   }
@@ -1739,7 +1740,14 @@ function worldLocationAction(action) {
     run.shopStock = state.stock;
     persist(); return showShop();
   }
-  if (handlerId === 'rest') { persist(); return showRest(); }
+  if (handlerId === 'rest') {
+    // WHICH PLACE THIS IS (plan phase 7): the point's own tagging row, else
+    // its service type's (inn, chapel), else the classic Shrine. Kept on the
+    // active service so a resumed save re-opens the same place.
+    j.activeService.locationId = resolveLocationId(registries, { nodeId: action.pointId, serviceTypeId: service.serviceTypeId }) || 'shrine';
+    persist();
+    return showRest(null, j.activeService.locationId);
+  }
   throw Error(`Unsupported atlas service ${handlerId}`);
 }
 
@@ -1784,7 +1792,9 @@ function enterNode(nodeId) {
       return startFight('boss', nodeId);
     case 'shrine':
       persist();
-      return showRest();
+      // An Unknown node's rest outcome is the field camp (proposal §7.4): a
+      // small rest and no services. A shrine node is the Shrine.
+      return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
       const stock = buildShopStock(registries, rng, run);
       const pm = shopPriceMult();
@@ -2263,35 +2273,48 @@ function roomHud(returnTo) {
   };
 }
 
-function showRest(openPanel = null) {
+// The place the Rest screen stands at, kept across its own re-mounts (the
+// HUD's remount passes no location). The door that enters a place names it.
+let restLocationId = 'shrine';
+
+function showRest(openPanel = null, locationId = null) {
+  if (locationId) restLocationId = locationId;
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
-  // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
-  // refill automatically at graces". Not a third option beside Rest and Smith —
-  // arriving is the trigger, so a run that comes to smith is refilled exactly
-  // like a run that comes to rest. The counts come from balance.graceRefill
-  // through the Advanced debug rows; `bad` is a stored override that is not on
-  // the ladder, and it is named in the command log rather than swallowed
-  // (the same treatment applyTapSize gives a bad tapFloor).
+  // THE PLACE IS A CARRIER (plan phase 7, engine/locations.js): its tags'
+  // rules mount for the visit, `arrived` fires here and `rested` when the
+  // player takes the Rest, and what the place restores is the sum of its
+  // tags. The refill is one of those rules (`restFlasks` on `arrived`) —
+  // AUTOMATIC, AND BEFORE THE CHOICE. Constantine: "flasks should refill
+  // automatically at graces". Arriving is the trigger, so a run that comes to
+  // smith is refilled exactly like a run that comes to rest. The counts come
+  // from balance.graceRefill through the Advanced debug rows; `bad` is a
+  // stored override that is not on the ladder, and it is named in the
+  // command log rather than swallowed.
   const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
   for (const b of bad) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
+  const visit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
   const worldRest = run.journey?.activeService;
   const restState = worldRest ? run.journey.serviceStates[worldRest.pointId] : null;
-  const refill = restState?.refilled ? { hp: 0, mana: 0, total: 0 } : applyGraceRefill(registries, run, { counts });
+  // A resumed atlas visit arrived once already; the classic map re-arrives on
+  // every mount, and the refill is a top-up so that pours nothing twice.
+  const refill = restState?.refilled ? null : arriveAt(visit).refill;
   if (restState && !restState.refilled) { restState.refilled = true; persist(); }
-  if (refill.total) persist();
+  if (refill && refill.total) persist();
   mountRest(app, {
     registries,
     run,
+    visit,
     hud: roomHud(() => showRest()),
     openPanel,
     healMult,
     refill,
     meta: saves.loadMeta(),
-    // Which smith services this Shrine offers — the table's word, resolved
+    // Which smith services this place offers — the table's word, resolved
     // here so the screen reads one answer (a chance of 100 consumes no roll).
+    // The screen shows the smith only where the place carries the `smith` tag.
     services: smithServicesAt(registries, 'shrine', rng),
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
@@ -2304,6 +2327,7 @@ function showRest(openPanel = null) {
     // leaving it, and the screen carries its own LEAVE.
     multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
+      leaveLocation(visit);
       finishWorldService();
       persist();
       showMap();
