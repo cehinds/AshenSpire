@@ -79,7 +79,11 @@ export function mountProperties(ctx, carrier) {
   if (owned[sourceKey]) {
     throw new Error(`Property source '${sourceKey}' is already mounted for '${carrier.ownerKey}' — a carrier mounts once; unmount it before mounting it again`);
   }
-  owned[sourceKey] = { kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules };
+  // `scopeTags` are the carrier's OWN non-property tags, kept on the record
+  // so a scoped passive reader (engine/skillXp.js: skillXpMult for the tracks
+  // the class card names) can ask which mounts speak for a track without a
+  // second table. Empty for the carriers that carry none.
+  owned[sourceKey] = { kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])] };
   return owned[sourceKey];
 }
 
@@ -125,6 +129,36 @@ export function relicCarrier(registries, relicId, ownerKey) {
   const def = registries.relics.get(relicId);
   const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
   return tagIds.length ? { kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+/**
+ * classCarrier(registries, classId, ownerKey) → the carrier the class card
+ * presents (plan phase 5a): the CORE ZONE's one card, mounted like a relic,
+ * conferring the property tags the class carries in tagging.csv (`favored`),
+ * scoped by its other tags (the item types it names). Null when the class
+ * carries no property.
+ */
+export function classCarrier(registries, classId, ownerKey) {
+  const def = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tagIds.length
+    ? { kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds: [...tagIds], scopeTags: [...(def.tags || [])] }
+    : null;
+}
+
+/**
+ * syncClassProperties(combat, entity) — mount the entity's class card once,
+ * as syncRelicProperties mounts a relic: a class never changes mid-fight, so
+ * this only ever adds.
+ */
+export function syncClassProperties(combat, entity) {
+  const owner = entity || (combat && combat.player);
+  if (!combat || !owner || !owner.classId) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  const carrier = classCarrier(combat.registries, owner.classId, ownerKey);
+  if (!carrier) return;
+  const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
+  if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
 }
 
 /**

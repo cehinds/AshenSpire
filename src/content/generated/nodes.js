@@ -1803,6 +1803,66 @@ export const nodes = [
     "blurb": "What Wrath Coil does when the fight gives it its moment."
   },
   {
+    "id": "favored",
+    "parentId": "property",
+    "label": "Favored",
+    "color": "9FC3E8",
+    "glyph": "✦",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
+  },
+  {
+    "id": "ashenGrip",
+    "parentId": "property",
+    "label": "Ashen Grip",
+    "color": "8C7A5B",
+    "glyph": "🤚",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "What Ashen Grip does when the fight gives it its moment."
+  },
+  {
+    "id": "lodestarShard",
+    "parentId": "property",
+    "label": "Lodestar Shard",
+    "color": "8C7A5B",
+    "glyph": "🌟",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "What Lodestar Shard does when the fight gives it its moment."
+  },
+  {
+    "id": "waxenSeal",
+    "parentId": "property",
+    "label": "Waxen Seal",
+    "color": "8C7A5B",
+    "glyph": "🕯",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "What Waxen Seal does when the fight gives it its moment."
+  },
+  {
+    "id": "whetstonePouch",
+    "parentId": "property",
+    "label": "Whetstone Pouch",
+    "color": "8C7A5B",
+    "glyph": "👝",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "What Whetstone Pouch does when the fight gives it its moment."
+  },
+  {
     "id": "classification",
     "parentId": "",
     "label": "classification",

@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1191",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Every class now begins with its own ability card and a second relic, and leans toward its favoured weapon",
+    "detail": "The Reaver starts with Brace, a stance that turns aside a quarter of the damage you take and hands you Strength when you leave it, and carries the Ashen Grip, which gives back one Stamina for the first stance you enter each turn. The Starseer starts with Attune and the Lodestar Shard; the Herald with Warm Litany and the Waxen Seal; the Rogue with Prepare and the Whetstone Pouch. Your starting deck is eleven cards now, the ability card beside your signature. Each class favours one kind of weapon — blades for the Reaver and Rogue, a focus for the Starseer and Herald — and every skill point earned with that kind is worth a quarter more. Nothing you already carry changes.",
+    "build": "0.7.1.199",
+    "pullRequest": 1191,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1191"
+  },
+  {
     "id": "pr-1190",
     "date": "2026-09-19",
     "group": "2026-09-19",

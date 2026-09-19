@@ -318,6 +318,31 @@ export const nodeVariables = [
     "role": "amount"
   },
   {
+    "nodeId": "favored",
+    "variable": "skillXpMult",
+    "role": "skillXpMult"
+  },
+  {
+    "nodeId": "ashenGrip",
+    "variable": "restoreStamina",
+    "role": "amount"
+  },
+  {
+    "nodeId": "lodestarShard",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "waxenSeal",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "whetstonePouch",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
     "nodeId": "cost.action",
     "variable": "amount",
     "role": "amount"

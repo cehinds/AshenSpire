@@ -315,7 +315,7 @@ stampDeck(baseRegistries, mutable);
 const once = JSON.stringify(mutable.deck);
 stampDeck(baseRegistries, mutable);
 check(JSON.stringify(mutable.deck) === once, 'compose/apply twice is byte-identical after the first pass');
-check(mutable.deck.length === 10 && attacks(mutable).length === 4, 'equip preserves deck size and authored attack count');
+check(mutable.deck.length === baseRegistries.balance.startingDeckSize && attacks(mutable).length === 4, 'equip preserves deck size and authored attack count');
 const reboundAttacks = attacks(mutable);
 check(JSON.stringify(reboundAttacks.map((card) => ({ instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, acquiredAt: card.acquiredAt }))) === JSON.stringify(attackIdentityBefore)
   && reboundAttacks.every((card, index) => card.upgraded === false

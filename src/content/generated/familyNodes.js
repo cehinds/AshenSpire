@@ -11,6 +11,10 @@ export const familyNodes = [
     "nodeId": "card"
   },
   {
+    "family": "class",
+    "nodeId": "itemType"
+  },
+  {
     "family": "relic",
     "nodeId": "item"
   },

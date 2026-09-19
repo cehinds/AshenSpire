@@ -97,9 +97,8 @@ function armamentEntries(registries, run) {
   });
 }
 
-function relicEntry(registries, run) {
-  const classDef = registries.classes.get(run.class);
-  const relic = classDef.startingRelic ? registries.relics.get(classDef.startingRelic) : null;
+function relicEntry(registries, run, relicId = registries.classes.get(run.class).startingRelic) {
+  const relic = relicId ? registries.relics.get(relicId) : null;
   if (!relic) return null;
   // The resource's name is the presentation table's, never an upper-cased id:
   // a player reads 'Mana', and the engine's key is not a label (Vira's
@@ -266,7 +265,9 @@ export function creationBrief(registries, run) {
     equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
   }), ...derivedEntries(projection)];
   const relic = relicEntry(registries, run);
-  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : [])];
+  // The kit relic (plan phase 5a) rides beside the starting relic; the brief says so.
+  const kitRelic = relicEntry(registries, run, registries.classes.get(run.class).kitRelic);
+  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : []), ...(kitRelic && kitRelic.id !== (relic && relic.id) ? [kitRelic] : [])];
   const split = splitByDisclosure(stats);
   return {
     classId: run.class,

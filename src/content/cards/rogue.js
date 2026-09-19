@@ -283,4 +283,17 @@ export const rogueCards = [
     textTemplate: 'Deal {damage} damage. If the target has Bleed, deal {damage.2} more. If it has Venom, deal {damage.3} more.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 30 }, { op: 'damage', target: 'enemy', amount: 12, if: TARGET_BLEED }, { op: 'damage', target: 'enemy', amount: 12, if: TARGET_VENOM }] },
   },
+  // ---- The class ability card (plan phase 5a, proposal §4) -----------------
+  // Prepare: the Rogue's loop is setup then payoff; the cheapest way in.
+  {
+    id: 'prepare', name: 'Prepare', class: 'rogue', rarity: 'starter', cost: 0, staminaCost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '◈',
+    effects: [{ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one }],
+    textTemplate: 'Become Prepared. Exhaust.',
+    upgrade: {
+      keywords: [],
+      effects: [{ op: 'applyStatus', target: 'self', status: 'prepared', stacks: one }],
+      textTemplate: 'Become Prepared.',
+    },
+  },
 ];

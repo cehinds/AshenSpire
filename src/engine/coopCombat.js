@@ -29,7 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncRelicProperties } from './properties.js';
+import { syncRelicProperties, syncClassProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
@@ -129,6 +129,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   for (const P of livingPlayers(C)) {
     setActive(C, P);
     syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
     C.emit('combatStart', {});
   }
   for (const enemy of C.enemies) {
@@ -208,6 +209,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
     setActive(C, P);
     syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
     setActive(C, wasActive || null);
     // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {

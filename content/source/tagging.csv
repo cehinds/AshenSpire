@@ -38,6 +38,14 @@ class,,rogue,guile
 class,,rogue,flourish
 class,,herald,ritual
 class,,herald,oath
+class,,reaver,favored
+class,,reaver,item:blade
+class,,starseer,favored
+class,,starseer,item:magic-focus
+class,,rogue,favored
+class,,rogue,item:blade
+class,,herald,favored
+class,,herald,item:magic-focus
 # ---- card ----------------------------------------------------------------------
 # Card schools. What KIND of attack, which school a skill belongs to.
 card,,ambush,guile
@@ -135,6 +143,10 @@ card,,enterGorefire,gorefire
 card,,enterGorefire,oath
 card,,enterBulwark,guard
 card,,enterBulwark,oath
+card,,brace,guard
+card,,attune,starstone
+card,,warmLitany,ritual
+card,,prepare,guile
 card,,riposte,guard
 card,,riposte,flourish
 card,,starstonePebble,starstone
@@ -1178,6 +1190,10 @@ relic,,gravetendersBell,gravetendersBell
 relic,,sentinelsOath,sentinelsOath
 relic,,forsakenWarflag,forsakenWarflag
 relic,,wrathCoil,wrathCoil
+relic,,ashenGrip,ashenGrip
+relic,,lodestarShard,lodestarShard
+relic,,waxenSeal,waxenSeal
+relic,,whetstonePouch,whetstonePouch
 
 # ---- kinds: what each object IS ------------------------------------------------
 # One row per object into the classification subtree. A card carries the node
@@ -1200,6 +1216,10 @@ card,,ironResolve,classification.skill
 card,,serratedBlade,classification.attack
 card,,enterGorefire,classification.skill
 card,,enterBulwark,classification.skill
+card,,brace,classification.skill
+card,,attune,classification.skill
+card,,warmLitany,classification.skill
+card,,prepare,classification.skill
 card,,riposte,classification.attack
 card,,rend,classification.attack
 card,,cleavingBlow,classification.attack
@@ -1433,6 +1453,10 @@ relic,,gravetendersBell,classification.relic
 relic,,sentinelsOath,classification.relic
 relic,,forsakenWarflag,classification.relic
 relic,,wrathCoil,classification.relic
+relic,,ashenGrip,classification.relic
+relic,,lodestarShard,classification.relic
+relic,,waxenSeal,classification.relic
+relic,,whetstonePouch,classification.relic
 flask,,crimsonFlask,classification.flask
 flask,,azureFlask,classification.flask
 flask,,flaskOfFerocity,classification.flask

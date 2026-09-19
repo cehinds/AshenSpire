@@ -42,7 +42,9 @@ export const balance = {
   ],
   flaskSlots: 3,
   startingCinders: 0,
-  startingDeckSize: 10,
+  // 11 since plan phase 5a: the class ability card joins the kit beside the
+  // signature (roleCopies.ability below; the composed plan grants it first).
+  startingDeckSize: 11,
 
   // Engine-consulted poise config (see ENGINE-API §1). onFill is where content
   // defines what "Staggered" means — the engine never names the status.
@@ -82,6 +84,10 @@ export const balance = {
     draftSize: 3,
     draftsPerCombat: 1,
     upgradeAt: 5,
+    // The class card's leaning (plan phase 5a, proposal §4): skill XP in the
+    // weapon groups the card names (its item-type tags) is multiplied by
+    // this, through the `favored` property the card carries.
+    favoredXpMult: 1.25,
   },
 
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
@@ -1125,6 +1131,11 @@ export const balance = {
     sentinelsOath: { strength: 1, n: 12 },
     forsakenWarflag: { weak: 1 },
     wrathCoil: { damage: 3 },
+    // The four class kit relics (plan phase 5a, proposal §4).
+    ashenGrip: { restoreStamina: 1 },
+    lodestarShard: { restoreMana: 1 },
+    waxenSeal: { heal: 3 },
+    whetstonePouch: { bleed: 2 },
   },
   equipment: {
     startingKitDiscovery: {
@@ -1133,7 +1144,7 @@ export const balance = {
       undiscoveredPresentation: 'hidden',
       receiptLimit: 64,
     },
-    roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 },
+    roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1, ability: 1 },
 
     // ---- Composed starting deck (togglable) ---------------------------------
     // `roleCopies` above is a FIXED distribution that must sum to

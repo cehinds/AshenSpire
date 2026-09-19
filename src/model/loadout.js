@@ -597,11 +597,12 @@ function collectEquipmentProblems(registries, problems = []) {
     // and these dormant counts would still reject it for summing to ten.
     // They are rules only while they are the ones being read.
     if (!startingDeckConfig(registries)) {
-      const total = [...EQUIPMENT_ROLES, 'signature'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
+      const total = [...EQUIPMENT_ROLES, 'signature', 'ability'].reduce((sum, role) => sum + (Number(roleCopies[role]) || 0), 0);
       if (total !== registries.balance.startingDeckSize) {
         problems.push(`balance.equipment.roleCopies sum ${total}; startingDeckSize is ${registries.balance.startingDeckSize}`);
       }
       if (roleCopies.signature !== 1) problems.push('balance.equipment.roleCopies.signature must be exactly 1');
+      if (roleCopies.ability !== undefined && roleCopies.ability !== 1) problems.push('balance.equipment.roleCopies.ability must be exactly 1 when present');
     }
     problems.push(...startingDeckProblems(registries));
     for (const role of EQUIPMENT_ROLES) {
@@ -1764,6 +1765,9 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
     for (const cardId of globalGrants) grants.push({ source: grantSourceFor(cfg, 'global'), cardId });
   }
   if (cls.startingSignatureCard) grants.push({ source: grantSourceFor(cfg, 'class'), cardId: cls.startingSignatureCard });
+  // The class ability card (plan phase 5a, proposal §4): one copy, beside the
+  // signature, from the same source.
+  if (cls.abilityCard) grants.push({ source: grantSourceFor(cfg, 'class'), cardId: cls.abilityCard });
 
   // DEALT IN THE AUTHORED ORDER. `sourceOrder` is a list of grantSource tag ids;
   // a source it does not name is dealt last, in the order it was pushed. Stable,
@@ -1895,6 +1899,7 @@ export function startingDeckRefs(registries, loadout, classId) {
 
   if (!plan) {
     for (let i = 0; i < (copies.signature || 0); i++) refs.push({ cardId: cls.startingSignatureCard });
+    if (cls.abilityCard) for (let i = 0; i < (copies.ability || 0); i++) refs.push({ cardId: cls.abilityCard });
     return refs;
   }
   for (const grant of plan.grants) {

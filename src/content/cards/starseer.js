@@ -608,4 +608,18 @@ export const starseerCards = [
       ],
     },
   },
+  // ---- The class ability card (plan phase 5a, proposal §4) -----------------
+  // Attune: the Starseer's loop is stamina tension around scarce casts; one
+  // card that buys the next cast.
+  {
+    id: 'attune', name: 'Attune', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '✴',
+    effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
+    textTemplate: 'Restore {restoreMana} Mana. Exhaust.',
+    upgrade: {
+      keywords: [],
+      effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
+      textTemplate: 'Restore {restoreMana} Mana.',
+    },
+  },
 ];

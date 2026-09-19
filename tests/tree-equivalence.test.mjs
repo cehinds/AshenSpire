@@ -92,7 +92,12 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   assert.deepEqual(addedDomains, ['classification', 'cost', 'damage', 'equipment', 'internal', 'lifecycle', 'scaling', 'targeting', 'utility'],
     'the roots that joined are the framework\'s nine (presentation merged with the flat root of the same name)');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
-  assert.ok(addedTags.every((t) => t.visibility), 'every tag that joined is a framework node — one carrying a visibility, never a chip');
+  // Plan phase 5a's property nodes: the class card's leaning and the four
+  // kit relics' rules. Named, so a stray chip cannot hide among them.
+  const PHASE_5A_PROPERTIES = ['favored', 'ashenGrip', 'lodestarShard', 'waxenSeal', 'whetstonePouch'];
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && PHASE_5A_PROPERTIES.includes(t.id))),
+    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a\'s named property nodes');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...PHASE_5A_PROPERTIES].sort(), 'and the property additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -111,7 +116,7 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  assert.equal(counted, 438, 'the 438 shipped objects, every one (435 at the tree phase; phase 3b added the head, hands and feet slots)');
+  assert.equal(counted, 446, 'the 446 shipped objects, every one (435 at the tree phase; phase 3b added the head, hands and feet slots; phase 5a the four class ability cards and four kit relics)');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

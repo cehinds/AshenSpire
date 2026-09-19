@@ -74,7 +74,9 @@ function playIntoBreak(combat, card, { value = null, extra = {}, startMana = 0 }
   };
 }
 
-const mountedKeys = (combat) => Object.keys((combat.propertyMounts || {}).player || {});
+// The EQUIPMENT mounts: the class card mounts too since plan phase 5a
+// (`class:<id>`, its `favored` leaning), and these tests ask about the hands.
+const mountedKeys = (combat) => Object.keys((combat.propertyMounts || {}).player || {}).filter((k) => !k.startsWith('class:'));
 const propertyGateKeys = (combat) => [...combat.triggerState.keys()].filter((k) => k.startsWith('property:'));
 
 test('a scepter-wielding player\'s own arcane break restores balance.exposure.siphonRefund Mana', () => {

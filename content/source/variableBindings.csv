@@ -78,6 +78,11 @@ default,,sentinelsOath,strength,powers.sentinelsOath.strength
 default,,sentinelsOath,n,powers.sentinelsOath.n
 default,,forsakenWarflag,weak,powers.forsakenWarflag.weak
 default,,wrathCoil,damage,powers.wrathCoil.damage
+default,,favored,skillXpMult,skill.favoredXpMult
+default,,ashenGrip,restoreStamina,powers.ashenGrip.restoreStamina
+default,,lodestarShard,restoreMana,powers.lodestarShard.restoreMana
+default,,waxenSeal,heal,powers.waxenSeal.heal
+default,,whetstonePouch,bleed,powers.whetstonePouch.bleed
 default,,cost.action,amount,costs.action
 default,,cost.stamina,amount,costs.stamina
 default,,cost.mana,amount,costs.mana

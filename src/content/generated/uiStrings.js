@@ -577,6 +577,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "possession.trigger.stanceEntered",
+    "extends": "",
+    "short": "Stance entered",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "possession.limit.once",
     "extends": "",
     "short": "Once per combat",

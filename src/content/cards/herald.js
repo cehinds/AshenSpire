@@ -546,4 +546,16 @@ export const heraldCards = [
       ],
     },
   },
+  // ---- The class ability card (plan phase 5a, proposal §4) -----------------
+  // Litany: the Herald's loop is overheal turned to offence; one card that
+  // heals and braces in the same breath.
+  {
+    id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    keywords: [], icon: '📿',
+    effects: [{ op: 'heal', target: 'self', amount: 3 }, { op: 'block', target: 'self', amount: 3 }],
+    textTemplate: 'Heal {heal}. Gain {block} Block.',
+    upgrade: {
+      effects: [{ op: 'heal', target: 'self', amount: 5 }, { op: 'block', target: 'self', amount: 5 }],
+    },
+  },
 ];

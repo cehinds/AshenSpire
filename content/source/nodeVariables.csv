@@ -73,6 +73,11 @@ sentinelsOath,strength,stacks
 sentinelsOath,n,n
 forsakenWarflag,weak,stacks
 wrathCoil,damage,amount
+favored,skillXpMult,skillXpMult
+ashenGrip,restoreStamina,amount
+lodestarShard,restoreMana,amount
+waxenSeal,heal,amount
+whetstonePouch,bleed,stacks
 # The framework's cost defaults — the amount a card pays when it carries the
 # cost node with no amount of its own. They were `defaultParameters` literals
 # on the property rows; a node carries no numbers, so they are variables here
