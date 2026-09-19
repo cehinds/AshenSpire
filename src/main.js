@@ -12,6 +12,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
+import { advancedConfigSnapshot, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
@@ -146,9 +147,16 @@ if (!validation.ok) {
   }
 }
 
-const registries = createRegistries(contentBundle);
+let registries = createRegistries(contentBundle);
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
+
+function rebuildRegistries(configuration = {}) {
+  registries = createRegistries(configuredContentBundle(contentBundle, configuration));
+  configureTooltipGlossary(registries);
+  setClassGlyphs(registries.classes.all());
+  return registries;
+}
 
 // Dev screenshot hook (?shot=…). Read HERE, above pickStorage(), because storage
 // selection depends on it; the hook that consumes it lives at the bottom of this
@@ -255,6 +263,7 @@ if (shotState) {
 // hook seam, so every sfx.play() call site makes sound with no change.
 let activeMeta = saves.loadMeta();
 let activeSettings = activeMeta.settings || (activeMeta.settings = {});
+rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 
@@ -671,6 +680,14 @@ function applyCardSizeSettings(settings) {
 
 function applyDisplaySettings(settings) {
   applyCardSizeSettings(settings);
+  const advancedPresentation = presentationConfig(settings);
+  const rootStyle = document.documentElement.style;
+  rootStyle.setProperty('--player-sprite-scale', String(advancedPresentation.playerSpriteScale));
+  rootStyle.setProperty('--enemy-sprite-scale', String(advancedPresentation.enemySpriteScale));
+  rootStyle.setProperty('--settings-window-width', `${advancedPresentation.settingsWidthPercent}vw`);
+  rootStyle.setProperty('--settings-window-height', `${advancedPresentation.settingsHeightPercent}dvh`);
+  document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;
+  document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
@@ -897,6 +914,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
+  const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
+  rebuildRegistries(configSnapshot);
   // HIS TIER DIAL, AND THE ONLY PLACE IT CAN BE SPENT — Constantine,
   // 2026-08-17: "let's make the increment of 5 points for reasonable change be
   // confurable as well." A run SNAPSHOTS its derived-stat rules at birth so a
@@ -910,6 +929,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
     profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
+  run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
   if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
@@ -1019,6 +1039,10 @@ function advanceAct() {
 function resumeRun(slot = 1) {
   resetArmouryTraySession();
   activeSlot = slot;
+  const authoredRegistries = createRegistries(contentBundle);
+  run = saves.loadRun(authoredRegistries, slot);
+  if (!run) return showTitle();
+  rebuildRegistries(run.advancedConfigSnapshot || {});
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   if (run.journey) syncWorldPosition();
@@ -1500,6 +1524,7 @@ function finishRun(victory) {
 }
 
 function showCustomize(slot = 1, catalog = false) {
+  rebuildRegistries(saves.loadMeta().settings || {});
   mountCustomize(app, {
     registries,
     meta: saves.loadMeta(),
@@ -3025,6 +3050,20 @@ if (shotState === 'combat-test') {
   {
     const posed = saves.loadMeta();
     saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), settingsCategory: 'About' } });
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  showTitle();
+  showSettings();
+} else if (shotState === 'settings') {
+  // Advanced configuration, through the same modal and profile settings path a
+  // player uses. shotSettings may choose a subsection or tune a row.
+  {
+    const posed = saves.loadMeta();
+    saves.saveMeta({ ...posed, settings: {
+      ...(posed.settings || {}), settingsCategory: 'Advanced',
+      settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Progression',
+    } });
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }

@@ -1,0 +1,142 @@
+#!/usr/bin/env node
+// Browser witness for Settings > Advanced configuration.
+
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { launchBrowser } from './browser.mjs';
+import { serve } from './serve.mjs';
+
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+const OUT = resolve(ROOT, 'scratch', 'advanced-config-preview');
+const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+
+function connect(wsUrl) {
+  const socket = new WebSocket(wsUrl);
+  const pending = new Map();
+  let nextId = 1;
+  socket.addEventListener('message', (event) => {
+    const message = JSON.parse(event.data);
+    const entry = pending.get(message.id);
+    if (!entry) return;
+    pending.delete(message.id);
+    if (message.error) entry.reject(new Error(message.error.message));
+    else entry.resolve(message.result);
+  });
+  return {
+    ready: new Promise((ok, fail) => { socket.addEventListener('open', ok); socket.addEventListener('error', fail); }),
+    send(method, params = {}, sessionId) {
+      const id = nextId++;
+      return new Promise((ok, fail) => {
+        pending.set(id, { resolve: ok, reject: fail });
+        socket.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      });
+    },
+    close: () => socket.close(),
+  };
+}
+
+async function main() {
+  mkdirSync(OUT, { recursive: true });
+  const server = await serve({ root: ROOT, port: 8547, open: false });
+  const browser = await launchBrowser({ prefix: 'advconfig-', timeoutMs: 20000 });
+  const cdp = connect(browser.wsUrl);
+  await cdp.ready;
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  await cdp.send('Page.enable', {}, sessionId);
+  await cdp.send('Runtime.enable', {}, sessionId);
+  const evaluate = async (expression) => {
+    const reply = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
+    if (reply.exceptionDetails) throw new Error(reply.exceptionDetails.exception?.description || reply.exceptionDetails.text);
+    return reply.result.value;
+  };
+  const until = async (expression, label) => {
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+      if (await evaluate(expression)) return;
+      await wait(80);
+    }
+    throw new Error(`Timed out waiting for ${label}`);
+  };
+  const capture = async (name) => {
+    const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
+    writeFileSync(resolve(OUT, `${name}.png`), Buffer.from(shot.data, 'base64'));
+  };
+  try {
+    for (const shape of [
+      { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
+      { name: 'desktop-classes', width: 1440, height: 900, group: 'Classes', mobile: false },
+      { name: 'desktop-interface', width: 1440, height: 900, group: 'Interface', mobile: false },
+      { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },
+      { name: 'phone-progression', width: 390, height: 844, group: 'Progression', mobile: true },
+    ]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
+      }, sessionId);
+      const shotSettings = encodeURIComponent(JSON.stringify({ settingsAdvancedCategory: shape.group }));
+      await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=settings&shotSettings=${shotSettings}` }, sessionId);
+      await until("!!document.querySelector('.settings-modal [data-advanced-search]')", 'advanced settings');
+      await wait(250);
+      if (shape.group === 'Export') {
+        await evaluate(`(() => {
+          window.showSaveFilePicker = async () => ({ createWritable: async () => ({ write: async () => {}, close: async () => {} }) });
+          document.querySelector('[data-btn="gameConfigExport"]').click();
+        })()`);
+        await until("document.querySelector('[data-btn=gameConfigExport]')?.textContent === 'Saved'", 'Save As completion');
+      }
+      const state = await evaluate(`(() => {
+        const modal = document.querySelector('.settings-modal');
+        const body = modal.querySelector('.set-body');
+        const pane = modal.querySelector('.set-panel');
+        const active = modal.querySelector('.set-advanced-group:not([hidden])');
+        const scrollable = [body, pane].filter((el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== 'hidden');
+        return {
+          group: active?.dataset.advancedPanel,
+          rows: active?.querySelectorAll('.set-row').length || 0,
+          viewport: [innerWidth, innerHeight],
+          modal: [Math.round(modal.getBoundingClientRect().width), Math.round(modal.getBoundingClientRect().height)],
+          verticalScrollOwners: scrollable.map((el) => el.className),
+          overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      })()`);
+      if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
+        throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
+      }
+      console.log(`PASS ${shape.name} — ${state.rows} rows, one vertical scroll owner, modal ${state.modal.join('×')}`);
+      await capture(shape.name);
+    }
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
+    }, sessionId);
+    const combatSettings = encodeURIComponent(JSON.stringify({
+      'gameConfig.presentation.playerSpriteScale': 1.15,
+      'gameConfig.presentation.enemySpriteScale': 0.8,
+      'gameConfig.presentation.playerSpawnRow': 'front',
+      'gameConfig.presentation.enemySpawnRow': 'back',
+    }));
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=combat&shotSettings=${combatSettings}` }, sessionId);
+    await until("!!document.querySelector('.combatant.player .sprite') && !!document.querySelector('.combatant.enemy .sprite')", 'combat figures');
+    await wait(350);
+    const presentation = await evaluate(`(() => ({
+      playerScale: getComputedStyle(document.querySelector('.combatant.player .sprite')).scale,
+      enemyScale: getComputedStyle(document.querySelector('.combatant.enemy .sprite')).scale,
+      playerRow: document.documentElement.dataset.playerSpawnRow,
+      enemyRow: document.documentElement.dataset.enemySpawnRow,
+    }))()`);
+    if (presentation.playerScale !== '1.15' || presentation.enemyScale !== '0.8'
+      || presentation.playerRow !== 'front' || presentation.enemyRow !== 'back') {
+      throw new Error(`combat-presentation: ${JSON.stringify(presentation)}`);
+    }
+    console.log('PASS combat-presentation — sprite scales and default rows applied');
+    await capture('combat-presentation');
+  } finally {
+    cdp.close();
+    await browser.close();
+    server.server.closeAllConnections?.();
+    await new Promise((done) => server.server.close(done));
+  }
+  console.log(`Screenshots: ${OUT}`);
+}
+
+main().catch((error) => { console.error(error); process.exitCode = 1; });

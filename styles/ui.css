@@ -888,6 +888,31 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   outline-offset: -3px;
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
+/* Settings owns one vertical scrollport: the content pane. The old shell and
+   pane both scrolled, producing the paired scrollbars visible in the report. */
+.modal.settings-modal[data-size='lg'] {
+  width: min(76rem, calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
+  height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
+  max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
+}
+:root[data-short='true'] .modal.settings-modal[data-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
+.settings-modal > .set-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.settings-modal > .set-body > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
+.settings-modal .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+.settings-modal .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.settings-modal .set-tabs { overflow: visible; }
+.settings-modal .set-subtabs { display: flex; flex-wrap: wrap; }
+.settings-modal .set-subtabs > button { flex: 1 0 auto; }
+.set-advanced-tools { display: flex; align-items: end; gap: .8rem; flex-wrap: wrap; margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); }
+.set-config-search { display: grid; gap: .35rem; flex: 1 1 18rem; color: var(--muted); font-size: 1.05rem; }
+.set-config-search input { width: 100%; min-height: var(--tap-floor); }
+.set-config-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
+@media (max-width: 600px) {
+  .modal.settings-modal[data-size='lg'] { width: 100%; border-radius: var(--r-3); }
+  .settings-modal .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
+  .settings-modal .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
+}
 /* W1a CATEGORY NAVIGATION is the kit's (kit/categoryNav.js, kit.css "W1
    CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector
    above it (`.set-cat-select`) that opens the same `.set-tabs` as a list.
