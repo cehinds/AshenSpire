@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1203",
+    "id": "pr-1173",
     "date": "2026-09-19",
     "group": "2026-09-19",
-    "summary": "Mana is never a card's only price, a focus decides what its break does, and you can be Staggered too",
-    "detail": "Every card that costs Mana also costs an action and stamina — the signature arts now ask a point of stamina beside their Mana, and a few free upgraded powers drop their Mana line instead. Your staff, rod or branch now decides what breaking a foe's Arcane Exposure earns: the plain staves batter the broken foe's Poise, the Blight Rod and the Gorefire Brand build Exposure faster, the Goldbough Branch spreads half the break to every other foe. And your own Poise meter is live: enemy impact fills it, and when it fills you are Staggered — 2 Vulnerable, 2 Weak, and one fewer action next turn.",
-    "build": "0.7.1.279",
-    "pullRequest": 1203,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1203"
+    "summary": "Holding a card now asks where it should go",
+    "detail": "In combat, holding a card that needs a target selects it and shows its legal targets, and the effect lands once when you choose one — the same flow a tap opens, so no hold plays a targeted card on its own. A card with no target still plays from a hold, the hold's fill starts the moment you press instead of after a hidden delay, and tapping, dragging, keyboard and controller play are unchanged.",
+    "build": "0.7.1.278",
+    "pullRequest": 1173,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1173"
   },
   {
     "id": "pr-1198",
