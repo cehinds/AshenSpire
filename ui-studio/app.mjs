@@ -26,7 +26,7 @@ const state = {
   sketch: new M.History(M.newSketch()), sketchName: '', sketchHash: null, sketches: [],
   scope: 'base', // 'base' | 'breakpoint' — where a sketch edit lands
   selection: new Set(), guides: [], marquee: null, drag: null,
-  search: '', raw: false, compile: null, validation: null, backups: [],
+  search: '', raw: false, compile: null, validation: null, backups: [], sketchRevision: 0,
 };
 
 const wireframe = () => state.settings.wireframes.find((w) => w.id === state.wireframeId) || state.settings.wireframes[0];
@@ -54,7 +54,8 @@ function regions() {
   if (!file) return [];
   const wf = wireframe();
   const parent = wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null;
-  return M.regionsFor(wf, file.history.present, viewport(), { parent, tokens: tokens(), layoutMode: layoutFor(viewport()).mode, screens: state.settings.screens });
+  const lay = layoutFor(viewport());
+  return M.regionsFor(wf, file.history.present, viewport(), { parent, tokens: tokens(), layoutMode: lay.mode, screens: state.settings.screens, zoom: lay.zoom, rootFontPx: state.settings.gameLayout.rootFontPx });
 }
 function sketchBoxesPx(vp = viewport()) {
   const s = state.sketch.present, bp = sketchBreakpointFor(vp);
@@ -250,7 +251,7 @@ function renderStage() {
       return orientations.map((o) => {
         const v = M.viewportFor(dev, o), l = layoutFor(v), b = breakpointFor(v);
         const wf = wireframe(), file = fileOf(wf.file);
-        const regs = file ? M.regionsFor(wf, file.history.present, v, { parent: wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null, tokens: tokens(), layoutMode: l.mode, screens: state.settings.screens }) : [];
+        const regs = file ? M.regionsFor(wf, file.history.present, v, { parent: wf.parent && fileOf(wf.parent) ? fileOf(wf.parent).history.present : null, tokens: tokens(), layoutMode: l.mode, screens: state.settings.screens, zoom: l.zoom, rootFontPx: state.settings.gameLayout.rootFontPx }) : [];
         const svg = canvasSvg({ viewport: v, scale: Math.min(230 / v.width, 250 / v.height), grid: state.settings.grid, canvas: state.settings.canvas, regions: regs, boxes: sketchBoxesPx(v), selection: new Set(), compact: true });
         return `<figure data-device="${esc(dev.id)}" data-orientation="${o}"><figcaption><span>${esc(dev.label)} ${o === 'landscape' ? '⟷' : '↕'}</span><span>${v.width}×${v.height} · <span class="badge ${l.mode}">${l.mode}</span> ${l.zoom}× · ${esc(b ? b.id : '—')}</span></figcaption>${svg}</figure>`;
       });
@@ -413,8 +414,8 @@ function settingsHtml() {
     <div class="row"><button data-act="add-bp">+ Add breakpoint</button></div>
     <div class="hint">The first matching breakpoint wins. Sketch boxes may carry an override per breakpoint. The defaults follow the game: narrow at or below ${s.gameLayout.narrowMax}px, compact below the ${esc(String((tokens().compactBelowPx) || 768))}px token.</div>
     <h3>Game layout decision</h3>
-    <div class="row">${['designW', 'designH', 'narrowW', 'narrowH', 'narrowMax', 'gateBelowH', 'shortWideMinH', 'min', 'max'].map((k) => `<label>${k}</label><input type="number" step="any" data-setting="gameLayout.${k}" value="${s.gameLayout[k]}">`).join('')}</div>
-    <div class="hint">Read from <code>balance.ui.uiScale</code> when the server runs; the badge on every device uses the same rule as <code>src/main.js</code>. Change these only to ask "what if".</div>
+    <div class="row">${['designW', 'designH', 'narrowW', 'narrowH', 'narrowMax', 'gateBelowH', 'shortWideMinH', 'min', 'max', 'rootFontPx'].map((k) => `<label>${k}</label><input type="number" step="any" data-setting="gameLayout.${k}" value="${s.gameLayout[k]}">`).join('')}</div>
+    <div class="hint">Read from <code>balance.ui.uiScale</code> when the server runs; the badge on every device uses the same rule as <code>src/main.js</code>. <code>rootFontPx</code> is one rem in the game (10 at text size Auto/M; S 9, L 11, XL 12): rem thresholds and clamps are drawn at rootFontPx × zoom. Change these only to ask "what if".</div>
     <div class="row"><label>Armoury phone at or below</label><input type="number" data-setting="screens.armouryBreakpointPx" value="${s.screens.armouryBreakpointPx}"> px <span class="hint">(<code>content/source/armouryUi.json</code> layout.responsive.breakpoint, read by the server)</span></div>
     <h3>Wireframe catalog</h3>
     <table class="grid"><thead><tr><th>label</th><th>file</th><th>draw</th><th>?shot</th><th></th></tr></thead><tbody>${s.wireframes.map(wfr).join('')}</tbody></table>
@@ -505,7 +506,7 @@ function onLeftClick(e) {
   if (act === 'dup') duplicateSelection();
   if (act === 'del') deleteSelection();
   if (act === 'adopt-breakpoints') { const s = M.clone(state.sketch.present); s.breakpoints = M.clone(state.settings.breakpoints); const ids = new Set(s.breakpoints.map((b) => b.id)); for (const b of s.boxes) for (const k of Object.keys(b.overrides || {})) if (!ids.has(k)) delete b.overrides[k]; commitSketch(s); }
-  if (act === 'new-sketch') { if (sketchDirty() && !confirm('Discard the current sketch?')) return; state.sketch = new M.History(M.newSketch({ breakpoints: state.settings.breakpoints })); state.sketchName = ''; state.sketchHash = null; state.sketchSaved = M.clone(state.sketch.present); state.selection.clear(); persistDrafts(); renderAll(); }
+  if (act === 'new-sketch') { if (sketchDirty() && !confirm('Discard the current sketch?')) return; state.sketch = new M.History(M.newSketch({ breakpoints: state.settings.breakpoints })); state.sketchName = ''; state.sketchHash = null; state.sketchSaved = M.clone(state.sketch.present); state.sketchRevision = (state.sketchRevision || 0) + 1; state.selection.clear(); persistDrafts(); renderAll(); }
   if (act === 'open-json') $('#open-json').click();
 }
 function onLeftChange(e) {
@@ -802,8 +803,16 @@ async function saveSketch() {
   // tab or tool changed is refused rather than overwritten.
   const submitted = M.clone(state.sketch.present);
   const expected = name === state.sketchName ? state.sketchHash : null;
-  try { const r = await api('sketch', { name, sketch: submitted, hash: expected }); state.sketchName = r.name; state.sketchHash = r.hash; state.sketchSaved = submitted; state.sketches = await api('sketches'); persistDrafts(); toast(`Sketch saved as ${r.name}.json`); renderAll(); }
-  catch (e) { toast(e.message, true); }
+  const revision = state.sketchRevision;
+  try {
+    const r = await api('sketch', { name, sketch: submitted, hash: expected });
+    state.sketches = await api('sketches');
+    // Another document may have been opened while the request was out: the
+    // file is written, but its name, hash and baseline belong to the document
+    // that was sent, never to whatever is open now.
+    if (state.sketchRevision === revision) { state.sketchName = r.name; state.sketchHash = r.hash; state.sketchSaved = submitted; }
+    persistDrafts(); toast(`Sketch saved as ${r.name}.json`); renderAll();
+  } catch (e) { toast(e.message, true); }
 }
 async function openSketch(name) {
   if (sketchDirty() && !confirm('Discard the current sketch?')) return;
@@ -812,7 +821,7 @@ async function openSketch(name) {
 function loadSketch(sketch, name = '', hash = null) {
   const problems = M.sketchProblems(sketch);
   if (problems.length) { toast(problems[0], true); return; }
-  state.sketch = new M.History(sketch); state.sketchName = name; state.sketchHash = hash; state.sketchSaved = M.clone(sketch); state.selection.clear(); state.mode = 'sketch'; persistDrafts(); persistView(); renderAll();
+  state.sketch = new M.History(sketch); state.sketchName = name; state.sketchHash = hash; state.sketchSaved = M.clone(sketch); state.sketchRevision = (state.sketchRevision || 0) + 1; state.selection.clear(); state.mode = 'sketch'; persistDrafts(); persistView(); renderAll();
 }
 async function stageBackup(id) {
   try {

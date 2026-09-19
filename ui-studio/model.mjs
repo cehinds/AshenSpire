@@ -87,7 +87,11 @@ export const DEFAULT_SETTINGS = {
   wireframes: DEFAULT_WIREFRAMES,
   // The game's zoom/layout decision (balance.ui.uiScale). The server replaces
   // these with the live values from src/content/balance.js when it can.
-  gameLayout: { designW: 1200, designH: 730, min: 0.62, max: 1.7, narrowW: 430, narrowH: 780, narrowMax: 520, shortWideMinH: 340, gateBelowH: 465 },
+  // rootFontPx is one rem in the game's own coordinate space: styles/base.css
+  // sets html to 62.5% (10 px) at text size Auto/M; S is 9, L 11, XL 12. The
+  // game lays out in local px (physical / zoom), so a rem threshold or clamp
+  // compares against rootFontPx × zoom physical px.
+  gameLayout: { designW: 1200, designH: 730, min: 0.62, max: 1.7, narrowW: 430, narrowH: 780, narrowMax: 520, shortWideMinH: 340, gateBelowH: 465, rootFontPx: 10 },
   // Screens that ask their own width question. The Armoury reads
   // content/source/armouryUi.json layout.responsive.breakpoint (phone at or
   // below it); the server replaces this with the live value when it can.
@@ -95,12 +99,17 @@ export const DEFAULT_SETTINGS = {
   save: { compileAfterSave: true, keepBackups: 40 },
 };
 
-/** Deep-merge `patch` over `base`; arrays are replaced whole, never merged. */
+/**
+ * Deep-merge `patch` over `base`; arrays are replaced whole, never merged.
+ * A group the base holds as an object keeps the base when the patch offers
+ * something else (null, a number): a stored file cannot hollow the shape out.
+ */
 export function mergeSettings(base, patch) {
   if (!isObject(patch)) return clone(base);
   const out = clone(base);
   for (const [k, v] of Object.entries(patch)) {
-    out[k] = isObject(v) && isObject(out[k]) ? mergeSettings(out[k], v) : clone(v);
+    if (isObject(out[k])) { if (isObject(v)) out[k] = mergeSettings(out[k], v); continue; }
+    out[k] = clone(v);
   }
   return out;
 }
@@ -109,7 +118,11 @@ export function mergeSettings(base, patch) {
 export function settingsProblems(s) {
   const out = [];
   if (!isObject(s)) return ['settings must be an object'];
-  const g = s.grid || {};
+  for (const group of ['grid', 'canvas', 'units', 'gameLayout', 'screens', 'save']) if (!isObject(s[group])) out.push(`${group} must be an object`);
+  const g = isObject(s.grid) ? s.grid : {};
+  const z = isObject(s.gameLayout) ? s.gameLayout : {};
+  for (const k of ['designW', 'designH', 'min', 'max', 'rootFontPx']) if (!(z[k] > 0)) out.push(`gameLayout.${k} must be a positive number`);
+  if (!(isObject(s.screens) && s.screens.armouryBreakpointPx > 0)) out.push('screens.armouryBreakpointPx must be a positive number');
   if (!(g.sizePx > 0)) out.push('grid.sizePx must be a positive number');
   if (!(Number.isInteger(g.subdivisions) && g.subdivisions >= 1)) out.push('grid.subdivisions must be an integer of at least 1');
   if (!(g.thresholdPx >= 0)) out.push('grid.thresholdPx must be 0 or more');
@@ -468,26 +481,45 @@ export function jsonSpans(text) {
 // Regions — a wireframe drawn from its config, in viewport px
 // ---------------------------------------------------------------------------
 
-const remPx = (tokens) => (tokens && tokens.refRemPx) || 16;
-
 /**
- * regionsFor(wireframe, data, viewport, { parent, tokens, layoutMode }) →
+ * regionsFor(wireframe, data, viewport, { parent, tokens, layoutMode, screens, zoom, rootFontPx }) →
  * [{ id, label, x, y, w, h, kind, edit? }]. `edit` says what dragging the
  * region's lower edge changes: { kind: 'bandEdge', index } or { kind: 'path',
  * path, unit }. Values here are nominal — the numbers as authored — with the
  * one floor the W4 parent states (footer minimum) shown, not silently applied.
+ *
+ * Units. The viewport is physical px, and so are the thresholds the game
+ * reads from window.innerWidth/innerHeight (compactBelowPx, the Armoury
+ * breakpoint, narrowMax). The game lays its screens out in LOCAL px — the
+ * physical size divided by the zoom src/main.js applies — with one rem equal
+ * to the root font size (`rootFontPx`, 10 at text size Auto). So a rem
+ * threshold or clamp (the shop's wideMinRem, the category rail's minimum
+ * host width, the hand's rem widths) is compared here at rootFontPx × zoom
+ * physical px, and a local px value (the hand's minimum height) at × zoom.
  */
-export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide', screens = {} } = {}) {
-  const W = viewport.width, H = viewport.height, rem = remPx(tokens);
+export function regionsFor(wireframe, data, viewport, { parent = null, tokens = {}, layoutMode = 'wide', screens = {}, zoom = 1, rootFontPx = 10 } = {}) {
+  const W = viewport.width, H = viewport.height, rem = rootFontPx * zoom;
   const vw = (n) => (W * n) / 100, vh = (n) => (H * n) / 100;
   const sizing = (data && data.sizing) || {}, positioning = (data && data.positioning) || {};
   const out = [];
   const push = (r) => out.push({ kind: 'region', ...r });
   // A "$name" reads the file's own vars first, then ui/tokens.json — the
-  // compiler's order (content/config/README.md), so a shadowed token draws
-  // the number the game will use.
-  const resolve = (v) => (isRef(v) ? ((data.vars || {})[v.slice(1)] ?? tokens[v.slice(1)]) : isFraction(v) ? v.numerator / v.denominator : v);
-  const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' ? r : fallback; };
+  // compiler's order (content/config/README.md) — and a variable may name
+  // another variable, a fraction's operands may be references: resolved
+  // recursively as the compiler does, with a cycle or an unknown name
+  // coming out as NaN so `num` falls back rather than drawing garbage.
+  const resolve = (v, depth = 0) => {
+    if (depth > 32) return NaN;
+    if (isRef(v)) {
+      const name = v.slice(1);
+      const vars = data.vars || {};
+      const owner = Object.prototype.hasOwnProperty.call(vars, name) ? vars[name] : tokens[name];
+      return owner === undefined ? NaN : resolve(owner, depth + 1);
+    }
+    if (isFraction(v)) { const n = resolve(v.numerator, depth + 1), d = resolve(v.denominator, depth + 1); return typeof n === 'number' && typeof d === 'number' && d !== 0 ? n / d : NaN; }
+    return v;
+  };
+  const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' && Number.isFinite(r) ? r : fallback; };
 
   const drawBands = (bands, bandsPath) => {
     let y = 0;
@@ -513,7 +545,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
         const ctx = out.find((r) => r.band === 'context');
         const wide = num(hand.wideWidthRem) * rem, narrow = num(hand.narrowWidthRem) * rem;
         const width = Math.min(W, layoutMode === 'narrow' ? narrow : wide);
-        const height = Math.max(num(hand.minimumHeightPx), ctx ? ctx.h : 0);
+        const height = Math.max(num(hand.minimumHeightPx) * zoom, ctx ? ctx.h : 0);
         push({ id: 'hand', label: `hand ≥${num(hand.minimumHeightPx)}px, ${layoutMode === 'narrow' ? hand.narrowWidthRem : hand.wideWidthRem}rem wide`, x: (W - width) / 2, y: ctx ? ctx.y + ctx.h - height : H - height, w: width, h: height, dashed: true });
       }
       const footerMin = parent && num(getPath(parent, 'sizing.minimums.footerPx'));
@@ -585,7 +617,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
         push({ id: 'detail', label: `detail ${round((1 - num(sizing.offersFraction, 0.5)) * 100)}%`, x: railW + gap + offersW, y: 0, w: rest - offersW, h: H, dashed: true });
       } else {
         const railH = 3 * rem;
-        push({ id: 'rail', label: `rail on top (below ${num(sizing.wideMinRem)}rem the panes stack)`, x: 0, y: 0, w: W, h: railH });
+        push({ id: 'rail', label: `rail on top (host under ${num(sizing.wideMinRem)}rem = ${round(num(sizing.wideMinRem) * rem, 0)}px at zoom ${zoom})`, x: 0, y: 0, w: W, h: railH });
         const detailH = Math.floor((H - railH - gap) * num(sizing.detailMaxFraction, 0.5));
         push({ id: 'offers', label: 'offers (stacked)', x: 0, y: railH + gap, w: W, h: H - railH - gap - detailH });
         push({ id: 'detail', label: `detail ≤${round(num(sizing.detailMaxFraction) * 100)}% of the height`, x: 0, y: H - detailH, w: W, h: detailH, dashed: true, edit: { kind: 'path', path: 'sizing.detailMaxFraction', unit: 'fractionOfHeight', axis: 'h', anchor: 'bottom' } });
@@ -624,7 +656,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
         push({ id: 'detail', label: 'detail', x: cw, y: 0, w: W - cw, h: H });
       } else {
         const rowH = num(tokens.targetRem, 2.75) * rem;
-        push({ id: 'selector', label: `category selector (host under ${round(railMinHost / rem)}rem: the rail becomes a row)`, x: 0, y: 0, w: W, h: rowH });
+        push({ id: 'selector', label: `category selector (host under ${round(railMinHost / rem)}rem = ${round(railMinHost, 0)}px at zoom ${zoom}: the rail becomes a row)`, x: 0, y: 0, w: W, h: rowH });
         push({ id: 'detail', label: 'pane', x: 0, y: rowH, w: W, h: H - rowH });
       }
       break;

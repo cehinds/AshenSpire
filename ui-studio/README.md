@@ -45,7 +45,11 @@ would raise the upright gate says so. Each wireframe's drawing follows its own
 model's rules where they differ from that badge: the dialogue's compact bands
 and portrait slot follow `DialogueModel` (short height or narrow width; narrow
 width alone), the shop's stacked panes follow `ShopWorkspaceModel` (the whole
-width against `wideMinRem`).
+width against `wideMinRem`), the Armoury its own 760 px breakpoint, the Smith
+the category rail's minimum host width. Rem values are drawn in the game's own
+coordinate space: one rem is `rootFontPx` (10 at text size Auto) times the
+zoom the game applies at that device, so an iPad at zoom 0.64 keeps the
+Smith's rail where a phone at 0.9 folds it into a selector row.
 
 ## Grid and snapping
 

@@ -147,7 +147,7 @@ test('formatJson changes only the edited line and keeps a changed object in its 
 test('regionsFor draws the combat bands, floor, hand and the footer floor note', () => {
   const w4a = readConfig('ui/scenes/w4a-combat.json'), w4 = readConfig('ui/scenes/w4.json'), tokens = readConfig('ui/tokens.json').vars;
   const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w4a');
-  const regs = M.regionsFor(wf, w4a, { width: 1280, height: 800 }, { parent: w4, tokens, layoutMode: 'wide' });
+  const regs = M.regionsFor(wf, w4a, { width: 1280, height: 800 }, { parent: w4, tokens, layoutMode: 'wide', zoom: 1.07, rootFontPx: 10 });
   const bands = regs.filter((r) => r.band);
   assert.deepEqual(bands.map((r) => [r.band, r.h]), [['hud', 80], ['scene', 440], ['context', 240], ['footer', 40]]);
   assert.equal(bands[0].edit.kind, 'bandEdge');
@@ -156,9 +156,9 @@ test('regionsFor draws the combat bands, floor, hand and the footer floor note',
   const floor = regs.find((r) => r.id === 'floor');
   assert.equal(floor.y, 80 + 440 * 0.8);
   const hand = regs.find((r) => r.id === 'hand');
-  assert.equal(hand.w, 75 * 16, 'wide hand width is wideWidthRem × refRemPx');
-  const narrow = M.regionsFor(wf, w4a, { width: 390, height: 844 }, { parent: w4, tokens, layoutMode: 'narrow' }).find((r) => r.id === 'hand');
-  assert.equal(narrow.w, 22 * 16);
+  assert.equal(M.round(hand.w, 6), M.round(75 * 10 * 1.07, 6), 'wide hand width is wideWidthRem × rootFontPx × zoom');
+  const narrow = M.regionsFor(wf, w4a, { width: 390, height: 844 }, { parent: w4, tokens, layoutMode: 'narrow', zoom: 0.9, rootFontPx: 10 }).find((r) => r.id === 'hand');
+  assert.equal(narrow.w, 22 * 10 * 0.9);
 });
 
 test('regionsFor draws every catalogued wireframe without throwing', () => {
@@ -287,19 +287,21 @@ test('the dialogue folds its bands on a short OR narrow host and its slot on a n
 test('the shop stacks below wideMinRem with the rail on top, as ShopWorkspaceModel does', () => {
   const shop = readConfig('ui/screens/shop.json'), tokens = readConfig('ui/tokens.json').vars;
   const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-shop');
-  const wide = M.regionsFor(wf, shop, { width: 1280, height: 800 }, { tokens });
+  // 1280x800: the game zooms 1.07, so one rem is 10.7 physical px.
+  const rem = 10 * 1.07;
+  const wide = M.regionsFor(wf, shop, { width: 1280, height: 800 }, { tokens, zoom: 1.07, rootFontPx: 10 });
   const rail = wide.find((r) => r.id === 'rail');
-  assert.equal(rail.w, Math.round(Math.min(Math.max(1280 * 21.6 / 95, 11 * 16), 28 * 16)));
+  assert.equal(rail.w, Math.round(Math.min(Math.max(1280 * 21.6 / 95, 11 * rem), 28 * rem)));
   assert.equal(rail.h, 800);
   const offers = wide.find((r) => r.id === 'offers'), detail = wide.find((r) => r.id === 'detail');
   assert.equal(offers.w, detail.w, 'offersFraction 0.5 splits the rest evenly');
-  // 390 px is under 60rem: the rail spans the top, the panes stack, the detail takes at most half the height.
-  const phone = M.regionsFor(wf, shop, { width: 390, height: 844 }, { tokens });
+  // 390x844 at zoom 0.9: 60rem is 540 physical px, so the rail spans the top, the panes stack, the detail takes at most half the height.
+  const phone = M.regionsFor(wf, shop, { width: 390, height: 844 }, { tokens, zoom: 0.9, rootFontPx: 10 });
   const top = phone.find((r) => r.id === 'rail');
   assert.deepEqual([top.x, top.y, top.w], [0, 0, 390]);
   const stacked = phone.find((r) => r.id === 'detail');
   assert.equal(stacked.w, 390);
-  assert.equal(stacked.h, Math.floor((844 - 3 * 16 - 16) * 0.5));
+  assert.equal(stacked.h, Math.floor((844 - 3 * 9 - 9) * 0.5));
   assert.equal(stacked.y + stacked.h, 844);
 });
 
@@ -363,16 +365,19 @@ test('the Smith folds its candidate rail into a selector row under the category 
   const smith = readConfig('ui/screens/smith.json'), nav = readConfig('ui/components/categoryNav.json'), tokens = readConfig('ui/tokens.json').vars;
   const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'w1-smith');
   assert.equal(wf.parent, 'ui/components/categoryNav.json');
-  const wide = M.regionsFor(wf, smith, { width: 1280, height: 800 }, { parent: nav, tokens });
-  assert.equal(wide.find((r) => r.id === 'candidates').w, Math.min(Math.max(1280 * 0.44, 14 * 16), 60 * 16));
-  const phone = M.regionsFor(wf, smith, { width: 390, height: 844 }, { parent: nav, tokens });
+  const at = (width, height) => { const z = M.gameLayoutFor({ width, height }, M.DEFAULT_SETTINGS.gameLayout).zoom; return M.regionsFor(wf, smith, { width, height }, { parent: nav, tokens, zoom: z, rootFontPx: 10 }); };
+  const wide = at(1280, 800);
+  const rem = 10 * 1.07;
+  assert.equal(wide.find((r) => r.id === 'candidates').w, Math.min(Math.max(1280 * 0.44, 14 * rem), 60 * rem));
+  // A phone at zoom 0.9 sees a 433 px local host against the 600 px (60rem) rail minimum: the selector row.
+  const phone = at(390, 844);
   assert.equal(phone.find((r) => r.id === 'candidates'), undefined);
   const row = phone.find((r) => r.id === 'selector');
-  assert.deepEqual([row.x, row.y, row.w, row.h], [0, 0, 390, 2.75 * 16]);
-  assert.equal(phone.find((r) => r.id === 'detail').y, 2.75 * 16);
-  // 959 px is under 60rem; 960 is not.
-  assert.ok(M.regionsFor(wf, smith, { width: 959, height: 800 }, { parent: nav, tokens }).some((r) => r.id === 'selector'));
-  assert.ok(M.regionsFor(wf, smith, { width: 960, height: 800 }, { parent: nav, tokens }).some((r) => r.id === 'candidates'));
+  assert.deepEqual([row.x, row.y, row.w, row.h], [0, 0, 390, 2.75 * 9]);
+  assert.equal(phone.find((r) => r.id === 'detail').y, 2.75 * 9);
+  // An iPad at 768x1024 zooms to 0.64: a 1200 px local host keeps the rail, as the live categoryNav does.
+  assert.equal(M.gameLayoutFor({ width: 768, height: 1024 }, M.DEFAULT_SETTINGS.gameLayout).zoom, 0.64);
+  assert.ok(at(768, 1024).some((r) => r.id === 'candidates'));
 });
 
 test('sketchProblems refuses a breakpoint that is not an object, unnamed, duplicated or non-numeric', () => {
@@ -395,4 +400,28 @@ test('sketchProblems refuses an override that is not an object or carries non-fi
   }
   box.overrides = { narrow: { x: 0, w: 100, hidden: true } };
   assert.deepEqual(M.sketchProblems(s), []);
+});
+
+test('variables resolve through variables and inside fractions, as the compiler does; a cycle falls back', () => {
+  const card = readConfig('ui/components/card.json'), tokens = readConfig('ui/tokens.json').vars;
+  const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'card');
+  const vp = { width: 1280, height: 2000 }; // tall enough that the 90% height cap never clips the card
+  const ratioOf = (data) => { const r = M.regionsFor(wf, data, vp, { tokens }).find((x) => x.id === 'card'); return r.h / r.w; };
+  assert.equal(M.round(ratioOf(card), 4), M.round(7 / 5, 4));
+  const viaToken = { ...card, sizing: { ...card.sizing, ratio: { numerator: '$targetRem', denominator: 7 } } };
+  assert.equal(M.round(ratioOf(viaToken), 4), M.round(7 / tokens.targetRem, 4), 'a fraction operand may be a reference');
+  const viaAlias = { ...card, vars: { alias: '$targetRem' }, sizing: { ...card.sizing, ratio: { numerator: '$alias', denominator: 7 } } };
+  assert.equal(M.round(ratioOf(viaAlias), 4), M.round(7 / tokens.targetRem, 4), 'a local variable may alias a token');
+  const cyclic = { ...card, vars: { a: '$b', b: '$a' }, sizing: { ...card.sizing, ratio: '$a' } };
+  const r = M.regionsFor(wf, cyclic, vp, { tokens }).find((x) => x.id === 'card');
+  assert.ok(Number.isFinite(r.w) && Number.isFinite(r.h), 'a cycle draws the fallback, never NaN');
+});
+
+test('settings refuse a hollowed group and a stored null cannot replace one', () => {
+  assert.ok(M.settingsProblems({ ...M.DEFAULT_SETTINGS, canvas: null }).some((p) => p === 'canvas must be an object'));
+  assert.ok(M.settingsProblems(M.mergeSettings(M.DEFAULT_SETTINGS, { gameLayout: { rootFontPx: 0 } })).some((p) => p.includes('gameLayout.rootFontPx')));
+  const merged = M.mergeSettings(M.DEFAULT_SETTINGS, { canvas: null, grid: 7 });
+  assert.deepEqual(merged.canvas, M.DEFAULT_SETTINGS.canvas);
+  assert.deepEqual(merged.grid, M.DEFAULT_SETTINGS.grid);
+  assert.deepEqual(M.settingsProblems(merged), []);
 });
