@@ -930,6 +930,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-general-select { width: 100%; padding: .4rem .7rem; min-height: var(--tap-floor); margin-bottom: .5rem; background: #201c15; color: #eee5d4; border: 1px solid var(--line); border-radius: var(--r-2); }
 .settings-modal .modal-foot { padding: .5rem .8rem; }
 .set-export-choice { display: flex; gap: .7rem; align-items: center; }
+:root [data-settings-host] .set-row-dropdown { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 45%); align-items: center; gap: .8rem; }
+:root [data-settings-host] .set-row-dropdown > .r-trail { width: 100%; min-width: 0; max-width: none; }
+.set-choice-select { width: 100%; min-width: 0; min-height: var(--tap-floor); padding: .4rem .6rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); font: inherit; }
 .set-export-body { padding: 1rem; }
 .set-general-pickers { display: flex; gap: .5rem; }
 .set-general-pickers select { flex: 1 1 0; min-width: 0; }
