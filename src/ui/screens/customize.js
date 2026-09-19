@@ -487,9 +487,14 @@ export function mountCustomize(app, {
       // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
       // picked card opens to the portrait and the summary. Before a pick the
       // pointer-follow has nothing to draw.
-      for (const open of classBox.querySelectorAll('.cz-class.unfolded')) { open.classList.remove('unfolded'); open.querySelector('.cc-class-unfold')?.remove(); }
+      for (const open of classBox.querySelectorAll('.cz-class.unfolded')) { open.classList.remove('unfolded'); open.querySelector('.cc-class-unfold')?.remove(); open.removeAttribute('aria-describedby'); }
       const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
-      if (card) { card.classList.add('unfolded'); card.append(classUnfold({ cls, sprite, resources, relic, label: t('creation.unfold.label') })); }
+      if (card) {
+        const unfold = classUnfold({ cls, sprite, resources, relic });
+        card.classList.add('unfolded');
+        card.append(unfold);
+        card.setAttribute('aria-describedby', unfold.id); // the button's description: the resources and the relic
+      }
       $('#cz-class-preview-host').replaceChildren();
       return;
     }
@@ -722,6 +727,8 @@ export function mountCustomize(app, {
     for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     classBox.replaceChildren(...cards);
     renderViewToggles();
+    // The cards are new nodes; in unfold mode the chosen one opens again.
+    if (!catalog && state.classChosen && creationClassPreview() === 'unfold') renderClassPreview();
   }
 
   function renderAppearance() {

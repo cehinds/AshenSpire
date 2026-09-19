@@ -162,7 +162,7 @@ export function creationClassPreview(config = CONFIG) {
 export function creationUnfoldGeometry(config = CONFIG) {
   const { unfoldPortraitShare: portraitShare, unfoldSummaryShare: summaryShare, unfoldHeightVh: heightVh, unfoldMinRem: minRem } = config.sizing;
   for (const [name, value] of Object.entries({ unfoldPortraitShare: portraitShare, unfoldSummaryShare: summaryShare, unfoldHeightVh: heightVh, unfoldMinRem: minRem })) {
-    if (!(value > 0)) throw new Error(`creation sizing.${name} must be > 0, got ${value}`);
+    if (!Number.isFinite(value) || value <= 0) throw new Error(`creation sizing.${name} must be a number > 0, got ${value}`);
   }
   if (portraitShare + summaryShare !== 100) throw new Error(`creation sizing.unfoldPortraitShare + unfoldSummaryShare must be 100, got ${portraitShare + summaryShare}`);
   return Object.freeze({ portraitShare, summaryShare, heightVh, minRem });

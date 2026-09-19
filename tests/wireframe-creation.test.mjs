@@ -97,6 +97,7 @@ test('the class preview mode and the unfolded card geometry are config', async (
   assert.ok(geometry.heightVh > 0);
   assert.throws(() => creationUnfoldGeometry({ sizing: { unfoldPortraitShare: 40, unfoldSummaryShare: 70, unfoldHeightVh: 30, unfoldMinRem: 17 } }), /must be 100/);
   assert.ok(geometry.minRem > 0);
+  assert.throws(() => creationUnfoldGeometry({ sizing: { unfoldPortraitShare: '30', unfoldSummaryShare: 70, unfoldHeightVh: 30, unfoldMinRem: 17 } }), /must be a number/);
   const properties = creationCssProperties();
   if (config.behavior.classPreview === 'unfold') {
     assert.equal(properties['--creation-unfold-portrait'], `${config.sizing.unfoldPortraitShare}fr`);

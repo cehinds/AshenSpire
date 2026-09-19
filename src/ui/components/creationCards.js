@@ -190,17 +190,20 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
 }
 
 /**
- * classUnfold({ cls, sprite, resources, relic, label }) → what the chosen
+ * classUnfold({ cls, sprite, resources, relic }) → what the chosen
  * class card opens to hold (owner, 2026-09-19): the portrait on the left,
  * the summary stats on the right, never past the card's box. Appended
  * inside the card, so it is the card that unfolds; the shares and the
  * height are the screen's --creation-unfold-* (creation.json).
  */
-export function classUnfold({ cls, sprite = null, resources = null, relic = null, label = '' }) {
-  const art = artWell({ glyph: '', attrs: { class: 'figure cc-unfold-art' } });
-  art.removeAttribute('aria-hidden');
-  if (sprite) art.appendChild(sprite);
-  const node = el('span', { class: 'cc-class-unfold', role: 'group', 'aria-label': label || cls.name, dataset: { class: cls.id } }, [
+export function classUnfold({ cls, sprite = null, resources = null, relic = null }) {
+  // Spans only: this lives inside the card's <button>, which admits no div
+  // and discards a group role. The card names the class; the portrait is
+  // decoration here, and the resources and relic reach a reader through the
+  // card's aria-describedby (customize.js).
+  if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
+  const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
+  const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
     el('span', { class: 'cc-unfold-portrait' }, art),
     el('span', { class: 'cc-unfold-summary' }, [
       resources,
