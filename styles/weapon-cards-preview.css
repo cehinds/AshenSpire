@@ -1,6 +1,7 @@
 html:has(.weapon-preview) { height:auto; overflow:auto; }
 body.weapon-preview { display:block; height:auto; min-height:100vh; margin:0; background:#13100d; color:#eee3ca; font:15px/1.6 Arial,sans-serif; }
 .weapon-preview main { max-width:1180px; margin:auto; padding:36px 24px; }
+.shared-armor-preview main { max-width:1280px; }
 .weapon-preview header { max-width:760px; margin-bottom:24px; }
 .weapon-preview .eyebrow { color:#c9a74e; text-transform:uppercase; letter-spacing:.18em; font-size:11px; }
 .weapon-preview h1 { color:#e4ca80; font:600 36px/1.2 Georgia,serif; margin:10px 0; }

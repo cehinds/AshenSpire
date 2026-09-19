@@ -27,7 +27,7 @@
 # Intrinsic catalog facts are not generated-card deltas. Smithing and attribute
 # projection remain separate receipts layered over these authored values.
 id,name,kind,hand,rarity,geom,scale,metal,accent,attackProfile,guardProfile,techniqueProfile,mods,unlock,blurb,dropWeight,artKey,poiseThreshold,attackRating,defenseRating,weight,weaponArtManaCost,uniqueSkillStaminaCost,inventoryArtKey
-straightSword,Straight Sword,weapon,either,common,sword,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,Honest steel. It asks nothing clever of you.,10,,5,5,2,5,0,0,
+straightSword,Straight Sword,weapon,either,common,sword,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,,,Honest steel. It asks nothing clever of you.,10,,5,5,2,5,0,0,straightSwordInventory2026
 greatsword,Greatsword,weapon,either,uncommon,colossal,1.00,B8B0A0,C9A227,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care.",7,,8,9,2,8,0,0,
 dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,daggerPierceAttack,weaponGuard,weaponTechnique,strike.hits=2,,Two cuts where one would do.,10,,3,3,2,3,0,0,
 shortbow,Shortbow,weapon,either,common,dagger,1.00,C0B8A6,C9A227,bowPierceAttack,weaponGuard,bowTechnique,,,A compact ash-wood bow bound for a quick draw.,10,dagger,2,4,2,2,0,0,
@@ -37,7 +37,7 @@ warhammer,Warhammer,weapon,either,uncommon,hammer,1.00,8E8678,C9A227,bladeAttack
 twinblade,Twinblade,weapon,either,rare,twin,1.00,C0B8A6,7FA8C9,bladeAttack,weaponGuard,weaponTechnique,strike.damage=2|strike.hits=3|self.maxStamina=+1,,Both ends are the business end.,4,,5,2,2,5,0,0,
 battleaxe,Battleaxe,weapon,either,common,axe,1.00,A8A090,C9502E,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+3|strike.cost=+1,,It was a woodcutter's once.,10,,7,8,2,7,0,0,
 buckler,Buckler,shield,either,common,round,0.80,8E8678,C9A227,shieldAttack,shieldGuard,weaponTechnique,defend.block=+2,,Small enough to be quick with.,10,,4,0,5,4,0,0,
-kiteShield,Kite Shield,shield,either,common,kite,1.00,8E8678,C9A227,shieldAttack,shieldGuard,weaponTechnique,defend.block=+3|strike.damage=-1,,A wall you can carry. Your arm knows it.,10,,8,0,6,8,0,0,
+kiteShield,Kite Shield,shield,either,common,kite,1.00,8E8678,C9A227,shieldAttack,shieldGuard,weaponTechnique,defend.block=+3|strike.damage=-1,,A wall you can carry. Your arm knows it.,10,,8,0,6,8,0,0,kiteShieldInventory2026
 towerShield,Tower Shield,shield,either,rare,tower,1.00,7E766A,C9A227,shieldAttack,shieldGuard,weaponTechnique,defend.block=+6|strike.damage=-2|self.maxHp=+10,,You will not be moved. You will not move.,4,,12,0,9,12,0,0,
 roundShield,Round Shield,shield,either,common,round,1.00,8E8678,7FA8C9,shieldAttack,shieldGuard,weaponTechnique,defend.block=+2,,"Plain, round, and enough.",10,,7,0,5,7,0,0,
 spikedShield,Spiked Shield,shield,either,uncommon,spiked,1.00,8E8678,C9502E,shieldAttack,shieldGuard,weaponTechnique,defend.block=+2|strike.damage=+1,,Defence with an opinion.,7,,8,0,5,8,0,0,

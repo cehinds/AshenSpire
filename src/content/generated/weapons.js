@@ -26,7 +26,7 @@ export const weapons = [
     "weight": 5,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "straightSwordInventory2026"
   },
   {
     "id": "greatsword",
@@ -310,7 +310,7 @@ export const weapons = [
     "weight": 8,
     "weaponArtManaCost": 0,
     "uniqueSkillStaminaCost": 0,
-    "inventoryArtKey": ""
+    "inventoryArtKey": "kiteShieldInventory2026"
   },
   {
     "id": "towerShield",
