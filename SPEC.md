@@ -1376,7 +1376,12 @@ row shows the shipped default, the currently resolved value, whether it affects 
 or only a new run, and a Reset action. A section can reset all its values after confirmation;
 the complete editor can reset all overrides after confirmation. Invalid legacy or manually
 edited stored values resolve to the authored default and are visibly reported instead of being
-accepted, discarded silently, or allowed to produce `NaN`/infinite state.
+accepted, discarded silently, or allowed to produce `NaN`/infinite state. A balance path a
+build renames keeps its stored override: the retired key is read as the current one wherever
+settings are read (the configured bundle, the snapshot, an imported file) and the current key
+wins when both are stored — today `balance.shrine.healPct` → `balance.rest.hpPartialPct`
+(§13.4j). A generated row's domain is read off its shipped value, except where validation is
+stricter: a percent validation caps at 100 offers 0–100, a cap that must be positive starts at 1.
 
 Run-defining values are resolved and snapshotted when a new run is created. They never silently
 recalculate an in-progress run; a row may affect the current run only where its descriptor
