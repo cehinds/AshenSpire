@@ -22,8 +22,8 @@ export const prototypeCards = [
   card('prototypeSetup', 'Open Vein', 1, [hit(6)], { staminaCost: 1, attack: { source: 'weapon', buildup: [{ status: 'bleed', amount: 2 }] } }),
   card('prototypeFinish', 'Bloodletting Flurry', 1, [hit(5, 3)], { staminaCost: 2, attack: { source: 'weapon' } }),
   card('prototypeSpell', 'Astral Shard', 1, [hit(8)], { attack: { source: 'spell', damageType: 'arcane' } }),
-  card('prototypeComet', 'Falling Comet', 1, [hit(22)], { manaCost: 1, attack: { source: 'spell', damageType: 'arcane' } }),
-  card('prototypeNova', 'Nova', 2, [{ ...hit(30), target: 'allEnemies' }], { manaCost: 2, attack: { source: 'spell', damageType: 'arcane' } }),
+  card('prototypeComet', 'Falling Comet', 1, [hit(22)], { manaCost: 1, staminaCost: 1, exposureBuildupPerHit: 5, attack: { source: 'spell', damageType: 'arcane' } }),
+  card('prototypeNova', 'Nova', 2, [{ ...hit(30), target: 'allEnemies' }], { manaCost: 2, staminaCost: 1, exposureBuildupPerHit: 5, attack: { source: 'spell', damageType: 'arcane' } }),
   card('prototypePhysicalStance', 'Measured Guard', 1, [{ op: 'enterStance', stance: 'prototypeGuardStance' }], { type: 'skill', staminaCost: 2 }),
   card('prototypeCasterStance', 'Astral Focus', 1, [{ op: 'enterStance', stance: 'prototypeFocusStance' }], { type: 'skill', staminaCost: 2 }),
 ];

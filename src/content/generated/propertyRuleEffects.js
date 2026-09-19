@@ -70,6 +70,43 @@ export const propertyRuleEffects = {
       }
     }
   },
+  "staggerBreak": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "poiseDamage",
+            "amount": {
+              "balance": "exposure.staggerBreakPoise"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "resonance": {
+    "triggers": [
+      {
+        "on": "arcaneBreak",
+        "if": {
+          "p": "eventSourceIsOwner"
+        },
+        "do": [
+          {
+            "op": "arcaneBuildup",
+            "target": "otherEnemies",
+            "pct": {
+              "balance": "exposure.resonanceSpreadPct"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "forsakenMedallion": {
     "triggers": [
       {

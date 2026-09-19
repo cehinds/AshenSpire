@@ -297,6 +297,18 @@ export const nodeTerms = [
     "template": "Your hits build Arcane Exposure faster."
   },
   {
+    "nodeId": "staggerBreak",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Breaking a foe's Arcane Exposure deals {poiseDamage} Poise damage to it."
+  },
+  {
+    "nodeId": "resonance",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Breaking a foe's Arcane Exposure builds {spreadPct}% of its threshold on every other foe."
+  },
+  {
     "nodeId": "ironFooting",
     "playerTermId": "",
     "tooltipTermId": "",

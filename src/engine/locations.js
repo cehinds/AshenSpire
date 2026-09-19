@@ -142,6 +142,9 @@ export function previewRest(visit) {
     ? createRng(rng.seed, rng.getCounters())
     : createRng((visit.ctx.run.seed ?? 0) >>> 0);
   const dry = createLocationVisit({ run: clone, registries, rng: dryRng }, visit.locationId, visit.opts);
+  // The dry run carries the live visit's trigger gates (once / limitPerTurn),
+  // so a gate the arrival spent stays spent in the preview.
+  dry.ctx.triggerState = structuredClone(visit.ctx.triggerState);
   // The dry run answers "what would the rest restore", denial aside: the
   // clone carries no relics the run lacks, and restAt re-reads the denial,
   // so the clone's relics are set aside for the roll.
