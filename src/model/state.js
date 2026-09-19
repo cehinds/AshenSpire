@@ -29,6 +29,7 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 // One home for the mechanic: src/model/healLedger.js.
 import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
+import { skillsProblems } from './skills.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 
@@ -43,7 +44,7 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-export const RUN_SCHEMA_VERSION = 7;
+export const RUN_SCHEMA_VERSION = 8;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -139,6 +140,9 @@ export function createRunState({
     // exactly what the derived-stat table says a point is worth), and this
     // number is what the COST RAMP indexes on. `model/levelup.js`.
     levelUps: 0,
+    // THE SKILL LEDGER (plan phase 4a): { [trackId]: { xp, level, pendingDrafts } },
+    // written only by model/skills.js awardSkillXp. Empty until a hit lands.
+    skills: {},
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -593,6 +597,9 @@ export const RUN_SHAPE = [
   // the migration door from the four legacy fields, no registries needed.
   { key: 'zones', type: 'object' },
   { key: 'collection', type: 'array' },
+  // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
+  // with the empty ledger at the migration door.
+  { key: 'skills', type: 'object' },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
@@ -667,7 +674,7 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false } = {}) {
   const problems = [];
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
@@ -677,6 +684,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preEquipmentPools && (f.key === 'equipmentPoolBonuses' || f.key === 'equipmentPoolDeficits')) continue;
     if (preSeats && f.key === 'seatOrder') continue;
     if (preZones && (f.key === 'zones' || f.key === 'collection')) continue;
+    if (preSkills && f.key === 'skills') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -694,6 +702,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (run.seatOrder !== undefined) problems.push(...seatOrderProblems(run.seatOrder));
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
+  if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (Array.isArray(run.collection)) {
     run.collection.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1016,10 +1025,14 @@ export function migrateRunSchema(run) {
   // v6 and older: no zones. Filled HERE, not at the load door, because the
   // projection reads only the run's own fields (projectZones is registry-free).
   const preZones = [1, 2, 3, 4, 5, 6].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, ${RUN_SCHEMA_VERSION})`);
+  // v7 and older: no skill ledger. Filled HERE with the empty ledger — a run
+  // that never recorded a hit has none, and the shape wants the object.
+  const preSkills = [1, 2, 3, 4, 5, 6, 7].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills });
+  if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
   // The projection is re-derived at every load. A schema-7 save that carried
   // zones disagreeing with its legacy fields (an edit by hand; serializeRun

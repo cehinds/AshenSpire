@@ -148,6 +148,9 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     targetId: target.id,
     amount: dmg,
     blocked,
+    // The card that landed it, for the readers that pay by the piece that lent
+    // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
+    ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
     blockRemaining: target.block,
     ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
       tags: receipt.tags } : {}),
@@ -211,7 +214,7 @@ export function computeBlockGain(ctx, entity, base) {
 }
 
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
-export function gainBlock(ctx, entity, base) {
+export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
   let amt = computeBlockGain(ctx, entity, base);
   const cap = statuses.getCap(ctx, entity, 'blockCap');
@@ -219,7 +222,15 @@ export function gainBlock(ctx, entity, base) {
     amt = Math.max(0, cap - entity.block);
   }
   entity.block += amt;
-  ctx.emit('blockGained', { targetId: entity.id, amount: amt, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
+  ctx.emit('blockGained', {
+    targetId: entity.id, amount: amt,
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
+    // The card that raised it, when one did (engine/skillXp.js pays its piece's
+    // group), and in co-op the seat that played it — a guard cast on an ally
+    // is the caster's shield work, not the ally's.
+    ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy,
+      ...(ctx.playerIdForEntity && ctx.playerKey ? { sourcePlayerId: ctx.playerKey } : {}) } : {}),
+  });
   return amt;
 }
 
@@ -518,7 +529,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;
     }

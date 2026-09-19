@@ -40,6 +40,7 @@ import {
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
 import { wornZoneOf, handZoneOf } from './zones.js';
+import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
@@ -517,6 +518,36 @@ function collectContentProblems(bundle, errors = []) {
       if (!Number.isInteger(deck.minimumPerStep) || deck.minimumPerStep < 0) err('balance.deck.minimumPerStep', `must be a non-negative integer, got ${JSON.stringify(deck.minimumPerStep)}`);
     }
   }
+  // The skill tracks' numbers (plan phase 4a): the curve and the award rows
+  // model/skills.js and engine/skillXp.js read. Refused by name, never clamped.
+  if (b.balance && b.balance.skill !== undefined) {
+    const skill = b.balance.skill;
+    const posInt = (v) => Number.isInteger(v) && v > 0;
+    const nonNeg = (v) => Number.isFinite(v) && v >= 0;
+    const curve = (row, path) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) { err(path, 'must be an object { base, growth, roundTo, … }'); return; }
+      if (!posInt(row.base)) err(`${path}.base`, `must be a positive integer, got ${JSON.stringify(row.base)}`);
+      if (!Number.isFinite(row.growth) || row.growth < 1) err(`${path}.growth`, `must be a number ≥ 1, got ${JSON.stringify(row.growth)}`);
+      if (!posInt(row.roundTo)) err(`${path}.roundTo`, `must be a positive integer, got ${JSON.stringify(row.roundTo)}`);
+    };
+    if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
+    else {
+      for (const key of Object.keys(skill)) if (!['xp', 'class'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      curve(skill.xp, 'balance.skill.xp');
+      if (skill.xp && typeof skill.xp === 'object') {
+        for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
+        for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
+        if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+      }
+      if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
+      else {
+        for (const key of Object.keys(skill.class)) if (key !== 'xp') err(`balance.skill.class.${key}`, 'Unknown field');
+        curve(skill.class.xp, 'balance.skill.class.xp');
+        if (skill.class.xp && typeof skill.class.xp === 'object') for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+      }
+    }
+  }
   if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
     try {
       const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
@@ -566,7 +597,10 @@ function collectContentProblems(bundle, errors = []) {
   const creatureTagIds = tagIdsInDomain(b, 'creature');
   // Every node of the tree, for the predicate that may ask about any of them.
   const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
-  const vctx = { ids, err, tagIds, nodeIds };
+  // The skill tracks, derived (model/skills.js): the ids a progression gate
+  // may name are exactly the ones the ledger can hold.
+  const skillIds = new Set(skillTracks(b).map((t) => t.id));
+  const vctx = { ids, err, tagIds, nodeIds, skillIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -2036,11 +2070,13 @@ export function validatePredicate(pred, path, vctx) {
     case 'random':
       if (typeof pred.pct !== 'number') err(`${path}.pct`, 'pct must be a number');
       break;
-    // The skill ids themselves are derived from the tag registry in phase 4;
-    // until then the id is checked for shape only.
+    // The skill id is one of the derived tracks (model/skills.js): a gate on
+    // a name the ledger never holds would be false forever, silently.
     case 'skillLevelAtLeast':
       if (typeof pred.skill !== 'string' || !pred.skill) {
         err(`${path}.skill`, `skillLevelAtLeast names a skill track id, got ${describe(pred.skill)}`);
+      } else if (vctx.skillIds && !vctx.skillIds.has(pred.skill)) {
+        err(`${path}.skill`, `Unknown skill track '${pred.skill}' — the tracks are ${[...vctx.skillIds].join(', ')}`);
       }
       if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;

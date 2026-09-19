@@ -16,7 +16,7 @@ export const propertyRuleEffects = {
               "p": "not",
               "pred": {
                 "p": "skillLevelAtLeast",
-                "skill": "focus",
+                "skill": "item:magic-focus",
                 "level": {
                   "balance": "exposure.siphonMasteryLevel"
                 }
@@ -44,7 +44,7 @@ export const propertyRuleEffects = {
             },
             {
               "p": "skillLevelAtLeast",
-              "skill": "focus",
+              "skill": "item:magic-focus",
               "level": {
                 "balance": "exposure.siphonMasteryLevel"
               }

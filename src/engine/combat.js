@@ -17,6 +17,7 @@ import { formationMovePlan } from '../model/formationMovement.js';
 import * as A from './actions.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
+import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
@@ -135,6 +136,10 @@ export function createCombat({
     // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
+    // The run's skill ledger, read by the progression predicates
+    // (triggers.js skillLevelAtLeast / classLevelAtLeast). A copy: combat
+    // never writes it.
+    skills: player.skills ? structuredClone(player.skills) : {},
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -147,6 +152,9 @@ export function createCombat({
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
+  // The skill tracks listen to the same bus (plan phase 4a); the receipt they
+  // write lives on the combat and reaches the run only through applySkillXp.
+  attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
 
@@ -887,6 +895,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     // rewrites `tags` into the resolved attack tags (the weapon's inherited
     // ones included), and cardTagIs must read what the card row says.
     authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    // Which piece lent this card, for the skill hooks (engine/skillXp.js).
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };

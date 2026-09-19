@@ -16,7 +16,7 @@ export const nodeEffects = {
               "p": "not",
               "pred": {
                 "p": "skillLevelAtLeast",
-                "skill": "focus",
+                "skill": "item:magic-focus",
                 "level": {
                   "variable": "siphonMasteryLevel"
                 }
@@ -44,7 +44,7 @@ export const nodeEffects = {
             },
             {
               "p": "skillLevelAtLeast",
-              "skill": "focus",
+              "skill": "item:magic-focus",
               "level": {
                 "variable": "siphonMasteryLevel"
               }

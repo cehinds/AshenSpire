@@ -6,6 +6,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 // runtime methods detached for storage and reattached after loading.
 
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
+import { skillsProblems } from './skills.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -68,6 +69,19 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
+  // The skill ledger and receipt (plan phase 4a); absent on a snapshot written
+  // before them, refused by name when present and malformed.
+  if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
+  if (snapshot.skillXp !== undefined) {
+    if (!record(snapshot.skillXp)) problems.push('skillXp must be an object keyed by owner');
+    else for (const [owner, receipt] of Object.entries(snapshot.skillXp)) {
+      if (!record(receipt) || !record(receipt.xp)) { problems.push(`skillXp.${owner} must be { xp, killGroup }`); continue; }
+      for (const [skillId, amount] of Object.entries(receipt.xp)) {
+        if (!finite(amount) || amount < 0) problems.push(`skillXp.${owner}.xp.${skillId} must be a non-negative number`);
+      }
+      if (receipt.killGroup !== null && !nonEmptyString(receipt.killGroup)) problems.push(`skillXp.${owner}.killGroup must be null or a skill track id`);
+    }
+  }
   if (snapshot.armamentLevels !== undefined) {
     if (!record(snapshot.armamentLevels)) problems.push('armamentLevels must be an object');
     else for (const [pieceId, level] of Object.entries(snapshot.armamentLevels)) {

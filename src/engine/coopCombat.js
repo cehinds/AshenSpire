@@ -40,6 +40,7 @@ import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
 import { gripOf, gripTags } from '../model/loadout.js';
+import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
 
 const QUEUE_GUARD = 10000;
@@ -85,6 +86,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   };
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C._emitEvent = emitEvent;
+  attachSkillXp(C); // plan phase 4a: one receipt per seat, keyed by C.playerKey
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
   // Player combat entities intentionally share the engine id `player`. Events
@@ -188,6 +190,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     // dodge check) is decided from THIS player's equipment, not a Light default.
     loadout: p.loadout ? structuredClone(p.loadout) : null,
     itemUpgradeLevels: p.itemUpgradeLevels || {},
+    skills: p.skills ? structuredClone(p.skills) : {},
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,
@@ -226,6 +229,7 @@ function setActive(C, P) {
   C.attributes = P ? P.attributes : null;
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
+  C.skills = P ? P.skills : {};
   // Every player entity carries id 'player', so triggers.js scopes player-owned
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
@@ -422,6 +426,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     // rewrites `tags` into the resolved attack tags (the weapon's inherited
     // ones included), and cardTagIs must read what the card row says.
     authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };

@@ -29,6 +29,7 @@ import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
+import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -1879,6 +1880,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     player: {
       classId: run.class,
       attributes: run.attributes,
+      skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
       maxHp: run.maxHp,
       hp: run.hp,
       maxMana: run.maxMana,
@@ -2032,6 +2034,10 @@ async function onCombatEnd(result, combat, enc) {
     run[maxField] = combat.player[maxField];
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
+  // receipt of every hit, block, evade and buildup by track; the run's ledger
+  // takes it now, win or loss, and climbs whatever the XP buys.
+  applySkillXp(registries, run, skillXpReceipt(combat));
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });

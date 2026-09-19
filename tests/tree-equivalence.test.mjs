@@ -42,6 +42,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = (name) => JSON.parse(readFileSync(resolve(HERE, 'fixtures', name), 'utf8'));
 const REG = createRegistries(contentBundle);
 
+// The fixture is the pre-tree rules with one id re-pointed since: siphon's
+// mastery gate read `skill: focus`, a name no ledger holds, and names the focus
+// track `item:magic-focus` from plan phase 4a (the id is a track, not a number).
 test('every property rule resolves to exactly the numbers it had before its rule became a node', () => {
   const pre = fixture('property-rules-pre-tree.json');
   const now = new Map(PROPERTY_RULES.map((r) => [r.tag, r]));

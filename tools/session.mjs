@@ -20,6 +20,7 @@ import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, m
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
+import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
@@ -460,6 +461,7 @@ export function createSession({ registries, seedString, endless = false, restore
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
@@ -682,6 +684,8 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.stamina = P.entity.stamina;
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
+        // The seat's skill receipt, keyed by its own id (plan phase 4a).
+        applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
       }
     }
     live = null;

@@ -28,6 +28,7 @@ import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity, playerWeightClass } from '../src/engine/combat.js';
 import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { combatSnapshotProblems } from '../src/model/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
@@ -74,6 +75,9 @@ import {
 } from '../src/model/loadout.js';
 import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
+import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS } from '../src/model/skills.js';
+import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
+import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
@@ -8124,11 +8128,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a balance reference naming no row is refused by name');
     // 80.11 — the progression predicates are closed-set members, checked for shape,
     // and answer false until the phase-4 skill/class ledger exists.
-    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'skillLevelAtLeast', skill: 'focus', level: 0 }, do: [] }] })]),
+    refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'skillLevelAtLeast', skill: 'item:magic-focus', level: 0 }, do: [] }] })]),
       /propertyRules\.fxGate\.triggers\[0\]\.if\.level: level must be a positive integer/, 'a non-positive skill level is refused by name');
     refuses(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'classLevelAtLeast' }, do: [] }] })]),
       /if\.level: level must be a positive integer/, 'a class-level gate with no level is refused by name');
-    assert(validateContent(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'skillLevelAtLeast', skill: 'focus', level: 7 }] }, do: [] }] })])).ok,
+    assert(validateContent(withRules(['fxGate'], [rule('fxGate', { triggers: [{ on: 'arcaneBreak', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'skillLevelAtLeast', skill: 'item:magic-focus', level: 7 }] }, do: [] }] })])).ok,
       'a well-formed skill gate validates');
     eq(evalPredicate({}, { p: 'skillLevelAtLeast', skill: 'focus', level: 1 }), false, 'skillLevelAtLeast is false until the skill ledger exists');
     eq(evalPredicate({}, { p: 'classLevelAtLeast', level: 1 }), false, 'classLevelAtLeast is false until the class ledger exists');
@@ -8190,7 +8194,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // re-derived and noted, never refused.
   test('82. zones and collection ride the save as a projection; a schema-6 save is filled; a tampered one is re-projected and noted', () => {
     const run = createRunState({ seed: 0x3a3a, classId: 'reaver', registries: REG });
-    eq(run.schemaVersion, 7, 'schema 7');
+    eq(run.schemaVersion, RUN_SCHEMA_VERSION, 'the current schema');
     eq(run.zones.core, 'reaver', 'core is the class id');
     eq(run.zones.hands.main, run.loadout.sets.rightHand[run.loadout.active.rightHand], 'main hand is the active right-hand piece');
     eq(run.zones.hands.off, run.loadout.sets.leftHand[run.loadout.active.leftHand], 'off hand is the active left-hand piece');
@@ -8482,6 +8486,162 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!bad.ok && said(bad).some((e) => /probeGripCard/.test(e) && /Unknown tag 'nope'/.test(e)), `an unknown tag is refused by name — got ${JSON.stringify(said(bad)).slice(0, 300)}`);
     const good = validateContent(probe('equipment.dualWield'));
     assert(!said(good).some((e) => /probeGripCard/.test(e)), `the derived tag is a legal predicate tag — got ${JSON.stringify(said(good).filter((e) => /probeGripCard/.test(e)))}`);
+  });
+
+  test('85. the skill tracks are derived, climb one curve, are paid by the combat receipt, and gate the progression predicates (plan phase 4a)', () => {
+    // The tracks come from the tree, the framework and the class registry —
+    // no list of their own.
+    const tracks = skillTracks(REG);
+    const ids = tracks.map((t) => t.id);
+    for (const id of ['item:blade', 'item:shield', 'item:magic-focus', 'armour:light', 'armour:medium', 'armour:heavy', 'dualWield', 'class:reaver', 'class:rogue']) assert(ids.includes(id), `track '${id}' is derived`);
+    assert(!ids.includes('item:armor'), 'armour is not a weapon group');
+    eq(tracks.find((t) => t.id === 'item:magic-focus').kind, 'focus');
+    eq(tracks.find((t) => t.id === 'item:blade').kind, 'weapon');
+    assert(tracks.every((t) => SKILL_KINDS.includes(t.kind)), 'every track has a kind');
+    // One curve shape: round(base × growth^n, roundTo).
+    const c = REG.balance.skill.xp;
+    eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
+    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
+    assert(xpToNext(REG, 'class', 0) > xpToNext(REG, 'weapon', 0), 'the class curve is the slower one');
+    assert(xpToNext(REG, 'armour', 1) > xpToNext(REG, 'armour', 0), 'the curve climbs');
+    // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
+    const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    eq(run.schemaVersion, 8); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
+    eq(skillLevel(run, 'item:blade'), 0);
+    const first = awardSkillXp(REG, run, 'item:blade', xpToNext(REG, 'weapon', 0) + xpToNext(REG, 'weapon', 1) + 1);
+    eq(first.levelUps, 2, 'enough XP for two steps climbs two');
+    eq(run.skills['item:blade'].level, 2); eq(run.skills['item:blade'].xp, 1, 'the remainder carries'); eq(run.skills['item:blade'].pendingDrafts, 2, 'one draft queued per level');
+    eq(awardSkillXp(REG, run, 'item:blade', 0).levelUps, 0, 'nothing is nothing');
+    let threw = null; try { awardSkillXp(REG, run, 'notATrack', 5); } catch (e) { threw = e.message; }
+    assert(/not a skill track/.test(threw || ''), 'an unknown track is refused by name');
+    // The shape, refused by name; a migration fills the ledger.
+    assert(/skills\.item:blade\.xp must be a non-negative integer/.test(skillsProblems({ 'item:blade': { xp: -1, level: 0, pendingDrafts: 0 } }).join('|')));
+    assert(/skills\.x\.bogus is not a ledger field/.test(skillsProblems({ x: { xp: 0, level: 0, pendingDrafts: 0, bogus: 1 } }).join('|')));
+    assert(/missing 'skills'/.test(validateRunShape({ ...run, skills: undefined }).join(' | ')), 'a current save without the ledger is named');
+    const old = JSON.parse(serializeRun(run)); delete old.skills; old.schemaVersion = 7;
+    const back = deserializeRun(JSON.stringify(old));
+    eq(back.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(back.skills), '{}', 'a schema-7 save gains the empty ledger');
+
+    // The combat receipt: a reaver's sword strikes pay item:blade, the shield's
+    // defends pay item:shield, a win pays every held group, the killing group
+    // more, and the run's ledger takes it once through applySkillXp.
+    const fresh = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    const cb = createCombat({
+      registries: REG, rng: createRng(0x4a4a),
+      player: { classId: 'reaver', attributes: fresh.attributes, skills: fresh.skills, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] },
+      enemyIds: ['fellWarden'],
+    });
+    let guard = 0;
+    while (!cb.result && ++guard < 2000) {
+      const target = cb.enemies.find((e) => e.alive);
+      const playable = cb.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && cb.player.energy >= def.cost && (def.manaCost || 0) === 0; });
+      if (playable && target) dispatch(cb, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id }); else dispatch(cb, { type: 'endTurn' });
+    }
+    assert(cb.result, 'the bot finished the fight');
+    // The group of an event's card, read from the log alone: the hand it was
+    // swung from, or the piece a kit/package card names (bare id or ref).
+    const groupOfEvent = (e) => {
+      if (e.sourceHand === 'right') return 'item:blade';
+      if (e.sourceHand === 'left') return 'item:shield';
+      const id = typeof e.grantedBy === 'string' ? e.grantedBy.replace(/^armament\//, '') : null;
+      const piece = id ? REG.equipment.armaments.find((a) => a.id === id) : null;
+      return piece ? (piece.itemTypeTags || []).find((t) => t !== 'item:armor') || null : null;
+    };
+    // Every hit landed and every block gained by a card the piece lent is one
+    // payment to that piece's group — a sword's guard art pays the blade, a
+    // shield's bash pays the shield.
+    const paid = (group) => cb.eventLog.filter((e) => e.amount > 0 && groupOfEvent(e) === group
+      && ((e.type === 'damageDealt' && e.sourceId === 'player') || (e.type === 'blockGained' && e.targetId === 'player'))).length;
+    const hits = cb.eventLog.filter((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && groupOfEvent(e) === 'item:blade').length;
+    assert(hits > 0, 'the sword landed hits');
+    assert(cb.eventLog.some((e) => e.type === 'damageDealt' && e.sourceId === 'player' && e.amount > 0 && !e.sourceHand && groupOfEvent(e)), 'a kit or art card, named by its piece alone, landed too');
+    const receipt = skillXpReceipt(cb);
+    const rows = REG.balance.skill.xp;
+    if (cb.result === 'victory') {
+      const killGroup = cb.skillXp.player.killGroup;
+      assert(killGroup === 'item:blade' || killGroup === 'item:shield', `the killing hit names its group — got ${killGroup}`);
+      eq(receipt['item:blade'], Math.floor(paid('item:blade') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:blade' ? rows.killMult : 1)), 'blade is paid per hit and block plus the win, more for the kill');
+      eq(receipt['item:shield'], Math.floor(paid('item:shield') * rows.perHit + rows.perWinEquipped * (killGroup === 'item:shield' ? rows.killMult : 1)), 'shield is paid per hit and block plus the win');
+    } else {
+      eq(receipt['item:blade'], paid('item:blade') * rows.perHit, 'a lost fight still pays the hits');
+    }
+    assert(!('dualWield' in receipt), 'sword and shield is not dual-wielding');
+    assert(!Object.keys(receipt).some((k) => k.startsWith('class:')), 'no class XP source until phase 5b');
+    eq(fresh.skills['item:blade'], undefined, 'combat never wrote the run');
+    const awards = applySkillXp(REG, fresh, receipt);
+    eq(awards.find((a) => a.skillId === 'item:blade').after, skillLevel(fresh, 'item:blade'), 'the run took the receipt');
+    assert(skillLevel(fresh, 'item:blade') >= 1 || fresh.skills['item:blade'].xp === receipt['item:blade'], 'the XP is in the ledger');
+    // Dual grip pays dualWield beside the group.
+    const rogue = createRunState({ seed: 0x4a4a, classId: 'rogue', registries: REG });
+    rogue.loadout.sets.leftHand[0] = 'straightSword'; stampDeck(REG, rogue);
+    const cd = createCombat({ registries: REG, rng: createRng(1), player: { classId: 'rogue', attributes: rogue.attributes, skills: rogue.skills, maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: rogue.energyMax, drawPerTurn: rogue.drawPerTurn, deck: rogue.deck, loadout: rogue.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    const t2 = cd.enemies.find((e) => e.alive);
+    const strike = cd.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return def.type === 'attack' && def.cost !== 'X' && cd.player.energy >= def.cost && inst.sourceHand; });
+    if (strike) {
+      dispatch(cd, { type: 'playCard', cardInstanceId: strike.instanceId, targetId: t2.id });
+      const r2 = cd.skillXp.player.xp;
+      assert(r2['item:blade'] > 0 && r2.dualWield === r2['item:blade'], `dual pays dualWield beside the blade — got ${JSON.stringify(r2)}`);
+    }
+    // The predicates read the ledger the combat was handed.
+    const gated = createCombat({ registries: REG, rng: createRng(2), player: { classId: 'reaver', attributes: fresh.attributes, skills: { 'item:blade': { xp: 0, level: 3, pendingDrafts: 0 }, 'class:reaver': { xp: 0, level: 2, pendingDrafts: 0 } }, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    eq(evalPredicate(gated, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 3 }), true, 'a level the ledger holds passes');
+    eq(evalPredicate(gated, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 4 }), false, 'one above does not');
+    eq(evalPredicate(gated, { p: 'skillLevelAtLeast', skill: 'item:shield', level: 1 }), false, 'an untouched track is level 0');
+    eq(evalPredicate(gated, { p: 'classLevelAtLeast', level: 2 }, { owner: gated.player }), true, 'the class track reads class:<id>');
+    eq(evalPredicate(gated, { p: 'classLevelAtLeast', level: 3 }, { owner: gated.player }), false);
+    // balance.skill is validated by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const bad = validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, xp: { ...contentBundle.balance.skill.xp, growth: 0.5 } } } });
+    assert(!bad.ok && said(bad).some((e) => /balance\.skill\.xp\.growth/.test(e)), 'a shrinking curve is refused by name');
+    // Review round. A granted card names its piece in whichever spelling the
+    // loadout stamped (bare id for kits, packages and arts; namespaced refs);
+    // an armour piece's card and a run card have no group.
+    const probe = createCombat({ registries: REG, rng: createRng(3), player: { classId: 'reaver', attributes: fresh.attributes, skills: {}, maxHp: 78, hp: 78, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck: fresh.deck, loadout: fresh.loadout, relicIds: [] }, enemyIds: ['fellWarden'] });
+    const foe = probe.enemies[0];
+    const hit = (extra) => recordSkillXp(probe, { type: 'damageDealt', sourceId: 'player', targetId: foe.id, amount: 3, ...extra });
+    hit({ grantedBy: 'straightSword' }); eq(probe.skillXp.player.xp['item:blade'], rows.perHit, 'a bare armament id pays its group');
+    hit({ grantedBy: 'armament/straightSword' }); eq(probe.skillXp.player.xp['item:blade'], 2 * rows.perHit, 'the namespaced ref pays the same group');
+    hit({ grantedBy: 'armor/reaver/ironPlate' }); hit({ grantedBy: 'unarmed:leftHand' }); hit({});
+    eq(probe.skillXp.player.xp['item:blade'], 2 * rows.perHit, 'armour, the empty hand and a run card pay nothing');
+    // The killing hit is read from the HP it left, not from a flag set later.
+    eq(probe.skillXp.player.killGroup, null);
+    foe.hp = 0; hit({ sourceHand: 'right' });
+    eq(probe.skillXp.player.killGroup, 'item:blade', 'the hit that emptied the HP is the kill');
+    // A fight saved and resumed keeps its ledger and receipt, and keeps recording.
+    const before = JSON.stringify(probe.skillXp);
+    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(probe)));
+    eq(JSON.stringify(stored.skillXp), before, 'the receipt is in the snapshot'); eq(JSON.stringify(stored.skills), '{}', 'so is the ledger');
+    const resumed = restoreCombatSnapshot({ registries: REG, rng: createRng(3), snapshot: stored });
+    eq(JSON.stringify(resumed.skillXp), before, 'the receipt survives the load');
+    resumed.emit('damageDealt', { sourceId: 'player', targetId: foe.id, amount: 3, grantedBy: 'straightSword' });
+    eq(resumed.skillXp.player.xp['item:blade'], 4 * rows.perHit, 'the listener is hooked again after the load');
+    const gatedStore = JSON.parse(JSON.stringify(serializeCombatSnapshot(gated)));
+    eq(evalPredicate(restoreCombatSnapshot({ registries: REG, rng: createRng(2), snapshot: gatedStore }), { p: 'skillLevelAtLeast', skill: 'item:blade', level: 3 }), true, 'a restored fight gates on the ledger it was handed');
+    delete stored.skills; delete stored.skillXp;
+    const older = restoreCombatSnapshot({ registries: REG, rng: createRng(3), snapshot: stored });
+    eq(JSON.stringify(older.skills), '{}'); eq(JSON.stringify(older.skillXp), '{}', 'a pre-ledger snapshot resumes with an empty one');
+    assert(/skillXp\.player\.xp\.item:blade must be a non-negative number/.test(combatSnapshotProblems({ ...stored, skillXp: { player: { xp: { 'item:blade': -1 }, killGroup: null } } }).join('|')), 'a malformed receipt is refused by name');
+    // A gate names a derived track, or is refused: the shipped Siphon reads the focus track.
+    const shipped = JSON.stringify(contentBundle.nodeEffects.siphon);
+    assert(shipped.includes('"skill":"item:magic-focus"') && !shipped.includes('"skill":"focus"'), 'siphon gates on the focus track by its derived id');
+    // (The bundle validates the derived propertyRules, which content-build joins from nodeEffects.)
+    const ghostGate = validateContent({ ...testBundle(), propertyRules: contentBundle.propertyRules.map((r) => r.tag === 'siphon' ? JSON.parse(JSON.stringify(r).replace(/item:magic-focus/g, 'focus')) : r) });
+    assert(!ghostGate.ok && said(ghostGate).some((e) => /Unknown skill track 'focus'/.test(e)), 'a gate on a name no track has is refused by name');
+    // Co-op: a guard one seat casts on another is the caster's work, and a
+    // seat's gates read that seat's own ledger, not the active one's.
+    const seatA = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
+    const seatB = createRunState({ seed: 0x4a4b, classId: 'rogue', registries: REG });
+    const party = createCoopCombat({ registries: REG, rng: createRng(0x4a4a), players: [
+      { id: 'A', classId: 'reaver', attributes: seatA.attributes, skills: { 'item:blade': { xp: 0, level: 5, pendingDrafts: 0 } }, maxHp: 78, hp: 78, maxMana: 2, mana: 2, energyMax: seatA.energyMax, drawPerTurn: seatA.drawPerTurn, deck: seatA.deck, loadout: seatA.loadout, relicIds: [] },
+      { id: 'B', classId: 'rogue', attributes: seatB.attributes, skills: {}, maxHp: 60, hp: 60, maxMana: 2, mana: 2, energyMax: seatB.energyMax, drawPerTurn: seatB.drawPerTurn, deck: seatB.deck, loadout: seatB.loadout, relicIds: [] },
+    ], enemyIds: ['fellWarden'] });
+    const entB = party.players.get('B').entity;
+    const caster = party.playerKey, ally = caster === 'A' ? 'B' : 'A';
+    gainBlock(party, party.players.get(ally).entity, 4, { instanceId: 'kit:roundShield:guard', grantedBy: 'roundShield' });
+    eq(party.skillXp[caster] && party.skillXp[caster].xp['item:shield'], rows.perHit, "the active seat's shield is paid for the guard it cast on its ally");
+    assert(!party.skillXp[ally], 'the ally guarded is paid nothing');
+    eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 5 }, { owner: party.players.get('A').entity }), true, "a seat's gate reads its own ledger");
+    eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
   });
 
   const passed = results.filter((r) => r.ok).length;
