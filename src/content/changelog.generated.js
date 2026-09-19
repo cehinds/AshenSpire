@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1173",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Holding a card now asks where it should go",
+    "detail": "In combat, holding a card that needs a target selects it and shows its legal targets, and the effect lands once when you choose one — the same flow a tap opens, so no hold plays a targeted card on its own. A card with no target still plays from a hold, the hold's fill starts the moment you press instead of after a hidden delay, and tapping, dragging, keyboard and controller play are unchanged.",
+    "build": "0.7.1.278",
+    "pullRequest": 1173,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1173"
+  },
+  {
     "id": "pr-1198",
     "date": "2026-09-19",
     "group": "2026-09-19",
