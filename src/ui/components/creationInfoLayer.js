@@ -23,7 +23,8 @@ export function mountCreationInfoLayer(root) {
     if (!control) return;
     const box = owner.getBoundingClientRect();
     const pane = (root.querySelector('.cz-pane') || root).getBoundingClientRect();
-    if (box.bottom <= pane.top || box.top >= pane.bottom || root.inert) { close(); return; }
+    const gallery = owner.closest('.cc-card-selectors').getBoundingClientRect();
+    if (box.right <= gallery.left || box.left >= gallery.right || box.bottom <= pane.top || box.top >= pane.bottom || root.inert) { close(); return; }
     if (!control.matches(':popover-open')) control.showPopover();
     const size = control.getBoundingClientRect();
     const zoom = size.width / control.offsetWidth || 1;

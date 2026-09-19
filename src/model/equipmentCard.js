@@ -8,7 +8,7 @@ export function equipmentCardModel(registries, piece) {
   const tag = id => (registries.tags || []).find(row => row.id === id);
   const className = armor ? (piece.sharedSet ? 'All classes' : registries.classes.get(piece.classId)?.name || piece.classId) : '';
   const types = (piece.itemTypes || []).map(t => t.label).join(' / ');
-  const type = armor ? `Armor Â· ${className}` : piece.kind === 'weapon' ? `Weapon Â· ${types}` : piece.kind === 'staff' ? `Staff Â· ${types}` : types || piece.kind;
+  const type = armor ? `Armor · ${className}` : piece.kind === 'weapon' ? `Weapon · ${types}` : piece.kind === 'staff' ? `Staff · ${types}` : types || piece.kind;
   const field = (label, value, explanation) => ({ label, value, explanation });
   const facts = armor
     ? [field('DR', (piece.mods || []).map(parseMod).filter(m => m.prefix === 'defend' && m.field === 'block' && m.mode !== 'set').reduce((n, m) => n + m.value, 0), 'Armor bonus to Defense cards: adds this much Block. This is not damage reduction or the full equipped Defense Rating.'), field('Poise', piece.poiseThreshold, 'Authored player Poise threshold contribution. Currently displayed only: players do not receive Poise damage. This is separate from enemy Stagger.')]
@@ -21,7 +21,7 @@ export function equipmentCardModel(registries, piece) {
     const label = spec.apply === 'startStatus' ? `starting ${spec.label}` : mod.field === 'poise' ? 'poise damage' : spec.label;
     return field(`${target}${value} ${label}`, raw, `${mod.mode === 'set' ? 'Replaces the value' : 'Adjusts the value'} ${mod.prefix === 'self' ? 'on the wearer' : `on ${mod.prefix === 'power' ? 'the class power card' : mod.prefix}`}. ${spec.blurb}`);
   });
-  const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' Â· ');
+  const requirements = Object.entries(piece.requirements?.attributes || {}).map(([id, value]) => `${registries.attributes.get(id)?.shortLabel || id} ${value}`).join(' · ');
   return { id: piece.id, name: piece.name, armor, type, facts, bonuses,
     tags: tags.map(id => field(tag(id)?.label || id, id, tag(id)?.blurb || 'Authored equipment classification.')),
     typeExplanation: (piece.itemTypes || []).map(t => tag(t.tag)?.blurb).filter(Boolean).join(' ') || `${type}. Compatibility is determined by the equipment position.`,
@@ -43,7 +43,7 @@ export function equipmentCardModel(registries, piece) {
  * bonus was sliced through the middle. Here each region declares a floor and a
  * priority, the floors are laid down first, and only what is genuinely spare is
  * shared out by `grow`. If the floors alone do not fit, the region with the
- * LOWEST priority gives up its slack first â€” so flavour shrinks before the
+ * LOWEST priority gives up its slack first — so flavour shrinks before the
  * bonuses do, which is the ordering the config states out loud.
  *
  * Type sizes are emitted as clamps rather than fixed pixels so a long line
@@ -55,12 +55,12 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
   // COLLAPSE AND OMIT ARE NOT THE SAME THING, and the difference is the whole
   // value of the presentation levels (src/model/cardFields.js).
   //
-  //   COLLAPSE â€” the card HAS this region and has nothing to put in it (a
+  //   COLLAPSE — the card HAS this region and has nothing to put in it (a
   //   relic or potion has no tag badges). The row still exists, because the
   //   face still has that many landmarks; it just takes no floor, so its
   //   height is spare for the regions that grow.
   //
-  //   OMIT â€” this level does not say this at all. The row is GONE: no floor,
+  //   OMIT — this level does not say this at all. The row is GONE: no floor,
   //   no growth, no gap on either side of it, and no element in the DOM. That
   //   last part is not an optimisation. A region hidden with `display:none`
   //   still costs a row in this budget, so a glance card would be the same
@@ -68,7 +68,7 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
   //   screen reader must not announce a field the player cannot see.
   //
   // So `omit` leaves `order` before anything is measured, which is what
-  // returns its pixels â€” and its gaps â€” to the regions that remain.
+  // returns its pixels — and its gaps — to the regions that remain.
   const regions = Object.fromEntries(Object.entries(config.regions)
     .filter(([key]) => !omit.includes(key))
     .map(([key, spec]) => [key, collapse.includes(key) ? { ...spec, minPx: 0, grow: 0 } : spec]));
@@ -89,7 +89,7 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
     }
   } else {
     // Over budget: take the shortfall from the least important regions first,
-    // and never take a region below its own floor's half â€” a row that has
+    // and never take a region below its own floor's half — a row that has
     // collapsed to nothing is not a smaller row, it is a missing one.
     let debt = floors - budget;
     for (const key of order) height[key] = regions[key].minPx;
@@ -111,7 +111,7 @@ export function equipmentCardTokens(config = balance.ui.equipmentCard, { collaps
   const type = Object.fromEntries(Object.entries(text).map(([key, spec]) => [key, clamp(spec)]));
   return { rows, type, frameWidthPx, frameHeightPx, paddingPx, gapPx,
     bonusMaxLines: config.bonusMaxLines, info: config.info,
-    /** The regions that got a row, in order â€” what the renderer must emit. */
+    /** The regions that got a row, in order — what the renderer must emit. */
     regions: order,
     /** Exposed so a gate can assert the solver honoured the declared floors. */
     heights: height, budget };
