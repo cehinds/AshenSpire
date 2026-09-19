@@ -46,7 +46,7 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
       assert(rows.some((row) => row.key.endsWith(`.${classDef.id}.${attribute.id}`)));
     }
   }
-  assert(rows.some((row) => row.key === 'gameConfig.progression.levelCostMultiplier'));
+  assert(rows.some((row) => row.key === 'gameConfig.progression.xpMultiplier'));
   assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpriteScale'));
   assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpawnColumn'));
   assert(rows.some((row) => row.key === 'gameConfig.presentation.enemySpawnColumn'));
@@ -56,14 +56,16 @@ test('configured bundle overlays starting stats and progression without mutating
   const configured = configuredContentBundle(contentBundle, {
     'gameConfig.attributeRules.presets.tuned.reaver.strength': 15,
     'gameConfig.attributeRules.presets.tuned.reaver.dexterity': 9,
-    'gameConfig.balance.levelUp.firstCost': 60,
-    'gameConfig.progression.levelCostMultiplier': 2,
+    'gameConfig.balance.xp.combatWin': 30,
+    'gameConfig.progression.xpMultiplier': 2,
     'gameConfig.progression.rewardMultiplier': 0.5,
     'gameConfig.derivedStatRules.defaults.pointsPerTier': 3,
   });
   assert.equal(configured.attributeRules.presets.tuned.reaver.strength, 15);
   assert.equal(contentBundle.attributeRules.presets.tuned.reaver.strength, 13);
-  assert.equal(configured.balance.levelUp.firstCost, 120);
+  assert.equal(configured.balance.xp.combatWin, 60);
+  assert.equal(configured.balance.xp.kill.boss, contentBundle.balance.xp.kill.boss * 2);
+  assert.equal(contentBundle.balance.xp.combatWin, 50);
   assert.equal(configured.balance.rewards.cinders.normal[0], Math.round(contentBundle.balance.rewards.cinders.normal[0] * 0.5));
   assert.equal(configured.derivedStatRules.defaults.pointsPerTier, 3);
 });

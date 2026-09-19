@@ -789,15 +789,16 @@ attribute, with its complete bonus pool unspent. Reopening Assign Points refunds
 allocation the same way; class presets and earlier edits do not consume points before the
 player assigns them.
 
-**Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
-level by one and grants exactly 1 configurable attribute point by default. Price purchase
-`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 20` and `costStep = 4`
-(retuned from 800 / 200 in #522: the fleet simulator measured the shipped ladder at under one
-level-up per full run against the owner's 10–20 per run; 20 / 4 measures 14.8 — see
-`docs/asks/asks-ledger.md` E13 and `tools/runsim.mjs --level-cost`).
-Therefore five purchases cost `20 + 24 + 28 + 32 + 36 = 140` and produce level 6.
-The starting level, first cost, step, points per level and any maximum are content data; the
-worked level-6 result is a curve receipt, not a second hard-coded total or an implied cap.
+**Level curve.** A fresh run starts at displayed level 1 and the level is EARNED (plan phase 6,
+§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool), and every
+step of the one curve every track shares, `xpToNext(n) = round(base × growth^(n − 1), roundTo)`
+on `balance.level.xp` (100 / 1.15 / 10), grants `balance.levelUp.pointsPerLevel` attribute points
+(the player's dial, read when the level is reached), which wait on the run's ledger until the
+player assigns them at a shrine. Curve receipt: the steps from level 1 cost 100, 120, 130, 150,
+170, 200, 230, 270, 310, 350 — 2,030 XP to level 11; a full run at the shipped awards lands near
+level 10–12, and `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
+level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
+faucet) is gone with the purse.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
@@ -1801,6 +1802,14 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 - **One shipped door: the Turncoat's Mirror** (`events.js turncoatMirror`), an event whose first choice is `swapClass { random: true }` and whose second turns away; its choices are durable (`eventChoiceIds`). The boss-reward door the plan names is not shipped: a reward row is a kind of its own (§13.4e's shape) and the owner has not said which boss gives it.
 
 *Falsify:* every shipped class is free; a fixture `class` row gates the Rogue until earned; `classLevel 3` is not met at 2 and met at 3, `bossWithGroup` needs the boss AND the group, the tally only grows; a Reaver at class level 1 with Iron Footing picked swaps to Rogue: `class` and `zones.core` read rogue, the pick is dropped, `class:reaver` is gone, the blade skill, the deck and the relics stay, a `classSwapped` row is written, the save is sound and round-trips; the same class is a no-op, an unknown class refused by name; the opcode lands a named class through the run-effect door and a random swap never lands on the run's own; the mirror ships with the opcode and durable choice ids; a swap to an unknown class is refused by name at validation; a locked class card wears its hint (engine test 89).
+
+### 13.4i The character level is earned: XP, the point ledger, the level's own term (plan phase 6)
+
+- **The ledger is the run's:** `run.level = { xp, level, unspentPoints }` (schema 10; a save at ≤ 9 arrives at the level its cinder purchases reached — `1 + levelUps` — with no XP toward the next and nothing waiting; `validateRunShape` refuses a malformed ledger by name), written only by `model/levelup.js`. `xpToNext(registries, level)` is the one curve shape (`balance.level.xp`); `awardLevelXp(registries, run, amount, { pointsPerLevel })` climbs as many steps as the XP buys, each granting the dial's points to `unspentPoints` (`balance.levelUp.maxLevels` caps the climb, XP past it stays); `applyLevelUp(registries, run, attributeId)` assigns ONE waiting point — the attribute moves, `levelUps`/`levelPoints` record the assignment for the load door's allocation check exactly as before, the pools re-derive from the run's own snapshot with the deficit carried (levelling is not a rest). `levelUpPlan` offers the waiting points and nothing else (`blockedBy`: `points` | `cap` | null); the shrine's Level-up card assigns them (`rest.js`), the town's level-up service once phase 7 places it. Cinders buy no level: no code path spends `run.cinders` on one.
+- **The awards are the run's owner's** (`main.js onCombatEnd`, `tools/session.mjs` per seat, `tools/runsim.mjs`): `combatLevelXp(registries, { victory, pool, kills })` — `xp.combatWin` for a won fight and `xp.kill.<pool>` per enemy felled (a kill is a kill, won or lost; an unknown pool pays the normal rate); `questLevelXp` names `xp.quest` for phase 10a's completion door. His level-value dial (`levelUpValue`) is read where the level is reached, so the points a level grants are decided then and wait for the shrine.
+- **The level's own term** rides the derived-stat rows (`content/derivedStats.js` `perLevel: { every, gain }`, optional per row, refused by name when malformed): `deriveStat` adds `floor((level − 1) / every) × gain` at the character level it is handed — HP +5, Mana +1 and Stamina +1 every five levels past the first, Hand +1 every ten — and every derivation of a run's pools (birth, the load door's integrity check, `reconcileRunLoadoutHp`, the stat projection) passes the run's level. The term is snapshotted with the row: a run born under it keeps it whatever the table says later, and a run born before it never gains it, so no old save is re-priced or refused.
+
+*Falsify:* a fresh run is level 1 with nothing waiting and the shrine offers nothing (refused by name); the base XP climbs one step, grants one point that waits, moves no stat and no cinder; the point assigned lands on its stat, leaves the ledger, records `levelUps`/`levelPoints`, and the pools follow the point with the deficit carried; the curve receipt reads 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 and 2,030 to level 11; the awards by pool and the loss's kills; the cap holds the level and keeps the XP; the dial at 1 and at 3 grants one and three points for the same XP; level 6 adds the HP/Mana/Stamina term and level 11 the Hand, the deficit carried; a run at level 11 loads with its bumped pools; a schema-9 save with three purchases loads at level 4 under its own term-less snapshot; the ladder's keys, a zero curve base, a falling growth, a missing kill rate and a zero cadence are refused by name (engine tests 60, 60b–60e, 90). `runsim --xp-levels` reports the levels per full run against the band.
 
 ### 13.5 The last seat opens the causeway to the Ashen Spire
 

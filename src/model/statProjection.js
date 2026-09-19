@@ -141,7 +141,7 @@ export function statProjection(registries, run) {
     .map((def) => ({ ...def, value: run.attributes[def.id] }));
   const derived = presentationRows(registries).map((presentation) => {
     const id = presentation.id;
-    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef });
+    const receipt = deriveStat(snapshot.rules, id, { attributes: run.attributes, classDef, level: run.level && Number.isInteger(run.level.level) ? run.level.level : 1 });
     const equipmentBonus = id === 'hp' ? runMods(registries, run.loadout, run.class).maxHp : 0;
     const adjustment = id === 'hp' ? (run.maxHpAdjustment || 0) : 0;
     const value = id === 'hp' ? Math.max(1, receipt.value + equipmentBonus + adjustment) : receipt.value;

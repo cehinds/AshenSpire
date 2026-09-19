@@ -32,7 +32,7 @@ import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { resolveStartingKit } from '../src/model/startingKits.js';
-import { levelUpPlan, applyLevelUp } from '../src/model/levelup.js';
+import { levelUpPlan, applyLevelUp, awardLevelXp, combatLevelXp, xpToNext as xpToNextLevel } from '../src/model/levelup.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
@@ -43,29 +43,24 @@ import {
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 const argv = process.argv.slice(2);
-// THE LEVEL-LADDER A/B (E13, #258). Constantine's acceptance test for shrine
+// THE XP-CURVE A/B (plan phase 6). Constantine's acceptance test for
 // levelling is a range with a unit — "10-20 level-ups a run, scalable" — so
-// the sim counts them, and `--level-cost=first,step` reruns the fleet under a
-// different ladder without touching content: the A-side is the shipped
-// balance.levelUp, the B-side whatever the flag names.
-const LEVEL_COST = (argv.find((a) => a.startsWith('--level-cost=')) || '').slice('--level-cost='.length);
-const levelBundle = LEVEL_COST
+// the sim pays the character XP a real run pays (a won fight, each kill by
+// the door's pool), counts the levels reached, and says whether the fleet's
+// mean over its full (victorious) runs sits in the band. `--xp-levels` alone
+// prints the measurement against the shipped curve; `--xp-levels=base,growth,
+// roundTo` reruns the fleet under another curve without touching content.
+const XP_LEVELS = argv.find((a) => a === '--xp-levels' || a.startsWith('--xp-levels='));
+const XP_CURVE = XP_LEVELS && XP_LEVELS.includes('=') ? XP_LEVELS.slice('--xp-levels='.length) : '';
+const levelBundle = XP_CURVE
   ? (() => {
-    // Exactly two non-empty fields: `20,` would read as 20/0 (Number('') is 0)
-    // and `20,4,999` would silently drop its tail — both mislabel a fleet.
-    const fields = LEVEL_COST.split(',');
-    if (fields.length !== 2 || fields.some((f) => f.trim() === '')) throw new Error(`--level-cost expects exactly first,step — got '${LEVEL_COST}'`);
-    const [firstCost, costStep] = fields.map(Number);
-    if (!Number.isFinite(firstCost) || !Number.isFinite(costStep)) throw new Error(`--level-cost expects first,step — got '${LEVEL_COST}'`);
-    // A ladder the shrine could not price: a first purchase that is free or
-    // negative, or a step that walks the price DOWN, is a typo, not an
-    // experiment. Refuse it at the door, before a fleet reports on it.
-    // Integers, because the shrine rounds its price: a fractional first cost
-    // below one half (`0.1,0`) passed the sign check and still priced every
-    // level at zero — the same endless loop by another door.
-    if (!Number.isInteger(firstCost) || firstCost < 1) throw new Error(`--level-cost: first must be a whole cinder cost of at least 1 — got ${firstCost}`);
-    if (!Number.isInteger(costStep) || costStep < 0) throw new Error(`--level-cost: step must be a whole number of zero or more — got ${costStep}`);
-    return { ...contentBundle, balance: { ...contentBundle.balance, levelUp: { ...contentBundle.balance.levelUp, firstCost, costStep } } };
+    const fields = XP_CURVE.split(',');
+    if (fields.length !== 3 || fields.some((f) => f.trim() === '')) throw new Error(`--xp-levels expects exactly base,growth,roundTo — got '${XP_CURVE}'`);
+    const [base, growth, roundTo] = fields.map(Number);
+    if (!Number.isFinite(base) || base <= 0) throw new Error(`--xp-levels: base must be a positive number — got ${base}`);
+    if (!Number.isFinite(growth) || growth < 1) throw new Error(`--xp-levels: growth must be at least 1 — got ${growth}`);
+    if (!Number.isInteger(roundTo) || roundTo < 1) throw new Error(`--xp-levels: roundTo must be a positive integer — got ${roundTo}`);
+    return { ...contentBundle, balance: { ...contentBundle.balance, level: { ...contentBundle.balance.level, xp: { base, growth, roundTo } } } };
   })()
   : contentBundle;
 const REG = createRegistries(levelBundle);
@@ -133,7 +128,16 @@ function spendAllocation(classId) {
 let poured = 0;
 let graces = 0;
 let levelUps = 0;
-let cinderSpentOnLevels = 0;
+let levelsReached = 0;
+let levelsReachedInWins = 0;
+let xpEarnedInWins = 0;
+// The XP a run has earned in all: every step it climbed plus what waits toward the next.
+const xpEarnedBy = (run) => {
+  const row = run.level || { level: 1, xp: 0 };
+  let total = row.xp || 0;
+  for (let l = 1; l < (row.level || 1); l++) total += xpToNextLevel(REG, l);
+  return total;
+};
 let cinderLeftAtEnd = 0;
 let skillDraftsTaken = 0;
 let classDraftsTaken = 0;
@@ -143,7 +147,7 @@ let levelUpsInWins = 0;
 // and cinders inside the ON side's lines.
 function resetFleetCounters() {
   poured = 0; graces = 0;
-  levelUps = 0; cinderSpentOnLevels = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0; skillDraftsTaken = 0; classDraftsTaken = 0;
+  levelUps = 0; levelsReached = 0; levelsReachedInWins = 0; xpEarnedInWins = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0; skillDraftsTaken = 0; classDraftsTaken = 0;
 }
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
@@ -271,6 +275,11 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
   // The skill receipt, as main.js onCombatEnd pays it (plan phase 4a).
   applySkillXp(REG, run, skillXpReceipt(combat));
+  // The character level (plan phase 6), as main.js onCombatEnd pays it: a won
+  // fight and every kill by the door's pool; the points wait for a shrine.
+  awardLevelXp(REG, run, combatLevelXp(REG, {
+    victory: combat.result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+  }));
   if (combat.result === 'victory') run.hp = combat.player.hp;
   return combat.result;
 }
@@ -330,6 +339,7 @@ function simulateRun(classId, seed, ds = null) {
   // divides by every run — a death that skipped this line underreported it.
   const finish = () => {
     cinderLeftAtEnd += run.cinders;
+    levelsReached += Math.max(0, (run.level && run.level.level ? run.level.level : 1) - 1);
     // E12 receipts: how many event choices this run recorded, and how many of
     // them answered a GATED step (a quest step earned by an earlier choice) —
     // zero across a fleet means gated content never entered the simulation.
@@ -438,11 +448,10 @@ function simulateRun(classId, seed, ds = null) {
         }
         if (run.hp < run.maxHp * 0.6) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
-        // THE BOT LEVELS WHILE IT CAN AFFORD TO — the whole point of E13's shrine:
-        // cinders become permanent points here. Constitution every time: the
-        // greedy pilot measures how many levels the economy allows, not which.
+        // THE BOT ASSIGNS EVERY POINT IT HAS EARNED — the shrine is where the
+        // level's points land (plan phase 6). Constitution every time: the
+        // greedy pilot measures how many levels the climb pays, not which.
         for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
-          cinderSpentOnLevels += plan.cost;
           applyLevelUp(REG, run, 'constitution');
           result.levelUps = (result.levelUps || 0) + 1;
           levelUps += 1;
@@ -459,6 +468,8 @@ function simulateRun(classId, seed, ds = null) {
   }
   result.victory = true;
   levelUpsInWins += result.levelUps || 0;
+  levelsReachedInWins += Math.max(0, (run.level && run.level.level ? run.level.level : 1) - 1);
+  xpEarnedInWins += xpEarnedBy(run);
   return finish();
 }
 
@@ -531,11 +542,15 @@ for (const cls of REG.classes.all()) {
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
-console.log(`level-ups bought at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run` + (LEVEL_COST ? ` (ladder ${LEVEL_COST})` : ' (shipped ladder)') + ` — E13's acceptance range is 10-20 per run; over the ${tally.wins} full (victorious) runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
+const levelsPerWin = levelsReachedInWins / Math.max(1, tally.wins);
+const inBand = tally.wins > 0 && levelsPerWin >= 10 && levelsPerWin <= 20;
+console.log(`character levels earned: ${(levelsReached / Math.max(1, tally.runs)).toFixed(1)} per run over ${tally.runs} runs; ${levelsPerWin.toFixed(1)} per full (victorious) run over ${tally.wins}` + (XP_CURVE ? ` (curve ${XP_CURVE})` : ' (shipped curve)') + ` — the acceptance band is 10-20 per full run: ${tally.wins ? (inBand ? 'IN BAND' : '<-- OUT OF BAND') : 'no full run to measure'} (plan phase 6; a greedy bot, the ceiling a real climb approaches)`);
+console.log(`XP earned per full run: ${(xpEarnedInWins / Math.max(1, tally.wins)).toFixed(0)} (the curve's receipt: 2,030 reaches level 11)`);
+console.log(`attribute points assigned at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run; over the ${tally.wins} full runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
 console.log(`event choices recorded: ${tally.eventChoices} over ${tally.runs} runs, ${tally.questSteps} of them answering a gated quest step (E12) — 0 gated steps across a fleet means the chain never entered the simulation`);
 console.log(`class tree picks: ${classDraftsTaken} over ${tally.runs} runs = ${(classDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 5b: the bot picks the first node offered)`);
 console.log(`skill drafts taken: ${skillDraftsTaken} over ${tally.runs} runs = ${(skillDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 4b: one per track per door, the bot takes the first card)`);
-console.log(`cinder economy: ${cinderSpentOnLevels} spent on levels + ${cinderLeftAtEnd} left at run end = ${((cinderSpentOnLevels + cinderLeftAtEnd) / Math.max(1, tally.runs)).toFixed(0)} cinders per run available to a shrine (the bot buys nothing at merchants)`);
+console.log(`cinder economy: ${cinderLeftAtEnd} left at run end = ${(cinderLeftAtEnd / Math.max(1, tally.runs)).toFixed(0)} cinders per run unspent (the bot buys nothing at merchants; cinders buy no level since plan phase 6)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
 return { ...tally, graces, poured };
 }

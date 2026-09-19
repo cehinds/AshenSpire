@@ -35,6 +35,7 @@ import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
+import { awardLevelXp, combatLevelXp } from './model/levelup.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -2052,6 +2053,13 @@ async function onCombatEnd(result, combat, enc) {
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
   awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
+  // THE CHARACTER LEVEL (plan phase 6), paid by the run's owner too: a won
+  // fight and every kill by the door's pool. His level-value dial is read at
+  // the moment the level is reached — the points it grants wait on the
+  // ledger for the shrine.
+  awardLevelXp(registries, run, combatLevelXp(registries, {
+    victory: result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+  }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2285,16 +2293,12 @@ function showRest(openPanel = null) {
     // Which smith services this Shrine offers — the table's word, resolved
     // here so the screen reads one answer (a chance of 100 consumes no roll).
     services: smithServicesAt(registries, 'shrine', rng),
-    // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
-    // so turning it applies to the NEXT level bought — in any run, including
-    // one already in progress. Unlike the tier size it needs no new run,
-    // because nothing about it is snapshotted: the run records the POINTS it
-    // was granted (model/levelup.js) rather than the rule that granted them.
-    levelValue: resolveLevelUpValue(saves.loadMeta().settings),
     onReallocate: () => persist(),
-    // A level is cinders and a permanent point. It persists the moment it is
-    // bought, not when the player leaves the shrine, for the same reason the
-    // reallocation above does: a closed tab must not be able to un-spend it.
+    // An assigned point is permanent. It persists the moment it is assigned,
+    // not when the player leaves the shrine, for the same reason the
+    // reallocation above does: a closed tab must not be able to un-assign it.
+    // (His level-value dial is read where the level is reached — onCombatEnd —
+    // since the points a level grants are decided there, not here.)
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.

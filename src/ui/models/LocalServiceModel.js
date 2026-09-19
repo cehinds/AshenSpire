@@ -13,7 +13,7 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
   if (handlerId === 'rest') {
     const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
     const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-    const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+    const level = levelUpPlan(registries, run);
     const refill = state.refilled || run.flaskCharges ? null : graceRefillPlan(registries, run, { counts: refillCounts });
     result.benefit = noRest ? 'Your relic prevents healing by resting.' : heal ? `Rest to recover ${heal} HP: ${run.hp} → ${run.hp + heal} / ${run.maxHp}.` : run.hp >= run.maxHp ? 'Your health is already full.' : 'Your current modifiers allow no healing from rest.';
     result.facts.push('Rest costs no cinders. One visit at this site; other services show their own costs.');
@@ -25,7 +25,9 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     else if (refill?.total) result.facts.push(`Entering restores ${refill.total} flask${refill.total === 1 ? '' : 's'} in your available slots.`);
     else result.facts.push(state.refilled ? 'Arrival flask refill already received.' : 'No additional flasks would be granted with your current inventory and refill settings.');
     if (refill?.shortfalls.length) result.facts.push('Full flask slots limit the arrival refill.');
-    result.facts.push(level.capped ? 'Your run level is at its cap.' : `Level up: ${level.cost} cinders for ${level.pointsPerLevel} attribute point. ${level.affordable ? 'You can afford this.' : `You need ${level.short} more cinders.`}`);
+    result.facts.push(level.offerable
+      ? `Level ${level.level}: ${level.points} attribute point${level.points === 1 ? '' : 's'} earned and waiting to be assigned.`
+      : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants ${level.pointsPerLevel} attribute point${level.pointsPerLevel === 1 ? '' : 's'} to assign here.`);
     result.action = 'Enter rest services';
   } else if (handlerId === 'smith') {
     const plan = smithingPlan(registries, run);

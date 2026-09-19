@@ -1,286 +1,242 @@
-// src/model/levelup.js — LEVELLING AT A SHRINE. Constantine, D10 wave 1:
+// src/model/levelup.js — THE CHARACTER LEVEL (plan phase 6, proposal §10).
 //
-//   "also at graces, players should have the option to level up their character
-//    (per run) by trading cinders to level up. at level up they may increase a
-//    stat by 1 point."
+// A level is EARNED, not bought. The run keeps one ledger, `run.level =
+// { xp, level, unspentPoints }`: XP is paid by the run's owner at the end of
+// a fight (a win, and each kill by the door's pool) and, once phase 10a's
+// door exists, per quest; every step of the one curve every track shares
+// (`xpToNext`, the shape skills.js uses) grants `pointsPerLevel` attribute
+// points, which wait on the ledger until the player assigns them at a shrine
+// (the town's level-up service once phase 7 places it). Cinders buy nothing
+// here any more: the shrine's Level-up card spends POINTS, never a purse.
 //
-// and again in E13, with the acceptance test attached:
+// WHAT A POINT STILL IS, unchanged from the shrine ladder this replaces: one
+// attribute point, worth exactly what the derived-stat table says a point is
+// worth, with the pools re-derived from the run's OWN snapshot and the deficit
+// carried (levelling is not a rest). `run.levelUps` and `run.levelPoints`
+// keep counting every point assigned — they are what the load door's
+// allocation check reads (attributes.js:grantedAttributePoints), and nothing
+// about that door moved.
 //
-//   "rest sites become where you level, cinders spent past a threshold — 1 stat
-//    point per level, 10–20 level-ups a run, scalable."
-//
-// WHAT LEVELLING TURNED OUT TO BE, because there was no level system in this
-// tree to add to and the shape had to be derived rather than invented. There is
-// no XP, no character level, no class progression, and nothing anywhere named
-// `level`. What there IS, already, is the exact machinery a level-up needs:
-//
-//   `run.attributes`      five integers, the only growth surface the run has.
-//   `content/derivedStats.js`  what a point is WORTH — CON → HP and Stamina,
-//                         WIS → Mana, DEX → Actions, INT → Draw. E6 shipped
-//                         this tonight.
-//   `run.cinders`         the currency, already spent this way at the shop.
-//
-// So a level is not a new system. **A level is one attribute point, bought with
-// cinders, at a shrine** — and every consequence of it is already derived by
-// tables somebody else owns. This file adds a PRICE and a PURCHASE and nothing
-// else: it authors no stat, no curve of HP, and no idea of what a point does.
-//
-// THE ONE THING THAT IS NOT OBVIOUS, and it is the whole reason this is a model
-// file rather than four lines in the shrine screen. Three separate mechanisms
-// have to move together or the run breaks, and two of them break LATER:
-//
-//   1. the attribute goes up — the visible half;
-//   2. the derived pools have to be re-derived from the run's OWN snapshot, or
-//      the next load throws `Persisted maxMana N contradicts derived-stat
-//      snapshot value N+1` (state.js:initializeRunDerivedStats);
-//   3. `run.levelUps` has to record the purchase, or the creation-rule check at
-//      the load door sees a 56-point allocation where the mode says 55 and the
-//      save is ARCHIVED (attributes.js:grantedAttributePoints, save.js).
-//
-// A level-up that does only (1) looks perfect on screen and destroys the run on
-// the next load. That is why this is one function and not a screen's business.
+// WHAT A LEVEL ADDS BESIDE THE POINT: every `perLevel.every` levels the
+// derived-stat rows that carry a `perLevel` term (content/derivedStats.js)
+// bump their maximum — the same rule the snapshot carries, so a run born
+// under it keeps it and a run born before it never gains it.
 
 import { deriveStat } from './derivedStats.js';
 import { orderedAttributes } from './attributes.js';
 import { reconcileRunLoadoutHp } from './loadout.js';
 import { note } from './healLedger.js';
 
-/** The authored table, or the shape of one, so a bundle without it fails soft
- *  in tools rather than throwing on a missing key. Bad data is caught at the
- *  content door, not here. */
-function table(registries) {
+/** The authored tables, or the shape of them, so a bundle without them fails
+ *  soft in tools rather than throwing on a missing key. Bad data is caught at
+ *  the content door, not here. */
+function grantTable(registries) {
   return (registries && registries.balance && registries.balance.levelUp) || {};
 }
+function curveTable(registries) {
+  return ((registries && registries.balance && registries.balance.level) || {}).xp || {};
+}
+function awardTable(registries) {
+  return (registries && registries.balance && registries.balance.xp) || {};
+}
 
-/**
- * levelCost(registries, levelsTaken) → the price of the NEXT level.
- *
- * "cinders spent past a threshold … scalable" — a linear ramp, `firstCost +
- * costStep × levelsTaken`, so n levels cost `n × firstCost + costStep × n(n−1)/2`
- * in total. Both numbers are data (content/balance.js `levelUp`), which is what
- * makes his "scalable" a knob rather than an edit.
- */
-export function levelCost(registries, levelsTaken) {
-  const t = table(registries);
-  const first = Number.isFinite(t.firstCost) ? t.firstCost : 0;
-  const step = Number.isFinite(t.costStep) ? t.costStep : 0;
-  return Math.max(0, Math.round(first + step * Math.max(0, levelsTaken)));
+/** A fresh ledger: level 1, nothing earned, nothing waiting. */
+export const emptyLevel = () => ({ xp: 0, level: 1, unspentPoints: 0 });
+
+/** The ledger a run holds, or a fresh one for a run that has none. */
+export function levelOf(run) {
+  const row = run && run.level;
+  return row && typeof row === 'object' ? row : emptyLevel();
+}
+
+/** The displayed character level: 1 for a run that has none. */
+export function characterLevel(run) {
+  const row = run && run.level;
+  return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
 }
 
 /**
- * levelsAffordable(registries, cinders) → how many levels a given purse buys,
- * from a standing start, if it is spent on nothing else.
- *
- * THIS IS THE ACCEPTANCE TEST'S FUNCTION, and it is exported so the test is a
- * property of the shipped curve rather than arithmetic retyped beside it. His
- * band is 10–20 levels a run.
- *
- * WHAT IT IS NOT: a claim about a real climb. Nobody has simulated what an act
- * actually pays out, or what the shop takes first. The curve is checked; the
- * purse it is checked against is an assumption and is named as one wherever it
- * is used.
+ * xpToNext(registries, level) → the XP the step from `level` to `level + 1`
+ * costs: `round(base × growth^(level − 1), roundTo)`, the one curve shape
+ * every track shares (proposal §10; skills.js has the same function for the
+ * skill tracks). Level 1's step costs `base`.
  */
-export function levelsAffordable(registries, cinders) {
-  let n = 0;
-  let left = Number.isFinite(cinders) ? cinders : 0;
-  // The ramp only rises, so this terminates on any non-negative purse; the
-  // guard is against a zero-or-negative step making every level free.
-  while (left >= levelCost(registries, n) && levelCost(registries, n) > 0) {
-    left -= levelCost(registries, n);
-    n++;
-    if (n > 10000) break;
-  }
-  return n;
+export function xpToNext(registries, level) {
+  const { base, growth, roundTo } = curveTable(registries);
+  const b = Number.isFinite(base) && base > 0 ? base : 100;
+  const g = Number.isFinite(growth) && growth > 0 ? growth : 1.15;
+  const step = Number.isInteger(level) && level > 1 ? level - 1 : 0;
+  const unit = Number.isInteger(roundTo) && roundTo > 0 ? roundTo : 1;
+  // The epsilon: 100 × 1.15 is 114.999… in floating point, and the receipt
+  // in balance.js says 120, not 110.
+  return Math.max(unit, Math.round((b * Math.pow(g, step)) / unit + 1e-9) * unit);
 }
 
 /**
- * levelUpPlan(registries, run, { pointsPerLevel }) → what the shrine may offer.
- *
- *   { levelsTaken, cost, cinders, affordable, capped, short, blockedBy,
- *     offerable, pointsPerLevel, attributes }
- *
- * `attributes` is READ OFF THE CONTENT TABLE, in its authored order, and is
- * this feature's Law 0 falsifier: a sixth attribute is one row in
- * `content/attributes.js` and it appears at the shrine with zero UI edits. The
- * shrine screen never names a stat.
- *
- * ⚠ AFFORDABILITY DOES NOT DEPEND ON `pointsPerLevel`, AND THE DISPATCH THAT
- * ASKED FOR THIS PREDICATE ASSUMED IT DID. Measured rather than relayed:
- * `levelCost` is `firstCost + costStep × levelsTaken` and takes no third
- * argument. The typed value decides what a level GRANTS, never what it COSTS —
- * which is asserted in `tests/engine.test.js` 60c, in those words, one act
- * before the question was asked. So the predicate moves with `run.cinders` and
- * with `levelsTaken`, and is INDIFFERENT to the dial.
- *
- * It is still not a constant, and the fold must re-read it rather than cache it:
- * every purchase raises the next price, and every fight changes the purse.
- *
- * `pointsPerLevel` IS AN ARGUMENT, NOT A LOOKUP — Constantine, 2026-08-17:
- * "leave the level up value configurable". The caller resolves the player's
- * setting (`resolveLevelUpValue`, settings.js) and hands it in; omitted, the
- * content default applies. This model stays pure and knows nothing about a
- * profile, and — the reason that matters — NOTHING AT THE LOAD DOOR EVER READS
- * THE LIVE VALUE. See `run.levelPoints` in `applyLevelUp`.
+ * combatLevelXp(registries, { victory, pool, kills }) → the XP one fight
+ * pays: `xp.combatWin` for a won fight, and `xp.kill.<pool>` per enemy felled
+ * (a kill is a kill, won or lost; an unknown pool pays the normal rate).
  */
-export function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
-  const t = table(registries);
-  const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
-  const cost = levelCost(registries, levelsTaken);
-  const cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
-  const capped = Number.isInteger(t.maxLevels) && levelsTaken >= t.maxLevels;
-  const affordable = cinders >= cost;
+export function combatLevelXp(registries, { victory = false, pool = 'normal', kills = 0 } = {}) {
+  const t = awardTable(registries);
+  const kill = t.kill || {};
+  const perKill = Number.isFinite(kill[pool]) ? kill[pool] : (Number.isFinite(kill.normal) ? kill.normal : 0);
+  const won = victory && Number.isFinite(t.combatWin) ? t.combatWin : 0;
+  const n = Number.isInteger(kills) && kills > 0 ? kills : 0;
+  return won + n * perKill;
+}
+
+/** questLevelXp(registries) → the XP a completed quest pays (`xp.quest`); phase 10a's door pays it. */
+export function questLevelXp(registries) {
+  const t = awardTable(registries);
+  return Number.isFinite(t.quest) ? t.quest : 0;
+}
+
+/**
+ * awardLevelXp(registries, run, amount, { pointsPerLevel }) → { before,
+ * after, levelUps, points, thresholds } — writes the ledger and climbs as
+ * many steps as the XP buys, each step granting `pointsPerLevel` points to
+ * `unspentPoints` (the caller resolves the player's dial; omitted, the
+ * content default). A step that crosses a `perLevel` threshold re-derives
+ * the pools from the run's own snapshot, the deficit carried. `maxLevels`
+ * (balance.levelUp) caps the climb; XP past the cap stays on the ledger. A
+ * non-positive or non-finite amount writes nothing.
+ */
+export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } = {}) {
+  if (!run) throw new Error('awardLevelXp: no run');
+  if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
+  const row = run.level;
+  const before = row.level;
+  const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
+  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0 };
+  const t = grantTable(registries);
   const authored = Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1;
-  return {
-    levelsTaken,
-    cost,
-    cinders,
-    affordable,
-    capped,
-    // ---- THE AFFORDABILITY PREDICATE, for the fold ------------------------
-    //
-    // Constantine: "make the flask and the level up collapsible (with level up
-    // being grayed out or not visible when there isn't enough cinders)".
-    //
-    // ONE DERIVATION, ONE HOME, AND NO SECOND COPY OF THE PRICE. The seat that
-    // authors the fold and the grey-out reads these three fields; it never
-    // subtracts cinders from a cost, because the day it did there would be two
-    // answers to "can he afford this" and the screen would eventually disagree
-    // with the purchase. `#level-opt` publishes them as data attributes
-    // (ui/screens/rest.js) so a component and an instrument read the SAME
-    // derivation the commit path used, rather than re-deriving it.
-    //
-    // `short` — how many cinders are missing, 0 when none are. It is here and
-    // not computed by the caller for exactly the reason above: it is the one
-    // number a disabled label wants, and a caller computing `cost - cinders`
-    // would be the second copy in its cheapest disguise.
-    short: Math.max(0, cost - cinders),
-    // `blockedBy` — WHY it is not offerable, as a token and never as prose. A
-    // closed set of three, so a presentation seat switches on a word instead of
-    // inferring the reason from two numbers: 'cinders' and 'cap' are different
-    // sentences to a player, and only one of them is fixed by fighting a
-    // monster. `null` means it IS offerable.
-    blockedBy: capped ? 'cap' : (affordable ? null : 'cinders'),
-    // A cap of `null` is "no ceiling but the cinders themselves" — his range is
-    // an economy, not a limit, so the shipped table refuses on price alone.
-    offerable: affordable && !capped,
-    pointsPerLevel: Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored,
-    attributes: orderedAttributes(registries),
-  };
+  const perLevel = Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored;
+  const cap = Number.isInteger(t.maxLevels) ? t.maxLevels : null;
+  row.xp += gain;
+  let points = 0;
+  let cost = xpToNext(registries, row.level);
+  while (row.xp >= cost && (cap === null || row.level < cap)) {
+    row.xp -= cost;
+    row.level += 1;
+    row.unspentPoints += perLevel;
+    points += perLevel;
+    cost = xpToNext(registries, row.level);
+  }
+  const levelUps = row.level - before;
+  let thresholds = 0;
+  if (levelUps > 0) {
+    thresholds = rederivePools(registries, run, `level ${before} → ${row.level}`);
+    note(run, {
+      kind: 'write',
+      site: 'levelup.js:awardLevelXp',
+      field: 'level',
+      was: { level: before, unspentPoints: row.unspentPoints - points },
+      now: { level: row.level, unspentPoints: row.unspentPoints },
+      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed at ${perLevel} point(s) each (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)`,
+    });
+  }
+  return { before, after: row.level, levelUps, points, thresholds };
 }
 
 /**
- * applyLevelUp(registries, run, attributeId) → the plan that was paid for, or
- * throws by name.
- *
- * THE THREE MECHANISMS, IN ONE ACT, in the order that keeps the run loadable at
- * every point in between. Nothing here is a screen's to reorder.
- *
- * RE-DERIVED FROM THE RUN'S OWN SNAPSHOT, never from today's content tables.
- * `run.derivedStatRuleSnapshot` is what the run was born under and what its
- * persisted pools are validated against; re-deriving from `registries` would
- * hand a climb in progress whatever the tables say tonight — the exact drift
- * the snapshot exists to prevent.
- *
- * MAX-HP IS NOT COMPUTED HERE. `reconcileRunLoadoutHp` is max-HP home 3 of 3
- * and already does derived + equipment + adjustment with the deficit carried;
- * a fourth home doing the same sum is the second copy this tree keeps catching.
- *
- * WHAT A LEVEL DOES TO A CURRENT POOL, ruled rather than assumed: the pool
- * grows and **the deficit is carried** — levelling CON at 12/40 HP gives 12/41,
- * not a heal. A level-up is not a rest, the shrine already sells the heal
- * beside it, and a level that healed would make the Rest panel pointless at the
- * same counter. Mana, Stamina and the per-turn stats have no deficit to carry
- * inside a shrine (combat is over), so they take the new maximum.
- *
- * ⚠ `run.levelPoints` IS NOT A SECOND COPY OF `run.levelUps`, AND IT BECAME A
- * SECOND FACT THE MOMENT THE LEVEL VALUE BECAME A DIAL. Six levels at 1 point
- * and three levels at 2 points are the same nine points and a different number
- * of purchases; the COST RAMP indexes on purchases, the LOAD DOOR's allocation
- * check needs points, and there is no arithmetic between them once the dial has
- * moved mid-run. Deriving one from the other would need the value each purchase
- * was made at, which is a history nobody is keeping.
- *
- * AND IT IS WHAT DELETES THE HAZARD I SHIPPED THIS EVENING. `e05be89` had the
- * door multiply `levelUps × balance.levelUp.pointsPerLevel` — a LIVE content
- * read — so turning this dial would have re-priced every in-flight save's
- * expected total and archived runs at the next load. He has just told us he
- * intends to turn it repeatedly between test runs, which would have made that
- * the FIRST thing he hit. The run now records the points it was actually
- * granted, the door reads what the run recorded, and no setting can refuse a
- * save. A friendlier error message would have been the wrong fix.
+ * rederivePools(registries, run, why) → how many maxima moved. Mana, Stamina,
+ * Actions and Hand from the run's own snapshot at its attributes AND level;
+ * max HP through reconcileRunLoadoutHp (max-HP home 3 of 3). Current pools
+ * ride their own maximum up and are never reduced. Shared by the point
+ * assignment and the level climb: one writer for what a level does to a pool.
  */
-/**
- * levelUpBudget(registries, run) → how many levels the run can buy IN A ROW
- * from the cinders it holds, and what each one costs.
- *
- *   { levels, costs, total }
- *
- * Constantine, 2026-09-04: "why can't I use multiple points for level up if I
- * have enough cinders for it. Instead I gotta confirm each point." The shrine
- * card reads this to offer up to `levels` points at once; Done then commits
- * them one applyLevelUp at a time, in order, so each level pays the price the
- * ladder says (`levelCost` walks with levelsTaken) and the run is never asked
- * to pay a total this function computed rather than the ladder. The cap
- * (maxLevels) bounds the walk exactly as it bounds a single purchase.
- */
-export function levelUpBudget(registries, run) {
-  const t = table(registries);
-  const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
-  let cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
-  const costs = [];
-  for (let k = 0; ; k++) {
-    if (Number.isInteger(t.maxLevels) && levelsTaken + k >= t.maxLevels) break;
-    const cost = levelCost(registries, levelsTaken + k);
-    if (cinders < cost) break;
-    cinders -= cost;
-    costs.push(cost);
-  }
-  return { levels: costs.length, costs, total: costs.reduce((sum, cost) => sum + cost, 0) };
-}
-
-export function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = {}) {
-  const plan = levelUpPlan(registries, run, { pointsPerLevel });
-  const ids = plan.attributes.map((a) => a.id);
-  if (!ids.includes(attributeId)) {
-    throw new Error(`levelUp: '${attributeId}' is not an attribute id (${ids.join(', ')})`);
-  }
-  if (plan.capped) throw new Error(`levelUp: this run is at its ${plan.levelsTaken}-level ceiling`);
-  if (!plan.affordable) throw new Error(`levelUp: ${plan.cost} cinders needed, ${plan.cinders} held`);
-  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) {
-    throw new Error('levelUp: the run carries no derived-stat snapshot to re-derive against');
-  }
-
-  run.cinders -= plan.cost;
-  run.attributes[attributeId] += plan.pointsPerLevel;
-  run.levelUps = plan.levelsTaken + 1;
-  // The POINTS this run was actually granted — what the load door checks the
-  // allocation against, recorded at the moment they were granted so no later
-  // change to the dial can re-price them. See the paragraph above.
-  run.levelPoints = (Number.isInteger(run.levelPoints) ? run.levelPoints : 0) + plan.pointsPerLevel;
-
+function rederivePools(registries, run, why) {
+  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) return 0;
   const rules = run.derivedStatRuleSnapshot.rules;
   const classDef = registries.classes.get(run.class);
+  const level = characterLevel(run);
   const before = { maxMana: run.maxMana, maxStamina: run.maxStamina, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn };
+  let moved = 0;
   for (const [key, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina'], ['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
     if (run[key] === undefined) continue;
-    run[key] = deriveStat(rules, statId, { attributes: run.attributes, classDef }).value;
+    const next = deriveStat(rules, statId, { attributes: run.attributes, classDef, level }).value;
+    if (next !== run[key]) moved += 1;
+    run[key] = next;
   }
-  // Current pools ride their own maximum up; they are never reduced by a level.
   if (run.mana !== undefined && before.maxMana !== undefined) {
     run.mana = Math.min(run.maxMana, run.mana + Math.max(0, run.maxMana - before.maxMana));
   }
   if (run.stamina !== undefined && before.maxStamina !== undefined) {
     run.stamina = Math.min(run.maxStamina, run.stamina + Math.max(0, run.maxStamina - before.maxStamina));
   }
-  const hp = reconcileRunLoadoutHp(registries, run);
+  const hpBefore = run.maxHp;
+  reconcileRunLoadoutHp(registries, run);
+  if (run.maxHp !== hpBefore) moved += 1;
+  return moved;
+}
 
+/**
+ * levelUpPlan(registries, run) → what the shrine may offer.
+ *
+ *   { level, xp, xpToNext, points, capped, offerable, blockedBy,
+ *     pointsPerLevel, attributes }
+ *
+ * `points` is the ledger's `unspentPoints`; the offer is those points and
+ * nothing else — no price, no purse. `blockedBy` is a TOKEN so a label
+ * switches on a word: 'points' (none waiting) or 'cap' (the level ceiling,
+ * with none waiting); null means it IS offerable. `attributes` is READ OFF THE
+ * CONTENT TABLE, in its authored order: the shrine names no stat itself.
+ */
+export function levelUpPlan(registries, run) {
+  const t = grantTable(registries);
+  const row = levelOf(run);
+  const points = Number.isInteger(row.unspentPoints) && row.unspentPoints > 0 ? row.unspentPoints : 0;
+  const capped = Number.isInteger(t.maxLevels) && row.level >= t.maxLevels;
+  const authored = Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1;
+  return {
+    level: row.level,
+    xp: row.xp,
+    xpToNext: xpToNext(registries, row.level),
+    points,
+    capped,
+    blockedBy: points > 0 ? null : (capped ? 'cap' : 'points'),
+    offerable: points > 0,
+    pointsPerLevel: authored,
+    attributes: orderedAttributes(registries),
+  };
+}
+
+/** levelUpBudget(registries, run) → { points }: how many points the shrine card may assign at once. */
+export function levelUpBudget(registries, run) {
+  return { points: levelUpPlan(registries, run).points };
+}
+
+/**
+ * applyLevelUp(registries, run, attributeId) → the plan that was spent from,
+ * or throws by name. Spends ONE unspent point on one attribute, in the order
+ * that keeps the run loadable at every point in between: the attribute goes
+ * up, the assignment is recorded (`levelUps`, `levelPoints` — what the load
+ * door checks the allocation against), and the pools are re-derived from the
+ * run's own snapshot with the deficit carried.
+ */
+export function applyLevelUp(registries, run, attributeId) {
+  const plan = levelUpPlan(registries, run);
+  const ids = plan.attributes.map((a) => a.id);
+  if (!ids.includes(attributeId)) {
+    throw new Error(`levelUp: '${attributeId}' is not an attribute id (${ids.join(', ')})`);
+  }
+  if (!plan.offerable) throw new Error(`levelUp: no attribute point waiting to be assigned (level ${plan.level}, ${plan.xp}/${plan.xpToNext} XP)`);
+  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) {
+    throw new Error('levelUp: the run carries no derived-stat snapshot to re-derive against');
+  }
+  run.attributes[attributeId] += 1;
+  run.level.unspentPoints -= 1;
+  run.levelUps = (Number.isInteger(run.levelUps) ? run.levelUps : 0) + 1;
+  run.levelPoints = (Number.isInteger(run.levelPoints) ? run.levelPoints : 0) + 1;
+  rederivePools(registries, run, `point on ${attributeId}`);
   note(run, {
     kind: 'write',
     site: 'levelup.js:applyLevelUp',
     field: `attributes.${attributeId}`,
-    was: run.attributes[attributeId] - plan.pointsPerLevel,
+    was: run.attributes[attributeId] - 1,
     now: run.attributes[attributeId],
-    why: `level ${run.levelUps} bought for ${plan.cost} cinders at ${plan.pointsPerLevel} point(s) each (${run.levelPoints} granted in total); pools re-derived from the run's own snapshot (maxHp ${hp ? hp.maxHp : 'unchanged'})`,
+    why: `one earned point assigned at level ${run.level.level} (${run.levelPoints} assigned in total, ${run.level.unspentPoints} waiting); pools re-derived from the run's own snapshot (maxHp ${run.maxHp})`,
   });
-  return { ...plan, spent: plan.cost, attributeId, level: run.levelUps };
+  return { ...plan, attributeId, points: run.level.unspentPoints, level: run.level.level };
 }

@@ -2642,9 +2642,13 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
   // Keep this named composition explicit: three independent instruments pin
   // the exact HP addends at creation and load. Mana/Stamina use the same
   // persisted-equipment rule below without weakening that historical witness.
+  // The character level rides the derivation (plan phase 6): the snapshot's
+  // `perLevel` rows move with it, and a run whose snapshot has none reads 0.
+  const level = run.level && Number.isInteger(run.level.level) && run.level.level >= 1 ? run.level.level : 1;
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
     attributes: run.attributes,
     classDef,
+    level,
   });
   const equipmentBonus = bonuses.maxHp;
   const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
@@ -2653,6 +2657,7 @@ export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses =
     const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
       attributes: run.attributes,
       classDef,
+      level,
     });
     const poolMax = Math.max(0, poolDerived.value + bonuses[maxField]);
     applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);

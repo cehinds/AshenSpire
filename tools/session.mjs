@@ -22,6 +22,7 @@ import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { awardClassXp } from '../src/model/classTree.js';
+import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
@@ -690,6 +691,12 @@ export function createSession({ registries, seedString, endless = false, restore
         applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
         // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
         awardClassXp(registries, m.run, { victory: c.result === 'victory', pool: live && live.pool });
+        // The character level (plan phase 6), per seat: the party's kills are
+        // every seat's. No settings dial here — the server is authoritative
+        // and reads the authored points per level.
+        awardLevelXp(registries, m.run, combatLevelXp(registries, {
+          victory: c.result === 'victory', pool: live && live.pool, kills: c.eventLog.filter((e) => e.type === 'enemyDied').length,
+        }));
       }
     }
     live = null;
