@@ -15,7 +15,7 @@ import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
 import { openConfirmationModal } from './confirmationModal.js';
-import { deleteSaveReview } from '../models/ConfirmationReviewModel.js';
+import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
 import { saveStatusReview, savedAtLabel } from '../models/SaveStatusModel.js';
 import { t } from '../strings.js';
 import {
@@ -548,6 +548,27 @@ export function openSaveStatusReview({ slot, className, facts, savedAt = null, e
     tone: 'normal',
     returnFocusElement,
     onConfirm: onRetry,
+  });
+}
+
+/**
+ * openReplaceSaveReview({ slot, existing, replacement, tone, onConfirm, returnFocusElement })
+ * — W2c, asked at the write boundary (Begin on the creation screen): the
+ * existing save is the target, the replacement is named, the consequence is
+ * exact, and the primary is Replace in the ConfirmationRegistry's tone for
+ * action.overwriteSave. Nothing is written until onConfirm.
+ */
+export function openReplaceSaveReview({ slot, existing, replacement, tone, onConfirm, returnFocusElement = null }) {
+  const review = replaceSaveReview({ slot, existing, replacement });
+  openConfirmationModal({
+    title: review.question,
+    target: review.target,
+    message: review.message,
+    confirmLabel: review.confirmLabel,
+    consequence: reviewEyebrow({ undo: 'none' }),
+    tone: typeof tone === 'function' ? tone(review.policyAction) : (tone || 'danger'),
+    returnFocusElement,
+    onConfirm,
   });
 }
 

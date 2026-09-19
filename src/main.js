@@ -80,8 +80,8 @@ import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
-import { openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
-import { loadOverRunReview, replaceSaveReview, reviewEyebrow } from './ui/models/ConfirmationReviewModel.js';
+import { openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
+import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -1608,18 +1608,11 @@ function showCustomize(slot = 1, catalog = false) {
       // The title's own slot record: the class NAME, as the slot list prints it.
       const existing = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
       if (!existing) return newRun({ ...config, slot });
-      const review = replaceSaveReview({
+      openReplaceSaveReview({
         slot,
         existing: { className: existing.className, facts: slotFacts(existing) },
         replacement: { className: registries.classes.get(config.classId)?.name ?? config.classId, seed: config.seedString },
-      });
-      openConfirmationModal({
-        title: review.question,
-        target: review.target,
-        message: review.message,
-        confirmLabel: review.confirmLabel,
-        consequence: reviewEyebrow({ undo: 'none' }),
-        tone: registries.framework.confirmationTone(review.policyAction),
+        tone: (policyAction) => registries.framework.confirmationTone(policyAction),
         returnFocusElement: document.activeElement,
         onConfirm: () => newRun({ ...config, slot }),
       });
