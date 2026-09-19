@@ -19,4 +19,3 @@ const path=require('node:path');
  await page.screenshot({path:path.join(__dirname,'gallery-mobile.png')});
  assert.deepEqual(errors,[]);await browser.close();console.log('Gallery verified: 60 image cards, 4 review groups, labels/copy selection, pause, filters, backgrounds, mobile width, no broken images or script errors.');
 })().catch(e=>{console.error(e);process.exit(1)});
-

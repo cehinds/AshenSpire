@@ -29,4 +29,3 @@ The export scripts isolate connected figures to prevent neighboring sprite fragm
 Rebuild in this order: `node catalog.mjs`, `python export.py`, `python finalize.py` from this directory (Python needs Pillow). These commands only rebuild this art pack. `check-gallery.cjs` validates the served review gallery with Playwright installed or supplied through PLAYWRIGHT_MODULE.
 
 `manifest.json` is the authoritative file index. `data.js` embeds the manifest and coverage so the gallery can also open directly without a server. Production pending entries are not placeholders or fabricated completed images.
-
