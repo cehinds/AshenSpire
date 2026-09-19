@@ -23,6 +23,8 @@ test('advanced configuration inventory is complete, grouped, and uniquely keyed'
   }
   assert(rows.some((row) => row.key === 'gameConfig.progression.levelCostMultiplier'));
   assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpriteScale'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.playerSpawnColumn'));
+  assert(rows.some((row) => row.key === 'gameConfig.presentation.enemySpawnColumn'));
 });
 
 test('configured bundle overlays starting stats and progression without mutating authored content', () => {
@@ -78,10 +80,14 @@ test('presentation config clamps numbers and refuses unknown rows', () => {
     'gameConfig.presentation.playerSpriteScale': 8,
     'gameConfig.presentation.enemySpawnRow': 'back',
     'gameConfig.presentation.playerSpawnRow': 'sideways',
+    'gameConfig.presentation.playerSpawnColumn': 'right',
+    'gameConfig.presentation.enemySpawnColumn': 'diagonal',
   });
   assert.equal(config.playerSpriteScale, 2);
   assert.equal(config.enemySpawnRow, 'back');
   assert.equal(config.playerSpawnRow, 'middle');
+  assert.equal(config.playerSpawnColumn, 'right');
+  assert.equal(config.enemySpawnColumn, 'center');
 });
 
 test('desktop export uses Save As and writes the deterministic JSON', async () => {

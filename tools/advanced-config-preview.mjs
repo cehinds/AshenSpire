@@ -68,8 +68,10 @@ async function main() {
       { name: 'desktop-progression', width: 1440, height: 900, group: 'Progression', mobile: false },
       { name: 'desktop-classes', width: 1440, height: 900, group: 'Classes', mobile: false },
       { name: 'desktop-interface', width: 1440, height: 900, group: 'Interface', mobile: false },
+      { name: 'desktop-placement', width: 1440, height: 900, group: 'Interface', search: 'default', mobile: false },
       { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },
       { name: 'phone-progression', width: 390, height: 844, group: 'Progression', mobile: true },
+      { name: 'phone-placement', width: 390, height: 844, group: 'Interface', search: 'default', mobile: true },
     ]) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
@@ -78,6 +80,13 @@ async function main() {
       await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=settings&shotSettings=${shotSettings}` }, sessionId);
       await until("!!document.querySelector('.settings-modal [data-advanced-search]')", 'advanced settings');
       await wait(250);
+      if (shape.search) {
+        await evaluate(`(() => {
+          const input = document.querySelector('[data-advanced-search]');
+          input.value = ${JSON.stringify(shape.search)};
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        })()`);
+      }
       if (shape.group === 'Export') {
         await evaluate(`(() => {
           window.showSaveFilePicker = async () => ({ createWritable: async () => ({ write: async () => {}, close: async () => {} }) });
@@ -93,7 +102,8 @@ async function main() {
         const scrollable = [body, pane].filter((el) => el.scrollHeight > el.clientHeight + 1 && getComputedStyle(el).overflowY !== 'hidden');
         return {
           group: active?.dataset.advancedPanel,
-          rows: active?.querySelectorAll('.set-row').length || 0,
+          rows: active?.querySelectorAll('.set-row:not([hidden])').length || 0,
+          placementLabels: [...(active?.querySelectorAll('.set-row:not([hidden]) .ls-label') || [])].map((node) => node.textContent),
           viewport: [innerWidth, innerHeight],
           modal: [Math.round(modal.getBoundingClientRect().width), Math.round(modal.getBoundingClientRect().height)],
           verticalScrollOwners: scrollable.map((el) => el.className),
@@ -102,6 +112,10 @@ async function main() {
       })()`);
       if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
         throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
+      }
+      if (shape.search && !['Player default row', 'Enemy default row', 'Player default column', 'Enemy default column']
+        .every((label) => state.placementLabels.includes(label))) {
+        throw new Error(`${shape.name}: placement controls missing: ${JSON.stringify(state)}`);
       }
       console.log(`PASS ${shape.name} — ${state.rows} rows, one vertical scroll owner, modal ${state.modal.join('×')}`);
       await capture(shape.name);
@@ -114,6 +128,8 @@ async function main() {
       'gameConfig.presentation.enemySpriteScale': 0.8,
       'gameConfig.presentation.playerSpawnRow': 'front',
       'gameConfig.presentation.enemySpawnRow': 'back',
+      'gameConfig.presentation.playerSpawnColumn': 'right',
+      'gameConfig.presentation.enemySpawnColumn': 'left',
     }));
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=combat&shotSettings=${combatSettings}` }, sessionId);
     await until("!!document.querySelector('.combatant.player .sprite') && !!document.querySelector('.combatant.enemy .sprite')", 'combat figures');
@@ -121,14 +137,20 @@ async function main() {
     const presentation = await evaluate(`(() => ({
       playerScale: getComputedStyle(document.querySelector('.combatant.player .sprite')).scale,
       enemyScale: getComputedStyle(document.querySelector('.combatant.enemy .sprite')).scale,
+      playerTranslate: getComputedStyle(document.querySelector('.combatant.player .sprite')).translate,
+      enemyTranslate: getComputedStyle(document.querySelector('.combatant.enemy .sprite')).translate,
       playerRow: document.documentElement.dataset.playerSpawnRow,
       enemyRow: document.documentElement.dataset.enemySpawnRow,
+      playerColumn: document.documentElement.dataset.playerSpawnColumn,
+      enemyColumn: document.documentElement.dataset.enemySpawnColumn,
     }))()`);
     if (presentation.playerScale !== '1.15' || presentation.enemyScale !== '0.8'
-      || presentation.playerRow !== 'front' || presentation.enemyRow !== 'back') {
+      || presentation.playerTranslate !== '14% -12%' || presentation.enemyTranslate !== '-14% -12%'
+      || presentation.playerRow !== 'front' || presentation.enemyRow !== 'back'
+      || presentation.playerColumn !== 'right' || presentation.enemyColumn !== 'left') {
       throw new Error(`combat-presentation: ${JSON.stringify(presentation)}`);
     }
-    console.log('PASS combat-presentation — sprite scales and default rows applied');
+    console.log('PASS combat-presentation — sprite scales and default rows and columns applied');
     await capture('combat-presentation');
   } finally {
     cdp.close();

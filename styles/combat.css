@@ -1374,12 +1374,22 @@
 
 /* Advanced presentation dials only change the painted figure. Combat boxes,
    meters and targeting remain in their authored formation cells. */
-:root .combat .combatant.player .sprite { scale: var(--player-sprite-scale, .9); }
-:root .combat .combatant.enemy .sprite { scale: var(--enemy-sprite-scale, .9); }
-:root[data-player-spawn-row='front'] .combat .combatant.player .sprite { translate: 0 -12%; }
-:root[data-player-spawn-row='back'] .combat .combatant.player .sprite { translate: 0 12%; }
-:root[data-enemy-spawn-row='front'] .combat .combatant.enemy .sprite { translate: 0 12%; }
-:root[data-enemy-spawn-row='back'] .combat .combatant.enemy .sprite { translate: 0 -12%; }
+:root .combat .combatant.player .sprite {
+  scale: var(--player-sprite-scale, .9);
+  translate: var(--player-spawn-column-offset, 0) var(--player-spawn-row-offset, 0);
+}
+:root .combat .combatant.enemy .sprite {
+  scale: var(--enemy-sprite-scale, .9);
+  translate: var(--enemy-spawn-column-offset, 0) var(--enemy-spawn-row-offset, 0);
+}
+:root[data-player-spawn-row='front'] { --player-spawn-row-offset: -12%; }
+:root[data-player-spawn-row='back'] { --player-spawn-row-offset: 12%; }
+:root[data-enemy-spawn-row='front'] { --enemy-spawn-row-offset: 12%; }
+:root[data-enemy-spawn-row='back'] { --enemy-spawn-row-offset: -12%; }
+:root[data-player-spawn-column='left'] { --player-spawn-column-offset: -14%; }
+:root[data-player-spawn-column='right'] { --player-spawn-column-offset: 14%; }
+:root[data-enemy-spawn-column='left'] { --enemy-spawn-column-offset: -14%; }
+:root[data-enemy-spawn-column='right'] { --enemy-spawn-column-offset: 14%; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
