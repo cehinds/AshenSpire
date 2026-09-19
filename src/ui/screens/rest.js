@@ -314,9 +314,12 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   ].filter(Boolean);
   const availability = restChoiceStatus(offeredChoices);
   // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
-  // cards). A single-use Shrine has none — taking a choice is the way on — so
-  // its reserved foot collapses rather than inventing a way to leave.
-  const leave = multiUse ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
+  // cards). A single-use place has none — taking a choice is the way on — so
+  // its reserved foot collapses rather than inventing a way to leave. EXCEPT
+  // where a relic denies the Rest: then Rest is not a way on, and a place
+  // with no smith (a chapel) would hold the run for good (the review of
+  // #1195), so the foot is the way out.
+  const leave = multiUse || relicNoRest ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
   mountChoiceBody(app.querySelector('.rest-screen'), {
     className: 'rest-door',

@@ -115,6 +115,15 @@ export function restoreSession(registries, data) {
 
 export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
+  // Each member's open shrine visit (engine/locations.js), by member id.
+  const shrineVisits = new Map();
+  function restView(visit) {
+    if (!visit) return null;
+    if (visit.restDenied) return { denied: registries.relics.get(visit.restDenied).name, heal: 0, mana: 0 };
+    const preview = previewRest(visit);
+    return { denied: null, heal: preview.heal, mana: preview.mana };
+  }
+
   if (restore) {
     // SPEC §13.4: a party save from before seats climbs the default order —
     // the one it was already climbing — and a save that names an order must
@@ -230,12 +239,25 @@ export function createSession({ registries, seedString, endless = false, restore
     // trusted serialized client-facing bytes. Rebuild them on restore so an
     // older saved Shrine cannot disable Smithing after the run itself heals.
     if (session.scene?.kind === 'shrine') {
+      // The visits are rebuilt with the plans (engine/locations.js): each
+      // living member arrives again — the refill is a top-up, so the restore
+      // pours nothing twice — and the rest view is read off the rebuilt visit,
+      // so a restored save at a shrine shows a denied Rest disabled, not open.
+      shrineVisits.clear();
+      for (const member of [...members.values()].filter((m) => m.alive)) {
+        const visit = createLocationVisit({ run: member.run, registries, rng }, 'shrine');
+        arriveAt(visit);
+        shrineVisits.set(member.id, visit);
+      }
       session.scene = {
         ...session.scene,
         done: { ...(session.scene.done || {}) },
         smithing: Object.fromEntries([...members.values()]
           .filter((member) => member.alive)
           .map((member) => [member.id, smithingPlan(registries, member.run)])),
+        rest: Object.fromEntries([...members.values()]
+          .filter((member) => member.alive)
+          .map((member) => [member.id, restView(shrineVisits.get(member.id))])),
         receipts: {
           ...(session.scene.receipts || {}),
           ...Object.fromEntries([...members.values()]
@@ -823,14 +845,6 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- shrine / treasure / event (per-member, simplified for S2) -----------
-  // Each member's open shrine visit (engine/locations.js), by member id.
-  const shrineVisits = new Map();
-  function restView(visit) {
-    if (!visit) return null;
-    if (visit.restDenied) return { denied: registries.relics.get(visit.restDenied).name, heal: 0, mana: 0 };
-    const preview = previewRest(visit);
-    return { denied: null, heal: preview.heal, mana: preview.mana };
-  }
   function enterShrine() {
     // At every Grace, every character refills their fixed-capacity allocation.
     // In co-op the host owns that truth, not whichever client taps first. Every
