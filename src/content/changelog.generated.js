@@ -68,7 +68,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "The Last Lantern opens a new quest, and the road offers new gear",
     "detail": "Help a stranded caravan with oil or effort, then meet it again for a reward that remembers your choice. Frost Spear, Cinder Axe and Dusk Chime bring three new weapon Arts; Bastion Harness, Rimeweave Robes and Waywatcher Coat trade protection, Frost and Stamina against their own drawbacks. Four new relics offer travel rewards, stronger Exposure, portable healing or cheaper Powers. Every weapon has smith upgrades and uses existing artwork throughout the Armoury, shops and compendium.",
-    "build": "0.7.1.195",
+    "build": "0.7.1.201",
     "pullRequest": 1187,
     "url": "https://github.com/cehinds/AshenSpire/pull/1187"
   },

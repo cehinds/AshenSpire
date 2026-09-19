@@ -1660,12 +1660,14 @@ armament,,frostSpear,delivery:melee
 armament,,frostSpear,damage:piercing
 armament,,frostSpear,classification.armament
 armament,,cinderAxe,item:blade
+armament,,cinderAxe,blade
 armament,,cinderAxe,heavy
 armament,,cinderAxe,source:weapon
 armament,,cinderAxe,delivery:melee
 armament,,cinderAxe,damage:slashing
 armament,,cinderAxe,classification.armament
 armament,,duskChime,item:magic-focus
+armament,,duskChime,ritual
 armament,,duskChime,source:spell
 armament,,duskChime,delivery:projectile
 armament,,duskChime,damage:arcane

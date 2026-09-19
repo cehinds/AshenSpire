@@ -89,3 +89,28 @@ for (const [file, count] of [['src/ui/assets.js', 1], ['src/ui/screens/equipment
   assert.ok(!source.includes('assets/equipment/icon_${'), `${file}: no bypass of authored alias`);
 }
 console.log('PASS inventory icon aliases: inventory, extraction, installation, smithing, equipment, compendium and shared card art');
+import { skillSchools } from '../src/model/skills.js';
+import { rollSkillDraftIds } from '../src/engine/encounters.js';
+import { createRng } from '../src/engine/rng.js';
+
+// A weapon's own schools must sustain progression with the other hand empty;
+// the class starter must not accidentally provide its missing draft pool.
+for (const [id, classId, skillId, school] of [
+  ['frostSpear', 'reaver', 'item:blade', 'blade'],
+  ['cinderAxe', 'reaver', 'item:blade', 'blade'],
+  ['duskChime', 'herald', 'item:magic-focus', 'ritual'],
+]) {
+  const run = createRunState({ seed: 17, classId, registries: r });
+  assert.ok(equipPiece(r, run.loadout, 'leftHand', 0, null, owns, { inCombat: false, attributes: run.attributes }));
+  assert.ok(equipPiece(r, run.loadout, 'rightHand', 0, id, owns, { inCombat: false, attributes: run.attributes }));
+  const schools = skillSchools(r, run.loadout, skillId);
+  assert.ok(schools.includes(school), `${id}: held weapon supplies ${school} school`);
+  const draft = rollSkillDraftIds(r, createRng(17), { classId, loadout: run.loadout, skillId, level: 1 });
+  assert.ok(draft.length > 0, `${id}: first skill level offers a draft`);
+  for (const cardId of draft) {
+    const card = r.cards.get(cardId);
+    assert.equal(card.class, classId);
+    assert.ok(card.tags.some(tag => schools.includes(tag)), `${id}: draft respects held schools`);
+  }
+}
+console.log('PASS new weapon skill schools and first-level drafts in intended classes');

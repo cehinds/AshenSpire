@@ -9594,6 +9594,12 @@ export const tagging = [
     "family": "armament",
     "scope": "",
     "objectId": "cinderAxe",
+    "tagId": "blade"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
     "tagId": "heavy"
   },
   {
@@ -9625,6 +9631,12 @@ export const tagging = [
     "scope": "",
     "objectId": "duskChime",
     "tagId": "item:magic-focus"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "duskChime",
+    "tagId": "ritual"
   },
   {
     "family": "armament",
