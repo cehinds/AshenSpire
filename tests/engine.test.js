@@ -8380,6 +8380,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }
     const fightRow = (saves3.runStatus().ledger || { entries: [] }).entries.find((e) => e.field === 'loadout.sets');
     assert(fightRow && fightRow.now.snapshotSlots.includes('head') && /saved fight/.test(fightRow.why), `one row names both loadouts — got ${JSON.stringify(fightRow).slice(0, 220)}`);
+    // The excuse is for a slot nothing could ever have filled. A current
+    // save whose snapshot lost a HAND is malformed and is archived, as before.
+    const storage4 = createMemoryStorage();
+    const saves4 = createSaveManager(storage4);
+    saves4.saveRun(midFight, createRng(3));
+    const raw4 = JSON.parse(storage4.getItem(RUN_KEY));
+    delete raw4.combatEntered.snapshot.loadout.sets.rightHand; delete raw4.combatEntered.snapshot.loadout.active.rightHand;
+    storage4.setItem(RUN_KEY, JSON.stringify(raw4));
+    eq(saves4.loadRun(REG), null, 'a snapshot missing a hand slot is refused');
+    assert(/loadout\.sets\.rightHand must be an array/.test(saves4.runStatus().reason || ''), `and named — got ${saves4.runStatus().reason}`);
   });
 
   test('84. the grip is read off the hands, its tags ride the action snapshot and no card, and cardTagIs reads both lists (plan phase 3c)', () => {
