@@ -1372,6 +1372,53 @@
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
+/* Grid geometry and actor placement share the formation model. */
+.formation-grid {
+  display: none; position: absolute; inset: 0; z-index: 8;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  pointer-events: none; user-select: none;
+}
+:root[data-formation-grid='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid-cell:not(:disabled) { pointer-events: auto; cursor: pointer; }
+.formation-grid-cell.formation-selected { --grid-stroke: var(--selection-color, #59bd75); }
+.formation-grid-cell.formation-selected .formation-grid-outline > * { fill-opacity: .4; stroke-width: 3; }
+.formation-move-controls { position: absolute; z-index: 2500; top: 36px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.formation-move-controls[hidden] { display: none; }
+.formation-move-controls button { min-height: 44px; background: #191710; white-space: nowrap; }
+.formation-grid-cell {
+  border: 0; border-radius: 0; padding: 0; background: transparent; color: inherit; opacity: 1; box-shadow: none;
+  position: absolute;
+  transform: translateY(-50%);
+  min-width: 0; box-sizing: border-box;
+  --grid-stroke: var(--player-grid-color, #d5cc63);
+}
+:root .formation-grid-cell, :root .formation-grid-cell:disabled, :root .formation-grid-cell:hover, :root .formation-grid-cell:focus-visible {
+  background-color: transparent; border: 0; box-shadow: none; opacity: 1; filter: none; overflow: visible;
+}
+.formation-grid-cell::after {
+  content: '+'; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%); color: #fff2bb; font-weight: bold;
+}
+.formation-grid-cell[data-side='enemy'] { --grid-stroke: var(--enemy-grid-color, #e1a679); }
+.formation-grid-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.formation-grid-outline > * { display: none; fill: var(--grid-stroke); fill-opacity: .07; stroke: var(--grid-stroke); stroke-width: 1; }
+.formation-grid[data-shape='rhombus'] polygon,
+.formation-grid[data-shape='wide-rhombus'] polygon,
+.formation-grid[data-shape='square'] rect,
+.formation-grid[data-shape='rectangle'] rect,
+.formation-grid[data-shape='circle'] ellipse,
+.formation-grid[data-shape='ellipse'] ellipse { display: block; }
+.formation-grid-cell[data-occupied='true'] .formation-grid-outline > * { stroke-width: 2; fill-opacity: .25; }
+.formation-grid-cell span {
+  position: absolute; left: 50%; top: 100%; transform: translateX(-50%); white-space: nowrap;
+  display: inline-block; background: #14110de6; color: #fff2bb;
+  font: 700 .7rem/1.4 var(--font-ui, sans-serif); padding: .1rem .25rem;
+  border-radius: .2rem;
+}
+:root .combat .combatant .sprite { scale: none; translate: none; }
+
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
   top: var(--overhead-top, 0); bottom: auto;
@@ -1427,4 +1474,3 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
-

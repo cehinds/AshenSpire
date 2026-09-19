@@ -168,19 +168,21 @@
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
-/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
-   chooser set only `data-new`, which no stylesheet or renderer consumed, so
-   the unseen card looked identical to its neighbours). The chip dress is
-   restated here because `.chip` styling is scoped to `.class-pick` and this
-   badge lives inside `.card` — its named container (position: relative,
-   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
-   box); the label keeps its text unit. pointer-events: none — the badge marks
-   the card, the CARD takes the tap. */
+/* The card chooser's NEW badge belongs to the status stack above the card,
+   never to the title band. The reward row owns the stack's shared dimensions
+   in kit.css; fallbacks keep this component safe in an isolated render. The
+   height scales with text, while the gap remains a small piece of box
+   geometry. pointer-events: none — the badge marks the card, the CARD takes
+   the tap. */
 .card .card-badge-new {
-  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  position: absolute;
+  top: calc(-1 * (var(--reward-new-badge-height, calc(1.08rem + 6px)) + var(--reward-status-gap, 6px)));
+  left: 50%; transform: translateX(-50%);
+  box-sizing: border-box; height: var(--reward-new-badge-height, calc(1.08rem + 6px));
+  display: inline-flex; align-items: center;
+  font-size: 0.9rem; line-height: 1.2; font-weight: 700; letter-spacing: 0.08em;
   color: var(--gold); border: 1px solid var(--gold); border-radius: var(--r-3);
-  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  padding: 2px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
 
@@ -888,6 +890,31 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   outline-offset: -3px;
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
+/* Settings owns one vertical scrollport: the content pane. The old shell and
+   pane both scrolled, producing the paired scrollbars visible in the report. */
+.modal.settings-modal[data-size='lg'] {
+  width: min(76rem, calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
+  height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
+  max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
+}
+:root[data-short='true'] .modal.settings-modal[data-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
+.settings-modal > .set-body { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.settings-modal > .set-body > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
+.settings-modal .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+.settings-modal .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
+.settings-modal .set-tabs { overflow: visible; }
+.settings-modal .set-subtabs { display: flex; flex-wrap: wrap; }
+.settings-modal .set-subtabs > button { flex: 1 0 auto; }
+.set-advanced-tools { display: flex; align-items: end; gap: .8rem; flex-wrap: wrap; margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); }
+.set-config-search { display: grid; gap: .35rem; flex: 1 1 18rem; color: var(--muted); font-size: 1.05rem; }
+.set-config-search input { width: 100%; min-height: var(--tap-floor); }
+.set-config-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
+@media (max-width: 600px) {
+  .modal.settings-modal[data-size='lg'] { width: 100%; border-radius: var(--r-3); }
+  .settings-modal .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
+  .settings-modal .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
+}
 /* W1a CATEGORY NAVIGATION is the kit's (kit/categoryNav.js, kit.css "W1
    CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector
    above it (`.set-cat-select`) that opens the same `.set-tabs` as a list.
@@ -948,6 +975,27 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .num-wrap:has(.set-num-slider) { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; max-width:100%; width:100%; flex-basis:100%; order:1; }
 .set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:var(--tap-floor); }
 .set-num-reset { grid-column:2; grid-row:1; }
+.set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
+:root .choice.on, :root [role='tab'][aria-selected='true'], :root .mount-row.selected,
+:root .hand .card.selected { border-color: var(--selection-color, #59bd75); }
+:root .combatant.context-selected .sprite { --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75)); }
+:root .combatant.context-selected .nm { color: var(--selection-color, #59bd75); }
+:root .card.selected, :root .card[data-selected='true'], :root .as-card[data-selected='true'],
+:root .as-option[aria-checked='true'], :root .as-option[aria-pressed='true'], :root .as-option.is-selected,
+:root .class-pick.selected, :root .class-pick[aria-checked='true'], :root .as-railitem[aria-current='true'] {
+  border-color: var(--selection-color, #59bd75);
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75));
+}
+:root .choice.on, :root [role='tab'][aria-selected='true'], :root .as-railitem[aria-current='true'] { color: var(--selection-color, #59bd75); }
+/* Existing selection treatments share a color without recoloring rarity or
+   unselected gold ornamentation elsewhere in the game. */
+:root :is(.selected, .is-selected, .reward-selected, .selected-target, .skill-selected,
+  .tooltip-selected, [data-selected='true'], [aria-selected='true'], .choice.on,
+  .modal-tab.on, .as-tab.on, .as-railitem.on, .as-railitem[aria-current='true'],
+  .as-option[aria-checked='true'], .as-option[aria-pressed='true'], .class-pick[aria-checked='true']) {
+  --gold: var(--selection-color, #59bd75);
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75));
+}
 .set-row:has(.flick-practice) { display:flex; flex-wrap:wrap; }
 .set-row:has(.flick-practice) > .as-labelstack { flex-basis:100%; }
 .flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }

@@ -139,6 +139,15 @@ async function main() {
         const safeCenter=(safeTop+safeBottom)/2;
         const frames=[...document.querySelectorAll('.combatant')].filter(visible).map((frame) => {
           const card=rect(frame.querySelector('.combatant-card'));
+          // The transparent sprite canvas is not visible artwork. Compare the
+          // intent against its measured idle art top, retaining the card's
+          // bottom (health/details) for hand-clearance checks.
+          const sprite=rect(frame.querySelector('.sprite'));
+          const visibleHeight=Number(frame.dataset.spriteVisibleHeight);
+          if (visibleHeight > 0) {
+            card.top=sprite.bottom-visibleHeight;
+            card.height=card.bottom-card.top;
+          }
           const intentEl=frame.querySelector('.intent');
           const intent=visible(intentEl)?rect(intentEl):null;
           const top=intent?intent.top:card.top;
