@@ -56,6 +56,10 @@ const baselineTierA = readFixture('config-migration-baseline-tier-a.json');
 //     arc, so a wider card needs less height: 80/0.625 + 33.6 = 161.6 became
 //     80/(5/7) + 33.6 = 145.6. #1146 and #1140 merged 74 seconds apart, so
 //     neither could see the other's effect and dev went red on the pair.
+//   · tooltipHelp.messages.playerPoise. #1203 gave the player a live Poise
+//     meter with a Constitution term, so the old copy denied a feature that
+//     exists and named three of the four things that steady the threshold.
+//     One string, re-pointed by hand.
 //   · CombatFormationModel probes now include #1180's grid cells, rowSpacing,
 //     cell labels and fitGround. Its slots keep their previous coordinates;
 //     only that module's entry is refreshed for the approved added outputs.

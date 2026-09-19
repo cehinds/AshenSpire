@@ -342,10 +342,13 @@ check('WAKE RED — the writer premise is probed, and no display refusal may sta
     dealPoiseDamage(probeCtx([]), bare, 3);
     if ('poiseMeter' in bare) { wrote = true; how = how || 'a meter appeared on the threshold-0 player'; }
   } catch (error) { wrote = true; how = how || `a writer reached the ABSENT vessel and crashed on it: ${error.message}`; }
-  // The refusal artifacts, read at their homes. The denial is read from
-  // combat.js SOURCE, not from a rendered tooltip — that string's one home —
-  // and the boundary is stated here rather than smoothed: no pixel rendered.
-  const denial = /Nothing deals Poise damage to you yet/.test(readFileSync(resolve(ROOT, 'src/ui/screens/combat.js'), 'utf8'));
+  // The refusal artifact, read at its one home. The denial sentence is TOOLTIP
+  // COPY: it lives in content/config/ui/presentation/tooltipHelp.json, which is
+  // where combat.js reads it from via helpText('playerPoise'). Grepping
+  // combat.js for it went on passing after the copy moved — a probe that cannot
+  // fail is not a probe. The boundary is stated rather than smoothed: source
+  // read, no pixel rendered.
+  const denial = /deals Poise damage to you yet/.test(readFileSync(resolve(ROOT, 'content/config/ui/presentation/tooltipHelp.json'), 'utf8'));
   const registries = createRegistries(contentBundle);
   const run = createRunState({ seed: 0x5015e, classId: 'reaver', registries });
   const receipt = projectionModel.playerPoiseThresholdReceipt(registries, run);
@@ -355,7 +358,7 @@ check('WAKE RED — the writer premise is probed, and no display refusal may sta
   assert(wrote, 'THE WRITER IS GONE — dealPoiseDamage moved nothing on a vesseled player (SPEC §13.4k says impact fills it)');
   assert(!denial && receipt.active === true,
     `THE MECHANICS LANDED AND A REFUSAL STILL STANDS — a writer moved player poise through dealPoiseDamage (${how}) `
-    + `while denial=${denial} (combat.js "Nothing deals Poise damage to you yet"), receipt.active=${receipt.active}. `
+    + `while denial=${denial} (tooltipHelp.json playerPoise still says Poise damage reaches nobody), receipt.active=${receipt.active}. `
     + `Retire the denial sentence and flip the receipt WITH the mechanics, not after them.`);
   return `writer present (${how}) and every display refusal is gone`;
 });

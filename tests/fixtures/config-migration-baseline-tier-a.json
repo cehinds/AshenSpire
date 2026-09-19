@@ -3483,7 +3483,7 @@
                 "__string": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it."
               },
               "playerPoise": {
-                "__string": "Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet."
+                "__string": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it."
               },
               "enemyPoise": {
                 "__string": "Fill it to Stagger. {effect}"

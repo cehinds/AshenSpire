@@ -3653,6 +3653,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const energyBefore = combat.player.energy;
     dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
     eq(combat.player.energy, energyBefore - bal.swapCost, 'the swap costs what the config says');
+    // The swap re-stamps the Poise vessel from the loadout it just changed, and
+    // it re-derives the WHOLE receipt: a re-stamp that forgets the attributes
+    // collapses the player's threshold to equipment + relics, silently, mid
+    // fight. changeEquipment is asserted below; this is the other door.
+    eq(combat.player.poiseMeter.max, playerPoiseThresholdReceipt(LEGACY_REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels, attributes: combat.attributes,
+    }).value, 'a mid-fight swap re-stamps the exact live Poise threshold, Constitution included');
+    assert(combat.player.poiseMeter.max > playerPoiseThresholdReceipt(LEGACY_REG, {
+      loadout: combat.loadout, relics: combat.player.relicIds, class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels,
+    }).value, 'the attribute term is really in the stamp: drop it and the threshold is lower');
     const inHand = combat.piles.hand.concat(combat.piles.draw).find((c) => c.cardId === 'strike');
     eq(dmgOf(resolveCard(LEGACY_REG, inHand)), 12, 'every Strike now carries the greatsword profile, rarity, tier, and explicit mod');
 

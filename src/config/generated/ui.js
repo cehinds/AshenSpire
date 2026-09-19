@@ -35,7 +35,7 @@
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
 // source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
-// source content/config/ui/presentation/tooltipHelp.json 001b849ff447824b
+// source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
@@ -8687,7 +8687,7 @@ export const uiConfig = deepFreeze({
             "stamina": "Stamina pays physical skill and Dodge costs.",
             "recovery": " Recovers {amount} per turn.",
             "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
-            "playerPoise": "Your Stagger threshold — your armament, armour and relics steady it. Nothing deals Poise damage to you yet.",
+            "playerPoise": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",
             "enemyPoise": "Fill it to Stagger. {effect}",
             "cost": "{amount} required to play {card}.",
             "costAll": "Spend all remaining {resource} to play {card}.",
