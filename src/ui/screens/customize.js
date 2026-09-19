@@ -1295,7 +1295,7 @@ export function mountCustomize(app, {
       { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
       // W1c moved the live portrait into the head; the catalogue still shows it.
-      { key: 'creation-portrait', label: 'Live portrait (W1c head)', node: portrait },
+      { key: 'creation-portrait', label: t('creation.catalog.portrait'), node: portrait },
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
     flow.replaceChildren(fragment);

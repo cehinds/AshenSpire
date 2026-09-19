@@ -2416,5 +2416,12 @@ export const uiStrings = [
     "short": "List view",
     "full": "The choices as a list.",
     "tip": ""
+  },
+  {
+    "id": "creation.catalog.portrait",
+    "extends": "",
+    "short": "Live portrait (W1c head)",
+    "full": "The head portrait as the catalogue shows it.",
+    "tip": ""
   }
 ];
