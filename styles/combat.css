@@ -1372,6 +1372,15 @@
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
+/* Advanced presentation dials only change the painted figure. Combat boxes,
+   meters and targeting remain in their authored formation cells. */
+:root .combat .combatant.player .sprite { scale: var(--player-sprite-scale, .9); }
+:root .combat .combatant.enemy .sprite { scale: var(--enemy-sprite-scale, .9); }
+:root[data-player-spawn-row='front'] .combat .combatant.player .sprite { translate: 0 -12%; }
+:root[data-player-spawn-row='back'] .combat .combatant.player .sprite { translate: 0 12%; }
+:root[data-enemy-spawn-row='front'] .combat .combatant.enemy .sprite { translate: 0 12%; }
+:root[data-enemy-spawn-row='back'] .combat .combatant.enemy .sprite { translate: 0 -12%; }
+
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
   top: var(--overhead-top, 0); bottom: auto;
@@ -1427,4 +1436,3 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
-
