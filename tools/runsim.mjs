@@ -545,7 +545,7 @@ console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` 
 const levelsPerWin = levelsReachedInWins / Math.max(1, tally.wins);
 const inBand = tally.wins > 0 && levelsPerWin >= 10 && levelsPerWin <= 20;
 console.log(`character levels earned: ${(levelsReached / Math.max(1, tally.runs)).toFixed(1)} per run over ${tally.runs} runs; ${levelsPerWin.toFixed(1)} per full (victorious) run over ${tally.wins}` + (XP_CURVE ? ` (curve ${XP_CURVE})` : ' (shipped curve)') + ` — the acceptance band is 10-20 per full run: ${tally.wins ? (inBand ? 'IN BAND' : '<-- OUT OF BAND') : 'no full run to measure'} (plan phase 6; a greedy bot, the ceiling a real climb approaches)`);
-console.log(`XP earned per full run: ${(xpEarnedInWins / Math.max(1, tally.wins)).toFixed(0)} (the curve's receipt: 2,030 reaches level 11)`);
+console.log(`XP earned per full run: ${(xpEarnedInWins / Math.max(1, tally.wins)).toFixed(0)} (this curve's receipt: ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0)} reaches level 11)`);
 console.log(`attribute points assigned at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run; over the ${tally.wins} full runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
 console.log(`event choices recorded: ${tally.eventChoices} over ${tally.runs} runs, ${tally.questSteps} of them answering a gated quest step (E12) — 0 gated steps across a fleet means the chain never entered the simulation`);
 console.log(`class tree picks: ${classDraftsTaken} over ${tally.runs} runs = ${(classDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 5b: the bot picks the first node offered)`);
