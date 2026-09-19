@@ -517,6 +517,36 @@ function collectContentProblems(bundle, errors = []) {
       if (!Number.isInteger(deck.minimumPerStep) || deck.minimumPerStep < 0) err('balance.deck.minimumPerStep', `must be a non-negative integer, got ${JSON.stringify(deck.minimumPerStep)}`);
     }
   }
+  // The skill tracks' numbers (plan phase 4a): the curve and the award rows
+  // model/skills.js and engine/skillXp.js read. Refused by name, never clamped.
+  if (b.balance && b.balance.skill !== undefined) {
+    const skill = b.balance.skill;
+    const posInt = (v) => Number.isInteger(v) && v > 0;
+    const nonNeg = (v) => Number.isFinite(v) && v >= 0;
+    const curve = (row, path) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) { err(path, 'must be an object { base, growth, roundTo, … }'); return; }
+      if (!posInt(row.base)) err(`${path}.base`, `must be a positive integer, got ${JSON.stringify(row.base)}`);
+      if (!Number.isFinite(row.growth) || row.growth < 1) err(`${path}.growth`, `must be a number ≥ 1, got ${JSON.stringify(row.growth)}`);
+      if (!posInt(row.roundTo)) err(`${path}.roundTo`, `must be a positive integer, got ${JSON.stringify(row.roundTo)}`);
+    };
+    if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
+    else {
+      for (const key of Object.keys(skill)) if (!['xp', 'class'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      curve(skill.xp, 'balance.skill.xp');
+      if (skill.xp && typeof skill.xp === 'object') {
+        for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
+        for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
+        if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+      }
+      if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
+      else {
+        for (const key of Object.keys(skill.class)) if (key !== 'xp') err(`balance.skill.class.${key}`, 'Unknown field');
+        curve(skill.class.xp, 'balance.skill.class.xp');
+        if (skill.class.xp && typeof skill.class.xp === 'object') for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+      }
+    }
+  }
   if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
     try {
       const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);

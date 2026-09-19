@@ -59,6 +59,21 @@ export const balance = {
   // floor is `minimum`. model/loadout.js deckMinimum is the one reader.
   deck: { minimum: 8, minimumStepLevels: 2, minimumPerStep: 1 },
 
+  // ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
+  // One curve shape for every track: the step from level n costs
+  // round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
+  // dual-wield curve; `class.xp` the slower class curve. The award rows are
+  // what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
+  // block a group's card resolves on a live target; perWinEquipped per
+  // equipped group on a win, × killMult when that group landed the killing
+  // hit; one XP per impactPerXp impact absorbed (heavy), evadeXp per hit
+  // evaded (light; medium reads half of each), one XP per buildupPerXp arcane
+  // buildup dealt (focus). model/skills.js is the one reader of the curve.
+  skill: {
+    xp: { base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5 },
+    class: { xp: { base: 60, growth: 1.25, roundTo: 5 } },
+  },
+
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
     cardChoices: 3,

@@ -334,9 +334,16 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     // that phase 4 adds to run state. Until that ledger exists no level has
     // been reached, so both answer false rather than guessing its shape — a
     // property branch gated on them is inert, never half-live.
-    case 'skillLevelAtLeast':
-    case 'classLevelAtLeast':
-      return false;
+    case 'skillLevelAtLeast': {
+      // The ledger the combat was handed (plan phase 4a): a copy of run.skills.
+      const row = ctx.skills && ctx.skills[pred.skill];
+      return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
+    }
+    case 'classLevelAtLeast': {
+      const classId = pctx.owner && pctx.owner.classId ? pctx.owner.classId : (ctx.player && ctx.player.classId);
+      const row = ctx.skills && classId ? ctx.skills[`class:${classId}`] : null;
+      return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
+    }
     case 'all':
       return pred.preds.every((sub) => evalPredicate(ctx, sub, pctx));
     case 'any':

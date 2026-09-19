@@ -25,6 +25,8 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
+import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { skillTracks } from '../src/model/skills.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
@@ -83,6 +85,8 @@ const SEEDED_SEATS = argv.includes('--seeded-seats');
 // plain fleet's wins exactly, same seeds, or the instrument perturbed the
 // measurement. (Invariant, not a boast: re-run both ways and diff the wins.)
 const DEEP = argv.includes('--deep');
+// Plan phase 4a: report the skill level each track reached, averaged per class.
+const SKILL_LEVELS = argv.includes('--skill-levels');
 // THE CON BAND (Vira, 2026-08-15). D22 put HP back on Constitution while D10
 // already had Stamina there, so one attribute now pays two resources and the
 // creation screen's five bonus points became a question nobody had measured.
@@ -188,6 +192,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     // (not `...run`) keeps the sim honest about what a fight consumes.
     player: {
       classId: run.class, attributes: run.attributes, loadout: run.loadout,
+      skills: run.skills,
       maxHp: run.maxHp, hp: run.hp,
       maxMana: run.maxMana, mana: run.mana,
       maxStamina: run.maxStamina, stamina: run.stamina,
@@ -260,6 +265,8 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // unlimited flasks, which is not this game. Charges are spent here, refilled
   // at a grace, and scarce in between: that is the loop being measured.
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
+  // The skill receipt, as main.js onCombatEnd pays it (plan phase 4a).
+  applySkillXp(REG, run, skillXpReceipt(combat));
   if (combat.result === 'victory') run.hp = combat.player.hp;
   return combat.result;
 }
@@ -298,6 +305,7 @@ function simulateRun(classId, seed, ds = null) {
     const choices = run.history.filter((row) => row && row.kind === 'eventChoice');
     result.eventChoices = choices.length;
     result.questSteps = choices.filter((row) => gates[row.eventId]).length;
+    result.skills = run.skills;
     return result;
   };
   // The death book: act, the run's maxHp, and the HP it walked into the fatal
@@ -428,6 +436,7 @@ console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_C
 console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
+const skillLevelsByClass = {};
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
@@ -442,6 +451,10 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
+    if (SKILL_LEVELS) {
+      skillLevelsByClass[cls.id] = skillLevelsByClass[cls.id] || {};
+      for (const [id, row] of Object.entries(r.skills || {})) skillLevelsByClass[cls.id][id] = (skillLevelsByClass[cls.id][id] || 0) + (row.level || 0);
+    }
     tally.runs++; if (r.victory) tally.wins++; tally.acts += r.act;
     tally.eventChoices += r.eventChoices || 0; tally.questSteps += r.questSteps || 0;
     acts += r.act; floors += r.floor; maxAct = Math.max(maxAct, r.act);
@@ -456,6 +469,11 @@ for (const cls of REG.classes.all()) {
         `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
         `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
+  if (SKILL_LEVELS) {
+    const levels = skillLevelsByClass[cls.id] || {};
+    const line = skillTracks(REG).map((t) => `${t.id} ${((levels[t.id] || 0) / N).toFixed(1)}`).join('  ');
+    console.log(`  skill levels/run: ${line}`);
+  }
   if (ds && ds.fights) {
     const perTurn = (x) => (x / ds.turns).toFixed(2);
     const perFight = (x) => (x / ds.fights).toFixed(1);
