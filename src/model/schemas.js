@@ -159,6 +159,9 @@ export const PREDICATES = Object.freeze([
   'firstCardThisTurn',
   'firstAttackThisCombat',
   'cardTypeIs',
+  // Plan phase 3c: the card's tags UNION the action snapshot's derived tags
+  // (the grip's) — never the card row alone, never a tag written to a card.
+  'cardTagIs',
   'everyNthCardThisCombat',
   'random',
   'eventIsAttack',

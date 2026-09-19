@@ -2331,6 +2331,18 @@ export const nodes = [
     "blurb": ""
   },
   {
+    "id": "equipment.dualWield",
+    "parentId": "equipment",
+    "label": "dualWield",
+    "color": "",
+    "glyph": "",
+    "visibility": "SECONDARY",
+    "priority": 16,
+    "domain": "",
+    "aside": "",
+    "blurb": ""
+  },
+  {
     "id": "utility",
     "parentId": "",
     "label": "utility",

@@ -1578,6 +1578,15 @@ export const tags = [
     "blurb": ""
   },
   {
+    "id": "equipment.dualWield",
+    "domain": "equipment",
+    "label": "dualWield",
+    "color": "",
+    "glyph": "",
+    "visibility": "SECONDARY",
+    "blurb": ""
+  },
+  {
     "id": "utility.evasion",
     "domain": "utility",
     "label": "evasion",

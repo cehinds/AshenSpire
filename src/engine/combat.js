@@ -26,7 +26,7 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax 
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 export { playerWeightClass };
-import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
@@ -872,9 +872,17 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // from `def.type` — every reader downstream (the attack counter, the
   // cardTypeIs predicate, the cardPlayed receipt) sees the kind.
   const kind = cardKind(def);
+  // DYNAMIC TAGS ARE READ HERE, ONCE, AND WRITTEN TO NO CARD (plan phase 3c).
+  // The grip the hands are in when the card is played (model/loadout.js
+  // gripOf) derives `equipment.dualWield` / `equipment.twoHanded`; they ride
+  // this snapshot as `derivedTags`, beside the card's own `tags`, and a
+  // predicate that asks about the card's tags reads both (triggers.js
+  // cardTagIs). The card definition and the deck instance never carry them.
+  const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -914,6 +922,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
     cardType: kind,
+    cardTags: cardRef.tags || [],
+    derivedTags,
     targetId: target ? target.id : null,
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,
@@ -1021,7 +1031,10 @@ export function previewCard(combat, cardInstanceId, targetId) {
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
       instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-      type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+      // The kind tag and the grip's derived tags, as the live play reads them
+      // (above) — a preview that disagreed with the play would lie.
+      type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+      derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
       damageSchool: inst.damageSchool ?? def.damageSchool,
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     },

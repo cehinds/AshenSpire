@@ -70,7 +70,7 @@ import {
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip, startingDeckWarnings, isEquipmentComposedInstance, startingDeckPlan, WeaponCardPackageModel,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
   previewCompatibleHands, startingHandsRequirementFailure,
-  deckMinimum, loadoutLeaveRefusal,
+  deckMinimum, loadoutLeaveRefusal, gripOf, gripTags, gripRefusal,
 } from '../src/model/loadout.js';
 import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
@@ -8332,6 +8332,73 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     stampDeck(REG, fresh);
     eq(fresh.deck.filter(isItemOwned).length, 0, 'unequipping removes every lent instance');
     eq(fresh.zones.worn.head, null, 'and the projection still reads');
+  });
+
+  test('84. the grip is read off the hands, its tags ride the action snapshot and no card, and cardTagIs reads both lists (plan phase 3c)', () => {
+    // The grip, read, never stored. A rogue's knife and buckler are two groups
+    // — `one`; a knife and a sword share item:blade — `dual`.
+    const rogue = createRunState({ seed: 0x3c3c, classId: 'rogue', registries: REG });
+    eq(JSON.stringify(gripOf(REG, rogue.loadout, 'rogue')), JSON.stringify({ mode: 'one', group: null, right: 'dagger', left: 'buckler' }), 'knife and buckler is one grip');
+    eq(gripTags(gripOf(REG, rogue.loadout, 'rogue')).length, 0, 'and derives no tag');
+    rogue.loadout.sets.leftHand[0] = 'straightSword';
+    const dual = gripOf(REG, rogue.loadout, 'rogue');
+    eq(dual.mode, 'dual'); eq(dual.group, 'item:blade');
+    eq(gripTags(dual).join('|'), 'equipment.dualWield', 'dual derives the framework tag');
+    assert(contentBundle.nodes.some((n) => n.id === 'equipment.dualWield' && n.parentId === 'equipment'), 'the tag is a node under equipment');
+    eq(gripRefusal(REG, rogue.loadout, 'rogue', 'leftHand', 0, 'straightSword'), '', 'dual is legal on its own — its attribute gate is phase 9');
+    // A two-handed piece beside an occupied hand is the one illegal grip. No
+    // shipped package requires two hands yet, so a probe registry says one does.
+    const twoHanded = createRegistries({ ...contentBundle, equipment: { ...contentBundle.equipment, armaments: contentBundle.equipment.armaments.map((a) => (a.id === 'greatsword' ? { ...a, handsRequired: 2 } : a)) } });
+    const reaver = createRunState({ seed: 0x3c3c, classId: 'reaver', registries: REG });
+    const refusal = gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword');
+    assert(/Greatsword/.test(refusal) && /Round Shield/.test(refusal) && /both hands/.test(refusal), `the refusal names both pieces — got '${refusal}'`);
+    eq(equipPiece(twoHanded, reaver.loadout, 'rightHand', 0, 'greatsword', { has: () => true }, { inCombat: false, classId: 'reaver' }), false, 'equipPiece refuses the grip');
+    eq(reaver.loadout.sets.rightHand[0], 'straightSword', 'and the hand is unchanged');
+    eq(canEquip(twoHanded, 'rightHand', { inCombat: false }).ok, true, 'a bare "may this slot change" question keeps its answer');
+    reaver.loadout.sets.leftHand[0] = null;
+    eq(gripRefusal(twoHanded, reaver.loadout, 'reaver', 'rightHand', 0, 'greatsword'), '', 'with the other hand free, the two-hander goes in');
+    reaver.loadout.sets.rightHand[0] = 'greatsword';
+    eq(gripOf(twoHanded, reaver.loadout, 'reaver').mode, 'two');
+    eq(gripTags(gripOf(twoHanded, reaver.loadout, 'reaver')).join('|'), 'equipment.twoHanded');
+
+    // The snapshot. A card played under a dual grip carries the derived tag on
+    // its cardPlayed event and its action card — and on no card row, no deck
+    // instance, no card definition.
+    stampDeck(REG, rogue);
+    const c = createCombat({
+      registries: REG, rng: createRng(0x3c3c),
+      player: { classId: 'rogue', attributes: rogue.attributes, maxHp: 60, hp: 60, mana: 2, maxMana: 2, energyMax: rogue.energyMax, drawPerTurn: rogue.drawPerTurn, deck: rogue.deck, loadout: rogue.loadout, relicIds: [] },
+      enemyIds: ['fellWarden'],
+    });
+    const target = c.enemies.find((e) => e.alive);
+    const playable = c.piles.hand.find((inst) => { const def = resolveCard(REG, inst); return !(def.keywords || []).includes('unplayable') && def.cost !== 'X' && c.player.energy >= def.cost && (def.manaCost || 0) === 0; });
+    assert(playable, 'the opening hand holds a playable card');
+    const out = dispatch(c, { type: 'playCard', cardInstanceId: playable.instanceId, targetId: target.id });
+    const played = out.events.find((e) => e.type === 'cardPlayed');
+    assert(played, 'cardPlayed fired');
+    eq((played.derivedTags || []).join('|'), 'equipment.dualWield', 'the event carries the grip\'s derived tag');
+    assert(!(played.cardTags || []).includes('equipment.dualWield'), 'and not among the card\'s own tags');
+    assert(!(REG.cards.get(playable.cardId).tags || []).includes('equipment.dualWield'), 'the card definition never carries it');
+    assert(!('derivedTags' in playable), 'nor does the deck instance');
+    const preview = previewCard(c, c.piles.hand[0] ? c.piles.hand[0].instanceId : playable.instanceId, target.id);
+    assert(preview, 'a preview still answers');
+
+    // The predicate reads the card's tags ∪ the derived tags, on the action
+    // card and on the event alike.
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), true, 'a derived tag answers on the card snapshot');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'blade' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), true, 'an authored tag answers');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.twoHanded' }, { card: { tags: ['blade'], derivedTags: ['equipment.dualWield'] } }), false, 'a tag in neither list does not');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, { event: played }), true, 'and the event path reads the same lists');
+    eq(evalPredicate(c, { p: 'cardTagIs', tag: 'equipment.dualWield' }, {}), false, 'no card, no event: false');
+
+    // Validation: the tag must be a node of the tree, by name.
+    const defend = contentBundle.cards.find((card) => card.id === 'defend');
+    const probe = (tag) => withKindRows({ ...contentBundle, cards: [...contentBundle.cards, { ...structuredClone(defend), id: 'probeGripCard', effects: [{ ...structuredClone(defend.effects[0]), if: { p: 'cardTagIs', tag } }] }] });
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const bad = validateContent(probe('nope'));
+    assert(!bad.ok && said(bad).some((e) => /probeGripCard/.test(e) && /Unknown tag 'nope'/.test(e)), `an unknown tag is refused by name — got ${JSON.stringify(said(bad)).slice(0, 300)}`);
+    const good = validateContent(probe('equipment.dualWield'));
+    assert(!said(good).some((e) => /probeGripCard/.test(e)), `the derived tag is a legal predicate tag — got ${JSON.stringify(said(good).filter((e) => /probeGripCard/.test(e)))}`);
   });
 
   const passed = results.filter((r) => r.ok).length;

@@ -240,6 +240,22 @@ locks on equip and unlocks on unequip; dual daggers show `dual` in the
 snapshot and not on the card definition; `figureSpec` test covers four worn
 slots.
 
+**3c AS BUILT (2026-09-19):** the grip is READ, not stored. `gripOf` derives
+`one`/`two`/`dual` from the two hand slots (a stored grip would be a second
+home for a fact the hands already hold); the moment a grip CHOICE exists
+(two-handing a one-hander) that choice becomes the stored intent and `gripOf`
+its reader. The derived tags are framework nodes — `equipment.twoHanded`
+(already authored) and `equipment.dualWield` (new) — so the predicate that
+asks about them is validated against the tree like any tag. They ride the
+card snapshot in solo and co-op combat as `derivedTags`, and the `cardPlayed`
+event carries `cardTags` and `derivedTags`; the preview builds its card the
+same way (and now reads the kind tag, which the tree phase had left at
+`def.type` on that one site). `canEquip` refuses the one illegal grip (a
+two-hander beside an occupied hand) when told what is going where; the DEX
+gate on `dual` is phase 9's row, as the plan sequences it. No shipped package
+requires two hands, so `two` is dormant and proven with a probe registry;
+`dual` is live (knife and sword). SPEC §13.4c; engine test 84.
+
 ## Phase 4 — Skill tracks (2 PRs)
 
 **PR 4a: ledger and curve.**
