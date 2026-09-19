@@ -318,6 +318,23 @@ export function bandEntries(bands) {
 }
 
 /**
+ * Whether the edge between two bands may move: both must hold numbers. A
+ * band written as "$name" (or anything else the compiler resolves later) is
+ * edited by hand under Values, so a drag or a slider leaves the pair alone.
+ */
+export function bandPairEditable(a, b) {
+  return !!a && !!b && Number.isFinite(a.percent) && Number.isFinite(b.percent);
+}
+
+/** The band whose share moves when `id` is set: the next one, or the previous for the last. */
+export function bandPartner(bands, id) {
+  const entries = bandEntries(bands);
+  const i = entries.findIndex((e) => e.id === id);
+  if (i < 0) return null;
+  return i < entries.length - 1 ? entries[i + 1] : entries[i - 1] || null;
+}
+
+/**
  * Move the edge between band `index` and `index + 1` by `deltaPercent`,
  * snapped to `step`, so one band gains exactly what the other loses. A band
  * never drops below `minPercent`. Returns a new bands object.
@@ -326,6 +343,7 @@ export function moveBandEdge(bands, index, deltaPercent, { step = 1, minPercent 
   const entries = bandEntries(bands);
   if (index < 0 || index >= entries.length - 1) return clone(bands);
   const a = entries[index], b = entries[index + 1];
+  if (!bandPairEditable(a, b)) return clone(bands); // a "$name" band is edited by hand, never moved
   const room = step > 0 ? Math.round(deltaPercent / step) * step : deltaPercent;
   const delta = clamp(room, -(a.percent - minPercent), b.percent - minPercent);
   const out = {};
@@ -341,7 +359,7 @@ export function setBand(bands, id, percent, { minPercent = 0 } = {}) {
   const i = entries.findIndex((e) => e.id === id);
   if (i < 0) return clone(bands);
   const j = i < entries.length - 1 ? i + 1 : i - 1;
-  if (j < 0) return clone(bands);
+  if (j < 0 || !bandPairEditable(entries[i], entries[j])) return clone(bands);
   const target = clamp(percent, minPercent, entries[i].percent + entries[j].percent - minPercent);
   return moveBandEdge(bands, Math.min(i, j), (i < j ? 1 : -1) * (target - entries[i].percent), { step: 0, minPercent });
 }

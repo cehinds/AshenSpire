@@ -62,10 +62,19 @@ export class Workspace {
   serialize(task) { const run = this.queue.then(task, task); this.queue = run.catch(() => {}); return run; }
   get workspaceDir() { return path.join(HERE, 'workspace'); }
 
+  /**
+   * The settings the page boots from: the defaults under workspace/settings.json,
+   * then the live game values. A persisted file that does not parse, or that
+   * `settingsProblems` refuses (a hand edit, an older shape), never reaches the
+   * page: the defaults stand and `problems` says why, so the studio always opens
+   * and the next saved edit writes a clean file.
+   */
   async settings() {
-    let live = {};
-    try { live = JSON.parse(await fs.readFile(path.join(this.workspaceDir, 'settings.json'), 'utf8')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
-    const merged = mergeSettings(DEFAULT_SETTINGS, live);
+    let live = {}; const problems = [];
+    try { live = JSON.parse(await fs.readFile(path.join(this.workspaceDir, 'settings.json'), 'utf8')); } catch (e) { if (e.code !== 'ENOENT') problems.push(`workspace/settings.json: ${e.message}`); }
+    let merged = mergeSettings(DEFAULT_SETTINGS, live);
+    const refused = settingsProblems(merged);
+    if (refused.length) { problems.push(...refused.map((m) => `workspace/settings.json: ${m}`)); merged = mergeSettings(DEFAULT_SETTINGS, {}); }
     try {
       const { balance } = await import(pathToFileURL(path.join(this.root, 'src/content/balance.js')).href);
       if (balance && balance.ui && balance.ui.uiScale) merged.gameLayout = { ...merged.gameLayout, ...balance.ui.uiScale };
@@ -79,7 +88,7 @@ export class Workspace {
       const breakpoint = armoury && armoury.layout && armoury.layout.responsive && armoury.layout.responsive.breakpoint;
       if (Number.isFinite(breakpoint)) merged.screens = { ...merged.screens, armouryBreakpointPx: breakpoint };
     } catch { /* no source file: the default stands */ }
-    return merged;
+    return problems.length ? { ...merged, problems } : merged;
   }
 
   async saveSettings(settings) {

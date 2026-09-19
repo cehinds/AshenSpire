@@ -93,6 +93,18 @@ test('bands stay at 100 whichever edge moves, and never go negative', () => {
   assert.deepEqual(M.setBand(bands, 'hud', 20), { hud: 20, scene: 45, context: 30, footer: 5 });
   assert.deepEqual(M.setBand(bands, 'footer', 15), { hud: 10, scene: 55, context: 20, footer: 15 });
   for (const b of [M.moveBandEdge(bands, 1, 99), M.setBand(bands, 'scene', 200)]) assert.equal(Object.values(b).reduce((a, v) => a + v, 0), 100);
+  // A "$name" band is edited by hand: neither it nor the band that would take
+  // its slack moves from a drag or a slider, and the rest still do.
+  const referenced = { hud: '$hudShare', scene: 55, context: 30, footer: 5 };
+  assert.deepEqual(M.moveBandEdge(referenced, 0, 5), referenced);
+  assert.deepEqual(M.setBand(referenced, 'hud', 20), referenced);
+  assert.deepEqual(M.setBand(referenced, 'scene', 60), { hud: '$hudShare', scene: 60, context: 25, footer: 5 }, 'scene pairs with context, both numbers');
+  assert.equal(M.bandPartner(referenced, 'footer').id, 'context', 'the last band pairs with the previous one');
+  assert.equal(M.bandPartner(referenced, 'hud').id, 'scene');
+  assert.equal(M.bandPartner(referenced, 'nope'), null);
+  assert.equal(M.bandPairEditable({ id: 'a', percent: 10 }, { id: 'b', percent: '$x' }), false);
+  assert.equal(M.bandPairEditable({ id: 'a', percent: 10 }, null), false);
+  assert.equal(M.bandPairEditable({ id: 'a', percent: 10 }, { id: 'b', percent: 20 }), true);
 });
 
 test('paths get, set and delete without touching the input', () => {

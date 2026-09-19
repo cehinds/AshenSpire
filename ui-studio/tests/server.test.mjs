@@ -93,6 +93,20 @@ test('settings merge over the defaults and refuse a broken shape; sketches valid
   t.after(async () => { if (had === null) await fs.rm(settingsFile, { force: true }); else await fs.writeFile(settingsFile, had); });
   await workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 12 } });
   assert.equal((await workspace.settings()).grid.sizePx, 12);
+  // A persisted file the validator refuses, or one that does not parse, never
+  // reaches the page: the defaults stand, the live values still win, and
+  // `problems` names the file so the page can say so.
+  await fs.writeFile(settingsFile, JSON.stringify({ grid: { sizePx: 12 }, devices: [null] }));
+  let served = await workspace.settings();
+  assert.equal(served.grid.sizePx, 8, 'the refused file is set aside whole');
+  assert.equal(served.screens.armouryBreakpointPx, 700);
+  assert.match(served.problems.join('; '), /settings\.json: devices\[0\]/);
+  await fs.writeFile(settingsFile, '{ not json');
+  served = await workspace.settings();
+  assert.equal(served.grid.sizePx, 8);
+  assert.match(served.problems[0], /settings\.json: .*JSON/);
+  await workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 12 } });
+  assert.equal((await workspace.settings()).problems, undefined, 'a clean save clears it');
   // Two settings writes at once are serialized: the file parses and holds one of them whole.
   await Promise.all([workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 13 } }), workspace.saveSettings({ ...before, grid: { ...before.grid, sizePx: 14 } })]);
   const parsed = JSON.parse(await fs.readFile(settingsFile, 'utf8'));

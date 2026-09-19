@@ -95,7 +95,9 @@ async function boot() {
     if (session.token) state.api = session;
   } catch { /* opened without the server */ }
   if (state.api) {
-    state.settings = M.mergeSettings(M.DEFAULT_SETTINGS, await api('settings'));
+    const { problems: refused = [], ...served } = await api('settings');
+    state.settings = M.mergeSettings(M.DEFAULT_SETTINGS, served);
+    for (const p of refused) toast(`Settings file ignored — ${p}`, true);
     for (const e of await api('config')) loadFile(e);
     state.sketches = await api('sketches');
     $('#project').textContent = `${state.api.root} · ${state.api.branch}`;
@@ -368,7 +370,13 @@ function selectionConfigHtml() {
       const path = (r.edit && r.edit.path) || (regs.find((x) => x.edit && x.edit.kind === 'bandEdge') || { edit: { path: 'sizing.bands' } }).edit.path;
       const bands = M.getPath(file.history.present, path) || {};
       html += `<div class="hint">Bands of <code>${esc(path)}</code> always sum to 100: the slack moves to the next band.</div>`;
-      for (const [id, pct] of Object.entries(bands)) html += `<div class="row"><label>${esc(id)}</label><input type="range" min="0" max="100" step="${state.settings.grid.bandStepPercent}" value="${pct}" data-band="${esc(id)}" data-bands-path="${esc(path)}" class="grow"><input type="number" min="0" max="100" step="${state.settings.grid.bandStepPercent}" value="${pct}" data-band="${esc(id)}" data-bands-path="${esc(path)}"> <span class="unit">${M.round(vp.height * pct / 100, 0)}px</span></div>`;
+      for (const [id, pct] of Object.entries(bands)) {
+        // A "$name" band, or the numeric band that would take its slack, is
+        // edited by hand under Values: a slider on it would write NaN.
+        const partner = M.bandPartner(bands, id);
+        if (!Number.isFinite(pct) || !M.bandPairEditable({ id, percent: pct }, partner)) { html += `<div class="row"><label>${esc(id)}</label><code>${esc(JSON.stringify(pct))}</code> <span class="unit">${Number.isFinite(pct) ? `paired with ${esc(partner ? partner.id : '—')} — ` : ''}edit under Values</span></div>`; continue; }
+        html += `<div class="row"><label>${esc(id)}</label><input type="range" min="0" max="100" step="${state.settings.grid.bandStepPercent}" value="${pct}" data-band="${esc(id)}" data-bands-path="${esc(path)}" class="grow"><input type="number" min="0" max="100" step="${state.settings.grid.bandStepPercent}" value="${pct}" data-band="${esc(id)}" data-bands-path="${esc(path)}"> <span class="unit">${M.round(vp.height * pct / 100, 0)}px</span></div>`;
+      }
     } else if (r.edit && r.edit.kind === 'path') {
       for (const p of [r.edit.path, r.edit.pathH].filter(Boolean)) {
         const v = M.getPath(file.history.present, p); const kind = M.leafKind(v);
@@ -552,6 +560,7 @@ function onBandInput(input) {
   // push a step per pixel, and a push of an equal state records nothing).
   if (!state.bandEditStart) state.bandEditStart = { rel: activeRel(), data: f.history.present };
   const path = input.dataset.bandsPath; const bands = M.getPath(f.history.present, path);
+  if (!M.bandPairEditable(M.bandEntries(bands).find((b) => b.id === input.dataset.band), M.bandPartner(bands, input.dataset.band))) return; // a "$name" pair: the file changed under the inspector
   const next = M.setBand(bands, input.dataset.band, Number(input.value));
   f.history.replace(M.setPath(f.history.present, path, next));
   renderStage();
@@ -845,13 +854,15 @@ async function saveSketch() {
 }
 async function openSketch(name) {
   if (sketchDirty() && !confirm('Discard the current sketch?')) return;
-  // The document may change while the file is fetched (an edit, or another
-  // open); what was confirmed is what was seen, so a changed one is asked again.
+  // The document may change while the file is fetched. Another document
+  // (an open that finished first, or a new sketch) bumps the revision,
+  // and this older answer is dropped for it; an edit to the same document is
+  // asked about again, since what was confirmed is what was seen.
   const seen = JSON.stringify(state.sketch.present), revision = state.sketchRevision;
   try {
     const r = await api(`sketch?name=${encodeURIComponent(name)}`);
-    const changed = state.sketchRevision !== revision || JSON.stringify(state.sketch.present) !== seen;
-    if (changed && sketchDirty() && !confirm('The sketch changed while loading. Discard those changes too?')) return;
+    if (state.sketchRevision !== revision) { toast(`${name} was not opened: another sketch action finished first`, true); return; }
+    if (JSON.stringify(state.sketch.present) !== seen && sketchDirty() && !confirm('The sketch changed while loading. Discard those changes too?')) return;
     loadSketch(r.sketch, r.name, r.hash);
   } catch (e) { toast(e.message, true); }
 }
