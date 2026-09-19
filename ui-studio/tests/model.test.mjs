@@ -320,7 +320,7 @@ test('the shop stacks below wideMinRem with the rail on top, as ShopWorkspaceMod
   assert.deepEqual([top.x, top.y, top.w], [0, 0, 390]);
   const stacked = phone.find((r) => r.id === 'detail');
   assert.equal(stacked.w, 390);
-  assert.equal(stacked.h, Math.floor((844 - 3 * 9 - 9) * 0.5));
+  assert.equal(stacked.h, Math.floor((844 - (44 + 2 * 0.6 * 9) - 9) * 0.5), 'the top row is the selector: one tap target plus its margins');
   assert.equal(stacked.y + stacked.h, 844);
   // 844x390 at zoom 0.62 is wide by width (372 px is 60rem) but seven 44 px items plus gaps and insets
   // (348 px) do not fit 70% of 390 (273): the category rail folds into a selector row above the columns.
@@ -328,6 +328,7 @@ test('the shop stacks below wideMinRem with the rail on top, as ShopWorkspaceMod
   assert.equal(short.find((r) => r.id === 'rail'), undefined);
   const row = short.find((r) => r.id === 'selector');
   assert.deepEqual([row.x, row.y, row.w], [0, 0, 844]);
+  assert.equal(row.h, 44 + 2 * 0.6 * 6.2, 'the selector row is one physical tap target plus its 0.6rem margins');
   assert.equal(short.find((r) => r.id === 'offers').y, row.h);
   const fit = M.categoryRailFits(nav, { width: 844, height: 390, rem: 6.2, count: 7, itemMinPx: 44 });
   assert.deepEqual([fit.fitsWidth, fit.fitsHeight, fit.fits], [true, false, false]);
@@ -401,8 +402,8 @@ test('the Smith folds its candidate rail into a selector row under the category 
   const phone = at(390, 844);
   assert.equal(phone.find((r) => r.id === 'candidates'), undefined);
   const row = phone.find((r) => r.id === 'selector');
-  assert.deepEqual([row.x, row.y, row.w, row.h], [0, 0, 390, 2.75 * 9]);
-  assert.equal(phone.find((r) => r.id === 'detail').y, 2.75 * 9);
+  assert.deepEqual([row.x, row.y, row.w, row.h], [0, 0, 390, 44 + 2 * 0.6 * 9]);
+  assert.equal(phone.find((r) => r.id === 'detail').y, 44 + 2 * 0.6 * 9);
   // An iPad at 768x1024 zooms to 0.64: a 1200 px local host keeps the rail, as the live categoryNav does.
   assert.equal(M.gameLayoutFor({ width: 768, height: 1024 }, M.DEFAULT_SETTINGS.gameLayout).zoom, 0.64);
   assert.ok(at(768, 1024).some((r) => r.id === 'candidates'));

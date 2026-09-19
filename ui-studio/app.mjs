@@ -49,7 +49,7 @@ const tokens = () => { const t = fileOf('ui/tokens.json'); return (t && t.histor
 // Every loaded file's current draft by path, for a drawing that reads a second file (combat reads the card ratio).
 const loadedConfigs = () => Object.fromEntries([...state.files].map(([rel, f]) => [rel, f.history.present]));
 const proposedText = (file) => M.formatJson(file.history.present, { original: file.text });
-const isDirty = (file) => proposedText(file) !== file.text.replace(/\r\n/g, '\n');
+const isDirty = (file) => proposedText(file) !== file.text;
 const dirtyFiles = () => [...state.files.entries()].filter(([, f]) => isDirty(f));
 function regions() {
   const file = activeFile();
@@ -115,7 +115,11 @@ async function boot() {
   renderAll();
   new ResizeObserver(() => { if (state.zoom === 'fit') renderStage(); }).observe($('#stage-body'));
 }
-function loadFile({ rel, text, hash }) { state.files.set(rel, { text, hash, history: new M.History(JSON.parse(text)) }); }
+// Text is kept with LF line endings whatever the checkout wrote (a Windows
+// autocrlf checkout hands CRLF), so the dirty comparison, the formatter's
+// span reuse and the server's hash (which normalizes the same way) agree.
+const lf = (text) => String(text).replace(/\r\n/g, '\n');
+function loadFile({ rel, text, hash }) { const normalized = lf(text); state.files.set(rel, { text: normalized, hash, history: new M.History(JSON.parse(normalized)) }); }
 async function tryStaticConfig() {
   // Served from the checkout by any static server: read the catalog's files relative to this page.
   const rels = [...new Set(['ui/tokens.json', ...state.settings.wireframes.flatMap((w) => [w.file, w.parent].filter(Boolean))])];
@@ -326,7 +330,15 @@ function leafInput(path, value, kind, vars) {
     case 'number': return numberInput(path, value);
     case 'boolean': return `<input type="checkbox" data-path="${esc(path)}" data-kind="boolean" ${value ? 'checked' : ''}>`;
     case 'ref': return `<span><select data-path="${esc(path)}" data-kind="ref">${vars.map((v) => `<option value="$${esc(v.name)}"${`$${v.name}` === value ? ' selected' : ''}>$${esc(v.name)} = ${esc(v.value)}</option>`).join('')}</select> <button class="small" data-unref="${esc(path)}" title="Replace the variable with its number">#</button></span>`;
-    case 'fraction': return `<span class="frac"><input type="number" step="any" data-path="${esc(path)}.numerator" data-kind="number" value="${esc(value.numerator)}"> / <input type="number" step="any" data-path="${esc(path)}.denominator" data-kind="number" value="${esc(value.denominator)}"> <span class="unit">= ${esc(M.round(value.numerator / value.denominator, 4))}</span></span>`;
+    case 'fraction': {
+      // Each operand takes its own editor: a number, or a "$name" picker when
+      // the file references a variable (environments.json, paintedOutfits.json do).
+      const operand = (key) => { const v = value[key]; const k = M.leafKind(v); return k === 'ref' ? leafInput(`${path}.${key}`, v, 'ref', vars) : `<input type="number" step="any" data-path="${esc(path)}.${key}" data-kind="number" value="${esc(v)}">`; };
+      const shown = (v) => (M.isRef(v) ? (vars.find((x) => `$${x.name}` === v) || {}).value : v);
+      const n = shown(value.numerator), d = shown(value.denominator);
+      const result = typeof n === 'number' && typeof d === 'number' && d !== 0 ? `= ${esc(M.round(n / d, 4))}` : '';
+      return `<span class="frac">${operand('numerator')} / ${operand('denominator')} <span class="unit">${result}</span></span>`;
+    }
     case 'list': return `<input type="text" data-path="${esc(path)}" data-kind="list" value="${esc(value.map((v) => JSON.stringify(v)).join(', '))}" title="Comma-separated JSON values">`;
     case 'null': return `<input type="text" data-path="${esc(path)}" data-kind="json" value="null">`;
     default: return `<input type="text" data-path="${esc(path)}" data-kind="string" value="${esc(value)}">`;
@@ -480,7 +492,7 @@ function bindChrome() {
   $('#zoom').addEventListener('change', (e) => { state.zoom = e.target.value === 'fit' ? 'fit' : Number(e.target.value); persistView(); renderStage(); });
   for (const k of ['w', 'h']) $(`#free-${k}`).addEventListener('change', (e) => { state.freeSize[k === 'w' ? 'width' : 'height'] = M.clamp(Number(e.target.value) || 200, 200, 8192); persistView(); renderAll(); });
   $('#undo').addEventListener('click', undo); $('#redo').addEventListener('click', redo);
-  $('#save').addEventListener('click', () => { state.tab = 'files'; renderRight(); if (state.api && dirtyFiles().length) saveConfig(); });
+  $('#save').addEventListener('click', () => { state.tab = 'files'; renderRight(); if (!state.api) return; if (state.mode === 'sketch') { if (sketchDirty()) saveSketch(); } else if (dirtyFiles().length) saveConfig(); });
   $('#right-tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; state.tab = b.dataset.tab; renderRight(); });
   $('#open-json').addEventListener('change', openJsonFiles);
   $('#left').addEventListener('click', onLeftClick);
@@ -789,7 +801,7 @@ async function saveConfig() {
     const result = await api('save', { changes: list });
     // The baseline is the text that was SENT, not the draft as it is now: an
     // edit made while the request was in flight stays dirty for the next save.
-    for (const saved of result.files) { const f = fileOf(saved.rel); const sent = list.find((c) => c.rel === saved.rel); f.text = sent.text; f.hash = saved.hash; }
+    for (const saved of result.files) { const f = fileOf(saved.rel); const sent = list.find((c) => c.rel === saved.rel); f.text = lf(sent.text); f.hash = saved.hash; }
     state.validation = null; persistDrafts();
     toast(`Saved ${result.files.length} file(s) (backup ${result.backup})`);
     if (state.settings.save.compileAfterSave) await compile();
@@ -841,7 +853,7 @@ function loadSketch(sketch, name = '', hash = null) {
 async function stageBackup(id) {
   try {
     const r = await api('backup', { id });
-    for (const c of r.changes) { const f = fileOf(c.rel); if (f) f.history.push(JSON.parse(c.text)); }
+    for (const c of r.changes) { const f = fileOf(c.rel); if (f) f.history.push(JSON.parse(lf(c.text))); }
     persistDrafts(); toast(`Staged ${r.changes.length} file(s) from the backup — review under Save`); renderAll();
   } catch (e) { toast(e.message, true); }
 }

@@ -542,6 +542,14 @@ export function combatPlan(data, parent, { width, height, zoom = 1, rem = 10, ca
  * in bodyHeightFraction of the height. Physical px throughout (the rail item
  * is one tap target: --tap-floor is the target divided by the zoom, local).
  */
+/**
+ * The category selector row the rail folds into: styles/kit.css gives
+ * .as-catnav-toggle min-height var(--tap-floor) (one tap target, physical
+ * after the zoom) and 0.6rem margins above and below.
+ */
+export const SELECTOR_MARGIN_REM = 0.6;
+export function selectorRowPx({ rem, itemMinPx = 44 } = {}) { return itemMinPx + 2 * SELECTOR_MARGIN_REM * rem; }
+
 export function categoryRailFits(nav, { width, height, rem, count = 0, itemMinPx = 44 } = {}) {
   const n = (path, fallback) => { const v = getPath(nav || {}, path); return typeof v === 'number' && Number.isFinite(v) ? v : fallback; };
   const minWidthPx = n('sizing.railMinHostWidthRem', 60) * rem;
@@ -713,7 +721,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
       const wide = W >= num(sizing.wideMinRem) * rem;
       const nav = configs['ui/components/categoryNav.json'] || null;
       const rail = categoryRailFits(nav, { width: W, height: H, rem, count: num(screens.shopCategoryCount, 7), itemMinPx: num(screens.railItemMinPx, 44) });
-      const railH = 3 * rem;
+      const railH = selectorRowPx({ rem, itemMinPx: num(screens.railItemMinPx, 44) });
       if (wide && rail.fits) {
         const railW = Math.round(clamp(W * num(sizing.railFraction), num(sizing.railMinRem) * rem, num(sizing.railMaxRem) * rem));
         push({ id: 'rail', label: `rail ${round(num(sizing.railFraction) * 100, 1)}% (${num(sizing.railMinRem)}–${num(sizing.railMaxRem)}rem)`, x: 0, y: 0, w: railW, h: H, edit: { kind: 'path', path: 'sizing.railFraction', unit: 'fractionOfWidth', axis: 'w' } });
@@ -768,7 +776,7 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
         push({ id: 'candidates', label: `candidates ${round(num(sizing.candidatesWidth) * 100)}% (${num(sizing.candidatesMinRem)}–${num(sizing.candidatesMaxRem)}rem)`, x: 0, y: 0, w: cw, h: H, edit: { kind: 'path', path: 'sizing.candidatesWidth', unit: 'fractionOfWidth', axis: 'w' } });
         push({ id: 'detail', label: 'detail', x: cw, y: 0, w: W - cw, h: H });
       } else {
-        const rowH = num(tokens.targetRem, 2.75) * rem;
+        const rowH = selectorRowPx({ rem, itemMinPx: num(screens.railItemMinPx, 44) });
         const why = !rail.fitsWidth ? `host under ${round(rail.minWidthPx / rem)}rem = ${round(rail.minWidthPx, 0)}px at zoom ${zoom}` : `${num(screens.smithCandidateCount, 6)} items need ${round(rail.railHeightPx, 0)}px, ${round(rail.bodyHeightPx, 0)} available`;
         push({ id: 'selector', label: `category selector (${why}: the rail becomes a row)`, x: 0, y: 0, w: W, h: rowH });
         push({ id: 'detail', label: 'pane', x: 0, y: rowH, w: W, h: H - rowH });
