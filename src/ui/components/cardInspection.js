@@ -1,7 +1,7 @@
 import { openModal } from './modalShell.js';
 import { hideTooltip } from './tooltip.js';
 import { decorateKeywords } from './tooltipGlossary.js';
-import { lightCard, countBeat, spendSelectingBeat, litCard } from './cardSelection.js';
+import { lightCard, countBeat, spendSelectingBeat, litCard, clearSelection } from './cardSelection.js';
 import { selectionRevealDelayMs } from '../models/SelectionEffectModel.js';
 import { cardDoorStackBelowPx, doorReadableMinPx } from '../models/CardSizeModel.js';
 
@@ -387,7 +387,17 @@ export function bindCardInspection(card, { title, open, readOnly = false, touchS
     revealInfo();
     card.dispatchEvent(new CustomEvent('cardinspectionselect', { bubbles: true }));
   };
-  card.addEventListener('cardholdstart', select);
+  // A HOLD THAT BECOMES A DRAG TAKES ITS LIGHT BACK. A combat card's hold
+  // lights this card from pointer-down (combat.js dispatches 'cardholdstart'
+  // at once, so the fill is visible from the first frame). A press that then
+  // crosses the drag slop was never a selection: the light the hold lent is
+  // put out again, and a card lit before the press keeps it, as a drag has
+  // never undone a choice already made.
+  let litByHold = false;
+  card.addEventListener('cardholdstart', () => { litByHold = litCard() !== identity; select(); });
+  card.addEventListener('carddragstart', () => { if (litByHold && litCard() === identity) clearSelection(); litByHold = false; });
+  card.addEventListener('pointerup', () => { litByHold = false; });
+  card.addEventListener('pointercancel', () => { litByHold = false; });
   card.addEventListener('cardinspectionrequest', () => { select(); revealInfo(); });
   for (const type of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'keydown', 'keyup']) {
     info.addEventListener(type, event => event.stopImmediatePropagation());
