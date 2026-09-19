@@ -26,9 +26,9 @@
 import * as F from './combatRules.js';
 import { allocateInteger } from '../model/combatRules.js';
 import { COMBAT_OPCODES, RUN_OPCODES, relicInRewardPool } from '../model/schemas.js';
-import { evaluate, isFormula } from '../model/formulas.js';
+import { evaluate, evaluateRaw, isFormula } from '../model/formulas.js';
 import * as statuses from '../framework/statusSemantics.js';
-import { evalPredicate, checkPhases } from './triggers.js';
+import { evalPredicate, checkPhases, emitEvent } from './triggers.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { canRemoveDeckCard, removeDeckCard } from '../model/cardRemoval.js';
 import { flaskSlotCap, chargeFlaskDefinition } from '../model/gracerefill.js';
@@ -36,6 +36,8 @@ import { syncFlaskGrowth } from '../model/flaskgrowth.js';
 import { passiveMult } from '../model/registries.js';
 import { commitSmithing, smithingPlan } from '../model/smithing.js';
 import { propertyMountsOf } from './properties.js';
+import { swapRunClass } from '../model/classSwap.js';
+import { applyGraceRefill } from './encounters.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -148,6 +150,9 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
     targetId: target.id,
     amount: dmg,
     blocked,
+    // The card that landed it, for the readers that pay by the piece that lent
+    // it (engine/skillXp.js): which hand, which piece. Absent when no card did.
+    ...(carrier && carrier.instanceId ? { cardInstanceId: carrier.instanceId, sourceHand: carrier.sourceHand, grantedBy: carrier.grantedBy } : {}),
     blockRemaining: target.block,
     ...(components ? { components, hpComponents: components.map((c, i) => ({ type: c.type, amount: hpShares[i] || 0 })), sourceInstanceId: F.foundationSource(ctx, source, carrier).id,
       tags: receipt.tags } : {}),
@@ -211,7 +216,7 @@ export function computeBlockGain(ctx, entity, base) {
 }
 
 /** gainBlock — mutating block gain with 'blockCap' modifier honored. */
-export function gainBlock(ctx, entity, base) {
+export function gainBlock(ctx, entity, base, card = null) {
   if (!entity.alive) return 0;
   let amt = computeBlockGain(ctx, entity, base);
   const cap = statuses.getCap(ctx, entity, 'blockCap');
@@ -219,7 +224,15 @@ export function gainBlock(ctx, entity, base) {
     amt = Math.max(0, cap - entity.block);
   }
   entity.block += amt;
-  ctx.emit('blockGained', { targetId: entity.id, amount: amt, ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}) });
+  ctx.emit('blockGained', {
+    targetId: entity.id, amount: amt,
+    ...(ctx.playerIdForEntity ? { targetPlayerId: ctx.playerIdForEntity(entity) } : {}),
+    // The card that raised it, when one did (engine/skillXp.js pays its piece's
+    // group), and in co-op the seat that played it — a guard cast on an ally
+    // is the caster's shield work, not the ally's.
+    ...(card && card.instanceId ? { cardInstanceId: card.instanceId, sourceHand: card.sourceHand, grantedBy: card.grantedBy,
+      ...(ctx.playerIdForEntity && ctx.playerKey ? { sourcePlayerId: ctx.playerKey } : {}) } : {}),
+  });
   return amt;
 }
 
@@ -244,7 +257,10 @@ export function applyHeal(ctx, target, amount) {
     : null;
   ctx.emit('healed', {
     targetId: target.id,
-    ...(playerId ? { playerId } : {}),
+    // `playerId` for the readers that always had it; `targetPlayerId` so
+    // eventTargetIsOwner resolves the HEALED seat in co-op, as it does for a
+    // hit — an ally's heal is the ally's, not the active seat's.
+    ...(playerId ? { playerId, targetPlayerId: playerId } : {}),
     amount: gained,
     requested: n,
   });
@@ -443,6 +459,19 @@ function evalNum(ctx, action, value, dflt, target) {
   return v;
 }
 
+// The unfloored amount, for the one caller that multiplies before flooring
+// (the heal under ctx.healMult). The generic amount scaling applies as above.
+function evalRaw(ctx, action, value, dflt, target) {
+  if (value === undefined) return dflt;
+  let v;
+  if (typeof value === 'number') v = value;
+  else if (isFormula(value)) v = evaluateRaw(value, formulaCtxFor(ctx, action, target));
+  else throw new Error(`Expected number or formula, got ${JSON.stringify(value)}`);
+  const mult = action.meta && action.meta.amountMult;
+  if (typeof mult === 'number' && mult !== 1) v = Math.ceil(v * mult);
+  return v;
+}
+
 // ---------------------------------------------------------------------------
 // executeAction — the queue interpreter body
 // ---------------------------------------------------------------------------
@@ -518,7 +547,7 @@ function runOpcode(ctx, action, eff) {
     }
     case 'block': {
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        gainBlock(ctx, t, evalNum(ctx, action, eff.amount, 0, t), action.card);
       }
       break;
     }
@@ -609,10 +638,19 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'restoreMana': {
-      const n = Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      // BY an amount, or TO a floor (plan phase 7's floorOrFull rest): a pool
+      // under the floor rises to it; one already at or above it fills.
+      const toFloor = eff.toFloorPct !== undefined;
+      const n = toFloor ? 0 : Math.max(0, evalNum(ctx, action, eff.amount, 1));
+      const pct = toFloor ? Math.max(0, evalNum(ctx, action, eff.toFloorPct, 0)) : 0;
       for (const t of resolveTargets(ctx, action, eff.target)) {
         const before = t.mana;
-        t.mana = Math.min(t.maxMana, t.mana + n);
+        if (toFloor) {
+          const floor = Math.min(t.maxMana, Math.floor((t.maxMana * pct) / 100));
+          t.mana = before >= floor ? t.maxMana : floor;
+        } else {
+          t.mana = Math.min(t.maxMana, t.mana + n);
+        }
         ctx.emit('manaRestored', { targetId: t.id, amount: t.mana - before });
       }
       break;
@@ -626,8 +664,18 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'heal': {
+      // `ctx.healMult` is the run-level door's (createRunContext): a rest's
+      // heal scaled by the custom mod and the restHealMult passive. A fight
+      // never sets it and reads 1. Under a multiplier the amount is floored
+      // ONCE, after it — a percentage of max HP floored first and again after
+      // the multiplier would heal less than the single-floor rule it replaces
+      // (the review of #1195: 50 × 35% × 1.15 is 20, not 19).
+      const mult = typeof ctx.healMult === 'number' ? ctx.healMult : 1;
       for (const t of resolveTargets(ctx, action, eff.target)) {
-        applyHeal(ctx, t, evalNum(ctx, action, eff.amount, 0, t));
+        const amount = mult === 1
+          ? evalNum(ctx, action, eff.amount, 0, t)
+          : Math.floor(evalRaw(ctx, action, eff.amount, 0, t) * mult);
+        applyHeal(ctx, t, amount);
       }
       break;
     }
@@ -800,19 +848,42 @@ function runRunOpcode(ctx, action, eff) {
       run.combatEntered = eff.encounterId;
       break;
     }
+    case 'swapClass': {
+      // Plan phase 5c: the core card is replaced (model/classSwap.js). A
+      // random swap rolls on the 'misc' stream among every other class.
+      const others = ctx.registries.classes.ids().filter((id) => id !== run.class);
+      const classId = eff.random ? (others.length ? ctx.rng.pick('misc', others) : run.class) : eff.classId;
+      swapRunClass(ctx.registries, run, classId);
+      break;
+    }
+    case 'refillFlasks': {
+      // Plan phase 7: the grace refill is the `restFlasks` location rule's
+      // effect on `arrived`. A top-up by construction (engine/encounters.js),
+      // so a re-entry grants nothing twice; the receipt rides the context for
+      // the screen's refill line.
+      ctx.receipts = ctx.receipts || {};
+      ctx.receipts.refill = applyGraceRefill(ctx.registries, run, ctx.refillOpts || {});
+      break;
+    }
     default:
       throw new Error(`Run opcode '${eff.op}' has no implementation`);
   }
 }
 
 /**
- * executeRunEffects({ run, registries, rng }, effects) → { events }.
- * Executes run-level effect lists (event choices, shop purchases, rewards)
- * outside combat. Combat statistics ops are unavailable, but damage / loseHp /
- * heal apply to the run's HP through a player facade so events like
- * "take 6 damage" and "heal 20% max HP" work.
+ * createRunContext({ run, registries, rng }, opts) → the run-level door's
+ * context: a player FACADE over the run's pools (hp / mana) so heal, loseHp
+ * and restoreMana apply to the run through the same opcode bodies a fight
+ * uses, an empty enemy list, an action queue and a trigger-state map. Combat
+ * statistics ops are unavailable. Three doors share it: executeRunEffects
+ * (event choices, shop purchases, rewards, flasks on the map), and the
+ * location visit (engine/locations.js, plan phase 7), which mounts a place's
+ * property rules on it and emits `arrived` / `rested` through the trigger
+ * scan. `opts.healMult` scales every heal the context applies (the custom
+ * mod's lesser healing × the run's restHealMult passive); `opts.refillOpts`
+ * are handed to the refillFlasks opcode. Nothing here is persisted.
  */
-export function executeRunEffects({ run, registries, rng }, effects, meta = {}) {
+export function createRunContext({ run, registries, rng }, { healMult = 1, refillOpts = {} } = {}) {
   const events = [];
   const facade = {
     id: 'player',
@@ -843,8 +914,16 @@ export function executeRunEffects({ run, registries, rng }, effects, meta = {}) 
     turn: 0,
     triggerState: new Map(),
     _idCounter: 0,
+    healMult,
+    refillOpts,
+    receipts: {},
+    // An effect's own event (`healed`, `manaRestored`, …) rides the trigger
+    // bus, so a rule mounted on this context — a location's (engine/locations.js)
+    // — hears what another rule did, as combat properties do. With nothing
+    // mounted and no relics on the facade the scan finds no source and the
+    // event is simply logged, as before.
     emit(type, payload) {
-      events.push({ type, ...payload });
+      emitEvent(ctx, type, payload);
     },
     enqueue(a) {
       ctx.queue.push(a);
@@ -853,17 +932,52 @@ export function executeRunEffects({ run, registries, rng }, effects, meta = {}) 
       return `run${++ctx._idCounter}`;
     },
   };
-  for (const eff of effects) {
-    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta });
-  }
+  return ctx;
+}
+
+/**
+ * syncRunContext(ctx) — re-read the run's pools into the facade. A visit
+ * lives across other doors (a level point assigned re-derives maxHp; a flask
+ * charge moved), so a context that emits twice reads the run again before
+ * the second emission rather than committing a stale copy over it.
+ */
+export function syncRunContext(ctx) {
+  const { run, player } = ctx;
+  player.hp = run.hp;
+  player.maxHp = run.maxHp;
+  player.mana = run.mana;
+  player.maxMana = run.maxMana;
+  player.alive = run.hp > 0;
+  return ctx;
+}
+
+/** drainRunContext(ctx) — run the queue to empty (bounded), then write the facade back. */
+export function drainRunContext(ctx) {
   let guard = 0;
   while (ctx.queue.length) {
     if (++guard > 1000) throw new Error('Run effect queue did not drain');
     executeAction(ctx, ctx.queue.shift());
   }
-  run.hp = Math.min(facade.hp, run.maxHp);
-  run.mana = Math.min(facade.mana, run.maxMana);
-  return { events };
+  ctx.run.hp = Math.min(ctx.player.hp, ctx.run.maxHp);
+  ctx.run.mana = Math.min(ctx.player.mana, ctx.run.maxMana);
+  return ctx;
+}
+
+/**
+ * executeRunEffects({ run, registries, rng }, effects) → { events }.
+ * Executes run-level effect lists (event choices, shop purchases, rewards)
+ * outside combat. Combat statistics ops are unavailable, but damage / loseHp /
+ * heal apply to the run's HP through a player facade so events like
+ * "take 6 damage" and "heal 20% max HP" work.
+ */
+export function executeRunEffects({ run, registries, rng }, effects, meta = {}) {
+  const ctx = createRunContext({ run, registries, rng });
+  const facade = ctx.player;
+  for (const eff of effects) {
+    ctx.enqueue({ effect: eff, source: facade, owner: facade, target: facade, meta });
+  }
+  drainRunContext(ctx);
+  return { events: ctx.eventLog };
 }
 
 /** Spend one permanent restorative charge and apply its authored run effects. */

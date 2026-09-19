@@ -295,5 +295,191 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "Your hits build Arcane Exposure faster."
+  },
+  {
+    "nodeId": "ironFooting",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Entering a stance grants {block} Block."
+  },
+  {
+    "nodeId": "bloodTempo",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first stance you enter each turn draws {draw} card."
+  },
+  {
+    "nodeId": "ashenReserve",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of your turn, recover {restoreStamina} Stamina."
+  },
+  {
+    "nodeId": "grimHarvest",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever an enemy dies, heal {heal}."
+  },
+  {
+    "nodeId": "warlord",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Begin each combat with {strength} Strength."
+  },
+  {
+    "nodeId": "bulwarkKing",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of your turn, gain {block} Block."
+  },
+  {
+    "nodeId": "attunedMind",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you restore Mana each turn, draw {draw} card."
+  },
+  {
+    "nodeId": "starlitFocus",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Begin each combat with {starstoneCharge} Starstone Charge."
+  },
+  {
+    "nodeId": "lodestarCap",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Begin each combat with {restoreMana} more Mana."
+  },
+  {
+    "nodeId": "arcaneDraw",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first Arcane break each combat draws {draw} cards."
+  },
+  {
+    "nodeId": "conduit",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of your turn, recover {restoreStamina} Stamina."
+  },
+  {
+    "nodeId": "reservoir",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of your turn, restore {restoreMana} Mana."
+  },
+  {
+    "nodeId": "warmth",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever you heal, gain {block} Block."
+  },
+  {
+    "nodeId": "vigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of your turn, heal {heal}."
+  },
+  {
+    "nodeId": "sealOfPlenty",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you heal each combat, restore {restoreMana} Mana."
+  },
+  {
+    "nodeId": "wakingRot",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your attacks apply {crimsonBlight} Crimson Blight."
+  },
+  {
+    "nodeId": "martyr",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever you lose HP, gain {block} Block."
+  },
+  {
+    "nodeId": "saint",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Begin each combat healing {heal}."
+  },
+  {
+    "nodeId": "quickHands",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Begin each combat with {prepared} Prepared."
+  },
+  {
+    "nodeId": "secondWind",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first card you exhaust each turn draws {draw} card."
+  },
+  {
+    "nodeId": "honedEdge",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your attacks while Prepared apply {bleed} Bleed."
+  },
+  {
+    "nodeId": "poisonedPouch",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your attacks while Prepared apply {venom} Venom."
+  },
+  {
+    "nodeId": "assassin",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "When an enemy staggers, gain {prepared} Prepared and draw {draw} card."
+  },
+  {
+    "nodeId": "shadow",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of your turn, gain {block} Block."
+  },
+  {
+    "nodeId": "restHpSmall",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores {pct}% of your max HP."
+  },
+  {
+    "nodeId": "restHpPartial",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores {pct}% of your max HP."
+  },
+  {
+    "nodeId": "restHpFull",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores your HP to full."
+  },
+  {
+    "nodeId": "restManaFlat",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores {restoreMana} Mana."
+  },
+  {
+    "nodeId": "restManaFloor",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores Mana to {floorPct}% of max, or to full if already there."
+  },
+  {
+    "nodeId": "restManaFull",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Resting restores your Mana to full."
+  },
+  {
+    "nodeId": "restFlasks",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Arriving refills your flask charges."
   }
 ];

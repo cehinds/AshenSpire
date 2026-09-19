@@ -1,0 +1,36 @@
+# content/source/classTree.csv — the class tree (plan phase 5b, proposal §6.2)
+#
+# One row per node a class may pick as it levels: which class, which property
+# node, and the tier the node sits in. A tier opens at the class level
+# balance.skill.class.tierAt names; tier 3 nodes are the subclasses and are
+# mutually exclusive (a CONFLICTS_WITH row in nodeRelations.csv for every
+# pair, refused by name when missing). What a node DOES is its property rule
+# (nodeEffects.json); what it SAYS is its term (nodeTerms.csv). A node sits in
+# exactly one class.
+#
+# columns: classId, nodeId, tier
+classId,nodeId,tier
+reaver,ironFooting,1
+reaver,bloodTempo,1
+reaver,ashenReserve,2
+reaver,grimHarvest,2
+reaver,warlord,3
+reaver,bulwarkKing,3
+starseer,attunedMind,1
+starseer,starlitFocus,1
+starseer,lodestarCap,2
+starseer,arcaneDraw,2
+starseer,conduit,3
+starseer,reservoir,3
+herald,warmth,1
+herald,vigil,1
+herald,sealOfPlenty,2
+herald,wakingRot,2
+herald,martyr,3
+herald,saint,3
+rogue,quickHands,1
+rogue,secondWind,1
+rogue,honedEdge,2
+rogue,poisonedPouch,2
+rogue,assassin,3
+rogue,shadow,3

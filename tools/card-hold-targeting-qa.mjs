@@ -13,7 +13,8 @@ const root = resolve(process.env.CARD_HOLD_ROOT || process.cwd());
 const entry = process.env.CARD_HOLD_ENTRY || 'index.html';
 mkdirSync(output, { recursive: true });
 const server = await serve({ root, port: 0, open: false });
-const browser = await chromium.launch({ channel: 'msedge', headless: true });
+// Edge on the owner's machine; CHROME=<executable> elsewhere, as ui-sweep takes it.
+const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME, headless: true } : { channel: 'msedge', headless: true });
 const base = `http://127.0.0.1:${server.server.address().port}`;
 let checks = 0;
 const check = (condition, label) => { assert.ok(condition, label); checks++; console.log(`PASS ${label}`); };
@@ -102,7 +103,10 @@ try {
       `${name} completed hold exposes every legal living target`);
     await page.screenshot({ path: resolve(output, `${name}-target-selected.png`) });
 
-    await page.locator('.enemy.targetable:not(.dead)').first().click();
+    // A player taps the enemy's sprite: in the formation layout the combatant
+    // frame itself takes no pointer events, and on a phone its centre sits in
+    // the overhead space above the sprite.
+    await page.locator('.enemy.targetable:not(.dead) .sprite').first().click();
     await page.waitForFunction(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardInstanceId === window.__holdTargetCard).length === 1);
     check(await page.evaluate(() => window.__combat.eventLog.filter(event => event.type === 'cardPlayed' && event.cardInstanceId === window.__holdTargetCard).length === 1),
       `${name} choosing a legal target plays the held card exactly once`);

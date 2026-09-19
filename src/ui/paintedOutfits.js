@@ -1,5 +1,5 @@
 import { DEFEATED_ART } from '../content/defeatedArt.js';
-import { paintedOutfit } from '../model/paintedOutfitArt.js';
+import { paintedOutfit, armourArtClass, armourArtKey } from '../model/paintedOutfitArt.js';
 import { auraFilter, POWER_FRAMES } from './combatAura.js';
 import { COMBAT_SEQUENCES } from '../model/combatAnimation.js';
 import { COMBAT_POSE_STATES } from '../content/combatPoseStates.js';
@@ -11,6 +11,7 @@ import { hintImage } from './imageHints.js';
 import { preloadPoses } from './services/posePreloads.js';
 import { liteRendering } from './performance.js';
 import { uiConfig } from '../config/generated/ui.js';
+import { animationArt, animationClip, animationTiming, animationView } from '../model/equipmentAnimation.js';
 
 // The stage's geometry, its timings and the aura artwork live in
 // content/config/ui/presentation/paintedOutfits.json. This module builds the
@@ -20,13 +21,15 @@ const STAGE = OUTFIT.sizing.stage;
 const TIME = OUTFIT.motion;
 const POSE = OUTFIT.behavior;
 
-export function paintedPortraitUrl(classId, armourId = POSE.defaultArmourId) {
+export function paintedPortraitUrl(classId, armourId = POSE.defaultArmourId, animation = null) {
+  const portrait = animationView(animation, 'portrait');
+  if (portrait) return assetUrl(portrait);
   const art = paintedOutfit(classId, armourId);
   return art ? assetUrl(art.menu.portrait) : null;
 }
 
-export function paintedPresentation(classId, armourId = POSE.defaultArmourId, pose = 'stand') {
-  const art = paintedOutfit(classId, armourId);
+export function paintedPresentation(classId, armourId = POSE.defaultArmourId, pose = 'stand', animation = null) {
+  const art = animationArt(animation, paintedOutfit(classId, armourId));
   if (!art || !art.menu[pose]) return null;
   const img = hintImage(document.createElement('img'));
   img.src = assetUrl(art.menu[pose]);
@@ -43,10 +46,15 @@ export function paintedPresentation(classId, armourId = POSE.defaultArmourId, po
 // stage is rebuilt on every combat render, and each rebuild used to allocate
 // a fresh Image per outfit frame — nineteen per render for a painted class.
 
-export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { still = false } = {}) {
+export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { still = false, animation = null, view = 'stand' } = {}) {
+  const visualClass = armourArtClass(classId, armourId);
+  const visualArmour = armourArtKey(classId, armourId);
+  if (visualClass !== classId || visualArmour !== armourId) {
+    return createPaintedStage(visualClass, visualArmour, { still, animation, view });
+  }
   if (still) {
-    const presentation = paintedPresentation(classId, armourId);
-    const defeated = createPaintedStage(classId, armourId);
+    const presentation = paintedPresentation(classId, armourId, view, animation) || paintedPresentation(classId, armourId, 'stand', animation);
+    const defeated = createPaintedStage(classId, armourId, { animation });
     if (!presentation || !defeated) return null;
     const el = document.createElement('div');
     el.className = 'pose-stage rendered-stage';
@@ -69,14 +77,15 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
       play(pose) { if (pose !== POSE.defeatedPose) return false; setRestPose(pose); return true; },
     });
   }
-  const art = paintedOutfit(classId, armourId);
+  const art = animationArt(animation, paintedOutfit(classId, armourId));
   if (!art) return null;
   const el = document.createElement('div');
   el.className = 'pose-stage painted-stage';
   el.dataset.poseClass = !armourId || armourId === POSE.defaultArmourId ? classId : `${classId}-${armourId}`;
-  const frames = { ...art.frames, ...(READINESS_POSE_ART[el.dataset.poseClass] || READINESS_POSE_ART[classId]) };
-  if (READINESS_POSE_ART[classId]) el.classList.add('readiness-outfit');
-  const readyFrames = READINESS_POSE_ART[el.dataset.poseClass] || READINESS_POSE_ART[classId] || {};
+  if (animation) el.dataset.animationSet = animation.setId;
+  const readyFrames = animation ? {} : art.readiness || READINESS_POSE_ART[el.dataset.poseClass] || READINESS_POSE_ART[classId] || {};
+  const frames = { ...art.frames, ...readyFrames };
+  if (!animation && READINESS_POSE_ART[classId]) el.classList.add('readiness-outfit');
   const idleBox = art.frames.idle.box;
   const height = Math.max(STAGE.floorY - idleBox.y0, ...Object.values(readyFrames).map(frame => STAGE.floorY - frame.box.y0));
   el.dataset.idleHeightRatio = String((STAGE.floorY - idleBox.y0) / height);
@@ -98,13 +107,13 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   aura.setAttribute('aria-hidden', 'true');
   aura.innerHTML = OUTFIT.components.aura.svg;
   el.appendChild(aura);
-  const downArt = DEFEATED_ART[el.dataset.poseClass] || DEFEATED_ART[classId];
+  const downArt = art.defeated || DEFEATED_ART[el.dataset.poseClass] || DEFEATED_ART[classId];
   const down = hintImage(document.createElement('img'));
   down.className = 'defeated-frame'; down.alt = '';
   down.style.cssText = `position:absolute;left:50%;bottom:0;height:${STAGE.percent * (downArt?.scale || OUTFIT.sizing.defeated.defaultScale)}%;width:auto;max-width:none;transform:${OUTFIT.sizing.defeated.transform};visibility:hidden;pointer-events:none;`;
   if (downArt) down.src = assetUrl(downArt.file);
   el.appendChild(down);
-  preloadPoses(`painted:${classId}:${armourId}`, Object.values(frames).map(frame => assetUrl(frame.file)));
+  preloadPoses(`painted:${classId}:${armourId}:${animation?.setId || 'default'}`, Object.values(frames).map(frame => assetUrl(frame.file)));
   const previous = img.cloneNode();
   previous.alt = ''; previous.setAttribute('aria-hidden', 'true');
   previous.classList.add('pose-previous'); previous.style.opacity = '0'; previous.style.display = 'none';
@@ -131,7 +140,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     if (!state && !fade) { auraState = ''; aura.dataset.motif = ''; }
   };
   const setPose = (pose, blend = false) => {
-    if (pose === POSE.defeatedPose && downArt) {
+    if (pose === POSE.defeatedPose && downArt && !animationClip(animation, pose)) {
       current = pose; el.dataset.pose = pose; el.dataset.aura = '';
       layer.style.visibility = 'hidden'; down.style.visibility = 'visible'; return true;
     }
@@ -157,11 +166,26 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     el.dataset.aura = active ? resources.join(' ') : POSE.guardedRestPoses.includes(resting) ? POSE.guardAura : '';
     return true;
   };
-  const sequenceFor = pose => (Object.hasOwn(COMBAT_SEQUENCES, pose) ? COMBAT_SEQUENCES[pose] : [pose]).filter(p => Object.hasOwn(frames, p) || Object.hasOwn(POWER_FRAMES, p) || Object.hasOwn(COMBAT_POSE_STATES, p));
+  const sequenceFor = pose => (animationClip(animation, pose)?.frames || (Object.hasOwn(COMBAT_SEQUENCES, pose) ? COMBAT_SEQUENCES[pose] : [pose])).filter(p => Object.hasOwn(frames, p) || Object.hasOwn(POWER_FRAMES, p) || Object.hasOwn(COMBAT_POSE_STATES, p));
   const restingPose = () => resting === POSE.defeatedPose ? POSE.defeatedPose : sequenceFor(resting).at(-1) || (POSE.guardedRestPoses.includes(resting) && resting !== POSE.guardAura ? POSE.guardAura : POSE.restPose);
   const settle = () => { clear(); transition = null; el.dataset.poseTransition = ''; active = false; resources = []; syncAura(resting); setPose(restingPose()); };
   const changeRest = (from, startedAt = Date.now()) => {
     clear(); active = false; resources = [];
+    const stanceClip = from !== resting && (COMBAT_POSE_STATES[resting] || COMBAT_POSE_STATES[from])
+      ? animationClip(animation, COMBAT_POSE_STATES[resting] ? 'stanceActivate' : 'stanceDeactivate') : null;
+    if (stanceClip && !reducedMotionRequested()) {
+      const elapsed = Date.now() - startedAt, duration = stanceClip.frames.length * stanceClip.frameMs;
+      if (elapsed >= duration) { settle(); return; }
+      transition = { from, to: resting, startedAt };
+      el.dataset.poseTransition = COMBAT_POSE_STATES[resting] ? 'enter' : 'leave';
+      setPose(stanceClip.frames[Math.min(stanceClip.frames.length - 1, Math.floor(elapsed / stanceClip.frameMs))]);
+      stanceClip.frames.forEach((pose, index) => {
+        const delay = index * stanceClip.frameMs - elapsed;
+        if (delay > 0) timers.push(setTimeout(() => setPose(pose), delay));
+      });
+      timers.push(setTimeout(settle, duration - elapsed));
+      return;
+    }
     const middle = frames[`${resting}Transition`] ? `${resting}Transition` : frames[`${from}Transition`] ? `${from}Transition` : null;
     const elapsed = Date.now() - startedAt;
     if (!middle || resting === POSE.defeatedPose || reducedMotionRequested() || elapsed >= TIME.transitionMs) { settle(); return; }
@@ -208,7 +232,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     if (!reactionTimer) next();
   };
   settle();
-  return Object.freeze({ el, poses: [POSE.defeatedPose, ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
+  return Object.freeze({ el, animationSetId: animation?.setId || null, actionTiming: (pose, speed) => animationTiming(animation, pose, speed), poses: [POSE.defeatedPose, ...Object.keys(frames), ...Object.keys(POWER_FRAMES), ...Object.keys(COMBAT_POSE_STATES)], get pose() { return current; }, get rest() { return resting; }, get presentation() { return { rest: resting, pose: current, transition, auraState, auraOpacity: Number.parseFloat(getComputedStyle(aura).opacity) || 0 }; }, setPose, setRestPose, settle, react, dispose() { clear(); clearTimeout(reactionTimer); reactionQueue = []; [aura, img, previous].forEach(el => el.getAnimations().forEach(a => a.cancel())); },
     play(pose, ms = TIME.defaultPlayMs, aura = []) {
       if (pose === POSE.defeatedPose) { setRestPose(POSE.defeatedPose); return true; }
       if (resting === POSE.defeatedPose) return false;
@@ -221,8 +245,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
       resources = aura;
       const duration = Math.max(TIME.minPlayMs, ms);
       setPose(sequence[0]);
-      sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length))));
-      timers.push(setTimeout(() => changeRest(current), duration));
+      sequence.slice(1).forEach((p, i) => timers.push(setTimeout(() => setPose(p), duration * (!animationClip(animation, pose) && sequence.length === TIME.fourStepSequenceLength ? TIME.fourStepOffsets[i] : (i + 1) / sequence.length))));
+      timers.push(setTimeout(() => animation ? settle() : changeRest(current), duration));
       return true;
     },
   });

@@ -42,6 +42,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = (name) => JSON.parse(readFileSync(resolve(HERE, 'fixtures', name), 'utf8'));
 const REG = createRegistries(contentBundle);
 
+// The fixture is the pre-tree rules with one id re-pointed since: siphon's
+// mastery gate read `skill: focus`, a name no ledger holds, and names the focus
+// track `item:magic-focus` from plan phase 4a (the id is a track, not a number).
 test('every property rule resolves to exactly the numbers it had before its rule became a node', () => {
   const pre = fixture('property-rules-pre-tree.json');
   const now = new Map(PROPERTY_RULES.map((r) => [r.tag, r]));
@@ -89,7 +92,19 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   assert.deepEqual(addedDomains, ['classification', 'cost', 'damage', 'equipment', 'internal', 'lifecycle', 'scaling', 'targeting', 'utility'],
     'the roots that joined are the framework\'s nine (presentation merged with the flat root of the same name)');
   const addedTags = TAGS.filter((t) => !pre.tags.some((o) => o.id === t.id));
-  assert.ok(addedTags.every((t) => t.visibility), 'every tag that joined is a framework node — one carrying a visibility, never a chip');
+  // Plan phase 5a's property nodes: the class card's leaning and the four
+  // kit relics' rules. Named, so a stray chip cannot hide among them.
+  const PHASE_5A_PROPERTIES = ['favored', 'ashenGrip', 'lodestarShard', 'waxenSeal', 'whetstonePouch'];
+  // Plan phase 5b's class tree: its nodes are named by the tree table itself,
+  // one row per node, so the table is the list.
+  const PHASE_5B_PROPERTIES = contentBundle.classTree.map((row) => row.nodeId);
+  // Plan phase 7's location properties: what a place restores on `rested` /
+  // `arrived`, and the two services a place may offer.
+  const PHASE_7_PROPERTIES = ['restHpSmall', 'restHpPartial', 'restHpFull', 'restMana', 'restManaFlat', 'restManaFloor', 'restManaFull', 'restFlasks', 'smith', 'levelUp'];
+  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES];
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id))),
+    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a/5b/7\'s named property nodes');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED].sort(), 'and the property additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 
@@ -108,7 +123,7 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  assert.equal(counted, 435, 'the 435 shipped objects, every one');
+  assert.equal(counted, 478, 'all 478 shipped objects: existing 462 plus four shared armor sets projected into all four classes');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

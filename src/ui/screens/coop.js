@@ -663,7 +663,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.alive) box.append(infoEl(p, m.name || p.id));
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
-      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId));
+      sprite.appendChild(playerSprite({ tint: m.tint, glyph: m.glyph, spriteStyle: m.spriteStyle, figureId: `seat:${m.id}` }, m.classId, figureSpec(registries, m.loadout, m.classId).armourId, { animation: equipmentAnimationForLoadout(registries, m.loadout, m.classId) }));
       const resume = posePresentations.get(p.id);
       stageFor(sprite)?.setRestPose?.(resolveCombatPose(p, combatRests.get(p.id), readinessOrders.get(p.id)), { resume, immediate: !resume });
       for (const reaction of poseReactions.get(p.id) || []) stageFor(sprite)?.react?.(reaction);
@@ -872,7 +872,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,ownerId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       const authoredTargets=presentationTargetIds(plan.effectEvents,ownerId,plan.spriteEffect?.bindingContext.objectId).map(id=>app.querySelector(`[data-eid="${CSS.escape(String(id))}"] .sprite`)||app.querySelector(`[data-eid="${CSS.escape(String(id))}"]`)).filter(Boolean);
       if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration:420,actor:anchor,localBox:anchorLocalBox});
-      stage?.play(stage.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle', 420, plan.aura);
+      const pose = stage?.setRestPose ? plan.technique : plan.group === 'attack' ? 'attack' : plan.group === 'defend' ? 'guard' : 'idle';
+      stage?.play(pose, stage?.actionTiming?.(pose)?.totalMs || 420, plan.aura);
     }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
@@ -1069,12 +1070,21 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const smith = snap.scene.smithing?.[me];
     const candidates = smith?.candidates || [];
     const stones = mm?.smithingStones || 0;
+    // The host's word on this member's Rest (tools/session.mjs restView): what
+    // it restores here, or the relic that forbids it — the option is disabled
+    // with the reason rather than sent to be refused.
+    const rest = snap.scene.rest?.[me] || null;
+    const restDenied = rest?.denied || '';
+    const restCopy = rest && !restDenied ? `Heal ${rest.heal} HP${rest.mana > 0 ? ` and restore ${rest.mana} Mana` : ''}.` : 'Heal yourself.';
     sceneDoor({
       title: 'Shrine of Emberlight',
       children: done ? [waiting('Waiting for the party…')] : [options([
-        choice({ glyph: '✚', name: 'Rest', description: 'Heal yourself.', attrs: { dataset: { shrine: 'rest' } } }),
+        choice({ glyph: '✚', name: 'Rest', description: restDenied ? `The ${restDenied} will not let you rest here.` : restCopy, disabled: !!restDenied, reason: restDenied ? `The ${restDenied} will not let you rest here.` : '', attrs: restDenied ? {} : { dataset: { shrine: 'rest' } } }),
         choice({ glyph: '⚒', name: 'Upgrade an item', description: `${stones} Stone${stones === 1 ? '' : 's'}`, disabled: !candidates.length, reason: candidates.length ? '' : 'Nothing here can be upgraded.', attrs: { id: 'coop-smith' } }),
         ...allies.map((a) => choice({ glyph: '❤', name: `Mend ${a.name}`, description: '+30% HP', className: 'coop-take', attrs: { dataset: { mend: a.id } } })),
+        // A denied Rest is not a way on: the member leaves instead, and the
+        // host counts the leave as their choice (as the solo screen's LEAVE).
+        ...(restDenied ? [choice({ glyph: '→', name: 'Leave', description: 'Take nothing here and move on with the party.', attrs: { dataset: { shrine: 'leave' } } })] : []),
       ], { class: 'coop-choices' })],
     });
     app.querySelectorAll('[data-shrine]').forEach((b) => b.addEventListener('click', () => send({ t: 'shrineChoice', choice: b.dataset.shrine })));
@@ -1508,3 +1518,4 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
 
   if (conn.open) send({ t: 'resync' });
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

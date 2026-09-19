@@ -330,6 +330,8 @@ const SCREENS = [
   //          presence landmark.
   { name: 'reward', query: '?shot=reward', landmark: '.reward-kind[data-kind="relic"]', state: 'reward' },
   { name: 'reward-empty', query: '?shot=reward&shotReward=empty', landmark: '#reward-continue' },
+  // draft: a skill draft in the card row's seat (plan phase 4b).
+  { name: 'reward-draft', query: '?shot=reward&shotReward=draft', landmark: '.reward-kind[data-kind="skillDraft"]' },
   // --- driven: no ?shot= state exists for any of these ---
   {
     name: 'armoury', query: '?shot=combat', landmark: '.armoury, .equip-screen, .equipment',

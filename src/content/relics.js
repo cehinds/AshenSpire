@@ -199,8 +199,8 @@ export const relics = [
     name: 'Ember Fragment',
     rarity: 'uncommon',
     icon: '✨',
-    passives: { shrineHealMult: 1.15 },
-    textTemplate: 'Resting at Shrines heals 15% more.',
+    passives: { restHealMult: 1.15 },
+    textTemplate: 'Resting heals 15% more.',
   },
   {
     id: 'twinnedArmor',
@@ -279,8 +279,10 @@ export const relics = [
     name: 'Wyrm Heart',
     rarity: 'rare',
     icon: '🫀',
-    passives: { shrineNoRest: true },
-    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines no longer offer Rest.',
+    // Denies the shrine's Rest (and any place whose set holds the partial
+    // rest) — a town's bed and a camp's rough rest stay open (plan phase 7).
+    passives: { restDenied: ['restHpPartial'] },
+    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines and chapels no longer offer Rest.',
     flavor: 'It still beats. It expects something of you.',
   },
   {
@@ -500,5 +502,77 @@ export const relics = [
     icon: '⚡',
     textTemplate: 'Whenever you lose HP, deal {damage} damage to a random enemy.',
     flavor: 'It winds tighter with every wound and lets go all at once, at someone else.',
+  },
+  // ---- The class kit relics (plan phase 5a, proposal §4) -------------------
+  // Each reinforces its class's loop; the trigger is a property rule
+  // (content/source/nodeEffects.json), as every relic's is since phase 2.
+  {
+    id: 'ashenGrip',
+    name: 'Ashen Grip',
+    rarity: 'starter',
+    icon: '🤚',
+    textTemplate: 'The first stance you enter each turn refunds {restoreStamina} Stamina.',
+    flavor: 'The leather remembers every hand that held it, and gives a little back.',
+  },
+  {
+    id: 'lodestarShard',
+    name: 'Lodestar Shard',
+    rarity: 'starter',
+    icon: '🌟',
+    textTemplate: 'Begin each combat with {restoreMana} extra Mana.',
+    flavor: 'It points nowhere on any map. It points at the next cast.',
+  },
+  {
+    id: 'waxenSeal',
+    name: 'Waxen Seal',
+    rarity: 'starter',
+    icon: '🕯',
+    textTemplate: 'The first time you heal each combat, heal {heal} more.',
+    flavor: 'Pressed once, it holds. Pressed twice, it is only wax.',
+  },
+  {
+    id: 'whetstonePouch',
+    name: 'Whetstone Pouch',
+    rarity: 'starter',
+    icon: '👝',
+    textTemplate: 'Your first attack while Prepared each combat applies {bleed} Bleed.',
+    flavor: 'A thumb along the edge before the first cut. Habit, and then not.',
+  },
+  // ---- Expedition relics: travel, exposure, flaskcraft, and a boss bargain ----
+  {
+    id: 'wayfarersKnot',
+    name: "Wayfarer's Knot",
+    rarity: 'common',
+    icon: '🪢',
+    passives: { runeGainMult: 1.1, restHealMult: 1.1 },
+    textTemplate: 'Gain 10% more Cinders from combats. Resting heals 10% more.',
+    flavor: 'One knot for the road ahead. One for the breath to walk it.',
+  },
+  {
+    id: 'prismaticThorn',
+    name: 'Prismatic Thorn',
+    rarity: 'uncommon',
+    icon: '🔷',
+    passives: { exposureBuildupMult: 1.25, flaskPowerMult: 0.75 },
+    textTemplate: 'Your hits build 25% more Arcane Exposure. Flasks are 25% weaker (rounded up).',
+    flavor: 'It drinks the medicine and leaves the fever bright.',
+  },
+  {
+    id: 'restlessClasp',
+    name: 'Restless Clasp',
+    rarity: 'rare',
+    icon: '🧷',
+    passives: { flaskPowerMult: 2, restHealMult: 0.5 },
+    textTemplate: 'Flasks are 100% stronger. Resting heals 50% less.',
+    flavor: 'It keeps the medicine close and sleep far away.',
+  },
+  {
+    id: 'paupersDiadem',
+    name: "Pauper's Diadem",
+    rarity: 'boss',
+    icon: '👑',
+    passives: { powerCostReduction: 1, runeGainMult: 0.65 },
+    textTemplate: 'Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats.',
+    flavor: 'The crown accepts your future earnings. It never asks what you will eat.',
   },
 ];

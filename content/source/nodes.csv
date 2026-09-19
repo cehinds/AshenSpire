@@ -179,6 +179,45 @@ gravetendersBell,property,Gravetender's Bell,6E9C6E,🔔,,,,,What Gravetender's 
 sentinelsOath,property,Sentinel's Oath,6E9C6E,🛡,,,,,What Sentinel's Oath does when the fight gives it its moment.
 forsakenWarflag,property,Forsaken Warflag,B08CC9,🏴,,,,,What Forsaken Warflag does when the fight gives it its moment.
 wrathCoil,property,Wrath Coil,B08CC9,⚡,,,,,What Wrath Coil does when the fight gives it its moment.
+favored,property,Favored,9FC3E8,✦,,,,,"A class card's leaning: skill XP in the weapon groups the card also names (its item-type tags) is multiplied. Scoped by the carrier's own tags, never by a second table."
+ashenGrip,property,Ashen Grip,8C7A5B,🤚,,,,,What Ashen Grip does when the fight gives it its moment.
+lodestarShard,property,Lodestar Shard,8C7A5B,🌟,,,,,What Lodestar Shard does when the fight gives it its moment.
+waxenSeal,property,Waxen Seal,8C7A5B,🕯,,,,,What Waxen Seal does when the fight gives it its moment.
+whetstonePouch,property,Whetstone Pouch,8C7A5B,👝,,,,,What Whetstone Pouch does when the fight gives it its moment.
+ironFooting,property,Iron Footing,9FC3E8,🦶,,,,,"Every stance you enter braces you."
+bloodTempo,property,Blood Tempo,9FC3E8,♪,,,,,"A change of footing is a breath."
+ashenReserve,property,Ashen Reserve,9FC3E8,🤚,,,,,"The grip gives back a little more."
+grimHarvest,property,Grim Harvest,9FC3E8,🩸,,,,,"What falls feeds you."
+restHpSmall,property,Small rest,7FA8C9,♨,,,,,"A rough camp's rest: a small share of your max HP back."
+restHpPartial,property,Partial rest,7FA8C9,♨,,,,,"A shrine's rest: part of your max HP back."
+restHpFull,property,Full rest,7FA8C9,♨,,,,,"A town's bed: HP to full."
+restMana,property,Mana rest,7FA8C9,◈,,,,,"Mana back by the configured mode (balance.rest.mana.mode) — the door resolves this tag to the mode's own tag, so a place that wants another amount carries restManaFlat, restManaFloor or restManaFull instead."
+restManaFlat,property,Flat mana rest,7FA8C9,◈,,,,,"Mana back by a fixed amount."
+restManaFloor,property,Mana rest to a floor,7FA8C9,◈,,,,,"Mana back to a floor of max, or to full when already there."
+restManaFull,property,Full mana rest,7FA8C9,◈,,,,,"Mana to full."
+restFlasks,property,Flask refill,7FA8C9,⚗,,,,,"Arriving refills your flask charges (the grace refill)."
+smith,property,Smith,9A9A9A,⚒,,,,,"The place offers a smith: upgrade, extract, install (balance.smithing.services says which)."
+levelUp,property,Level-up,9A9A9A,✦,,,,,"The place is where waiting attribute points are assigned."
+warlord,property,Warlord,9FC3E8,👑,,,,,"The subclass that opens every fight already swinging."
+bulwarkKing,property,Bulwark King,9FC3E8,🏰,,,,,"The subclass that is never caught open."
+attunedMind,property,Attuned Mind,9FC3E8,✴,,,,,"Mana found is a card found."
+starlitFocus,property,Starlit Focus,9FC3E8,✦,,,,,"The charge is there before the first cast."
+lodestarCap,property,Lodestar Cap,9FC3E8,🌟,,,,,"The shard opens the fight wider."
+arcaneDraw,property,Arcane Draw,9FC3E8,🌀,,,,,"The first break each combat is a hand."
+conduit,property,Conduit,9FC3E8,⚡,,,,,"The subclass whose casts cost breath, not blood."
+reservoir,property,Reservoir,9FC3E8,🫙,,,,,"The subclass that never runs dry."
+warmth,property,Warmth,9FC3E8,☀,,,,,"Every heal braces you."
+vigil,property,Vigil,9FC3E8,🕯,,,,,"The litany never quite stops."
+sealOfPlenty,property,Seal of Plenty,9FC3E8,📿,,,,,"The first heal pays for the next cast."
+wakingRot,property,Waking Rot,9FC3E8,🦠,,,,,"Your blows carry the blight."
+martyr,property,Martyr,9FC3E8,✝,,,,,"The subclass that turns every wound to a wall."
+saint,property,Saint,9FC3E8,🌞,,,,,"The subclass that walks in whole."
+quickHands,property,Quick Hands,9FC3E8,🤏,,,,,"Prepared before the first card."
+secondWind,property,Second Wind,9FC3E8,💨,,,,,"What you burn, you draw."
+honedEdge,property,Honed Edge,9FC3E8,🔪,,,,,"Every prepared cut opens a vein."
+poisonedPouch,property,Poisoned Pouch,9FC3E8,☠,,,,,"The whetstone is not the only thing in the pouch."
+assassin,property,Assassin,9FC3E8,🗡,,,,,"The subclass that reads a stagger as an opening."
+shadow,property,Shadow,9FC3E8,🌑,,,,,"The subclass nothing quite reaches."
 classification,,classification,,,INTERNAL,0,CLASSIFICATION,true,
 classification.attack,classification,attack,,,PRIMARY,10,,,
 classification.strike,classification,strike,,,PRIMARY,11,,,
@@ -223,6 +262,7 @@ equipment.offHand,equipment,offHand,,,SECONDARY,12,,,
 equipment.twoHanded,equipment,twoHanded,,,SECONDARY,13,,,
 equipment.shield,equipment,shield,,,SECONDARY,14,,,
 equipment.parryTool,equipment,parryTool,,,SECONDARY,15,,,
+equipment.dualWield,equipment,dualWield,,,SECONDARY,16,,,
 utility,,utility,,,INTERNAL,0,ACTION_ROLE,,
 utility.evasion,utility,evasion,,,SECONDARY,10,,,
 utility.conduit,utility,conduit,,,SECONDARY,11,,,

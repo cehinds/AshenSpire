@@ -1113,7 +1113,7 @@
   flex: none; height: calc(100dvh / var(--ui-zoom, 1)); min-height: 0;
   display: grid; grid-template-rows: 10% 45% 45%; overflow: clip;
 }
-:root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: 0; height: 100%; box-sizing: border-box; overflow: visible; }
+:root .combat[data-layout='formation'] > .topbar { grid-row: 1; min-height: var(--w4-band-hud, 0px); height: auto; box-sizing: border-box; overflow: visible; }
 :root .combat[data-layout='formation'] > .field {
   grid-row: 2; height: 100%; min-height: 0; padding: 0; display: block; overflow: visible;
 }
@@ -1194,6 +1194,47 @@
   position: absolute; inset: auto var(--potion-tray-right, 0px) calc(100% + 0.3rem) auto; margin: 0; z-index: 1;
   width: calc(var(--icon-tray-slots, 4) * (var(--icon-tray-size, calc(25px / var(--ui-zoom,1))) + var(--icon-tray-gap, calc(3px / var(--ui-zoom,1)))) - var(--icon-tray-gap, calc(3px / var(--ui-zoom,1))));
   max-width: 100%; height: auto; max-height: none; justify-content: flex-end; align-self: auto;
+  visibility: hidden;
+  transition: visibility 0s linear var(--potion-reveal-fade, 160ms);
+}
+:root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray > * {
+  opacity: 0; transform: translateY(0.7rem);
+  transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
+}
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(1) { --potion-stagger: 0ms; }
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(2) { --potion-stagger: 40ms; }
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(3) { --potion-stagger: 80ms; }
+:root .combat[data-layout='formation'] .combat-potion-tray > *:nth-last-child(4) { --potion-stagger: 120ms; }
+/* Keyboard focus exposes the minis on every device. :focus-visible keeps a
+   pointer click (and focus restored after closing the list) from pinning them
+   open as though the pointer were still hovering the control. */
+:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray {
+  visibility: visible; transition-delay: var(--potion-focus-delay, 500ms);
+}
+:root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:focus-visible, > .combat-potion-tray :focus-visible) > .combat-potion-tray > * {
+  opacity: 1; transform: none;
+  transition-delay: calc(var(--potion-focus-delay, 500ms) + var(--potion-stagger, 0ms));
+}
+/* A touchscreen can latch :hover after tapping. The touch route is the large
+   Potions button and its full list, so hover reveal belongs only to a real
+   fine hover pointer. Keeping the tray itself in the selector lets the pointer
+   cross into a mini and use it. */
+@media (hover: hover) and (pointer: fine) {
+  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray {
+    visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms);
+  }
+  :root .combat[data-layout='formation'] .combat-action-row:has(> .combat-potions:hover, > .combat-potion-tray:hover) > .combat-potion-tray > * {
+    opacity: 1; transform: none;
+    transition-delay: calc(var(--potion-reveal-delay, 500ms) + var(--potion-stagger, 0ms));
+  }
+}
+:root body.reduced-motion .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray > * {
+  transform: none; transition-property: opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root .combat[data-layout='formation'] .combat-action-row > .combat-potion-tray > * {
+    transform: none; transition-property: opacity;
+  }
 }
 /* Narrow: the fan reaches down to the row beside the control, so there is no
    room above it. The minis ride inside the control's top edge, as wide as the
@@ -1319,12 +1360,11 @@
    the enemy-turn filter changes would shift the vertically centered cards. */
 :root .combat[data-layout='formation'] .hand { overflow:visible; }
 
-/* Short landscape keeps vitals in one row inside the fixed HUD band, on every
-   W4 screen (combat and the quest dialogue share the HUD band). :is() keeps
-   combat's specificity where it was. */
+/* Short landscape keeps meters inline in the left resource column.
+   Relics remain below them; the compact band preserves battlefield space. */
 @media (max-height:500px) {
  :root :is(.combat[data-layout='formation'], .w4-frame) > .topbar { padding:0 calc(8px / var(--ui-zoom,1)); }
- :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .hud-top { width:100%; height:100%; justify-content:center; }
+ :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .hud-top { width:100%; height:auto; justify-content:center; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
@@ -1371,6 +1411,53 @@
 :root[data-performance='lite'] .sprite > img { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
+
+/* Grid geometry and actor placement share the formation model. */
+.formation-grid {
+  display: none; position: absolute; inset: 0; z-index: 8;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  pointer-events: none; user-select: none;
+}
+:root[data-formation-grid='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid { display: grid; }
+:root[data-formation-movement='true'] .formation-grid-cell:not(:disabled) { pointer-events: auto; cursor: pointer; }
+.formation-grid-cell.formation-selected { --grid-stroke: var(--selection-color, #59bd75); }
+.formation-grid-cell.formation-selected .formation-grid-outline > * { fill-opacity: .4; stroke-width: 3; }
+.formation-move-controls { position: absolute; z-index: 2500; top: 36px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.formation-move-controls[hidden] { display: none; }
+.formation-move-controls button { min-height: 44px; background: #191710; white-space: nowrap; }
+.formation-grid-cell {
+  border: 0; border-radius: 0; padding: 0; background: transparent; color: inherit; opacity: 1; box-shadow: none;
+  position: absolute;
+  transform: translateY(-50%);
+  min-width: 0; box-sizing: border-box;
+  --grid-stroke: var(--player-grid-color, #d5cc63);
+}
+:root .formation-grid-cell, :root .formation-grid-cell:disabled, :root .formation-grid-cell:hover, :root .formation-grid-cell:focus-visible {
+  background-color: transparent; border: 0; box-shadow: none; opacity: 1; filter: none; overflow: visible;
+}
+.formation-grid-cell::after {
+  content: '+'; position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%); color: #fff2bb; font-weight: bold;
+}
+.formation-grid-cell[data-side='enemy'] { --grid-stroke: var(--enemy-grid-color, #e1a679); }
+.formation-grid-outline { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.formation-grid-outline > * { display: none; fill: var(--grid-stroke); fill-opacity: .07; stroke: var(--grid-stroke); stroke-width: 1; }
+.formation-grid[data-shape='rhombus'] polygon,
+.formation-grid[data-shape='wide-rhombus'] polygon,
+.formation-grid[data-shape='square'] rect,
+.formation-grid[data-shape='rectangle'] rect,
+.formation-grid[data-shape='circle'] ellipse,
+.formation-grid[data-shape='ellipse'] ellipse { display: block; }
+.formation-grid-cell[data-occupied='true'] .formation-grid-outline > * { stroke-width: 2; fill-opacity: .25; }
+.formation-grid-cell span {
+  position: absolute; left: 50%; top: 100%; transform: translateX(-50%); white-space: nowrap;
+  display: inline-block; background: #14110de6; color: #fff2bb;
+  font: 700 .7rem/1.4 var(--font-ui, sans-serif); padding: .1rem .25rem;
+  border-radius: .2rem;
+}
+:root .combat .combatant .sprite { scale: none; translate: none; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {
@@ -1427,4 +1514,3 @@
    relics themselves answer a press. */
 :root .combat[data-layout='formation'] .hud-relics { pointer-events: none; }
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
-

@@ -190,8 +190,42 @@ plan's four because the slot table already declares it. SPEC §13.4a.
 | `src/content/equipment.js` armament and armour rows gain `cardType: 'equipment'`, `slot` (existing `SLOTS`), and are registered in the card registry with a `zone` field; `SCHEMAS.card` gains `zone?: en('draw','core','worn','hands','passive')` | schemas, registries |
 | Armour slots split: `body`, `head`, `hands`, `feet` in `SLOTS`; existing armour rows map to `body`; new head/hands/feet rows ship as data with the slot→layer table from proposal §4 as mods | content |
 | `reconcileGrantedCards` (`loadout.js:2011`) and `reconcileGrantedCardsInCombat` (`:2212`) reconcile against `collection`, and mark granted instances `locked: true` while their source is equipped | |
-| Deck minimum: `balance.deck.minimum`, `balance.deck.minimumPerLevel`; `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
+| Deck minimum: `balance.deck.minimum`, `balance.deck.minimumStepLevels`, `balance.deck.minimumPerStep` (as built); `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
 | `figureSpec` (`loadout.js:2280`) reads `zones.worn` and `zones.hands`; `equippedFigure` (`assets.js:558`) accepts head/hands/feet layer ids and falls back to nothing when art is missing | |
+
+**3b AS BUILT (2026-09-19):** the half of 3b that is feel-neutral shipped;
+the half that changes what an object IS did not, and is 3b-ii below.
+
+- The slot split is real: `equipSlots.csv` carries `head`, `hands`, `feet`
+  (kinds of the same names, one set, out-of-combat swap) and `model/zones.js`
+  is the one map from zone to slot, read by the projection, the figure and the
+  slot table's door. No head/hands/feet PIECES ship: the proposal's §4 layer
+  stats (typed resistance, evade charges, stamina recovery, impact dealt…) are
+  mod fields the engine does not yet compute, and a piece authored against a
+  field nothing reads is a number that does nothing. The pieces arrive with
+  the fields, in the phase that gives the fields a reader (8 for exposure; the
+  rest as their systems land).
+- `figureSpec` draws from `projectZones`; `equippedFigure` layers the three
+  new slots and draws nothing when the art is missing.
+- The deck floor is `balance.deck` + `deckMinimum` + `loadoutLeaveRefusal`, on
+  every player road out of the Armoury. It refuses what the screen did, never a
+  deficit the run arrived with (a shop removal), so a door cannot trap a
+  player. Measured before building: unequipping both hands takes a reaver from
+  10 cards to 4, so the floor is live on day one, not dormant.
+- The lock is `grantedBy`, which `canRemoveDeckCard` already refused; a
+  `locked: true` flag would be a second home for one fact (3NF), so none is
+  written. "Reconcile against `collection`" is a no-op while `collection` is a
+  projection of `deck`, and stays unwritten for the same reason 3a's note gives.
+
+**3b-ii (not built; needs the owner's call):** equipment rows joining the
+card registry with `cardType: 'equipment'` and a `zone` field. Under the tag
+tree every object states exactly one kind (`classification.armament`,
+`classification.armour`); making a piece ALSO a card is a classification
+decision — a second kind row per piece, or `card` becoming an ancestor of
+`armament` in `nodes.csv` — and it changes every reader of
+`registries.cards.all()` (rewards, shops, deck stamping, the 435-object
+equivalence). It should be decided as a tree change first and a registry
+change second, in its own PR.
 
 **PR 3c: dynamic tags at snapshot.**
 
@@ -206,6 +240,24 @@ locks on equip and unlocks on unequip; dual daggers show `dual` in the
 snapshot and not on the card definition; `figureSpec` test covers four worn
 slots.
 
+**3c AS BUILT (2026-09-19):** the grip is READ, not stored. `gripOf` derives
+`one`/`two`/`dual` from the two hand slots (a stored grip would be a second
+home for a fact the hands already hold); the moment a grip CHOICE exists
+(two-handing a one-hander) that choice becomes the stored intent and `gripOf`
+its reader. The derived tags are framework nodes — `equipment.twoHanded`
+(already authored) and `equipment.dualWield` (new) — so the predicate that
+asks about them is validated against the tree like any tag. They ride the
+card snapshot in solo and co-op combat as `derivedTags`, and the `cardPlayed`
+event carries `cardTags` and `derivedTags`; the preview builds its card the
+same way (and now reads the kind tag, which the tree phase had left at
+`def.type` on that one site). `canEquip` refuses the one illegal grip (a
+two-hander beside an occupied hand) when told what is going where — the same
+rule the deck plan's gate already held at `cycleSet`/`equipPiece` by throwing,
+asked earlier and with a sentence the Armoury's seal can show; the DEX gate on
+`dual` is phase 9's row, as the plan sequences it. No shipped package
+requires two hands, so `two` is dormant and proven with a probe registry;
+`dual` is live (knife and sword). SPEC §13.4c; engine test 84.
+
 ## Phase 4 — Skill tracks (2 PRs)
 
 **PR 4a: ledger and curve.**
@@ -218,6 +270,30 @@ slots.
 | XP hooks in the engine: `damageDealt`/`blockGained` with a card tagged by group → `perHit`; `combatEnd` win → `perWinEquipped` per equipped group × `killMult` if that group dealt the killing hit; `impactDealt` to owner while heavy armour worn → `armorAbsorbPer`; `attackEvaded` while light → `armorEvadePer`; `arcaneExposureChanged` by owner → `focusBuildupPer` | `src/engine/combat.js` event listeners, no entity-specific code: the hooks read the tag registry |
 | Predicates `skillLevelAtLeast` now read the ledger | |
 | Simulator: `tools/runsim.mjs --skill-levels` reports levels per track per run | tools |
+
+**4a AS BUILT (2026-09-19):** the tracks are DERIVED — `itemType` nodes for
+weapon and focus groups, the framework's weight classes for the armour
+groups (`armour:light|medium|heavy`, read off `playerWeightClass`, the one
+home the game already has for "how heavy is what you wear"; no armour group
+tags were authored, because a second home for weight would be exactly what
+the tree phase removed), `dualWield`, and `class:<id>`. One listener on the
+event bus (`engine/skillXp.js`) pays a receipt on the combat, keyed by seat;
+the run is written once by its owner through `applySkillXp` — main.js,
+tools/session.mjs and tools/runsim.mjs — so combat never writes a run.
+`damageDealt` and `blockGained` now carry the card (`cardInstanceId`,
+`sourceHand`, `grantedBy`) so a hook can pay the piece that lent it — kit,
+package and weapon-art cards name their piece by the bare id the loadout
+stamps, normalised through `cardMounts.ownerItemRef`. ALL THREE ARMOUR TRACKS
+ARE DORMANT today: heavy's `impactDealt` fires for enemies only until phase 8
+gives the player poise, and light's `attackEvaded` fires only under a
+foundation ruleset, which no shipped door passes; the focus track's buildup
+is live. Balance rows are named for what they are (`impactPerXp`, `evadeXp`,
+`buildupPerXp`) rather than the proposal's "1 per 5" prose. The combat
+snapshot carries the ledger and the receipt, so a fight resumed from a save
+keeps what it earned. The shipped Siphon gate was re-pointed from `focus` to
+the derived track id `item:magic-focus`, and `validate.js` now refuses a
+gate on a name no track has. `pendingDrafts` accrues and nothing yet spends
+it (4b). SPEC §13.4d; engine test 85.
 
 **PR 4b: drafts and rarity.**
 
@@ -233,6 +309,32 @@ Acceptance: headless run reaches greatsword level 2 after N hits and offers
 one draft with three greatsword-tagged commons; a second level-up in the
 same combat queues to the next reward; simulator prints per-track levels.
 
+**4b AS BUILT (2026-09-19):** drafts, rarity and auto-upgrade landed; the
+smithing re-point did NOT, and is its own PR (4b-ii) — `model/smithing.js`
+carries its own schema version and the smith panel's transaction, and a
+door that offers cards should not also re-tier the forge in one review. Two
+decisions to state: (1) the tree keeps a Blade ITEM TYPE and a Blade CARD
+SCHOOL as distinct nodes, so "filter by group tag" had no single tag to
+filter by — the schools a track drafts from are DERIVED from the held
+piece's own card-domain tags in tagging.csv (`skillSchools`), falling back
+to every piece of the type; an authored relation could replace that
+derivation if the owner wants a tighter pool; the review round dropped
+the "every piece of the type" fallback — a type no hand holds drafts
+nothing and keeps its draft, since a union over the type handed a swordless
+blade track guard and blood cards. A draft rolls at the door's own odds
+(the boss's at a boss door, equal under Chaos Rewards) and still takes the
+card row's seat, as the plan says. (2) Reward rows gained a KEY
+(`rewardplan.js rowKey`) because one offer may carry several drafts and the
+old `states[kind]` could hold one; singleton kinds keep the kind as key, so
+saved offers still read. Co-op queues drafts and does not yet offer them
+(its reward scene in tools/session.mjs is its own door). Review round:
+the threshold is a STANDING RULE (every award at or past it, and the load
+door reconciles an older ledger), it upgrades ORDINARY cards only — an
+equipment-bound basic and an item-owned card read the smith's tier and are
+re-derived by every restamp — and a draft row's key carries an ordinal so
+two drafts of one track are two rows. Simulator: 6.5 drafts taken per run
+over 8 runs. SPEC §13.4e; engine test 86.
+
 ## Phase 5 — Class card, kits, tree, unlocks, swap (3 PRs)
 
 **PR 5a: class card and kits.**
@@ -244,6 +346,26 @@ same combat queues to the next reward; simulator prints per-track levels.
 | `createRunState` (`state.js:63`) builds `zones.core` and injects the kit through the existing starting-kit path (`startingDeckPlan`, `loadout.js:1801`) | |
 | `mountProperties` mounts the core card at run start and combat start | |
 
+**5a AS BUILT (2026-09-19):** the class card is DERIVED (`model/classCard.js`)
+from the class row, its free kit and its tagging rows — no `cardType`/`zone`/
+`kit` fields were authored, because every one of them is a fact another row
+already owns. Decisions to state: (1) the kit relic rides BESIDE the starting
+relic (`kitRelic`, `run.relics = [startingRelic, kitRelic]`) rather than
+replacing it — the starting relics carry the pool modifiers the HP/Mana
+formulas and a dozen tests read, and a swap would have been a balance change
+hidden in a content phase. (2) `favored<Group>` is ONE rule, `favored`, scoped
+by the carrier's own item-type tag (`class,,reaver,item:blade`; the family
+gained `class → itemType`) — a rule per group would have been N rows saying
+one number. (3) The ability cards are authored to the nearest shipped word:
+Brace is a stance (damage taken −25%, Block on entering, Strength on leaving)
+rather than "impact taken −2", Attune restores Mana rather than discounting
+the next cast's Stamina, Warm Litany heals and blocks without the overheal
+charge, Prepare prepares without the cost discount — each needs vocabulary
+the engine has not got, and the owner may want the proposal's exact words
+when it does. (4) `startingDeckSize` is 11 (`roleCopies.ability: 1`). The
+core zone mounts in solo, co-op (per seat) and on restore. SPEC §13.4f;
+engine test 87.
+
 **PR 5b: class tree.**
 
 | Change | Where |
@@ -252,6 +374,20 @@ same combat queues to the next reward; simulator prints per-track levels.
 | Class XP source: `combatEnd` win, `questCompleted` (the event phase 10a adds; completing a journey node is not completing a quest), boss kill | engine |
 | Draft screen for class level-ups reuses `rollSkillDraftIds` with the node list as the pool; picking writes a tagging row into `run.zones.coreTags` | `reward.js` |
 
+**5b AS BUILT (2026-09-19):** the tree is a TABLE (`content/source/classTree.csv`)
+rather than a `requires: classLevelAtLeast N` on each rule row — a tier is
+the row's own column and the level it opens at is one balance list
+(`skill.class.tierAt`), so the gate lives where the draft reads it, and
+`requires`/`excludes` stay the relation rows the mount path already reads.
+Six nodes per class (two per tier) rather than "about twelve": the shape is
+complete and the count is rows. The pick is `run.coreTags` (schema 9),
+projected as `zones.coreTags` — a projection cannot be written, so the
+field is the run's and the zone reads it. Class XP is paid by the RUN'S
+OWNER (the combat does not know the door's pool); quest XP waits for 10a.
+No `presentation: {artKey, name}` column: the subclass node's own label and
+glyph are the card's face, read off the row. The reward door is the tree's
+only screen today. SPEC §13.4g; engine test 88.
+
 **PR 5c: unlocks and swap.**
 
 | Change | Where |
@@ -259,6 +395,18 @@ same combat queues to the next reward; simulator prints per-track levels.
 | Profile unlock table (`src/model/unlocks.js`) keyed by class card id; conditions as data rows (`winAs`, `classLevel`, `bossWithGroup`) | |
 | Class-swap item: a run opcode `swapClass {classId}` in `RUN_OPCODES`; authored on one event and one boss reward; replaces `zones.core`, clears `coreTags` not permitted by the new class, resets `skills['class:*']` | `actions.js:810` run-effect door |
 | Character-creation screen lists unlocked class cards from the profile | `src/ui/screens/` creation |
+
+**5c AS BUILT (2026-09-19):** the unlock table gained a `class` kind and two
+conditions (`classLevel`, `bossWithGroup`); no shipped class is gated, so the
+gate is a row the owner may write, and the creation screen lists a gated
+class locked with the row's hint. The swap is the run opcode `swapClass`
+(named or `random`), shipped on ONE door, the Turncoat's Mirror event; the
+boss-reward door is NOT shipped — a reward row is a kind of its own and
+which boss gives it is the owner's call. The swap keeps the deck, relics,
+loadout, attributes and weapon skills, resets every class track, prunes the
+tree picks the new class has no seat for, and does not deal the new class's
+kit (the run was born once). Progress records `maxClassLevel` and the item
+types each boss fell to. SPEC §13.4h; engine test 89.
 
 Acceptance: four classes start from core cards with kits; a tier-3 node
 swaps art and name; an old save with `run.class` loads with its core card
@@ -278,6 +426,25 @@ mounted; class swap removes disallowed tags and keeps weapon skills.
 Acceptance: simulator measures levels per run in band; no code path spends
 cinders on a level.
 
+**6 AS BUILT (2026-09-19):** `run.level = { xp, level, unspentPoints }` at
+schema 10 (a ≤ 9 save arrives at `1 + levelUps`, nothing waiting);
+`model/levelup.js` owns the curve (`xpToNext` on `balance.level.xp`, the
+skills' shape), the climb (`awardLevelXp`, the dial's points per level to
+the ledger, `maxLevels` the cap) and the assignment (`applyLevelUp` spends
+one waiting point; `levelUps`/`levelPoints` still count every assignment for
+the load door). The run's owner pays `combatLevelXp` — a win, each kill by
+the door's pool — in `main.js`, `tools/session.mjs` and `tools/runsim.mjs`;
+`questLevelXp` names the quest award for 10a's door. The threshold bumps are
+NOT a `perLevelThreshold` object on the table but a `perLevel: { every,
+gain }` term per derived-stat row, snapshotted with the row and read by
+`deriveStat` at the run's level (HP/Mana/Stamina every five, Hand every
+ten), so no old save is re-priced. The shrine's Level-up card assigns the
+waiting points and names no cinder; `levelCost`/`levelsAffordable` and
+`balance.levelUp.firstCost/costStep` are gone, `--level-cost` is
+`--xp-levels` with the band line. The proposal's awards paid 6.7 levels a
+full run on this map; raised ×2.5 they measure 11.5, in band. SPEC §13.4i;
+engine tests 60–60e, 90.
+
 ## Phase 7 — Recovery as location properties (1 PR)
 
 | Change | Where |
@@ -293,6 +460,37 @@ cinders on a level.
 Acceptance: shrine restores exactly its tag set; town restores everything and
 mana to full; camp with `restMana` at default restores to 50% or full; a
 `restDenied` relic filtered to `restHpPartial` still allows town rest.
+
+**7 AS BUILT (2026-09-19):** the `location` family (no collection; ids are
+the map's — a classic node type, `camp`, an atlas service type, an atlas
+node — checked by `model/locations.js`) carries the property subtree;
+`engine/locations.js` is the window (`createLocationVisit` mounts on the
+run-level context `actions.js createRunContext`, now the one facade for
+events, flasks and visits; `arriveAt` / `restAt` emit the two new events and
+write the pools back; `previewRest` on a clone; `leaveLocation` unmounts).
+Rules: `restHpSmall/Partial/Full`, `restManaFlat/Floor/Full` (the
+`restoreMana` opcode gains `toFloorPct`; `missingMana` joins the formula
+ops), `restFlasks` (a new run opcode `refillFlasks` wrapping
+`applyGraceRefill`), and `smith` / `levelUp` as service markers. `restMana`
+is the default, resolved at the carrier to `balance.rest.mana.mode`'s tag
+(shipped `floorOrFull` at 50%) — NOT a mode read inside the rule, because a
+variable binds to a number and the mode is a word. Shipped sets: shrine,
+camp (the Unknown node's rest outcome, `enterNode`), inn and chapel (the
+atlas rest services, one row per type; a node row would override). Not
+shipped from §7.4: `restAzureOne` (no Azure charge kind exists),
+`restCleanse` (nothing lingers between fights), `ambushRisk` (a seeded
+encounter roll is its own feature), `merchant` / `questBoard` markers (no
+carrier today; 10b's board may add one). The passives are `restHealMult`
+and `restDenied` (true | tag list; the Wyrm Heart carries
+`['restHpPartial']`). The heal multipliers ride `ctx.healMult`, never the
+rule. `generateJourney` takes `{ townsPerActMax }` and counts city nodes
+per act (the start is not a stop; every shipped city is act 1 and a route
+holds one hub, so the shipped cap of 1 changes no seeded route). Note the
+retunes this design carries: the shrine's Rest used to restore Mana to
+full; under the default mode it restores to 50% or full. The Unknown
+node's rest outcome used to open the Shrine (35%, refill, smith,
+level-up); it opens the camp now (25%, Mana, nothing else). SPEC §13.4j;
+engine test 91, local-map and world-atlas tests.
 
 ## Phase 8 — Mana costing and Exposure properties (1 PR, can run beside 4)
 

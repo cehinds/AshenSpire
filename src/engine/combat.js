@@ -1,3 +1,4 @@
+import { formationMovePlan } from '../model/formationMovement.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
 //
@@ -16,6 +17,7 @@
 import * as A from './actions.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
+import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
@@ -25,11 +27,11 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax 
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 export { playerWeightClass };
-import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncLoadoutProperties, syncRelicProperties, propertyMountsOf } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -134,6 +136,12 @@ export function createCombat({
     // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
+    // The run's skill ledger, read by the progression predicates
+    // (triggers.js skillLevelAtLeast / classLevelAtLeast). A copy: combat
+    // never writes it.
+    skills: player.skills ? structuredClone(player.skills) : {},
+    // The core card's picked tree nodes (plan phase 5b), mounted with the class.
+    coreTags: Array.isArray(player.coreTags) ? [...player.coreTags] : [],
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -146,6 +154,9 @@ export function createCombat({
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
+  // The skill tracks listen to the same bus (plan phase 4a); the receipt they
+  // write lives on the combat and reaches the run only through applySkillXp.
+  attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
 
@@ -156,6 +167,9 @@ export function createCombat({
   // …and the relics the player carries, whose triggers are property rules too
   // since plan phase 2. Mounted before the first emit for the same reason.
   syncRelicProperties(combat);
+  // …and the class card, the core zone's one card (plan phase 5a): its
+  // `favored` leaning is a property like any other.
+  syncClassProperties(combat);
 
   // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
   // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
@@ -554,6 +568,16 @@ export function dispatch(combat, intent) {
   combat._buffer = [];
   try {
     switch (intent.type) {
+      case 'moveCharacter': {
+        const move = formationMovePlan(combat, intent.cell, intent.settings);
+        if (!move.ok) throw new Error(move.reason);
+        combat.player.energy -= move.cost;
+        combat.player.formationCell = move.cell;
+        if (move.cost) combat.emit('energySpent', { amount: move.cost });
+        combat.emit('characterMoved', { sourceId: combat.player.id, from: move.current, to: move.cell });
+        drainQueue(combat);
+        break;
+      }
       case 'playCard':
         doPlayCard(combat, intent);
         break;
@@ -861,9 +885,23 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   // from `def.type` — every reader downstream (the attack counter, the
   // cardTypeIs predicate, the cardPlayed receipt) sees the kind.
   const kind = cardKind(def);
+  // DYNAMIC TAGS ARE READ HERE, ONCE, AND WRITTEN TO NO CARD (plan phase 3c).
+  // The grip the hands are in when the card is played (model/loadout.js
+  // gripOf) derives `equipment.dualWield` / `equipment.twoHanded`; they ride
+  // this snapshot as `derivedTags`, beside the card's own `tags`, and a
+  // predicate that asks about the card's tags reads both (triggers.js
+  // cardTagIs). The card definition and the deck instance never carry them.
+  const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    // Which piece lent this card, for the skill hooks (engine/skillXp.js).
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -903,6 +941,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
     cardType: kind,
+    cardTags: cardRef.tags || [],
+    derivedTags,
     targetId: target ? target.id : null,
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,
@@ -1010,7 +1050,11 @@ export function previewCard(combat, cardInstanceId, targetId) {
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
       instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-      type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+      // The kind tag and the grip's derived tags, as the live play reads them
+      // (above) — a preview that disagreed with the play would lie.
+      type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+      derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
+      authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
       damageSchool: inst.damageSchool ?? def.damageSchool,
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
     },

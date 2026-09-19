@@ -17,6 +17,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
+import { runClassIdentity } from '../../model/classCard.js';
+import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
 import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
@@ -29,7 +31,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
-import { helpText } from '../../model/tooltipSettings.js';
+import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
@@ -84,6 +86,8 @@ import { wireCombatLayout } from '../components/combatLayout.js';
 import { intentVisible } from '../models/CombatOverlayModel.js';
 import { el, meter, meters, pill, labelStack, statPair, keycap, glyph, iconButton, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 import { clearSelection, onSelectionChange } from '../components/cardSelection.js';
+import { wireFormationMovement } from '../components/formationMovement.js';
+import { formationMovePlan } from '../../model/formationMovement.js';
 
 /** A pile control: a kit button carrying a stacked StatPair (count over name). */
 function pileButton(kind, label) {
@@ -115,6 +119,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // a `let` that reads null rather than a `const` in its temporal dead zone —
   // which throws, and would throw on the FIRST RENDER OF EVERY FIGHT.
   let endTurnBeat = null;
+  let formationMovement = null;
   const previewParams = new URLSearchParams(window.location.search);
   const previewSceneId = previewParams.get('shot') === 'combat' ? previewParams.get('shotScene') : null;
   app.innerHTML = `
@@ -129,7 +134,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         floor: run.floor,
         floorTotal: run.mapGraph?.floors ?? null,
         seed: run.seedString,
-        identity: { className: registries.classes.get(run.class).name },
+        identity: { className: runClassIdentity(registries, run).name },
         controls: {
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
@@ -142,6 +147,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       }))}
       ${combatBackdropHtml(run, previewSceneId)}
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
+        <div class="formation-grid" aria-hidden="true">
+          ${['A', 'B', 'C'].flatMap(row => [1, 2, 3, 4].map(column => `<button type="button" disabled tabindex="-1" aria-label="Position ${row}${column}" class="formation-grid-cell" data-cell="${row}${column}" data-side="${column <= 2 ? 'player' : 'enemy'}"><svg class="formation-grid-outline" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polygon points="50,0 100,50 50,100 0,50" vector-effect="non-scaling-stroke" /><rect width="100" height="100" vector-effect="non-scaling-stroke" /><ellipse cx="50" cy="50" rx="50" ry="50" vector-effect="non-scaling-stroke" /></svg><span>${row}${column} · ${column === 1 || column === 4 ? 'back' : 'front'}</span></button>`)).join('')}
+        </div>
         <div class="turn-ribbon" role="status" aria-live="polite">Player Turn</div>
         <div class="player-zone"></div>
         <div class="sr-only dodge-announcement" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -188,6 +196,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  const potionReveal = resolveTooltipSettings(meta.settings);
+  const actionRow = $('.combat-action-row');
+  actionRow?.style.setProperty('--potion-reveal-delay', `${potionReveal.open}ms`);
+  actionRow?.style.setProperty('--potion-focus-delay', `${potionReveal.focus}ms`);
+  actionRow?.style.setProperty('--potion-reveal-fade', `${potionReveal.fade}ms`);
   // The bar ceilings, DERIVED from the content (classes + equipment for the
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
@@ -265,7 +278,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         customization: run.customization,
         spritesEnabled: spritesAreEnabled(),
       });
-      return eligible && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
+      return eligible && !stage?.animationSetId && !actorEl.querySelector('.painted-outfit') ? playReaverAttack(actorEl, reaverAttackTiming(speed)) : playFamilyAnimation(actorEl, stage, plan, speed);
     },
   };
 
@@ -274,7 +287,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const tempo = Number.isFinite(plan.tempo) ? Math.min(2, Math.max(0.25, plan.tempo)) : 1;
     const reach = Number.isFinite(plan.reach) ? Math.min(2, Math.max(0.25, plan.reach)) : 1;
     const direction = actorEl.closest('.enemy') ? -1 : 1;
-    const totalMs = plan.family === 'neutral' ? 0 : Math.round(speed.lungeMs * tempo);
+    const authoredTiming = stage?.actionTiming?.(plan.pose, speed);
+    const totalMs = plan.family === 'neutral' ? 0 : authoredTiming?.totalMs ?? Math.round(speed.lungeMs * tempo);
     const target = plan.targetId && fxCtx.anchorFor(plan.targetId);
     const effectTargets=combatEffectTargetIds(plan.spriteEffect,plan.effectEvents,combat.player.id).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
     const authoredTargets=presentationTargetIds(plan.effectEvents,combat.player.id,plan.spriteEffect?.bindingContext.objectId).map(id=>fxCtx.anchorFor(id)).filter(Boolean).map(anchor=>anchorLocalBox(fxCtx.layer,anchor));
@@ -300,7 +314,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       if (enemyAttack) actorEl.classList.add('enemy-attack-pose');
       if (plan.pose) stage?.play(plan.pose, totalMs, plan.aura);
     }
-    return { totalMs, impactMs: Math.round(totalMs * 0.55), cancel: () => {
+    return { totalMs, impactMs: authoredTiming?.impactMs ?? Math.round(totalMs * 0.55), cancel: () => {
       actorEl.classList.remove(actionClass);
       if (enemyAttack) actorEl.classList.remove('enemy-attack-pose');
       for (const [name, value, priority] of original) {
@@ -631,7 +645,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       return {
         role: 'player',
         name: (run.customization?.name || classDef.name).toUpperCase(),
-        subtitle: `${classDef.name} · Level ${run.level ?? 1}`,
+        subtitle: `${classDef.name} · Level ${characterLevel(run)}`,
         resources: inspectorResources([
           { label: 'HP', value: v.hp, max: entity.maxHp },
           { label: 'MP', value: v.mana, max: entity.maxMana },
@@ -698,7 +712,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   function inspectorPreviewSprite(subject) {
     if (subject.role === 'player') {
       const figure = figureSpec(registries, run.loadout, run.class);
-      return playerSprite(run.customization || {}, run.class, figure.armourId);
+      return playerSprite(run.customization || {}, run.class, figure.armourId, { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), view: 'portrait' });
     }
     const enemy = combat.enemies.find((e) => e.id === subject.entityId);
     if (!enemy) return null;
@@ -885,12 +899,14 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage() {
+    $('.field').dataset.playerCell = combat.player.formationCell || '';
     hideTooltip();
     if (selected || selfArm || selectedFlask != null) selectedCombatantId = null;
     if (selectedCombatantId && selectedCombatantId !== 'player' && !combat.enemies.some((enemy) => enemy.id === selectedCombatantId && enemy.alive)) selectedCombatantId = null;
     renderPlayer();
     renderEnemies();
     battlefieldStage.refresh();
+    formationMovement?.refresh();
   }
 
   function render() {
@@ -1245,7 +1261,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const zone = $('.player-zone');
     const p = combat.player;
     const figure = figureSpec(registries, run.loadout, run.class);
-    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, spritesAreEnabled(), document.documentElement.dataset.performance]);
+    const animation = equipmentAnimationForLoadout(registries, run.loadout, run.class);
+    const artKey = JSON.stringify([run.class, run.customization, figure.armourId, animation?.setId, animation?.grip, spritesAreEnabled(), document.documentElement.dataset.performance]);
     const existing = artKey === playerArtKey ? zone.querySelector('.combatant.player') : null;
     const renderKey = JSON.stringify([artKey, p, dv(p), run.attributes, run.loadout, selfArm, lastDodge, playerRest, readinessOrder, readSettings()]);
     if (existing && playerRenderKey === renderKey) return;
@@ -1299,9 +1316,9 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       entityId: 'player',
       leading: [combatantInfo(combatantSubject('player', p).name, opener => openCombatantDoor(combatantSubject('player', p), opener))],
       classNames: [selfArm ? 'armed' : '', selectedCombatantId === 'player' ? 'context-selected' : ''],
-      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId),
+      sprite: existing ? null : playerSprite(run.customization || {}, run.class, figure.armourId, { animation }),
       blockBadge: blockBadge(p),
-      name: markMeterRow(labelStack({ label: run.customization?.name || registries.classes.get(run.class).name, attrs: { class: 'nm' } }), 'name'),
+      name: markMeterRow(labelStack({ label: run.customization?.name || runClassIdentity(registries, run).name, attrs: { class: 'nm' } }), 'name'),
       meters: meterBars(p),
       trailing,
     };
@@ -2304,7 +2321,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const node = $(selector);
     node.tabIndex = 0;
     attachTooltip(node, () => `<div class="tt-title">${esc(title)}</div>${esc(helpText(message, {
-      className: registries.classes.get(run.class).name, classDescription: registries.classes.get(run.class).description || '',
+      className: runClassIdentity(registries, run).name, classDescription: registries.classes.get(run.class).description || '',
       cinders: run.cinders, act: run.actNumber, floor: run.floor, turn: $('.turn-ribbon').textContent,
       instruction: helpText(combatEl.dataset.turn === 'player' ? 'playerTurn' : 'enemyTurn'),
     }))}`);
@@ -2452,6 +2469,22 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   render();
 
+  formationMovement = wireFormationMovement($('.field'), {
+    readSettings, holdConfig: registries.balance.ui.holdConfirm,
+    available: () => !busy && !selected && !selfArm && selectedFlask == null,
+    plan: cell => formationMovePlan(combat, cell, readSettings()),
+    move: cell => {
+      if (busy) return;
+      try {
+        disp = takeSnapshot();
+        const out = dispatch(combat, { type: 'moveCharacter', cell, settings: readSettings() });
+        dlog('dispatch', `moveCharacter ${cell}`, { events: out.events.length });
+        busy = true;
+        afterDispatch(out.events);
+      } catch (error) { disp = null; busy = false; dlog('rejected', 'moveCharacter', error.message); render(); }
+    },
+  });
+
   // Veils mount beside #app, not inside it. Watch that ownership boundary plus
   // the originating combat mount itself: #app is reused across screens and
   // fights, so finding *a* later `.combat` must never keep this mount's captured
@@ -2466,6 +2499,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         enemyFrames.clear();
         removeEventListener('keydown', keyHandler);
         battlefieldStage.release();
+        formationMovement?.release();
         combatLayout.release();
         aimObserver?.disconnect();
         releaseSelectionWatch();
@@ -2506,3 +2540,4 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.
   if (showTutorial) mountTutorial(app, { onDone: () => onTutorialDone && onTutorialDone() });
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

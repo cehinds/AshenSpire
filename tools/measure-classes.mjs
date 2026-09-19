@@ -74,8 +74,9 @@ import { hasStatus } from '../src/engine/statuses.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount, applyGraceRefill,
+  rollRelicReward,
 } from '../src/engine/encounters.js';
+import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 
 const REG = createRegistries(contentBundle);
 const argv = process.argv.slice(2);
@@ -805,9 +806,13 @@ function simulateRun(classId, seed, policy = POLICY) {
         // divergence: with the bots never spending a charge, a refill was a
         // no-op on both sides. Two sims disagreed about the game's sustain loop
         // and agreed on the answer, because the subsystem was dead in both.
-        applyGraceRefill(REG, run);
-        if (run.hp < run.maxHp * (MUTATE === 'shrine' ? 0.2 : 0.6)) run.hp = Math.min(run.maxHp, run.hp + shrineHealAmount(REG, run));
+        // Since plan phase 7 the shrine is a location visit: `arrived` runs
+        // the refill rule, `rested` the heal and Mana rules (engine/locations.js).
+        const visit = createLocationVisit({ run, registries: REG, rng }, 'shrine');
+        arriveAt(visit);
+        if (run.hp < run.maxHp * (MUTATE === 'shrine' ? 0.2 : 0.6) && !visit.restDenied) restAt(visit);
         else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
+        leaveLocation(visit);
       } else if (kind === 'treasure') {
         const r = rollRelicReward(REG, rng, run.relics);
         if (r) run.relics.push(r);

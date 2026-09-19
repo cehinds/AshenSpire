@@ -411,5 +411,15 @@ export const cardExposure = [
     "cardId": "spikedReprisal",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rimeThrust",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "kilnCleave",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
   }
 ];

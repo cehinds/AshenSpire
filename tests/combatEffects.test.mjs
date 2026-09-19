@@ -98,9 +98,9 @@ test('live named card styles select their authored effects',()=>{
  for(const [id,kind]of [['starstonePebble','starbolt'],['bloodPact','steelGlint']]){const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)}).kind,kind);}
 });
 
-test('expanded effects follow live cards and equipment profiles without changing resource auras',()=>{
+test('expanded effects retain paid card motifs and action-only profile fallbacks without changing resource auras',()=>{
  const reg=createRegistries(contentBundle);
- for(const [id,kind]of [['twinPrick','crossSlash'],['bladeDanceRogue','whirlwind'],['sacredHarvest','heavyImpact'],['disorient','steelGlint']]){
+ for(const [id,kind]of [['twinPrick','crossSlash'],['bladeDanceRogue','whirlwind'],['sacredHarvest','lifeDrain'],['disorient','steelGlint']]){
   const card=resolveCard(reg,{cardId:id});assert.equal(effect({...card,cardTags:combatEffectTags(reg,card)},card.class).kind,kind,id);
  }
  const healing=reg.cards.all().find(c=>c.class==='herald'&&c.type==='skill'&&c.effects?.every(e=>e.op==='heal'));

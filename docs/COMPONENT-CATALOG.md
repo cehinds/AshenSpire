@@ -1,5 +1,13 @@
 # AshenSpire component catalog
 
+`equipment-animation-reference` derives the active presentation from class,
+armour, ordered right/left weapon groups and optional grip. Its model is
+`src/model/equipmentAnimation.js`; authored references live in
+`content/config/ui/presentation/equipmentAnimations.json`. The painted stage,
+Armoury, conversation and portrait views share those references. The visual
+catalog includes the approved Reaver greatsword ready stance and portrait.
+See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
+
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from
 Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,

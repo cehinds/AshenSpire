@@ -258,8 +258,8 @@ enemy-sourced effect it resolves to the player.
 
 Run-level opcodes (`addCinders {amount}`, `removeCardFromDeck {card?|random?}`,
 `upgradeCard {card?|random?}`, `addRelic {id?|random?}`, `addFlask
-{id?|random?}`, `loseMaxHpPct {pct}`, `startCombat {encounterId}`) require a
-run context — use:
+{id?|random?}`, `loseMaxHpPct {pct}`, `startCombat {encounterId}`, `swapClass
+{classId?|random?}`) require a run context — use:
 
 ```js
 import { executeRunEffects } from './src/engine/actions.js';
@@ -305,6 +305,7 @@ Predicates (`evalPredicate(ctx, pred, pctx)`, closed set):
 | `{ p:'firstCardThisTurn' }` | gated card was the 1st played this turn |
 | `{ p:'firstAttackThisCombat' }` | gated attack was the 1st this combat |
 | `{ p:'cardTypeIs', type }` | the contextual card's type matches |
+| `{ p:'cardTagIs', tag }` | the tag is in the contextual card's `tags` ∪ the action snapshot's `derivedTags` (the grip's), or in the firing event's `cardTags` ∪ `derivedTags` (SPEC §13.4c) |
 | `{ p:'everyNthCardThisCombat', n }` | card ordinal this combat ≡ 0 (mod n) |
 | `{ p:'random', pct }` | roll on stream `misc` |
 | `{ p:'eventIsAttack' }` | the trigger's firing event has `isAttack: true` (damageDealt) |

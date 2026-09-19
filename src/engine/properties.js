@@ -2,7 +2,8 @@
 // (docs/proposal-progression-and-property-system.md §3, plan phase 1b)
 //
 // A property tag confers behaviour only while a CARRIER holds it: the equipped
-// weapon, the worn armour — later a relic, the class card, a location. This
+// weapon, the worn armour, a held relic, the class card, the place the run
+// stands at (engine/locations.js). This
 // file is the single door. mountProperties installs a carrier's rules into
 // ctx.propertyMounts[ownerKey][sourceKey]; unmountProperties removes them; and
 // the fourth scan in triggers.js plus the passive readers in model/registries.js
@@ -41,10 +42,11 @@ import { triggerOwnerKey } from './triggers.js';
 const LOADOUT_KINDS = new Set(['armament', 'armour']);
 
 // The holders this path can mount, and why the list is short: a mount needs a
-// WINDOW — the span over which the holder is held — and these four are the
-// holders whose window the engine knows (worn, worn, owned, chosen). A kind
+// WINDOW — the span over which the holder is held — and these five are the
+// holders whose window the engine knows (worn, worn, owned, chosen, and a
+// location's arrival-to-departure — engine/locations.js, plan phase 7). A kind
 // gains a mount by gaining a window here, never by a content row.
-const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class']);
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {
@@ -79,7 +81,11 @@ export function mountProperties(ctx, carrier) {
   if (owned[sourceKey]) {
     throw new Error(`Property source '${sourceKey}' is already mounted for '${carrier.ownerKey}' — a carrier mounts once; unmount it before mounting it again`);
   }
-  owned[sourceKey] = { kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules };
+  // `scopeTags` are the carrier's OWN non-property tags, kept on the record
+  // so a scoped passive reader (engine/skillXp.js: skillXpMult for the tracks
+  // the class card names) can ask which mounts speak for a track without a
+  // second table. Empty for the carriers that carry none.
+  owned[sourceKey] = { kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])] };
   return owned[sourceKey];
 }
 
@@ -125,6 +131,54 @@ export function relicCarrier(registries, relicId, ownerKey) {
   const def = registries.relics.get(relicId);
   const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
   return tagIds.length ? { kind: 'relic', id: relicId, instanceId: relicId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+/**
+ * classCarrier(registries, classId, ownerKey) → the carrier the class card
+ * presents (plan phase 5a): the CORE ZONE's one card, mounted like a relic,
+ * conferring the property tags the class carries in tagging.csv (`favored`),
+ * scoped by its other tags (the item types it names). Null when the class
+ * carries no property.
+ */
+export function classCarrier(registries, classId, ownerKey, coreTags = []) {
+  const def = registries.classes && registries.classes.get ? registries.classes.get(classId) : null;
+  const own = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  // The run's picked tree nodes (plan phase 5b, run.coreTags) are the core
+  // card's own tagging rows: they mount beside the class's authored tags.
+  // Only the class's OWN tree mounts (the review of #1192): a pick the tree
+  // does not hold is the load door's — another class's node refused, one a
+  // content update dropped let go with a ledger row — never this carrier's
+  // to confer.
+  const rules = registries.propertyRules;
+  const tree = new Set((Array.isArray(registries.classTree) ? registries.classTree : []).filter((row) => row && row.classId === classId).map((row) => row.nodeId));
+  const picked = (Array.isArray(coreTags) ? coreTags : []).filter((id) => tree.has(id) && rules && typeof rules.has === 'function' && rules.has(id) && !own.includes(id));
+  const tagIds = [...own, ...picked];
+  return tagIds.length && def
+    ? { kind: 'class', id: classId, instanceId: classId, ownerKey, tagIds, scopeTags: [...(def.tags || [])] }
+    : null;
+}
+
+/** The core tags an entity's seat holds: the seat's own in co-op, the combat's in solo. */
+function coreTagsOf(combat, owner) {
+  if (combat.players instanceof Map) {
+    for (const P of combat.players.values()) if (P.entity === owner) return P.coreTags || [];
+  }
+  return combat.coreTags || [];
+}
+
+/**
+ * syncClassProperties(combat, entity) — mount the entity's class card once,
+ * as syncRelicProperties mounts a relic: a class never changes mid-fight, so
+ * this only ever adds.
+ */
+export function syncClassProperties(combat, entity) {
+  const owner = entity || (combat && combat.player);
+  if (!combat || !owner || !owner.classId) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  const carrier = classCarrier(combat.registries, owner.classId, ownerKey, coreTagsOf(combat, owner));
+  if (!carrier) return;
+  const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
+  if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
 }
 
 /**

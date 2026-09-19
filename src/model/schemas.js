@@ -71,6 +71,12 @@ export const RUN_OPCODES = Object.freeze([
   'addFlaskCapacity',
   'loseMaxHpPct',
   'startCombat',
+  // Plan phase 5c: the class swap — an event or a boss's gift, never a menu.
+  'swapClass',
+  // Plan phase 7: the grace refill as a rule's effect — the `restFlasks`
+  // location tag fires it on `arrived`. Idempotent (a top-up), so a re-entry
+  // cannot double-pour.
+  'refillFlasks',
 ]);
 
 export const OPCODES = Object.freeze([...COMBAT_OPCODES, ...RUN_OPCODES]);
@@ -135,9 +141,22 @@ export const EVENTS = Object.freeze([
   // the quest door (engine/quests.js completeQuest), for an event chain's
   // completing choice and an atlas quest's claimed reward alike.
   'questCompleted',
+  // Plan phase 7: a location is a property carrier, mounted from arrival to
+  // departure (engine/locations.js). `arrived` fires when the run reaches it,
+  // `rested` when the player takes its Rest; what the place restores is the
+  // sum of its tags' rules on these two events. Run-level only: no fight
+  // emits either.
+  'arrived',
+  'rested',
   'flaskUsed',
   'relicTriggered',
 ]);
+
+// The events only the run-level door emits (engine/locations.js): a status,
+// stance or enemy-phase hook naming one could never fire, so validate.js
+// refuses it by name. A property rule may name them — that is how a location
+// confers what it does.
+export const RUN_LEVEL_EVENTS = Object.freeze(['arrived', 'rested']);
 
 // Names a trigger's `on` may use (SPEC §3.6): every bus event, the owner-
 // relative turn hooks, and the enemy-phase threshold trigger.
@@ -159,10 +178,20 @@ export const PREDICATES = Object.freeze([
   'firstCardThisTurn',
   'firstAttackThisCombat',
   'cardTypeIs',
+  // Plan phase 3c: the card's tags UNION the action snapshot's derived tags
+  // (the grip's) — never the card row alone, never a tag written to a card.
+  'cardTagIs',
   'everyNthCardThisCombat',
   'random',
   'eventIsAttack',
   'hpDamagePositive',
+  // A `healed` event that healed something: applyHeal emits the event at
+  // full HP with amount 0, and a once-per-combat rule must not spend itself
+  // on it (plan phase 5a's Waxen Seal was the first to).
+  'healPositive',
+  // A `manaRestored` event that restored something: restoreMana emits the
+  // event at full Mana with amount 0 (plan phase 5b's Attuned Mind).
+  'manaPositive',
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
@@ -243,8 +272,12 @@ export const PASSIVE_TYPES = Object.freeze({
   eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
   flaskPowerMult: 'num', // flask effect amounts ×
   revealUnknown: 'bool', // flag: '?' map nodes show their resolved type
-  shrineHealMult: 'num', // shrine rest healing ×
-  shrineNoRest: 'bool', // flag: shrines offer Smith only
+  restHealMult: 'num', // rest healing × (every location's Rest; was shrineHealMult)
+  // Rest refused: `true` denies every location's Rest; a list of location
+  // tags (restHpPartial, …) denies only a place whose tag set holds one of
+  // them, so a relic can forbid the shrine's rest and still allow the town's
+  // (plan phase 7; was shrineNoRest, which had no filter).
+  restDenied: 'boolOrTags',
   powerCostReduction: 'num', // Power cards cost N less (min 0)
   // Inert character-sheet projection only. Player state and combat deliberately
   // have no poise meter; enemy poise remains a separate engine system.
@@ -258,6 +291,10 @@ export const PASSIVE_TYPES = Object.freeze({
   // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
   // properties alike. The wand's `overcharge` property confers it (plan 1b).
   exposureBuildupMult: 'num',
+  // Skill XP × for the tracks a carrier's own tags name (plan phase 5a): the
+  // class card's `favored` property confers it, and engine/skillXp.js reads
+  // it scoped to the mounts whose tags include the track — never unscoped.
+  skillXpMult: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
@@ -266,7 +303,10 @@ export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
 // every schema that carries passives (a relic, a property rule), so there is
 // one home for what a passive may be and no second hand-typed copy to drift.
 const passiveFields = Object.freeze(Object.fromEntries(
-  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, { k: t === 'bool' ? 'bool' : 'num', opt: true }])
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, {
+    ...(t === 'bool' ? { k: 'bool' } : t === 'boolOrTags' ? { k: 'union', anyOf: [{ k: 'bool' }, { k: 'arr', of: { k: 'str' } }] } : { k: 'num' }),
+    opt: true,
+  }])
 ));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
@@ -436,7 +476,11 @@ export const EFFECT_SPECS = Object.freeze({
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
   restoreStamina: { allowed: [], required: ['amount'], refs: {} },
-  restoreMana: { allowed: [], required: ['amount'], refs: {} },
+  // `amount` restores that much; `toFloorPct` (plan phase 7, the rest's
+  // floorOrFull mode) restores TO that percent of max, or to full when the
+  // pool already stands at or above the floor. Exactly one of the two —
+  // validate.js refuses neither and both.
+  restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
@@ -454,6 +498,9 @@ export const EFFECT_SPECS = Object.freeze({
   addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
   loseMaxHpPct: { allowed: ['pct'], required: ['pct'], refs: {} },
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
+  // `classId` names the class; `random: true` picks any class but the run's own.
+  swapClass: { allowed: ['classId', 'random'], required: [], refs: { classId: 'classes' } },
+  refillFlasks: { allowed: [], required: [], refs: {} },
 });
 
 // ---------------------------------------------------------------------------
@@ -940,6 +987,13 @@ export const SCHEMAS = Object.freeze({
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
     startingSignatureCard: ref('cards'),
+    // The class ability card (plan phase 5a, proposal §4): one card that
+    // teaches the class's resource loop, granted at creation beside the
+    // signature and, from phase 5b, what the class tree upgrades.
+    abilityCard: ref('cards'),
+    // The kit relic (plan phase 5a, proposal §4): held from creation beside
+    // the starting relic, and the one that reinforces the ability card's loop.
+    kitRelic: ref('relics'),
     eligibleStartingKitIds: arr(str),
     cardPool: arr(ref('cards')),
     description: opt(str),

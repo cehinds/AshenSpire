@@ -1,3 +1,4 @@
+import { contentBundle } from '../src/content/index.js';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -20,7 +21,8 @@ try {
     await page.screenshot({ path: join(out, `${name}-sword-and-shield.png`) });
     if (name === 'desktop') {
       const ids = await page.locator('#left option').evaluateAll(es => es.map(e => e.value).filter(Boolean));
-      check(ids.length === 25, 'all 25 armaments offered');
+      check(ids.length === contentBundle.equipment.armaments.length, `all ${contentBundle.equipment.armaments.length} armaments offered`);
+      assert.deepEqual([...ids].sort(), contentBundle.equipment.armaments.map(piece => piece.id).sort(), 'preview offers the exact shipped armament roster');
       for (const id of ids) {
         await page.selectOption('#right', ''); await page.selectOption('#left', id);
         await page.locator('#controls button').click();

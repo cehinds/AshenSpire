@@ -6,6 +6,7 @@
 // Settings tab. Each row declares its default so stored settings stay sparse.
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
+import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -27,6 +28,8 @@ import { openModal, button, categoryNav } from '../kit/index.js';
 import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
+import { contentBundle } from '../../content/index.js';
+import { advancedConfigProblems, advancedConfigRows, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -78,6 +81,7 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 // value the engine actually resolves rows against, so the row that turns it
 // reads it from there and a copy cannot drift.
 const DERIVED_DEFAULTS = derivedStatRules.defaults;
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle);
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -317,6 +321,8 @@ const ROWS = [
   { cat: 'Display', key: 'showPlayedCard', def: false, label: 'Show played card animation',
     note: 'Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.' },
 
+  ...HUD_VISIBILITY_SETTINGS,
+
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
     resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
@@ -509,11 +515,11 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
     label: 'Export card sizes',
     note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
-    note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+    note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
     min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
     label: 'Stat points per tier', applied: numberAppliedHtml,
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
@@ -523,6 +529,11 @@ const ROWS = [
     // alternative is him concluding the dial is broken. The middle sentence is
     // the finding that caused the ask: at 5, one level moves no number at all.
     note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+  ...ADVANCED_CONFIG_ROWS,
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: 'Export game configuration',
+    note: 'Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.' },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: 'Load game configuration',
+    note: 'Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -564,11 +575,18 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
+  { id: 'Progression', label: 'Progression', tip: 'Starting level, level costs, rewards, and points granted.' },
+  { id: 'Classes', label: 'Class defaults', tip: 'Starting attributes, HP, and flasks for every class.' },
+  { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants.' },
+  { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
+  { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
+  { id: 'Rules', label: 'Rules', tip: 'Remaining global numeric and boolean game rules.' },
   { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
   { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
+  { id: 'Export', label: 'Import / Export', tip: 'Load or save game configuration as a portable JSON file.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
@@ -737,6 +755,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
   const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
+  if (r.type === 'color') {
+    const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
+    return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
+  }
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `${rowOpen('set-row-wide')}
@@ -749,13 +771,15 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // number of its own. The synced slider (Part B) is still held behind #181.
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
+    const step = r.step ?? 1;
+    const inputMode = r.integer === false ? 'decimal' : 'numeric';
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
-                 min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
+                 min="${r.min}" max="${r.max}" step="${step}" inputmode="${inputMode}"
                  aria-label="${r.label}">
-          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="1" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
+          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="${step}" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
         </span>
         ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
@@ -777,9 +801,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       </div>`;
   }
   if (r.type === 'choice') {
-    const cur = r.choices.includes(settings[r.key]) ? settings[r.key] : r.def;
+    const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
+    const cur = r.choices.includes(stored) ? stored : r.def;
     const opts = r.choices
-      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${c}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${r.choiceLabels?.[c] || c}</button>`)
       .join('');
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
@@ -972,7 +997,13 @@ export function resolveNumberRow(settings, row) {
   // The rule itself lives in CardSizeModel so the card-size model and this row
   // cannot disagree about what a stored number means — they did, by a floor
   // against a round.
-  return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
+  if (row.integer !== false) return normalizeTunedNumber(raw, { min: row.min, max: row.max, def: Number(row.def) });
+  const numeric = raw === '' || raw === null || raw === undefined ? Number(row.def) : Number(raw);
+  if (!Number.isFinite(numeric)) return Number(row.def);
+  const clamped = Math.min(row.max, Math.max(row.min, numeric));
+  const step = Number(row.step) || 0.01;
+  const precision = Math.max(0, String(step).split('.')[1]?.length || 0);
+  return Number(clamped.toFixed(precision));
 }
 
 /**
@@ -1279,7 +1310,12 @@ function categoryHtml(cat, settings, saves) {
         + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
         + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
     }).join('');
-    return `<div class="as-pane-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>${groups}`;
+    return `<div class="as-pane-head set-advanced-head"><span class="as-seg set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
+      + '<div class="set-advanced-tools">'
+      + '<label class="set-config-search"><span>Find a setting</span><input type="search" data-advanced-search placeholder="Search names or config paths" autocomplete="off"></label>'
+      + '<span class="set-config-actions"><button type="button" class="as-btn" data-reset-config="group">Reset section</button><button type="button" class="as-btn" data-reset-config="all">Reset all game config</button></span>'
+      + '<output class="set-config-count" data-config-count aria-live="polite"></output></div>'
+      + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
   return `<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
@@ -1393,6 +1429,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // accumulates. The one listener that is NOT per-panel (the resize handler for
   // the applied-zoom readout) is installed once per open, below.
   const wire = () => {
+  const reportAdvancedProblems = () => {
+    const problems = advancedConfigProblems(contentBundle, settings);
+    if (problems.length) showSettingsNotice(problems[0], 'game-config');
+    else clearSettingsNotice('game-config');
+  };
   // The acknowledgement needs no manager and no settings — it always renders.
   const aboutMount = container.querySelector('.set-about-mount');
   if (aboutMount) renderAboutSection(aboutMount);
@@ -1414,6 +1455,43 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       });
       const panel = container.querySelector('.set-panel');
       if (panel) panel.scrollTop = 0;
+      filterAdvancedRows();
+    });
+  });
+
+  const advancedSearch = container.querySelector('[data-advanced-search]');
+  const filterAdvancedRows = () => {
+    if (!advancedSearch) return;
+    const query = advancedSearch.value.trim().toLocaleLowerCase();
+    let shown = 0;
+    let total = 0;
+    container.querySelectorAll('.set-advanced-group:not([hidden]) .set-row').forEach((row) => {
+      total += 1;
+      const match = !query || row.textContent.toLocaleLowerCase().includes(query)
+        || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
+      row.hidden = !match;
+      if (match) shown += 1;
+    });
+    const count = container.querySelector('[data-config-count]');
+    if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
+  };
+  advancedSearch?.addEventListener('input', filterAdvancedRows);
+  filterAdvancedRows();
+
+  container.querySelectorAll('[data-reset-config]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const currentGroup = settings[ADVANCED_CAT_KEY] || ADVANCED_GROUPS[0].id;
+      const keys = ADVANCED_CONFIG_ROWS
+        .filter((row) => button.dataset.resetConfig === 'all' || row.advancedGroup === currentGroup)
+        .map((row) => row.key);
+      if (button.dataset.resetConfig === 'all' || currentGroup === 'Progression') keys.push('levelUpValue', 'statTierSize');
+      const changed = {};
+      for (const key of keys) {
+        delete settings[key];
+        changed[key] = undefined;
+      }
+      onChange(changed);
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline });
     });
   });
 
@@ -1426,6 +1504,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     };
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);
+  });
+
+  container.querySelectorAll('.set-color').forEach(input => {
+    input.addEventListener('input', () => {
+      settings[input.dataset.key] = input.value;
+      onChange({ [input.dataset.key]: input.value });
+    });
   });
 
   // 'number' rows: the typed field and its slider are ONE value.
@@ -1456,6 +1541,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       mirror(val);
       settings[key] = val;
       onChange({ [key]: val });
+      if (key.startsWith('gameConfig.')) reportAdvancedProblems();
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.
@@ -1483,6 +1569,50 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
     btn.addEventListener('click', openDebugLog);
+  });
+
+  container.querySelectorAll('[data-btn="gameConfigExport"]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+      const result = await saveAdvancedConfigFile(panelSettings || settings, {
+        build: { contentVersion: contentBundle.version },
+        includeKeys: ROWS.filter((row) => row.cat === 'Advanced' && row.type !== 'button' && row.type !== 'action').map((row) => row.key),
+      });
+      btn.disabled = false;
+      btn.textContent = result.ok ? (result.method === 'save-as' ? 'Saved' : 'Downloaded') : 'Unavailable';
+      showSettingsNotice(result.ok
+        ? `${result.filename} ${result.method === 'save-as' ? 'saved.' : 'downloaded locally.'}`
+        : 'This browser could not create a local configuration file.');
+      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Export JSON'; }, 2000);
+    });
+  });
+
+  container.querySelectorAll('[data-btn="gameConfigImport"]').forEach(btn => {
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = '.json,application/json';
+    picker.hidden = true;
+    picker.dataset.configImport = '';
+    btn.after(picker);
+    btn.addEventListener('click', () => { picker.value = ''; picker.click(); });
+    picker.addEventListener('change', async () => {
+      const file = picker.files?.[0];
+      if (!file) return;
+      btn.disabled = true;
+      try {
+        if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
+        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS);
+        if (!container.isConnected) return;
+        const result = onChange(changes);
+        if (result?.ok === false) throw new Error('Settings could not be saved.');
+        Object.assign(settings, changes);
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline });
+        showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.`);
+      } catch (error) {
+        showSettingsNotice(`Import failed: ${error.message}`);
+      } finally { btn.disabled = false; }
+    });
   });
 
   // EXPORT WHAT THE FILE EXPECTS, AND SAY WHERE IT GOES. The block this copies
@@ -1676,6 +1806,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       });
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
+      if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
@@ -1712,9 +1843,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
       onChange({ [btn.dataset.key]: stored });
+      if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
       refreshConditionNotes(container, settings);
     });
   });
+  reportAdvancedProblems();
   }; // ---- end wire() ---------------------------------------------------
 
   wire();

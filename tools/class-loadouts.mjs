@@ -27,8 +27,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the authored role copies stop summing to the starting deck size',
         file: 'src/content/balance.js',
-        find: 'roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1 }',
-        replace: 'roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 }',
+        find: 'roleCopies: { attack: 4, guard: 4, technique: 1, signature: 1, ability: 1 }',
+        replace: 'roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1, ability: 1 }',
         expectRed: /FAIL default roleCopies are 4\/4\/1\/1/,
       },
       {
@@ -99,9 +99,9 @@ const expected = {
 };
 const wantedCounts = { attack: 4, guard: 4, technique: 1 };
 
-check(R.balance.startingDeckSize === 10, 'global startingDeckSize is 10', String(R.balance.startingDeckSize));
-check(JSON.stringify(R.balance.equipment?.roleCopies) === JSON.stringify({ ...wantedCounts, signature: 1 }),
-  'default roleCopies are 4/4/1/1', JSON.stringify(R.balance.equipment?.roleCopies));
+check(R.balance.startingDeckSize === 11, 'global startingDeckSize is 11 (10 before the class ability card joined the kit, plan phase 5a)', String(R.balance.startingDeckSize));
+check(JSON.stringify(R.balance.equipment?.roleCopies) === JSON.stringify({ ...wantedCounts, signature: 1, ability: 1 }),
+  'default roleCopies are 4/4/1/1/1', JSON.stringify(R.balance.equipment?.roleCopies));
 
 for (const [classId, want] of Object.entries(expected)) {
   const cls = R.classes.get(classId);
@@ -128,9 +128,14 @@ for (const [classId, want] of Object.entries(expected)) {
     `${classId} starts with the planned ${plan.guardCount} guard instances`, JSON.stringify(run.deck.map((c) => c.equipmentRole)));
   check(plan.attackCount + plan.guardCount === plan.filler,
     `${classId}: base cards fill exactly what the cap left (${plan.filler})`, `${plan.attackCount}+${plan.guardCount} vs ${plan.filler}`);
-  const signatures = run.deck.filter((c) => !c.equipmentRole);
-  check(signatures.length === 1 && signatures[0].cardId === want.signature,
-    `${classId} preserves one fixed signature instance`, JSON.stringify(signatures));
+  // The class grants: the signature and, since plan phase 5a, the ability
+  // card — one instance each, both from the class.
+  const classGrants = run.deck.filter((c) => !c.equipmentRole);
+  const signatures = classGrants.filter((c) => c.cardId === want.signature);
+  check(signatures.length === 1, `${classId} preserves one fixed signature instance`, JSON.stringify(classGrants));
+  const abilityId = R.classes.get(classId).abilityCard;
+  check(classGrants.length === 2 && classGrants.filter((c) => c.cardId === abilityId).length === 1,
+    `${classId} carries its ability card once beside the signature, and nothing else run-owned at birth`, JSON.stringify(classGrants));
 }
 
 const starseer = createRunState({ seed: 2, classId: 'starseer', registries: R });
@@ -250,7 +255,7 @@ refuses('mutant: role counts must sum to startingDeckSize', /10|sum|startingDeck
     equipment: {
       ...contentBundle.balance.equipment,
       startingDeck: { ...contentBundle.balance.equipment.startingDeck, enabled: false },
-      roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1 },
+      roleCopies: { attack: 5, guard: 4, technique: 1, signature: 1, ability: 1 },
     },
   },
 });

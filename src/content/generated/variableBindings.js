@@ -446,6 +446,41 @@ export const variableBindings = [
   {
     "scope": "default",
     "scopeId": "",
+    "nodeId": "favored",
+    "variable": "skillXpMult",
+    "balancePath": "skill.favoredXpMult"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "ashenGrip",
+    "variable": "restoreStamina",
+    "balancePath": "powers.ashenGrip.restoreStamina"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "lodestarShard",
+    "variable": "restoreMana",
+    "balancePath": "powers.lodestarShard.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "waxenSeal",
+    "variable": "heal",
+    "balancePath": "powers.waxenSeal.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "whetstonePouch",
+    "variable": "bleed",
+    "balancePath": "powers.whetstonePouch.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
     "nodeId": "cost.action",
     "variable": "amount",
     "balancePath": "costs.action"
@@ -463,5 +498,208 @@ export const variableBindings = [
     "nodeId": "cost.mana",
     "variable": "amount",
     "balancePath": "costs.mana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "ironFooting",
+    "variable": "block",
+    "balancePath": "classTree.ironFooting.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "bloodTempo",
+    "variable": "draw",
+    "balancePath": "classTree.bloodTempo.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "ashenReserve",
+    "variable": "restoreStamina",
+    "balancePath": "classTree.ashenReserve.restoreStamina"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "grimHarvest",
+    "variable": "heal",
+    "balancePath": "classTree.grimHarvest.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "warlord",
+    "variable": "strength",
+    "balancePath": "classTree.warlord.strength"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "bulwarkKing",
+    "variable": "block",
+    "balancePath": "classTree.bulwarkKing.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "attunedMind",
+    "variable": "draw",
+    "balancePath": "classTree.attunedMind.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "starlitFocus",
+    "variable": "starstoneCharge",
+    "balancePath": "classTree.starlitFocus.starstoneCharge"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "lodestarCap",
+    "variable": "restoreMana",
+    "balancePath": "classTree.lodestarCap.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "arcaneDraw",
+    "variable": "draw",
+    "balancePath": "classTree.arcaneDraw.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "conduit",
+    "variable": "restoreStamina",
+    "balancePath": "classTree.conduit.restoreStamina"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "reservoir",
+    "variable": "restoreMana",
+    "balancePath": "classTree.reservoir.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "warmth",
+    "variable": "block",
+    "balancePath": "classTree.warmth.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "vigil",
+    "variable": "heal",
+    "balancePath": "classTree.vigil.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "sealOfPlenty",
+    "variable": "restoreMana",
+    "balancePath": "classTree.sealOfPlenty.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "wakingRot",
+    "variable": "crimsonBlight",
+    "balancePath": "classTree.wakingRot.crimsonBlight"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "martyr",
+    "variable": "block",
+    "balancePath": "classTree.martyr.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "saint",
+    "variable": "heal",
+    "balancePath": "classTree.saint.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "quickHands",
+    "variable": "prepared",
+    "balancePath": "classTree.quickHands.prepared"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "secondWind",
+    "variable": "draw",
+    "balancePath": "classTree.secondWind.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "honedEdge",
+    "variable": "bleed",
+    "balancePath": "classTree.honedEdge.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "poisonedPouch",
+    "variable": "venom",
+    "balancePath": "classTree.poisonedPouch.venom"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "assassin",
+    "variable": "prepared",
+    "balancePath": "classTree.assassin.prepared"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "assassin",
+    "variable": "draw",
+    "balancePath": "classTree.assassin.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "shadow",
+    "variable": "block",
+    "balancePath": "classTree.shadow.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restHpSmall",
+    "variable": "pct",
+    "balancePath": "rest.hpSmallPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restHpPartial",
+    "variable": "pct",
+    "balancePath": "rest.hpPartialPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restManaFlat",
+    "variable": "restoreMana",
+    "balancePath": "rest.mana.flat"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "restManaFloor",
+    "variable": "floorPct",
+    "balancePath": "rest.mana.floorPct"
   }
 ];

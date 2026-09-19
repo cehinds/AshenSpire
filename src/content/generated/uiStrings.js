@@ -234,6 +234,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.skillDraft.title",
+    "extends": "",
+    "short": "{skill} · level {level}",
+    "full": "A level the fight bought: pick one card of the track's own schools.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillDraft.spent",
+    "extends": "",
+    "short": "This draft has already been spent. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.classDraft.title",
+    "extends": "",
+    "short": "{class} · level {level}",
+    "full": "A class level: pick one node of the class tree.",
+    "tip": ""
+  },
+  {
+    "id": "reward.classDraft.joins",
+    "extends": "",
+    "short": "<b>{name}</b> joins your class card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.classDraft.spent",
+    "extends": "",
+    "short": "This class pick is no longer open. Go Back; the row stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.kind.flask",
     "extends": "",
     "short": "Flask",
@@ -472,6 +507,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "possession.stat.exposureBuildupMult",
+    "extends": "",
+    "short": "Arcane Exposure buildup",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "possession.stat.revealUnknown",
     "extends": "",
     "short": "Unknown locations",
@@ -479,16 +521,16 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "possession.stat.shrineHealMult",
+    "id": "possession.stat.restHealMult",
     "extends": "",
-    "short": "Shrine healing",
+    "short": "Rest healing",
     "full": "",
     "tip": ""
   },
   {
-    "id": "possession.stat.shrineNoRest",
+    "id": "possession.stat.restDenied",
     "extends": "",
-    "short": "Shrine rest",
+    "short": "Rest",
     "full": "",
     "tip": ""
   },
@@ -559,6 +601,13 @@ export const uiStrings = [
     "id": "possession.trigger.enemyDied",
     "extends": "",
     "short": "Enemy defeated",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "possession.trigger.stanceEntered",
+    "extends": "",
+    "short": "Stance entered",
     "full": "",
     "tip": ""
   },
@@ -1616,27 +1665,55 @@ export const uiStrings = [
     "id": "rest.eyebrow",
     "extends": "",
     "short": "Rest",
-    "full": "Recover and use this Shrine's services before moving on.",
+    "full": "Recover and use this place's services before moving on.",
     "tip": ""
   },
   {
     "id": "rest.title",
+    "extends": "location.shrine.title",
+    "short": "",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "location.shrine.title",
     "extends": "",
     "short": "Shrine of Ember",
     "full": "The Shrine you are resting at.",
     "tip": ""
   },
   {
+    "id": "location.camp.title",
+    "extends": "",
+    "short": "Field Camp",
+    "full": "A rough camp off the road: a small rest and no services.",
+    "tip": ""
+  },
+  {
+    "id": "location.inn.title",
+    "extends": "",
+    "short": "Inn",
+    "full": "The town's inn: a full rest.",
+    "tip": ""
+  },
+  {
+    "id": "location.chapel.title",
+    "extends": "",
+    "short": "Chapel",
+    "full": "The town's chapel: a shrine's rest.",
+    "tip": ""
+  },
+  {
     "id": "rest.status.available",
     "extends": "",
     "short": "{available} of {total} available",
-    "full": "How many of this Shrine's choices you can take now.",
+    "full": "How many of this place's choices you can take now.",
     "tip": ""
   },
   {
     "id": "rest.review.question",
     "extends": "",
-    "short": "Rest at this Shrine?",
+    "short": "Rest here?",
     "full": "",
     "tip": ""
   },
@@ -1650,14 +1727,28 @@ export const uiStrings = [
   {
     "id": "rest.review.leave",
     "extends": "",
-    "short": "Heal {heal} HP and restore Mana, then leave this Shrine.",
+    "short": "Heal {heal} HP and restore {mana} Mana, then leave.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.leaveHp",
+    "extends": "",
+    "short": "Heal {heal} HP, then leave.",
     "full": "",
     "tip": ""
   },
   {
     "id": "rest.review.stay",
     "extends": "",
-    "short": "Heal {heal} HP and restore Mana. You stay at this Shrine and leave when you choose.",
+    "short": "Heal {heal} HP and restore {mana} Mana. You stay and leave when you choose.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "rest.review.stayHp",
+    "extends": "",
+    "short": "Heal {heal} HP. You stay and leave when you choose.",
     "full": "",
     "tip": ""
   },
@@ -2087,5 +2178,292 @@ export const uiStrings = [
     "short": "Piles",
     "full": "Choose which spent pile to read.",
     "tip": "Piles"
+  },
+  {
+    "id": "title.slots.door.new",
+    "extends": "",
+    "short": "New game",
+    "full": "Choose the slot a new climb will be saved in.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.door.load",
+    "extends": "",
+    "short": "Load game",
+    "full": "Choose the saved climb to continue.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.primary.new",
+    "extends": "",
+    "short": "Create character",
+    "full": "Go on to make the character that starts in the chosen slot.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.primary.load",
+    "extends": "",
+    "short": "Load",
+    "full": "Load the chosen saved climb.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.saved",
+    "extends": "",
+    "short": "Saved {when}",
+    "full": "When this slot was last written.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.seed",
+    "extends": "",
+    "short": "Seed {seed}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.start.occupied",
+    "extends": "",
+    "short": "Start in slot {slot}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.start.occupied.prompt",
+    "extends": "",
+    "short": "This slot holds a saved climb. Nothing changes until you begin the new one; you will be asked to replace it then.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.delete",
+    "extends": "",
+    "short": "Delete slot {slot}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.delete.message",
+    "extends": "",
+    "short": "The saved climb in slot {slot} is removed. It is not kept anywhere and cannot be recovered. Your profile stays as it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.delete.confirm",
+    "extends": "",
+    "short": "DELETE",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.replace",
+    "extends": "",
+    "short": "Replace this save?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.replace.message",
+    "extends": "",
+    "short": "Replacement: {className}, seed {seed}. The saved climb in slot {slot} is removed and cannot be recovered.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.replace.confirm",
+    "extends": "",
+    "short": "Replace",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.load",
+    "extends": "",
+    "short": "Load slot {slot}?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.load.message",
+    "extends": "",
+    "short": "The saved climb replaces everything done since your last save.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.review.load.confirm",
+    "extends": "",
+    "short": "Load saved run",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.title",
+    "extends": "",
+    "short": "Save game",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.destination",
+    "extends": "",
+    "short": "Slot {slot}",
+    "full": "Where this run is saved.",
+    "tip": ""
+  },
+  {
+    "id": "save.status.lastSaved",
+    "extends": "",
+    "short": "Last saved {when}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.neverSaved",
+    "extends": "",
+    "short": "Not saved yet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.saved",
+    "extends": "",
+    "short": "Saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.failed",
+    "extends": "",
+    "short": "The save did not land: {reason}. Your run is unchanged; try the save again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.retry",
+    "extends": "",
+    "short": "Retry save",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.status.save",
+    "extends": "",
+    "short": "Save",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.title",
+    "extends": "",
+    "short": "Create character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.categories",
+    "extends": "",
+    "short": "Creation steps",
+    "full": "The steps of making a character.",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.class",
+    "extends": "",
+    "short": "Class",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.character",
+    "extends": "",
+    "short": "Character",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.equipment",
+    "extends": "",
+    "short": "Equipment",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.category.review",
+    "extends": "",
+    "short": "Review",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.next",
+    "extends": "",
+    "short": "Next",
+    "full": "Go on to the next step.",
+    "tip": ""
+  },
+  {
+    "id": "creation.next.tip",
+    "extends": "",
+    "short": "On to {category}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.leave.tip",
+    "extends": "",
+    "short": "Back to the title screen. Nothing here is saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.previous.tip",
+    "extends": "",
+    "short": "Back to {category}. Your choices stay.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.destination",
+    "extends": "",
+    "short": "Destination",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.destination.hint",
+    "extends": "",
+    "short": "The save slot this climb will use.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.review.slot",
+    "extends": "",
+    "short": "Slot {slot}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.grid",
+    "extends": "",
+    "short": "Grid view",
+    "full": "The choices as a grid.",
+    "tip": ""
+  },
+  {
+    "id": "creation.view.list",
+    "extends": "",
+    "short": "List view",
+    "full": "The choices as a list.",
+    "tip": ""
+  },
+  {
+    "id": "creation.catalog.portrait",
+    "extends": "",
+    "short": "Live portrait (W1c head)",
+    "full": "The head portrait as the catalogue shows it.",
+    "tip": ""
   }
 ];

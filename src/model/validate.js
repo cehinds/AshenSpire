@@ -21,6 +21,7 @@ import {
   SCHEMAS,
   OPCODES,
   EFFECT_SPECS,
+  RUN_LEVEL_EVENTS,
   TARGETS,
   TRIGGER_EVENTS,
   PREDICATES,
@@ -36,9 +37,13 @@ import {
   RELIC_MODIFIER_TAGS,
   NODE_RELATIONS,
   VARIABLE_SCOPES,
+  CARD_RARITIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
+import { REST_MANA_MODES, locationTaggingProblems } from './locations.js';
+import { wornZoneOf, handZoneOf } from './zones.js';
+import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
@@ -98,6 +103,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'scripts',
   'equipment',
   'unlocks',
+  'classTree', // plan phase 5b: classId, nodeId, tier — the nodes a class may pick as it levels
   'sfx',
   'music',
   'tagDomains', // what a tag can be about — the domain lookup
@@ -503,6 +509,169 @@ function collectContentProblems(bundle, errors = []) {
   // always did) but when authored it must be whole, and the tag it names as
   // "extractable" must be a registered card-domain tag — otherwise nothing
   // could ever carry it and every mount would be sealed in silence.
+  // The deck's floor (plan phase 3b): balance.deck is read by model/loadout.js
+  // deckMinimum and nowhere else; the shape is held here so a retune that
+  // types a fraction or a negative is refused by name, never clamped.
+  // The character level (plan phase 6): the curve, the awards and what a
+  // level grants — each a closed set, each number refused by name.
+  // What a rest restores (plan phase 7): the location rules read these rows
+  // through their variable bindings, the door reads the mode. A retune that
+  // names an unknown mode or a percent off the scale is refused by name.
+  // Both blocks are REQUIRED: the location rules bind to balance.rest and the
+  // journey door reads balance.atlas at run start, so a bundle without them
+  // would pass here and throw there.
+  if (b.balance) {
+    const rest = b.balance.rest;
+    if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
+    else {
+      for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
+      for (const key of ['hpSmallPct', 'hpPartialPct']) {
+        if (!(Number.isInteger(rest[key]) && rest[key] >= 0 && rest[key] <= 100)) err(`balance.rest.${key}`, `must be an integer percent 0–100, got ${JSON.stringify(rest[key])}`);
+      }
+      const mana = rest.mana;
+      if (!mana || typeof mana !== 'object' || Array.isArray(mana)) err('balance.rest.mana', 'must be an object { mode, flat, floorPct }');
+      else {
+        for (const key of Object.keys(mana)) if (!['mode', 'flat', 'floorPct'].includes(key)) err(`balance.rest.mana.${key}`, 'Unknown field');
+        if (!REST_MANA_MODES.includes(mana.mode)) err('balance.rest.mana.mode', `must be one of ${REST_MANA_MODES.join(', ')}, got ${JSON.stringify(mana.mode)}`);
+        if (!(Number.isInteger(mana.flat) && mana.flat >= 0)) err('balance.rest.mana.flat', `must be a non-negative integer, got ${JSON.stringify(mana.flat)}`);
+        if (!(Number.isInteger(mana.floorPct) && mana.floorPct >= 0 && mana.floorPct <= 100)) err('balance.rest.mana.floorPct', `must be an integer percent 0–100, got ${JSON.stringify(mana.floorPct)}`);
+      }
+    }
+  }
+  if (b.balance) {
+    const atlas = b.balance.atlas;
+    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax } — the journey door reads it at run start (plan phase 7)');
+    else {
+      for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
+      // Positive: every seeded route stops at its hub city, so a cap of 0
+      // would refuse every journey at run start rather than here.
+      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 1)) err('balance.atlas.townsPerActMax', `must be a positive integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
+    }
+  }
+  if (b.balance?.rewards?.rarityWeightsByClass !== undefined) {
+    const overrides = b.balance.rewards.rarityWeightsByClass;
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    const root = 'balance.rewards.rarityWeightsByClass';
+    if (!object(overrides)) err(root, 'must be an object keyed by class id');
+    else for (const [classId, pools] of Object.entries(overrides)) {
+      const path = `${root}.${classId}`;
+      if (!(b.classes || []).some(cls => cls.id === classId)) err(path, 'unknown class id');
+      if (!object(pools)) { err(path, 'must be an object keyed by reward pool'); continue; }
+      for (const [pool, weights] of Object.entries(pools)) {
+        const poolPath = `${path}.${pool}`;
+        if (!['normal', 'elite', 'boss'].includes(pool)) err(poolPath, 'unknown reward pool');
+        if (!object(weights)) { err(poolPath, 'must be a rarity weight object'); continue; }
+        for (const rarity of Object.keys(weights)) if (!['common', 'uncommon', 'rare'].includes(rarity)) err(`${poolPath}.${rarity}`, 'unknown reward rarity');
+        for (const rarity of ['common', 'uncommon', 'rare']) {
+          if (!Number.isFinite(weights[rarity]) || weights[rarity] < 0) err(`${poolPath}.${rarity}`, 'must be a finite non-negative weight');
+        }
+        if (!(weights.common + weights.uncommon + weights.rare > 0)) err(poolPath, 'must have a positive total weight');
+      }
+    }
+  }
+
+  if (b.balance && b.balance.level !== undefined) {
+    const lv = b.balance.level;
+    if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');
+    else {
+      for (const key of Object.keys(lv)) if (!['xp'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      const xp = lv.xp;
+      if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.level.xp', 'must be an object { base, growth, roundTo }');
+      else {
+        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        if (!(Number.isFinite(xp.base) && xp.base > 0)) err('balance.level.xp.base', `must be a positive number, got ${JSON.stringify(xp.base)}`);
+        if (!(Number.isFinite(xp.growth) && xp.growth >= 1)) err('balance.level.xp.growth', `must be a number of at least 1, got ${JSON.stringify(xp.growth)}`);
+        if (!(Number.isInteger(xp.roundTo) && xp.roundTo > 0)) err('balance.level.xp.roundTo', `must be a positive integer, got ${JSON.stringify(xp.roundTo)}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.xp !== undefined) {
+    const xp = b.balance.xp;
+    if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, kill, quest }');
+    else {
+      for (const key of Object.keys(xp)) if (!['combatWin', 'kill', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
+      for (const key of ['combatWin', 'quest']) if (!(Number.isInteger(xp[key]) && xp[key] >= 0)) err(`balance.xp.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp[key])}`);
+      if (!xp.kill || typeof xp.kill !== 'object' || Array.isArray(xp.kill)) err('balance.xp.kill', 'must be an object { normal, elite, boss }');
+      else {
+        for (const key of Object.keys(xp.kill)) if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.kill.${key}`, 'Unknown field');
+        for (const key of ['normal', 'elite', 'boss']) if (!(Number.isInteger(xp.kill[key]) && xp.kill[key] >= 0)) err(`balance.xp.kill.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp.kill[key])}`);
+      }
+    }
+  }
+  if (b.balance && b.balance.levelUp !== undefined) {
+    const lu = b.balance.levelUp;
+    if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
+    else {
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'tierSizeMin', 'tierSizeMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
+      if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
+    }
+  }
+  if (b.balance && b.balance.deck !== undefined) {
+    const deck = b.balance.deck;
+    if (!deck || typeof deck !== 'object' || Array.isArray(deck)) err('balance.deck', 'must be an object { minimum, minimumStepLevels, minimumPerStep }');
+    else {
+      for (const key of Object.keys(deck)) if (!['minimum', 'minimumStepLevels', 'minimumPerStep'].includes(key)) err(`balance.deck.${key}`, 'Unknown field');
+      if (!Number.isInteger(deck.minimum) || deck.minimum < 0) err('balance.deck.minimum', `must be a non-negative integer, got ${JSON.stringify(deck.minimum)}`);
+      if (!Number.isInteger(deck.minimumStepLevels) || deck.minimumStepLevels < 1) err('balance.deck.minimumStepLevels', `must be a positive integer, got ${JSON.stringify(deck.minimumStepLevels)}`);
+      if (!Number.isInteger(deck.minimumPerStep) || deck.minimumPerStep < 0) err('balance.deck.minimumPerStep', `must be a non-negative integer, got ${JSON.stringify(deck.minimumPerStep)}`);
+    }
+  }
+  // The skill tracks' numbers (plan phase 4a): the curve and the award rows
+  // model/skills.js and engine/skillXp.js read. Refused by name, never clamped.
+  if (b.balance && b.balance.skill !== undefined) {
+    const skill = b.balance.skill;
+    const posInt = (v) => Number.isInteger(v) && v > 0;
+    const nonNeg = (v) => Number.isFinite(v) && v >= 0;
+    const curve = (row, path) => {
+      if (!row || typeof row !== 'object' || Array.isArray(row)) { err(path, 'must be an object { base, growth, roundTo, … }'); return; }
+      if (!posInt(row.base)) err(`${path}.base`, `must be a positive integer, got ${JSON.stringify(row.base)}`);
+      if (!Number.isFinite(row.growth) || row.growth < 1) err(`${path}.growth`, `must be a number ≥ 1, got ${JSON.stringify(row.growth)}`);
+      if (!posInt(row.roundTo)) err(`${path}.roundTo`, `must be a positive integer, got ${JSON.stringify(row.roundTo)}`);
+    };
+    if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
+    else {
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'upgradeAt', 'favoredXpMult'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      // The class card's leaning (plan phase 5a): a multiplier of 1 or more.
+      if (!(Number.isFinite(skill.favoredXpMult) && skill.favoredXpMult >= 1)) err('balance.skill.favoredXpMult', `must be a number ≥ 1, got ${JSON.stringify(skill.favoredXpMult)}`);
+      // The draft rows (plan phase 4b), each present and refused by name.
+      for (const key of ['draftSize', 'draftsPerCombat', 'upgradeAt']) {
+        if (!Number.isInteger(skill[key]) || skill[key] < 1) err(`balance.skill.${key}`, `must be a positive integer, got ${JSON.stringify(skill[key])}`);
+      }
+      if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {
+        err('balance.skill.rarityUnlock', 'must be an object { <rarity>: level }');
+      } else {
+        for (const [rarity, level] of Object.entries(skill.rarityUnlock)) {
+          if (!CARD_RARITIES.includes(rarity)) err(`balance.skill.rarityUnlock.${rarity}`, `'${rarity}' is not a card rarity (${CARD_RARITIES.join(', ')})`);
+          if (!Number.isInteger(level) || level < 1) err(`balance.skill.rarityUnlock.${rarity}`, `must be a positive integer level, got ${JSON.stringify(level)}`);
+        }
+        if (!Object.keys(skill.rarityUnlock).length) err('balance.skill.rarityUnlock', 'names no rarity — no draft could ever offer a card');
+      }
+      curve(skill.xp, 'balance.skill.xp');
+      if (skill.xp && typeof skill.xp === 'object') {
+        for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
+        for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
+        if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+      }
+      if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
+      else {
+        for (const key of Object.keys(skill.class)) if (!['xp', 'tierAt'].includes(key)) err(`balance.skill.class.${key}`, 'Unknown field');
+        curve(skill.class.xp, 'balance.skill.class.xp');
+        if (skill.class.xp && typeof skill.class.xp === 'object') {
+          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          // The class XP sources (plan phase 5b), each present and non-negative.
+          for (const key of ['perWin', 'bossKill', 'perQuest']) if (!nonNeg(skill.class.xp[key])) err(`balance.skill.class.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.class.xp[key])}`);
+        }
+        // The class levels the tree's tiers open at (plan phase 5b): one per
+        // tier, rising, the first at level 1 or above.
+        const tierAt = skill.class.tierAt;
+        if (!Array.isArray(tierAt) || !tierAt.length || tierAt.some((n) => !posInt(n)) || tierAt.some((n, i) => i > 0 && n <= tierAt[i - 1])) {
+          err('balance.skill.class.tierAt', `must be a rising list of positive integer levels, one per tier, got ${JSON.stringify(tierAt)}`);
+        }
+      }
+    }
+  }
   if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
     try {
       const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
@@ -526,7 +695,69 @@ function collectContentProblems(bundle, errors = []) {
       err('balance.equipment.cardMounts', error?.message || 'must be a complete card-mount block');
     }
   }
+  // THE CLASS TREE (plan phase 5b, content/source/classTree.csv): every row
+  // names a class and a property node, sits in a tier the balance rows open,
+  // a node sits in one class, and the top tier's nodes exclude one another
+  // by a relation row — the subclass is a choice, never a stack.
+  {
+    const rows = Array.isArray(b.classTree) ? b.classTree : [];
+    const classIds = new Set((Array.isArray(b.classes) ? b.classes : []).map((c) => c && c.id));
+    const nodesById = new Map((Array.isArray(b.nodes) ? b.nodes : []).map((n) => [n && n.id, n]));
+    const rootOf = (id) => { let n = nodesById.get(id); let guard = 0; while (n && n.parentId && guard++ < 64) n = nodesById.get(n.parentId); return n ? n.id : null; };
+    const tiers = ((((b.balance || {}).skill || {}).class || {}).tierAt) || [];
+    const tierCount = Array.isArray(tiers) ? tiers.length : 0;
+    const relations = Array.isArray(b.nodeRelations) ? b.nodeRelations : [];
+    const conflicts = (x, y) => relations.some((r) => r && r.relation === 'CONFLICTS_WITH' && ((r.sourceId === x && r.targetId === y) || (r.sourceId === y && r.targetId === x)));
+    const seenNode = new Map();
+    const byClassTier = new Map();
+    rows.forEach((row, i) => {
+      const path = `classTree[${i}]`;
+      if (!row || typeof row !== 'object') { err(path, 'must be { classId, nodeId, tier }'); return; }
+      if (!classIds.has(row.classId)) err(`${path}.classId`, `unknown class '${row.classId}'`);
+      const node = nodesById.get(row.nodeId);
+      if (!node) err(`${path}.nodeId`, `'${row.nodeId}' is not a node`);
+      else if (rootOf(row.nodeId) !== 'property') err(`${path}.nodeId`, `'${row.nodeId}' is not a property node — a tree node confers behaviour`);
+      const tier = Number(row.tier);
+      if (!Number.isInteger(tier) || tier < 1 || (tierCount && tier > tierCount)) err(`${path}.tier`, `must be a tier 1..${tierCount || '?'} (balance.skill.class.tierAt names one level per tier), got ${JSON.stringify(row.tier)}`);
+      if (seenNode.has(row.nodeId)) err(`${path}.nodeId`, `'${row.nodeId}' already sits in class '${seenNode.get(row.nodeId)}' — a node sits in one class`);
+      else seenNode.set(row.nodeId, row.classId);
+      const key = `${row.classId}\u0000${tier}`;
+      if (!byClassTier.has(key)) byClassTier.set(key, []);
+      byClassTier.get(key).push(row.nodeId);
+    });
+    if (tierCount) {
+      for (const [key, ids] of byClassTier) {
+        const [classId, tier] = key.split('\u0000');
+        if (Number(tier) !== tierCount) continue;
+        for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+          if (!conflicts(ids[i], ids[j])) err(`classTree.${classId}`, `tier ${tier} nodes '${ids[i]}' and '${ids[j]}' do not exclude one another — the subclass is a choice: add a CONFLICTS_WITH row in nodeRelations.csv`);
+        }
+      }
+    }
+  }
+  // The class card's leaning (plan phase 5a): a class carrying `favored`
+  // names at least one item type in the class domain, else the property
+  // multiplies nothing and the row is decoration.
+  {
+    const itemTypeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).filter((n) => n && n.parentId === 'itemType').map((n) => n.id));
+    const rows = Array.isArray(b.tagging) ? b.tagging : [];
+    for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+      if (!cls || !cls.id) continue;
+      const tags = rows.filter((r) => r && r.family === 'class' && r.objectId === cls.id).map((r) => r.tagId);
+      if (tags.includes('favored') && !tags.some((t) => itemTypeIds.has(t))) {
+        err(`tagging.class.${cls.id}`, "carries 'favored' but names no item type — the leaning has no group to favour");
+      }
+    }
+    // Only a class carries the leaning: on any other carrier its scope is
+    // empty and it multiplies nothing, silently.
+    for (const r of rows) {
+      if (r && r.tagId === 'favored' && r.family !== 'class') err(`tagging.${r.family}.${r.objectId}`, "'favored' is the class card's leaning — no other carrier scopes it");
+    }
+  }
   for (const cls of Array.isArray(b.classes) ? b.classes : []) {
+    // The kit relic rides beside the starting relic (plan phase 5a); naming
+    // the same relic twice would drop silently to one.
+    if (cls && cls.kitRelic && cls.kitRelic === cls.startingRelic) err(`classes.${cls.id}.kitRelic`, `'${cls.kitRelic}' is already the starting relic — the kit relic is a second relic`);
     const a = cls && cls.startingFlaskAllocation;
     if (!a || !Number.isInteger(a.hp) || a.hp < 0 || !Number.isInteger(a.mana) || a.mana < 0
       || a.hp + a.mana !== flaskCapacity) {
@@ -550,7 +781,12 @@ function collectContentProblems(bundle, errors = []) {
   // Creature identity is the creature domain of that same registry, so adding
   // a kind is a node in nodes.csv rather than an edit to a frozen array.
   const creatureTagIds = tagIdsInDomain(b, 'creature');
-  const vctx = { ids, err, tagIds };
+  // Every node of the tree, for the predicate that may ask about any of them.
+  const nodeIds = new Set((Array.isArray(b.nodes) ? b.nodes : []).map((n) => n && n.id).filter(Boolean));
+  // The skill tracks, derived (model/skills.js): the ids a progression gate
+  // may name are exactly the ones the ledger can hold.
+  const skillIds = new Set(skillTracks(b).map((t) => t.id));
+  const vctx = { ids, err, tagIds, nodeIds, skillIds };
 
   // Equipment profiles are nested tables, but receive the same strict central
   // schema walk as top-level registries. Absence is not an empty valid table.
@@ -776,6 +1012,17 @@ function collectContentProblems(bundle, errors = []) {
         seen.add(key);
       }
     }
+    // EVERY SLOT ROW IS A ZONE THE RUN CAN CARRY (plan phase 3b). zones.js is
+    // the one home of "which slot fills which zone"; a row here that it does
+    // not name would take a piece the player equipped and give it nowhere to
+    // ride in the save's `zones`, so it is refused by name at boot rather than
+    // discovered as a null in a projection.
+    for (const slot of Array.isArray(equipment.slots) ? equipment.slots : []) {
+      if (!slot || typeof slot.id !== 'string') continue;
+      const held = typeof slot.hand === 'string' && slot.hand !== '';
+      if (held && !handZoneOf(slot.id)) err(`equipment.slots.${slot.id}`, `is a hand slot that no hands zone names (model/zones.js HAND_SLOT_IDS) — the run could not carry what is put in it`);
+      if (!held && !wornZoneOf(slot.id)) err(`equipment.slots.${slot.id}`, `is a worn slot that no worn zone names (model/zones.js WORN_SLOT_IDS) — the run could not carry what is put in it`);
+    }
     if (!Array.isArray(equipment.cardTagging)) err('equipment.cardTagging', 'Missing required registered cardTagging array');
   }
 
@@ -845,7 +1092,19 @@ function collectContentProblems(bundle, errors = []) {
   // The tree the tag tables and the property rules are derived from: parents,
   // cycles, edges, families, variables against bindings, kinds against
   // collections (model/tree.js says what each refusal is).
+  // A combat source hooked on a run-level event (arrived, rested) would never
+  // fire: only the location visit emits them, outside any fight.
+  for (const [collection, field] of [['statuses', 'hooks'], ['stances', 'hooks'], ['enemies', 'phases']]) {
+    for (const def of Array.isArray(b[collection]) ? b[collection] : []) {
+      (def && Array.isArray(def[field]) ? def[field] : []).forEach((hook, i) => {
+        if (hook && RUN_LEVEL_EVENTS.includes(hook.on)) err(`${collection}.${def.id}.${field}[${i}].on`, `'${hook.on}' is a run-level event (the location visit's) that no ${collection.slice(0, -1)} hook can hear`);
+      });
+    }
+  }
   for (const p of treeProblems(b)) err(p.path, p.message);
+  // Locations (plan phase 7): a `location` tagging row names a map id, every
+  // rest-mana mode has its rule, and a restDenied filter names a carried tag.
+  for (const p of locationTaggingProblems(b)) err(p.path, p.message);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
     const base = `enemies.${enemy && enemy.id || '?'}`;
     const cfg = enemy && enemy.arcaneExposure;
@@ -1861,7 +2120,23 @@ export function validateEffects(effects, path, vctx) {
     if (eff.target !== undefined && !TARGETS.includes(eff.target)) {
       err(`${p}.target`, `Unknown target '${eff.target}' (closed set: ${TARGETS.join(', ')})`);
     }
-    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat']) {
+    // swapClass is `{ classId } | { random: true }` — one selector, never
+    // neither (the door would swap to nothing) nor both (one would be ignored).
+    if (eff.op === 'swapClass') {
+      const named = eff.classId !== undefined;
+      const random = eff.random !== undefined;
+      if (random && eff.random !== true) err(`${p}.random`, `'random' must be true on opcode 'swapClass' (omit it for a named swap)`);
+      if (named === random) err(p, `Opcode 'swapClass' takes exactly one of 'classId' or 'random: true'`);
+      else if (named && typeof eff.classId !== 'string') err(`${p}.classId`, `'classId' must be a class id`);
+    }
+    // restoreMana restores BY an amount or TO a floor (plan phase 7) — one
+    // selector, never neither (nothing to restore) nor both (one ignored).
+    if (eff.op === 'restoreMana') {
+      const by = eff.amount !== undefined;
+      const to = eff.toFloorPct !== undefined;
+      if (by === to) err(p, `Opcode 'restoreMana' takes exactly one of 'amount' or 'toFloorPct'`);
+    }
+    for (const numeric of ['amount', 'stacks', 'hits', 'pct', 'count', 'repeat', 'toFloorPct']) {
       if (eff[numeric] !== undefined) validateFormula(eff[numeric], `${p}.${numeric}`, vctx);
     }
     if (eff.if !== undefined) validatePredicate(eff.if, `${p}.if`, vctx);
@@ -1948,10 +2223,13 @@ const PREDICATE_FIELDS = {
   firstCardThisTurn: [],
   firstAttackThisCombat: [],
   cardTypeIs: ['type'],
+  cardTagIs: ['tag'],
   everyNthCardThisCombat: ['n'],
   random: ['pct'],
   eventIsAttack: [],
   hpDamagePositive: [],
+  healPositive: [],
+  manaPositive: [],
   eventSourceIsOwner: [],
   eventTargetIsOwner: [],
   eventStatusIs: ['status'],
@@ -1995,17 +2273,26 @@ export function validatePredicate(pred, path, vctx) {
     case 'cardTypeIs':
       if (!CARD_TYPES.includes(pred.type)) err(`${path}.type`, `Unknown card type '${pred.type}'`);
       break;
+    case 'cardTagIs':
+      // Any node of the tree may be asked about: a card's authored tags and
+      // the grip's derived framework tags (equipment.dualWield) alike.
+      if (typeof pred.tag !== 'string' || !vctx.nodeIds || !vctx.nodeIds.has(pred.tag)) {
+        err(`${path}.tag`, `Unknown tag '${pred.tag}' — not a node in content/source/nodes.csv`);
+      }
+      break;
     case 'everyNthCardThisCombat':
       if (!Number.isInteger(pred.n) || pred.n < 1) err(`${path}.n`, 'n must be a positive integer');
       break;
     case 'random':
       if (typeof pred.pct !== 'number') err(`${path}.pct`, 'pct must be a number');
       break;
-    // The skill ids themselves are derived from the tag registry in phase 4;
-    // until then the id is checked for shape only.
+    // The skill id is one of the derived tracks (model/skills.js): a gate on
+    // a name the ledger never holds would be false forever, silently.
     case 'skillLevelAtLeast':
       if (typeof pred.skill !== 'string' || !pred.skill) {
         err(`${path}.skill`, `skillLevelAtLeast names a skill track id, got ${describe(pred.skill)}`);
+      } else if (vctx.skillIds && !vctx.skillIds.has(pred.skill)) {
+        err(`${path}.skill`, `Unknown skill track '${pred.skill}' — the tracks are ${[...vctx.skillIds].join(', ')}`);
       }
       if (!Number.isInteger(pred.level) || pred.level < 1) err(`${path}.level`, 'level must be a positive integer');
       break;
@@ -2030,6 +2317,7 @@ const FORMULA_FIELDS = {
   mul: ['args'],
   percentMaxHp: ['of', 'pct', 'min', 'max'],
   missingHp: ['of', 'min', 'max'],
+  missingMana: ['of', 'min', 'max'],
   stacks: ['status', 'of', 'per', 'min', 'max'],
   energySpent: ['per', 'min', 'max'],
   blockOf: ['of', 'min', 'max'],
@@ -2068,7 +2356,7 @@ export function validateFormula(value, path, vctx) {
     }
     if (value.of === undefined) err(`${path}.of`, "'stacks' requires 'of'");
   }
-  if (['percentMaxHp', 'missingHp', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
+  if (['percentMaxHp', 'missingHp', 'missingMana', 'blockOf', 'hpOf'].includes(value.f) && value.of === undefined) {
     err(`${path}.of`, `'${value.f}' requires 'of'`);
   }
   if (value.f === 'percentMaxHp' && typeof value.pct !== 'number') {

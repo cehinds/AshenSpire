@@ -45,36 +45,24 @@ import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
-  booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
+  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, viewModeSwitch,
+  booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
 import {
-  el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack,
-  button, buttonRow, modalHead, modalFooter, pane, statPair,
+  el, eyebrow, subtitle, flavour, hairline, artWell, options, row, labelStack,
+  button, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
 } from '../kit/index.js';
+import {
+  creationCategories, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices, creationClassPreview,
+} from '../models/CreationWorkspaceModel.js';
 // The fold's own sentence is a row in content/source/uiStrings.csv, which is
 // where #991 put the words this game says. This screen still carries plenty of
 // copy in code — the baseline counts it — but a NEW sentence does not join it.
 import { t } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { levelForView } from '../../model/cardFields.js';
-
-/** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
-function sectionHead(kicker, title, trail = []) {
-  return el('div', { class: 'as-pane-head' }, [
-    el('div', { class: 'set-section-head' }, [eyebrow(kicker), titleS(title, { tag: 'h3' })]),
-    trail.length ? el('span', { class: 'r-trail' }, trail) : null,
-  ]);
-}
-
-/** The way on from a section: one long button, at the end of the row.
- *  A gated step's button is primary — green once the step is complete, muted
- *  with its reason until then (refusal.js). The seed's is a plain button:
- *  Begin, in the foot, is the one that turns green at the end. */
-function nextRow(label, next, weight = 'primary') {
-  return buttonRow({ size: 'long', className: 'end', buttons: [button({ label, weight, className: 'cz-next', attrs: { dataset: { next } } })] });
-}
+import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
 /** Show or stash a live node. Inline display, not `hidden` alone — the kit's
  *  author display rules beat the UA `[hidden]` rule (disclosure.js measured it). */
@@ -85,7 +73,7 @@ function showNode(node, on) {
 }
 
 export function mountCustomize(app, {
-  registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null,
+  registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null, slot = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -192,7 +180,6 @@ export function mountCustomize(app, {
     ]),
   ]);
   const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, [
-    portrait,
     el('div', { id: 'cz-preview-fold', class: 'cc-preview-fold cz-disc' }, spriteGroup),
   ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
@@ -210,10 +197,7 @@ export function mountCustomize(app, {
       'aria-orientation': 'vertical', 'aria-valuemin': '22', 'aria-valuemax': '45', 'aria-valuenow': String(state.classPreviewPercent),
     }),
     el('div', { class: 'as-split-pane cc-class-selection' }, el('div', { class: 'as-pane' }, [
-      sectionHead('Choose', 'Class', [el('div', { id: 'cz-class-view-toggle' })]),
-      hairline(),
       options([], { id: 'cz-classes', class: 'cc-choice-collection', dataset: { view: state.classChoiceView } }),
-      nextRow('Continue to character', 'character'),
     ])),
   ]);
   split.style.setProperty('--split-share', `${state.classPreviewPercent}%`);
@@ -223,32 +207,61 @@ export function mountCustomize(app, {
     character: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
-      nextRow('Continue to equipment', 'equipment'),
     ]),
     equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
-      sectionHead('Choose', 'Starting equipment', [el('div', { id: 'cz-equipment-view-toggle' })]),
-      hairline(),
       el('div', { id: 'cz-equipment-fold', class: 'cc-equipment-fold cz-disc' }),
       el('div', { id: 'cz-equipment-receipts', class: 'cc-equip-group', 'aria-live': 'polite' }),
       flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
-      nextRow('Continue to seed', 'seed', 'secondary'),
     ]),
-    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, [journeyRow, seedRow]),
+    // W1c Review: the seed and journey, the destination slot, and a concise
+    // summary of identity, loadout and derived values (filled on arrival).
+    review: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage', dataset: { stage: 'review' } }, [
+      journeyRow, seedRow,
+      slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
+      el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
+    ]),
   };
-  const flow = el('div', { class: 'cz-flow cz-disc' }, Object.values(stages));
-
-  const head = modalHead({
-    eyebrow: catalog ? 'Component catalogue' : 'Divided oath',
-    title: catalog ? 'Character creation components' : 'Prepare your Forsaken',
-    closeLabel: 'Back',
+  // The catalogue still lays every stage out in one column; the screen shows
+  // one at a time inside the W1 pane below.
+  const flow = el('div', { class: 'cz-flow cz-disc' }, catalog ? Object.values(stages) : []);
+  const categories = creationCategories();
+  for (const id of categories) {
+    if (!stages[id]) throw new Error(`creation behavior.categories names '${id}', which is not a stage this screen draws (${Object.keys(stages).join(', ')})`);
+  }
+  const railItems = creationRailItems({
+    categories, current: categories[0],
+    labels: Object.fromEntries(categories.map((id) => [id, t(`creation.category.${id}`)])),
+  }).map((entry) => {
+    const item = railItem({ label: entry.label, member: entry.id, id: `cz-tab-${entry.id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
+    item.append(el('span', { class: 'cz-tab-value as-status' }));
+    return item;
   });
-  head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
-  const back = button({ label: 'Back', role: 'exit', id: 'cz-back' });
+  const rail = el('div', { class: 'as-rail cz-rail', role: 'tablist', 'aria-label': t('creation.categories'), 'aria-orientation': 'vertical', dataset: { surface: 'creationCategory' } }, railItems);
+  const paneHost = el('div', { id: 'cz-pane', class: 'as-pane flush cz-pane', role: 'tabpanel' });
+  const railed = el('div', { class: 'as-railed cz-railed', dataset: { classPreview: creationClassPreview() } }, [rail, paneHost]);
+
+  // W1c head: one title, the small portrait, the exit. No eyebrow.
+  const head = modalHead({
+    eyebrow: catalog ? 'Component catalogue' : '',
+    title: catalog ? 'Character creation components' : t('creation.title'),
+    closeLabel: t('common.back'),
+  });
+  const close = head.querySelector('.modal-close');
+  // The view switches live in the head, where the width is free, and only the
+  // active category's shows (owner, 2026-09-19: no row spent on a toggle).
+  const classTools = el('div', { id: 'cz-class-view-toggle', class: 'cz-head-tool' });
+  const equipmentTools = el('div', { id: 'cz-equipment-view-toggle', class: 'cz-head-tool' });
+  const headTools = el('div', { class: 'cz-head-tools' }, [classTools, equipmentTools]);
+  if (catalog) { close.hidden = true; flow.prepend(headTools); }
+  else { close.before(headTools); close.before(portrait); } // beside the exit, whatever the head wraps it in
+  const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back' });
+  const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
-  const foot = modalFooter({ note: 'Choose your path. The spire remembers.', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
+  const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
+  if (!catalog) foot.querySelector('.modal-foot-actions').insertBefore(next, start);
   const body = el('div', { class: 'modal-body cz-scroll' }, [
     catalog ? subtitle('Interactive production specimens for every creation section, nested disclosure, and reusable selector card.', { class: 'cc-catalog-intro' }) : null,
-    flow,
+    catalog ? flow : railed,
   ]);
   // ONE page door, the kit's, on its `full` rung (kit.css PAGE DOOR).
   const door = el('section', {
@@ -257,8 +270,14 @@ export function mountCustomize(app, {
   }, [head, body, foot]);
   app.replaceChildren(el('div', { class: `screen customize as-page${catalog ? ' component-catalog' : ''}` }, door));
 
-  const $ = (selector) => app.querySelector(selector);
+  // W1c: only the active stage is in the document; the others wait, built,
+  // off it. A lookup reaches them all so the renderers need not know which.
+  const $ = (selector) => app.querySelector(selector)
+    || Object.values(stages).map((stage) => (stage.matches(selector) ? stage : stage.querySelector(selector))).find(Boolean)
+    || null;
   const customizeScreen = $('.screen.customize');
+  // Every --creation-* the W1c CSS reads, from the model (uiConfig.screens.creation); kit.css names no number for this screen.
+  for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
   const STANDARD = 'standard';
@@ -301,11 +320,13 @@ export function mountCustomize(app, {
   });
 
   function renderViewToggles() {
-    $('#cz-class-view-toggle').replaceChildren(viewModeToggle(state.classChoiceView, (mode) => {
+    const toggle = catalog ? viewModeToggle : viewModeSwitch;
+    $('#cz-class-view-toggle').replaceChildren(toggle(state.classChoiceView, (mode) => {
       state.classChoiceView = mode;
       renderClasses();
+      fitStage();
     }, 'Class choice view'));
-    $('#cz-equipment-view-toggle').replaceChildren(viewModeToggle(state.equipmentChoiceView, (mode) => {
+    $('#cz-equipment-view-toggle').replaceChildren(toggle(state.equipmentChoiceView, (mode) => {
       state.equipmentChoiceView = mode;
       // THE TOGGLE REDRAWS THE CHIPS, as the class toggle above already does.
       // Setting `data-view` on the containers was enough while the view was
@@ -461,9 +482,25 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
+    const resources = classResourceGrid(projection.derived.slice(0, 5));
+    if (!catalog && creationClassPreview() === 'unfold') {
+      // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
+      // picked card opens to the portrait and the summary. Before a pick the
+      // pointer-follow has nothing to draw.
+      for (const open of classBox.querySelectorAll('.cz-class.unfolded')) { open.classList.remove('unfolded'); open.querySelector('.cc-class-unfold')?.remove(); open.removeAttribute('aria-describedby'); }
+      const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
+      if (card) {
+        const unfold = classUnfold({ cls, sprite, resources, relic });
+        card.classList.add('unfolded');
+        card.append(unfold);
+        card.setAttribute('aria-describedby', unfold.id); // the button's description: the resources and the relic
+      }
+      $('#cz-class-preview-host').replaceChildren();
+      return;
+    }
     const previewPane = classPreviewPane({
       cls, sprite,
-      resources: classResourceGrid(projection.derived.slice(0, 5)),
+      resources,
       relic,
       relicDescription: relicText(relic, registries),
     });
@@ -661,13 +698,18 @@ export function mountCustomize(app, {
 
   function renderClasses() {
     classBox.dataset.view = state.classChoiceView;
+    // Plan phase 5c: a class card the profile has not earned is listed locked,
+    // with its unlock's hint; every shipped class is free until a row gates it.
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
       visual: classGlyph(cls.id),
+      locked: !classAvailable(registries.unlocks, cls.id, meta),
+      hint: classAvailable(registries.unlocks, cls.id, meta) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
         if (state.classChosen && state.classId === cls.id) return;
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        fitStage();
       },
     }));
     // Before a pick the preview pane follows the pointer, so it is never a
@@ -679,12 +721,14 @@ export function mountCustomize(app, {
         if (state.classChosen || state.classId === id) return;
         // The kit, relic and armour follow the class; nothing is chosen yet,
         // so the reset costs the player nothing.
-        state.classId = id; resetClassChoices(); renderClassPreview();
+        state.classId = id; resetClassChoices(); renderClassPreview(); fitStage();
       });
     }
     for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     classBox.replaceChildren(...cards);
     renderViewToggles();
+    // The cards are new nodes; in unfold mode the chosen one opens again.
+    if (!catalog && state.classChosen && creationClassPreview() === 'unfold') renderClassPreview();
   }
 
   function renderAppearance() {
@@ -902,7 +946,7 @@ export function mountCustomize(app, {
       continueButton.addEventListener('click', () => {
         if (sectionProblem()) return;
         if (next) openEquipmentSection(next.id);
-        else app.querySelector('.cz-next[data-next="seed"]')?.click();
+        else advanceFrom('equipment');
       });
       node.append(continueButton);
     }
@@ -951,7 +995,7 @@ export function mountCustomize(app, {
       resourceStrip(projection.derived, playerPoiseThresholdReceipt(registries, run)),
     ]);
   }
-  function fillSummary() {
+  function fillSummary(host = summaryBody) {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
@@ -998,7 +1042,7 @@ export function mountCustomize(app, {
       face: { label: 'Show calculations', value: 'Card packages, requirements and poise' },
       reveal: { node: receiptBody },
     }], { structure: 'details' });
-    summaryBody.replaceChildren(cards, calculations);
+    host.replaceChildren(cards, calculations);
   }
   function renderEquipmentSummary() {
     fillSummary();
@@ -1097,7 +1141,7 @@ export function mountCustomize(app, {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
-    { key: 'seed', label: 'SEED', node: panels.seed, value: () => seedInput.value.trim() || '—' },
+    { key: 'review', label: 'REVIEW', node: panels.review, value: () => seedInput.value.trim() || '—' },
   ];
   let fold = null;
   if (catalog) {
@@ -1268,25 +1312,41 @@ export function mountCustomize(app, {
       { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
       { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
+      // W1c moved the live portrait into the head; the catalogue still shows it.
+      { key: 'creation-portrait', label: t('creation.catalog.portrait'), node: portrait },
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
     flow.replaceChildren(fragment);
   } else {
-    fold = mountDisclosure(flow, sectionRows.map((row) => ({
-      key: row.key, kind: 'pick', disclosure: 'face',
-      face: { label: row.label, value: row.value() },
-      reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })), { structure: 'details' });
-    refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
-    fold.open('class');
+    // W1c: the rail names each category and what it holds; the pane shows one.
+    refreshSectionFaces = () => {
+      for (const item of railItems) {
+        const rowFor = sectionRows.find((row) => row.key === item.dataset.member);
+        if (rowFor) item.querySelector('.cz-tab-value').textContent = rowFor.value();
+      }
+    };
+    const nav = categoryNav({
+      items: railItems, rail, ariaLabel: t('creation.categories'),
+      choose: (id) => activate(id),
+      face: (item) => item.querySelector('.rail-label')?.textContent || item.firstChild?.textContent || item.dataset.member,
+      toggleClass: 'cz-cat-select', toggleId: 'cz-cat-select',
+      onChange: ({ mode, open }) => { railed.dataset.creationNav = mode; railed.toggleAttribute('data-nav-open', open); },
+    });
+    nav.attach(railed);
+    // The attribute grid's columns follow the pane's width (two when they fit,
+    // one in narrow portrait), asked of the model in local CSS px.
+    const applyColumns = () => {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const zoom = parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
+      const columns = creationAttributeColumns({ hostWidthPx: paneHost.getBoundingClientRect().width / zoom, rootFontPx: parseFloat(rootStyle.fontSize) });
+      customizeScreen.style.setProperty('--creation-attribute-columns', String(columns));
+    };
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { if (paneHost.isConnected) { applyColumns(); fitStage(); } }).observe(paneHost);
+    applyColumns();
   }
 
   // THE WAY ON, per step: what it waits for, and what it opens inside the next
   // section so the player lands on the next question rather than a shut fold.
-  const nextGates = {
-    character: { problem: classProblem, tip: 'On to the character.' },
-    equipment: { problem: characterProblem, tip: 'On to starting equipment.' },
-  };
   const openInside = {
     character: () => {
       characterFold.open('primary');
@@ -1298,23 +1358,73 @@ export function mountCustomize(app, {
       return null; // openEquipmentSection seats the cursor itself
     },
   };
-  app.querySelectorAll('.cz-next').forEach((control) => {
-    const gate = nextGates[control.dataset.next];
-    if (gate && !catalog) gateRefreshers.push(refusesWhen(control, gate.problem, gate.tip));
-    control.addEventListener('click', () => {
-      if (catalog) {
-        const target = app.querySelector(`[data-catalog-component="${control.dataset.next}"]`);
-        target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        focusElement(target?.querySelector('button, input'));
-        return;
-      }
-      if (gate && gate.problem()) return;
-      fold.open(control.dataset.next);
-      const opener = openInside[control.dataset.next];
-      const target = opener ? opener() : app.querySelector(`[data-face="${control.dataset.next}"]`);
-      if (target) queueMicrotask(() => focusElement(target));
-    });
-  });
+  // W1c: one persistent footer. Back leaves on the first category and steps
+  // back otherwise; Next refuses with the current category's unmet step and
+  // lands the cursor on the next question; Begin takes over on Review.
+  const stageProblems = { class: classProblem, character: characterProblem, equipment: equipmentProblem, review: () => null };
+  let current = categories[0];
+  const categoryLabel = (id) => t(`creation.category.${id}`);
+  function activate(id) {
+    if (catalog || !categories.includes(id)) return;
+    current = id;
+    paneHost.replaceChildren(stages[id]);
+    paneHost.scrollTop = 0;
+    paneHost.setAttribute('aria-labelledby', `cz-tab-${id}`);
+    for (const item of railItems) {
+      const on = item.dataset.member === id;
+      item.classList.toggle('on', on);
+      item.setAttribute('aria-selected', String(on));
+      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+    }
+    const plan = creationFooterPlan({ categories, current: id });
+    next.hidden = plan.primary !== 'next';
+    start.hidden = plan.primary !== 'begin';
+    railed.dataset.creationStage = id;
+    classTools.hidden = id !== 'class';
+    equipmentTools.hidden = id !== 'equipment';
+    if (id === 'review') fillSummary($('#cz-review-summary'));
+    refreshGates();
+    fitStage();
+  }
+  // EVERY CHOICE IN VIEW WITHOUT SCROLLING (owner, 2026-09-19). The class pane
+  // is measured after it draws; when its choices run past the pane the cards
+  // fold their descriptions to one line, and when that is still too tall the
+  // preview column steps aside so the choices take the width. Measurement
+  // only — the rule and its lines are behavior.fitChoicesToPane and
+  // sizing.choiceDescriptionLines in the config.
+  function fitStage() {
+    if (catalog || !creationFitsChoices()) return;
+    delete railed.dataset.choiceFit;
+    delete railed.dataset.previewOff;
+    if (current !== 'class') return;
+    // The collection is its own scrollport inside the split (kit.css), so it is
+    // the box that overflows, not the pane.
+    const overflows = () => classBox.scrollHeight > classBox.clientHeight + 1 || paneHost.scrollHeight > paneHost.clientHeight + 1;
+    if (!overflows()) return;
+    railed.dataset.choiceFit = 'compact';
+    if (!overflows()) return;
+    railed.dataset.previewOff = 'true';
+    if (!overflows()) return;
+    railed.dataset.choiceFit = 'bare';
+  }
+  function advanceFrom(id) {
+    if (catalog) return;
+    if (stageProblems[id]?.()) return;
+    const to = creationStep(categories, id, 1);
+    if (!to) return;
+    activate(to);
+    const opener = openInside[to];
+    const target = opener ? opener() : paneHost.querySelector('button:not([disabled]), input, select');
+    if (target) queueMicrotask(() => focusElement(target));
+  }
+  if (!catalog) {
+    gateRefreshers.push(refusesWhen(next, () => stageProblems[current](), () => {
+      const to = creationStep(categories, current, 1);
+      return t('creation.next.tip', { category: to ? categoryLabel(to) : '' });
+    }));
+    next.addEventListener('click', () => advanceFrom(current));
+    activate(categories[0]);
+  }
   const primaryContinue = $('.cc-primary-continue');
   gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the keepsake.'));
   primaryContinue.addEventListener('click', () => {
@@ -1337,8 +1447,20 @@ export function mountCustomize(app, {
     return `Begin as <b>${esc(cls.name)}</b>${keepsake ? ` with <b>${esc(keepsake.name)}</b>` : ''}.`;
   });
   updateStartRefusal = () => { refreshStart(); refreshGates(); };
-  attachTooltip(back, () => 'Back to the title screen. Nothing here is saved.');
-  back.addEventListener('click', onBack);
+  attachTooltip(back, () => {
+    const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
+    return plan.back === 'leave' ? t('creation.leave.tip') : t('creation.previous.tip', { category: categoryLabel(plan.previous) });
+  });
+  back.addEventListener('click', () => {
+    const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
+    if (plan.back === 'leave') return onBack();
+    activate(plan.previous);
+    queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
+  });
+  if (!catalog) {
+    attachTooltip(close, () => t('creation.leave.tip'));
+    close.addEventListener('click', onBack);
+  }
   start.addEventListener('click', () => {
     if (beginProblem()) return;
     onStart({

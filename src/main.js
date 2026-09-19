@@ -1,4 +1,5 @@
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -12,6 +13,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen } from './model/state.js';
@@ -28,6 +30,13 @@ import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
+import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
+import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
+import { equippedPieces } from './model/loadout.js';
+import { awardClassXp } from './model/classTree.js';
+import { runClassIdentity } from './model/classCard.js';
+import { peakClassLevel } from './model/classSwap.js';
+import { awardLevelXp, combatLevelXp } from './model/levelup.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -38,12 +47,15 @@ import {
   rollEncounter,
   rollRuneReward,
   rollCardRewardIds,
+  rollSkillDraftIds,
+  rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
   rollArmamentDrop,
-  applyGraceRefill,
 } from './engine/encounters.js';
+import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
+import { resolveLocationId, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -70,7 +82,8 @@ import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
-import { openSaveSlotSelector, slotFacts } from './ui/components/saveSlotSelector.js';
+import { openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
+import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -146,9 +159,27 @@ if (!validation.ok) {
   }
 }
 
-const registries = createRegistries(contentBundle);
+let registries = createRegistries(contentBundle);
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
+
+function rebuildRegistries(configuration = {}) {
+  const configured = configuredContentBundle(contentBundle, configuration);
+  const result = validateContent(configured);
+  const structuralProblems = advancedConfigStructuralProblems(contentBundle, configuration?.overrides || configuration);
+  if (!result.ok || structuralProblems.length) {
+    const first = structuralProblems[0] || `${result.errors[0].path}: ${result.errors[0].msg}`;
+    const message = `Game configuration unchanged: ${first} Authored defaults remain active until the values form a valid configuration.`;
+    console.warn('[advanced-config]', message, result.errors, structuralProblems);
+    if (typeof document !== 'undefined') showSettingsNotice(message, 'game-config');
+    registries = createRegistries(contentBundle);
+  } else {
+    registries = createRegistries(configured);
+  }
+  configureTooltipGlossary(registries);
+  setClassGlyphs(registries.classes.all());
+  return registries;
+}
 
 // Dev screenshot hook (?shot=…). Read HERE, above pickStorage(), because storage
 // selection depends on it; the hook that consumes it lives at the bottom of this
@@ -255,6 +286,7 @@ if (shotState) {
 // hook seam, so every sfx.play() call site makes sound with no change.
 let activeMeta = saves.loadMeta();
 let activeSettings = activeMeta.settings || (activeMeta.settings = {});
+rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 
@@ -670,7 +702,20 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
+  const advancedPresentation = presentationConfig(settings);
+  document.documentElement.dataset.formationSettings = JSON.stringify(advancedPresentation);
+  document.documentElement.dataset.formationMovement = String(advancedPresentation.movementEnabled);
+  document.documentElement.style.setProperty('--selection-color', advancedPresentation.selectionColor);
+  document.documentElement.dataset.formationGrid = String(advancedPresentation.showFormationGrid);
+  const rootStyle = document.documentElement.style;
+  rootStyle.setProperty('--settings-window-width', `${advancedPresentation.settingsWidthPercent}vw`);
+  rootStyle.setProperty('--settings-window-height', `${advancedPresentation.settingsHeightPercent}dvh`);
+  document.documentElement.dataset.playerSpawnRow = advancedPresentation.playerSpawnRow;
+  document.documentElement.dataset.enemySpawnRow = advancedPresentation.enemySpawnRow;
+  document.documentElement.dataset.playerSpawnColumn = advancedPresentation.playerSpawnColumn;
+  document.documentElement.dataset.enemySpawnColumn = advancedPresentation.enemySpawnColumn;
   const quality = resolvePerformanceMode(settings, typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
   document.documentElement.dataset.performance = quality;
   if (quality === 'lite' || settings.reducedMotion) clearPosePreloads();
@@ -817,6 +862,35 @@ function persist() {
   sendLanStatus();
 }
 
+// The run the way its save slot names it (W2e's target line, W1r's, W2d's).
+function runIdentityParts() {
+  return {
+    className: run && registries.classes.has(run.class) ? registries.classes.get(run.class).name : run?.class,
+    slot: activeSlot,
+    facts: run ? slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }) : '',
+  };
+}
+
+// W1r: an EXPLICIT Save says what happened. Autosave (persist) keeps throwing,
+// so a boot path never hides a failure; the Save row lands here instead, keeps
+// the run, and opens the status door whose Retry saves again — the save, never
+// the play. Returns the slot it wrote, or false when the door is open.
+function saveNow({ returnFocusElement = null } = {}) {
+  try {
+    persist();
+    return activeSlot;
+  } catch (error) {
+    openSaveStatusReview({
+      ...runIdentityParts(),
+      savedAt: run?.savedAt ?? null,
+      error,
+      onRetry: () => saveNow({ returnFocusElement }),
+      returnFocusElement,
+    });
+    return false;
+  }
+}
+
 // ---- Forsaken Together (LAN) -------------------------------------------------
 // The run is server-authoritative (the launcher owns it via tools/session.mjs);
 // the browser is a thin client that renders snapshots and sends intents. Solo
@@ -897,6 +971,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
+  const configSnapshot = advancedConfigSnapshot(saves.loadMeta().settings || {});
+  rebuildRegistries(configSnapshot);
   // HIS TIER DIAL, AND THE ONLY PLACE IT CAN BE SPENT — Constantine,
   // 2026-08-17: "let's make the increment of 5 points for reasonable change be
   // confurable as well." A run SNAPSHOTS its derived-stat rules at birth so a
@@ -910,8 +986,9 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
     profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
+  run.advancedConfigSnapshot = configSnapshot;
   run.seedString = seedToString(seed);
-  if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile);
+  if (journeyProfile) run.journey = generateJourney(run.seedString, journeyProfile, ATLAS, { townsPerActMax: registries.balance.atlas.townsPerActMax });
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
   run.stats = { fightsWon: 0, damageDealt: 0, damageTaken: 0 };
@@ -1019,6 +1096,10 @@ function advanceAct() {
 function resumeRun(slot = 1) {
   resetArmouryTraySession();
   activeSlot = slot;
+  const authoredRegistries = createRegistries(contentBundle);
+  run = saves.loadRun(authoredRegistries, slot);
+  if (!run) return showTitle();
+  rebuildRegistries(run.advancedConfigSnapshot || {});
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
   if (run.journey) syncWorldPosition();
@@ -1032,7 +1113,9 @@ function resumeRun(slot = 1) {
   } else if (run.shopStock) {
     showShop();
   } else if (run.journey?.activeService?.handlerId === 'rest') {
-    showRest();
+    // A save written before the visit carried its place resolves it from the
+    // point it stood at, exactly as entering the service does.
+    showRest(null, restLocationAt(run.journey.activeService.pointId));
   } else {
     showMap();
   }
@@ -1054,13 +1137,19 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
   // hands the seed to a review door on the way through; this path has no
   // review door, so the receipt belongs here.
   const summary = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
-  const climb = summary
-    ? `${summary.className} — ${slotFacts(summary)}. Seed ${summary.seedString}. `
-    : '';
+  // W2d: the target is the saved climb, the consequence is exactly what the
+  // current run loses (ui/models/ConfirmationReviewModel.js).
+  const review = loadOverRunReview({
+    slot,
+    className: summary?.className ?? null,
+    facts: summary ? slotFacts(summary) : null,
+    seed: summary?.seedString ?? null,
+  });
   openConfirmationModal({
-    title: `Load slot ${slot}?`,
-    message: `${climb}The saved run will replace changes made since your last save.`,
-    confirmLabel: 'Load saved run',
+    title: review.question,
+    target: review.target,
+    message: review.message,
+    confirmLabel: review.confirmLabel,
     consequence: 'DISCARDS UNSAVED CHANGES',
     // Whether this reads as destructive is the ConfirmationRegistry's call.
     tone: registries.framework.confirmationTone('action.loadSlot'),
@@ -1087,7 +1176,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
     title: 'Quit without saving?',
     // W2e: the run this leaves, named the way its save slot names it.
     target: run ? runIdentity({
-      className: registries.classes.has(run.class) ? registries.classes.get(run.class).name : run.class,
+      className: runClassIdentity(registries, run).name,
       slot: activeSlot,
       facts: slotFacts({ actNumber: run.actNumber, floor: run.floor, hp: run.hp, maxHp: run.maxHp }),
     }) : '',
@@ -1385,10 +1474,7 @@ function showOverlay(initialTab = 'settings') {
     },
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
+    onSave: () => saveNow(),
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
       showCollapsedTitle();
@@ -1403,7 +1489,7 @@ function runResult(victory) {
     victory,
     seed: run.seedString,
     class: run.class,
-    className: registries.classes.get(run.class).name,
+    className: runClassIdentity(registries, run).name,
     act: run.actNumber,
     floor: run.floor,
     fightsWon: run.stats.fightsWon,
@@ -1415,6 +1501,9 @@ function runResult(victory) {
     // Which bosses fell. beatBoss unlocks need this, and a run that ends in
     // act 3 has already earned the act 1 and 2 kills whatever happens next.
     bosses: [...(run.bossesBeaten || [])],
+    // Plan phase 5c: the class-card unlock conditions read these.
+    maxClassLevel: peakClassLevel(run),
+    bossGroups: structuredClone(run.bossGroups || {}),
   };
 }
 
@@ -1500,6 +1589,7 @@ function finishRun(victory) {
 }
 
 function showCustomize(slot = 1, catalog = false) {
+  rebuildRegistries(saves.loadMeta().settings || {});
   mountCustomize(app, {
     registries,
     meta: saves.loadMeta(),
@@ -1515,7 +1605,25 @@ function showCustomize(slot = 1, catalog = false) {
       ? { classId: shotParams.get('shotClass'), tint: shotParams.get('shotTint') }
       : null,
     onBack: showTitle,
-    onStart: (config) => newRun({ ...config, slot }),
+    slot,
+    // W2c REPLACE, AT THE WRITE BOUNDARY (FRONTEND-WIREFRAMES W1l/W2c): choosing
+    // an occupied slot on the title touched nothing; Begin is where the old
+    // climb would be written over, so this is where it is asked, naming both
+    // the save that goes and the character that replaces it.
+    onStart: (config) => {
+      // The title's own slot record: the class NAME, as the slot list prints it.
+      const existing = saveSlotRecords().find((record) => record.slot === slot)?.summary || null;
+      if (!existing) return newRun({ ...config, slot });
+      openReplaceSaveReview({
+        slot,
+        existing: { className: existing.className, facts: slotFacts(existing) },
+        replacement: { className: registries.classes.get(config.classId)?.name ?? config.classId, seed: config.seedString },
+        tone: (policyAction) => registries.framework.confirmationTone(policyAction),
+        returnFocusElement: document.activeElement,
+        onConfirm: () => newRun({ ...config, slot }),
+      });
+      return undefined;
+    },
     catalog,
   });
 }
@@ -1578,6 +1686,9 @@ function showMap() {
     serviceContext: {
       healMult: run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1,
       refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
+      // The run's live streams: the rest preview copies their position, so a
+      // rolling rule shows the roll the visit will make and advances nothing.
+      rng,
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
@@ -1596,10 +1707,7 @@ function showMap() {
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
+    onSave: () => saveNow(),
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
       showCollapsedTitle();
@@ -1687,8 +1795,23 @@ function worldLocationAction(action) {
     run.shopStock = state.stock;
     persist(); return showShop();
   }
-  if (handlerId === 'rest') { persist(); return showRest(); }
+  if (handlerId === 'rest') {
+    // WHICH PLACE THIS IS (plan phase 7): the point's own tagging row, else
+    // its service type's (inn, chapel), else the classic Shrine — resolved
+    // from the point here and again at resume, never stored, so a tagging
+    // row removed between save and load cannot refuse the save.
+    persist();
+    return showRest(null, restLocationAt(action.pointId));
+  }
   throw Error(`Unsupported atlas service ${handlerId}`);
+}
+
+/** The location an atlas rest point is: its own row, else its service type's, else the Shrine. */
+function restLocationAt(pointId) {
+  const offered = (ATLAS.nodeServices[pointId] || [])
+    .map((s) => ATLAS.services[s.serviceId])
+    .find((service) => service && ATLAS.serviceTypes[service.serviceTypeId]?.handlerId === 'rest');
+  return resolveLocationId(registries, { nodeId: pointId, serviceTypeId: offered ? offered.serviceTypeId : null }) || 'shrine';
 }
 
 function finishWorldService() {
@@ -1732,7 +1855,9 @@ function enterNode(nodeId) {
       return startFight('boss', nodeId);
     case 'shrine':
       persist();
-      return showRest();
+      // An Unknown node's rest outcome is the field camp (proposal §7.4): a
+      // small rest and no services. A shrine node is the Shrine.
+      return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
       const stock = buildShopStock(registries, rng, run);
       const pm = shopPriceMult();
@@ -1839,6 +1964,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     player: {
       classId: run.class,
       attributes: run.attributes,
+      skills: run.skills, // the ledger the progression predicates read (plan phase 4a)
+      coreTags: run.coreTags, // the class tree's picks, mounted with the class card (plan phase 5b)
       maxHp: run.maxHp,
       hp: run.hp,
       maxMana: run.maxMana,
@@ -1950,8 +2077,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     quickControls: quickMenuControls,
     onSave: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
-      persist();
-      return activeSlot;
+      return saveNow();
     },
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
@@ -1992,6 +2118,20 @@ async function onCombatEnd(result, combat, enc) {
     run[maxField] = combat.player[maxField];
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
+  // receipt of every hit, block, evade and buildup by track; the run's ledger
+  // takes it now, win or loss, and climbs whatever the XP buys.
+  applySkillXp(registries, run, skillXpReceipt(combat));
+  // The class track (plan phase 5b) is paid by the run's owner, who knows
+  // the door's pool: a won fight, more for a boss; a lost one nothing.
+  awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
+  // THE CHARACTER LEVEL (plan phase 6), paid by the run's owner too: a won
+  // fight and every kill by the door's pool. His level-value dial is read at
+  // the moment the level is reached — the points it grants wait on the
+  // ledger for the shrine.
+  awardLevelXp(registries, run, combatLevelXp(registries, {
+    victory: result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+  }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2028,6 +2168,10 @@ async function onCombatEnd(result, combat, enc) {
   if (enc.pool === 'boss') {
     run.bossesBeaten = run.bossesBeaten || [];
     for (const id of enc.enemies) if (!run.bossesBeaten.includes(id)) run.bossesBeaten.push(id);
+    // …and the item types in hand as it fell (plan phase 5c, bossWithGroup).
+    run.bossGroups = run.bossGroups || {};
+    const held = [...new Set(equippedPieces(registries, run.loadout, run.class).flatMap((piece) => piece.itemTypeTags || []))];
+    for (const id of enc.enemies) run.bossGroups[id] = [...new Set([...(run.bossGroups[id] || []), ...held])];
     // Endless Spire: no summit — the climb loops until death.
     if ((run.journey && run.journey.currentNodeId === run.journey.anchors.final) || (run.actNumber >= 3 && !endlessOn())) {
       // The Blighted Valkyrie falls: the Sovereign Ember is restored.
@@ -2042,10 +2186,14 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
+    const bossDrafts = rollSkillDrafts('boss');
+    const bossClassDrafts = rollClassDrafts();
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
-      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+      classDrafts: bossClassDrafts,
+      skillDrafts: bossDrafts,
+      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -2053,10 +2201,17 @@ async function onCombatEnd(result, combat, enc) {
     return beginPendingReward(bossRewards, { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
   }
 
+  // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
+  // a level the fight bought is offered as a pick from the track's own
+  // schools, and while one is on the table the class-card offer is not.
+  const drafts = rollSkillDrafts(enc.pool);
+  const classDrafts = rollClassDrafts();
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
-    cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    classDrafts,
+    skillDrafts: drafts,
+    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // Elites are the mid-run source of armaments; ordinary fights are not
@@ -2068,6 +2223,42 @@ async function onCombatEnd(result, combat, enc) {
   beginPendingReward(rewards, { source: enc.pool, after: 'map' });
 }
 
+/**
+ * The drafts the ledger has queued, one per track with a draft pending and at
+ * most balance.skill.draftsPerCombat per track per door (the rest wait for
+ * the next fight); a track whose schools offer nothing rolls no row and keeps
+ * its draft. Rolled on the 'cardRewards' stream the card offer would have
+ * used, at the door's own odds (the boss's at a boss door).
+ */
+function rollSkillDrafts(pool) {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row || !(row.pendingDrafts > 0)) continue;
+    for (let i = 0; i < Math.min(perDoor, row.pendingDrafts); i++) {
+      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool, flatRarity: chaosRewardsOn() });
+      if (cardIds.length) out.push({ skillId: track.id, level: row.level, cardIds });
+    }
+  }
+  return out;
+}
+
+/**
+ * The class draft the ledger has queued (plan phase 5b): a pick from the
+ * class tree per class level climbed, ONE per door — a second roll at the
+ * same door would read the same picks and could offer the first row's node
+ * again, or the node the first pick excludes (the review of #1192). The rest
+ * of the queue waits for the next fight; a level whose tier offers nothing
+ * draftable keeps its draft.
+ */
+function rollClassDrafts() {
+  const row = run.skills && run.skills[classSkillId(run.class)];
+  if (!row || !(row.pendingDrafts > 0)) return [];
+  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
+  return nodeIds.length ? [{ classId: run.class, level: row.level, nodeIds }] : [];
+}
+
 function beginPendingReward(rewards, { source, after }) {
   run.pendingReward = {
     schemaVersion: 1,
@@ -2076,6 +2267,8 @@ function beginPendingReward(rewards, { source, after }) {
     rewards: structuredClone(rewards),
     states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
     chosenCardId: null,
+    chosenDraftCardIds: {},
+    chosenDraftNodeIds: {},
   };
   persist();
   return mountPendingReward();
@@ -2131,10 +2324,7 @@ function roomHud(returnTo) {
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSettingsChange: persistSettingsChange,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
+    onSave: () => saveNow(),
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
       showCollapsedTitle();
@@ -2142,51 +2332,75 @@ function roomHud(returnTo) {
   };
 }
 
-function showRest(openPanel = null) {
+// The place the Rest screen stands at, kept across its own re-mounts (the
+// HUD's remount passes no location). The door that enters a place names it.
+let restLocationId = 'shrine';
+// THE OPEN VISIT (engine/locations.js): one per stay. A HUD remount re-uses
+// it rather than arriving again, so an `arrived` rule fires once per stay
+// whatever the screen does; leaving closes it.
+let openVisit = null;
+
+function showRest(openPanel = null, locationId = null) {
+  if (locationId) restLocationId = locationId;
   audio.music('rest');
   const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
-  // AUTOMATIC, AND IT HAPPENS BEFORE THE CHOICE. Constantine: "flasks should
-  // refill automatically at graces". Not a third option beside Rest and Smith —
-  // arriving is the trigger, so a run that comes to smith is refilled exactly
-  // like a run that comes to rest. The counts come from balance.graceRefill
-  // through the Advanced debug rows; `bad` is a stored override that is not on
-  // the ladder, and it is named in the command log rather than swallowed
-  // (the same treatment applyTapSize gives a bad tapFloor).
+  // THE PLACE IS A CARRIER (plan phase 7, engine/locations.js): its tags'
+  // rules mount for the visit, `arrived` fires here and `rested` when the
+  // player takes the Rest, and what the place restores is the sum of its
+  // tags. The refill is one of those rules (`restFlasks` on `arrived`) —
+  // AUTOMATIC, AND BEFORE THE CHOICE. Constantine: "flasks should refill
+  // automatically at graces". Arriving is the trigger, so a run that comes to
+  // smith is refilled exactly like a run that comes to rest. The counts come
+  // from balance.graceRefill through the Advanced debug rows; `bad` is a
+  // stored override that is not on the ladder, and it is named in the
+  // command log rather than swallowed.
   const { counts, bad } = resolveGraceRefill(saves.loadMeta().settings || {});
   for (const b of bad) {
     dlog('ERROR', `settings.${b.key}: stored value ${JSON.stringify(b.stored)} is not one of the counts this row offers — using ${b.used}.`);
   }
   const worldRest = run.journey?.activeService;
   const restState = worldRest ? run.journey.serviceStates[worldRest.pointId] : null;
-  const refill = restState?.refilled ? { hp: 0, mana: 0, total: 0 } : applyGraceRefill(registries, run, { counts });
-  if (restState && !restState.refilled) { restState.refilled = true; persist(); }
-  if (refill.total) persist();
+  if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
+    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
+    // A resumed atlas visit arrived once already (the service state says so);
+    // a resumed classic shrine arrives again, and the refill is a top-up so
+    // that pours nothing twice. The arrival's effects — the refill, or any
+    // rule a later row authors on `arrived` — are written the moment they
+    // land, so a reload before the next action does not lose them.
+    if (!restState?.refilled) {
+      arriveAt(openVisit);
+      if (restState) restState.refilled = true;
+      persist();
+    }
+  }
+  const visit = openVisit;
+  const refill = visit.refill;
   mountRest(app, {
     registries,
     run,
+    visit,
     hud: roomHud(() => showRest()),
     openPanel,
     healMult,
     refill,
     meta: saves.loadMeta(),
-    // Which smith services this Shrine offers — the table's word, resolved
-    // here so the screen reads one answer (a chance of 100 consumes no roll).
-    services: smithServicesAt(registries, 'shrine', rng),
-    // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
-    // so turning it applies to the NEXT level bought — in any run, including
-    // one already in progress. Unlike the tier size it needs no new run,
-    // because nothing about it is snapshotted: the run records the POINTS it
-    // was granted (model/levelup.js) rather than the rule that granted them.
-    levelValue: resolveLevelUpValue(saves.loadMeta().settings),
+    // Which smith services this place offers — the table's word, resolved
+    // here so the screen reads one answer (a chance of 100 consumes no roll),
+    // and only where the place carries the `smith` tag.
+    services: visit.services.smith ? smithServicesAt(registries, 'shrine', rng) : null,
     onReallocate: () => persist(),
-    // A level is cinders and a permanent point. It persists the moment it is
-    // bought, not when the player leaves the shrine, for the same reason the
-    // reallocation above does: a closed tab must not be able to un-spend it.
+    // An assigned point is permanent. It persists the moment it is assigned,
+    // not when the player leaves the shrine, for the same reason the
+    // reallocation above does: a closed tab must not be able to un-assign it.
+    // (His level-value dial is read where the level is reached — onCombatEnd —
+    // since the points a level grants are decided there, not here.)
     onLevelUp: () => persist(),
     // E13's toggle: with it on, Rest and Smith re-open the Shrine instead of
     // leaving it, and the screen carries its own LEAVE.
     multiUse: run.journey ? false : settingOn(saves.loadMeta().settings, 'shrineMultiUse'),
     onDone: () => {
+      leaveLocation(visit);
+      openVisit = null;
       finishWorldService();
       persist();
       showMap();
@@ -2798,12 +3012,13 @@ if (shotState === 'combat-test') {
       run.smithingStones = shotSmithingStones;
     }
     // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
-    // already states about its own remove grid: a fresh run holds 0 cinders, so
-    // the Level up panel this state now has to reach mounts LOCKED, and a
-    // photograph of a greyed-out feature is a green on nothing. Same posing
-    // discipline as the twenty-card deck above — enough to reach the control,
-    // no rng, identical every run.
-    run.cinders = 999;
+    // already states about its own remove grid: a fresh run has earned no
+    // point, so the Level up panel this state now has to reach mounts LOCKED,
+    // and a photograph of a greyed-out feature is a green on nothing. Same
+    // posing discipline as the twenty-card deck above — enough to reach the
+    // control, no rng, identical every run. Five points waiting on the ledger
+    // (plan phase 6): what five levels grant, without the fights.
+    run.level.unspentPoints = Math.max(run.level.unspentPoints || 0, 5);
     // `?shot=smith` — THE SAME SHRINE WITH THE UPGRADE TRANSACTION OPEN. The
     // Smith is a modal over the Shrine, not a screen of its own, so the review
     // of 2026-09-11 could not photograph it: `?shot=smith` was not a state and
@@ -2858,10 +3073,21 @@ if (shotState === 'combat-test') {
     const smithingStoneReceipt = pose === 'empty'
       ? null
       : grantSmithingReward(registries, run, 'elite', 'shot:reward');
+    // `?shotReward=draft` poses a skill draft in the card row's seat (plan
+    // phase 4b): the ledger is given the queued draft the row spends, so the
+    // take runs the real door, and the cards are the pool's first three of
+    // the track's schools — authored order, no roll.
+    if (pose === 'draft') {
+      run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
+    }
+    const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
-      cardIds: registries.classes.get(run.class).cardPool.slice(0, 3),
+      ...(pose === 'draft' ? {
+        skillDrafts: [{ skillId: 'item:blade', level: 2, cardIds: registries.classes.get(run.class).cardPool.filter((id) => (registries.cards.get(id).tags || []).some((t) => draftSchools.has(t))).slice(0, 3) }],
+        cardIds: [],
+      } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
@@ -3025,6 +3251,20 @@ if (shotState === 'combat-test') {
   {
     const posed = saves.loadMeta();
     saves.saveMeta({ ...posed, settings: { ...(posed.settings || {}), settingsCategory: 'About' } });
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  showTitle();
+  showSettings();
+} else if (shotState === 'settings') {
+  // Advanced configuration, through the same modal and profile settings path a
+  // player uses. shotSettings may choose a subsection or tune a row.
+  {
+    const posed = saves.loadMeta();
+    saves.saveMeta({ ...posed, settings: {
+      ...(posed.settings || {}), settingsCategory: 'Advanced',
+      settingsAdvancedCategory: posed.settings?.settingsAdvancedCategory || 'Progression',
+    } });
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }

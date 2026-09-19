@@ -10,6 +10,7 @@
 family,nodeId
 card,card
 class,card
+class,itemType
 relic,item
 flask,item
 keepsake,item
@@ -104,3 +105,6 @@ basicCardProfile,property
 slot,property
 startingKit,property
 unlock,property
+# A location (plan phase 7) carries only what it confers: the rest and service
+# tags under property. It has no collection and states no kind.
+location,property

@@ -6,7 +6,8 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties } from './properties.js';
+import { attachSkillXp } from './skillXp.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
 /**
@@ -64,6 +65,11 @@ export function serializeCombatSnapshot(combat) {
     triggerState: [...combat.triggerState.entries()],
     idCounter: combat._idCounter,
     emitDepth: combat._emitDepth,
+    // The skill ledger the fight was handed and the XP receipt it has paid so
+    // far (plan phase 4a): a fight resumed mid-way keeps what it earned.
+    skills: combat.skills,
+    skillXp: combat.skillXp,
+    coreTags: combat.coreTags,
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -119,9 +125,17 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     triggerState: new Map(carryRelicGateKeys(saved.triggerState)),
     _idCounter: saved.idCounter,
     _emitDepth: saved.emitDepth,
+    // A snapshot written before the ledger existed resumes with an empty one:
+    // the gates read level 0 and the receipt starts here, as createCombat's do.
+    skills: saved.skills ?? {},
+    skillXp: saved.skillXp ?? {},
+    coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
+  // The one listener createCombat hooks on the bus, hooked again here: the
+  // raw emitter alone would record no XP for the rest of the restored fight.
+  attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
   // Property mounts are never saved (definitions are not persisted): they are
@@ -129,6 +143,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   // derives them.
   syncLoadoutProperties(combat);
   syncRelicProperties(combat);
+  syncClassProperties(combat);
   return combat;
 }
 

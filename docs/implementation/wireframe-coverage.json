@@ -102,7 +102,7 @@
       "id": "W1c",
       "name": "Character creation",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
@@ -112,16 +112,33 @@
         {
           "file": "src/ui/components/statAllocationCard.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/CreationWorkspaceModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/screens/creation.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-creation.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/kit/categoryNav.js",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-creation.test.mjs 9/9 (class preview mode and the unfolded card geometry from config, every --creation-* custom property from config, description clamp and fit rule, category order from config, Next/Back stepping, two-action footer, rail entries, attribute columns, portrait size); ui-config 28/28 with screens.creation; creation-continue-stacking 10/10; every number is in content/config/ui/screens/creation.json",
+        "wide": "1280x800 (?shot=customize): head 75 px with the title, a 37 px portrait and the exit; rail 185 px beside a 1083x620 pane; footer Back + Next (Begin hidden until Review); no page or body scroll, the pane is the one scroll region; attribute grid 2 columns. Unfold (owner, 2026-09-19): picking Reaver opens its card to 257 px (30vh + the head), portrait 186 px square in the left 30 share, the five resources and the relic in the right 70; no preview column; the other three classes stay in view; pane scroll 0",
+        "compact": "844x390: rail stays beside the pane (107 px rail, 650x248 pane), footer 80 px, no page scroll, every control ≥ 44 px, attribute grid 2 columns; the class list folds its descriptions to one line and all four classes are in view without scrolling. Unfold: 844x390 lands on the rem floor (sizing.unfoldMinRem), portrait 75 px, fit rung bare, the class list scrolls for the fourth card",
+        "iphoneSE": "375x667: one [Class ▾] selector above the pane (selector mode), head 62 px, pane 288 wide, footer 86 px, no page scroll, controls ≥ 44 px",
+        "galaxyS24": "360x780: selector mode, pane 358x579, footer 86 px, no page scroll. 390x844: selector, pane 388x579, attribute grid 1 column, no page scroll. Unfold at 390x844: card 228 px, portrait 95 px wide, page scroll 0, pane scroll 0",
+        "interactions": "Choose Reaver → Next (refused with “Choose a class.” until then) → Character: Standard, keepsake → Next → Equipment: armour → Next → Review shows journey, seed, Destination Slot 1 and the summary, Begin replaces Next; Back steps to Equipment with every choice kept; the rail names each step’s value (Reaver / Forsaken / Round Shield ⁄ Straight Sword / SHOWCASE). Keyboard rail/selector behaviour is the shared categoryNav’s"
+      },
+      "notes": "Branch feature/wireframe-creation (dev 7d2c2f41). Character creation is a W1 workspace: head with the title, the small portrait (sizing.headPortraitRem) and the exit; the kit’s categoryNav rail (a [Category ▾] selector on a compact host) listing Class, Character, Equipment and Review (behavior.categories); one active category in the pane, the others built once and kept off the document with their draft; a persistent footer of exactly two actions — Back (leaves on Class, steps back otherwise) and Next (refusing with the category’s unmet step) until Review, where Begin takes over. The attribute grid takes sizing.attributeColumnsWide columns from sizing.attributeNarrowBelowRem (the game’s 10 px rem) and the narrow count under it. Review carries the journey, the seed, the destination slot and the equipment summary. The list/grid switch is one small button in the head (only the active category’s shows); no “Choose” heads over the choice collections, no footer note, no “Class preview” eyebrow; choice descriptions clip to sizing.choiceDescriptionLines and, when the class list still runs past its box, fold to one line, then the preview column steps aside, then the descriptions go (behavior.fitChoicesToPane), so every class is in view without scrolling (owner, 2026-09-19). Deviations: the drawing’s categories (Class / Starting kit / Attributes / Review) are the game’s Class / Character / Equipment / Review; the per-section sub-steps (Standard/Assign points, keepsake, each hand) keep their in-pane Continues; inactive categories are built at mount and detached rather than never mounted; no paging (no collection exceeds five). tools/character-creation-check.mjs and tools/uniform-stat-foldouts.mjs still read the old .cz-flow fold and are owed a re-teach. Review round (QA agent, 2026-09-19): every spacing the W1c CSS block reads is a sizing key in creation.json projected by creationCssProperties (kit.css names no number for this screen); the rail is built from creationRailItems; a configured category the screen cannot draw throws at mount; a class pick re-runs the fit; the view switch names its views through creation.view.*; the catalogue (?shot=components) keeps its scrolling page and shows the live portrait as a specimen. Kept: the third fit rung (data-choice-fit=\"bare\", descriptions hidden) — FRONTEND-WIREFRAMES W1c allows the pane to scroll, but the owner asked on 2026-09-19 for every class in view without scrolling; the rung is only reached when one-line descriptions with the preview column gone still overflow, and is the owner’s to drop. Unfold (owner, 2026-09-19, \"why not do this\"): behavior.classPreview \"unfold\" — no preview column; clicking a class opens its card to max(sizing.unfoldHeightVh, sizing.unfoldMinRem) with the portrait in sizing.unfoldPortraitShare of the width and the summary (starting resources, relic) in sizing.unfoldSummaryShare, nothing past the card (classUnfold in creationCards.js; the unfolded card is a two-row grid so the portrait is height-bound). The drawing’s 30vw / 70vw are read as shares of the card’s width: 100vw does not fit beside the rail. \"column\" keeps the old preview pane. Before a pick nothing unfolds (the pointer-follow has no column to draw in). Headless phone captures go through CDP device emulation (headless Chrome refuses windows under ~500 px), not tools/screenshot.mjs --viewport. Seen on the way: at ~600 px wide the categoryNav still chooses the rail and it squeezes to ~55 px with clipped labels — a categoryNav threshold, not this screen’s, owed a look."
     },
     {
       "id": "W1d",
@@ -327,43 +344,77 @@
       "id": "W1l",
       "name": "New game slot selection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SaveSlotSelectionModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/engine/save.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs 7/7 and menu-slot-availability 7 checks; the door is slotDoor in saveSlotSelector.js, shared with W1m",
+        "wide": "Title New game / Load game doors at 1280x800: title is the door’s purpose, no sub-heading, primary reads Create character / Load; rows print the class, act · floor · HP and “Saved 12:29 AM”; the occupied row carries its ✕",
+        "compact": "844x390: the door is 366x376 px at (239, 14), inside the viewport; its three rows scroll 33 px inside the door body; every control ≥ 44 px. The title screen behind it scrolls 277 px (pre-existing)",
+        "iphoneSE": "375x667: door 361x404 px at (7, 139), inside the viewport, every control ≥ 44 px; the title screen behind it scrolls 177 px (pre-existing)",
+        "galaxyS24": "360x780: door 346x391 px at (7, 202), inside the viewport, no page scroll, every control ≥ 44 px. 390x844: 373x452 px at (9, 205), no page scroll",
+        "interactions": "Tap highlights a slot, a second tap (or Create character) opens its decision door; an empty slot asks “Start in slot n?”, an occupied one says nothing changes until Begin and continues without danger; Back returns with the slot still highlighted; Escape closes. Choosing an occupied slot wrote nothing (slot 1 still held the Reaver until Begin)"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The New game door is titled “New game” (no “Choose a slot” sub-heading, no eyebrow) and its primary is “Create character” (uiStrings title.slots.*). Rows print the class, act · floor · HP and “Saved …” from the new savedAt stamp saveRun writes when the write lands (engine/save.js; state.js admits the optional field). Selecting never overwrites: the old Overwrite door is gone; an occupied slot’s door only says the replacement is asked at Begin (W2c). Delete is the row’s ✕, the owner’s 2026-09-11 choice, not the drawing’s single “Delete selected” button — owner decision. The review doors an empty/occupied slot opens before creation are the owner’s 2026-09-04 request and are kept."
     },
     {
       "id": "W1m",
       "name": "Load game slot selection",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SaveSlotSelectionModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/screens/title.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/engine/save.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs 7/7; menu-slot-availability: empty slots are unselectable in the in-run list and selectable on the title",
+        "wide": "Title New game / Load game doors at 1280x800: title is the door’s purpose, no sub-heading, primary reads Create character / Load; rows print the class, act · floor · HP and “Saved 12:29 AM”; the occupied row carries its ✕; the in-run Load door (quick menu) is the same slotDoor with “Load game” and “Load” and no delete",
+        "compact": "844x390: the door is 366x376 px at (239, 14), inside the viewport; its three rows scroll 33 px inside the door body; every control ≥ 44 px. The title screen behind it scrolls 277 px (pre-existing)",
+        "iphoneSE": "375x667: door 361x404 px at (7, 139), inside the viewport, every control ≥ 44 px; the title screen behind it scrolls 177 px (pre-existing)",
+        "galaxyS24": "360x780: door 346x391 px at (7, 202), inside the viewport, no page scroll, every control ≥ 44 px. 390x844: 373x452 px at (9, 205), no page scroll",
+        "interactions": "Title: tap reviews, hold loads (unchanged); Load opens the review door, Load Save resumes. In-run: Load opens W2d. The ✕ opens W2b. Verified by real clicks at 1280x800"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The Load game door is titled “Load game” and its primary is “Load” (title and quick menu alike); rows carry “Saved …”. Empty rows on the title offer a new climb (“Start a new climb here”), in-run they are disabled (“No climb saved here”). The review card’s meta line is seed · saved time (slotMeta)."
     },
     {
       "id": "W1n",
@@ -469,22 +520,39 @@
       "id": "W1r",
       "name": "Save status",
       "parent": "W1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/saveSlotSelector.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/SaveStatusModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/quicknav.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: saveStatusReview (destination, last saved, Saved / failed + Retry), savedAtLabel, saveRun stamps only a landed write",
+        "wide": "1280x800: with storage made to throw QuotaExceededError, Save Game in the quick menu opened “Save game”, 460x429 px: the run’s identity line, “The save did not land: … Your run is unchanged; try the save again.”, the DetailCard with SLOT 1 and “Last saved 12:27 AM”, Back and Retry save. Retry with storage restored closed the door and the slot held the run",
+        "compact": "pending: not measured at 844x390 (the door is the shared confirmation frame measured for W2b at 366x376)",
+        "iphoneSE": "pending: not measured at 375x667",
+        "galaxyS24": "pending: not measured at 360x780",
+        "interactions": "Retry saves again (saveNow → persist) and never repeats a gameplay action; a success says “Saved · Slot n” in place on the quick-menu row (owner rule) and opens no door; the row says nothing when the door is open"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). W1r exists for the failure the drawing names: an explicit Save that did not land. main.js saveNow wraps the four Save rows; autosave (persist) still throws so a boot path never hides a failure. The door is drawn by the shared confirmation frame (openSaveStatusReview in saveSlotSelector.js) with the W1 inspection body’s slots and no art; SaveStatusModel owns the words and the time format (today: the time; otherwise date and time; never Invalid Date). A successful Save keeps the owner’s in-place “Saved · Slot n” rather than opening a door — the drawing’s Saved state is that row."
     },
     {
       "id": "W1s",
@@ -652,64 +720,127 @@
       "id": "W2b",
       "name": "Delete save",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ConfirmationReviewModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: deleteSaveReview names the save, states the real policy (clearRun removes; nothing archives; profile stays), action.deleteSave is DESTRUCTIVE",
+        "wide": "alertdialog at 1280x800 with the CANNOT BE UNDONE eyebrow, the question, the save named as its slot row names it, the exact consequence, the DetailCard with seed and saved time, Back (focused) and the action-named danger primary; question “Delete slot 1?”, target “Reaver · Slot 1 · Act 1 · Floor 0 · 64/64 HP”, primary DELETE",
+        "compact": "844x390: 366x376 px at (239, 7), inside the viewport; focus on Back",
+        "iphoneSE": "375x667: 361x381 px at (7, 143), inside the viewport",
+        "galaxyS24": "360x780: 346x372 px at (7, 204), no page scroll. 390x844: 376x381 px at (7, 232)",
+        "interactions": "The ✕ taps into the review and holds to commit (beatArmer, unchanged); Back and Escape return to the list with the slot kept; DELETE clears the slot and reopens the door it came from"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The delete review used to print the generic “Review this change…” line. It now fills W2’s three slots from ConfirmationReviewModel.deleteSaveReview: the consequence is the save manager’s actual policy — clearRun removes the run and the archive keeps only saves that failed to load — and run deletion never implies profile deletion. The consequence tag stays as the eyebrow (the W2a owner decision)."
     },
     {
       "id": "W2c",
       "name": "Replace save",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ConfirmationReviewModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: replaceSaveReview names the existing save as target and the replacement (class, seed) in the consequence; action.overwriteSave is DESTRUCTIVE; an unnamed replacement throws",
+        "wide": "Begin on the creation screen over an occupied slot opened “Replace this save?” as an alertdialog: target “Reaver · Slot 1 · Act 1 · Floor 0 · 64/64 HP”, consequence “Replacement: Starseer, seed 1P1I6FU. The saved climb in slot 1 is removed and cannot be recovered.”, Back focused, Replace (danger). Replace began the Starseer in slot 1 (class reaver → starseer, savedAt stamped)",
+        "compact": "pending: not measured at 844x390 (same frame as W2b)",
+        "iphoneSE": "pending: not measured at 375x667",
+        "galaxyS24": "pending: not measured at 360x780",
+        "interactions": "Asked at the write boundary (showCustomize onStart), so Back keeps the old save and the draft; nothing about the slot changes before Replace. Selecting the slot on the title no longer asks"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). Moved the replacement confirmation from slot selection to Begin (FRONTEND-WIREFRAMES W1l/W2c: “perform the existing required replacement confirmation at the actual write boundary”), where the replacement can be named. main.js reads the title’s own slot record (class NAME) for the target. The title’s old “Overwrite slot n?” door is now a non-destructive notice (title.slots.start.occupied)."
     },
     {
       "id": "W2d",
       "name": "Load over active run",
       "parent": "W2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "screens-and-overlays",
       "sourceReferences": [
         {
           "file": "src/ui/components/modalShell.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/models/ConfirmationReviewModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/saveSlotSelector.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/confirmationModal.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/main.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-save-flow.test.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "wireframe-save-flow.test.mjs: loadOverRunReview names the saved climb and seed as target and the exact loss; action.loadSlot is DESTRUCTIVE; an empty slot yields no target rather than a throw",
+        "wide": "In-run Load → Load opened “Load slot 1?” as an alertdialog with the DISCARDS UNSAVED CHANGES eyebrow, target “Reaver · Slot 1 · Act 1 · Floor 0 · 64/64 HP · Seed 15ALNWH”, consequence “The saved climb replaces everything done since your last save.”, Back focused, Load saved run",
+        "compact": "pending: not measured at 844x390 (same frame as W2b)",
+        "iphoneSE": "pending: not measured at 375x667",
+        "galaxyS24": "pending: not measured at 360x780",
+        "interactions": "Back and Escape return to the Load door; Load saved run resumes the slot (unchanged path)"
+      },
+      "notes": "Branch feature/wireframe-save-flow (dev 6818bb06). The in-run load review (confirmSlotLoad) used to pack the climb and the consequence into one message. It now fills the W2 target slot with the saved climb and seed and the consequence slot with the exact loss (ConfirmationReviewModel.loadOverRunReview)."
     },
     {
       "id": "W2e",
@@ -887,13 +1018,13 @@
         "galaxyS24": "Atlas at 360x780: header 9.6 / scene 62.9 / context 20.0 / footer 7.5 %; no screen scroll",
         "interactions": "Atlas: select then Enter travels via onTravel; second tap travels; Details opens the location dialog. Keyboard Enter not provable in the preview pane."
       },
-            "notes": "W4b is now implemented by BOTH maps. Classic act map: select then Enter, context band, Recenter/Enter footer; header (run HUD + route strip) is W4b's 10 vh via the map-compact HUD context (MapHeaderLayout, wireframeUi.map.header): 10% at 1280x800, 1440x860, 390x844 and 375x667; 52 px physical floor (13.3%) at 844x390; map scene 58.9% at 1280x800, 68.6% at 390x844. World-journey atlas: W4b bands, select-then-Enter, context band, Recenter/Enter footer; 390x844: 9.4 / 63.6 / 20.0 / 7.0 %; scene ~63% because header and footer need less than 10%. The atlas can still opt into the classic map's shared header."
+      "notes": "W4b is now implemented by BOTH maps. Classic act map: select then Enter, context band, Recenter/Enter footer; header (run HUD + route strip) is W4b's 10 vh via the map-compact HUD context (MapHeaderLayout, wireframeUi.map.header): 10% at 1280x800, 1440x860, 390x844 and 375x667; 52 px physical floor (13.3%) at 844x390; map scene 58.9% at 1280x800, 68.6% at 390x844. World-journey atlas: W4b bands, select-then-Enter, context band, Recenter/Enter footer; 390x844: 9.4 / 63.6 / 20.0 / 7.0 %; scene ~63% because header and footer need less than 10%. The atlas can still opt into the classic map's shared header."
     },
     {
       "id": "W4c",
       "name": "Quest dialogue — player left, NPC right",
       "parent": "W4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -907,16 +1038,53 @@
         {
           "file": "src/ui/screens/event.js",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). W4c is the game’s quest dialogue screen (src/ui/screens/dialogue.js), a child of the W4 parent combat uses: HUD 10 / scene 40 / context 35 / footer 15 (12/40/33/15 when the HUD folds on a compact host). The environment plate (skybox over a 60% floor) is the base of the frame; the figures stand on it at z4, the opaque context band at z5 is the reveal line, HUD and footer at z6. Each figure is the whole art zoomed so one third shows above the reveal line, kept to its half-frame lane (frame less two insets and max(minGapVw, 24 px)), shrunk as a whole only when wider than the lane, allowed to lean 8 vw over the outer edge first, never under 22 vh visible. The context holds the quest title, the narrative and the responses only; four responses always show, five or more scroll. Every value is data in content/config/ui/scenes/w4c-dialogue.json."
     },
     {
       "id": "WC0",
@@ -3820,7 +3988,7 @@
       "id": "WGQ0",
       "name": "Dialogue composition",
       "parent": null,
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3838,22 +4006,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Composition: DialogueModel.dialogueBands allocates the W4 parent’s four bands from sizing.bands (or bandsCompact when dialogueHudCompact says the HUD folds); layering.layers gives each layer its z and the context band occludes; motion.entrance fades the figures in at once and raises the context band 2 vh 400 ms later; reduced motion skips it and a HUD remount never replays it."
     },
     {
       "id": "WGQ1",
       "name": "Dialogue scene",
       "parent": "WGS1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3871,22 +4076,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Scene: the shared W4 backdrop fitter (sceneBackdrop.js) fits skybox and floor to the window between the HUD and the context band, floorPercent 60; the stage re-measures each figure once its art has decoded, so a listener can no longer stay invisible on a host where nothing else resizes (844x390, 740x372)."
     },
     {
       "id": "WGQ2",
       "name": "Player portrait",
       "parent": "WCI2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3904,22 +4146,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Player, left lane: PortraitCropModel.closeUpPlacement zooms the whole figure so visibleFraction 1/3 stands above the reveal line (visibleFractionCompact 1 on a compact host), fit shrinkToLane, anchor revealLine (it sinks, never hovers), maxOuterOverflowVw 8, minVisibleHeightVh 22."
     },
     {
       "id": "WGQ3",
       "name": "NPC portrait",
       "parent": "WCI2",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3937,22 +4216,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). NPC, right lane, mirrored (mirrorNpc) to face the player; the speaker draws above the listener (layering.speakerAbove) and the listener dims no further than positioning.portraits.listener (opacity 0.62, brightness 0.8, saturation 0.55). Art comes from the speaker’s portraitKey when a shipped enemy answers to it, else the name plate."
     },
     {
       "id": "WGQ4",
       "name": "Caption/choice region",
       "parent": "WCF4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -3970,22 +4286,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Context band: quest title, narrative, responses; no eyebrow, speaker line or prompt hint (hints are tooltips, behavior.responseHints). behavior.maxVisibleResponses 4 must fit without scrolling; behavior.responseLayouts are tried in order (1 column below, 2 below, 2 beside the text at textShare 0.45) and the first that measures as holding them wins; responses clamp to 2 lines between 2.75 and 5.5 rem. Title 0.95 rem at line-height 1.45 so the ink is never clipped."
     },
     {
       "id": "WGQ5",
       "name": "Speech progression",
       "parent": "WCF1",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4003,22 +4356,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Speech progression: the event text is split into beats (dialogueBeats); Continue advances one beat, Skip speech ends the clip and keeps the caption, speechEnded may advance linear prose but never selects a response; the responses appear on the last beat only; the beat is never saved, so a reload reopens at the first beat."
     },
     {
       "id": "WGQ6",
       "name": "Back button",
       "parent": "WCB4",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4036,22 +4426,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Back: reviews the previous beat without replaying effects; one share of dialogueFooterPlan (components.footer.actions back / skipSpeech / continue in one row, side insets gutterVw, gaps gapVw)."
     },
     {
       "id": "WGQ7",
       "name": "Skip speech button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4069,22 +4496,59 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Skip speech: cancels the pending speech completion and keeps the current caption; same footer share."
     },
     {
       "id": "WGQ8",
       "name": "Continue button",
       "parent": "WCB3",
-      "status": "pending",
+      "status": "in-progress",
       "phase": "combat-and-hud",
       "sourceReferences": [
         {
@@ -4102,16 +4566,53 @@
         {
           "file": "styles/ui.css",
           "existsOnImplementationBase": true
+        },
+        {
+          "file": "src/ui/screens/dialogue.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/components/dialogueStage.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "src/ui/models/DialogueModel.js",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/scenes/w4c-dialogue.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "content/config/ui/components/dialogueFrame.json",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/quest-dialogue.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tests/wireframe-dialogue-frame.test.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-context-fit.mjs",
+          "existsOnImplementationBase": false
+        },
+        {
+          "file": "tools/dialogue-hud-fit.mjs",
+          "existsOnImplementationBase": false
         }
       ],
       "verification": {
-        "structural": "pending",
-        "wide": "pending",
-        "compact": "pending",
-        "iphoneSE": "pending",
-        "galaxyS24": "pending",
-        "interactions": "pending"
-      }
+        "structural": "quest-dialogue.test.mjs 17/17 and wireframe-dialogue-frame.test.mjs 28/28 (bands, lanes, response plan, entrance, footer plan, HUD fold); every number comes from uiConfig.scenes.w4c (content/config/ui/scenes/w4c-dialogue.json)",
+        "wide": "1280x800 (dialogue-context-fit, mounted screen): both figures placed at 853 px, the zoomed height, gap 149 px; context band 229 px; 3 and 4 responses fit without scrolling (1- then 2-column grid below the text), 5 scroll the band (229/296 px); band slack 1.0 px against a 4 px allowance. dialogue-hud-fit (?shot=event): HUD two rows, 75.9 px in a 74.8 px band, no overlapping readings",
+        "compact": "844x390: figures 717 px (the zoomed height), gap 463 px; band 178 px; 3 and 4 responses beside the text (2 columns, textShare 0.45) without scrolling, 5 scroll (178/202 px); HUD folded to one row (73.9/75.5 px). 740x372: figures 228 px (short host, minVisibleHeightVh 22), gap 644 px; band 169 px; 4 fit, 5 scroll; HUD one row (70.4/72 px). The game’s own short-window gate still covers 740x372 by default",
+        "iphoneSE": "pending: 375x667 is not among the two tools’ hosts. Nearest measured: 390x844, figures 357 px, gap 24 px (the px floor), band 269 px, 3/4/5 responses all fit without scrolling, HUD one row (70.4/112.6 px)",
+        "galaxyS24": "pending: 360x780 is not among the tools’ hosts. Nearest measured: 411x783, figures 313 px, gap 49 px, band 236 px, 4 responses in two columns and 5 in one, none scrolling, slack 1.0 px; HUD one row (66.5/98.9 px), no overlapping readings",
+        "interactions": "Node: dialogueStep covers back, continue, skipSpeech, speechEnded (advances prose, never a response) and respond; a binding response keeps the hold-to-confirm beat and commits through engine/quests.js commitEventChoice. Browser: the response grid is driven to 3, 4 and 5 responses at five hosts. A real tap on a response and the entrance sequence were not measured by the tools; owner previews 2026-09-18"
+      },
+      "notes": "Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141 (ledger written at dev 6818bb06). Continue: primary; next beat, or the responses on the last beat; disabled while a response is required. Same footer share."
     },
     {
       "id": "WGS0",

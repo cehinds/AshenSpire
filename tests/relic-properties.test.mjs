@@ -29,11 +29,43 @@ import { dirname, resolve } from 'node:path';
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, relicPropertyRules } from '../src/model/registries.js';
-import { relicTokens, tokenRe } from '../src/model/validate.js';
+import { relicTokens, tokenRe, validateContent } from '../src/model/validate.js';
+import { passiveMult, passiveSum } from '../src/model/registries.js';
+import { rollRelicReward, rollRuneReward } from '../src/engine/encounters.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FIXTURE = resolve(HERE, 'fixtures/relic-text-pre-properties.json');
 const REG = createRegistries(contentBundle);
+
+// The expedition pass appends four new sentences to the snapshot; no historical
+// sentence is replaced. These are passive-only and need no property mount.
+const EXPEDITION_RELICS = ['wayfarersKnot', 'prismaticThorn', 'restlessClasp', 'paupersDiadem'];
+
+test('expedition content respects global relic contracts', () => {
+  const result = validateContent(contentBundle);
+  assert.equal(result.ok, true, JSON.stringify(result.errors));
+});
+
+test('expedition relics reach the matching reward pool and owned copies are excluded', () => {
+  for (const id of EXPEDITION_RELICS) {
+    const rarities = REG.relics.get(id).rarity === 'boss' ? ['boss'] : ['common', 'uncommon', 'rare'];
+    const onlyMissing = REG.relics.ids().filter((owned) => owned !== id);
+    assert.equal(rollRelicReward(REG, { pick: (_stream, pool) => pool[0] }, onlyMissing, { rarities }), id);
+    assert.equal(rollRelicReward(REG, { pick: () => assert.fail('owned relic offered') }, REG.relics.ids(), { rarities }), null);
+    assert.equal(relicPropertyRules(REG, REG.relics.get(id)).length, 0);
+  }
+});
+
+test('expedition passive benefits retain their authored costs through shared readers', () => {
+  assert.equal(rollRuneReward(REG, { int: () => 21 }, 'normal', ['wayfarersKnot']), 23);
+  assert.equal(passiveMult(REG, ['wayfarersKnot'], 'restHealMult'), 1.1);
+  assert.equal(passiveMult(REG, ['prismaticThorn'], 'exposureBuildupMult'), 1.25);
+  assert.equal(passiveMult(REG, ['prismaticThorn', 'crackedTear'], 'flaskPowerMult'), 1.125);
+  assert.equal(passiveMult(REG, ['restlessClasp'], 'flaskPowerMult'), 2);
+  assert.equal(passiveMult(REG, ['restlessClasp'], 'restHealMult'), 0.5);
+  assert.equal(passiveSum(REG, ['paupersDiadem'], 'powerCostReduction'), 1);
+  assert.equal(rollRuneReward(REG, { int: () => 21 }, 'normal', ['paupersDiadem']), 13);
+});
 
 // The substitution ui/components/card.js relicText performs, minus the
 // flask-growth clause it appends — that clause is derived from balance rows and
@@ -82,6 +114,6 @@ test('a relic with triggers carries the property tag that holds them', () => {
   // …and the census, so a silent drop of the whole table cannot pass the loop
   // above by having nothing to iterate.
   const carrying = REG.relics.all().filter((def) => relicPropertyRules(REG, def).length);
-  assert.equal(carrying.length, 48,
-    'the 48 trigger-carrying relics each hold their property tag; the other 7 are passives-only');
+  assert.equal(carrying.length, 52,
+    'the 52 trigger-carrying relics each hold their property tag (48 before plan phase 5a\'s four kit relics); the other 7 are passives-only');
 });

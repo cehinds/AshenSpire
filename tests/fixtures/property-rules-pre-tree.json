@@ -17,7 +17,7 @@
        "p": "not",
        "pred": {
         "p": "skillLevelAtLeast",
-        "skill": "focus",
+        "skill": "item:magic-focus",
         "level": 7
        }
       }
@@ -41,7 +41,7 @@
       },
       {
        "p": "skillLevelAtLeast",
-       "skill": "focus",
+       "skill": "item:magic-focus",
        "level": 7
       }
      ]

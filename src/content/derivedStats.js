@@ -24,6 +24,8 @@ export const derivedStatRules = {
       pointsPerTier: 10,
       gainPerTier: 1,
       cap: null,
+      // One more card in hand at level 11 and every ten after (plan phase 6).
+      perLevel: { every: 10, gain: 1 },
     },
     hp: {
       // Tuned rule: 30 + 2 × CON + flat bonuses. A one-point tier makes the
@@ -34,11 +36,17 @@ export const derivedStatRules = {
       sourceStat: 'constitution',
       pointsPerTier: 1,
       gainPerTier: 2,
+      // THE CHARACTER LEVEL'S OWN TERM (plan phase 6): every five levels past
+      // the first the maximum gains this, beside whatever the points bought.
+      // Snapshotted with the row, so a run born before it never gains it and
+      // a run born under it keeps it whatever the table says later.
+      perLevel: { every: 5, gain: 5 },
     },
     stamina: {
       base: 0,
       sourceStat: 'constitution',
       gainPerTier: 1,
+      perLevel: { every: 5, gain: 1 },
     },
     mana: {
       // Small-unit pool: WIS is the only authored Mana authority. Classes do
@@ -47,6 +55,7 @@ export const derivedStatRules = {
       sourceStat: 'wisdom',
       gainPerTier: 1,
       cap: null,
+      perLevel: { every: 5, gain: 1 },
     },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------

@@ -4133,12 +4133,12 @@
           "text": "function table(registries) {"
         },
         {
-          "line": 63,
-          "text": "export function levelCost(registries, levelsTaken) {"
+          "line": 64,
+          "text": "export function xpToNext(registries, level) {"
         },
         {
-          "line": 83,
-          "text": "export function levelsAffordable(registries, cinders) {"
+          "line": 105,
+          "text": "export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } = {}) {"
         },
         {
           "line": 125,

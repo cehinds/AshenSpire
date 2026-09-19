@@ -215,7 +215,9 @@ export function createRegistries(contentBundle) {
   // (model/tree.js nodeTree, resolveVariable). The tag tables and the property
   // rules above are views of these; both are on the registries so a reader can
   // take whichever shape its question is in.
-  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings']) {
+  // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
+  // model/classTree.js as a plain table, like the tree's own companions.
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree']) {
     registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
   }
   registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
@@ -316,6 +318,10 @@ export function createRegistries(contentBundle) {
       if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
     }
   }
+  // The label ceiling is the ATTRIBUTE term at the creation ceiling: the
+  // character level's own term (plan phase 6, derivedStats `perLevel`) is not
+  // added here — the trough's geometry reads the authored domainMax, and a
+  // long run's bumps at most widen a plate's number by a digit.
   const domainRows = registries.classes.all().map((classDef) => {
     const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
     return {

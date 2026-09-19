@@ -4,6 +4,15 @@ Every third-party asset shipped in this repository is listed here with its sourc
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
 
+## Painted relic illustrations
+
+The eight 256px transparent WebPs in `assets/relics/` are project-owned
+AI-generated illustrations created with built-in OpenAI imagegen.
+Sources, exact prompts and export manifests are preserved in
+[relic pack 01](art/relic-icons-pack-01/README.md) and
+[relic pack 02](art/relic-icons-pack-02/README.md).
+No third-party artwork was used and no third-party license is claimed.
+
 ## Painted enemy sprites from the Unity fork
 
 `assets/enemies-unity/painted_*.png` contains twelve unchanged project-owned,
@@ -14,6 +23,21 @@ Frames share a 384 × 384 canvas, a (192, 364) foot anchor and left-facing art.
 These are static frames; existing combat effects provide their movement.
 
 ## Painted player outfits
+
+The review-only relic pack in `art/relic-icons-pack-01/` contains four original
+relic paintings generated with the built-in OpenAI image-generation tool and
+16 transparent WebP exports. Exact prompts, unchanged sources, checksums and
+export settings accompany the pack. No third-party artwork or license is
+claimed; these candidates do not replace runtime relic assets.
+
+The new Reaver greatsword reference set in
+`assets/animations/reaver/greatsword-v2/` and the four-class art review pack
+in `art/webp-pack-2026-09-19/` were generated with the built-in OpenAI
+image-generation tool from project-owned painted references. PNG sources,
+exact prompts, WebP exports and approval boundaries are recorded in the pack.
+The owner approved the Reaver greatsword attack order on 2026-09-19.
+These are project-owned AI-generated assets; no third-party license is claimed.
+Only the Reaver binding is activated; the other review-pack sets remain drafts.
 
 Combat technique artwork in `art/painted-combat-2026-09-07/animation-groups/`
 was generated with built-in OpenAI imagegen from the existing project-owned
@@ -163,3 +187,8 @@ controlled independently from the doorway and sconces.
 `assets/bg/tower-city-background-unlit.webp` is a generated lighting edit of
 that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
+
+### Shared armor inventory art (2026-09-19)
+Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
+
+Sixteen class-specific shared-outfit atlases were generated with the same tool from the existing class paintings and approved armor references. Sources, prompts, normalization script and review sheet: art/class-outfit-sprites-2026-09-19/. Runtime exports: assets/painted-outfits/shared-*/. Each atlas contains eight poses; no third-party asset license is claimed.

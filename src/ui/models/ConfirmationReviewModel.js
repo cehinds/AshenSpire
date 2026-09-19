@@ -106,14 +106,16 @@ export function sellReview({ kind, name, price }) {
 }
 
 /** W2a Shrine rest: the Shrine and the player's pools, then the exact recovery. */
-export function restReview({ shrine, heal, hp, maxHp, mana, maxMana, multiUse = false }) {
+export function restReview({ shrine, heal, manaGain = 0, hp, maxHp, mana, maxMana, multiUse = false }) {
   return Object.freeze({
     question: t('rest.review.question'),
     target: t('rest.review.target', {
       shrine: String(shrine), hp: amount(hp, 'restReview hp'), maxHp: amount(maxHp, 'restReview maxHp'),
       mana: amount(mana, 'restReview mana'), maxMana: amount(maxMana, 'restReview maxMana'),
     }),
-    message: t(multiUse ? 'rest.review.stay' : 'rest.review.leave', { heal: amount(heal, 'restReview heal') }),
+    // One sentence per shape: the Mana clause appears only when Mana moves,
+    // exactly as the card's own line reads (rest.js).
+    message: t(manaGain > 0 ? (multiUse ? 'rest.review.stay' : 'rest.review.leave') : (multiUse ? 'rest.review.stayHp' : 'rest.review.leaveHp'), { heal: amount(heal, 'restReview heal'), mana: amount(manaGain, 'restReview mana gain') }),
     confirmLabel: t('rest.review.confirm'),
     policyAction: null,
   });
@@ -126,4 +128,55 @@ export function restReview({ shrine, heal, hp, maxHp, mana, maxMana, multiUse = 
  */
 export function runIdentity({ className, slot, facts }) {
   return t('quit.review.target', { className: String(className), slot: amount(slot, 'runIdentity slot'), facts: String(facts) });
+}
+
+/** The save a slot review acts on, or nothing when the slot is empty. */
+function slotTarget({ slot, className, facts }) {
+  return className ? runIdentity({ className, slot, facts: facts ?? '' }) : '';
+}
+
+/**
+ * W2b Delete save. The consequence is the save manager's actual policy
+ * (engine/save.js clearRun): the slot's run is removed outright — the archive
+ * holds only saves that failed to load — and the profile is untouched.
+ */
+export function deleteSaveReview({ slot, className = null, facts = null }) {
+  const n = amount(slot, 'deleteSaveReview slot');
+  return Object.freeze({
+    question: t('save.review.delete', { slot: n }),
+    target: slotTarget({ slot: n, className, facts }),
+    message: t('save.review.delete.message', { slot: n }),
+    confirmLabel: t('save.review.delete.confirm'),
+    policyAction: 'action.deleteSave',
+  });
+}
+
+/**
+ * W2c Replace save, asked at the write boundary: the existing save is the
+ * target, the replacement is named, and the consequence is exact.
+ */
+export function replaceSaveReview({ slot, existing, replacement }) {
+  const n = amount(slot, 'replaceSaveReview slot');
+  if (!existing?.className) throw new Error('replaceSaveReview: the existing save must be named');
+  if (!replacement?.className) throw new Error('replaceSaveReview: the replacement must be named');
+  return Object.freeze({
+    question: t('save.review.replace'),
+    target: runIdentity({ className: existing.className, slot: n, facts: existing.facts ?? '' }),
+    message: t('save.review.replace.message', { className: String(replacement.className), seed: String(replacement.seed ?? '—'), slot: n }),
+    confirmLabel: t('save.review.replace.confirm'),
+    policyAction: 'action.overwriteSave',
+  });
+}
+
+/** W2d Load over an active run: the saved climb is the target; the loss is exact. */
+export function loadOverRunReview({ slot, className = null, facts = null, seed = null }) {
+  const n = amount(slot, 'loadOverRunReview slot');
+  const target = slotTarget({ slot: n, className, facts });
+  return Object.freeze({
+    question: t('save.review.load', { slot: n }),
+    target: seed && target ? `${target} · ${t('title.slots.seed', { seed: String(seed) })}` : target,
+    message: t('save.review.load.message'),
+    confirmLabel: t('save.review.load.confirm'),
+    policyAction: 'action.loadSlot',
+  });
 }

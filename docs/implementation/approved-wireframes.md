@@ -2371,3 +2371,273 @@ time, and Exhaust starts off the edge until the rail scrolls; that is
 recorded, not judged. The comment beside the Shop pane rule in
 `styles/kit.css` says the thumb colour comes from `.screen`; it comes from
 `.as-pane`. Both are left for the owner.
+
+## Quest dialogue (W4c, WGQ0–WGQ8)
+
+Dev through PRs #1106, #1112, #1126, #1129, #1132, #1134 and #1141; this
+section was written at dev `6818bb06`. The quest dialogue is now its own
+screen, `src/ui/screens/dialogue.js`, a child of the W4 parent combat uses,
+and every number it draws by is data in
+`content/config/ui/scenes/w4c-dialogue.json` (through `uiConfig.scenes.w4c`).
+
+- **Bands (WGQ0).** HUD 10 / scene 40 / context 35 / footer 15 of the frame;
+  12 / 40 / 33 / 15 when the HUD folds to one row on a compact host
+  (`dialogueHudCompact`: the screen is shorter than 500 physical px or
+  narrower than the parent's compact width). `dialogueBands` allocates them
+  through the shared W4 allocator, so the screen never scrolls.
+- **Layer stack.** The environment plate, skybox over a 60% floor, is the base
+  of the frame (z2, z3); the two figures stand on it (z4); the opaque context
+  band (z5) is the reveal line; HUD and footer are z6. The entrance fades the
+  figures in over 400 ms and raises the band 2 vh 300 ms later; reduced
+  motion skips it, and a run-HUD remount keeps the beat and never replays it.
+- **Figures (WGQ2, WGQ3).** Each is the whole art zoomed so one third stands
+  above the reveal line (all of it on a compact host). A figure keeps to its
+  lane: half the frame less the two insets and `max(minGapVw, 24 px)`. Wider
+  than the lane, it may lean 8 vw over the outer frame edge first, then shrinks
+  as a whole and sinks so its top third still meets the reveal line, never
+  under 22 vh visible. The NPC is mirrored to face the player; the speaker
+  draws above the listener, who dims no further than opacity 0.62, brightness
+  0.8, saturation 0.55. The stage re-measures a figure when its art decodes, so
+  a listener can no longer stay invisible at 844×390 or 740×372.
+- **Context band (WGQ4).** Quest title, narrative, responses; no eyebrow,
+  speaker line or prompt hint (hints are tooltips). Four responses must show
+  without scrolling; five or more may scroll the band. The response grid tries
+  `behavior.responseLayouts` in order (one column below the text, two below,
+  two beside it at a 0.45 text share) and keeps the first that measures as
+  holding them. Responses clamp to two lines between 2.75 and 5.5 rem; the
+  title's 1.45 line-height clears its ink.
+- **Speech (WGQ5–WGQ8).** The event text is split into beats. Continue
+  advances one; Skip speech ends the clip and keeps the caption; a finished
+  clip may advance prose but never picks a response; Back reviews without
+  replaying effects. The responses appear on the last beat only and commit
+  through `commitEventChoice`, the Event screen's own door; a binding response
+  keeps its hold-to-confirm beat. The beat is never saved.
+
+Evidence. `tests/quest-dialogue.test.mjs` 17/17 and
+`tests/wireframe-dialogue-frame.test.mjs` 28/28. `tools/dialogue-context-fit.mjs`
+(the real screen mounted at each host, the grid driven to 3, 4 and 5
+responses) and `tools/dialogue-hud-fit.mjs` (`?shot=event`, every HUD reading
+checked for overlap), both green on 2026-09-19 in headless Edge:
+
+| Host | Figures (px) | Gap (px) | Band (px) | 4 responses | 5 responses | HUD |
+|---|---:|---:|---:|---|---|---|
+| 1280×800 | 853 / 853 | 149 | 229 | 2 columns below, no scroll | scrolls (229/296) | two rows, 75.9 in 74.8 |
+| 844×390 | 717 / 717 | 463 | 178 | 2 columns beside, no scroll | scrolls (178/202) | one row |
+| 740×372 | 228 / 228 | 644 | 169 | 2 beside, no scroll | scrolls (169/197) | one row |
+| 411×783 | 313 / 313 | 49 | 236 | 2 columns below, no scroll | 1 column, no scroll | one row |
+| 390×844 | 357 / 357 | 24 | 269 | 2 columns below, no scroll | 1 column, no scroll | one row |
+
+Band slack (empty strip under the last response) is at most 1.1 px against
+the 4 px allowance at every host. Every response is at least 44 px tall.
+
+Limits:
+- 375×667 and 360×780 are not among the tools' hosts; the ledger keeps those
+  two columns pending and names the nearest measured host.
+- A real tap on a response and the entrance sequence are covered by the node
+  tests and the owner's previews of 2026-09-18, not by the tools.
+- 740×372 is still covered by the game's own short-window gate by default;
+  whether to lower that threshold is an owner decision.
+- `portraits.fit: "clipToLane"` (the close-up-with-clipping reading of the
+  drawing) was built in the docs preview and not shipped; `shrinkToLane` is
+  what plays.
+## Save flow: slot doors, save status and the save reviews (W1l, W1m, W1r, W2b, W2c, W2d)
+
+Branch `feature/wireframe-save-flow`, based on dev `6818bb06`. The slot doors
+and the save reviews already existed; this audits them against the six
+drawings and closes the gaps. Every new sentence is a row in
+`content/source/uiStrings.csv`; no layout number changed.
+
+- **W1l / W1m, one slot door.** The title's New game and Load game doors and
+  the quick menu's Load door are the same `slotDoor`. The door is titled by
+  its purpose (“New game”, “Load game”), with no “Choose a slot” sub-heading
+  and no eyebrow, and its primary by what it does (“Create character”,
+  “Load”). Rows print the class, act · floor · HP and now “Saved 12:29 AM”.
+  - `saveRun` stamps `run.savedAt` when the write lands (a full store that
+    throws leaves the stamp alone), `slotSummary` reports it, and the run
+    shape admits it as an optional field. A save from before the stamp
+    prints its seed alone.
+  - Selecting never overwrites. The old “Overwrite slot n?” door that a
+    New-game tap on an occupied slot opened is a plain notice now (“Start in
+    slot n?” — nothing changes until you begin the new one; you will be
+    asked to replace it then), and Continue is not a danger button.
+- **W2c Replace, at the write boundary.** Begin on the creation screen over
+  an occupied slot asks “Replace this save?”: the existing save as the
+  target, “Replacement: Starseer, seed 1P1I6FU. The saved climb in slot 1
+  is removed and cannot be recovered.”, Back and Replace (danger). Back keeps
+  the old save and the draft. FRONTEND-WIREFRAMES asks for exactly this:
+  “perform the existing required replacement confirmation at the actual
+  write boundary.”
+- **W2b Delete.** The ✕'s review filled only the question; its body was the
+  generic “Review this change…” line. It now names the save and states the
+  save manager's real policy: `clearRun` removes the run, the archive keeps
+  only saves that failed to load, and the profile stays.
+- **W2d Load over an active run.** The in-run review packed the climb and the
+  loss into one message; now the target slot holds the saved climb and seed
+  and the consequence slot the exact loss.
+- **W1r Save status.** The four Save rows go through `saveNow`: a save that
+  lands still says “Saved · Slot n” in place (the owner's rule for the quick
+  menu, which is the drawing's Saved state); a save that throws keeps the run
+  and opens “Save game” — the run's identity, “The save did not land: …
+  Your run is unchanged; try the save again.”, the destination slot with
+  “Last saved …”, Back and Retry save. Retry saves again and never repeats a
+  gameplay action. Autosave (`persist`) still throws, so a boot path never
+  hides a failure.
+- **Models.** `ConfirmationReviewModel` gains `deleteSaveReview`,
+  `replaceSaveReview` and `loadOverRunReview`; `SaveStatusModel` owns the
+  W1r words and the saved-time format (today: the time; otherwise date and
+  time; never “Invalid Date”). `tests/wireframe-save-flow.test.mjs` (7 tests)
+  is in `run-node.mjs`.
+
+Browser evidence (in-app browser, source `index.html`, durable storage, a
+Reaver made through the creation screen into slot 1):
+
+| Viewport | Load door (w×h at x,y) | Delete review (w×h at x,y) | Fits | Page scroll | Controls < 44 px |
+|---|---|---|---|---:|---|
+| 1280×800 | — | — | yes | 0 | none |
+| 844×390 | 366×376 at 239,14 (rows scroll 33 px inside) | 366×376 at 239,7 | yes | 277 (title screen, pre-existing) | none |
+| 390×844 | 373×452 at 9,205 | 376×381 at 7,232 | yes | 0 | none |
+| 375×667 | 361×404 at 7,139 | 361×381 at 7,143 | yes | 177 (title screen, pre-existing) | none |
+| 360×780 | 346×391 at 7,202 | 346×372 at 7,204 | yes | 0 | none |
+
+- W1r at 1280×800, with `Storage.prototype.setItem` made to throw
+  `QuotaExceededError`: Save Game opened the door (460×429), Retry with
+  storage restored closed it and the slot held the run.
+- W2c at 1280×800: Begin over the Reaver in slot 1 asked; Replace began the
+  Starseer there (slot class `reaver` → `starseer`, `savedAt` stamped).
+- W2d at 1280×800: an `alertdialog` with the DISCARDS UNSAVED CHANGES eyebrow;
+  focus on Back.
+- W2b: `alertdialog`, CANNOT BE UNDONE, focus on Back, DELETE in danger tone.
+
+Limits and owner decisions:
+- The pre-creation review doors (“Start in slot n?”, “Load slot n?”) are the
+  owner's 2026-09-04 request and stay; the drawings show none. Delete stays
+  the row's ✕ (owner, 2026-09-11) rather than one “Delete selected” button.
+- W1r, W2c and W2d were measured at 1280×800 only; they share the frame
+  measured for W2b at the four smaller sizes.
+- The title screen itself scrolls at 375×667 and 844×390; the doors fit the
+  viewport regardless. That scroll predates this branch.
+- `tools/uistrings.mjs --check` was red on dev before this branch (settings,
+  customize, uiContent, card); the baseline records only this branch's two
+  shrunk files.
+- `tools/receipts.mjs --check` reports merged PRs without receipts on dev;
+  none is this branch's.
+
+## Character creation on the W1 shell (W1c)
+
+Branch `feature/wireframe-creation`, based on dev `7d2c2f41`. The creation
+screen was a page door with four `<details>` folds and a scrolling body. It
+is now the W1 workspace the drawing asks for. No choice, gate, rule or saved
+identity changed; presentation only.
+
+- **Shell.** Head: the title ("Create character"), the small portrait beside
+  the exit (`sizing.headPortraitRem`), no eyebrow. Body: the kit's
+  `categoryNav` — a rail beside the pane, or one `[Category ▾]` selector
+  above it on a compact host (CategoryNavModel decides) — and one active
+  pane. Footer: Back and Next, then Begin on Review. Exactly two actions at
+  every step. The pane is the one scroll region; the page and body never
+  scroll.
+- **Categories.** `behavior.categories` in
+  `content/config/ui/screens/creation.json`: Class, Character, Equipment,
+  Review (the drawing's Class / Starting kit / Attributes / Review, mapped
+  onto the game's steps). Each rail item names its value (the class, the
+  name, the hands, the seed). Only the active category is in the document;
+  the others are built once at mount and kept off it with their draft.
+- **Footer.** Next refuses with the current category's unmet step
+  ("Choose a class.", "Choose a keepsake." …) and lands the cursor on the
+  next question; Back leaves on Class and steps back otherwise, keeping
+  every choice; the exit leaves. `CreationWorkspaceModel` owns the order,
+  the stepping and the footer plan.
+- **Attributes.** The grid takes `sizing.attributeColumnsWide` (2) columns
+  from `sizing.attributeNarrowBelowRem` (64 of the game's 10 px rem) and
+  `attributeColumnsNarrow` (1) under it, measured off the pane.
+- **Review.** Journey, seed, "Destination · Slot n" (main.js passes the
+  slot) and the equipment summary, filled on arrival.
+- **Copy.** `creation.*` rows in `uiStrings.csv`.
+- **Less chrome, every choice in view (owner, 2026-09-19).** The list/grid
+  toggle is one small button in the head (▦ / ☰), shown for the active
+  category only; the "Choose / Class" and "Choose / Starting equipment"
+  heads, the footer note and the "Class preview" eyebrow are gone. Class
+  descriptions clip to `sizing.choiceDescriptionLines` (2); when the list
+  still runs past its box the cards fold to one line, then the preview
+  column steps aside, then the descriptions go (`behavior.fitChoicesToPane`).
+  At 844×390 the fold alone brings all four classes into view.
+
+Browser evidence (in-app browser, source `index.html?shot=customize`):
+
+| Viewport | Nav | Head | Pane | Footer | Page scroll | Attr. columns |
+|---|---|---:|---|---:|---:|---:|
+| 1280×800 | rail 185 px | 75 px, portrait 37 px | 1083×620 | 105 px | 0 | 2 |
+| 844×390 | rail 107 px | 62 px | 650×248 | 80 px | 0 | 2 |
+| 390×844 | selector | 66 px | 388×579 | 86 px | 0 | 1 |
+| 375×667 | selector | 62 px | 288 wide | 86 px | 0 | 1 |
+| 360×780 | selector | 62 px | 358×579 | 86 px | 0 | 1 |
+
+- Flow at 1280×800: Reaver → Next → Standard, keepsake → Next → armour →
+  Next → Review (Begin shown, Next hidden, "Destination Slot 1", summary) →
+  Back to Equipment with the choices kept.
+- No control under 44 px at any size.
+
+Limits and owner decisions:
+- The sub-steps inside Character and Equipment (Standard / Assign points,
+  keepsake, each hand) keep their in-pane Continues; the footer's Next is
+  the category's way on.
+- Inactive categories are built at mount and detached, not left unmounted:
+  the renderers cross-reference each other and the draft must survive.
+- No paging: no choice collection exceeds five items.
+- `tools/character-creation-check.mjs` and `tools/uniform-stat-foldouts.mjs`
+  read the old `.cz-flow` fold and are owed a re-teach (neither is in
+  run-node).
+- WC3 / WC3a / WC3b (the class and starting-kit cards) are untouched here.
+
+Review round (QA agent on the push, 2026-09-19):
+- Every spacing the W1c CSS block reads (rail gap, rail value scale, attribute
+  gap, review padding, head-tool gap, portrait gap, view-switch padding and
+  glyph, the compact and bare fit densities) is a `sizing` key in
+  `creation.json`, projected as `--creation-*` by
+  `creationCssProperties` and written on the screen root in both branches;
+  `kit.css` names no number for this screen.
+- The rail is built from `creationRailItems`; a configured category the
+  screen cannot draw throws at mount instead of on activation.
+- A class pick re-runs the fit (the preview column changes the split's height
+  without moving the pane's box).
+- The view switch names its views through `creation.view.grid` /
+  `creation.view.list`.
+- The component catalogue (`?shot=components`) keeps its scrolling page and
+  shows the live portrait as a specimen; the workspace's `overflow: hidden`
+  body is scoped away from it.
+- Dead `sectionHead` / `nextRow` / `nextGates` removed.
+- Kept, as an owner decision: the third fit rung
+  (`data-choice-fit="bare"`, descriptions hidden). FRONTEND-WIREFRAMES W1c
+  allows the pane to scroll and asks that long descriptions reach the shared
+  detail view; the owner asked on 2026-09-19 for every class in view without
+  scrolling. The rung is reached only when one-line descriptions with the
+  preview column gone still overflow (no tested viewport reaches it).
+
+Unfold (owner, 2026-09-19, "why not do this"):
+- `behavior.classPreview` in `creation.json` is `unfold`: no preview
+  column. Clicking a class opens its card to
+  `max(sizing.unfoldHeightVh, sizing.unfoldMinRem)` — the portrait in the
+  left `unfoldPortraitShare` of the card's width, the summary (the five
+  starting resources and the relic) in the right `unfoldSummaryShare`,
+  nothing past the card's box. `column` keeps the old preview pane.
+- The drawing's 30vw / 70vw are shares of the card's width: 100vw does not
+  fit beside the rail. The unfolded card is a two-row grid (head, then the
+  unfold spanning both columns) so the portrait is bound by the card's
+  height, not its width.
+- Before a pick nothing unfolds; a pick opens exactly one card
+  (`classUnfold` in `creationCards.js`, appended by `renderClassPreview`).
+
+| Viewport | Unfolded card | Portrait | Summary | Pane scroll |
+|---|---:|---:|---:|---:|
+| 1440×860 (headless) | 30vh | 186 px | resources + relic | 0 |
+| 1280×800 | 257 px | 186 px | 671 px wide | 0 |
+| 390×844 | 228 px | 95 px wide | 223 px wide | 0 |
+| 844×390 | rem floor | 75 px | in view | class list scrolls (fit rung bare) |
+
+- Phone captures: headless Chrome refuses a window under ~500 px, so
+  `tools/screenshot.mjs --viewport 390x844` crops a wider layout; the
+  evidence above is CDP device emulation (`Emulation.setDeviceMetricsOverride`,
+  2×) against the source server.
+- Seen on the way: at ~600 px wide the categoryNav still chooses the rail and
+  the rail squeezes to ~55 px with clipped labels. That is the shared
+  categoryNav threshold, not this screen's; owed a look.

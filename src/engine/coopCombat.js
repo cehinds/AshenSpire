@@ -29,7 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncRelicProperties } from './properties.js';
+import { syncRelicProperties, syncClassProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
@@ -39,6 +39,8 @@ import * as S from '../framework/statusSemantics.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
 import { cardKind } from '../model/tree.js';
+import { gripOf, gripTags } from '../model/loadout.js';
+import { attachSkillXp } from './skillXp.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity } from '../model/state.js';
 
 const QUEUE_GUARD = 10000;
@@ -84,6 +86,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   };
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C._emitEvent = emitEvent;
+  attachSkillXp(C); // plan phase 4a: one receipt per seat, keyed by C.playerKey
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
   // Player combat entities intentionally share the engine id `player`. Events
@@ -126,6 +129,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   for (const P of livingPlayers(C)) {
     setActive(C, P);
     syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
     C.emit('combatStart', {});
   }
   for (const enemy of C.enemies) {
@@ -187,6 +191,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     // dodge check) is decided from THIS player's equipment, not a Light default.
     loadout: p.loadout ? structuredClone(p.loadout) : null,
     itemUpgradeLevels: p.itemUpgradeLevels || {},
+    skills: p.skills ? structuredClone(p.skills) : {},
+    coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     entity,
     piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
     connected: true,
@@ -204,6 +210,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     const wasActive = C.playerKey ? C.players.get(C.playerKey) : null;
     setActive(C, P);
     syncRelicProperties(C, P.entity);
+    syncClassProperties(C, P.entity);
     setActive(C, wasActive || null);
     // …and the fresh hand, which is the player phase's business only.
     if (C.phase === 'player') {
@@ -225,6 +232,7 @@ function setActive(C, P) {
   C.attributes = P ? P.attributes : null;
   C.loadout = P ? P.loadout : null;
   C.itemUpgradeLevels = P ? P.itemUpgradeLevels : {};
+  C.skills = P ? P.skills : {};
   // Every player entity carries id 'player', so triggers.js scopes player-owned
   // once / limitPerTurn gates by this seat id instead (see ownerKeyFor). Without
   // it, one seat's once-per-combat relic/stance/status consumes the party's.
@@ -411,9 +419,17 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
 
   // The kind tag, not def.type (model/tree.js cardKind) — as solo combat reads it.
   const kind = cardKind(def);
+  // The grip's derived tags ride the snapshot, as in solo combat (plan phase 3c).
+  const derivedTags = gripTags(gripOf(C.registries, C.loadout, p.classId));
   const cardRef = {
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
     type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
   };
@@ -442,7 +458,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
   C.emit('cardPlayed', {
     playerId: C.playerKey, profileId: inst.profileId, upgraded: inst.upgraded, sourceArmamentId: inst.sourceArmamentId,
-    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind,
+    cardInstanceId: inst.instanceId, cardId: inst.cardId, cardType: kind, cardTags: cardRef.tags || [], derivedTags,
     targetId: target ? target.id : null, ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat, energySpent: cost, manaSpent: manaCost, staminaSpent: staminaCost,
   });

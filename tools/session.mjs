@@ -19,7 +19,10 @@ import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
-import { stampDeck } from '../src/model/loadout.js';
+import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
+import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { awardClassXp } from '../src/model/classTree.js';
+import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
@@ -37,8 +40,9 @@ import { eventChoicesWithHistory } from '../src/content/events.js';
 import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount, applyGraceRefill,
+  rollRelicReward,
 } from '../src/engine/encounters.js';
+import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
@@ -111,6 +115,15 @@ export function restoreSession(registries, data) {
 
 export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
+  // Each member's open shrine visit (engine/locations.js), by member id.
+  const shrineVisits = new Map();
+  function restView(visit) {
+    if (!visit) return null;
+    if (visit.restDenied) return { denied: registries.relics.get(visit.restDenied).name, heal: 0, mana: 0 };
+    const preview = previewRest(visit);
+    return { denied: null, heal: preview.heal, mana: preview.mana };
+  }
+
   if (restore) {
     // SPEC §13.4: a party save from before seats climbs the default order —
     // the one it was already climbing — and a save that names an order must
@@ -193,6 +206,7 @@ export function createSession({ registries, seedString, endless = false, restore
         validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
         initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
         initializeRunSmithing(registries, md.run);
+        healMissingSlotCells(registries, md.run.loadout); // a slot row newer than the record gets its empty cells (phase 3b)
         stampDeck(registries, md.run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
         initializeRunFlaskCharges(md.run, registries);
         syncZones(md.run); // the restore re-stamped the deck; the projection follows it (plan phase 3a)
@@ -225,12 +239,25 @@ export function createSession({ registries, seedString, endless = false, restore
     // trusted serialized client-facing bytes. Rebuild them on restore so an
     // older saved Shrine cannot disable Smithing after the run itself heals.
     if (session.scene?.kind === 'shrine') {
+      // The visits are rebuilt with the plans (engine/locations.js) as
+      // ALREADY ARRIVED: the save was written after the members arrived, so
+      // the arrival's rules (the refill, or any content a later row authors)
+      // do not run again on a host restart. The rest view is read off the
+      // rebuilt visit, so a restored save at a shrine shows a denied Rest
+      // disabled, not open.
+      shrineVisits.clear();
+      for (const member of [...members.values()].filter((m) => m.alive)) {
+        shrineVisits.set(member.id, createLocationVisit({ run: member.run, registries, rng: member.rng }, 'shrine', { arrived: true }));
+      }
       session.scene = {
         ...session.scene,
         done: { ...(session.scene.done || {}) },
         smithing: Object.fromEntries([...members.values()]
           .filter((member) => member.alive)
           .map((member) => [member.id, smithingPlan(registries, member.run)])),
+        rest: Object.fromEntries([...members.values()]
+          .filter((member) => member.alive)
+          .map((member) => [member.id, restView(shrineVisits.get(member.id))])),
         receipts: {
           ...(session.scene.receipts || {}),
           ...Object.fromEntries([...members.values()]
@@ -459,6 +486,8 @@ export function createSession({ registries, seedString, endless = false, restore
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
+      coreTags: m.run.coreTags, // the seat's class tree picks (plan phase 5b)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
@@ -681,6 +710,16 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.stamina = P.entity.stamina;
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
+        // The seat's skill receipt, keyed by its own id (plan phase 4a).
+        applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
+        // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
+        awardClassXp(registries, m.run, { victory: c.result === 'victory', pool: live && live.pool });
+        // The character level (plan phase 6), per seat: the party's kills are
+        // every seat's. No settings dial here — the server is authoritative
+        // and reads the authored points per level.
+        awardLevelXp(registries, m.run, combatLevelXp(registries, {
+          victory: c.result === 'victory', pool: live && live.pool, kills: c.eventLog.filter((e) => e.type === 'enemyDied').length,
+        }));
       }
     }
     live = null;
@@ -816,11 +855,28 @@ export function createSession({ registries, seedString, endless = false, restore
     // No settings override here on purpose. The server is authoritative and has
     // no browser to read `meta.settings` from; the counts are the authored
     // table. A per-session override is a lobby setting and a separate subject.
-    for (const m of livingMembers()) applyGraceRefill(registries, m.run);
+    //
+    // THE SHRINE IS A LOCATION VISIT (plan phase 7): every living member's
+    // visit mounts the shrine's rules and `arrived` runs the refill rule; the
+    // Rest choice below fires `rested` on that member's visit. The visits live
+    // beside the scene, not in it — the scene is what clients are shown.
+    shrineVisits.clear();
+    for (const m of livingMembers()) {
+      // Each visit rolls on ITS MEMBER'S streams (the seat's rng, as their
+      // rewards do), so a rolling rule's preview and its Rest read the same
+      // roll whatever order the party chooses in.
+      const visit = createLocationVisit({ run: m.run, registries, rng: m.rng }, 'shrine');
+      arriveAt(visit);
+      shrineVisits.set(m.id, visit);
+    }
     session.scene = {
       kind: 'shrine',
       done: {},
       smithing: Object.fromEntries(livingMembers().map((m) => [m.id, smithingPlan(registries, m.run)])),
+      // What each member's Rest would do here, and the relic that forbids it
+      // when one does — so the client can disable and explain the option
+      // rather than send a choice the host refuses (the review of #1195).
+      rest: Object.fromEntries(livingMembers().map((m) => [m.id, restView(shrineVisits.get(m.id))])),
       receipts: {},
     };
     return { ok: true };
@@ -833,8 +889,19 @@ export function createSession({ registries, seedString, endless = false, restore
       reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
       return { ok: true, allocation: { ...m.run.flaskCharges } };
     } else if (choice === 'rest') {
-      m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
-      m.run.mana = m.run.maxMana;
+      // A member whose visit is missing (a save from before the visits, or a
+      // member revived at the stop) arrived when the scene opened: the visit
+      // is rebuilt already arrived and kept for the leave below.
+      let visit = shrineVisits.get(memberId);
+      if (!visit) {
+        visit = createLocationVisit({ run: m.run, registries, rng: m.rng }, 'shrine', { arrived: true });
+        shrineVisits.set(memberId, visit);
+      }
+      if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };
+      restAt(visit);
+    } else if (choice === 'leave') {
+      // Taking nothing is a choice: a member whose Rest a relic denies, with
+      // no smith candidate and no ally to Mend, still marks the stop done.
     } else if (choice === 'mend') {
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);
@@ -855,8 +922,15 @@ export function createSession({ registries, seedString, endless = false, restore
       return { ok: false, error: `unknown shrine choice '${choice}'` };
     }
     session.scene.done[memberId] = true;
+    // A Mend moved an ally's pools: every member's rest view is re-read so
+    // the next snapshot shows what a Rest would do now.
+    session.scene.rest = Object.fromEntries(livingMembers().map((mm) => [mm.id, restView(shrineVisits.get(mm.id))]));
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
-    if (!waiting.length) advanceFromNode();
+    if (!waiting.length) {
+      for (const visit of shrineVisits.values()) leaveLocation(visit);
+      shrineVisits.clear();
+      advanceFromNode();
+    }
     return { ok: true };
   }
 
@@ -1177,6 +1251,10 @@ export function createSession({ registries, seedString, endless = false, restore
         // live stream is not moved (Codex on #548).
         const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
         executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
+        // A CHOICE CAN SWAP THE CLASS (plan phase 5c, swapClass): the member's
+        // own copy of the class follows the run's, or the restore door refuses
+        // the seat and the reward and poise readers keep the old card.
+        if (m.run.class !== m.classId) m.classId = m.run.class;
         // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
         // the party did not meet is not in the entry (settleEvent) — and was
         // fought while this seat was away; a returning seat fights no room
@@ -1239,6 +1317,10 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
+      // The seat's character ledger (plan phase 6), so a client can show the
+      // level and the points waiting; assigning them in co-op waits with the
+      // co-op class draft (the session pays, the shrine does not yet offer).
+      level: m.run.level ? structuredClone(m.run.level) : null,
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       smithingStones: m.run.smithingStones,

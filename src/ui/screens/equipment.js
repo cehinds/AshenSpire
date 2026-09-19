@@ -1,3 +1,6 @@
+import { characterLevel } from '../../model/levelup.js';
+import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { equipmentRequirementReceipt } from '../../model/loadout.js';
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard, renderCollectibleInspection } from '../components/collectibleCard.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
@@ -21,6 +24,7 @@ import { resolveCard } from '../../model/registries.js';
 import {
   canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
+  loadoutLeaveRefusal,
 } from '../../model/loadout.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
@@ -396,7 +400,7 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const painted = spritesAreEnabled() && !['classic', 'glyph'].includes(cz?.spriteStyle)
-    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand') : null;
+    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand', equipmentAnimationForLoadout(registries, run.loadout, run.class)) : null;
   if (painted) { el.classList.add('painted-armoury'); el.appendChild(painted); return el; }
   const reacts = CFG().spriteReacts;
   const spec = figureSpec(registries, run.loadout, run.class);
@@ -418,7 +422,7 @@ function figureFor(registries, run, cz) {
 function thumbSrc(piece) {
   return piece.kind === 'armor'
     ? assetUrl(armourMenuAsset(piece.classId, piece.id))
-    : assetUrl(`assets/equipment/icon_${piece.id}.webp`);
+    : assetUrl(armamentIconAsset(piece));
 }
 
 /** A piece's mods, written the way a player reads them. */
@@ -856,6 +860,19 @@ export function mountEquipment(host, {
   // One teardown home for the listener this mount owns outside its subtree.
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
+  // THE DECK'S FLOOR GATES EVERY ROAD THE PLAYER TAKES OUT (plan phase 3b,
+  // proposal §5): Back, the ✕, Escape and the tap outside all go through
+  // `leave`, which asks the model (loadoutLeaveRefusal) and shows its sentence
+  // in place instead of closing. `close` itself stays unconditional — it is
+  // also the teardown a host calls when a fight starts, and a door that can
+  // trap a host is not a rule. `enteredWith` is what the run held when the
+  // screen opened: a deck already under the floor on arrival may still leave.
+  const enteredWith = Array.isArray(run.deck) ? run.deck.length : 0;
+  const leave = () => {
+    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith });
+    if (refusal) { notice = refusal; draw(); return; }
+    close();
+  };
   const close = () => {
     document.removeEventListener('keydown', onKey);
     if (paneObserver) paneObserver.disconnect();
@@ -885,7 +902,7 @@ export function mountEquipment(host, {
   // `ev.target === wrap` is load-bearing: a click that started on the panel
   // and bubbled must not close it.
   wrap.addEventListener('click', (ev) => {
-    if (ev.target === wrap) { close(); return; }
+    if (ev.target === wrap) { leave(); return; }
     if (!picking) return;
     // The footer's Back and action are outside the Inventory but are not a
     // "tap elsewhere": clearing the selection there would drop the action.
@@ -948,6 +965,17 @@ export function mountEquipment(host, {
   /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
   function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
     const hadSelection = !!picking;
+    const piece = pieceId && (eq.slots.find(slot => slot.id === slotId)?.kinds.includes('armor')
+      ? eq.armour.find(row => row.classId === run.class && row.id === pieceId)
+      : eq.armaments.find(row => row.id === pieceId));
+    if (piece) {
+      const requirement = equipmentRequirementReceipt(registries, piece, run.attributes, run);
+      if (!requirement.ok) {
+        notice = `${piece.name} requires ${requirement.failures.map(row => `${registries.attributes.get(row.attributeId).label} ${row.required} (you have ${row.actual ?? '—'})`).join(', ')}.`;
+        draw();
+        return false;
+      }
+    }
     if (inCombat) {
       if (typeof onEquip !== 'function') {
         notice = 'Combat equipment changes are unavailable on this screen.';
@@ -1411,7 +1439,9 @@ export function mountEquipment(host, {
       let eligibility = null;
       if (target) {
         const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
-        const seal = canEquip(registries, target.slot.id, { inCombat });
+        // With the candidate named, the seal carries the grip's sentence too
+        // (model/loadout.js gripRefusal) — the player reads why before the act.
+        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId });
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
@@ -1574,7 +1604,7 @@ export function mountEquipment(host, {
     const runStats = run.stats || {};
     const group = (title, chips, attrs = {}) => detailCard({ eyebrow: title, muted: true, attrs: { class: 'armoury-stats-group', ...attrs }, children: statStrip(chips.map(([key, value]) => chip({ key, value: String(value) }))) });
     const box = el('div', { class: 'armoury-stats-summary', dataset: { component: 'armoury.statsSummary' } }, [
-      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${run.level || 1}`, attrs: { class: 'armoury-stats-identity' } }),
+      detailCard({ eyebrow: 'Character', name: cls?.name || run.class, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
       group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
       group('Resources', [['Actions', derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
@@ -1758,7 +1788,7 @@ export function mountEquipment(host, {
   function characterSummaryPanel() {
     const cls = registries.classes.get(run.class);
     return el('header', { class: 'character-summary as-labelstack' }, [
-      eyebrow(`Forsaken · ${cls.name} · Level ${Number(run.level || 1)}`, { class: 'character-kicker' }),
+      eyebrow(`Forsaken · ${cls.name} · Level ${characterLevel(run)}`, { class: 'character-kicker' }),
       titleS(cls.name, { tag: 'h3' }),
       subtitle(cls.description || ''),
     ]);
@@ -2012,7 +2042,7 @@ export function mountEquipment(host, {
     // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
     // selected item's action bottom-right when there is one.
     const back = button({ label: t('common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
-    back.addEventListener('click', close);
+    back.addEventListener('click', leave);
     const rendered = renderArmouryPanel(panelModel, wrap, { back });
     setFooterPrimary = rendered.setPrimary;
     armouryNav = rendered.nav;
@@ -2139,7 +2169,7 @@ export function mountEquipment(host, {
     const itemCollection = wrap.querySelector('.armoury-item-collection');
     if (itemCollection) itemCollection.scrollTop = previousCollectionScroll;
     notice = '';
-    wrap.querySelector('.armoury-close').addEventListener('click', close);
+    wrap.querySelector('.armoury-close').addEventListener('click', leave);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
         picking = null;
@@ -2170,7 +2200,7 @@ export function mountEquipment(host, {
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
   // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) close();
+    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) leave();
   };
   document.addEventListener('keydown', onKey);
 
@@ -2191,3 +2221,4 @@ export function mountEquipment(host, {
   if (destinationPlan) queueMicrotask(focusArmouryDestination);
   return { close, redraw: draw };
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';

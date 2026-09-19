@@ -19,6 +19,7 @@ export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
     id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    flavor: "The fragment fell burning; by morning it was cold. — Astronomer's chart margin",
     keywords: [], icon: '💎',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6 },
@@ -37,14 +38,15 @@ export const starseerCards = [
 
   // ---- Commons ----------------------------------------------------------------
   {
-    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 0, type: 'attack',
+    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 0, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "Chart 41 recorded a fall; chart 42 showed a hearth. — Astronomer's chart margin",
     keywords: [], icon: '☄',
     effects: [{ op: 'damage', target: 'enemy', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage.',
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 5 }, GAIN_CHARGE] },
   },
   {
-    id: 'starbladePhalanx', name: 'Starblade Phalanx', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
+    id: 'starbladePhalanx', name: 'Starblade Phalanx', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🗡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -157,7 +159,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'starlance', name: 'Starlance', class: 'starseer', rarity: 'common', cost: 2, type: 'attack',
+    id: 'starlance', name: 'Starlance', class: 'starseer', rarity: 'common', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🏹',
     effects: [
       { op: 'damage', target: 'enemy', amount: 9, if: { p: 'not', pred: CHARGED } },
@@ -198,7 +200,7 @@ export const starseerCards = [
     // Vulnerable are what the Frost PROC leaves behind; this is the card that
     // fills the meter, and it is the Starseer's because frostExposed raises
     // `starstone`-tagged damage. Numbers PROVISIONAL, like the row's.
-    id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
+    id: 'frostNova', name: 'Frost Nova', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '❄',
     effects: [
       { op: 'damage', target: 'enemy', amount: 4 },
@@ -219,7 +221,7 @@ export const starseerCards = [
 
   // ---- Uncommons -----------------------------------------------------------------
   {
-    id: 'starstoneArc', name: 'Starstone Arc', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'attack',
+    id: 'starstoneArc', name: 'Starstone Arc', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '⚡',
     effects: [
       { op: 'damage', target: 'enemy', amount: 7 },
@@ -243,14 +245,15 @@ export const starseerCards = [
     upgrade: { effects: [{ op: 'gainEnergy', amount: 1 }, { op: 'draw', amount: 2 }, GAIN_CHARGE] },
   },
   {
-    id: 'stargazerCard', name: 'Stargazer', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'stargazerCard', name: 'Stargazer', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "A hundred winters darkened the lens; the coal still dimmed. — Astronomer's chart margin",
     keywords: [], icon: '🔭',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stargazer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'astralArmorCard', name: 'Astral Armor', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'astralArmorCard', name: 'Astral Armor', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🌌',
     effects: [{ op: 'applyStatus', target: 'self', status: 'astralArmor', stacks: one }],
     textTemplate: 'At the end of your turn, gain 4 Block.',
@@ -260,7 +263,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'moonrendCut', name: 'Moonrend Cut', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'moonrendCut', name: 'Moonrend Cut', class: 'starseer', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🌒',
     effects: [
       { op: 'damage', target: 'enemy', amount: 8 },
@@ -277,7 +280,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'meteorite', name: 'Meteorite', class: 'starseer', rarity: 'uncommon', cost: 3, type: 'attack',
+    id: 'meteorite', name: 'Meteorite', class: 'starseer', rarity: 'uncommon', cost: 3, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🪨',
     effects: [
       { op: 'damage', target: 'enemy', amount: 18, if: { p: 'not', pred: CHARGED } },
@@ -294,7 +297,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'meteorSwarm', name: 'Meteor Swarm', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'meteorSwarm', name: 'Meteor Swarm', class: 'starseer', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '☄',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 5 },
@@ -328,14 +331,14 @@ export const starseerCards = [
     },
   },
   {
-    id: 'azureCoilCard', name: 'Azure Coil', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'azureCoilCard', name: 'Azure Coil', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🌀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'azureCoil', stacks: one }],
     textTemplate: 'Whenever you play a Skill, gain 2 Block.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'astralCleave', name: 'Astral Cleave', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'astralCleave', name: 'Astral Cleave', class: 'starseer', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '⚔',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10 },
@@ -375,21 +378,23 @@ export const starseerCards = [
 
   // ---- Rares -----------------------------------------------------------------------
   {
-    id: 'supernova', name: 'Supernova', class: 'starseer', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'supernova', name: 'Supernova', class: 'starseer', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "The last chart predicted light enough to burn the paper. — Astronomer's chart margin",
     keywords: [], icon: '💥',
     effects: [{ op: 'damage', target: 'allEnemies', amount: 8, hits: { f: 'energySpent' } }, GAIN_CHARGE],
     textTemplate: 'Deal {damage} damage to ALL enemies once per Energy spent.',
     upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 10, hits: { f: 'energySpent' } }, GAIN_CHARGE] },
   },
   {
-    id: 'timeDilation', name: 'Time Dilation', class: 'starseer', rarity: 'rare', cost: 2, type: 'skill',
+    id: 'timeDilation', name: 'Time Dilation', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "The eclipse ended; the observatory clock disagreed. — Astronomer's chart margin",
     keywords: ['exhaust'], icon: '⏳',
     effects: [{ op: 'gainEnergy', amount: 2 }, { op: 'draw', amount: 3 }, GAIN_CHARGE],
     textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards. Exhaust.',
     upgrade: { keywords: [], textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards.' },
   },
   {
-    id: 'starstoneKris', name: 'Starstone Kris', class: 'starseer', rarity: 'rare', cost: 1, type: 'attack',
+    id: 'starstoneKris', name: 'Starstone Kris', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🔪',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5 },
@@ -408,14 +413,15 @@ export const starseerCards = [
     },
   },
   {
-    id: 'constellationCard', name: 'Constellation', class: 'starseer', rarity: 'rare', cost: 2, type: 'power',
+    id: 'constellationCard', name: 'Constellation', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "Three flames, three twigs; the crest matched the star chart. — Astronomer's chart margin",
     keywords: [], icon: '💫',
     effects: [{ op: 'applyStatus', target: 'self', status: 'constellation', stacks: one }],
     textTemplate: 'Whenever you gain Starstone Charge, deal 4 damage to a random enemy.',
     upgrade: { cost: 1 },
   },
   {
-    id: 'starfallBeam', name: 'Starfall Beam', class: 'starseer', rarity: 'rare', cost: 3, type: 'attack',
+    id: 'starfallBeam', name: 'Starfall Beam', class: 'starseer', rarity: 'rare', cost: 3, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🔆',
     effects: [
       { op: 'damage', target: 'allEnemies', amount: 12, if: { p: 'not', pred: CHARGED } },
@@ -432,7 +438,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'starcaller', name: 'Starcaller', class: 'starseer', rarity: 'rare', cost: 'X', type: 'attack',
+    id: 'starcaller', name: 'Starcaller', class: 'starseer', rarity: 'rare', cost: 'X', staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '⭐',
     effects: [
       { op: 'damage', target: 'enemy', amount: 6, hits: { f: 'energySpent' } },
@@ -449,7 +455,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'umbralWard', name: 'Umbral Ward', class: 'starseer', rarity: 'rare', cost: 2, type: 'skill',
+    id: 'umbralWard', name: 'Umbral Ward', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'skill',
     keywords: [], icon: '🌑',
     effects: [
       { op: 'block', target: 'self', amount: 20, if: { p: 'not', pred: CHARGED } },
@@ -466,7 +472,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'waxingMoonCard', name: 'Waxing Moon', class: 'starseer', rarity: 'rare', cost: 2, type: 'power',
+    id: 'waxingMoonCard', name: 'Waxing Moon', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🌕',
     effects: [{ op: 'applyStatus', target: 'self', status: 'waxingMoon', stacks: one }],
     textTemplate: 'At the start of your turn, apply 2 Vulnerable to ALL enemies.',
@@ -515,6 +521,7 @@ export const starseerCards = [
   },
   {
     id: 'starPath', name: 'Star Path', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "The fourth spur appeared on charts before the coast. — Astronomer's chart margin",
     keywords: [], icon: '🌌',
     effects: [
       { op: 'draw', amount: 1 },
@@ -531,14 +538,14 @@ export const starseerCards = [
     },
   },
   {
-    id: 'moonlitShieldCard', name: 'Moonlit Shield', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'power',
+    id: 'moonlitShieldCard', name: 'Moonlit Shield', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
     keywords: [], icon: '🔷',
     effects: [{ op: 'applyStatus', target: 'self', status: 'moonlitShield', stacks: one }],
     textTemplate: 'Whenever you gain Starstone Charge, gain 3 Block.',
     upgrade: { cost: 0 },
   },
   {
-    id: 'celestialLance', name: 'Celestial Lance', class: 'starseer', rarity: 'rare', cost: 2, type: 'attack',
+    id: 'celestialLance', name: 'Celestial Lance', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
     keywords: [], icon: '🔱',
     effects: [
       { op: 'damage', target: 'enemy', amount: 10, if: { p: 'not', pred: CHARGED } },
@@ -555,7 +562,8 @@ export const starseerCards = [
     },
   },
   {
-    id: 'astromancerCard', name: 'Astromancer', class: 'starseer', rarity: 'rare', cost: 1, type: 'power',
+    id: 'astromancerCard', name: 'Astromancer', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
+    flavor: "The apprentice took the charts and left the birth-roll. — Astronomer's chart margin",
     keywords: [], icon: '📚',
     effects: [{ op: 'applyStatus', target: 'self', status: 'astromancer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge and draw a card.',
@@ -582,6 +590,7 @@ export const starseerCards = [
   },
   {
     id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
+    flavor: "The ledger ended where the fourth hearth appeared. — Astronomer's chart margin",
     keywords: [], icon: '🌠',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
@@ -597,6 +606,20 @@ export const starseerCards = [
         { op: 'draw', amount: 1, if: CHARGED },
         GAIN_CHARGE,
       ],
+    },
+  },
+  // ---- The class ability card (plan phase 5a, proposal §4) -----------------
+  // Attune: the Starseer's loop is stamina tension around scarce casts; one
+  // card that buys the next cast.
+  {
+    id: 'attune', name: 'Attune', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 1, type: 'skill',
+    keywords: ['exhaust'], icon: '✴',
+    effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
+    textTemplate: 'Restore {restoreMana} Mana. Exhaust.',
+    upgrade: {
+      keywords: [],
+      effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
+      textTemplate: 'Restore {restoreMana} Mana.',
     },
   },
 ];

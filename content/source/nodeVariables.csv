@@ -73,6 +73,11 @@ sentinelsOath,strength,stacks
 sentinelsOath,n,n
 forsakenWarflag,weak,stacks
 wrathCoil,damage,amount
+favored,skillXpMult,skillXpMult
+ashenGrip,restoreStamina,amount
+lodestarShard,restoreMana,amount
+waxenSeal,heal,amount
+whetstonePouch,bleed,stacks
 # The framework's cost defaults — the amount a card pays when it carries the
 # cost node with no amount of its own. They were `defaultParameters` literals
 # on the property rows; a node carries no numbers, so they are variables here
@@ -80,3 +85,32 @@ wrathCoil,damage,amount
 cost.action,amount,amount
 cost.stamina,amount,amount
 cost.mana,amount,amount
+ironFooting,block,amount
+bloodTempo,draw,amount
+ashenReserve,restoreStamina,amount
+grimHarvest,heal,amount
+warlord,strength,stacks
+bulwarkKing,block,amount
+attunedMind,draw,amount
+starlitFocus,starstoneCharge,stacks
+lodestarCap,restoreMana,amount
+arcaneDraw,draw,amount
+conduit,restoreStamina,amount
+reservoir,restoreMana,amount
+warmth,block,amount
+vigil,heal,amount
+sealOfPlenty,restoreMana,amount
+wakingRot,crimsonBlight,stacks
+martyr,block,amount
+saint,heal,amount
+quickHands,prepared,stacks
+secondWind,draw,amount
+honedEdge,bleed,stacks
+poisonedPouch,venom,stacks
+assassin,prepared,stacks
+assassin,draw,amount
+shadow,block,amount
+restHpSmall,pct,pct
+restHpPartial,pct,pct
+restManaFlat,restoreMana,amount
+restManaFloor,floorPct,toFloorPct
