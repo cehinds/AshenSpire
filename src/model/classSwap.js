@@ -12,6 +12,7 @@
 import { classTreeRows } from './classTree.js';
 import { classSkillId, skillLevel } from './skills.js';
 import { syncZones } from './state.js';
+import { stampDeck } from './loadout.js';
 
 /**
  * swapRunClass(registries, run, classId) → { from, to, fromLevel,
@@ -47,6 +48,10 @@ export function swapRunClass(registries, run, classId) {
     if (run.loadout.active) run.loadout.active.armor = Math.max(0, sets.armor.findIndex((id) => !!id));
   }
   run.class = classId;
+  // The armour changed hands, so the deck is restamped and the equipment
+  // pools reconciled as the loadout screen does after any change (the review
+  // of #1193): the old set's card rewrites and max-HP bonus leave with it.
+  if (run.attributes && run.loadout) stampDeck(registries, run);
   if (Array.isArray(run.history)) {
     run.history.push({ kind: 'classSwapped', from, to: classId, fromLevel, droppedTags: [...droppedTags], droppedArmour: [...droppedArmour], actNumber: run.actNumber, floor: run.floor, mapNodeId: run.mapNodeId ?? null });
   }

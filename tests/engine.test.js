@@ -9043,6 +9043,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const bossGate = { ...gate, id: 'heraldUnlock', ref: 'herald', condition: 'bossWithGroup', param: 'fellWarden:item:shield' };
     eq(evaluateUnlocks([bossGate], { progress, unlocked: [] }).join(','), 'heraldUnlock', 'a boss felled with the group earns it');
     eq(evaluateUnlocks([{ ...bossGate, param: 'fellWarden:item:magic-focus' }], { progress, unlocked: [] }).length, 0, 'the wrong group does not');
+    eq(evaluateUnlocks([bossGate], { progress: { ...progress, bosses: [] }, unlocked: [] }).length, 0, 'the group without the kill does not');
     // THE SWAP replaces the core card and prunes what the new class has no seat for.
     const run = createRunState({ seed: 0x5c5c, classId: 'reaver', registries: REG });
     awardSkillXp(REG, run, 'item:blade', 50); awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
@@ -9084,6 +9085,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(bornClassOf(twice), 'reaver'); eq(peakClassLevel(twice), 1);
       eq(equippedIn(REG, twice.loadout, twice.class, 'armor').classId, 'herald', "and wears the herald's free set");
     }
+    // THE OLD SET'S MODS LEAVE WITH IT: the deck is restamped and the pools
+    // reconciled at the swap, as the loadout screen does after any change.
+    {
+      const her = createRunState({ seed: 0x5c5e, classId: 'herald', registries: REG });
+      her.loadout.sets.armor[0] = 'pilgrim'; stampDeck(REG, her);
+      const worn = her.equipmentPoolBonuses.maxHp;
+      assert(worn > 0, `Pilgrim Wrap raises max HP — got ${worn}`);
+      swapRunClass(REG, her, 'rogue');
+      eq(her.equipmentPoolBonuses.maxHp, 0, "the rogue's free set raises nothing, and the bonus left with the wrap");
+      assert(her.maxHp < her.maxHp + worn && Number.isFinite(her.hp), 'the pools reconciled');
+    }
     // THE OPCODE runs through the run-effect door; random never lands on the run's own class.
     const door = createRunState({ seed: 0x5c5d, classId: 'starseer', registries: REG });
     executeRunEffects({ run: door, registries: REG, rng: createRng(4) }, [{ op: 'swapClass', classId: 'herald' }]);
@@ -9104,6 +9116,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(mirrorWith([{ op: 'swapClass' }])).some((e) => /exactly one of 'classId' or 'random: true'/.test(e)), 'a swap to nothing is refused by name');
     assert(said(mirrorWith([{ op: 'swapClass', classId: 'rogue', random: true }])).some((e) => /exactly one of/.test(e)), 'a named AND random swap is refused by name');
     assert(said(mirrorWith([{ op: 'swapClass', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false is refused by name');
+    assert(said(mirrorWith([{ op: 'swapClass', classId: 'rogue', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false beside a name is refused by name');
     assert(!said(mirrorWith([{ op: 'swapClass', classId: 'rogue' }])).some((e) => /swapClass/.test(e)), 'a named swap passes');
   });
 

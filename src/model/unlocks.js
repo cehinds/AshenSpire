@@ -34,7 +34,9 @@ export const UNLOCK_CONDITIONS = Object.freeze({
     const at = param.indexOf(':');
     const enemyId = at < 0 ? param : param.slice(0, at);
     const group = at < 0 ? '' : param.slice(at + 1);
-    return ((p.bossGroups || {})[enemyId] || []).includes(group);
+    // The boss AND the group: the tally of groups is written at the boss
+    // door, but the row's claim is the kill, so the kill is read too.
+    return (p.bosses || []).includes(enemyId) && ((p.bossGroups || {})[enemyId] || []).includes(group);
   },
   winRuns: (u, p) => (p.wins || 0) >= Number(u.param),
 });
