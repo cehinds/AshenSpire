@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "One tap readies a combat card for its target",
     "detail": "Clicking a card title now fully selects it on the first tap, so the next click on a valid target plays it immediately. The card no longer stops at an inspection highlight when its text redraws under the pointer. Press-and-hold and flick-to-play keep working, and cancelled or moved presses do not become selecting taps.",
-    "build": "0.7.1.286",
+    "build": "0.7.1.288",
     "pullRequest": 1208,
     "url": "https://github.com/cehinds/AshenSpire/pull/1208"
   },
