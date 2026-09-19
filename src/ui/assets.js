@@ -1,3 +1,4 @@
+import { armamentIconAsset } from '../model/equipmentArt.js';
 import { COMBAT_EFFECT_ART } from '../content/combatEffectArt.js';
 import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // src/ui/assets.js — asset lookup + placeholder generator (SPEC §2.4)
@@ -716,7 +717,7 @@ export function classGlyph(classId) {
 export function equipmentCardArt(piece) {
   return assetUrl(piece.kind === 'armor'
     ? armourMenuAsset(piece.classId, piece.id)
-    : `assets/equipment/icon_${piece.inventoryArtKey || piece.id}.webp`);
+    : armamentIconAsset(piece));
 }
 
 export function combatEffectFrames(kind) { return (Object.hasOwn(COMBAT_EFFECT_ART,kind) ? COMBAT_EFFECT_ART[kind] : Object.hasOwn(POSE_EFFECT_ART,kind) ? POSE_EFFECT_ART[kind] : []).map(assetUrl); }

@@ -41,3 +41,31 @@ for (const [classId, id, alias] of [['reaver', 'bastion', 'warden'], ['starseer'
   assert.equal(resolveUpgradedEquipment(r, `armor/${classId}/${id}`, 1).poiseThreshold, piece.poiseThreshold + 1);
 }
 console.log('PASS content expansion equipment: discovery weights, equip, three-card packages, status Arts, upgrades and reused art');
+import { readFileSync } from 'node:fs';
+import { armamentIconAsset } from '../src/model/equipmentArt.js';
+import { inventoryItemCardModel } from '../src/ui/models/ArmouryModels.js';
+import { mountServiceModel } from '../src/ui/models/MountServiceModel.js';
+import { smithSelectionModel } from '../src/ui/models/SmithSelectionModel.js';
+
+// Exercise the actual read models used by inventory and both smith services.
+for (const id of ['frostSpear', 'cinderAxe', 'duskChime', 'straightSword', 'shortbow']) {
+  const piece = r.equipment.armaments.find(p => p.id === id);
+  const expected = `assets/equipment/icon_${piece.inventoryArtKey || id}.webp`;
+  assert.equal(armamentIconAsset(piece), expected);
+  assert.ok(existsSync(expected));
+  const row = { item: piece, id, key: id, name: piece.name, category: 'Weapon', equippedLabels: [] };
+  assert.equal(inventoryItemCardModel(row).properties.artAsset, expected);
+  const candidate = { itemKind: 'armament', itemId: id, itemRef: `armament/${id}`, mounts: [], affectedCards: [], requirements: [] };
+  for (const service of ['extract', 'install']) {
+    assert.equal(mountServiceModel(r, { service, candidates: [candidate], stones: 1 }).properties.candidates[0].artAsset, expected);
+  }
+  assert.equal(smithSelectionModel(r, { candidates: [candidate], stones: 1 }).properties.candidates[0].artAsset, expected);
+}
+// Screens must share the same identity resolution rather than rebuilding a URL
+// from reduced presentation facts (which intentionally do not contain aliases).
+for (const [file, count] of [['src/ui/assets.js', 1], ['src/ui/screens/equipment.js', 1], ['src/ui/screens/compendium.js', 2]]) {
+  const source = readFileSync(file, 'utf8');
+  assert.equal(source.split('armamentIconAsset(piece)').length - 1, count, file);
+  assert.ok(!source.includes('assets/equipment/icon_${'), `${file}: no bypass of authored alias`);
+}
+console.log('PASS inventory icon aliases: inventory, extraction, installation, smithing, equipment, compendium and shared card art');
