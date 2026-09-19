@@ -189,4 +189,6 @@ that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
 
 ### Shared armor inventory art (2026-09-19)
-Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed. Equipped appearances reuse the corresponding existing painted outfit sprites.
+Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed.
+
+Sixteen class-specific shared-outfit atlases were generated with the same tool from the existing class paintings and approved armor references. Sources, prompts, normalization script and review sheet: art/class-outfit-sprites-2026-09-19/. Runtime exports: assets/painted-outfits/shared-*/. Each atlas contains eight poses; no third-party asset license is claimed.

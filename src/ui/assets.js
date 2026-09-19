@@ -9,6 +9,7 @@ import { POSE_EFFECT_ART } from '../content/poseEffectArt.js';
 // with a CREDITS.md row — no game-code changes.
 
 import { armourMenuAsset, armourArtKey, armourArtClass } from '../model/paintedOutfitArt.js';
+import { armourById } from '../content/equipment.js';
 import { balance } from '../content/balance.js';
 import { PAINTED_ENEMIES, EXPANSION_ENEMIES, ENEMY_POSES } from '../content/enemyArt.js';
 import { medallionAnchor } from '../content/classArtAnchors.js';
@@ -585,8 +586,11 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
 export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false, headId = null, handsId = null, feetId = null }) {
-  const visualClass = armourArtClass(classId, armourId);
-  armourId = armourArtKey(classId, armourId);
+  // The classic layered rig retains its authored body alias; painted sprites
+  // have their own class-specific outfit art and are selected by the caller.
+  const piece = armourById(classId, armourId);
+  const visualClass = piece?.artClassId || classId;
+  armourId = piece?.artKey || armourId;
   classId = visualClass;
   // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
   // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on

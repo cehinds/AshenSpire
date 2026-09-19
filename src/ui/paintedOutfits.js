@@ -83,7 +83,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   el.className = 'pose-stage painted-stage';
   el.dataset.poseClass = !armourId || armourId === POSE.defaultArmourId ? classId : `${classId}-${armourId}`;
   if (animation) el.dataset.animationSet = animation.setId;
-  const readyFrames = animation ? {} : READINESS_POSE_ART[el.dataset.poseClass] || READINESS_POSE_ART[classId] || {};
+  const readyFrames = animation ? {} : art.readiness || READINESS_POSE_ART[el.dataset.poseClass] || READINESS_POSE_ART[classId] || {};
   const frames = { ...art.frames, ...readyFrames };
   if (!animation && READINESS_POSE_ART[classId]) el.classList.add('readiness-outfit');
   const idleBox = art.frames.idle.box;
@@ -107,7 +107,7 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   aura.setAttribute('aria-hidden', 'true');
   aura.innerHTML = OUTFIT.components.aura.svg;
   el.appendChild(aura);
-  const downArt = DEFEATED_ART[el.dataset.poseClass] || DEFEATED_ART[classId];
+  const downArt = art.defeated || DEFEATED_ART[el.dataset.poseClass] || DEFEATED_ART[classId];
   const down = hintImage(document.createElement('img'));
   down.className = 'defeated-frame'; down.alt = '';
   down.style.cssText = `position:absolute;left:50%;bottom:0;height:${STAGE.percent * (downArt?.scale || OUTFIT.sizing.defeated.defaultScale)}%;width:auto;max-width:none;transform:${OUTFIT.sizing.defeated.transform};visibility:hidden;pointer-events:none;`;
