@@ -43,7 +43,7 @@
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
-// source content/config/ui/screens/creation.json c02af0486359061f
+// source content/config/ui/screens/creation.json d1230172e48ebde1
 // source content/config/ui/screens/shop.json c11f4338ff4a7f02
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -743,7 +743,11 @@ export const uiConfig = deepFreeze({
         "choiceCompactPadRem": 0.4,
         "choiceCompactGapRem": 0.4,
         "choiceBarePadRem": 0.3,
-        "choiceBareGapRem": 0.3
+        "choiceBareGapRem": 0.3,
+        "unfoldPortraitShare": 30,
+        "unfoldSummaryShare": 70,
+        "unfoldHeightVh": 30,
+        "unfoldMinRem": 17
       },
       "behavior": {
         "categories": [
@@ -752,7 +756,8 @@ export const uiConfig = deepFreeze({
           "equipment",
           "review"
         ],
-        "fitChoicesToPane": true
+        "fitChoicesToPane": true,
+        "classPreview": "unfold"
       }
     },
     "shop": {
