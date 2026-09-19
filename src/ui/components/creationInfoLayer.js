@@ -10,8 +10,8 @@ export function mountCreationInfoLayer(root) {
     frame = 0;
     if (!root.isConnected) { dispose(); return; }
     if (document.querySelector('.card-inspection-modal')) { close(); return; }
-    const selected = [...root.querySelectorAll('.cc-card-selectors .inspection-selected')]
-      .find(card => card.getClientRects().length && (card.classList.contains('inspection-info-visible') || card.contains(document.activeElement)));
+    const selected = [...root.querySelectorAll('.cc-card-selectors .inspection-selected, .cc-card-selectors .is-chosen')]
+      .find(card => card.getClientRects().length && (card.classList.contains('inspection-info-visible') || card.classList.contains('is-chosen') || card.contains(document.activeElement)));
     const button = selected?.querySelector('.card-info-button');
     if (button !== control) {
       close();

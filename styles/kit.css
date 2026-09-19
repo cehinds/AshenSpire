@@ -4946,7 +4946,6 @@ button[data-button-size] {
 .customize .cc-compact-details .inspection-facts { flex-wrap:nowrap; }
 .customize .cc-compact-details .inspection-facts .inspection-tag { padding:4px 6px; font-size:12px; white-space:nowrap; }
 
-.customize .cc-card-selectors .equipment-poker-card { width:min(100%,180px); max-width:180px; }
 .customize .cc-compact-details { width:100%; max-width:none; }
 .customize .cc-item-heading h3 { font-size:max(20px,calc(20px / var(--ui-zoom,1))); }
 .customize .cc-single-tags > .inspection-tag { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
@@ -4963,7 +4962,6 @@ button[data-button-size] {
 
 .customize .cc-equipment-header { font-size:max(14px,calc(14px / var(--ui-zoom,1))); }
 .customize #cz-equipment-count { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
-.customize .cc-card-selectors .equipment-poker-card { width:min(100%,max(180px,calc(180px / var(--ui-zoom,1)))); max-width:max(180px,calc(180px / var(--ui-zoom,1))); }
 .customize .cc-equip-group[data-equipment-section] { max-width:max(440px,calc(440px / var(--ui-zoom,1))); }
 @media (max-width:700px) {
   .customize:has(#cz-equipment-panel) .cz-railed { display:block; }
@@ -4972,3 +4970,47 @@ button[data-button-size] {
 }
 .customize .cc-card-selectors .epc-footer { font-size:13px; line-height:1; }
 .customize .cc-compact-details .inspection-facts .inspection-tag { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }
+
+/* Picker faces use the shared glance sizing, including the selected card. */
+.customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance,152px); }
+.customize .cc-card-selectors .choice-focused .equipment-poker-card { transform:translateY(-4px); }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance,152px))); }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-template-columns:none; grid-auto-columns:var(--card-w-glance,152px); }
+.customize .cc-card-selectors .epc-fact { white-space:nowrap; }
+
+/* Equipment uses the available page height; actions own a reserved bottom row. */
+.customize .cz-pane:has(> #cz-equipment-panel) { overflow:hidden; }
+.customize .cz-pane > #cz-equipment-panel { height:100%; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr); padding-bottom:0; }
+.customize #cz-equipment-fold { min-height:0; height:100%; }
+.customize #cz-equipment-fold > div { height:100%; }
+.customize #cz-equipment-fold > div:not(:has(> details[open])) { display:none; }
+.customize #cz-equipment-fold .disc-fold-row[open] { height:100%; min-height:0; margin:0; }
+.customize #cz-equipment-fold .disc-reveal { height:100%; min-height:0; padding:0; margin:0; box-sizing:border-box; }
+.customize .cc-equip-group[data-equipment-section] { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:12px 20px; width:100%; max-width:none; height:100%; min-height:0; padding:0 12px; box-sizing:border-box; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1 / -1; grid-auto-flow:row; grid-auto-columns:auto; grid-template-columns:repeat(auto-fit,minmax(0,var(--card-w-glance,152px))); align-content:start; justify-content:center; overflow:auto; min-height:0; padding:58px 6px 12px; scroll-padding-inline:6px; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1 / -1; min-height:0; overflow:auto; }
+.customize .cc-equip-group > .cc-equipment-details { grid-column:2; grid-row:1; margin:0; padding:20px 0 0; min-height:0; overflow:auto; align-self:stretch; }
+.customize .cc-equipment-continue { grid-column:2; grid-row:2; align-self:end; margin:0 0 12px; width:100%; }
+.customize .cc-item-heading { gap:6px; }
+.customize .cc-compact-details { gap:8px; }
+.customize .cc-starting-summary { display:flex; flex-wrap:wrap; gap:4px 8px; }
+.customize .cc-starting-summary .cc-package-context { font-size:12px; margin:0; }
+@media(max-width:700px) {
+ .customize .cc-equip-group[data-equipment-section] { grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr) auto; gap:8px; padding:0 10px; }
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { grid-column:1; grid-row:1; grid-auto-flow:column; grid-template-columns:none; grid-auto-columns:calc((100% - 24px) / 3); justify-content:start; gap:12px; padding:54px 0 10px; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; }
+ .customize .cc-card-selectors[data-view="grid"] .poker-equipment-choice { padding:0; scroll-snap-align:start; }
+ .customize .cc-card-selectors .equipment-poker-card { width:100%; max-width:var(--card-w-glance,152px); }
+ .customize .cc-equip-group > .cc-card-selectors[data-view="list"] { grid-column:1; grid-row:1; max-height:32vh; }
+ .customize .cc-equip-group > .cc-equipment-details { grid-column:1; grid-row:2; padding:2px 0; }
+ .customize .cc-equipment-continue { grid-column:1; grid-row:3; margin:0 0 10px; }
+}
+
+.customize #cz-equipment-fold .disc-fold-row[open] { position:relative; }
+.customize #cz-equipment-fold .disc-reveal { position:absolute; inset:0; height:auto; display:block; }
+.customize .cc-equip-group > .cc-card-selectors[data-view="grid"] { row-gap:54px; }
+@media(max-width:700px) {
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"],
+ .customize .cc-equip-group > .cc-card-selectors[data-view="grid"][data-many="true"] { padding-top:70px; row-gap:12px; }
+}
