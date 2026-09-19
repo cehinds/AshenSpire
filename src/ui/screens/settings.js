@@ -7,6 +7,7 @@
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
+import { advancedSubgroups } from '../models/AdvancedSettingsGroups.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
@@ -1305,16 +1306,32 @@ function categoryHtml(cat, settings, saves) {
         return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
           + '><div class="set-changelog-mount"></div></section>';
       }
-      const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
+      const subgroups = advancedSubgroups(h.rows, group.id);
+      const selected = settings[`settingsAdvancedSubgroup.${group.id}`];
+      const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
+      const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
+        + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
+      const picker = '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `><p class="as-subtitle set-advanced-tip">${esc(group.tip)}</p>`
-        + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
+        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Classes' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
+          + sub.rows.map(row => {
+            const compact = { ...row };
+            if (group.id === 'Classes' && !['General', 'Assign points'].includes(sub.id)) {
+              compact.label = row.label.replace(/^.*? — /, '');
+              compact.note = '';
+            } else if (typeof row.note === 'string' && row.note.startsWith('Authored balance value:')) {
+              compact.label = row.key.replace(/^gameConfig\.balance\./, '').split('.').map(part => part.replace(/([a-z0-9])([A-Z])/g, '$1 $2')).join(' · ');
+              compact.note = 'Applies to a new run.';
+            }
+            return settingsRowHtml(settings, compact);
+          }).join('') + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
+      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
       + '<div class="set-advanced-tools">'
-      + '<label class="set-config-search"><span>Find a setting</span><input type="search" data-advanced-search placeholder="Search names or config paths" autocomplete="off"></label>'
-      + '<span class="set-config-actions"><button type="button" class="as-btn" data-reset-config="group">Reset section</button><button type="button" class="as-btn" data-reset-config="all">Reset all game config</button></span>'
-      + '<output class="set-config-count" data-config-count aria-live="polite"></output></div>'
+      + '<input type="search" class="set-config-search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…" autocomplete="off">'
+      + '<span class="set-config-actions"><button type="button" class="as-btn" data-reset-config="group">Reset group</button><details class="set-reset-menu"><summary class="as-btn">More</summary><button type="button" class="as-btn" data-reset-config="all">Reset all game config</button></details></span></div>'
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
@@ -1439,6 +1456,20 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   };
   const wire = () => {
   placeAdvancedNavigation();
+  const syncTopicPicker = () => {
+    const picker = container.querySelector('.set-topic-select');
+    if (!picker) return;
+    const tabs = [...container.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')];
+    picker.hidden = !tabs.length;
+    picker.innerHTML = tabs.map(tab => `<option${tab.getAttribute('aria-selected') === 'true' ? ' selected' : ''}>${esc(tab.dataset.topic)}</option>`).join('');
+  };
+  syncTopicPicker();
+  container.querySelector('.set-topic-select')?.addEventListener('change', event => {
+    [...container.querySelectorAll('.set-advanced-group:not([hidden]) [data-topic]')].find(tab => tab.dataset.topic === event.target.value)?.click();
+  });
+  container.querySelector('.set-section-select')?.addEventListener('change', event => {
+    [...container.querySelectorAll('.set-subtab')].find(tab => tab.dataset.advancedGroup === event.target.value)?.click();
+  });
   const reportAdvancedProblems = () => {
     const problems = advancedConfigProblems(contentBundle, settings);
     if (problems.length) showSettingsNotice(problems[0], 'game-config');
@@ -1468,6 +1499,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
       settings[ADVANCED_CAT_KEY] = group;
+      const picker = container.querySelector('.set-section-select');
+      if (picker) picker.value = group;
       onChange({ [ADVANCED_CAT_KEY]: group });
       container.querySelectorAll('.set-subtab').forEach((candidate) => {
         const selected = candidate.dataset.advancedGroup === group;
@@ -1478,6 +1511,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       container.querySelectorAll('.set-advanced-group').forEach((panel) => {
         panel.hidden = panel.dataset.advancedPanel !== group;
       });
+      syncTopicPicker();
       const panel = container.querySelector('.set-panel');
       if (panel) panel.scrollTop = 0;
       filterAdvancedRows();
@@ -1490,26 +1524,69 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     const query = advancedSearch.value.trim().toLocaleLowerCase();
     let shown = 0;
     let total = 0;
-    container.querySelectorAll('.set-advanced-group:not([hidden]) .set-row').forEach((row) => {
+    const section = container.querySelector('.set-advanced-group:not([hidden])');
+    if (!section) return;
+    const selected = section.querySelector('[data-topic][aria-selected="true"]')?.dataset.topic;
+    section.querySelectorAll('[data-topic-panel]').forEach(panel => {
+      panel.hidden = !query && !!selected && panel.dataset.topicPanel !== selected;
+      panel.dataset.searching = String(!!query);
+    });
+    section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
       total += 1;
       const match = !query || row.textContent.toLocaleLowerCase().includes(query)
         || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
       row.hidden = !match;
       if (match) shown += 1;
     });
-    const count = container.querySelector('[data-config-count]');
+    if (query) section.querySelectorAll('[data-topic-panel]').forEach(panel => {
+      panel.hidden = !panel.querySelector('.set-row:not([hidden])');
+    });
+    const count = section.querySelector('[data-config-count]');
     if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
   };
   advancedSearch?.addEventListener('input', filterAdvancedRows);
+  container.querySelectorAll('.set-advanced-group').forEach(section => {
+    const selectTopic = topic => {
+      const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
+      settings[key] = topic;
+      onChange({ [key]: topic });
+      section.querySelectorAll('[data-topic]').forEach(tab => {
+        const active = tab.dataset.topic === topic;
+        tab.setAttribute('aria-selected', String(active));
+        tab.classList.toggle('on', active);
+      });
+      const picker = section.querySelector('.set-topic-select');
+      if (picker) picker.value = topic;
+      syncTopicPicker();
+      if (advancedSearch) advancedSearch.value = '';
+      filterAdvancedRows();
+    };
+    section.querySelectorAll('[data-topic]').forEach(tab => {
+      tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
+      tab.addEventListener('keydown', event => {
+        const tabs = [...section.querySelectorAll('[data-topic]')];
+        const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+        const next = event.key === 'Home' ? tabs[0] : event.key === 'End' ? tabs.at(-1)
+          : step ? tabs[(tabs.indexOf(tab) + step + tabs.length) % tabs.length] : null;
+        if (!next) return;
+        event.preventDefault();
+        event.stopPropagation();
+        next.click();
+        next.focus();
+      });
+    });
+    section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
+  });
   filterAdvancedRows();
 
   container.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.addEventListener('click', () => {
       const currentGroup = settings[ADVANCED_CAT_KEY] || ADVANCED_GROUPS[0].id;
-      const keys = ADVANCED_CONFIG_ROWS
-        .filter((row) => button.dataset.resetConfig === 'all' || row.advancedGroup === currentGroup)
-        .map((row) => row.key);
-      if (button.dataset.resetConfig === 'all' || currentGroup === 'Progression') keys.push('levelUpValue', 'statTierSize');
+      const groups = advancedSubgroups(ROWS, currentGroup);
+      const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
+      const rows = button.dataset.resetConfig === 'all' ? ROWS.filter(row => row.cat === 'Advanced')
+        : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
+      const keys = rows.filter(row => !['button', 'action'].includes(row.type)).map(row => row.key);
       const changed = {};
       for (const key of keys) {
         delete settings[key];
@@ -1940,6 +2017,11 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     },
   });
   nav.attach(railed);
+  // Compact Settings uses visible category tabs, not the shared selector face.
+  nav.start = () => container.querySelector('.set-tab[aria-selected="true"]');
+  container.querySelectorAll('.set-tab').forEach(tab => tab.addEventListener('click', () => {
+    if (nav.mode() === 'selector') tab.focus({ preventScroll: true });
+  }));
 
   function selectCategory(cat) {
     if (!cats.includes(cat) || cat === current) return;

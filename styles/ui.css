@@ -911,6 +911,37 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 [data-settings-host] .set-panel .set-subtabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
 .settings-modal .set-subtabs { display: flex; flex-wrap: wrap; }
 .settings-modal .set-subtabs > button { flex: 1 0 auto; }
+.set-section-select, .set-topic-select { display: none; }
+.set-mobile-pickers { display: none; }
+.set-railed[data-cat-nav='selector'] .set-mobile-pickers { display: flex; gap: .5rem; }
+.set-railed[data-cat-nav='selector'] .set-mobile-pickers select { flex: 1 1 0; min-width: 0; }
+.set-railed[data-cat-nav='selector'] .set-topic-select[hidden] { display: none; }
+.set-topic-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .8rem; }
+.set-topic-tabs > button[aria-selected='true'] { color: var(--accent); border-color: var(--accent); }
+.set-group-summary { display: flex; gap: .6rem; align-items: baseline; justify-content: space-between; margin: 0 0 .6rem; color: var(--muted); font-size: 1.05rem; }
+.set-group-summary .set-config-count { flex: none; white-space: nowrap; }
+.set-topic-panel[hidden], .set-topic-panel .set-row[hidden], .set-advanced-group[hidden] { display: none; }
+.set-topic-panel[data-searching='true']::before { content: attr(data-topic-panel); display: block; color: var(--accent); padding: .7rem; }
+[data-settings-host] .set-topic-panel .set-row { padding: .4rem .7rem; }
+@media (min-width: 800px) { .modal.settings-modal[data-size='lg'] { height: min(80rem, calc(86dvh / var(--ui-zoom, 1))); } }
+.set-reset-menu { position: relative; }
+.set-reset-menu summary { list-style: none; cursor: pointer; }
+.set-reset-menu[open] > button { position: absolute; right: 0; top: 100%; z-index: 5; min-width: 16rem; background: var(--panel, #211d17); }
+[data-settings-host] input.set-config-search { min-height: var(--tap-floor); margin: 0; padding: .6rem .8rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); }
+[data-settings-host] .set-advanced-tools { align-items: center; flex-wrap: nowrap; padding-bottom: .6rem; margin-bottom: .8rem; gap: .5rem; }
+[data-settings-host] .set-config-actions { flex-wrap: nowrap; gap: .4rem; }
+[data-settings-host] .set-config-search { flex: 1 1 12rem; min-width: 0; }
+[data-settings-host] .set-tabs .set-subtab { min-height: 2.8rem; padding-block: .45rem; }
+.settings-modal .set-tabs { gap: .35rem; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .as-catnav-toggle { display: none; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-row: 1; padding: .6rem; gap: .4rem; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs > .set-tab { width: 100%; min-width: 0; padding: .5rem .25rem; text-align: center; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'][data-cat-open='true'] > .set-panel { visibility: visible; }
+.set-railed[data-cat-nav='selector'] .set-advanced-head, .set-railed[data-cat-nav='selector'] .set-topic-tabs { display: none; }
+.set-railed[data-cat-nav='selector'] .set-section-select, .set-railed[data-cat-nav='selector'] .set-topic-select { display: block; width: 100%; min-height: var(--tap-floor); margin-bottom: .6rem; padding: .5rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); }
+.set-railed[data-cat-nav='selector'] .set-panel { padding: .7rem; }
+.set-railed[data-cat-nav='selector'] .set-group-summary { flex-wrap: wrap; }
+.set-railed[data-cat-nav='selector'] .set-advanced-tools .as-btn { padding-inline: .6rem; }
 .set-advanced-tools { display: flex; align-items: end; gap: .8rem; flex-wrap: wrap; margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); }
 .set-config-search { display: grid; gap: .35rem; flex: 1 1 18rem; color: var(--muted); font-size: 1.05rem; }
 .set-config-search input { width: 100%; min-height: var(--tap-floor); }
