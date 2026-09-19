@@ -5,6 +5,12 @@ import { figureSpec, gripOf } from './loadout.js';
 export const EQUIPMENT_ANIMATIONS = uiConfig.presentation.equipmentAnimations.components;
 export const ANIMATION_ROLES = Object.freeze(['idle', 'attack', 'defend', 'buff', 'hurt', 'cast', 'stanceActivate', 'stanceDeactivate', 'aggressiveStance', 'defensiveStance', 'conversation', 'portrait', 'menu', 'detail', 'dodge', 'victory', 'defeat', 'revive']);
 
+// Motion belongs to the weapon family; each outfit supplies its own painted frames.
+function resolvedAnimationSet(data, set) {
+  const profile = set.motionProfile ? data.motionProfiles?.[set.motionProfile] : null;
+  return profile ? { ...profile, ...set } : set;
+}
+
 export function validateEquipmentAnimations(data) {
   const fail = message => { throw new Error('equipmentAnimations: ' + message); };
   const groups = new Set(['empty']);
@@ -14,7 +20,9 @@ export function validateEquipmentAnimations(data) {
     groups.add(id);
     for (const item of members) { if (typeof item !== 'string' || items.has(item)) fail('duplicate/invalid weapon ' + item); items.add(item); }
   }
-  for (const [id, set] of Object.entries(data.sets)) {
+  for (const [id, authored] of Object.entries(data.sets)) {
+    if (authored.motionProfile && !Object.hasOwn(data.motionProfiles || {}, authored.motionProfile)) fail('unknown motion profile ' + authored.motionProfile);
+    const set = resolvedAnimationSet(data, authored);
     if (!set.frames || !set.clips || !set.references || !Number.isFinite(set.normalLungeMs) || set.normalLungeMs <= 0) fail('incomplete set ' + id);
     for (const [name, frame] of Object.entries(set.frames)) {
       if (!/^assets\/[a-zA-Z0-9_./-]+\.webp$/.test(frame.file) || frame.file.includes('..')) fail(id + ': invalid asset ' + name);
@@ -51,7 +59,7 @@ export function selectEquipmentAnimation({ classId, armourId = 'default', rightI
   const matches = data.bindings.filter(b => b.classId === classId && b.armourId === armourId && b.rightGroup === rightGroup && b.leftGroup === leftGroup && (!b.grip || b.grip === grip));
   const binding = matches.find(b => b.grip === grip) || matches[0];
   if (!binding) return null;
-  return { setId: binding.setId, classId, armourId, rightGroup, leftGroup, grip, ...data.sets[binding.setId] };
+  return { setId: binding.setId, classId, armourId, rightGroup, leftGroup, grip, ...resolvedAnimationSet(data, data.sets[binding.setId]) };
 }
 
 export function equipmentAnimationForLoadout(registries, loadout, classId) {

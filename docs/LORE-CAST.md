@@ -114,15 +114,23 @@ thing a Claim ending can refuse to spend.
 Quests are short and their objectives are on the map (seat plan §2b). Givers are
 the existing event figures, given a seat and a want.
 
+**Implementation boundary:** the first six quests below are planned chains,
+not shipped objectives or promises of their stated consequences. The Second
+Cairn and The Last Lantern are implemented event chains; their later steps
+enter the random Unknown-node pool after the required earlier choices. They
+are not pinned to a destination. The companion endings and boss parleys remain
+future narrative plans.
+
 | Giver | Where met | The quest | What it is really about |
 |---|---|---|---|
-| **The Wayward Pilgrim** | weald road, any seat's road as a wayfarer | *The Cracked Bell*: reach the Bellfoundry and hear it ring once more | He is walking toward a sound. The bell is the Bell Keeper. Finishing the quest is fighting the boss with the Pilgrim present. |
-| **The Wandering Physician** | road, then the city as the Physician site | *A Little Flesh*: bring him a cinder from a thing that asked to die | He is testing whether cinders taken by mercy burn differently. They do not. He does not tell you. |
-| **The Sleeping Smith** | weald or reach city, Smith site | *Sunderplate*: bring him the Fell Warden Brand or the Ember Idol to reforge | He can only work a hearth-key. He wants to know if the flame's heat can be made into a tool again. Reforging a hearth-key means that seat's flame cannot be relit this run. |
-| **The Merchant's Ghost** | marches road | *Half Price*: find the merchant's cart and sell it the ghost's own cinder | The ghost is one of the three the merchant keeps warm. It wants out of the hearth. Selling it back is the only way to stop the private flame, and the merchant's stock changes for the rest of the run. |
-| **The Blight-Priest** | reach road, Shrine of the Feral Ember | *The Reliquary*: carry his reliquary to the Furnace Saint | The reliquary holds his own name, cut out. He wants it fed to a hearth by someone else's hand. |
-| **The Oracle** | any city, Lorekeeper site | *The Riddle*: answer three questions across three seats | She is the Astronomer's first apprentice. Her three answers are the three tellings; the fourth question is on the page in the Spire. |
-| **The Keeper of the Nameless** | the Grave, then the road | *The Second Cairn*: raise every sword at the second cairn | This is the chain that already ships. It ends where the Keeper's walk ends: the Spire's foot. |
+| **The Wayward Pilgrim** | weald road, any seat's road as a wayfarer | *The Cracked Bell* (planned): reach the Bellfoundry and hear it ring once more | He is walking toward a sound. The bell is the Bell Keeper. Finishing the quest is fighting the boss with the Pilgrim present. |
+| **The Wandering Physician** | road, then the city as the Physician site | *A Little Flesh* (planned): bring him a cinder from a thing that asked to die | He is testing whether cinders taken by mercy burn differently. They do not. He does not tell you. |
+| **The Sleeping Smith** | weald or reach city, Smith site | *Sunderplate* (planned): bring him the Fell Warden Brand or the Ember Idol to reforge | He can only work a hearth-key. He wants to know if the flame's heat can be made into a tool again. Reforging a hearth-key means that seat's flame cannot be relit this run. |
+| **The Merchant's Ghost** | marches road | *Half Price* (planned): find the merchant's cart and sell it the ghost's own cinder | The ghost is one of the three the merchant keeps warm. It wants out of the hearth. Selling it back is the only way to stop the private flame, and the merchant's stock changes for the rest of the run. |
+| **The Blight-Priest** | reach road, Shrine of the Feral Ember | *The Reliquary* (planned): carry his reliquary to the Furnace Saint | The reliquary holds his own name, cut out. He wants it fed to a hearth by someone else's hand. |
+| **The Oracle** | any city, Lorekeeper site | *The Riddle* (planned): answer three questions across three seats | She is the Astronomer's first apprentice. Her three answers are the three tellings; the fourth question is on the page in the Spire. |
+| **The Keeper of the Nameless** | the Grave, then random road events | *The Second Cairn* (implemented): answer the first grave and the Keeper, then keep vigil, rest, loot, or leave at the second cairn | Accepting thanks opens the vigil (two random card upgrades); returning the stolen cinders opens rest (heal 30% max HP); standing against the Keeper’s followers opens looting (120 cinders and Guilt). Vigil and rest raise the fallen swords; looting leaves them fallen. Any of those three answers completes this event chain; leaving does not. The Keeper is absent, their route unknown. This is not the planned companion ending at the Spire. |
+| **The Road Warden** | random road events | *The Last Lantern* (implemented): buy signal oil (40 cinders) or haul the beacon (8 damage), then meet the caravan | An unmarked keeper of routes for survivors, called Road Warden by the drivers; neither the Fell Warden nor a member of the marked Warden order. Oil opens a quartermaster's lesson (one random card upgrade); hauling opens wages (60 cinders). Either route permits stealing the medicine strongbox (100 cinders and Guilt). Those three answers complete the chain; leaving does not. The caravan supplies Lantern Haven and the cold hamlets. |
 | **The Bell Keeper, the Stitched King, the Furnace Saint** | boss antechambers, as parleys | no quest: an offer | Each boss offers the player its hearth-key for the Keeper's name. Refusing is the fight. |
 
 ## 4. The enemies, and why some are not human

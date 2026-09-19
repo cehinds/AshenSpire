@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1203",
+    "id": "pr-1205",
     "date": "2026-09-19",
     "group": "2026-09-19",
-    "summary": "Mana is never a card's only price, a focus decides what its break does, and you can be Staggered too",
-    "detail": "Every card that costs Mana also costs an action and stamina — the signature arts now ask a point of stamina beside their Mana, and a few free upgraded powers drop their Mana line instead. Your staff, rod or branch now decides what breaking a foe's Arcane Exposure earns: the plain staves batter the broken foe's Poise, the Blight Rod and the Gorefire Brand build Exposure faster, the Goldbough Branch spreads half the break to every other foe. And your own Poise meter is live: enemy impact fills it, and when it fills you are Staggered — 2 Vulnerable, 2 Weak, and one fewer action next turn.",
-    "build": "0.7.1.283",
-    "pullRequest": 1203,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1203"
+    "summary": "The roads tell the stories of the places they cross",
+    "detail": "The six existing surveys now have regional names, requests and reports when you return for your reward. The Second Cairn asks you to raise the fallen swords of the unwritten dead, and the Last Lantern names the hamlets waiting for its medicine. The Road Warden is distinct from the old marked Wardens. Quest choices, rewards and saved routes stay the same.",
+    "build": "0.7.1.282",
+    "pullRequest": 1205,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1205"
+  },
+  {
+    "id": "pr-1204",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Every class and armour keeps its own look while using the approved greatsword motion",
+    "detail": "Equipping a greatsword with the other hand empty now selects the nine-step attack and matching defend, hurt, cast, buff, stance and portrait art for all four classes and all 35 current armour entries. Thirty-two distinct appearances share one configurable motion profile, including separate paintings of each shared armour for each class. The original Reaver sequence stays intact. A synchronized gallery shows every outfit with labeled playback steps, source pose references and portraits. Other weapon combinations keep their existing presentation.",
+    "build": "0.7.1.280",
+    "pullRequest": 1204,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1204"
   },
   {
     "id": "pr-1173",
