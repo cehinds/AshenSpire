@@ -1382,14 +1382,12 @@
   scale: var(--enemy-sprite-scale, .9);
   translate: var(--enemy-spawn-column-offset, 0) var(--enemy-spawn-row-offset, 0);
 }
-:root[data-player-spawn-row='front'] { --player-spawn-row-offset: -12%; }
-:root[data-player-spawn-row='back'] { --player-spawn-row-offset: 12%; }
-:root[data-enemy-spawn-row='front'] { --enemy-spawn-row-offset: 12%; }
-:root[data-enemy-spawn-row='back'] { --enemy-spawn-row-offset: -12%; }
-:root[data-player-spawn-column='left'] { --player-spawn-column-offset: -14%; }
-:root[data-player-spawn-column='right'] { --player-spawn-column-offset: 14%; }
-:root[data-enemy-spawn-column='left'] { --enemy-spawn-column-offset: -14%; }
-:root[data-enemy-spawn-column='right'] { --enemy-spawn-column-offset: 14%; }
+:root[data-player-spawn-row='A'] { --player-spawn-row-offset: -12%; }
+:root[data-player-spawn-row='C'] { --player-spawn-row-offset: 12%; }
+:root[data-enemy-spawn-row='A'] { --enemy-spawn-row-offset: -12%; }
+:root[data-enemy-spawn-row='C'] { --enemy-spawn-row-offset: 12%; }
+:root[data-player-spawn-column='2'] { --player-spawn-column-offset: 14%; }
+:root[data-enemy-spawn-column='3'] { --enemy-spawn-column-offset: -14%; }
 
 /* Overhead controls are screen-sized, independent of sprite zoom and animation. */
 :root .combat[data-layout='formation'] .combatant-leading {

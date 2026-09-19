@@ -113,7 +113,7 @@ async function main() {
       if (state.group !== shape.group || state.rows < 1 || state.verticalScrollOwners.length > 1 || state.overflowX > 1) {
         throw new Error(`${shape.name}: ${JSON.stringify(state)}`);
       }
-      if (shape.search && !['Player default row', 'Enemy default row', 'Player default column', 'Enemy default column']
+      if (shape.search && !['Player default row (A–C)', 'Enemy default row (A–C)', 'Player default column (1–2)', 'Enemy default column (3–4)']
         .every((label) => state.placementLabels.includes(label))) {
         throw new Error(`${shape.name}: placement controls missing: ${JSON.stringify(state)}`);
       }
@@ -126,10 +126,6 @@ async function main() {
     const combatSettings = encodeURIComponent(JSON.stringify({
       'gameConfig.presentation.playerSpriteScale': 1.15,
       'gameConfig.presentation.enemySpriteScale': 0.8,
-      'gameConfig.presentation.playerSpawnRow': 'front',
-      'gameConfig.presentation.enemySpawnRow': 'back',
-      'gameConfig.presentation.playerSpawnColumn': 'right',
-      'gameConfig.presentation.enemySpawnColumn': 'left',
     }));
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=combat&shotSettings=${combatSettings}` }, sessionId);
     await until("!!document.querySelector('.combatant.player .sprite') && !!document.querySelector('.combatant.enemy .sprite')", 'combat figures');
@@ -145,9 +141,9 @@ async function main() {
       enemyColumn: document.documentElement.dataset.enemySpawnColumn,
     }))()`);
     if (presentation.playerScale !== '1.15' || presentation.enemyScale !== '0.8'
-      || presentation.playerTranslate !== '14% -12%' || presentation.enemyTranslate !== '-14% -12%'
-      || presentation.playerRow !== 'front' || presentation.enemyRow !== 'back'
-      || presentation.playerColumn !== 'right' || presentation.enemyColumn !== 'left') {
+      || presentation.playerTranslate !== '14% 12%' || presentation.enemyTranslate !== '-14% 12%'
+      || presentation.playerRow !== 'C' || presentation.enemyRow !== 'C'
+      || presentation.playerColumn !== '2' || presentation.enemyColumn !== '3') {
       throw new Error(`combat-presentation: ${JSON.stringify(presentation)}`);
     }
     console.log('PASS combat-presentation — sprite scales and default rows and columns applied');

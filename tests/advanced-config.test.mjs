@@ -78,16 +78,35 @@ test('snapshot and export contain only versioned game-config overrides in determ
 test('presentation config clamps numbers and refuses unknown rows', () => {
   const config = presentationConfig({
     'gameConfig.presentation.playerSpriteScale': 8,
-    'gameConfig.presentation.enemySpawnRow': 'back',
+    'gameConfig.presentation.enemySpawnRow': 'A',
     'gameConfig.presentation.playerSpawnRow': 'sideways',
-    'gameConfig.presentation.playerSpawnColumn': 'right',
-    'gameConfig.presentation.enemySpawnColumn': 'diagonal',
+    'gameConfig.presentation.playerSpawnColumn': '2',
+    'gameConfig.presentation.enemySpawnColumn': '9',
   });
   assert.equal(config.playerSpriteScale, 2);
-  assert.equal(config.enemySpawnRow, 'back');
-  assert.equal(config.playerSpawnRow, 'middle');
-  assert.equal(config.playerSpawnColumn, 'right');
-  assert.equal(config.enemySpawnColumn, 'center');
+  assert.equal(config.enemySpawnRow, 'A');
+  assert.equal(config.playerSpawnRow, 'C');
+  assert.equal(config.playerSpawnColumn, '2');
+  assert.equal(config.enemySpawnColumn, '3');
+});
+
+test('formation defaults put the player at C2 and enemies at C3', () => {
+  const config = presentationConfig({});
+  assert.equal(`${config.playerSpawnRow}${config.playerSpawnColumn}`, 'C2');
+  assert.equal(`${config.enemySpawnRow}${config.enemySpawnColumn}`, 'C3');
+});
+
+test('legacy row and column names migrate to the six-cell formation grid', () => {
+  const config = presentationConfig({
+    'gameConfig.presentation.playerSpawnRow': 'front',
+    'gameConfig.presentation.enemySpawnRow': 'front',
+    'gameConfig.presentation.playerSpawnColumn': 'right',
+    'gameConfig.presentation.enemySpawnColumn': 'left',
+  });
+  assert.deepEqual({
+    player: `${config.playerSpawnRow}${config.playerSpawnColumn}`,
+    enemy: `${config.enemySpawnRow}${config.enemySpawnColumn}`,
+  }, { player: 'A2', enemy: 'C3' });
 });
 
 test('desktop export uses Save As and writes the deterministic JSON', async () => {
