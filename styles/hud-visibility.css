@@ -1,0 +1,22 @@
+/* Live preferences apply to existing and subsequently mounted HUDs. display:none
+   removes hidden controls from keyboard navigation as well as from the layout. */
+:root[data-hud-show-vitality='false'] .hud-vitals-panel,
+:root[data-hud-show-relics='false'] .hud-relics,
+:root[data-hud-show-currency='false'] .hud-center,
+:root[data-hud-show-position='false'] .hud-run-meta,
+:root[data-hud-show-position='false'] .act-route-strip,
+:root[data-hud-show-potions='false'] .hud-potions,
+:root[data-hud-show-potions='false'] .map-potions,
+:root[data-hud-show-potions='false'] .combat-potion-tray,
+:root[data-hud-show-potions='false'] .combat-potions,
+:root[data-hud-show-potions='false'] [data-ui-component='potion-control'],
+:root[data-hud-show-potions='false'] [data-ui-component='crimson-flask-control'],
+:root[data-hud-show-potions='false'] [data-ui-component='azure-flask-control'] {
+  display: none !important;
+}
+/* Hiding the last child also removes the belt's own row and spacing. */
+:root[data-hud-show-relics='false'][data-hud-show-potions='false'] .hud-bottom,
+:root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-potions)),
+:root[data-hud-show-potions='false'] .hud-bottom:not(:has(.hud-relics)) {
+  display: none !important;
+}

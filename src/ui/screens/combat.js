@@ -31,7 +31,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { combatantDetailBody, combatantInspectorLayout } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { tooltipHelp } from '../../content/tooltipHelp.js';
-import { helpText } from '../../model/tooltipSettings.js';
+import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
@@ -196,6 +196,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
+  const potionReveal = resolveTooltipSettings(meta.settings);
+  const actionRow = $('.combat-action-row');
+  actionRow?.style.setProperty('--potion-reveal-delay', `${potionReveal.open}ms`);
+  actionRow?.style.setProperty('--potion-focus-delay', `${potionReveal.focus}ms`);
+  actionRow?.style.setProperty('--potion-reveal-fade', `${potionReveal.fade}ms`);
   // The bar ceilings, DERIVED from the content (classes + equipment for the
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.

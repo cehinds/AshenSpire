@@ -1,0 +1,253 @@
+{
+  "pack": "relic-icons-pack-01",
+  "generator": "built-in image_gen",
+  "date": "2026-09-19",
+  "catalog": "src/content/relics.js",
+  "status": "review art; not wired into runtime",
+  "assets": [
+    {
+      "id": "forsakenMedallion",
+      "name": "Forsaken Medallion",
+      "rarity": "starter",
+      "source": "sources/forsakenMedallion.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        5,
+        1232,
+        1238
+      ],
+      "sourceSHA256": "416fc4be3358649ce29c6f18e813d76454b36115a4163c5f2e795af0565bd700",
+      "prompt": "prompts/forsakenMedallion.txt",
+      "interpretation": "A heavy round old medallion suspended from one short frayed muted burgundy ribbon folded through its top loop. Its gold face is worn almost completely smooth; thin uneven remnants of antique gilding cling to charcoal-dark metal around the rim. A single broad pale gold scuff suggests remembered nobility, no readable emblem. Almost frontal three-quarter view. Lore: Its face is worn smooth, but it still remembers being gold.",
+      "exports": [
+        {
+          "path": "webp/forsakenMedallion-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 46616,
+          "alphaVerified": true,
+          "sha256": "c8df006f242b93ed17328dccb646be891ee0fa2724196b9e3a172f3078d9e17e"
+        },
+        {
+          "path": "webp/forsakenMedallion-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 13682,
+          "alphaVerified": true,
+          "sha256": "951d0f04bc9e1b452d8f8669a420126ac7d447562b2f6666a88a2c1365214980"
+        },
+        {
+          "path": "webp/forsakenMedallion-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 4782,
+          "alphaVerified": true,
+          "sha256": "ef8b736abc746e6e2e5012c812fc9db01a3f5ae5df8ce14697bd7ea883e12f6a"
+        },
+        {
+          "path": "webp/forsakenMedallion-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 1860,
+          "alphaVerified": true,
+          "sha256": "f7dd7ad8f607ddca393a145ecc0f13a4f08338212cb166f48f54294607447d1e"
+        }
+      ]
+    },
+    {
+      "id": "starstoneShard",
+      "name": "Starstone Shard",
+      "rarity": "starter",
+      "source": "sources/starstoneShard.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        31,
+        21,
+        1236,
+        1236
+      ],
+      "sourceSHA256": "b16a96c3d3883ac2897ea71492f6adbf4aa71ff961e432773d3d00dc3aa90aa3",
+      "prompt": "prompts/starstoneShard.txt",
+      "interpretation": "One asymmetrical elongated broken indigo starstone crystal, pointed top leaning slightly right, broad angular base and bold large facets. A subdued pale blue-white inner seam suggests a quiet magical hum. Tiny antique gold mineral inclusions only along one fracture. Dark violet and slate blue body with luminous but restrained facet edges; no mounting, no pedestal. Lore: A chip of someone else's genius. It still hums.",
+      "exports": [
+        {
+          "path": "webp/starstoneShard-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 35720,
+          "alphaVerified": true,
+          "sha256": "5b46f3c1d410aa4665da08ecd82c17c989b3140ccb5cab37857e67a7f011b686"
+        },
+        {
+          "path": "webp/starstoneShard-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 11598,
+          "alphaVerified": true,
+          "sha256": "46dca74b4a3de0c216c55474315df60e29a2f78a837bbc6573d3d3aa54e98130"
+        },
+        {
+          "path": "webp/starstoneShard-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 4228,
+          "alphaVerified": true,
+          "sha256": "8a07e0a30e8a2e2d855e0638c0910f77575b3c7119d168ad2ed0072ba7922681"
+        },
+        {
+          "path": "webp/starstoneShard-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 1742,
+          "alphaVerified": true,
+          "sha256": "82cc345bf08e4c15b95fec6e25fedc3b2baac7b6667a66c0416c107c19241cd4"
+        }
+      ]
+    },
+    {
+      "id": "cutpursesCoin",
+      "name": "Cutpurse's Coin",
+      "rarity": "starter",
+      "source": "sources/cutpursesCoin.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        8,
+        1218,
+        1254
+      ],
+      "sourceSHA256": "b23c8b18675dbd4f3d5b1b73cf123cc0927b6bad3b84c06cabacda91c8032029",
+      "prompt": "prompts/cutpursesCoin.txt",
+      "interpretation": "One thick tarnished antique gold coin seen near frontally at a slight angle, bold circular silhouette with one subtly clipped edge. Its worn face bears a simple large embossed closed eye crossed by a short horizontal stroke, a visual motif for purchased silence; no letters or numbers. Charcoal recessed surface, rubbed gold raised rim and worn relief, a restrained olive patina. Single coin only, no stack. Lore: One face buys silence. The other buys speed.",
+      "exports": [
+        {
+          "path": "webp/cutpursesCoin-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 56602,
+          "alphaVerified": true,
+          "sha256": "69a4e68216e3dcf81f7004def15fa63b9832a1990526fc2775b5e8a0463a3cf3"
+        },
+        {
+          "path": "webp/cutpursesCoin-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 16860,
+          "alphaVerified": true,
+          "sha256": "d887fb81174a11a93df995110743e61ffc0180826a00195c9df69ddf5c9ae8c0"
+        },
+        {
+          "path": "webp/cutpursesCoin-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 6036,
+          "alphaVerified": true,
+          "sha256": "933d22a6d0bf23714a1faa62c607c8f056de70e7ae235fb3c2c81a72850cbae1"
+        },
+        {
+          "path": "webp/cutpursesCoin-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2388,
+          "alphaVerified": true,
+          "sha256": "171d2a1406530aab500aa707219565262cf3c5a3fe937684d4cfe25d650a7cb0"
+        }
+      ]
+    },
+    {
+      "id": "goldFigurine",
+      "name": "Gold Figurine",
+      "rarity": "starter",
+      "source": "sources/goldFigurine.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        19,
+        1242,
+        1230
+      ],
+      "sourceSHA256": "71f42620b85a5e5cd3ecbc49a19b17f138122ba188cbce1bf84639fdfc6fc1f9",
+      "prompt": "prompts/goldFigurine.txt",
+      "interpretation": "One tiny squat antique gold devotional figurine, a solid heavy rounded idol with small bowed featureless head, broad hunched shoulders and large arms folded protectively over its compact belly. Thick integral rounded base, no separate pedestal. Worn softly dented gold with charcoal crevices and warm muted ochre highlights. Front three-quarter view, simple welcoming protective silhouette, ancient and tender, not cute cartoon. This is a carved relic object, not a living character. Lore: It is very small and very heavy and it loves you.",
+      "exports": [
+        {
+          "path": "webp/goldFigurine-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 53212,
+          "alphaVerified": true,
+          "sha256": "d1652d320d7b6d53e62af5998f1b629a8451bf815c9320636a00feefef938c85"
+        },
+        {
+          "path": "webp/goldFigurine-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 15800,
+          "alphaVerified": true,
+          "sha256": "f60c59b18146bb80118b88dbc234620b2f55f9d2ba8c6c9468be4d3e061d069d"
+        },
+        {
+          "path": "webp/goldFigurine-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 5348,
+          "alphaVerified": true,
+          "sha256": "3fcf422afbc1710b905d5a7c93ebdce29db69f032e3e2d1930ae5090c66520d5"
+        },
+        {
+          "path": "webp/goldFigurine-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2246,
+          "alphaVerified": true,
+          "sha256": "4b727751140346707f4f8dffa24ddb170ba356106fcd8144299a210751c728ce"
+        }
+      ]
+    }
+  ]
+}

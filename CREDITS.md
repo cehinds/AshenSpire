@@ -15,6 +15,12 @@ These are static frames; existing combat effects provide their movement.
 
 ## Painted player outfits
 
+The review-only relic pack in `art/relic-icons-pack-01/` contains four original
+relic paintings generated with the built-in OpenAI image-generation tool and
+16 transparent WebP exports. Exact prompts, unchanged sources, checksums and
+export settings accompany the pack. No third-party artwork or license is
+claimed; these candidates do not replace runtime relic assets.
+
 The new Reaver greatsword reference set in
 `assets/animations/reaver/greatsword-v2/` and the four-class art review pack
 in `art/webp-pack-2026-09-19/` were generated with the built-in OpenAI
