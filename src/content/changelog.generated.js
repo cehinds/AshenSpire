@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "A studio for the game's layout, with the phones and desktops it will be played on",
     "detail": "Nothing you see changes in play. A new local editor, beside the content editor and the pose studio, draws the combat, map, conversation and shop screens as the wireframes the layout file describes, at the real size of a desktop, an iPad, an iPhone or a Galaxy, and lets the numbers be dragged on a snapping grid rather than typed: how tall the top bar is, where the floor sits, how wide a portrait may be. Every size shows how the game itself will decide to lay out at that screen, the whole set can be compared side by side, and the real game can be opened at that size in the same window. A change is checked by the game's own build rule before it is written, and the file keeps its old bytes wherever it was not touched. Free wireframe sketches, with a different arrangement per screen size, save as their own files.",
-    "build": "0.7.1.233",
+    "build": "0.7.1.236",
     "pullRequest": 1198,
     "url": "https://github.com/cehinds/AshenSpire/pull/1198"
+  },
+  {
+    "id": "pr-1202",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Eight relics now have painted artwork throughout the game",
+    "detail": "Forsaken Medallion, Starstone Shard, Cutpurse's Coin, Gold Figurine, Golden Sprout, Cracked Lantern, Bloodstained Chalice and Crown of Stitches show their own art in cards, the HUD, character creation and smithing. Relic inspection shows the original lore. Other relics retain their glyphs; effects and drop rules are unchanged.",
+    "build": "0.7.1.235",
+    "pullRequest": 1202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1202"
   },
   {
     "id": "pr-1200",

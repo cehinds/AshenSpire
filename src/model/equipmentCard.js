@@ -6,7 +6,7 @@ export function equipmentCardModel(registries, piece) {
   const armor = piece.kind === 'armor';
   const tags = piece.tags || [];
   const tag = id => (registries.tags || []).find(row => row.id === id);
-  const className = armor ? registries.classes.get(piece.classId)?.name || piece.classId : '';
+  const className = armor ? (piece.sharedSet ? 'All classes' : registries.classes.get(piece.classId)?.name || piece.classId) : '';
   const types = (piece.itemTypes || []).map(t => t.label).join(' / ');
   const type = armor ? `Armor · ${className}` : piece.kind === 'weapon' ? `Weapon · ${types}` : piece.kind === 'staff' ? `Staff · ${types}` : types || piece.kind;
   const field = (label, value, explanation) => ({ label, value, explanation });

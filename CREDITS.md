@@ -4,6 +4,15 @@ Every third-party asset shipped in this repository is listed here with its sourc
 
 Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
 
+## Painted relic illustrations
+
+The eight 256px transparent WebPs in `assets/relics/` are project-owned
+AI-generated illustrations created with built-in OpenAI imagegen.
+Sources, exact prompts and export manifests are preserved in
+[relic pack 01](art/relic-icons-pack-01/README.md) and
+[relic pack 02](art/relic-icons-pack-02/README.md).
+No third-party artwork was used and no third-party license is claimed.
+
 ## Painted enemy sprites from the Unity fork
 
 `assets/enemies-unity/painted_*.png` contains twelve unchanged project-owned,
@@ -178,3 +187,6 @@ controlled independently from the doorway and sconces.
 `assets/bg/tower-city-background-unlit.webp` is a generated lighting edit of
 that city plate with artificial lights and their reflections removed, exported
 to WebP at quality 90 for the menu's separate background layer.
+
+### Shared armor inventory art (2026-09-19)
+Six original illustrations generated with OpenAI built-in image generation for this project. Sources and exact prompts: art/inventory-webp-2026-09-19/. Runtime exports: assets/equipment/icon_wayfarerPlate.webp, icon_nightweave.webp, icon_riteVestments.webp, icon_gutterLeathers.webp, icon_straightSwordInventory2026.webp and icon_kiteShieldInventory2026.webp. No third-party asset license is claimed. Equipped appearances reuse the corresponding existing painted outfit sprites.

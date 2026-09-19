@@ -14,6 +14,7 @@
 
 import { attachTooltip, esc } from './tooltip.js';
 import { t } from '../strings.js';
+import { relicIcon } from '../assets.js';
 import { mountDisclosure } from './disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
@@ -179,7 +180,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
       ]),
       el('div', { class: 'as-stack tight' }, [
         relic ? optionCard({
-          glyph: relic.icon || '◆', name: relic.name, description: relicDescription,
+          glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description: relicDescription,
           arrow: false, tag: 'div', className: 'cc-class-relic',
         }) : null,
       ]),
@@ -260,7 +261,7 @@ export function keepsakeChoiceButton(keepsake, selected, onChoose) {
 /** A starting relic: an OptionCard. */
 export function relicChoiceButton(relic, description, selected, onChoose) {
   const button = optionCard({
-    glyph: relic.icon || '◆', name: relic.name, description, selected, arrow: false,
+    glyph: relic.icon || '◆', art: relicIcon(relic), name: relic.name, description, selected, arrow: false,
     className: `cc-relic-card${selected ? ' chosen' : ''}`,
     attrs: { dataset: { relicId: relic.id }, 'aria-label': `${relic.name}. ${description}` },
   });

@@ -1,0 +1,138 @@
+{
+  "generator": "built-in image_gen",
+  "date": "2026-09-19",
+  "scenes": [
+    {
+      "id": "BS-ENV-01",
+      "name": "Gate of Unkept Names",
+      "region": "BS",
+      "map": "MAP-01-briar-sanctum",
+      "brief": "Inside the ruined forest entrance gate. Side pylons of charcoal stone frame a path back into the olive weald, small burgundy pennants, scratched funerary plaques, thorn roots confined along the upper floor seam. Broad old cobbled courtyard floor with shallow moss in cracks.",
+      "nodeStart": "BS-01",
+      "nodeEnd": "BS-05",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Inside the ruined forest entrance gate. Side pylons of charcoal stone frame a path back into the olive weald, small burgundy pennants, scratched funerary plaques, thorn roots confined along the upper floor seam. Broad old cobbled courtyard floor with shallow moss in cracks.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-90f3eef0-9afd-4c8c-ad88-6e442af145b3.png"
+    },
+    {
+      "id": "BS-ENV-02",
+      "name": "Chapel of Small Mercies",
+      "region": "BS",
+      "map": "MAP-01-briar-sanctum",
+      "brief": "Roofless woodland chapel, central small antique-gold cup shrine beneath shattered gothic lancets, olive canopy and scattered burgundy leaves visible beyond. Roots embrace the upper wall; broad level worn flagstone floor for quiet conversation or combat.",
+      "nodeStart": "BS-06",
+      "nodeEnd": "BS-10",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Roofless woodland chapel, central small antique-gold cup shrine beneath shattered gothic lancets, olive canopy and scattered burgundy leaves visible beyond. Roots embrace the upper wall; broad level worn flagstone floor for quiet conversation or combat.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-433321bc-c794-41ff-98ca-842622e4707c.png"
+    },
+    {
+      "id": "BS-ENV-03",
+      "name": "Bridge of Bound Vows",
+      "region": "BS",
+      "map": "MAP-01-briar-sanctum",
+      "brief": "A broad stone bridge landing over the sanctum stream, low parapet behind the fighting plane, wooded gorge and distant root-choked sanctuary. Paired oath statues near upper left and right, restrained olive mist. Broad ash-grey stone bridge-deck floor with no holes or dangerous gaps.",
+      "nodeStart": "BS-11",
+      "nodeEnd": "BS-22",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. A broad stone bridge landing over the sanctum stream, low parapet behind the fighting plane, wooded gorge and distant root-choked sanctuary. Paired oath statues near upper left and right, restrained olive mist. Broad ash-grey stone bridge-deck floor with no holes or dangerous gaps.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-f7ebda4d-aacb-48ec-89da-5347e65a2376.png"
+    },
+    {
+      "id": "BS-ENV-04",
+      "name": "Heart of Briar Sanctum — Boss Arena",
+      "region": "BS",
+      "map": "MAP-01-briar-sanctum",
+      "brief": "Dedicated Thorn Matriarch boss arena inside monumental dead-tree sanctuary. Giant intertwined roots form a circular gothic apse in upper half, empty antique-gold reliquary throne beneath a dark hollow in the trunk, broken lancets and burgundy thorn flowers. Symmetric ominous arena backdrop. Broad circular engraved stone floor in lower 45 percent, no props or roots crossing character lanes.",
+      "nodeStart": "BS-23",
+      "nodeEnd": "BS-24",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Dedicated Thorn Matriarch boss arena inside monumental dead-tree sanctuary. Giant intertwined roots form a circular gothic apse in upper half, empty antique-gold reliquary throne beneath a dark hollow in the trunk, broken lancets and burgundy thorn flowers. Symmetric ominous arena backdrop. Broad circular engraved stone floor in lower 45 percent, no props or roots crossing character lanes.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-a7ee15a1-4e1a-4262-8c0a-e68901445d7c.png"
+    },
+    {
+      "id": "HM-ENV-01",
+      "name": "Gate of Second Faces",
+      "region": "HM",
+      "map": "MAP-02-hall-of-mirrors",
+      "brief": "Inside ruined palace entrance facing snow-covered iron gate and angular gothic towers. Tarnished gold trim, thin ice, muted burgundy pennants. Cold indigo mountains through gate. Broad flat frost-dusted pale stone forecourt floor, no slippery glowing magic effects.",
+      "nodeStart": "HM-01",
+      "nodeEnd": "HM-04",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Inside ruined palace entrance facing snow-covered iron gate and angular gothic towers. Tarnished gold trim, thin ice, muted burgundy pennants. Cold indigo mountains through gate. Broad flat frost-dusted pale stone forecourt floor, no slippery glowing magic effects.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-3f02d7e7-a2f9-404f-9e17-f43861b7c2de.png"
+    },
+    {
+      "id": "HM-ENV-02",
+      "name": "Shattered Conservatory",
+      "region": "HM",
+      "map": "MAP-02-hall-of-mirrors",
+      "brief": "Abandoned winter glasshouse, shattered curved iron ribs and antique-gold window frames arch in upper half, pale dormant planting beds behind arena, snow beyond broken glazing, one small box of ordinary earth tucked in the back. Broad mosaic tile floor with restrained frost in lower band. Intimate melancholy dialogue and combat setting.",
+      "nodeStart": "HM-05",
+      "nodeEnd": "HM-08",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Abandoned winter glasshouse, shattered curved iron ribs and antique-gold window frames arch in upper half, pale dormant planting beds behind arena, snow beyond broken glazing, one small box of ordinary earth tucked in the back. Broad mosaic tile floor with restrained frost in lower band. Intimate melancholy dialogue and combat setting.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-a0ec89a4-305f-4797-a964-ad83bed97301.png"
+    },
+    {
+      "id": "HM-ENV-03",
+      "name": "Bridge of Courtesy",
+      "region": "HM",
+      "map": "MAP-02-hall-of-mirrors",
+      "brief": "Wide snowy bridge platform overlooking dark indigo frozen tarn, distant ruined mirror palace and mountain cliffs, low rear balustrade with two pale statues. Quiet cold sky light. Broad continuous stone deck in lower45 percent, enough open combat space, no central obstacles.",
+      "nodeStart": "HM-09",
+      "nodeEnd": "HM-21",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Wide snowy bridge platform overlooking dark indigo frozen tarn, distant ruined mirror palace and mountain cliffs, low rear balustrade with two pale statues. Quiet cold sky light. Broad continuous stone deck in lower45 percent, enough open combat space, no central obstacles.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-b2169da4-b4dd-4f96-a9b6-767346504c41.png"
+    },
+    {
+      "id": "HM-ENV-04",
+      "name": "Hall of Mirrors — Boss Arena",
+      "region": "HM",
+      "map": "MAP-02-hall-of-mirrors",
+      "brief": "Dedicated Glass Regent boss arena: monumental roofless throne hall, towering silver mirrors in antique-gold gothic frames across upper half, cracked center mirror behind empty pale throne, reflections show ghostly empty summer architecture rather than people. Indigo shadows, cold ivory stone. Lower45 percent broad level polished stone floor with fine radial silver inlay and restrained reflections, not a lake.",
+      "nodeStart": "HM-22",
+      "nodeEnd": "HM-24",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Dedicated Glass Regent boss arena: monumental roofless throne hall, towering silver mirrors in antique-gold gothic frames across upper half, cracked center mirror behind empty pale throne, reflections show ghostly empty summer architecture rather than people. Indigo shadows, cold ivory stone. Lower45 percent broad level polished stone floor with fine radial silver inlay and restrained reflections, not a lake.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-792f7ff1-b798-43b4-9060-25a1c53854d3.png"
+    },
+    {
+      "id": "FC-ENV-01",
+      "name": "Gate of Banked Coals",
+      "region": "FC",
+      "map": "MAP-03-furnace-chapel",
+      "brief": "Inside blackened furnace district entrance, charcoal iron portcullis, basalt gate pylons, muted burgundy banners and antique-gold devotional fittings. Distant ember haze beyond the gate confined to upper half. Broad ash-covered cobbled forecourt floor, no lava in walkable area.",
+      "nodeStart": "FC-01",
+      "nodeEnd": "FC-04",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Inside blackened furnace district entrance, charcoal iron portcullis, basalt gate pylons, muted burgundy banners and antique-gold devotional fittings. Distant ember haze beyond the gate confined to upper half. Broad ash-covered cobbled forecourt floor, no lava in walkable area.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-e387a826-d1df-4dd7-be40-58d4388dcd66.png"
+    },
+    {
+      "id": "FC-ENV-02",
+      "name": "Quenching Yard",
+      "region": "FC",
+      "map": "MAP-03-furnace-chapel",
+      "brief": "Abandoned industrial sacred foundry yard, cold cylindrical quenching tanks, iron cranes and roofed coal sheds grouped behind arena in upper half, basalt cliff backdrop, sooty iron and antique brass. Broad worn ash-grey paving lower45 percent, faint coal dust, safe open staging.",
+      "nodeStart": "FC-05",
+      "nodeEnd": "FC-10",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Abandoned industrial sacred foundry yard, cold cylindrical quenching tanks, iron cranes and roofed coal sheds grouped behind arena in upper half, basalt cliff backdrop, sooty iron and antique brass. Broad worn ash-grey paving lower45 percent, faint coal dust, safe open staging.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-afdc3a6b-322f-40b3-b3d5-4f021a2eb538.png"
+    },
+    {
+      "id": "FC-ENV-03",
+      "name": "Iron Viaduct",
+      "region": "FC",
+      "map": "MAP-03-furnace-chapel",
+      "brief": "Wide iron-supported stone viaduct viewing volcanic ravine and distant Furnace Chapel. Rear basalt parapet low and behind acting area, side iron braces, remote narrow lava fissures and subdued ember smoke in upper half only. Continuous broad basalt bridge deck lower45 percent, safe clear ground with restrained orange reflected light.",
+      "nodeStart": "FC-11",
+      "nodeEnd": "FC-21",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Wide iron-supported stone viaduct viewing volcanic ravine and distant Furnace Chapel. Rear basalt parapet low and behind acting area, side iron braces, remote narrow lava fissures and subdued ember smoke in upper half only. Continuous broad basalt bridge deck lower45 percent, safe clear ground with restrained orange reflected light.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-d66e987a-86ef-4d40-b5e2-f902cf5ce9a3.png"
+    },
+    {
+      "id": "FC-ENV-04",
+      "name": "Furnace Chapel — Boss Arena",
+      "region": "FC",
+      "map": "MAP-03-furnace-chapel",
+      "brief": "Dedicated Furnace Saint boss arena inside sacred gothic furnace chapel. A monumental glowing furnace mouth centered in upper apse, soot-black ribs and giant flues at sides, tarnished gold sun reliquary ornament, burgundy prayer banners. Furnace orange tightly confined to upper central opening. Broad uninterrupted dark basalt floor lower45 percent with worn circular devotional engravings and soft reflected amber, no lava under combatants.",
+      "nodeStart": "FC-22",
+      "nodeEnd": "FC-24",
+      "prompt": "Use case: stylized-concept. AshenSpire original dark fantasy painterly game combat and dialogue environment, widescreen 1536x1024. Match reference map's architecture, material, weathered charcoal stone/iron, antique gold details and rich restrained hand-painted texture, but change from aerial map to character-height theatre-stage view. Empty scene, no characters, no enemies, no text, no UI. IMPORTANT TWO-LAYER PRODUCTION COMPOSITION: lower 45 percent of image is uninterrupted walkable horizontal arena floor, broadly open left-to-right, with perspective texture and no large props crossing this lower band. All vertical scenery, architecture, vegetation, distant views occupy upper 55 percent. Ground meets scenery at a natural horizontal seam at 55 percent image height. No strong foreground occluders; characters must read clearly at x=25 and 75 percent on y=78 percent. Compose as a coherent finished painting intended for extraction into a lower floor plate and an upper background plate; no divider line, labels or collage. Wide quiet staging, atmospheric depth but no heavy fog obscuring the floor. Dedicated Furnace Saint boss arena inside sacred gothic furnace chapel. A monumental glowing furnace mouth centered in upper apse, soot-black ribs and giant flues at sides, tarnished gold sun reliquary ornament, burgundy prayer banners. Furnace orange tightly confined to upper central opening. Broad uninterrupted dark basalt floor lower45 percent with worn circular devotional engravings and soft reflected amber, no lava under combatants.",
+      "generatedFile": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0bad0-adbb-7891-94ea-315ce03f1be0\\exec-2469c3e3-a834-44a2-804b-886068c73b0b.png"
+    }
+  ]
+}

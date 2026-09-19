@@ -23,6 +23,23 @@
       "sourceSHA256": "416fc4be3358649ce29c6f18e813d76454b36115a4163c5f2e795af0565bd700",
       "prompt": "prompts/forsakenMedallion.txt",
       "interpretation": "A heavy round old medallion suspended from one short frayed muted burgundy ribbon folded through its top loop. Its gold face is worn almost completely smooth; thin uneven remnants of antique gilding cling to charcoal-dark metal around the rim. A single broad pale gold scuff suggests remembered nobility, no readable emblem. Almost frontal three-quarter view. Lore: Its face is worn smooth, but it still remembers being gold.",
+      "lore": "Its face is worn smooth, but it still remembers being gold.",
+      "acquisition": {
+        "className": "Reaver",
+        "method": "Default starting relic for Reaver. Granted at character creation unless you select the alternative Golden Sprout.",
+        "startingGrant": "Guaranteed when selected; not a random roll.",
+        "normalRewardDropRate": "0% \u2014 starter rarity is excluded from the normal relic reward pool.",
+        "bossRewardDropRate": "0% \u2014 boss rewards use boss-rarity relics.",
+        "bossOwner": "None \u2014 class starter relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/content/classes.js",
+          "src/content/generated/characterCreation.js",
+          "src/model/characterCreation.js:resolveCreationRelic",
+          "src/model/state.js",
+          "src/engine/encounters.js:rollRelicReward"
+        ]
+      },
       "exports": [
         {
           "path": "webp/forsakenMedallion-512.webp",
@@ -84,6 +101,23 @@
       "sourceSHA256": "b16a96c3d3883ac2897ea71492f6adbf4aa71ff961e432773d3d00dc3aa90aa3",
       "prompt": "prompts/starstoneShard.txt",
       "interpretation": "One asymmetrical elongated broken indigo starstone crystal, pointed top leaning slightly right, broad angular base and bold large facets. A subdued pale blue-white inner seam suggests a quiet magical hum. Tiny antique gold mineral inclusions only along one fracture. Dark violet and slate blue body with luminous but restrained facet edges; no mounting, no pedestal. Lore: A chip of someone else's genius. It still hums.",
+      "lore": "A chip of someone else\u2019s genius. It still hums.",
+      "acquisition": {
+        "className": "Starseer",
+        "method": "Default starting relic for Starseer. Granted at character creation unless you select the alternative Golden Sprout.",
+        "startingGrant": "Guaranteed when selected; not a random roll.",
+        "normalRewardDropRate": "0% \u2014 starter rarity is excluded from the normal relic reward pool.",
+        "bossRewardDropRate": "0% \u2014 boss rewards use boss-rarity relics.",
+        "bossOwner": "None \u2014 class starter relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/content/classes.js",
+          "src/content/generated/characterCreation.js",
+          "src/model/characterCreation.js:resolveCreationRelic",
+          "src/model/state.js",
+          "src/engine/encounters.js:rollRelicReward"
+        ]
+      },
       "exports": [
         {
           "path": "webp/starstoneShard-512.webp",
@@ -145,6 +179,23 @@
       "sourceSHA256": "b23c8b18675dbd4f3d5b1b73cf123cc0927b6bad3b84c06cabacda91c8032029",
       "prompt": "prompts/cutpursesCoin.txt",
       "interpretation": "One thick tarnished antique gold coin seen near frontally at a slight angle, bold circular silhouette with one subtly clipped edge. Its worn face bears a simple large embossed closed eye crossed by a short horizontal stroke, a visual motif for purchased silence; no letters or numbers. Charcoal recessed surface, rubbed gold raised rim and worn relief, a restrained olive patina. Single coin only, no stack. Lore: One face buys silence. The other buys speed.",
+      "lore": "One face buys silence. The other buys speed.",
+      "acquisition": {
+        "className": "Rogue",
+        "method": "Default starting relic for Rogue. Granted at character creation unless you select the alternative Golden Sprout.",
+        "startingGrant": "Guaranteed when selected; not a random roll.",
+        "normalRewardDropRate": "0% \u2014 starter rarity is excluded from the normal relic reward pool.",
+        "bossRewardDropRate": "0% \u2014 boss rewards use boss-rarity relics.",
+        "bossOwner": "None \u2014 class starter relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/content/classes.js",
+          "src/content/generated/characterCreation.js",
+          "src/model/characterCreation.js:resolveCreationRelic",
+          "src/model/state.js",
+          "src/engine/encounters.js:rollRelicReward"
+        ]
+      },
       "exports": [
         {
           "path": "webp/cutpursesCoin-512.webp",
@@ -206,6 +257,23 @@
       "sourceSHA256": "71f42620b85a5e5cd3ecbc49a19b17f138122ba188cbce1bf84639fdfc6fc1f9",
       "prompt": "prompts/goldFigurine.txt",
       "interpretation": "One tiny squat antique gold devotional figurine, a solid heavy rounded idol with small bowed featureless head, broad hunched shoulders and large arms folded protectively over its compact belly. Thick integral rounded base, no separate pedestal. Worn softly dented gold with charcoal crevices and warm muted ochre highlights. Front three-quarter view, simple welcoming protective silhouette, ancient and tender, not cute cartoon. This is a carved relic object, not a living character. Lore: It is very small and very heavy and it loves you.",
+      "lore": "It is very small and very heavy and it loves you.",
+      "acquisition": {
+        "className": "Herald",
+        "method": "Default starting relic for Herald. Granted at character creation unless you select the alternative Golden Sprout.",
+        "startingGrant": "Guaranteed when selected; not a random roll.",
+        "normalRewardDropRate": "0% \u2014 starter rarity is excluded from the normal relic reward pool.",
+        "bossRewardDropRate": "0% \u2014 boss rewards use boss-rarity relics.",
+        "bossOwner": "None \u2014 class starter relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/content/classes.js",
+          "src/content/generated/characterCreation.js",
+          "src/model/characterCreation.js:resolveCreationRelic",
+          "src/model/state.js",
+          "src/engine/encounters.js:rollRelicReward"
+        ]
+      },
       "exports": [
         {
           "path": "webp/goldFigurine-512.webp",

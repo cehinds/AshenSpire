@@ -4,6 +4,8 @@ Four original starter relics from `src/content/relics.js`, generated with the bu
 
 Open **preview.html** for the labeled gallery, dark/light backdrop toggle, and actual-size 48/64/128 px comparisons. **preview.png** is the shareable contact sheet.
 
+The HTML gallery also includes each relic's exact catalog lore, associated class, starting acquisition, normal and boss reward drop rates, and boss ownership. These four are default class starters (Reaver, Starseer, Rogue, Herald respectively), guaranteed when selected at creation; Golden Sprout is an available alternative. Their normal and boss reward drop rates are 0%, and none has a boss owner. Acquisition evidence is recorded per relic in the selection data and manifest, from class definitions, character creation rules, initial state, and `rollRelicReward`. The static PNG remains the compact art contact sheet.
+
 | Exact relic ID | Exact name | Visual interpretation |
 | --- | --- | --- |
 | forsakenMedallion | Forsaken Medallion | Smooth worn gold face, charcoal metal, burgundy ribbon |
