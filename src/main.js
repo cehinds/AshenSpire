@@ -1910,7 +1910,7 @@ function combatMods(pool) {
 function showLegacyDungeon() {
   if (run.legacyDungeon.pending) return showDungeonDialogue();
   mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow,
-    onTravel: id => { if (travelDungeon(run, id)) { persist(); showLegacyDungeon(); } },
+    onTravel: id => { if (travelDungeon(run, id)) { persist(); showDungeonDialogue(); } },
     onInspect: showDungeonDialogue, onLeave: leaveLegacyDungeon });
 }
 

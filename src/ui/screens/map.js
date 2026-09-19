@@ -73,21 +73,22 @@ export function releaseMapScreen() {
   liveMapViewportRelease = null;
 }
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   releaseMapScreen();
-  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls });
-  const map = run.mapGraph;
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter });
+  const map = mapAdapter?.graph || run.mapGraph;
+  const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
   // screen still computes. Geometry, drawing and the camera are the board's
   // (ui/components/mapboard.js).
-  const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
+  const reachable = new Set(mapAdapter?.reachable || (current ? map.nodes[current].next : map.startIds));
   const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
-  const mode = resolveMapMode(meta);
+  const mode = mapAdapter?.mode || resolveMapMode(meta);
   const fog = mode === 'fog';
 
-  const atEntrance = !run.mapNodeId;
+  const atEntrance = !current;
   // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
   // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
   // read, never chosen — so the Rows are static.
@@ -105,12 +106,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   });
 
   app.innerHTML = `
-    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+    <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${mapAdapter ? ' legacy-dungeon' : ''}${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
       ${runHudHtml({
         registries, run, meta, place: 'map', headerClass: 'map-header',
       })}
-      ${actRouteStripHtml({ title: actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
+      ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   // Bars, relics, Armoury and Menu: components/runHud.js fills the band for
@@ -178,20 +179,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   screen.append(tray);
   renderSelection();
   const board = mountMapBoard(screen, {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
-      current: run.mapNodeId || null,
-      path: run.path || [],
-      viewState: run.mapView,
+      current: current || null,
+      path: mapAdapter?.path || run.path || [],
+      viewState: mapAdapter ? mapAdapter.viewState : run.mapView,
       onViewStateChange: (viewState, { commit } = {}) => {
-        run.mapView = viewState;
+        if (mapAdapter) mapAdapter.onViewStateChange(viewState); else run.mapView = viewState;
         if (commit && onSave) onSave();
       },
       // W4b: a pick selects; Enter, or picking the selected node again, travels.
       onPick: (id, reading) => selectNode(id, reading),
-      tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
+      tooltip: (n, { shownType, revealed }) => mapAdapter ? `<div class="tt-title">${esc(n.name)}</div>${esc(n.lore)}` : nodeTooltip(shownType, n, revealed),
     },
   });
   const mapFrame = screen.querySelector('.map-frame');
@@ -278,12 +279,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       ? [el('p', { class: 'map-context-line', text: t('map.context.empty') })]
       : [
         el('p', { class: 'as-eyebrow', text: t('map.context.floor', { floor: view.floor }) }),
-        el('h2', { class: 'map-context-title', text: view.kindName }),
-        ...[view.blurb, view.destination, view.revealed ? t('map.context.revealed') : '']
+        el('h2', { class: 'map-context-title', text: mapAdapter ? map.nodes[id].name : view.kindName }),
+        ...[mapAdapter ? map.nodes[id].lore : view.blurb, view.destination, view.revealed ? t('map.context.revealed') : '']
           .filter(Boolean).map((text) => el('p', { class: 'map-context-line', text })),
       ]));
     enterButton.disabled = !view.canEnter;
-    enterButton.textContent = view.canEnter ? t('map.enterNamed', { name: view.kindName }) : t('map.enter');
+    enterButton.textContent = view.canEnter ? (mapAdapter?.enterLabel?.(id) || t('map.enterNamed', { name: mapAdapter ? map.nodes[id].name : view.kindName })) : t('map.enter');
   }
 
   // The legend hangs off the ? IN THE ZOOM BAR, so it is mounted inside that
