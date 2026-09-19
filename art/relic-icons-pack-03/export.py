@@ -9,8 +9,16 @@ manifest = {"pack": "relic-icons-pack-03", "generator": "built-in image_gen", "d
     "catalog": "src/content/relics.js", "status": "256px exports integrated through src/model/relicArt.js", "assets": []}
 sheet = Image.new("RGB", (1200, 590), "#17171c")
 draw = ImageDraw.Draw(sheet)
-font = ImageFont.truetype("C:/Windows/Fonts/segoeui.ttf", 19)
-small = ImageFont.truetype("C:/Windows/Fonts/consola.ttf", 15)
+def preview_font(size, *candidates):
+    for candidate in candidates:
+        try:
+            return ImageFont.truetype(candidate, size)
+        except OSError:
+            continue
+    return ImageFont.load_default()
+
+font = preview_font(19, "C:/Windows/Fonts/segoeui.ttf", "DejaVuSans.ttf")
+small = preview_font(15, "C:/Windows/Fonts/consola.ttf", "DejaVuSansMono.ttf")
 draw.text((24, 18), "ASHENSPIRE / RELICS / PACK 03", fill="#d7c49b", font=font)
 cards = []
 for index, item in enumerate(items):

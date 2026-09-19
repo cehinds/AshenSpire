@@ -13,7 +13,7 @@ Open [preview.html](preview.html) for lore, acquisition details, downloadable ar
 
 ## In-game card and lore comparison
 
-[cards.html](cards.html) shows all four relics using the actual game renderer at Compact (108px), Glance (152px), Focus (280px), and Inspect (320px), read from current game configuration. Serve the repository for this module-based preview (for example `node tools/serve.mjs --no-open`), then open `/art/relic-icons-pack-03/cards.html`. [Lore notes](lore.md) distinguish established facts from thematic associations, with links to existing sources. Per-relic `*-cards.png` files provide standalone previews.
+[cards.html](cards.html) shows all 63 catalog relics using the actual game renderer at Compact (108px), Glance (152px), Focus (280px), and Inspect (320px), read from current game configuration. Serve the repository for this module-based preview (for example `node tools/serve.mjs --no-open`), then open `/art/relic-icons-pack-03/cards.html`. [Lore notes](lore.md) distinguish established facts from thematic associations, with links to existing sources. Per-relic `*-cards.png` files provide standalone previews.
 
 The card gallery now covers the complete catalog: 63 relics, 252 cards, including all twelve paintings from packs 01–03. Search matches name, ID, lore context and associated class; filters separate painted relics from the 51 awaiting artwork. Missing authored flavor is explicitly identified, while the actual game card retains its fallback text. Additional contextual notes cover the earlier eight paintings without inventing named owners or boss assignments.
 

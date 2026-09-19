@@ -1,8 +1,8 @@
-import { contentBundle } from '../../../src/content/index.js';
-import { createRegistries } from '../../../src/model/registries.js';
-import { relicArtAsset } from '../../../src/model/relicArt.js';
-import { renderCollectibleCard } from '../../../src/ui/components/collectibleCard.js';
-import { cardLevels, cardShapeCssProperties, cardLevelCssProperties } from '../../../src/ui/models/CardSizeModel.js';
+import { contentBundle } from '../../src/content/index.js';
+import { createRegistries } from '../../src/model/registries.js';
+import { relicArtAsset } from '../../src/model/relicArt.js';
+import { renderCollectibleCard } from '../../src/ui/components/collectibleCard.js';
+import { cardLevels, cardShapeCssProperties, cardLevelCssProperties } from '../../src/ui/models/CardSizeModel.js';
 
 const registries = createRegistries(contentBundle);
 for (const [key,value] of Object.entries({...cardShapeCssProperties(), ...cardLevelCssProperties()})) document.documentElement.style.setProperty(key,value);
@@ -45,7 +45,7 @@ for (const relic of registries.relics.all()) {
   const artState=document.createElement('p');artState.className='lore-source';artState.textContent=painted?'Painted artwork available.':'Artwork pending — current game glyph shown.';
   const source=document.createElement('p');source.className='lore-source';source.append('Existing sources: ');
   note.sources.forEach(([name,path],i)=>{if(i)source.append(' · ');const a=document.createElement('a');a.href=path;a.textContent=name;source.append(a);});
-  const row=document.createElement('div');row.className='card-comparison';row.setAttribute('aria-label',relic.name+' in four game sizes');
+  const row=document.createElement('div');row.className='card-comparison';row.tabIndex=0;row.setAttribute('role','region');row.setAttribute('aria-label',relic.name+' in four game sizes');
   for(const group of groups){
     const figure=document.createElement('figure');figure.className='card-size-group';figure.dataset.sizeGroup=group.name;figure.style.setProperty('--sample-width',group.width+'px');
     const label=document.createElement('figcaption');label.textContent=group.name;
