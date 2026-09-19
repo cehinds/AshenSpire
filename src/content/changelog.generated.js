@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1205",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The roads tell the stories of the places they cross",
+    "detail": "The six existing surveys now have regional names, requests and reports when you return for your reward. The Second Cairn asks you to raise the fallen swords of the unwritten dead, and the Last Lantern names the hamlets waiting for its medicine. The Road Warden is distinct from the old marked Wardens. Quest choices, rewards and saved routes stay the same.",
+    "build": "0.7.1.282",
+    "pullRequest": 1205,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1205"
+  },
+  {
     "id": "pr-1204",
     "date": "2026-09-19",
     "group": "2026-09-19",
