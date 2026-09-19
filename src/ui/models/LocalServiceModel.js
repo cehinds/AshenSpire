@@ -35,9 +35,13 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     else if (refill?.total) result.facts.push(`Entering restores ${refill.total} flask${refill.total === 1 ? '' : 's'} in your available slots.`);
     else result.facts.push(state.refilled ? 'Arrival flask refill already received.' : 'No additional flasks would be granted with your current inventory and refill settings.');
     if (refill?.shortfalls.length) result.facts.push('Full flask slots limit the arrival refill.');
-    result.facts.push(level.offerable
-      ? `Level ${level.level}: ${level.points} attribute point${level.points === 1 ? '' : 's'} earned and waiting to be assigned.`
-      : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants attribute points to assign here.`);
+    // The level-up is a service the place carries (`levelUp`); a place without
+    // it promises no assignment here.
+    if (visit.services.levelUp) {
+      result.facts.push(level.offerable
+        ? `Level ${level.level}: ${level.points} attribute point${level.points === 1 ? '' : 's'} earned and waiting to be assigned.`
+        : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants attribute points to assign here.`);
+    }
     result.action = 'Enter rest services';
   } else if (handlerId === 'smith') {
     const plan = smithingPlan(registries, run);

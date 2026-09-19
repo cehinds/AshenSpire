@@ -15,9 +15,13 @@
 //     node opens no visit, so tagging one is refused),
 //   - `camp`, the Unknown node's rest outcome (the classic map has no node
 //     type for it — an event resolves to it),
-//   - an atlas service TYPE id (`inn`, `chapel`): every point of that type
-//     shares the tag set, so eleven inns are one row each, not eleven,
-//   - an atlas node id, for the one place that wants its own set.
+//   - an atlas service TYPE id whose handler is `rest` (`inn`, `chapel`):
+//     every point of that type shares the tag set, so eleven inns are one
+//     row each, not eleven,
+//   - an atlas node id that offers such a service, for the one place that
+//     wants its own set.
+// A shop, a smith, a fight node opens no visit, so tagging one is refused
+// rather than becoming inert content.
 // resolveLocationId picks the most specific of a point's candidates that
 // tagging.csv actually names, so a node row overrides its service type.
 //
@@ -58,8 +62,13 @@ export const VISITED_NODE_TYPES = Object.freeze(NODE_TYPES.filter((type) => type
 /** Every id a `location` tagging row may name (see the file comment). */
 export function locationIds(atlas = ATLAS) {
   const ids = new Set([...VISITED_NODE_TYPES, CAMP_LOCATION]);
-  for (const id of Object.keys((atlas && atlas.serviceTypes) || {})) ids.add(id);
-  for (const id of Object.keys((atlas && atlas.nodes) || {})) ids.add(id);
+  const serviceTypes = (atlas && atlas.serviceTypes) || {};
+  const restTypes = new Set(Object.keys(serviceTypes).filter((id) => serviceTypes[id] && serviceTypes[id].handlerId === 'rest'));
+  for (const id of restTypes) ids.add(id);
+  const services = (atlas && atlas.services) || {};
+  for (const [nodeId, rows] of Object.entries((atlas && atlas.nodeServices) || {})) {
+    if (rows.some((row) => services[row.serviceId] && restTypes.has(services[row.serviceId].serviceTypeId))) ids.add(nodeId);
+  }
   return ids;
 }
 
@@ -149,7 +158,7 @@ export function locationTaggingProblems(bundle, atlas = ATLAS) {
     if (!ids.has(row.objectId)) {
       problems.push({
         path: `tagging.${LOCATION_FAMILY}.${row.objectId}`,
-        message: `'${row.objectId}' is not a location — a classic node type the door visits (${VISITED_NODE_TYPES.join(', ')}), '${CAMP_LOCATION}', an atlas service type or an atlas node id`,
+        message: `'${row.objectId}' is not a location — a classic node type the door visits (${VISITED_NODE_TYPES.join(', ')}), '${CAMP_LOCATION}', an atlas rest service's type or an atlas point offering one`,
       });
     }
   }

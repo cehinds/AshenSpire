@@ -9318,6 +9318,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(bal({ rest: { ...rest, mana: { ...rest.mana, mode: 'sometimes' } } })).some((e) => /balance\.rest\.mana\.mode/.test(e)), 'an unknown mode is refused by name');
     assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
     assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
+    assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');
+    assert(said(tagged([{ family: 'location', scope: '', objectId: 'crownfall/market', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.crownfall\/market/.test(e)), 'a point offering no rest is not a location');
     const withCard = (effects) => validateContent({ ...testBundle(), cards: [...contentBundle.cards, { id: 'zzMana', name: 'zz', class: 'colorless', rarity: 'special', cost: 0, type: 'skill', keywords: [], effects, textTemplate: 'Rest.' }] });
     assert(said(withCard([{ op: 'restoreMana', target: 'self' }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with neither selector is refused');
     assert(said(withCard([{ op: 'restoreMana', target: 'self', amount: 2, toFloorPct: 50 }])).some((e) => /exactly one of 'amount' or 'toFloorPct'/.test(e)), 'restoreMana with both is refused');

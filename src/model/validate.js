@@ -540,7 +540,9 @@ function collectContentProblems(bundle, errors = []) {
     if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax }');
     else {
       for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
-      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 0)) err('balance.atlas.townsPerActMax', `must be a non-negative integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
+      // Positive: every seeded route stops at its hub city, so a cap of 0
+      // would refuse every journey at run start rather than here.
+      if (!(Number.isInteger(atlas.townsPerActMax) && atlas.townsPerActMax >= 1)) err('balance.atlas.townsPerActMax', `must be a positive integer, got ${JSON.stringify(atlas.townsPerActMax)}`);
     }
   }
   if (b.balance && b.balance.level !== undefined) {
