@@ -1,0 +1,47 @@
+{
+  "vars": {
+    "portraitRem": 3.5,
+    "narrowBelowRem": 64,
+    "choiceLines": 2,
+    "railGapPx": 2,
+    "railValueScale": 0.85,
+    "attributeGapPx": 8,
+    "reviewPadRem": 1.4,
+    "headToolsGapRem": 0.4,
+    "portraitGapRem": 0.6,
+    "viewSwitchPadRem": 0.6,
+    "viewSwitchGlyphRem": 1.6,
+    "compactPadRem": 0.4,
+    "compactGapRem": 0.4,
+    "barePadRem": 0.3,
+    "bareGapRem": 0.3
+  },
+  "sizing": {
+    "headPortraitRem": "$portraitRem",
+    "attributeColumnsWide": 2,
+    "attributeColumnsNarrow": 1,
+    "attributeNarrowBelowRem": "$narrowBelowRem",
+    "choiceDescriptionLines": "$choiceLines",
+    "railGapPx": "$railGapPx",
+    "railValueScale": "$railValueScale",
+    "attributeGapPx": "$attributeGapPx",
+    "reviewPadRem": "$reviewPadRem",
+    "headToolsGapRem": "$headToolsGapRem",
+    "portraitGapRem": "$portraitGapRem",
+    "viewSwitchPadRem": "$viewSwitchPadRem",
+    "viewSwitchGlyphRem": "$viewSwitchGlyphRem",
+    "choiceCompactPadRem": "$compactPadRem",
+    "choiceCompactGapRem": "$compactGapRem",
+    "choiceBarePadRem": "$barePadRem",
+    "choiceBareGapRem": "$bareGapRem"
+  },
+  "behavior": {
+    "categories": [
+      "class",
+      "character",
+      "equipment",
+      "review"
+    ],
+    "fitChoicesToPane": true
+  }
+}
