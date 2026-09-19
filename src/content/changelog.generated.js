@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1200",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Reaver draws the approved greatsword poses when that weapon is equipped",
+    "detail": "A greatsword with an empty off hand now uses the new ready stance, the chosen nine-step attack, defensive and buff poses, casting, hurt reactions and portrait. Each weapon combination can name its animation and view references in one settings file, selected by class, armour and the group held in each hand. Other combinations keep their existing art. The labeled four-class sprite review gallery and four new relic-icon candidates are saved for review; those additional candidates are not activated in play.",
+    "build": "0.7.1.232",
+    "pullRequest": 1200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1200"
+  },
+  {
     "id": "pr-1199",
     "date": "2026-09-19",
     "group": "2026-09-19",
