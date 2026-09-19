@@ -168,19 +168,21 @@
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
-/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
-   chooser set only `data-new`, which no stylesheet or renderer consumed, so
-   the unseen card looked identical to its neighbours). The chip dress is
-   restated here because `.chip` styling is scoped to `.class-pick` and this
-   badge lives inside `.card` — its named container (position: relative,
-   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
-   box); the label keeps its text unit. pointer-events: none — the badge marks
-   the card, the CARD takes the tap. */
+/* The card chooser's NEW badge belongs to the status stack above the card,
+   never to the title band. The reward row owns the stack's shared dimensions
+   in kit.css; fallbacks keep this component safe in an isolated render. The
+   height scales with text, while the gap remains a small piece of box
+   geometry. pointer-events: none — the badge marks the card, the CARD takes
+   the tap. */
 .card .card-badge-new {
-  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  position: absolute;
+  top: calc(-1 * (var(--reward-new-badge-height, calc(1.08rem + 6px)) + var(--reward-status-gap, 6px)));
+  left: 50%; transform: translateX(-50%);
+  box-sizing: border-box; height: var(--reward-new-badge-height, calc(1.08rem + 6px));
+  display: inline-flex; align-items: center;
+  font-size: 0.9rem; line-height: 1.2; font-weight: 700; letter-spacing: 0.08em;
   color: var(--gold); border: 1px solid var(--gold); border-radius: var(--r-3);
-  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  padding: 2px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
 
