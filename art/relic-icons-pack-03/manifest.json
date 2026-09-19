@@ -1,0 +1,313 @@
+{
+  "pack": "relic-icons-pack-03",
+  "generator": "built-in image_gen",
+  "date": "2026-09-19",
+  "catalog": "src/content/relics.js",
+  "status": "review art; not wired into runtime",
+  "assets": [
+    {
+      "id": "ivoryComb",
+      "name": "Ivory Comb",
+      "rarity": "common",
+      "source": "sources/ivoryComb.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        27,
+        20,
+        1225,
+        1186
+      ],
+      "sourceSHA256": "37a1edf11b77c19a6ca0a0e114d5910c07740e5cba026d25f07bea2b53842d23",
+      "prompt": "prompts/ivoryComb.txt",
+      "interpretation": "A single ancient ivory grooming comb, wide horizontal gently arched spine, ten thick slightly uneven teeth pointing downward. A few teeth chipped short. Warm aged bone, charcoal dirt in shallow carved grooves, a thin worn antique gold repair band at one end. Three-quarter near-frontal view, melancholy humble personal possession. No hair, no skull, no extra objects.",
+      "lore": "Someone kept themselves tidy right up until the end.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Elite-victory reward and other standard relic reward rolls.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+        "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+        "bossOwner": "None; not a boss-rarity relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js",
+          "src/content/events.js:namelessKeeper"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/ivoryComb-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 42634,
+          "alphaVerified": true,
+          "sha256": "46639a85cb12167c0b35809d35eb521f90bcf88162e5425e0eb741d8c490ec58"
+        },
+        {
+          "path": "webp/ivoryComb-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 15462,
+          "alphaVerified": true,
+          "sha256": "317c43e14b055940b979999654655d2ba53d5fc0f1653b4cbe9af8750db2c2c7"
+        },
+        {
+          "path": "webp/ivoryComb-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 5812,
+          "alphaVerified": true,
+          "sha256": "58cb160aa1cbbd0292315e755e57da41ea194fda415ff2c8fbc0f8ee06787add"
+        },
+        {
+          "path": "webp/ivoryComb-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2330,
+          "alphaVerified": true,
+          "sha256": "a28741c4c841dba995a2edbdbd1c041afef87d886b664391117c7f829f722685"
+        }
+      ]
+    },
+    {
+      "id": "blessedDew",
+      "name": "Blessed Dew",
+      "rarity": "uncommon",
+      "source": "sources/blessedDew.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        20,
+        1226,
+        1230
+      ],
+      "sourceSHA256": "885e48b49bbc56751f11029d98698e62a42f826751f8c5f1a840b7e83f04d15f",
+      "prompt": "prompts/blessedDew.txt",
+      "interpretation": "One small rounded pear-shaped vial of smoky pale indigo glass, short neck and worn antique-gold stopper, dark metal foot ring. A shallow pool of softly luminous pale silver-blue dew inside and three broad condensation droplets on its outer glass. Simple sacred object with no symbol or inscription, clear pear silhouette, transparent glass represented with restrained semi-transparent areas, no background reflections.",
+      "lore": "It gathers on the vial overnight, from nowhere, for no one.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Elite-victory reward and other standard relic reward rolls.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+        "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+        "bossOwner": "None; not a boss-rarity relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js",
+          "src/content/events.js:namelessKeeper"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/blessedDew-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 26492,
+          "alphaVerified": true,
+          "sha256": "8ccd7ad37eb2cc22acab6e73cfe257de76a6caa401fd9836d353d9bc370f4f1c"
+        },
+        {
+          "path": "webp/blessedDew-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 9192,
+          "alphaVerified": true,
+          "sha256": "ee21657d125ac4002666feb37ea73da18047ffb913a5b7a02e42aeec1c636ae5"
+        },
+        {
+          "path": "webp/blessedDew-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 3744,
+          "alphaVerified": true,
+          "sha256": "ec2de21291ff2104fb56b76d9872ee021c82f38aa0c3f4bea123ae12f7244ec5"
+        },
+        {
+          "path": "webp/blessedDew-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 1582,
+          "alphaVerified": true,
+          "sha256": "55c7226c82c851d560f6c6e3a0fdcd8fc8e9a2d628fffcc04dcb482c2b903af0"
+        }
+      ]
+    },
+    {
+      "id": "gravetendersBell",
+      "name": "Gravetender's Bell",
+      "rarity": "uncommon",
+      "source": "sources/gravetendersBell.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        0,
+        0,
+        1232,
+        1228
+      ],
+      "sourceSHA256": "73b32312925c182ceff8196d7df74c0964f626c486f99c2877e838d095161087",
+      "prompt": "prompts/gravetendersBell.txt",
+      "interpretation": "One heavy old handheld funerary bell, broad flared cold charcoal iron cup with rubbed antique gold lip, a thick upright loop handle wrapped once in frayed muted olive cloth. Large small clapper visible in the dark interior below the angled lip. Hand-worked ridges and a few deep tally grooves without readable writing. Three-quarter frontal view. Quiet dignified care, no skulls, no extra props.",
+      "lore": "One toll for each name laid down. The tending is in the counting.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "The Keeper of the Nameless event: choose \u201cAccept the keeper\u2019s thanks\u201d when that choice is available.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "0% \u2014 quest-pool relic; guaranteed from the eligible Accept Thanks choice.",
+        "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+        "bossOwner": "No boss owner; awarded by the Keeper through the quest.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js",
+          "src/content/events.js:namelessKeeper"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/gravetendersBell-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 44692,
+          "alphaVerified": true,
+          "sha256": "a28fba566958a1b88eaa4e7e7092c2cc16e47b3bfab50d3940a0cb6492ba700e"
+        },
+        {
+          "path": "webp/gravetendersBell-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 14358,
+          "alphaVerified": true,
+          "sha256": "461bb8701769a0eae4be62312f32fcddf8941be49cb8d4665721a9b0f325b00a"
+        },
+        {
+          "path": "webp/gravetendersBell-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 5170,
+          "alphaVerified": true,
+          "sha256": "43a500870e4667a8216eb795ff54774e8bb07321a70f63a487fbcb7d64cf2c5d"
+        },
+        {
+          "path": "webp/gravetendersBell-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2088,
+          "alphaVerified": true,
+          "sha256": "2e2521f9b01f09da11aa768082002d600a4c7a088901baba991a42370c94fe52"
+        }
+      ]
+    },
+    {
+      "id": "wyrmHeart",
+      "name": "Wyrm Heart",
+      "rarity": "rare",
+      "source": "sources/wyrmHeart.png",
+      "sourceDimensions": [
+        1254,
+        1254
+      ],
+      "sourceAlphaBounds": [
+        41,
+        28,
+        1230,
+        1232
+      ],
+      "sourceSHA256": "50485e27093f63a3020f8d3ff53f8ba0b6f4b4bfd5d52b157dbda4df6b05ec93",
+      "prompt": "prompts/wyrmHeart.txt",
+      "interpretation": "One fantastical preserved dragon heart, compact anatomical heart shape with two thick vessel stumps on top. Deep muted burgundy leathery muscle merging into charcoal-black reptile scales around its lower half. Subtle warm ember-orange fissure across its central lobe implies a stubborn heartbeat. Old, heavy, magical specimen, no dripping blood, no gore spray, no pedestal, no jewelry or cage. Bold pearlike asymmetrical organic silhouette.",
+      "lore": "It still beats. It expects something of you.",
+      "acquisition": {
+        "className": "All classes",
+        "method": "Elite-victory reward and other standard relic reward rolls.",
+        "startingGrant": "Not a starting selection.",
+        "normalRewardDropRate": "1 / N per standard relic roll, where N is the number of eligible unowned common, uncommon and rare reward-pool relics. Ordinary combat does not roll a relic.",
+        "bossRewardDropRate": "0% in the boss-rarity relic reward roll.",
+        "bossOwner": "None; not a boss-rarity relic.",
+        "sources": [
+          "src/content/relics.js",
+          "src/engine/encounters.js:rollRelicReward",
+          "src/main.js",
+          "src/content/events.js:namelessKeeper"
+        ]
+      },
+      "exports": [
+        {
+          "path": "webp/wyrmHeart-512.webp",
+          "dimensions": [
+            512,
+            512
+          ],
+          "bytes": 48224,
+          "alphaVerified": true,
+          "sha256": "7e9194e10b2cb552dde0945745b3530a669907fba4aea9ebf34ee49538350d51"
+        },
+        {
+          "path": "webp/wyrmHeart-256.webp",
+          "dimensions": [
+            256,
+            256
+          ],
+          "bytes": 15534,
+          "alphaVerified": true,
+          "sha256": "ab6e9c5ebf22bb5c0c044c89b62fac64fe610d299f9361e0eb2f1b5dac9de4f7"
+        },
+        {
+          "path": "webp/wyrmHeart-128.webp",
+          "dimensions": [
+            128,
+            128
+          ],
+          "bytes": 5262,
+          "alphaVerified": true,
+          "sha256": "2dd8c5bc595a3c8ab6e076df8701234ac08b32ec24c24c686bd72925d1a9a00f"
+        },
+        {
+          "path": "webp/wyrmHeart-64.webp",
+          "dimensions": [
+            64,
+            64
+          ],
+          "bytes": 2014,
+          "alphaVerified": true,
+          "sha256": "2ea1c04b1e974c1bdd8afac5809f470e0f061e63193a43e3f66581eac4139aea"
+        }
+      ]
+    }
+  ]
+}
