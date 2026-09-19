@@ -154,7 +154,10 @@ export function settingsProblems(s) {
       if (!b || typeof b.id !== 'string' || !b.id) out.push(`breakpoints[${i}].id is required`);
       else if (ids.has(b.id)) out.push(`breakpoints[${i}].id "${b.id}" is used twice`);
       else ids.add(b.id);
-      if (b && b.minWidth != null && b.maxWidth != null && b.minWidth > b.maxWidth) out.push(`breakpoints[${i}] has minWidth above maxWidth`);
+      if (!b) continue;
+      for (const k of ['minWidth', 'maxWidth', 'minHeight', 'maxHeight']) if (b[k] != null && !(typeof b[k] === 'number' && Number.isFinite(b[k]))) out.push(`breakpoints[${i}].${k} must be a number`);
+      if (typeof b.minWidth === 'number' && typeof b.maxWidth === 'number' && b.minWidth > b.maxWidth) out.push(`breakpoints[${i}] has minWidth above maxWidth`);
+      if (typeof b.minHeight === 'number' && typeof b.maxHeight === 'number' && b.minHeight > b.maxHeight) out.push(`breakpoints[${i}] has minHeight above maxHeight`);
     }
   }
   if (!Array.isArray(s.wireframes) || !s.wireframes.length) out.push('wireframes must be a non-empty array');
@@ -1021,6 +1024,7 @@ export function alignBoxes(sketch, ids, edge, viewport, { breakpointId = null, s
     ? { x: Math.min(...boxes.map((o) => o.r.x)), y: Math.min(...boxes.map((o) => o.r.y)), r: Math.max(...boxes.map((o) => o.r.x + o.r.w)), b: Math.max(...boxes.map((o) => o.r.y + o.r.h)) }
     : { x: 0, y: 0, r: viewport.width, b: viewport.height };
   for (const { b, r } of boxes) {
+    if (b.locked) continue; // a locked box anchors the bounds and stays where it is, as under a drag or a nudge
     const next = { ...r };
     if (edge === 'left') next.x = bounds.x;
     if (edge === 'right') next.x = bounds.r - r.w;

@@ -64,6 +64,16 @@ try {
   await page.waitForSelector('#right-body .ok, #right-body .problems');
   assert.match(await page.textContent('#right-body .ok'), /compile clean/);
   await shot(page, '03-validated');
+  // The result speaks for the tree it checked: a second drag afterwards sets
+  // it aside until the next validation.
+  const again = await page.locator('[data-hit^="bandEdge:0:"]').boundingBox();
+  await page.mouse.move(again.x + again.width / 2, again.y + again.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(again.x + again.width / 2, again.y + again.height / 2 + 24, { steps: 6 });
+  await page.mouse.up();
+  await page.click('#right-tabs button[data-tab="files"]');
+  await page.waitForSelector('#validation-stale');
+  assert.equal(await page.$('#right-body .ok'), null, 'a stale "compiles clean" is not shown');
 
   // A phone reports the game's narrow mode; Compare draws every enabled device.
   await page.selectOption('#device', 'iphone-14');

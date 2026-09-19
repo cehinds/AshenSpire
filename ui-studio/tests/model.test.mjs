@@ -262,6 +262,11 @@ test('sketches validate, resolve overrides, convert units, align and reorder', (
   assert.equal(right.boxes[0].x, 70);
   const both = M.alignBoxes(s, s.boxes.map((b) => b.id), 'left', vp);
   assert.deepEqual(both.boxes.map((b) => b.x), [10, 10]);
+  // A locked box anchors an alignment and stays put, as it does under a drag or a nudge.
+  const lockedSecond = { ...s, boxes: [s.boxes[0], { ...s.boxes[1], locked: true }] };
+  const anchored = M.alignBoxes(lockedSecond, lockedSecond.boxes.map((b) => b.id), 'right', vp);
+  assert.equal(anchored.boxes[1].x, s.boxes[1].x, 'the locked box did not move');
+  assert.equal(anchored.boxes[0].x + anchored.boxes[0].w, Math.max(s.boxes[0].x + s.boxes[0].w, s.boxes[1].x + s.boxes[1].w), 'the other aligned to the shared right edge');
   assert.deepEqual(M.reorderBox(s, box.id, Infinity).boxes.map((b) => b.label), ['B', 'A']);
   assert.deepEqual(M.reorderBox(s, s.boxes[1].id, -1).boxes.map((b) => b.label), ['B', 'A']);
 });
@@ -479,6 +484,11 @@ test('variables resolve through variables and inside fractions, as the compiler 
 
 test('settings refuse a hollowed group and a stored null cannot replace one', () => {
   assert.ok(M.settingsProblems({ ...M.DEFAULT_SETTINGS, canvas: null }).some((p) => p === 'canvas must be an object'));
+  // A breakpoint bound that is present must be a finite number, as a sketch's must: "oops" would make breakpointFor skip the check and match everything.
+  assert.ok(M.settingsProblems({ ...M.DEFAULT_SETTINGS, breakpoints: [{ id: 'a', minWidth: 'oops' }] }).some((p) => p === 'breakpoints[0].minWidth must be a number'));
+  assert.ok(M.settingsProblems({ ...M.DEFAULT_SETTINGS, breakpoints: [{ id: 'a', maxHeight: NaN }] }).some((p) => p === 'breakpoints[0].maxHeight must be a number'));
+  assert.ok(M.settingsProblems({ ...M.DEFAULT_SETTINGS, breakpoints: [{ id: 'a', minHeight: 700, maxHeight: 400 }] }).some((p) => p.includes('minHeight above maxHeight')));
+  assert.deepEqual(M.settingsProblems({ ...M.DEFAULT_SETTINGS, breakpoints: [{ id: 'a', minWidth: 0, maxHeight: 900 }] }), []);
   assert.ok(M.settingsProblems(M.mergeSettings(M.DEFAULT_SETTINGS, { gameLayout: { rootFontPx: 0 } })).some((p) => p.includes('gameLayout.rootFontPx')));
   const merged = M.mergeSettings(M.DEFAULT_SETTINGS, { canvas: null, grid: 7 });
   assert.deepEqual(merged.canvas, M.DEFAULT_SETTINGS.canvas);

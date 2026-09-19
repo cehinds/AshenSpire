@@ -462,11 +462,12 @@ function settingsHtml() {
 
 function filesHtml() {
   const dirty = dirtyFiles();
-  const v = state.validation;
+  const v = currentValidation();
   let html = `<h3>Config changes (${dirty.length})</h3>`;
   html += dirty.length ? `<ul class="list">${dirty.map(([rel, f]) => `<li data-diff="${esc(rel)}"><span class="grow mono">${esc(rel)}</span><span class="dim">${diffLines(f.text, proposedText(f))} lines · view diff</span><button class="small" data-revert="${esc(rel)}">revert</button></li>`).join('')}</ul>` : '<p class="hint">Nothing changed. Edits appear here with a diff before they are written.</p>';
   html += `<div class="row"><button data-act="validate" ${dirty.length && state.api ? '' : 'disabled'}>Validate with the game compiler</button><button data-act="save-config" class="primary" ${dirty.length && state.api ? '' : 'disabled'}>Save to checkout</button></div>`;
   if (v) html += v.errors.length ? `<div class="problems">${esc(v.errors.join('\n'))}</div>` : `<div class="ok">✓ ${v.files} files compile clean.</div>`;
+  else if (state.validation && dirty.length) html += '<div class="hint" id="validation-stale">Edited since the last validation — validate again before saving.</div>';
   html += `<div class="row"><label><input type="checkbox" data-setting="save.compileAfterSave" ${state.settings.save.compileAfterSave ? 'checked' : ''}> run <code>tools/config-build.mjs</code> after saving (so Live game sees it)</label></div>`;
   if (state.compile) html += `<div class="hint">Compiler: <strong class="${state.compile.status === 'failed' ? 'problems' : 'ok'}">${esc(state.compile.status)}</strong> <button class="small" data-act="compile">Run again</button></div><pre class="output">${esc(state.compile.output || '')}</pre>`;
   else html += `<div class="row"><button class="small" data-act="compile" ${state.api ? '' : 'disabled'}>Compile now</button></div>`;
@@ -636,7 +637,7 @@ function onRightClick(e) {
   if (!b) return;
   if (b.dataset.revert) { const f = fileOf(b.dataset.revert); f.history.push(JSON.parse(f.text)); persistDrafts(); renderAll(); return; }
   if (b.dataset.unref) { const f = activeFile(); const v = M.getPath(f.history.present, b.dataset.unref); const name = v.slice(1); const value = varsFor(f).find((x) => x.name === name); if (value) setValue(activeRel(), b.dataset.unref, value.value); return; }
-  if (b.dataset.align) { commitSketch(M.alignBoxes(state.sketch.present, [...state.selection], b.dataset.align, viewport(), sketchScope())); return; }
+  if (b.dataset.align) { commitSketch(M.alignBoxes(state.sketch.present, [...state.selection], b.dataset.align, viewport(), sketchScope())); return; } // a locked box in the selection anchors the others and stays put
   if (b.dataset.order) { let s = state.sketch.present; for (const id of state.selection) s = M.reorderBox(s, id, Number(b.dataset.order)); commitSketch(s); return; }
   if (b.dataset.clearOverride) { const sc = sketchScope(); commitSketch(M.clearOverride(state.sketch.present, b.dataset.clearOverride, sc.breakpointId)); return; }
   const row = b.closest('tr');
@@ -803,9 +804,22 @@ function onKey(e) {
 // Files: validate, save, compile, sketches, downloads, uploads
 // ---------------------------------------------------------------------------
 const changes = () => dirtyFiles().map(([rel, f]) => ({ rel, text: proposedText(f), hash: f.hash }));
+/**
+ * A validation result speaks for the change set that was SENT: it carries
+ * that snapshot, and the Save panel shows it only while the tree still
+ * matches (an edit, an undo or a band slider afterwards leaves it stale);
+ * an answer for a tree that moved while the request was in flight is dropped.
+ */
+const changesKey = (list) => JSON.stringify(list.map((c) => [c.rel, c.hash, c.text]));
+function currentValidation() { const v = state.validation; return v && v.for === changesKey(changes()) ? v : null; }
 async function validateConfig() {
-  try { state.validation = await api('validate', { changes: changes() }); toast(state.validation.errors.length ? `${state.validation.errors.length} problem(s)` : 'Compiles clean'); }
-  catch (e) { toast(e.message, true); }
+  const list = changes(), sent = changesKey(list);
+  try {
+    const result = await api('validate', { changes: list });
+    if (changesKey(changes()) !== sent) { toast('The tree changed while validating — validate again', true); renderRight(); return; }
+    state.validation = { ...result, for: sent };
+    toast(result.errors.length ? `${result.errors.length} problem(s)` : 'Compiles clean');
+  } catch (e) { toast(e.message, true); }
   renderRight();
 }
 async function saveConfig() {
@@ -820,7 +834,7 @@ async function saveConfig() {
     if (state.settings.save.compileAfterSave) await compile();
   } catch (e) {
     const lines = e.message.split('\n');
-    state.validation = { errors: lines.length > 1 ? lines.slice(1) : [e.message], files: 0 };
+    state.validation = { errors: lines.length > 1 ? lines.slice(1) : [e.message], files: 0, for: changesKey(list) };
     toast(lines[0], true);
   }
   renderAll();
