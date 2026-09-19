@@ -1,5 +1,6 @@
-// src/ui/screens/rest.js — Shrine of Emberlight: Rest (heal) or Smith (upgrade)
-// (SPEC §7.1; heal math from engine/encounters.js shrineHealAmount)
+// src/ui/screens/rest.js — a location's Rest screen: Rest, and the services
+// the place carries (SPEC §7.1, §13.4j; what a Rest restores is the location's
+// tag set, engine/locations.js — this screen states no number of its own)
 //
 // TWO ACTIONS ON THIS SCREEN TAKE A SECOND BEAT, and they take DIFFERENT ONES,
 // which is the clearest illustration in the tree of why the form is derived
@@ -17,10 +18,10 @@
 // Neither of those decisions is in this file. `model/secondbeat.js` holds the
 // characteristics; this screen names its actions.
 
-import { shrineHealAmount } from '../../engine/encounters.js';
+import { createLocationVisit, previewRest, restAt } from '../../engine/locations.js';
+import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
-import { passiveFlag } from '../../model/registries.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -45,7 +46,7 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
 import { mountChoiceBody } from '../components/choiceBody.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
-import { t } from '../strings.js';
+import { t, has } from '../strings.js';
 import { restReview } from '../models/ConfirmationReviewModel.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
@@ -95,29 +96,51 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
+/**
+ * The place's own title row when one is authored, else its rest service type's
+ * (an atlas point resolved by its own tagging row is still an inn), else the
+ * Shrine's.
+ */
+function locationTitle(locationId) {
+  for (const id of [locationId, locationServiceTypeId(locationId)]) {
+    if (has(`location.${id}.title`)) return t(`location.${id}.title`);
+  }
+  return t('rest.title');
+}
+
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, ...extra,
   });
-  const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  // THE PLACE IS A CARRIER (plan phase 7). The door (main.js) opens the visit
+  // — the location's rules mounted, `arrived` already emitted — and hands it
+  // in; a screen mounted without one (a fixture, an older caller) stands at
+  // the classic Shrine. What Rest restores is read off the same rules the
+  // button fires, on a clone, so the line and the result cannot disagree.
+  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult });
+  const relicNoRest = !!stay.restDenied;
+  const preview = relicNoRest ? null : previewRest(stay);
+  const heal = preview ? preview.heal : 0;
+  const manaAfter = preview ? preview.manaAfter : run.mana;
+  const manaGain = Math.max(0, manaAfter - run.mana);
   const noRest = relicNoRest || (multiUse && rested);
-  // The locked copy names the real reason: a relic that forbids rest, or a
-  // rest already taken at this Shrine under Multi-use — never a relic the
+  // The locked copy names the real reason: the relic that forbids rest here,
+  // or a rest already taken at this place under Multi-use — never a relic the
   // player does not carry.
-  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  const noRestCopy = relicNoRest ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.` : 'You have already rested here.';
   // Rest at full health and full Mana led the list as if it were the thing to
   // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
   // 2026-09-11). It stays a choice (it is still the way to end a visit without
   // spending anything), reads muted, and says what it would not restore.
-  const nothingToRestore = !noRest && heal <= 0 && run.mana >= run.maxMana;
+  const nothingToRestore = !noRest && heal <= 0 && manaGain <= 0;
   const smith = smithingPlan(registries, run);
-  // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
-  // resolved at the door (main.js) and handed in; a screen mounted without it
-  // — a fixture, an older caller — keeps the Shrine it always had.
-  const offered = services && Array.isArray(services.services) ? services.services : ['upgrade'];
+  // WHICH SERVICES THIS PLACE OFFERS is its tag set (smith, levelUp,
+  // restFlasks — model/locations.js); WHICH SMITH SERVICES is the table in
+  // balance.smithing.services, resolved at the door and handed in. A screen
+  // mounted without the table keeps the upgrade it always had.
+  const offered = stay.services.smith ? (services && Array.isArray(services.services) ? services.services : ['upgrade']) : [];
   const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
   const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
   const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
@@ -189,10 +212,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP with full Mana. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
-        <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
              role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
              aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
@@ -202,7 +225,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
               ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
               : 'No owned armament has an effective tier remaining.'}</p>
           </div>
-        </div>
+        </div>` : ''}
         ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
              role="button" tabindex="${extract.available ? '0' : '-1'}"
              aria-disabled="${extract.available ? 'false' : 'true'}">
@@ -221,7 +244,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${esc(install.summary)}</p>
           </div>
         </div>` : ''}
-        <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
+        ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
             <span class="glyph shrine-fold-glyph">⚗</span>
             <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
@@ -247,7 +270,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
           </div>
           </div>
-        </details>
+        </details>` : ''}
         <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
@@ -269,7 +292,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+        ${stay.services.levelUp ? `<div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
              role="button" tabindex="0" aria-haspopup="dialog"
              aria-disabled="${level.offerable ? 'false' : 'true'}"
              data-points="${level.points}"
@@ -280,7 +303,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <h3>Level up</h3>
             <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
-        </div>
+        </div>` : ''}
       </div>
     `;
 
@@ -291,22 +314,25 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // same plans that build and wire the cards above — never re-derived.
   const offeredChoices = [
     { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && multiUse && rested },
-    { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
+    stay.services.smith && { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
     extract && { id: 'extract', selector: '#extract-opt', available: extract.available },
     install && { id: 'install', selector: '#install-opt', available: install.available },
-    { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
-    { id: 'level', selector: '#level-opt', available: level.offerable },
+    stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
+    stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
   ].filter(Boolean);
   const availability = restChoiceStatus(offeredChoices);
   // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
-  // cards). A single-use Shrine has none — taking a choice is the way on — so
-  // its reserved foot collapses rather than inventing a way to leave.
-  const leave = multiUse ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
+  // cards). A single-use place has none — taking a choice is the way on — so
+  // its reserved foot collapses rather than inventing a way to leave. EXCEPT
+  // where a relic denies the Rest: then Rest is not a way on, and a place
+  // with no smith (a chapel) would hold the run for good (the review of
+  // #1195), so the foot is the way out.
+  const leave = multiUse || relicNoRest ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
   mountChoiceBody(app.querySelector('.rest-screen'), {
     className: 'rest-door',
     eyebrow: t('rest.eyebrow'),
-    title: t('rest.title'),
+    title: locationTitle(stay.locationId),
     status: t('rest.status.available', { available: availability.available, total: availability.total }),
     choices: el('div', { class: 'choice-body-choices rest-choices', html: choicesHtml }),
     consequences,
@@ -341,10 +367,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
       // W2a: question, the Shrine and the pools it acts on, the exact recovery.
-      ...restReview({ shrine: t('rest.title'), heal, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
+      ...restReview({ shrine: locationTitle(stay.locationId), heal, manaGain, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
       onConfirm: () => {
-        run.hp = Math.min(run.maxHp, run.hp + heal);
-        run.mana = run.maxMana;
+        // The rules fire (`rested`), the pools move through the engine's
+        // opcodes; this screen writes nothing to the run itself.
+        restAt(stay);
         sfx.play('shrine');
         if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
@@ -394,7 +421,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // The same allocation component used by character creation, with shrine
   // policy: existing values are immutable, affordable points may be assigned,
   // and the run is not mutated until Done commits it through applyLevelUp.
-  if (level.offerable) {
+  if (level.offerable && stay.services.levelUp) {
     // Pending points per attribute. Up to `budget.points` in total — the
     // points the run has earned and not yet assigned; Done commits them one
     // applyLevelUp at a time, in order.

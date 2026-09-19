@@ -41,6 +41,10 @@
 
 import { attackDescriptor } from './attackTags.js';
 
+// Source-less families whose object ids are validated by their own door
+// (see the collection check in tagContentProblems).
+const EXTERNALLY_CHECKED_FAMILIES = new Set(['location']);
+
 /** Walk a dotted `source` path ('equipment.armaments') into the bundle. */
 function atPath(bundle, path) {
   let node = bundle;
@@ -286,6 +290,12 @@ export function tagContentProblems(bundle, keywordIds = []) {
       continue;
     }
     if (!Array.isArray(collection)) {
+      // A family whose objects are the MAP'S rather than a bundle collection
+      // (`location`, plan phase 7: a node type, a service type, an atlas node)
+      // has its ids checked by model/locations.js locationTaggingProblems,
+      // which knows the map. Every other source-less family declares only a
+      // vocabulary and tags nothing.
+      if (EXTERNALLY_CHECKED_FAMILIES.has(family)) continue;
       err(path, `family '${family}' names no source collection, so nothing can be tagged in it — this row tags nothing`);
       continue;
     }

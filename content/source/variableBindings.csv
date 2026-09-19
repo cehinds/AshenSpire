@@ -111,3 +111,7 @@ default,,poisonedPouch,venom,classTree.poisonedPouch.venom
 default,,assassin,prepared,classTree.assassin.prepared
 default,,assassin,draw,classTree.assassin.draw
 default,,shadow,block,classTree.shadow.block
+default,,restHpSmall,pct,rest.hpSmallPct
+default,,restHpPartial,pct,rest.hpPartialPct
+default,,restManaFlat,restoreMana,rest.mana.flat
+default,,restManaFloor,floorPct,rest.mana.floorPct
