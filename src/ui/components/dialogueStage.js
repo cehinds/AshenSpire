@@ -211,14 +211,20 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
     // A short host draws the HUD's one-row compact form. The band itself never
     // gives way: it is always drawn (owner, 2026-09-15).
     root.dataset.hudCompact = String(compactHud);
-    const revealLine = bands.hud + bands.scene;
+    // The HUD can grow to fit its meters and relics. Fit artwork to the
+    // actual grid window rather than the nominal percentage budget.
+    const sceneRect = root.querySelector(':scope > .dialogue-scene')?.getBoundingClientRect();
+    const sceneTop = sceneRect ? (sceneRect.top - rect.top) / zoom : bands.hud;
+    const sceneHeight = sceneRect ? sceneRect.height / zoom : bands.scene;
+    const revealLine = sceneTop + sceneHeight;
+    root.style.setProperty('--dialogue-scene-top', `${sceneTop}px`);
     root.style.setProperty('--dialogue-reveal-line', `${revealLine}px`);
     // The plate is fitted to the scene window and drawn over the whole frame;
     // its skybox and floor halves are two copies cut at the floor line.
-    let floorLine = bands.hud + bands.scene * (1 - sceneConfig.floorFraction);
+    let floorLine = sceneTop + sceneHeight * (1 - sceneConfig.floorFraction);
     for (const backdrop of root.querySelectorAll(':scope > .dialogue-plate-layer > .environment-backdrop')) {
       const layers = fitSceneBackdrop(backdrop, {
-        width, height, zoom, windowTop: bands.hud, windowHeight: bands.scene, config: sceneConfig,
+        width, height, zoom, windowTop: sceneTop, windowHeight: sceneHeight, config: sceneConfig,
       });
       if (layers) floorLine = layers.frame.floorLine;
     }
@@ -248,6 +254,8 @@ export function wireDialogueStage(root, { layout, parent, scene }) {
   if (typeof ResizeObserver !== 'undefined') {
     observer = new ResizeObserver(schedule);
     observer.observe(root);
+    const hud = root.querySelector(':scope > .topbar');
+    if (hud) observer.observe(hud);
   }
   // THE SCREEN REDRAWS ITS PORTRAITS AS THE CONVERSATION MOVES — a new beat
   // swaps who is speaking, and the figure elements are replaced under the

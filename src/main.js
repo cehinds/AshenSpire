@@ -1,4 +1,5 @@
 import { resolveLocationPresentation } from './model/locationPresentation.js';
+import { applyHudVisibility } from './ui/models/HudVisibilityModel.js';
 // src/main.js — boot + run orchestrator (SPEC §7.1)
 //
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
@@ -700,6 +701,7 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
   document.documentElement.dataset.formationSettings = JSON.stringify(advancedPresentation);

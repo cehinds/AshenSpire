@@ -132,7 +132,8 @@ export function inventoryBeltHtml(model) {
   const potions = optionalChildModel(model, UI.potionTray);
   // Both are the shared icon tray (components/iconTray.js): one row of round
   // icons that never wraps, the combatant card's status row its reference.
-  // relicRail.js and runHud.js fill them.
+  // relicRail.js and runHud.js fill them. The shared grid seats this belt
+  // directly below vitality; its content grows the HUD background in flow.
   return `<div class="hud-bottom as-band-row fold" ${uiComponentAttrs(model.component, model.variant)}>${relics ? `
     <div class="relics hud-relics as-pips icon-tray grow" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>` : ''}${potions ? `
     <div class="hud-potions as-pips icon-tray${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>` : ''}

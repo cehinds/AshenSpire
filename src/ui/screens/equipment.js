@@ -400,7 +400,7 @@ function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
   const painted = spritesAreEnabled() && !['classic', 'glyph'].includes(cz?.spriteStyle)
-    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand') : null;
+    ? paintedPresentation(run.class, figureSpec(registries, run.loadout, run.class).armourId, 'stand', equipmentAnimationForLoadout(registries, run.loadout, run.class)) : null;
   if (painted) { el.classList.add('painted-armoury'); el.appendChild(painted); return el; }
   const reacts = CFG().spriteReacts;
   const spec = figureSpec(registries, run.loadout, run.class);
@@ -2221,3 +2221,4 @@ export function mountEquipment(host, {
   if (destinationPlan) queueMicrotask(focusArmouryDestination);
   return { close, redraw: draw };
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';
