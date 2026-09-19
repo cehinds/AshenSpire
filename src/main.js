@@ -34,6 +34,7 @@ import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
 import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
+import { peakClassLevel } from './model/classSwap.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -1462,7 +1463,7 @@ function runResult(victory) {
     // act 3 has already earned the act 1 and 2 kills whatever happens next.
     bosses: [...(run.bossesBeaten || [])],
     // Plan phase 5c: the class-card unlock conditions read these.
-    maxClassLevel: Math.max(0, ...Object.entries(run.skills || {}).filter(([id]) => id.startsWith('class:')).map(([, row]) => row.level || 0)),
+    maxClassLevel: peakClassLevel(run),
     bossGroups: structuredClone(run.bossGroups || {}),
   };
 }

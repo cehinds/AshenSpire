@@ -13,7 +13,7 @@ import { importLegacyContent } from '../src/framework/importer.js';
 import { attackTagsFor } from '../src/engine/actions.js';
 import { evalPredicate, triggerOwnerKey } from '../src/engine/triggers.js';
 import { tagContentProblems, itemTypeLabelFrom, tagIdsAllowedFor, tagIdsInDomain } from '../src/model/tags.js';
-import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances } from '../src/model/loadout.js';
+import { boundGrantCardIds, boundGrantProblems, isItemOwned, pieceItemRef, reconcileGrantedCardsInCombat, itemMountInstances, equippedIn } from '../src/model/loadout.js';
 import { extractionPlan, commitExtraction, installPlan, commitInstall, smithServicesAt, mountRows } from '../src/model/cardExtraction.js';
 import { ownerItemRef, mountKey as mountKeyOf } from '../src/model/cardMounts.js';
 import { itemTypeLabel } from '../src/content/equipment.js';
@@ -82,7 +82,7 @@ import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skill
 import { classCard, runClassIdentity } from '../src/model/classCard.js';
 import { classTreeRows, tierOpensAt, classDraftPool, pickClassNode, awardClassXp, coreTagsTreeProblems, staleCoreTags } from '../src/model/classTree.js';
 import { classCarrier } from '../src/engine/properties.js';
-import { swapRunClass } from '../src/model/classSwap.js';
+import { swapRunClass, peakClassLevel } from '../src/model/classSwap.js';
 import { classAvailable, classUnlockRow } from '../src/model/unlocks.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { gainBlock } from '../src/engine/actions.js';
@@ -9047,7 +9047,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     awardSkillXp(REG, run, 'item:blade', 50); awardSkillXp(REG, run, 'class:reaver', xpToNext(REG, 'class', 0));
     eq(pickClassNode(REG, run, 'ironFooting'), true);
     const deckBefore = run.deck.map((c) => c.instanceId).join(','); const relicsBefore = run.relics.join(',');
+    run.loadout.sets.armor[0] = 'vigil'; // a set the Reaver earned; the Rogue has no row for it
     const receipt = swapRunClass(REG, run, 'rogue');
+    eq(receipt.fromLevel, 1, 'the level the old class reached is on the receipt');
+    eq(receipt.droppedArmour.join(','), 'armor/reaver/vigil', "the reaver's armour is set aside, by name");
+    eq(equippedIn(REG, run.loadout, run.class, 'armor').id, 'default', "the run wears the rogue's free set");
+    eq(equippedIn(REG, run.loadout, run.class, 'armor').classId, 'rogue');
+    eq(run.zones.worn.body, 'default', 'and the projection follows');
+    eq(peakClassLevel(run), 1, 'the peak survives the swap');
+    eq(run.history.at(-1).fromLevel, 1, 'and rides the history row');
     eq(receipt.from, 'reaver'); eq(receipt.to, 'rogue'); eq(receipt.droppedTags.join(','), 'ironFooting', "the reaver's pick has no seat in the rogue tree"); eq(receipt.resetTracks.join(','), 'class:reaver');
     eq(run.class, 'rogue'); eq(run.zones.core, 'rogue', 'the core zone follows'); eq(JSON.stringify(run.coreTags), '[]'); eq(JSON.stringify(run.zones.coreTags), '[]');
     eq(skillLevel(run, 'class:reaver'), 0, 'the class track starts over'); assert(run.skills['class:reaver'] === undefined);
@@ -9075,6 +9083,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const badRef = validateContent({ ...testBundle(), events: contentBundle.events.map((ev) => (ev.id === 'turncoatMirror' ? { ...ev, choices: [{ ...ev.choices[0], effects: [{ op: 'swapClass', classId: 'nope' }] }, ev.choices[1]] } : ev)) });
     assert(said(badRef).some((e) => /nope/.test(e)), 'a swap to an unknown class is refused by name');
+    const mirrorWith = (effects) => validateContent({ ...testBundle(), events: contentBundle.events.map((ev) => (ev.id === 'turncoatMirror' ? { ...ev, choices: [{ ...ev.choices[0], effects }, ev.choices[1]] } : ev)) });
+    assert(said(mirrorWith([{ op: 'swapClass' }])).some((e) => /exactly one of 'classId' or 'random: true'/.test(e)), 'a swap to nothing is refused by name');
+    assert(said(mirrorWith([{ op: 'swapClass', classId: 'rogue', random: true }])).some((e) => /exactly one of/.test(e)), 'a named AND random swap is refused by name');
+    assert(said(mirrorWith([{ op: 'swapClass', random: false }])).some((e) => /'random' must be true/.test(e)), 'random: false is refused by name');
+    assert(!said(mirrorWith([{ op: 'swapClass', classId: 'rogue' }])).some((e) => /swapClass/.test(e)), 'a named swap passes');
   });
 
   const passed = results.filter((r) => r.ok).length;
