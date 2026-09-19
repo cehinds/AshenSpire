@@ -128,7 +128,44 @@ export function creationCssProperties(config = CONFIG) {
     '--creation-choice-compact-gap': `${positive('choiceCompactGapRem')}rem`,
     '--creation-choice-bare-pad': `${positive('choiceBarePadRem')}rem`,
     '--creation-choice-bare-gap': `${positive('choiceBareGapRem')}rem`,
+    ...(creationClassPreview(config) === 'unfold' ? (() => {
+      const unfold = creationUnfoldGeometry(config);
+      return {
+        '--creation-unfold-portrait': `${unfold.portraitShare}fr`,
+        '--creation-unfold-summary': `${unfold.summaryShare}fr`,
+        '--creation-unfold-height': `${unfold.heightVh}vh`,
+        '--creation-unfold-min': `${unfold.minRem}rem`,
+      };
+    })() : {}),
   });
+}
+
+const CLASS_PREVIEWS = Object.freeze(['column', 'unfold']);
+
+/**
+ * creationClassPreview(config) → where the chosen class's portrait and
+ * summary live: 'column' (a preview pane beside the choices) or 'unfold'
+ * (the chosen card itself opens to hold them; owner, 2026-09-19).
+ */
+export function creationClassPreview(config = CONFIG) {
+  const mode = config.behavior.classPreview ?? 'column';
+  if (!CLASS_PREVIEWS.includes(mode)) throw new Error(`creation behavior.classPreview must be one of ${CLASS_PREVIEWS.join(', ')}, got ${mode}`);
+  return mode;
+}
+
+/**
+ * creationUnfoldGeometry(config) → the unfolded card: the portrait's and the
+ * summary's shares of its width (the drawing's 30vw / 70vw, which together
+ * are the whole card), the card's height in vh, and the floor under it in
+ * rem (a landscape phone's 30vh is a head and nothing else).
+ */
+export function creationUnfoldGeometry(config = CONFIG) {
+  const { unfoldPortraitShare: portraitShare, unfoldSummaryShare: summaryShare, unfoldHeightVh: heightVh, unfoldMinRem: minRem } = config.sizing;
+  for (const [name, value] of Object.entries({ unfoldPortraitShare: portraitShare, unfoldSummaryShare: summaryShare, unfoldHeightVh: heightVh, unfoldMinRem: minRem })) {
+    if (!Number.isFinite(value) || value <= 0) throw new Error(`creation sizing.${name} must be a number > 0, got ${value}`);
+  }
+  if (portraitShare + summaryShare !== 100) throw new Error(`creation sizing.unfoldPortraitShare + unfoldSummaryShare must be 100, got ${portraitShare + summaryShare}`);
+  return Object.freeze({ portraitShare, summaryShare, heightVh, minRem });
 }
 
 /** Whether the class choices are fitted to the pane (descriptions folded, then the preview stepped aside). */

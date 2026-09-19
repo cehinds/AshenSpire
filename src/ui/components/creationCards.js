@@ -189,6 +189,30 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
   return markUiComponent(pane, UI.classPreviewPane);
 }
 
+/**
+ * classUnfold({ cls, sprite, resources, relic }) → what the chosen
+ * class card opens to hold (owner, 2026-09-19): the portrait on the left,
+ * the summary stats on the right, never past the card's box. Appended
+ * inside the card, so it is the card that unfolds; the shares and the
+ * height are the screen's --creation-unfold-* (creation.json).
+ */
+export function classUnfold({ cls, sprite = null, resources = null, relic = null }) {
+  // Spans only: this lives inside the card's <button>, which admits no div
+  // and discards a group role. The card names the class; the portrait is
+  // decoration here, and the resources and relic reach a reader through the
+  // card's aria-describedby (customize.js).
+  if (sprite && sprite.tagName === 'IMG') sprite.alt = '';
+  const art = el('span', { class: 'as-artwell figure cc-unfold-art' }, sprite);
+  const node = el('span', { class: 'cc-class-unfold', id: `cc-unfold-${cls.id}`, dataset: { class: cls.id } }, [
+    el('span', { class: 'cc-unfold-portrait' }, art),
+    el('span', { class: 'cc-unfold-summary' }, [
+      resources,
+      relic ? el('span', { class: 'cc-unfold-relic' }, [el('span', { class: 'cc-unfold-relic-glyph', 'aria-hidden': 'true', text: relic.icon || '◆' }), el('span', { class: 'cc-unfold-relic-name', text: relic.name })]) : null,
+    ]),
+  ]);
+  return markUiComponent(node, UI.classPreviewPane);
+}
+
 /** The five starting resources: a StatStrip of Chips. */
 export function classResourceGrid(rows) {
   const strip = statStrip(rows.map((entry) => chip({
