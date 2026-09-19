@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1207",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Only living enemies accept your aim",
+    "detail": "A defeated enemy can no longer catch a click, tap, keyboard focus or potion aim. Its body and name cannot activate an attack or targeted potion, and old target highlights disappear when it falls.",
+    "build": "0.7.1.290",
+    "pullRequest": 1207,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1207"
+  },
+  {
     "id": "pr-1208",
     "date": "2026-09-19",
     "group": "2026-09-19",
