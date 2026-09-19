@@ -1395,7 +1395,7 @@
   --grid-stroke: var(--player-grid-color, #d5cc63);
 }
 :root .formation-grid-cell, :root .formation-grid-cell:disabled, :root .formation-grid-cell:hover, :root .formation-grid-cell:focus-visible {
-  background: transparent; border: 0; box-shadow: none; opacity: 1; filter: none; overflow: visible;
+  background-color: transparent; border: 0; box-shadow: none; opacity: 1; filter: none; overflow: visible;
 }
 .formation-grid-cell::after {
   content: '+'; position: absolute; left: 50%; top: 50%;

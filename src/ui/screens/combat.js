@@ -2455,10 +2455,10 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
 
   formationMovement = wireFormationMovement($('.field'), {
     readSettings, holdConfig: registries.balance.ui.holdConfirm,
-    available: () => !busy && !veilIsOpen() && !selected && !selfArm && selectedFlask == null,
+    available: () => !busy && !selected && !selfArm && selectedFlask == null,
     plan: cell => formationMovePlan(combat, cell, readSettings()),
     move: cell => {
-      if (busy || veilIsOpen()) return;
+      if (busy) return;
       try {
         disp = takeSnapshot();
         const out = dispatch(combat, { type: 'moveCharacter', cell, settings: readSettings() });
