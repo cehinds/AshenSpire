@@ -7,13 +7,14 @@
 import { openCollectibleInspection } from './collectibleCard.js';
 import { esc } from './tooltip.js';
 import { relicText } from './card.js';
+import { relicIcon } from '../assets.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
 
 export function relicRailTile(registries, relicId) {
   const def = registries.relics.get(relicId);
   const tile = trayIcon({
-    glyph: def.icon || '◆', tone: def.tint || '', label: def.name,
+    glyph: def.icon || '◆', art: relicIcon(def), tone: def.tint || '', label: def.name,
     attrs: { class: 'relic', dataset: { relicId } },
     tip: () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`,
     activate: (node) => openCollectibleInspection(registries, def, 'Relic', node),
