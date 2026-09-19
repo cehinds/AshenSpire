@@ -103,6 +103,13 @@ test('settings merge over the defaults and refuse a broken shape; sketches valid
   const listed = await workspace.sketches();
   assert.ok(listed.some((s) => s.name === 'ui-studio-test-sketch' && s.boxes === 1));
   assert.deepEqual((await workspace.sketch('ui-studio-test-sketch')).sketch, sketch);
+  // A second save must carry the hash it loaded or last saved; a stale or absent one is refused.
+  const edited = { ...sketch, name: 'T2' };
+  await assert.rejects(workspace.saveSketch('ui-studio-test-sketch', edited), /already exists/);
+  await assert.rejects(workspace.saveSketch('ui-studio-test-sketch', edited, 'stale'), /changed on disk/);
+  const again = await workspace.saveSketch('ui-studio-test-sketch', edited, saved.hash);
+  assert.equal((await workspace.sketch('ui-studio-test-sketch')).sketch.name, 'T2');
+  assert.equal((await workspace.sketch('ui-studio-test-sketch')).hash, again.hash);
 });
 
 test('HTTP: token, origin and host checks; the preview origin cannot reach the API; static allowlist', async (t) => {

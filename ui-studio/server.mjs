@@ -174,15 +174,29 @@ export class Workspace {
     return { name, sketch: JSON.parse(text), hash: hash(text) };
   }
 
-  async saveSketch(name, sketch) {
+  /**
+   * Write a sketch. `expectedHash` is the hash the client loaded or last
+   * saved under this name (null for a name it has not seen): a file on disk
+   * whose bytes differ is another tab's or another tool's work and is refused,
+   * as config saves refuse a stale hash.
+   */
+  async saveSketch(name, sketch, expectedHash = null) {
     if (!SKETCH_NAME.test(name || '')) throw Error('Sketch names use lower-case letters, digits and dashes');
     const problems = sketchProblems(sketch);
     if (problems.length) throw Error(`Sketch refused: ${problems.join('; ')}`);
     const dir = path.join(this.workspaceDir, 'sketches');
-    await fs.mkdir(dir, { recursive: true });
+    const file = path.join(dir, `${name}.json`);
     const text = `${JSON.stringify(sketch, null, 2)}\n`;
-    await fs.writeFile(path.join(dir, `${name}.json`), text);
-    return { name, hash: hash(text) };
+    return this.serialize(async () => {
+      let current = null;
+      try { current = await fs.readFile(file, 'utf8'); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+      if (current !== null && hash(current) !== (expectedHash || null)) {
+        throw Error(expectedHash ? `${name}.json changed on disk since it was opened; open it again before saving` : `${name}.json already exists; open it first or save under another name`);
+      }
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(file, text);
+      return { name, hash: hash(text) };
+    });
   }
 }
 
@@ -239,7 +253,7 @@ export async function createUiStudio({ root = path.resolve(HERE, '..'), port = 4
           if (url.pathname === '/api/settings') return send(res, 200, await workspace.saveSettings(data));
           if (url.pathname === '/api/validate') return send(res, 200, await workspace.validate(data.changes));
           if (url.pathname === '/api/save') return send(res, 200, await workspace.save(data.changes));
-          if (url.pathname === '/api/sketch') return send(res, 200, await workspace.saveSketch(data.name, data.sketch));
+          if (url.pathname === '/api/sketch') return send(res, 200, await workspace.saveSketch(data.name, data.sketch, data.hash || null));
           if (url.pathname === '/api/backup') return send(res, 200, await workspace.backup(data.id));
           if (url.pathname === '/api/compile') return send(res, 200, startCompile());
         }

@@ -797,7 +797,12 @@ async function compile() {
 async function saveSketch() {
   const name = ($('#sketch-name') ? $('#sketch-name').value : state.sketchName).trim().toLowerCase() || prompt('Sketch file name (a-z, 0-9, dashes)') || '';
   if (!name) return;
-  try { const r = await api('sketch', { name, sketch: state.sketch.present }); state.sketchName = r.name; state.sketchHash = r.hash; state.sketchSaved = M.clone(state.sketch.present); state.sketches = await api('sketches'); persistDrafts(); toast(`Sketch saved as ${r.name}.json`); renderAll(); }
+  // The snapshot that is SENT is the saved baseline: an edit made while the
+  // request is in flight stays dirty. The hash goes along so a file another
+  // tab or tool changed is refused rather than overwritten.
+  const submitted = M.clone(state.sketch.present);
+  const expected = name === state.sketchName ? state.sketchHash : null;
+  try { const r = await api('sketch', { name, sketch: submitted, hash: expected }); state.sketchName = r.name; state.sketchHash = r.hash; state.sketchSaved = submitted; state.sketches = await api('sketches'); persistDrafts(); toast(`Sketch saved as ${r.name}.json`); renderAll(); }
   catch (e) { toast(e.message, true); }
 }
 async function openSketch(name) {

@@ -734,7 +734,13 @@ export function sketchProblems(s) {
     for (const k of ['x', 'y', 'w', 'h']) if (typeof b[k] !== 'number' || !Number.isFinite(b[k])) out.push(`${at}.${k} must be a finite number`);
     if (b.w <= 0 || b.h <= 0) out.push(`${at} must have positive width and height`);
     if (b.overrides && !isObject(b.overrides)) out.push(`${at}.overrides must be an object`);
-    for (const k of Object.keys(b.overrides || {})) if (!bps.has(k)) out.push(`${at}.overrides names breakpoint "${k}", which the sketch does not declare`);
+    for (const [k, o] of Object.entries(isObject(b.overrides) ? b.overrides : {})) {
+      if (!bps.has(k)) out.push(`${at}.overrides names breakpoint "${k}", which the sketch does not declare`);
+      if (!isObject(o)) { out.push(`${at}.overrides.${k} must be an object`); continue; }
+      for (const g of ['x', 'y', 'w', 'h']) if (o[g] != null && !(typeof o[g] === 'number' && Number.isFinite(o[g]))) out.push(`${at}.overrides.${k}.${g} must be a finite number`);
+      for (const g of ['w', 'h']) if (typeof o[g] === 'number' && o[g] <= 0) out.push(`${at}.overrides.${k}.${g} must be positive`);
+      if (o.hidden != null && typeof o.hidden !== 'boolean') out.push(`${at}.overrides.${k}.hidden must be true or false`);
+    }
   }
   return out;
 }
