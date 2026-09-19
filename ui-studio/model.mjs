@@ -408,6 +408,21 @@ export function deletePath(obj, path) {
   return out;
 }
 
+/**
+ * resolveValue(value, lookup) → the number a "$name" or a fraction stands for,
+ * the compiler's way: a variable may name another variable and a fraction's
+ * operands may be references, followed recursively; a cycle, a depth past
+ * 32 or an unknown name comes out as NaN. `lookup(name)` returns the value a
+ * name holds, or undefined — the caller decides the order (a file's own vars
+ * before ui/tokens.json). Anything else is returned as it is.
+ */
+export function resolveValue(value, lookup, depth = 0) {
+  if (depth > 32) return NaN;
+  if (isRef(value)) { const owner = lookup(value.slice(1)); return owner === undefined ? NaN : resolveValue(owner, lookup, depth + 1); }
+  if (isFraction(value)) { const n = resolveValue(value.numerator, lookup, depth + 1), d = resolveValue(value.denominator, lookup, depth + 1); return typeof n === 'number' && typeof d === 'number' && d !== 0 ? n / d : NaN; }
+  return value;
+}
+
 export const isFraction = (v) => isObject(v) && Object.keys(v).length === 2 && 'numerator' in v && 'denominator' in v;
 export const isRef = (v) => typeof v === 'string' && /^\$[A-Za-z_][A-Za-z0-9_]*$/.test(v);
 
@@ -629,17 +644,8 @@ export function regionsFor(wireframe, data, viewport, { parent = null, tokens = 
   // another variable, a fraction's operands may be references: resolved
   // recursively as the compiler does, with a cycle or an unknown name
   // coming out as NaN so `num` falls back rather than drawing garbage.
-  const resolve = (v, depth = 0) => {
-    if (depth > 32) return NaN;
-    if (isRef(v)) {
-      const name = v.slice(1);
-      const vars = (isObject(data) && data.vars) || {};
-      const owner = Object.prototype.hasOwnProperty.call(vars, name) ? vars[name] : tokens[name];
-      return owner === undefined ? NaN : resolve(owner, depth + 1);
-    }
-    if (isFraction(v)) { const n = resolve(v.numerator, depth + 1), d = resolve(v.denominator, depth + 1); return typeof n === 'number' && typeof d === 'number' && d !== 0 ? n / d : NaN; }
-    return v;
-  };
+  const fileVars = (isObject(data) && data.vars) || {};
+  const resolve = (v) => resolveValue(v, (name) => (Object.prototype.hasOwnProperty.call(fileVars, name) ? fileVars[name] : tokens[name]));
   const num = (v, fallback = 0) => { const r = resolve(v); return typeof r === 'number' && Number.isFinite(r) ? r : fallback; };
 
   const drawBands = (bands, bandsPath, plan = null) => {

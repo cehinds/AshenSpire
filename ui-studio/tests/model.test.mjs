@@ -467,6 +467,19 @@ test('sketchProblems refuses an override that is not an object or carries non-fi
   assert.deepEqual(M.sketchProblems(s), []);
 });
 
+test('resolveValue follows a chain of names and a fraction of names; a cycle, a depth or an unknown name is NaN', () => {
+  const vars = { alias: '$target', target: 7, half: { numerator: '$alias', denominator: 14 }, loopA: '$loopB', loopB: '$loopA' };
+  const lookup = (name) => vars[name];
+  assert.equal(M.resolveValue('$alias', lookup), 7, 'an alias of an alias');
+  assert.equal(M.resolveValue('$target', lookup), 7);
+  assert.equal(M.resolveValue({ numerator: '$alias', denominator: 14 }, lookup), 0.5);
+  assert.equal(M.resolveValue('$half', lookup), 0.5, 'a fraction behind a name');
+  assert.ok(Number.isNaN(M.resolveValue('$loopA', lookup)), 'a cycle');
+  assert.ok(Number.isNaN(M.resolveValue('$missing', lookup)), 'an unknown name');
+  assert.ok(Number.isNaN(M.resolveValue({ numerator: 1, denominator: 0 }, lookup)), 'a zero denominator');
+  assert.equal(M.resolveValue(3, lookup), 3); assert.equal(M.resolveValue('plain', lookup), 'plain');
+});
+
 test('variables resolve through variables and inside fractions, as the compiler does; a cycle falls back', () => {
   const card = readConfig('ui/components/card.json'), tokens = readConfig('ui/tokens.json').vars;
   const wf = M.DEFAULT_WIREFRAMES.find((w) => w.id === 'card');

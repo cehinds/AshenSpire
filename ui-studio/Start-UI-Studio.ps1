@@ -3,7 +3,19 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 $studioUrl = "http://127.0.0.1:$Port/"
 $ready = $false
-try { $response = Invoke-WebRequest $studioUrl -TimeoutSec 2; $ready = $response.Content.Contains('AshenSpire UI Studio') } catch { }
+# A studio already on this port is reused only when it serves the SAME
+# checkout: /api/session reports the root it edits, and a window opened on a
+# server for another project would write that project's config files.
+$wanted = if ($Project) { (Resolve-Path -LiteralPath $Project).Path } else { $repoRoot }
+$normalize = { param($p) ($p -replace '[\\/]+$', '').ToLowerInvariant() }
+try {
+  $response = Invoke-WebRequest $studioUrl -TimeoutSec 2
+  if ($response.Content.Contains('AshenSpire UI Studio')) {
+    $session = Invoke-RestMethod "${studioUrl}api/session" -TimeoutSec 2
+    if ((& $normalize $session.root) -eq (& $normalize $wanted)) { $ready = $true }
+    else { throw "Port $Port already serves UI Studio for $($session.root); start this checkout on another port with -Port." }
+  }
+} catch { if ($_.Exception.Message -like 'Port * already serves UI Studio*') { throw } }
 if (-not $ready) {
   $node = (Get-Command node -ErrorAction Stop).Source
   $server = Join-Path $PSScriptRoot 'server.mjs'

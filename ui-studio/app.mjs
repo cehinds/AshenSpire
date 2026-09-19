@@ -338,9 +338,11 @@ function leafInput(path, value, kind, vars) {
       // Each operand takes its own editor: a number, or a "$name" picker when
       // the file references a variable (environments.json, paintedOutfits.json do).
       const operand = (key) => { const v = value[key]; const k = M.leafKind(v); return k === 'ref' ? leafInput(`${path}.${key}`, v, 'ref', vars) : `<input type="number" step="any" data-path="${esc(path)}.${key}" data-kind="number" value="${esc(v)}">`; };
-      const shown = (v) => (M.isRef(v) ? (vars.find((x) => `$${x.name}` === v) || {}).value : v);
-      const n = shown(value.numerator), d = shown(value.denominator);
-      const result = typeof n === 'number' && typeof d === 'number' && d !== 0 ? `= ${esc(M.round(n / d, 4))}` : '';
+      // The result is what the compiler and the canvas resolve: a "$name" may
+      // name another variable, so the lookup follows the chain (file vars
+      // first, then the tokens — the order `vars` already carries).
+      const ratio = M.resolveValue(value, (name) => (vars.find((x) => x.name === name) || {}).value);
+      const result = typeof ratio === 'number' && Number.isFinite(ratio) ? `= ${esc(M.round(ratio, 4))}` : '';
       return `<span class="frac">${operand('numerator')} / ${operand('denominator')} <span class="unit">${result}</span></span>`;
     }
     case 'list': return `<input type="text" data-path="${esc(path)}" data-kind="list" value="${esc(value.map((v) => JSON.stringify(v)).join(', '))}" title="Comma-separated JSON values">`;
@@ -401,8 +403,8 @@ function selectionSketchHtml() {
   for (const b of sel) {
     const r = M.resolveBox(b, bp && bp.id);
     html += `<section style="padding:8px 0"><div class="row"><input class="grow" data-box-field="label" data-box="${esc(b.id)}" value="${esc(b.label)}" aria-label="Label"></div>
-      <div class="row"><label>x</label><input type="number" step="any" data-box-geom="x" data-box="${esc(b.id)}" value="${r.x}"><label>y</label><input type="number" step="any" data-box-geom="y" data-box="${esc(b.id)}" value="${r.y}"></div>
-      <div class="row"><label>w</label><input type="number" step="any" data-box-geom="w" data-box="${esc(b.id)}" value="${r.w}"><label>h</label><input type="number" step="any" data-box-geom="h" data-box="${esc(b.id)}" value="${r.h}"> <span class="unit">${s.unit === 'percent' ? '% of viewport' : 'px'}</span></div>
+      <div class="row"><label>x</label><input type="number" step="any" data-box-geom="x" data-box="${esc(b.id)}" value="${r.x}"${b.locked ? ' disabled' : ''}><label>y</label><input type="number" step="any" data-box-geom="y" data-box="${esc(b.id)}" value="${r.y}"${b.locked ? ' disabled' : ''}></div>
+      <div class="row"><label>w</label><input type="number" step="any" data-box-geom="w" data-box="${esc(b.id)}" value="${r.w}"${b.locked ? ' disabled' : ''}><label>h</label><input type="number" step="any" data-box-geom="h" data-box="${esc(b.id)}" value="${r.h}"${b.locked ? ' disabled' : ''}> <span class="unit">${s.unit === 'percent' ? '% of viewport' : 'px'}${b.locked ? ' · locked' : ''}</span></div>
       <div class="hint">= ${M.round(M.boxToPx(r, s.unit, vp).w, 0)}×${M.round(M.boxToPx(r, s.unit, vp).h, 0)}px here${r.overridden ? ` · <strong>overridden for ${esc(bp.label)}</strong> <button class="small" data-clear-override="${esc(b.id)}">reset to base</button>` : ''}${sc.scope === 'breakpoint' ? ' · edits go to this breakpoint' : ''}</div>
       <div class="row"><label><input type="checkbox" data-box-field="locked" data-box="${esc(b.id)}" ${b.locked ? 'checked' : ''}> locked</label><label><input type="checkbox" data-box-field="hidden" data-box="${esc(b.id)}" ${r.hidden ? 'checked' : ''}> hidden${sc.scope === 'breakpoint' ? ' here' : ''}</label></div>
       <div class="row"><label>Note</label><input class="grow" data-box-field="note" data-box="${esc(b.id)}" value="${esc(b.note || '')}" placeholder="what this box is for"></div></section>`;
@@ -588,6 +590,7 @@ function onRightChange(e) {
   if (t.dataset.box && t.dataset.boxGeom) {
     const s = state.sketch.present; const sc = sketchScope(); const vp = viewport();
     const box = s.boxes.find((b) => b.id === t.dataset.box); if (!box) return;
+    if (box.locked) { toast('Locked — untick "locked" to change its geometry', true); renderRight(); return; } // as a drag, a nudge, a grip and Align leave it
     const shown = M.resolveBox(box, sc.breakpointId);
     const next = M.boxToPx({ ...shown, [t.dataset.boxGeom]: Number(t.value) }, s.unit, vp);
     commitSketch(M.applyResolvedRect(s, box.id, next, vp, sc)); return;
