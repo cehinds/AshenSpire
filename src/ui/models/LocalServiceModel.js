@@ -1,4 +1,5 @@
-import { createLocationVisit, previewRest, leaveLocation } from '../../engine/locations.js';
+import { createLocationVisit, arriveAt, previewRest, leaveLocation } from '../../engine/locations.js';
+import { createRng } from '../../engine/rng.js';
 import { resolveLocationId } from '../../model/locations.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { levelUpPlan } from '../../model/levelup.js';
@@ -12,17 +13,22 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
   if (state.used) result.facts.push('This visit has been used.');
   if (handlerId === 'rest') {
     // The place is a carrier (plan phase 7): the point's own row, else its
-    // service type's, else the classic Shrine. The preview runs its rules on
-    // a clone — the same answer the Rest button gives, nothing written — and
-    // on a COPY of the run's live streams when the caller hands them (the
-    // atlas does), so a rolling rule previews the roll the visit will make.
+    // service type's, else the classic Shrine. The preview walks the visit
+    // exactly as entry will — on a CLONE of the run and a COPY of its live
+    // streams (the atlas hands them): it arrives first, unless the service
+    // state says the arrival already happened, so a rule that rolls or
+    // restores on `arrived` is spent before the rest is previewed, and the
+    // rest's answer is the one the Rest button will give. Nothing is written.
     const locationId = resolveLocationId(registries, { nodeId, serviceTypeId }) || 'shrine';
-    const visit = createLocationVisit({ run, registries, rng }, locationId, { healMult });
+    const dryRun = structuredClone(run);
+    const dryRng = rng && typeof rng.getCounters === 'function' ? createRng(rng.seed, rng.getCounters()) : rng;
+    const visit = createLocationVisit({ run: dryRun, registries, rng: dryRng }, locationId, { healMult, refillCounts, arrived: !!state.refilled });
+    arriveAt(visit);
     const noRest = !!visit.restDenied;
     const rest = noRest ? null : previewRest(visit);
     leaveLocation(visit);
     const heal = rest ? rest.heal : 0;
-    const manaGain = rest ? Math.max(0, rest.manaAfter - run.mana) : 0;
+    const manaGain = rest ? Math.max(0, rest.manaAfter - dryRun.mana) : 0;
     const level = levelUpPlan(registries, run);
     const refills = visit.services.flasks;
     const refill = !refills || state.refilled || run.flaskCharges ? null : graceRefillPlan(registries, run, { counts: refillCounts });
