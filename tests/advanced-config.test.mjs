@@ -10,7 +10,32 @@ import {
   configuredContentBundle,
   presentationConfig,
   saveAdvancedConfigFile,
+  parseAdvancedConfigFile,
 } from '../src/model/advancedConfig.js';
+
+test('settings files round trip and leave unrelated settings untouched', () => {
+  const source = { 'gameConfig.presentation.rowAScale': 1.5, 'gameConfig.presentation.gridShape': 'circle' };
+  const current = { 'gameConfig.presentation.rowBScale': 2 };
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(source), contentBundle, current), source);
+  assert.deepEqual(current, { 'gameConfig.presentation.rowBScale': 2 });
+});
+
+test('settings import refuses malformed, oversized, unknown and invalid values atomically', () => {
+  for (const text of ['{', '{}', ' '.repeat(1024 * 1024 + 1),
+    advancedConfigExport({ 'gameConfig.presentation.rowAScale': 90 }),
+    advancedConfigExport({ 'gameConfig.presentation.gridShape': 'triangle' }),
+    advancedConfigExport({ 'gameConfig.presentation.playerGridColor': 'red' }),
+    advancedConfigExport({ 'gameConfig.unknown': true }),
+    '{"game":"Ashen Spire","schemaVersion":1,"overrides":{"__proto__":{}}}',
+  ]) assert.throws(() => parseAdvancedConfigFile(text, contentBundle));
+});
+
+test('settings import accepts exported legacy advanced settings using their row definitions', () => {
+  const rows = [{ cat: 'Advanced', key: 'levelUpValue', type: 'number', integer: true, min: 1, max: 20, def: 1 },
+    { cat: 'Advanced', key: 'cardMotif', type: 'choice', choices: ['band', 'plain'], def: 'plain' }];
+  const text = advancedConfigExport({ levelUpValue: 3, cardMotif: 'band' }, {}, ['cardMotif']);
+  assert.deepEqual(parseAdvancedConfigFile(text, contentBundle, {}, rows), { levelUpValue: 3, cardMotif: 'band' });
+});
 
 test('advanced configuration inventory is complete, grouped, and uniquely keyed', () => {
   const rows = advancedConfigRows(contentBundle);
