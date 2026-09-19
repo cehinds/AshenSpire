@@ -9523,5 +9523,245 @@ export const tagging = [
     "scope": "",
     "objectId": "rogueReachCrown",
     "tagId": "classification.unlock"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "wayfarersKnot",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "prismaticThorn",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "restlessClasp",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "relic",
+    "scope": "",
+    "objectId": "paupersDiadem",
+    "tagId": "classification.relic"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "frostSpear",
+    "tagId": "item:blade"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "frostSpear",
+    "tagId": "blade"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "frostSpear",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "frostSpear",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "frostSpear",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "frostSpear",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
+    "tagId": "item:blade"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
+    "tagId": "heavy"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
+    "tagId": "damage:slashing"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "cinderAxe",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "duskChime",
+    "tagId": "item:magic-focus"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "duskChime",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "duskChime",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "duskChime",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "duskChime",
+    "tagId": "classification.armament"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "bastion",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "reaver",
+    "objectId": "bastion",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "rimeweave",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "starseer",
+    "objectId": "rimeweave",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "waywatcher",
+    "tagId": "item:armor"
+  },
+  {
+    "family": "armour",
+    "scope": "rogue",
+    "objectId": "waywatcher",
+    "tagId": "classification.armour"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rimeThrust",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kilnCleave",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vesperWard",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vesperWard",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "vesperWard",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "lastLantern",
+    "tagId": "classification.event"
+  },
+  {
+    "family": "event",
+    "scope": "",
+    "objectId": "lanternCaravan",
+    "tagId": "classification.event"
   }
 ];
