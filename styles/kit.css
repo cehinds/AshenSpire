@@ -4970,3 +4970,5 @@ button[data-button-size] {
   .customize:has(#cz-equipment-panel) .as-rail { display:none; }
   .customize:has(#cz-equipment-panel) .cz-pane { width:100%; height:100%; }
 }
+.customize .cc-card-selectors .epc-footer { font-size:13px; line-height:1; }
+.customize .cc-compact-details .inspection-facts .inspection-tag { font-size:max(12px,calc(12px / var(--ui-zoom,1))); }

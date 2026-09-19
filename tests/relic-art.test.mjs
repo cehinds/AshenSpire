@@ -4,9 +4,9 @@ import { existsSync } from 'node:fs';
 import { relics } from '../src/content/relics.js';
 import { relicArtAsset } from '../src/model/relicArt.js';
 
-test('painted relic paths resolve to shipped WebPs for eight catalog identities', () => {
+test('painted relic paths resolve to shipped WebPs for twelve catalog identities', () => {
   const painted = relics.filter(relic => relicArtAsset(relic));
-  assert.equal(painted.length, 8);
+  assert.equal(painted.length, 12);
   for (const relic of painted) {
     assert.ok(existsSync(new URL('../' + relicArtAsset(relic), import.meta.url)), relic.id);
     assert.equal(relicArtAsset(relic.id), relicArtAsset(relic));

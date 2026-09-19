@@ -2,6 +2,7 @@
 const PAINTED_RELICS = new Set([
   'forsakenMedallion', 'starstoneShard', 'cutpursesCoin', 'goldFigurine',
   'goldenSprout', 'crackedLantern', 'bloodstainedChalice', 'crownOfStitches',
+  'ivoryComb', 'blessedDew', 'gravetendersBell', 'wyrmHeart',
 ]);
 
 export function relicArtAsset(relic) {
