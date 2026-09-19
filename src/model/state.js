@@ -813,9 +813,27 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         problems.push('pendingReward.states must be an object');
       } else {
         const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
-        for (const [kind, state] of Object.entries(pending.states)) {
-          if (!rewardKinds.includes(kind) || !['taken', 'skipped'].includes(state)) {
-            problems.push(`pendingReward.states.${kind || '<empty>'} must be taken or skipped for a known reward kind`);
+        const draftIds = new Set((Array.isArray(pending.rewards?.skillDrafts) ? pending.rewards.skillDrafts : []).map((d) => d && d.skillId));
+        for (const [key, state] of Object.entries(pending.states)) {
+          // A key is a kind, or `skillDraft:<skillId>` for a draft the offer carries (plan phase 4b).
+          const known = rewardKinds.includes(key) || (key.startsWith('skillDraft:') && draftIds.has(key.slice('skillDraft:'.length)));
+          if (!known || !['taken', 'skipped'].includes(state)) {
+            problems.push(`pendingReward.states.${key || '<empty>'} must be taken or skipped for a known reward kind`);
+          }
+        }
+      }
+      if (pending.chosenDraftCardIds !== undefined) {
+        const chosen = pending.chosenDraftCardIds;
+        if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by track');
+        else {
+          const drafts = Array.isArray(pending.rewards?.skillDrafts) ? pending.rewards.skillDrafts : [];
+          for (const [skillId, cardId] of Object.entries(chosen)) {
+            const draft = drafts.find((d) => d && d.skillId === skillId);
+            if (!draft || !Array.isArray(draft.cardIds) || !draft.cardIds.includes(cardId)) problems.push(`pendingReward.chosenDraftCardIds.${skillId} must name a card of that draft`);
+            if (pending.states?.[`skillDraft:${skillId}`] !== 'taken') problems.push(`pendingReward.chosenDraftCardIds.${skillId} requires the draft's Taken state`);
+          }
+          for (const draft of drafts) {
+            if (draft && pending.states?.[`skillDraft:${draft.skillId}`] === 'taken' && !chosen[draft.skillId]) problems.push(`pendingReward skillDraft:${draft.skillId} Taken state requires its chosen card`);
           }
         }
       }

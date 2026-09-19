@@ -43,6 +43,7 @@ import {
   rollEncounter,
   rollRuneReward,
   rollCardRewardIds,
+  rollSkillDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
@@ -75,7 +76,7 @@ import {
 } from '../src/model/loadout.js';
 import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
-import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS } from '../src/model/skills.js';
+import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
 import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
@@ -8642,6 +8643,84 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!party.skillXp[ally], 'the ally guarded is paid nothing');
     eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 5 }, { owner: party.players.get('A').entity }), true, "a seat's gate reads its own ledger");
     eq(evalPredicate(party, { p: 'skillLevelAtLeast', skill: 'item:blade', level: 1 }, { owner: entB }), false, 'and not the active seat\'s');
+  });
+
+  test('86. skill drafts: the level buys a pick from the track\'s own schools, rarity opens by level, the threshold upgrades the deck (plan phase 4b)', () => {
+    const c = REG.balance.skill;
+    // THE SCHOOLS ARE DERIVED from what the hands hold — a straight sword's
+    // tagging rows, not a second table; armour and class tracks draft nothing.
+    const reaver = createRunState({ seed: 0x4b4b, classId: 'reaver', registries: REG });
+    eq(skillSchools(REG, reaver.loadout, 'reaver', 'item:blade').join(','), 'blade,basic', 'the held sword names the blade track\'s schools');
+    eq(skillSchools(REG, reaver.loadout, 'reaver', 'item:shield').join(','), 'guard,basic', 'the held shield names the shield track\'s');
+    eq(skillSchools(REG, reaver.loadout, 'reaver', 'dualWield').join(','), 'blade,basic,guard', 'dual-wield reads both hands');
+    eq(skillSchools(REG, reaver.loadout, 'reaver', 'armour:heavy').length, 0, 'an armour track has no schools');
+    eq(skillSchools(REG, reaver.loadout, 'reaver', 'class:reaver').length, 0, 'nor a class track (phase 5b\'s tree)');
+    assert(skillSchools(REG, reaver.loadout, 'reaver', 'item:magic-focus').includes('starstone'), 'an unheld type falls back to every piece of the type');
+    // RARITY OPENS BY LEVEL, from the balance rows, level 0 opening nothing.
+    eq(rarityUnlockedAt(REG, 0).length, 0); eq(rarityUnlockedAt(REG, c.rarityUnlock.common).join(','), 'common');
+    eq(rarityUnlockedAt(REG, c.rarityUnlock.uncommon).join(','), 'common,uncommon'); eq(rarityUnlockedAt(REG, c.rarityUnlock.rare).join(','), 'common,uncommon,rare');
+    // THE ROLL: draftSize distinct cards of the class pool, each of a school
+    // the track owns and a rarity the level has opened; the same stream as
+    // the card offer, and an empty pool draws nothing.
+    const rogue = createRunState({ seed: 0x4b4b, classId: 'rogue', registries: REG });
+    const pool = REG.classes.get('rogue').cardPool;
+    const bladeSchools = new Set(skillSchools(REG, rogue.loadout, 'rogue', 'item:blade'));
+    const low = rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: 1 });
+    eq(low.length, c.draftSize, 'a full draft'); eq(new Set(low).size, low.length, 'distinct cards');
+    for (const id of low) {
+      const def = REG.cards.get(id);
+      assert(pool.includes(id), `${id} is in the class pool`);
+      assert((def.tags || []).some((t) => bladeSchools.has(t)), `${id} carries a blade school`);
+      eq(def.rarity, 'common', 'level 1 drafts commons only');
+    }
+    const high = rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: c.rarityUnlock.rare });
+    assert(high.every((id) => ['common', 'uncommon', 'rare'].includes(REG.cards.get(id).rarity)), 'a high level drafts from the opened set');
+    const rngEmpty = createRng(7); const beforeCounters = JSON.stringify(rngEmpty.getCounters());
+    const starseer = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: REG });
+    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
+    eq(JSON.stringify(rngEmpty.getCounters()), beforeCounters, 'and draws nothing');
+    eq(rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: 0 }).length, 0, 'level 0 has opened no rarity');
+    // THE MENU: one keyed row per draft, ahead of the card row, each a choice
+    // auto-collect resolves through the injected pick; NEW reads the draft's cards.
+    const offer = { cinders: 5, skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: low }, { skillId: 'item:shield', level: 1, cardIds: ['quickCut'] }], cardIds: [], relicId: 'forsakenMedallion' };
+    const plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
+    eq(plan.rows.map((r) => r.key).join(','), 'cinders,skillDraft:item:blade,skillDraft:item:shield,relic', 'keyed rows in the declared order; an empty card offer has no row');
+    eq(plan.rows[1].choice, true); eq(plan.rows[2].choice, false);
+    const auto = resolveContinue(plan, { 'skillDraft:item:blade': 'skipped' }, 'auto', () => 0);
+    eq(auto.take.map((r) => r.key).join(','), 'cinders,skillDraft:item:shield,relic', 'a skipped draft stays skipped; the one-card draft takes itself');
+    eq(auto.take[1].cardId, 'quickCut');
+    eq(resolveContinue(plan, {}, 'auto', (n) => 2 % n).take.find((r) => r.key === 'skillDraft:item:blade').cardId, low[2], 'the pick is the injected one');
+    assert(unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[1]) && !unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[0]), 'NEW reads the drafts\' cards');
+    assert(REWARD_KIND_ORDER.indexOf('skillDraft') < REWARD_KIND_ORDER.indexOf('card'), 'the draft sits where the class card sat');
+    // THE THRESHOLD UPGRADES THE DECK, once, for the track's schools only.
+    const before = reaver.deck.filter((x) => x.upgraded).length; eq(before, 0);
+    const toThreshold = Array.from({ length: c.upgradeAt }, (_, lvl) => xpToNext(REG, 'weapon', lvl)).reduce((a, b) => a + b, 0);
+    const award = awardSkillXp(REG, reaver, 'item:blade', toThreshold);
+    eq(award.after, c.upgradeAt, 'the award reached the threshold');
+    const bladeCards = reaver.deck.filter((x) => (REG.cards.get(x.cardId).tags || []).some((t) => ['blade', 'basic'].includes(t)));
+    assert(bladeCards.length > 0 && bladeCards.every((x) => x.upgraded), 'every blade-school card in the deck is upgraded');
+    assert(reaver.deck.filter((x) => x.cardId === 'defend').every((x) => !x.upgraded), 'a guard-only card is not');
+    eq(award.upgraded.length, bladeCards.length, 'the award names what it upgraded');
+    eq(awardSkillXp(REG, reaver, 'item:blade', xpToNext(REG, 'weapon', c.upgradeAt)).upgraded.length, 0, 'the next level upgrades nothing again');
+    eq(applySkillUpgrades(REG, reaver, 'item:blade').length, 0, 'idempotent');
+    assert(skillUpgradesCards(REG, c.upgradeAt) && !skillUpgradesCards(REG, c.upgradeAt - 1));
+    eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt + 1, 'each level queued a draft');
+    assert(spendSkillDraft(reaver, 'item:blade')); eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt);
+    assert(!spendSkillDraft(reaver, 'item:shield'), 'a track with no draft queued spends nothing');
+    // THE SAVE DOOR: a draft's state key is known only when the offer carries
+    // that draft; a chosen card must be the draft's and its row Taken.
+    const pending = (states, chosenDraftCardIds, drafts = offer.skillDrafts) => validateRunShape({ ...reaver, pendingReward: { schemaVersion: 1, source: 'normal', after: 'map', rewards: { ...offer, skillDrafts: drafts }, states, chosenCardId: null, chosenDraftCardIds } }).join(' | ');
+    eq(pending({ 'skillDraft:item:blade': 'taken' }, { 'item:blade': low[0] }), '', 'a taken draft with its card passes');
+    assert(/states\.skillDraft:item:magic-focus/.test(pending({ 'skillDraft:item:magic-focus': 'taken' }, {})), 'a draft the offer does not carry is refused by name');
+    assert(/chosenDraftCardIds\.item:blade must name a card of that draft/.test(pending({ 'skillDraft:item:blade': 'taken' }, { 'item:blade': 'stomp' })));
+    assert(/requires the draft's Taken state/.test(pending({}, { 'item:blade': low[0] })));
+    assert(/Taken state requires its chosen card/.test(pending({ 'skillDraft:item:blade': 'taken' }, {})));
+    // The balance rows are refused by name.
+    const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
+    const withSkill = (skill) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, ...skill } } });
+    assert(said(withSkill({ rarityUnlock: { ...c.rarityUnlock, legendary: 10 } })).some((e) => /rarityUnlock\.legendary/.test(e)), 'a rarity the game has not got is refused by name');
+    assert(said(withSkill({ draftSize: 0 })).some((e) => /balance\.skill\.draftSize/.test(e)), 'a zero draft is refused by name');
+    assert(said(withSkill({ upgradeAt: 2.5 })).some((e) => /balance\.skill\.upgradeAt/.test(e)));
   });
 
   const passed = results.filter((r) => r.ok).length;

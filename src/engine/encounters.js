@@ -18,6 +18,7 @@ import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/q
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 import { eligibleWeaponArts } from '../model/armamentTrading.js';
 import { carriedIds } from '../model/loadout.js';
+import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -96,6 +97,50 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     }
     const options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
+    picks.push(rng.pick('cardRewards', options));
+  }
+  return picks;
+}
+
+/**
+ * rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level,
+ * size }) → distinct card ids for one skill draft (plan phase 4b): the class
+ * reward pool filtered to the track's schools (model/skills.js skillSchools),
+ * rarities unlocked by the level (balance.skill.rarityUnlock), weighted by
+ * the normal reward odds, `balance.skill.draftSize` picks on the same
+ * 'cardRewards' stream the card offer rolls on. An empty pool rolls nothing
+ * and draws nothing.
+ */
+export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, size }) {
+  const skill = registries.balance.skill || {};
+  const count = Number.isInteger(size) ? size : skill.draftSize;
+  const schools = new Set(skillSchools(registries, loadout, classId, skillId));
+  const unlocked = rarityUnlockedAt(registries, level);
+  if (!schools.size || !unlocked.length || !(count > 0)) return [];
+  const weights = registries.balance.rewards.rarityWeights.normal;
+  const byRarity = {};
+  for (const id of registries.classes.get(classId).cardPool) {
+    const def = registries.cards.get(id);
+    if (!unlocked.includes(def.rarity) || !(def.tags || []).some((t) => schools.has(t))) continue;
+    (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
+  }
+  const rarities = unlocked.filter((r) => byRarity[r] && byRarity[r].length && weights[r] > 0);
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!total) return [];
+  const picks = [];
+  let guard = 0;
+  while (picks.length < count && guard++ < 100) {
+    let roll = rng.float('cardRewards') * total;
+    let rarity = rarities[rarities.length - 1];
+    for (const r of rarities) {
+      roll -= weights[r];
+      if (roll < 0) { rarity = r; break; }
+    }
+    const options = byRarity[rarity].filter((id) => !picks.includes(id));
+    if (!options.length) {
+      if (rarities.every((r) => byRarity[r].every((id) => picks.includes(id)))) break;
+      continue;
+    }
     picks.push(rng.pick('cardRewards', options));
   }
   return picks;

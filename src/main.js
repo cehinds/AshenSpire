@@ -30,6 +30,7 @@ import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_S
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
+import { skillTracks, skillSchools } from './model/skills.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from './model/seats.js';
@@ -40,6 +41,7 @@ import {
   rollEncounter,
   rollRuneReward,
   rollCardRewardIds,
+  rollSkillDraftIds,
   rollFlaskDrop,
   rollRelicReward,
   buildShopStock,
@@ -2088,10 +2090,12 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
+    const bossDrafts = rollSkillDrafts();
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
-      cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+      skillDrafts: bossDrafts,
+      cardIds: bossDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -2099,10 +2103,15 @@ async function onCombatEnd(result, combat, enc) {
     return beginPendingReward(bossRewards, { source: 'boss', after: run.journey ? 'map' : 'advanceAct' });
   }
 
+  // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
+  // a level the fight bought is offered as a pick from the track's own
+  // schools, and while one is on the table the class-card offer is not.
+  const drafts = rollSkillDrafts();
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
-    cardIds: rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    skillDrafts: drafts,
+    cardIds: drafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // Elites are the mid-run source of armaments; ordinary fights are not
@@ -2114,6 +2123,27 @@ async function onCombatEnd(result, combat, enc) {
   beginPendingReward(rewards, { source: enc.pool, after: 'map' });
 }
 
+/**
+ * The drafts the ledger has queued, one per track with a draft pending and at
+ * most balance.skill.draftsPerCombat per track per door (the rest wait for
+ * the next fight); a track whose schools offer nothing rolls no row and keeps
+ * its draft. Rolled on the 'cardRewards' stream the card offer would have
+ * used.
+ */
+function rollSkillDrafts() {
+  const perDoor = registries.balance.skill.draftsPerCombat;
+  const out = [];
+  for (const track of skillTracks(registries)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row || !(row.pendingDrafts > 0)) continue;
+    for (let i = 0; i < Math.min(perDoor, row.pendingDrafts); i++) {
+      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level });
+      if (cardIds.length) out.push({ skillId: track.id, level: row.level, cardIds });
+    }
+  }
+  return out;
+}
+
 function beginPendingReward(rewards, { source, after }) {
   run.pendingReward = {
     schemaVersion: 1,
@@ -2122,6 +2152,7 @@ function beginPendingReward(rewards, { source, after }) {
     rewards: structuredClone(rewards),
     states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
     chosenCardId: null,
+    chosenDraftCardIds: {},
   };
   persist();
   return mountPendingReward();
@@ -2904,10 +2935,21 @@ if (shotState === 'combat-test') {
     const smithingStoneReceipt = pose === 'empty'
       ? null
       : grantSmithingReward(registries, run, 'elite', 'shot:reward');
+    // `?shotReward=draft` poses a skill draft in the card row's seat (plan
+    // phase 4b): the ledger is given the queued draft the row spends, so the
+    // take runs the real door, and the cards are the pool's first three of
+    // the track's schools — authored order, no roll.
+    if (pose === 'draft') {
+      run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
+    }
+    const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, run.class, 'item:blade')) : null;
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
-      cardIds: registries.classes.get(run.class).cardPool.slice(0, 3),
+      ...(pose === 'draft' ? {
+        skillDrafts: [{ skillId: 'item:blade', level: 2, cardIds: registries.classes.get(run.class).cardPool.filter((id) => (registries.cards.get(id).tags || []).some((t) => draftSchools.has(t))).slice(0, 3) }],
+        cardIds: [],
+      } : { cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }),
       flaskId: 'crimsonFlask',
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',

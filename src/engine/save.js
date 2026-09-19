@@ -43,6 +43,7 @@ import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
+import { skillKindOf } from '../model/skills.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -100,6 +101,12 @@ function pendingRewardReferenceProblems(pending, registries) {
   const problems = [];
   for (const cardId of rewards.cardIds || []) {
     if (!registries.cards.has(cardId)) problems.push(`card '${cardId}' is unknown`);
+  }
+  for (const draft of rewards.skillDrafts || []) {
+    if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
+    for (const cardId of (draft && draft.cardIds) || []) {
+      if (!registries.cards.has(cardId)) problems.push(`skill draft card '${cardId}' is unknown`);
+    }
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
