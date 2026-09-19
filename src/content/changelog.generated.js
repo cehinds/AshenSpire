@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1190",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Levelling a weapon now lets you draft a card of its own school",
+    "detail": "Every rung a weapon skill climbs sets aside a draft, and the spoils door after a fight now offers it: pick one of three cards drawn from the schools the weapon you hold belongs to, in the seat the class-card offer used to take. Higher rungs open rarer cards, common first, then uncommon, then rare. When a skill reaches its fifth rung, every card of that school already in your deck is upgraded on the spot, and a card drafted from then on arrives upgraded. A draft you do not take waits for the next fight; a weapon with no cards of its school in your class's pool keeps its draft rather than offering nothing. Armour and class skills draft nothing yet.",
+    "build": "0.7.1.195",
+    "pullRequest": 1190,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1190"
+  },
+  {
     "id": "pr-1189",
     "date": "2026-09-19",
     "group": "2026-09-19",

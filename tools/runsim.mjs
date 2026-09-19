@@ -26,7 +26,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
-import { skillTracks } from '../src/model/skills.js';
+import { skillTracks, spendSkillDraft, skillUpgradesCards } from '../src/model/skills.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
 import { seatAtTier, seatTierHpMult } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
@@ -36,7 +36,7 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import {
-  rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
+  rollEncounter, rollRuneReward, rollCardRewardIds, rollSkillDraftIds, rollFlaskDrop,
   rollRelicReward, shrineHealAmount, applyGraceRefill,
 } from '../src/engine/encounters.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
@@ -134,13 +134,14 @@ let graces = 0;
 let levelUps = 0;
 let cinderSpentOnLevels = 0;
 let cinderLeftAtEnd = 0;
+let skillDraftsTaken = 0;
 let levelUpsInWins = 0;
 // Every per-fleet counter, zeroed together: the A/B runs fleet() twice and a
 // counter that survived the first fleet would report the OFF side's level-ups
 // and cinders inside the ON side's lines.
 function resetFleetCounters() {
   poured = 0; graces = 0;
-  levelUps = 0; cinderSpentOnLevels = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0;
+  levelUps = 0; cinderSpentOnLevels = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0; skillDraftsTaken = 0;
 }
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
@@ -273,7 +274,23 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
 
 function afterVictory(run, rng, pool) {
   run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-  const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
+  // The skill drafts, as main.js offers them (plan phase 4b): one per track
+  // with a draft queued, capped per door, the bot taking the first card; a
+  // draft on the table takes the card row's seat.
+  let drafts = 0;
+  for (const track of skillTracks(REG)) {
+    const row = run.skills && run.skills[track.id];
+    if (!row || !(row.pendingDrafts > 0)) continue;
+    for (let i = 0; i < Math.min(REG.balance.skill.draftsPerCombat, row.pendingDrafts); i++) {
+      const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
+      if (!ids.length) break;
+      spendSkillDraft(run, track.id);
+      run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });
+      drafts += 1;
+    }
+  }
+  skillDraftsTaken += drafts;
+  const cards = drafts ? [] : rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
   if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
   const flask = rollFlaskDrop(REG, rng, run);
   if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
@@ -501,6 +518,7 @@ if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
 console.log(`level-ups bought at shrines: ${levelUps} over ${tally.runs} runs = ${(levelUps / Math.max(1, tally.runs)).toFixed(1)} per run` + (LEVEL_COST ? ` (ladder ${LEVEL_COST})` : ' (shipped ladder)') + ` — E13's acceptance range is 10-20 per run; over the ${tally.wins} full (victorious) runs: ${(levelUpsInWins / Math.max(1, tally.wins)).toFixed(1)} per run`);
 console.log(`event choices recorded: ${tally.eventChoices} over ${tally.runs} runs, ${tally.questSteps} of them answering a gated quest step (E12) — 0 gated steps across a fleet means the chain never entered the simulation`);
+console.log(`skill drafts taken: ${skillDraftsTaken} over ${tally.runs} runs = ${(skillDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 4b: one per track per door, the bot takes the first card)`);
 console.log(`cinder economy: ${cinderSpentOnLevels} spent on levels + ${cinderLeftAtEnd} left at run end = ${((cinderSpentOnLevels + cinderLeftAtEnd) / Math.max(1, tally.runs)).toFixed(0)} cinders per run available to a shrine (the bot buys nothing at merchants)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
 return { ...tally, graces, poured };

@@ -28,7 +28,18 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'skillDraft', 'card', 'flask', 'armament', 'relic']);
+
+/**
+ * A row's KEY is what its state is kept under (`states[key]`): the kind for
+ * the kinds an offer carries once, and `skillDraft:<skillId>:<ordinal>` for a
+ * skill draft, of which one offer may carry several — several for one track
+ * when draftsPerCombat allows it, the ordinal telling them apart (plan phase
+ * 4b). Every reader
+ * of a state goes through the key, so the saved `states` of a pre-draft
+ * offer (keyed by kind) still read.
+ */
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}` : kind);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -45,6 +56,18 @@ const KINDS = {
   smithingStone: {
     present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
     row: (r) => ({ ...r.smithingStoneReceipt }),
+    blocked: () => null,
+  },
+  skillDraft: {
+    // One row per draft the offer carries; each is a CHOICE (pick 1 of N)
+    // the way a card offer is, keyed by its track so two drafts never share
+    // a state. `rows` is the multi-row door: the descriptor yields a list.
+    present: (r) => Array.isArray(r.skillDrafts) && r.skillDrafts.some((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0),
+    rows: (r) => {
+      const seen = {};
+      return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 }));
+    },
     blocked: () => null,
   },
   card: {
@@ -98,7 +121,9 @@ export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSl
   for (const kind of REWARD_KIND_ORDER) {
     const d = KINDS[kind];
     if (!d.present(rewards)) continue;
-    rows.push({ kind, blockedBy: d.blocked(rewards, facts), ...d.row(rewards) });
+    for (const fields of d.rows ? d.rows(rewards) : [d.row(rewards)]) {
+      rows.push({ kind, key: rowKey(kind, fields), blockedBy: d.blocked(rewards, facts), ...fields });
+    }
   }
   return { rows };
 }
@@ -122,11 +147,11 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
   const take = [];
   const leave = [];
   for (const row of plan.rows) {
-    const state = states[row.kind];
+    const state = states[row.key];
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (row.kind === 'card') {
+      if (row.kind === 'card' || row.kind === 'skillDraft') {
         const cardId = row.choice ? row.cardIds[pick(row.cardIds.length) % row.cardIds.length] : row.cardIds[0];
         take.push({ ...row, cardId });
       } else {
@@ -150,17 +175,20 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
 export function rewardClaimStatus(plan, states = {}) {
   const rows = plan.rows.map((row) => Object.freeze({
     kind: row.kind,
-    state: states[row.kind] || (row.blockedBy ? 'blocked' : 'available'),
+    key: row.key,
+    state: states[row.key] || (row.blockedBy ? 'blocked' : 'available'),
   }));
   const count = (state) => rows.filter((row) => row.state === state).length;
-  const card = plan.rows.find((row) => row.kind === 'card');
+  // The first choice still waiting, in row order: a skill draft before the
+  // card offer, as the menu lists them.
+  const choice = plan.rows.find((row) => row.choice && !states[row.key]);
   return Object.freeze({
     total: rows.length,
     claimed: count('taken'),
     skipped: count('skipped'),
     blocked: count('blocked'),
     available: count('available'),
-    requiredChoice: card && card.choice && !states.card ? Object.freeze({ kind: 'card', count: card.cardIds.length }) : null,
+    requiredChoice: choice ? Object.freeze({ kind: choice.kind, key: choice.key, count: choice.cardIds.length }) : null,
     rows: Object.freeze(rows),
   });
 }
@@ -173,8 +201,9 @@ export function rewardClaimStatus(plan, states = {}) {
  */
 export function unseenIds(rewards = {}, possessions = {}) {
   const holds = (set, id) => !!(set && set.has(id));
+  const draftIds = (rewards.skillDrafts || []).flatMap((d) => (d && d.cardIds) || []);
   return {
-    cards: (rewards.cardIds || []).filter((id) => !holds(possessions.cards, id)),
+    cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
     relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
     flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
     armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],

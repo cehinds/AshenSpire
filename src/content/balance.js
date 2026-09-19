@@ -72,6 +72,16 @@ export const balance = {
   skill: {
     xp: { base: 30, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5 },
     class: { xp: { base: 60, growth: 1.25, roundTo: 5 } },
+    // The drafts a level buys (plan phase 4b, proposal §6.1): pick 1 of
+    // `draftSize` cards of the track's schools; at most `draftsPerCombat`
+    // drafts per track per reward door, the rest queue; a rarity is drafted
+    // from the level its row names (the game has no legendary rarity, so the
+    // proposal's fourth row has no seat); at `upgradeAt` every deck card of
+    // the track's schools is upgraded, the shrine keeping the rest.
+    rarityUnlock: { common: 1, uncommon: 4, rare: 7 },
+    draftSize: 3,
+    draftsPerCombat: 1,
+    upgradeAt: 5,
   },
 
   // ---- M2 run economy (SPEC §6) ---------------------------------------------

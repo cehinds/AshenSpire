@@ -14,6 +14,11 @@
 // carries a number of its own.
 
 import { mechanics } from '../framework/data/mechanics.js';
+import { activeIn, HAND_SLOT_IDS } from './zones.js';
+
+// The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
+// because loadout.js would close an import cycle through validate.js).
+const ITEM_OWNED_ROLES = Object.freeze(['granted', 'weaponArt']);
 
 /** The kinds of track, and the balance row each reads its curve from. */
 export const SKILL_KINDS = Object.freeze(['weapon', 'armour', 'focus', 'dual', 'class']);
@@ -101,7 +106,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { skillId, before, after: before, levelUps: 0 };
+  if (gain <= 0) return { skillId, before, after: before, levelUps: 0, upgraded: [] };
   row.xp += gain;
   let cost = xpToNext(registries, kind, row.level);
   while (row.xp >= cost) {
@@ -110,7 +115,118 @@ export function awardSkillXp(registries, run, skillId, amount) {
     row.pendingDrafts += 1;
     cost = xpToNext(registries, kind, row.level);
   }
-  return { skillId, before, after: row.level, levelUps: row.level - before };
+  // The auto-upgrade threshold (plan phase 4b) is a STANDING RULE, applied at
+  // every write of a track at or past it — not only the crossing — so a card
+  // that joined the deck later, and a ledger written before the rule existed,
+  // are upgraded at the next award. Idempotent, so the cost of re-asking is
+  // one pass over the deck.
+  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
+  return { skillId, before, after: row.level, levelUps: row.level - before, upgraded };
+}
+
+// ---- drafts, rarity and auto-upgrade (plan phase 4b) ------------------------
+
+function draftRows(registries) {
+  return (((registries || {}).balance || {}).skill) || {};
+}
+
+/**
+ * skillSchools(registries, loadout, skillId) → the card schools a track
+ * drafts from, DERIVED, no second table: a weapon or focus track reads the
+ * card-domain tags the HELD pieces of that item type carry in tagging.csv (a
+ * greatsword: blade, heavy; a straight sword: blade, basic); dualWield reads
+ * both hands; a type no hand holds has no schools — the draft waits until
+ * one is held (a union over every piece of the type would hand a swordless
+ * blade track guard and blood cards); armour and class tracks have no
+ * schools (nothing to draft until phase 5b's tree). "The sword you levelled
+ * drafts sword cards."
+ */
+export function skillSchools(registries, loadout, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  if (kind !== 'weapon' && kind !== 'focus' && kind !== 'dual') return [];
+  const schools = new Set((Array.isArray(registries && registries.nodes) ? registries.nodes : [])
+    .filter((n) => n.parentId === 'card').map((n) => n.id));
+  const armaments = (((registries || {}).equipment || {}).armaments) || [];
+  // The hands, read through the zones leaf (loadout.js would close an import
+  // cycle through validate.js): a track's cards come from what the hands hold.
+  const held = Object.values(HAND_SLOT_IDS).map((slotId) => activeIn(loadout, slotId))
+    .map((id) => (id ? armaments.find((a) => a.id === id) : null)).filter(Boolean);
+  const ofType = (piece) => (piece.itemTypeTags || []).includes(skillId);
+  const pieces = kind === 'dual' ? held : held.filter(ofType);
+  const out = [];
+  for (const piece of pieces) {
+    for (const tag of piece.tags || []) if (schools.has(tag) && !out.includes(tag)) out.push(tag);
+  }
+  return out;
+}
+
+/**
+ * rarityUnlockedAt(registries, level) → the rarities a track at `level` may
+ * draft: every row of balance.skill.rarityUnlock whose threshold the level
+ * has reached. Level 0 unlocks nothing — a draft is a level's reward.
+ */
+export function rarityUnlockedAt(registries, level) {
+  const unlock = draftRows(registries).rarityUnlock || {};
+  return Object.keys(unlock).filter((rarity) => Number.isInteger(unlock[rarity]) && level >= unlock[rarity]);
+}
+
+/** Whether a track at `level` has reached the auto-upgrade threshold. */
+export function skillUpgradesCards(registries, level) {
+  const at = draftRows(registries).upgradeAt;
+  return Number.isInteger(at) && at > 0 && level >= at;
+}
+
+/**
+ * applySkillUpgrades(registries, run, skillId) → the instance ids upgraded:
+ * every ORDINARY deck card carrying one of the track's schools gains
+ * `upgraded: true` (proposal §6.1: "skill thresholds auto-upgrade cards
+ * tagged with that group"; the shrine keeps the untagged ones). An
+ * equipment-bound basic (`sourceArmamentId`) and an item-owned card (a kit,
+ * package or weapon-art card) are the piece's: their upgrade is the smith's
+ * tier, and stampDeck re-derives it on every restamp, so a flag written here
+ * would be gone by the reward door. Idempotent; a card already upgraded is
+ * not counted.
+ */
+export function applySkillUpgrades(registries, run, skillId) {
+  const schools = new Set(skillSchools(registries, run.loadout, skillId));
+  if (!schools.size || !Array.isArray(run.deck)) return [];
+  const cards = registries && registries.cards;
+  const out = [];
+  for (const inst of run.deck) {
+    if (!inst || inst.upgraded || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) continue;
+    const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
+    if (!def || !(def.tags || []).some((t) => schools.has(t))) continue;
+    inst.upgraded = true;
+    out.push(inst.instanceId);
+  }
+  return out;
+}
+
+/**
+ * reconcileSkillUpgrades(registries, run) → { [skillId]: instanceIds }, the
+ * standing rule asked of every track at or past the threshold — the load
+ * door's call, for a ledger written before the rule existed (a schema-8 save
+ * carries no version for it, and none is needed: the rule is idempotent).
+ */
+export function reconcileSkillUpgrades(registries, run) {
+  const out = {};
+  for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
+    if (!row || !skillUpgradesCards(registries, row.level) || !skillKindOf(registries, skillId)) continue;
+    const ids = applySkillUpgrades(registries, run, skillId);
+    if (ids.length) out[skillId] = ids;
+  }
+  return out;
+}
+
+/**
+ * spendSkillDraft(run, skillId) → true when a queued draft was spent. The
+ * reward door's one write to the ledger's draft count.
+ */
+export function spendSkillDraft(run, skillId) {
+  const row = run && run.skills && run.skills[skillId];
+  if (!row || !(row.pendingDrafts > 0)) return false;
+  row.pendingDrafts -= 1;
+  return true;
 }
 
 /**

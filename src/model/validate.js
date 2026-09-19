@@ -36,6 +36,7 @@ import {
   RELIC_MODIFIER_TAGS,
   NODE_RELATIONS,
   VARIABLE_SCOPES,
+  CARD_RARITIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
@@ -532,7 +533,20 @@ function collectContentProblems(bundle, errors = []) {
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
-      for (const key of Object.keys(skill)) if (!['xp', 'class'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      for (const key of Object.keys(skill)) if (!['xp', 'class', 'rarityUnlock', 'draftSize', 'draftsPerCombat', 'upgradeAt'].includes(key)) err(`balance.skill.${key}`, 'Unknown field');
+      // The draft rows (plan phase 4b), each present and refused by name.
+      for (const key of ['draftSize', 'draftsPerCombat', 'upgradeAt']) {
+        if (!Number.isInteger(skill[key]) || skill[key] < 1) err(`balance.skill.${key}`, `must be a positive integer, got ${JSON.stringify(skill[key])}`);
+      }
+      if (!skill.rarityUnlock || typeof skill.rarityUnlock !== 'object' || Array.isArray(skill.rarityUnlock)) {
+        err('balance.skill.rarityUnlock', 'must be an object { <rarity>: level }');
+      } else {
+        for (const [rarity, level] of Object.entries(skill.rarityUnlock)) {
+          if (!CARD_RARITIES.includes(rarity)) err(`balance.skill.rarityUnlock.${rarity}`, `'${rarity}' is not a card rarity (${CARD_RARITIES.join(', ')})`);
+          if (!Number.isInteger(level) || level < 1) err(`balance.skill.rarityUnlock.${rarity}`, `must be a positive integer level, got ${JSON.stringify(level)}`);
+        }
+        if (!Object.keys(skill.rarityUnlock).length) err('balance.skill.rarityUnlock', 'names no rarity — no draft could ever offer a card');
+      }
       curve(skill.xp, 'balance.skill.xp');
       if (skill.xp && typeof skill.xp === 'object') {
         for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);

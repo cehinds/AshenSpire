@@ -309,6 +309,32 @@ Acceptance: headless run reaches greatsword level 2 after N hits and offers
 one draft with three greatsword-tagged commons; a second level-up in the
 same combat queues to the next reward; simulator prints per-track levels.
 
+**4b AS BUILT (2026-09-19):** drafts, rarity and auto-upgrade landed; the
+smithing re-point did NOT, and is its own PR (4b-ii) — `model/smithing.js`
+carries its own schema version and the smith panel's transaction, and a
+door that offers cards should not also re-tier the forge in one review. Two
+decisions to state: (1) the tree keeps a Blade ITEM TYPE and a Blade CARD
+SCHOOL as distinct nodes, so "filter by group tag" had no single tag to
+filter by — the schools a track drafts from are DERIVED from the held
+piece's own card-domain tags in tagging.csv (`skillSchools`), falling back
+to every piece of the type; an authored relation could replace that
+derivation if the owner wants a tighter pool; the review round dropped
+the "every piece of the type" fallback — a type no hand holds drafts
+nothing and keeps its draft, since a union over the type handed a swordless
+blade track guard and blood cards. A draft rolls at the door's own odds
+(the boss's at a boss door, equal under Chaos Rewards) and still takes the
+card row's seat, as the plan says. (2) Reward rows gained a KEY
+(`rewardplan.js rowKey`) because one offer may carry several drafts and the
+old `states[kind]` could hold one; singleton kinds keep the kind as key, so
+saved offers still read. Co-op queues drafts and does not yet offer them
+(its reward scene in tools/session.mjs is its own door). Review round:
+the threshold is a STANDING RULE (every award at or past it, and the load
+door reconciles an older ledger), it upgrades ORDINARY cards only — an
+equipment-bound basic and an item-owned card read the smith's tier and are
+re-derived by every restamp — and a draft row's key carries an ordinal so
+two drafts of one track are two rows. Simulator: 6.5 drafts taken per run
+over 8 runs. SPEC §13.4e; engine test 86.
+
 ## Phase 5 — Class card, kits, tree, unlocks, swap (3 PRs)
 
 **PR 5a: class card and kits.**
