@@ -17,7 +17,8 @@
     "bareGapRem": 0.3,
     "unfoldPortraitShare": 30,
     "unfoldSummaryShare": 70,
-    "unfoldHeightVh": 30
+    "unfoldHeightVh": 30,
+    "unfoldMinRem": 17
   },
   "sizing": {
     "headPortraitRem": "$portraitRem",
@@ -39,7 +40,8 @@
     "choiceBareGapRem": "$bareGapRem",
     "unfoldPortraitShare": "$unfoldPortraitShare",
     "unfoldSummaryShare": "$unfoldSummaryShare",
-    "unfoldHeightVh": "$unfoldHeightVh"
+    "unfoldHeightVh": "$unfoldHeightVh",
+    "unfoldMinRem": "$unfoldMinRem"
   },
   "behavior": {
     "categories": [
