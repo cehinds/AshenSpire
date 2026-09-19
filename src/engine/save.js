@@ -44,7 +44,7 @@ import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js'
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
-import { classTreeRows } from '../model/classTree.js';
+import { classTreeRows, coreTagsTreeProblems } from '../model/classTree.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -94,6 +94,21 @@ function hydrateMissingEquipmentProfiles(registries, snapshot) {
     added.push(profileId);
   }
   return added;
+}
+
+/**
+ * The class tree's picks, by the run's own class (plan phase 5b): the picks
+ * on the run, the picks a fight in progress carries, and the class a pending
+ * draft names. The shape door proves the arrays; this door proves the tree.
+ */
+function classTreeReferenceProblems(run, registries) {
+  const problems = coreTagsTreeProblems(registries, run.class, run.coreTags, 'coreTags');
+  const snapshot = run.combatEntered && run.combatEntered.snapshot;
+  if (snapshot) problems.push(...coreTagsTreeProblems(registries, run.class, snapshot.coreTags, 'combatEntered.snapshot.coreTags'));
+  for (const draft of (run.pendingReward && run.pendingReward.rewards && run.pendingReward.rewards.classDrafts) || []) {
+    if (draft && draft.classId !== run.class) problems.push(`class draft class '${draft.classId}' is not the run's class '${run.class}'`);
+  }
+  return problems;
 }
 
 function pendingRewardReferenceProblems(pending, registries) {
@@ -557,6 +572,8 @@ export function createSaveManager(storage) {
         if (pendingReferenceProblems.length) {
           throw new Error(`Malformed pending reward references: ${pendingReferenceProblems.join('; ')}`);
         }
+        const treeProblems = classTreeReferenceProblems(run, registries);
+        if (treeProblems.length) throw new Error(`Malformed class tree references: ${treeProblems.join('; ')}`);
         // THE DOOR OPENS HERE — after the shape is proven, before the first
         // heal can fire. `savedSchemaVersion` is what the FILE said, not what
         // the migration stamped, because "did a heal fire on a current-schema

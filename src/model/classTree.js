@@ -85,6 +85,19 @@ export function awardClassXp(registries, run, { victory = false, pool = 'normal'
   return awardSkillXp(registries, run, classSkillId(run.class), amount);
 }
 
+/**
+ * coreTagsTreeProblems(registries, classId, coreTags, path) → the refusals a
+ * REGISTRY can make, for the load door: every pick must be a node of this
+ * class's tree. The shape door (coreTagsProblems) cannot know the tree; a
+ * save that names another class's node — or a node the tree no longer holds —
+ * would otherwise mount it with the class card.
+ */
+export function coreTagsTreeProblems(registries, classId, coreTags, path = 'coreTags') {
+  if (!Array.isArray(coreTags) || !coreTags.length) return [];
+  const tree = new Set(classTreeRows(registries, classId).map((row) => row.nodeId));
+  return coreTags.filter((id) => !tree.has(id)).map((id) => `${path} '${id}' is not in the '${classId}' tree`);
+}
+
 /** coreTagsProblems(coreTags) → the shape's refusals, registry-free, for the save door. */
 export function coreTagsProblems(coreTags) {
   if (!Array.isArray(coreTags)) return ['coreTags must be an array of node ids'];

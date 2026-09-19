@@ -2155,20 +2155,18 @@ function rollSkillDrafts(pool) {
 }
 
 /**
- * The class drafts the ledger has queued (plan phase 5b): a pick from the
- * class tree per class level climbed, capped per door like a skill draft; a
- * level whose tier offers nothing draftable keeps its draft.
+ * The class draft the ledger has queued (plan phase 5b): a pick from the
+ * class tree per class level climbed, ONE per door — a second roll at the
+ * same door would read the same picks and could offer the first row's node
+ * again, or the node the first pick excludes (the review of #1192). The rest
+ * of the queue waits for the next fight; a level whose tier offers nothing
+ * draftable keeps its draft.
  */
 function rollClassDrafts() {
-  const perDoor = registries.balance.skill.draftsPerCombat;
   const row = run.skills && run.skills[classSkillId(run.class)];
-  const out = [];
-  if (!row || !(row.pendingDrafts > 0)) return out;
-  for (let i = 0; i < Math.min(perDoor, row.pendingDrafts); i++) {
-    const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
-    if (nodeIds.length) out.push({ classId: run.class, level: row.level, nodeIds });
-  }
-  return out;
+  if (!row || !(row.pendingDrafts > 0)) return [];
+  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
+  return nodeIds.length ? [{ classId: run.class, level: row.level, nodeIds }] : [];
 }
 
 function beginPendingReward(rewards, { source, after }) {

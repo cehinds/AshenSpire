@@ -277,17 +277,15 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
 
 function afterVictory(run, rng, pool) {
   run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-  // The class track, paid by the run's owner (plan phase 5b), and its draft:
-  // the bot picks the first node the tree offers.
+  // The class track, paid by the run's owner (plan phase 5b), and its draft,
+  // one per door as main.js offers it: the bot picks the first node offered.
   awardClassXp(REG, run, { victory: true, pool });
   let classDrafts = 0;
   {
     const row = run.skills && run.skills[classSkillId(run.class)];
-    for (let i = 0; row && i < Math.min(REG.balance.skill.draftsPerCombat, row.pendingDrafts); i++) {
+    if (row && row.pendingDrafts > 0) {
       const ids = rollClassDraftIds(REG, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
-      if (!ids.length || !pickClassNode(REG, run, ids[0])) break;
-      spendSkillDraft(run, classSkillId(run.class));
-      classDrafts += 1;
+      if (ids.length && pickClassNode(REG, run, ids[0])) { spendSkillDraft(run, classSkillId(run.class)); classDrafts += 1; }
     }
   }
   classDraftsTaken += classDrafts;
