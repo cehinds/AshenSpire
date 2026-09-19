@@ -94,9 +94,9 @@ export function mountRewards(app, {
     ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
   }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
   let chosenCardId = checkpoint?.chosenCardId || null;
-  // The skill drafts' picks, keyed by track (plan phase 4b): one offer may
-  // carry several drafts, so the card row's single `chosenCardId` is not
-  // their record.
+  // The skill drafts' picks, keyed by ROW KEY (plan phase 4b): one offer may
+  // carry several drafts, even for one track, so the card row's single
+  // `chosenCardId` is not their record.
   const chosenDraftCardIds = { ...(checkpoint?.chosenDraftCardIds || {}) };
   const pendingByKey = {}; // a chooser's unconfirmed selection, per row, so Back keeps it
 
@@ -153,7 +153,7 @@ export function mountRewards(app, {
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
-      chosenDraftCardIds[row.skillId] = row.cardId;
+      chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
     flask(row) {
@@ -215,8 +215,8 @@ export function mountRewards(app, {
         const skill = skillTracks(registries).find((track) => track.id === row.skillId);
         const label = esc((skill && skill.label) || row.skillId);
         if (state === 'taken') {
-          const def = registries.cards.get(chosenDraftCardIds[row.skillId]);
-          return { title: t('reward.skillDraft.title', { skill: label, level: row.level }), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.skillId]) }) };
+          const def = registries.cards.get(chosenDraftCardIds[row.key]);
+          return { title: t('reward.skillDraft.title', { skill: label, level: row.level }), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
         }
         return {
           title: t('reward.skillDraft.title', { skill: label, level: row.level }),

@@ -32,12 +32,14 @@ export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'ski
 
 /**
  * A row's KEY is what its state is kept under (`states[key]`): the kind for
- * the kinds an offer carries once, and `skillDraft:<skillId>` for a skill
- * draft, of which one offer may carry several (plan phase 4b). Every reader
+ * the kinds an offer carries once, and `skillDraft:<skillId>:<ordinal>` for a
+ * skill draft, of which one offer may carry several — several for one track
+ * when draftsPerCombat allows it, the ordinal telling them apart (plan phase
+ * 4b). Every reader
  * of a state goes through the key, so the saved `states` of a pre-draft
  * offer (keyed by kind) still read.
  */
-export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}` : kind);
+export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}` : kind);
 
 /**
  * Per-kind descriptors: how a kind reads its slice of the offer.
@@ -61,8 +63,11 @@ const KINDS = {
     // the way a card offer is, keyed by its track so two drafts never share
     // a state. `rows` is the multi-row door: the descriptor yields a list.
     present: (r) => Array.isArray(r.skillDrafts) && r.skillDrafts.some((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0),
-    rows: (r) => r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
-      .map((d) => ({ skillId: d.skillId, level: d.level, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 })),
+    rows: (r) => {
+      const seen = {};
+      return r.skillDrafts.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+        .map((d) => ({ skillId: d.skillId, ordinal: (seen[d.skillId] = (seen[d.skillId] || 0) + 1) - 1, level: d.level, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 }));
+    },
     blocked: () => null,
   },
   card: {

@@ -322,8 +322,13 @@ derivation if the owner wants a tighter pool. (2) Reward rows gained a KEY
 (`rewardplan.js rowKey`) because one offer may carry several drafts and the
 old `states[kind]` could hold one; singleton kinds keep the kind as key, so
 saved offers still read. Co-op queues drafts and does not yet offer them
-(its reward scene in tools/session.mjs is its own door). Simulator: 6.5
-drafts taken per run over 8 runs. SPEC §13.4e; engine test 86.
+(its reward scene in tools/session.mjs is its own door). Review round:
+the threshold is a STANDING RULE (every award at or past it, and the load
+door reconciles an older ledger), it upgrades ORDINARY cards only — an
+equipment-bound basic and an item-owned card read the smith's tier and are
+re-derived by every restamp — and a draft row's key carries an ordinal so
+two drafts of one track are two rows. Simulator: 6.5 drafts taken per run
+over 8 runs. SPEC §13.4e; engine test 86.
 
 ## Phase 5 — Class card, kits, tree, unlocks, swap (3 PRs)
 

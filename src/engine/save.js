@@ -43,7 +43,7 @@ import { defaultSeatOrder, seatOrderProblems, seatAtTier } from '../model/seats.
 import { refreshBossDestinationLabels } from '../model/bossDestinationLabels.js';
 import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
-import { skillKindOf } from '../model/skills.js';
+import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -645,6 +645,21 @@ export function createSaveManager(storage) {
           was: undefined,
           now: { slots: slotsAdded, snapshotSlots: snapshotSlotsAdded },
           why: `the slot table gained ${[...new Set([...slotsAdded, ...snapshotSlotsAdded])].join(', ')} after this save was written; each has its empty cells now, as a fresh run does${snapshotSlotsAdded.length ? ' — in the saved fight\'s loadout too' : ''}`,
+        });
+      }
+      // The skill threshold's standing rule (plan phase 4b, model/skills.js):
+      // a ledger written before the rule existed may stand past `upgradeAt`
+      // with its cards untouched; the rule is idempotent, so the load door
+      // asks it once and says what it did.
+      const skillUpgrades = reconcileSkillUpgrades(registries, run);
+      if (Object.keys(skillUpgrades).length) {
+        note(run, {
+          kind: 'heal',
+          site: 'save.js:loadRun',
+          field: 'deck.upgraded',
+          was: undefined,
+          now: skillUpgrades,
+          why: `the tracks ${Object.keys(skillUpgrades).join(', ')} stand at or past balance.skill.upgradeAt; the cards of their schools are upgraded, as the rule upgrades them at every award`,
         });
       }
       const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);

@@ -16,6 +16,10 @@
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
 
+// The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
+// because loadout.js would close an import cycle through validate.js).
+const ITEM_OWNED_ROLES = Object.freeze(['granted', 'weaponArt']);
+
 /** The kinds of track, and the balance row each reads its curve from. */
 export const SKILL_KINDS = Object.freeze(['weapon', 'armour', 'focus', 'dual', 'class']);
 
@@ -111,10 +115,12 @@ export function awardSkillXp(registries, run, skillId, amount) {
     row.pendingDrafts += 1;
     cost = xpToNext(registries, kind, row.level);
   }
-  // The auto-upgrade threshold (plan phase 4b): crossing it upgrades every
-  // deck card of the group's schools, once, here — the one writer of levels
-  // is the one place a level's consequence lands.
-  const upgraded = crossedUpgradeAt(registries, before, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
+  // The auto-upgrade threshold (plan phase 4b) is a STANDING RULE, applied at
+  // every write of a track at or past it — not only the crossing — so a card
+  // that joined the deck later, and a ledger written before the rule existed,
+  // are upgraded at the next award. Idempotent, so the cost of re-asking is
+  // one pass over the deck.
+  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
   return { skillId, before, after: row.level, levelUps: row.level - before, upgraded };
 }
 
@@ -163,11 +169,6 @@ export function rarityUnlockedAt(registries, level) {
   return Object.keys(unlock).filter((rarity) => Number.isInteger(unlock[rarity]) && level >= unlock[rarity]);
 }
 
-function crossedUpgradeAt(registries, before, after) {
-  const at = draftRows(registries).upgradeAt;
-  return Number.isInteger(at) && at > 0 && before < at && after >= at;
-}
-
 /** Whether a track at `level` has reached the auto-upgrade threshold. */
 export function skillUpgradesCards(registries, level) {
   const at = draftRows(registries).upgradeAt;
@@ -176,10 +177,14 @@ export function skillUpgradesCards(registries, level) {
 
 /**
  * applySkillUpgrades(registries, run, skillId) → the instance ids upgraded:
- * every deck card carrying one of the track's schools gains `upgraded: true`
- * (proposal §6.1: "skill thresholds auto-upgrade cards tagged with that
- * group"; the shrine keeps the untagged ones). Idempotent; a card already
- * upgraded is not counted.
+ * every ORDINARY deck card carrying one of the track's schools gains
+ * `upgraded: true` (proposal §6.1: "skill thresholds auto-upgrade cards
+ * tagged with that group"; the shrine keeps the untagged ones). An
+ * equipment-bound basic (`sourceArmamentId`) and an item-owned card (a kit,
+ * package or weapon-art card) are the piece's: their upgrade is the smith's
+ * tier, and stampDeck re-derives it on every restamp, so a flag written here
+ * would be gone by the reward door. Idempotent; a card already upgraded is
+ * not counted.
  */
 export function applySkillUpgrades(registries, run, skillId) {
   const schools = new Set(skillSchools(registries, run.loadout, run.class, skillId));
@@ -187,11 +192,27 @@ export function applySkillUpgrades(registries, run, skillId) {
   const cards = registries && registries.cards;
   const out = [];
   for (const inst of run.deck) {
-    if (!inst || inst.upgraded) continue;
+    if (!inst || inst.upgraded || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) continue;
     const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
     if (!def || !(def.tags || []).some((t) => schools.has(t))) continue;
     inst.upgraded = true;
     out.push(inst.instanceId);
+  }
+  return out;
+}
+
+/**
+ * reconcileSkillUpgrades(registries, run) → { [skillId]: instanceIds }, the
+ * standing rule asked of every track at or past the threshold — the load
+ * door's call, for a ledger written before the rule existed (a schema-8 save
+ * carries no version for it, and none is needed: the rule is idempotent).
+ */
+export function reconcileSkillUpgrades(registries, run) {
+  const out = {};
+  for (const [skillId, row] of Object.entries((run && run.skills) || {})) {
+    if (!row || !skillUpgradesCards(registries, row.level) || !skillKindOf(registries, skillId)) continue;
+    const ids = applySkillUpgrades(registries, run, skillId);
+    if (ids.length) out[skillId] = ids;
   }
   return out;
 }

@@ -76,7 +76,7 @@ import {
 } from '../src/model/loadout.js';
 import { canRemoveDeckCard } from '../src/model/cardRemoval.js';
 import { WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf, handZoneOf } from '../src/model/zones.js';
-import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft } from '../src/model/skills.js';
+import { skillTracks, xpToNext, awardSkillXp, skillLevel, skillsProblems, SKILL_KINDS, skillSchools, rarityUnlockedAt, applySkillUpgrades, skillUpgradesCards, spendSkillDraft, reconcileSkillUpgrades } from '../src/model/skills.js';
 import { skillXpReceipt, applySkillXp, recordSkillXp } from '../src/engine/skillXp.js';
 import { gainBlock } from '../src/engine/actions.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
@@ -8684,37 +8684,59 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // auto-collect resolves through the injected pick; NEW reads the draft's cards.
     const offer = { cinders: 5, skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: low }, { skillId: 'item:shield', level: 1, cardIds: ['quickCut'] }], cardIds: [], relicId: 'forsakenMedallion' };
     const plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
-    eq(plan.rows.map((r) => r.key).join(','), 'cinders,skillDraft:item:blade,skillDraft:item:shield,relic', 'keyed rows in the declared order; an empty card offer has no row');
+    eq(plan.rows.map((r) => r.key).join(','), 'cinders,skillDraft:item:blade:0,skillDraft:item:shield:0,relic', 'keyed rows in the declared order; an empty card offer has no row');
     eq(plan.rows[1].choice, true); eq(plan.rows[2].choice, false);
-    const auto = resolveContinue(plan, { 'skillDraft:item:blade': 'skipped' }, 'auto', () => 0);
-    eq(auto.take.map((r) => r.key).join(','), 'cinders,skillDraft:item:shield,relic', 'a skipped draft stays skipped; the one-card draft takes itself');
+    const auto = resolveContinue(plan, { 'skillDraft:item:blade:0': 'skipped' }, 'auto', () => 0);
+    eq(auto.take.map((r) => r.key).join(','), 'cinders,skillDraft:item:shield:0,relic', 'a skipped draft stays skipped; the one-card draft takes itself');
     eq(auto.take[1].cardId, 'quickCut');
-    eq(resolveContinue(plan, {}, 'auto', (n) => 2 % n).take.find((r) => r.key === 'skillDraft:item:blade').cardId, low[2], 'the pick is the injected one');
+    eq(resolveContinue(plan, {}, 'auto', (n) => 2 % n).take.find((r) => r.key === 'skillDraft:item:blade:0').cardId, low[2], 'the pick is the injected one');
     assert(unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[1]) && !unseenIds(offer, { cards: new Set([low[0]]) }).cards.includes(low[0]), 'NEW reads the drafts\' cards');
     assert(REWARD_KIND_ORDER.indexOf('skillDraft') < REWARD_KIND_ORDER.indexOf('card'), 'the draft sits where the class card sat');
-    // THE THRESHOLD UPGRADES THE DECK, once, for the track's schools only.
+    // THE THRESHOLD UPGRADES THE DECK — the ORDINARY cards of the track's
+    // schools; an equipment-bound basic and an item-owned card are the piece's
+    // (the smith's tier, re-derived by every restamp) and are left alone.
     const before = reaver.deck.filter((x) => x.upgraded).length; eq(before, 0);
     const toThreshold = Array.from({ length: c.upgradeAt }, (_, lvl) => xpToNext(REG, 'weapon', lvl)).reduce((a, b) => a + b, 0);
     const award = awardSkillXp(REG, reaver, 'item:blade', toThreshold);
     eq(award.after, c.upgradeAt, 'the award reached the threshold');
-    const bladeCards = reaver.deck.filter((x) => (REG.cards.get(x.cardId).tags || []).some((t) => ['blade', 'basic'].includes(t)));
-    assert(bladeCards.length > 0 && bladeCards.every((x) => x.upgraded), 'every blade-school card in the deck is upgraded');
+    const isBlade = (x) => (REG.cards.get(x.cardId).tags || []).some((t) => ['blade', 'basic'].includes(t));
+    const ordinary = (x) => !x.sourceArmamentId && !['granted', 'weaponArt'].includes(x.equipmentRole);
+    const bladeCards = reaver.deck.filter((x) => isBlade(x) && ordinary(x));
+    assert(bladeCards.length > 0 && bladeCards.every((x) => x.upgraded), 'every ordinary blade-school card in the deck is upgraded');
+    assert(reaver.deck.filter((x) => isBlade(x) && !ordinary(x)).length > 0, 'the deck holds equipment-bound blade cards too');
+    assert(reaver.deck.filter((x) => isBlade(x) && !ordinary(x)).every((x) => !x.upgraded), "and they are the piece's — untouched");
     assert(reaver.deck.filter((x) => x.cardId === 'defend').every((x) => !x.upgraded), 'a guard-only card is not');
     eq(award.upgraded.length, bladeCards.length, 'the award names what it upgraded');
     eq(awardSkillXp(REG, reaver, 'item:blade', xpToNext(REG, 'weapon', c.upgradeAt)).upgraded.length, 0, 'the next level upgrades nothing again');
     eq(applySkillUpgrades(REG, reaver, 'item:blade').length, 0, 'idempotent');
+    // Restamping (as onCombatEnd does after the award) leaves the ordinary
+    // upgrade in place: the rule wrote only what the restamp does not own.
+    stampDeck(REG, reaver);
+    assert(reaver.deck.filter((x) => isBlade(x) && ordinary(x)).every((x) => x.upgraded), 'the restamp keeps the ordinary upgrades');
+    // A STANDING RULE, not a crossing: a blade card that joins the deck later
+    // is upgraded at the next award, and a ledger written before the rule
+    // existed is reconciled at the load door.
+    reaver.deck.push({ instanceId: 'late', cardId: 'crimsonCleave', upgraded: false });
+    eq(awardSkillXp(REG, reaver, 'item:blade', 1).upgraded.join(','), 'late', 'a later card is upgraded at the next award');
+    reaver.deck.push({ instanceId: 'later', cardId: 'serratedBlade', upgraded: false });
+    eq(JSON.stringify(reconcileSkillUpgrades(REG, reaver)), JSON.stringify({ 'item:blade': ['later'] }), 'the load door asks the rule of every track past the threshold');
     assert(skillUpgradesCards(REG, c.upgradeAt) && !skillUpgradesCards(REG, c.upgradeAt - 1));
     eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt + 1, 'each level queued a draft');
     assert(spendSkillDraft(reaver, 'item:blade')); eq(reaver.skills['item:blade'].pendingDrafts, c.upgradeAt);
     assert(!spendSkillDraft(reaver, 'item:shield'), 'a track with no draft queued spends nothing');
+    // TWO DRAFTS FOR ONE TRACK (draftsPerCombat > 1) are two rows with two keys.
+    const twin = rewardPlan({ skillDrafts: [{ skillId: 'item:blade', level: 1, cardIds: low }, { skillId: 'item:blade', level: 1, cardIds: ['quickCut'] }] }, { flaskSlotsFree: 1 });
+    eq(twin.rows.map((r) => r.key).join(','), 'skillDraft:item:blade:0,skillDraft:item:blade:1', 'the ordinal tells same-track drafts apart');
+    eq(resolveContinue(twin, { 'skillDraft:item:blade:0': 'skipped' }, 'auto', () => 0).take.map((r) => r.key).join(','), 'skillDraft:item:blade:1', 'and their states are their own');
     // THE SAVE DOOR: a draft's state key is known only when the offer carries
     // that draft; a chosen card must be the draft's and its row Taken.
     const pending = (states, chosenDraftCardIds, drafts = offer.skillDrafts) => validateRunShape({ ...reaver, pendingReward: { schemaVersion: 1, source: 'normal', after: 'map', rewards: { ...offer, skillDrafts: drafts }, states, chosenCardId: null, chosenDraftCardIds } }).join(' | ');
-    eq(pending({ 'skillDraft:item:blade': 'taken' }, { 'item:blade': low[0] }), '', 'a taken draft with its card passes');
-    assert(/states\.skillDraft:item:magic-focus/.test(pending({ 'skillDraft:item:magic-focus': 'taken' }, {})), 'a draft the offer does not carry is refused by name');
-    assert(/chosenDraftCardIds\.item:blade must name a card of that draft/.test(pending({ 'skillDraft:item:blade': 'taken' }, { 'item:blade': 'stomp' })));
-    assert(/requires the draft's Taken state/.test(pending({}, { 'item:blade': low[0] })));
-    assert(/Taken state requires its chosen card/.test(pending({ 'skillDraft:item:blade': 'taken' }, {})));
+    eq(pending({ 'skillDraft:item:blade:0': 'taken' }, { 'skillDraft:item:blade:0': low[0] }), '', 'a taken draft with its card passes');
+    assert(/states\.skillDraft:item:magic-focus:0/.test(pending({ 'skillDraft:item:magic-focus:0': 'taken' }, {})), 'a draft the offer does not carry is refused by name');
+    assert(/states\.skillDraft:item:blade:1/.test(pending({ 'skillDraft:item:blade:1': 'taken' }, {})), 'so is a second draft the offer has not got');
+    assert(/chosenDraftCardIds\.skillDraft:item:blade:0 must name a card of that draft/.test(pending({ 'skillDraft:item:blade:0': 'taken' }, { 'skillDraft:item:blade:0': 'stomp' })));
+    assert(/requires the draft's Taken state/.test(pending({}, { 'skillDraft:item:blade:0': low[0] })));
+    assert(/Taken state requires its chosen card/.test(pending({ 'skillDraft:item:blade:0': 'taken' }, {})));
     // The balance rows are refused by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const withSkill = (skill) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, ...skill } } });
