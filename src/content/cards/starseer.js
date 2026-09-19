@@ -18,7 +18,7 @@ const GAIN_CHARGE = { op: 'applyStatus', target: 'self', status: 'starstoneCharg
 export const starseerCards = [
   // ---- Starter ---------------------------------------------------------------
   {
-    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, manaCost: 1, type: 'attack',
+    id: 'starstonePebble', name: 'Starstone Pebble', class: 'starseer', rarity: 'starter', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "The fragment fell burning; by morning it was cold. — Astronomer's chart margin",
     keywords: [], icon: '💎',
     effects: [
@@ -38,7 +38,7 @@ export const starseerCards = [
 
   // ---- Commons ----------------------------------------------------------------
   {
-    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 0, staminaCost: 1, manaCost: 1, type: 'attack',
+    id: 'cometFragment', name: 'Comet Fragment', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
     flavor: "Chart 41 recorded a fall; chart 42 showed a hearth. — Astronomer's chart margin",
     keywords: [], icon: '☄',
     effects: [{ op: 'damage', target: 'enemy', amount: 3 }, GAIN_CHARGE],
@@ -250,7 +250,7 @@ export const starseerCards = [
     keywords: [], icon: '🔭',
     effects: [{ op: 'applyStatus', target: 'self', status: 'stargazer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
   {
     id: 'astralArmorCard', name: 'Astral Armor', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'power',
@@ -335,7 +335,7 @@ export const starseerCards = [
     keywords: [], icon: '🌀',
     effects: [{ op: 'applyStatus', target: 'self', status: 'azureCoil', stacks: one }],
     textTemplate: 'Whenever you play a Skill, gain 2 Block.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
   {
     id: 'astralCleave', name: 'Astral Cleave', class: 'starseer', rarity: 'uncommon', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
@@ -542,7 +542,7 @@ export const starseerCards = [
     keywords: [], icon: '🔷',
     effects: [{ op: 'applyStatus', target: 'self', status: 'moonlitShield', stacks: one }],
     textTemplate: 'Whenever you gain Starstone Charge, gain 3 Block.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
   {
     id: 'celestialLance', name: 'Celestial Lance', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
@@ -567,7 +567,7 @@ export const starseerCards = [
     keywords: [], icon: '📚',
     effects: [{ op: 'applyStatus', target: 'self', status: 'astromancer', stacks: one }],
     textTemplate: 'At the start of your turn, gain Starstone Charge and draw a card.',
-    upgrade: { cost: 0 },
+    upgrade: { manaCost: 0 },
   },
 
   // ---- Content-pass additions (round 4) --------------------------------------

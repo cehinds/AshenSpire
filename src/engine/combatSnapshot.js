@@ -7,6 +7,8 @@
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
 import { syncLoadoutProperties, syncRelicProperties, syncClassProperties } from './properties.js';
+import { stampPlayerPoiseMax } from '../model/state.js';
+import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
 import { COMBAT_SNAPSHOT_VERSION, assertCombatSnapshot } from '../model/combatSnapshot.js';
 
@@ -144,6 +146,16 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncLoadoutProperties(combat);
   syncRelicProperties(combat);
   syncClassProperties(combat);
+  // The player's poise max is RE-DERIVED, never trusted from the save (plan
+  // phase 8): a fight saved before the formula changed keeps its accumulated
+  // value and takes the receipt's max — Constitution, body armour, relics —
+  // exactly as a fresh fight would (stampPlayerPoiseMax clamps the value).
+  if (combat.player && combat.loadout) {
+    stampPlayerPoiseMax(combat.player, playerPoiseThresholdReceipt(registries, {
+      loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
+      itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
+    }).value);
+  }
   return combat;
 }
 
