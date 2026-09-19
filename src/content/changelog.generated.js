@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1204",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "Every class and armour keeps its own look while using the approved greatsword motion",
+    "detail": "Equipping a greatsword with the other hand empty now selects the nine-step attack and matching defend, hurt, cast, buff, stance and portrait art for all four classes and all 35 current armour entries. Thirty-two distinct appearances share one configurable motion profile, including separate paintings of each shared armour for each class. The original Reaver sequence stays intact. A synchronized gallery shows every outfit with labeled playback steps, source pose references and portraits. Other weapon combinations keep their existing presentation.",
+    "build": "0.7.1.280",
+    "pullRequest": 1204,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1204"
+  },
+  {
     "id": "pr-1173",
     "date": "2026-09-19",
     "group": "2026-09-19",
