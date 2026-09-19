@@ -376,6 +376,42 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
   }, null, 2) + '\n';
 }
 
+export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRows = []) {
+  if (typeof text !== 'string' || text.length > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
+  let file;
+  try { file = JSON.parse(text); } catch { throw new Error('The file is not valid JSON.'); }
+  if (!file || file.game !== 'Ashen Spire' || file.schemaVersion !== ADVANCED_CONFIG_SCHEMA_VERSION
+    || !file.overrides || typeof file.overrides !== 'object' || Array.isArray(file.overrides)) {
+    throw new Error('Choose an Ashen Spire configuration exported by this version.');
+  }
+  const rows = new Map(advancedConfigRows(bundle).map(row => [row.key, row]));
+  for (const row of additionalRows) {
+    if (row.cat === 'Advanced' && !['button', 'action'].includes(row.type)) rows.set(`settings.${row.key}`, row);
+    if (row.key === 'levelUpValue') rows.set('gameConfig.balance.levelUp.pointsPerLevel', row);
+    if (row.key === 'statTierSize') rows.set('gameConfig.derivedStatRules.defaults.pointsPerTier', row);
+  }
+  const changes = {};
+  for (const [key, raw] of Object.entries(file.overrides)) {
+    const row = rows.get(key);
+    if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
+    const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;
+    let valid = false;
+    if (row.type === 'choice') valid = row.choices.includes(value);
+    else if (row.type === 'color') valid = typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
+    else if (typeof row.def === 'boolean') valid = typeof value === 'boolean';
+    else if (['number', 'range'].includes(row.type) || typeof row.def === 'number') {
+      valid = typeof value === 'number' && Number.isFinite(value)
+        && value >= (row.min ?? 0) && value <= (row.max ?? 100)
+        && (!row.integer || Number.isInteger(value));
+    } else if (typeof row.def === 'string') valid = typeof value === 'string' && value.length <= 1000;
+    if (!valid) throw new Error(`Invalid value for ${row.label || key}. Nothing was imported.`);
+    changes[row.key] = value;
+  }
+  const problems = advancedConfigProblems(bundle, { ...current, ...changes });
+  if (problems.length) throw new Error(`Nothing was imported. ${problems[0]}`);
+  return changes;
+}
+
 export async function saveAdvancedConfigFile(settings, options = {}) {
   const win = options.window || globalThis.window;
   const doc = options.document || globalThis.document;

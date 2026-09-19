@@ -28,7 +28,7 @@ import { t } from '../strings.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblems, advancedConfigRows, saveAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { advancedConfigProblems, advancedConfigRows, saveAdvancedConfigFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 
 const UI_DEFAULTS = balance.ui;
 // The card's authored sizes, so the rows below state a DEFAULT they read
@@ -529,6 +529,8 @@ const ROWS = [
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: 'Export game configuration',
     note: 'Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.' },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: 'Load game configuration',
+    note: 'Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -581,7 +583,7 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Export', label: 'Export', tip: 'Save the current game configuration as a portable JSON file.' },
+  { id: 'Export', label: 'Import / Export', tip: 'Load or save game configuration as a portable JSON file.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
@@ -1580,6 +1582,33 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         ? `${result.filename} ${result.method === 'save-as' ? 'saved.' : 'downloaded locally.'}`
         : 'This browser could not create a local configuration file.');
       setTimeout(() => { if (btn.isConnected) btn.textContent = 'Export JSON'; }, 2000);
+    });
+  });
+
+  container.querySelectorAll('[data-btn="gameConfigImport"]').forEach(btn => {
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = '.json,application/json';
+    picker.hidden = true;
+    picker.dataset.configImport = '';
+    btn.after(picker);
+    btn.addEventListener('click', () => { picker.value = ''; picker.click(); });
+    picker.addEventListener('change', async () => {
+      const file = picker.files?.[0];
+      if (!file) return;
+      btn.disabled = true;
+      try {
+        if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
+        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS);
+        if (!container.isConnected) return;
+        const result = onChange(changes);
+        if (result?.ok === false) throw new Error('Settings could not be saved.');
+        Object.assign(settings, changes);
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline });
+        showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.`);
+      } catch (error) {
+        showSettingsNotice(`Import failed: ${error.message}`);
+      } finally { btn.disabled = false; }
     });
   });
 

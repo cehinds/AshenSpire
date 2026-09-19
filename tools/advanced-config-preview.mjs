@@ -73,8 +73,9 @@ async function main() {
       { name: 'desktop-export', width: 1440, height: 900, group: 'Export', mobile: false },
       { name: 'phone-progression', width: 390, height: 844, group: 'Progression', mobile: true },
       { name: 'phone-interface', width: 390, height: 844, group: 'Interface', mobile: true },
+      { name: 'phone-export', width: 390, height: 844, group: 'Export', mobile: true },
       { name: 'phone-placement', width: 390, height: 844, group: 'Interface', search: 'default', mobile: true },
-    ].filter(() => !process.argv.includes('--combat-only'))) {
+    ].filter(shape => !process.argv.includes('--combat-only') && (!process.argv.includes('--settings-files-only') || shape.group === 'Export'))) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
       }, sessionId);
@@ -95,6 +96,23 @@ async function main() {
           document.querySelector('[data-btn="gameConfigExport"]').click();
         })()`);
         await until("document.querySelector('[data-btn=gameConfigExport]')?.textContent === 'Saved'", 'Save As completion');
+        await evaluate(`(() => {
+          const input = document.querySelector('[data-config-import]');
+          const transfer = new DataTransfer();
+          transfer.items.add(new File([JSON.stringify({game:'Ashen Spire',schemaVersion:1,overrides:{'gameConfig.presentation.rowAScale':1.4}})], 'settings.json', {type:'application/json'}));
+          input.files = transfer.files;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        })()`);
+        await until("JSON.parse(document.documentElement.dataset.formationSettings).rowAScale === 1.4", 'settings file applied');
+        await evaluate(`(() => {
+          const input = document.querySelector('[data-config-import]');
+          const transfer = new DataTransfer();
+          transfer.items.add(new File(['not JSON'], 'invalid.json'));
+          input.files = transfer.files;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        })()`);
+        await until("document.body.textContent.includes('Import failed:')", 'invalid file notice');
+        if (await evaluate("JSON.parse(document.documentElement.dataset.formationSettings).rowAScale") !== 1.4) throw new Error('Invalid import changed settings');
       }
       const state = await evaluate(`(() => {
         const modal = document.querySelector('.settings-modal');
@@ -122,6 +140,7 @@ async function main() {
       console.log(`PASS ${shape.name} — ${state.rows} rows, one vertical scroll owner, modal ${state.modal.join('×')}`);
       await capture(shape.name);
     }
+    if (process.argv.includes('--settings-files-only')) return;
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 1440, height: 900, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
