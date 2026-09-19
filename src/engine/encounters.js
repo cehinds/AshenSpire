@@ -104,20 +104,23 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
 
 /**
  * rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level,
- * size }) → distinct card ids for one skill draft (plan phase 4b): the class
- * reward pool filtered to the track's schools (model/skills.js skillSchools),
- * rarities unlocked by the level (balance.skill.rarityUnlock), weighted by
- * the normal reward odds, `balance.skill.draftSize` picks on the same
- * 'cardRewards' stream the card offer rolls on. An empty pool rolls nothing
- * and draws nothing.
+ * pool, flatRarity, size }) → distinct card ids for one skill draft (plan
+ * phase 4b): the class reward pool filtered to the track's schools
+ * (model/skills.js skillSchools), rarities unlocked by the level
+ * (balance.skill.rarityUnlock), weighted by the door's own reward odds
+ * (`rarityWeights[pool]`, normal when the pool has no row; equal odds under
+ * Chaos Rewards, as the card offer), `balance.skill.draftSize` picks on the
+ * same 'cardRewards' stream the card offer rolls on. An empty pool rolls
+ * nothing and draws nothing.
  */
-export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, size }) {
+export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, pool = 'normal', flatRarity = false, size }) {
   const skill = registries.balance.skill || {};
   const count = Number.isInteger(size) ? size : skill.draftSize;
-  const schools = new Set(skillSchools(registries, loadout, classId, skillId));
+  const schools = new Set(skillSchools(registries, loadout, skillId));
   const unlocked = rarityUnlockedAt(registries, level);
   if (!schools.size || !unlocked.length || !(count > 0)) return [];
-  const weights = registries.balance.rewards.rarityWeights.normal;
+  const bal = registries.balance.rewards;
+  const weights = flatRarity ? { common: 1, uncommon: 1, rare: 1 } : (bal.rarityWeights[pool] || bal.rarityWeights.normal);
   const byRarity = {};
   for (const id of registries.classes.get(classId).cardPool) {
     const def = registries.cards.get(id);

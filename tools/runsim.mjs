@@ -282,7 +282,7 @@ function afterVictory(run, rng, pool) {
     const row = run.skills && run.skills[track.id];
     if (!row || !(row.pendingDrafts > 0)) continue;
     for (let i = 0; i < Math.min(REG.balance.skill.draftsPerCombat, row.pendingDrafts); i++) {
-      const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level });
+      const ids = rollSkillDraftIds(REG, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool });
       if (!ids.length) break;
       spendSkillDraft(run, track.id);
       run.deck.push({ instanceId: run._id(), cardId: ids[0], upgraded: skillUpgradesCards(REG, row.level) });

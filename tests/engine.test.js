@@ -8650,12 +8650,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE SCHOOLS ARE DERIVED from what the hands hold — a straight sword's
     // tagging rows, not a second table; armour and class tracks draft nothing.
     const reaver = createRunState({ seed: 0x4b4b, classId: 'reaver', registries: REG });
-    eq(skillSchools(REG, reaver.loadout, 'reaver', 'item:blade').join(','), 'blade,basic', 'the held sword names the blade track\'s schools');
-    eq(skillSchools(REG, reaver.loadout, 'reaver', 'item:shield').join(','), 'guard,basic', 'the held shield names the shield track\'s');
-    eq(skillSchools(REG, reaver.loadout, 'reaver', 'dualWield').join(','), 'blade,basic,guard', 'dual-wield reads both hands');
-    eq(skillSchools(REG, reaver.loadout, 'reaver', 'armour:heavy').length, 0, 'an armour track has no schools');
-    eq(skillSchools(REG, reaver.loadout, 'reaver', 'class:reaver').length, 0, 'nor a class track (phase 5b\'s tree)');
-    assert(skillSchools(REG, reaver.loadout, 'reaver', 'item:magic-focus').includes('starstone'), 'an unheld type falls back to every piece of the type');
+    eq(skillSchools(REG, reaver.loadout, 'item:blade').join(','), 'blade,basic', 'the held sword names the blade track\'s schools');
+    eq(skillSchools(REG, reaver.loadout, 'item:shield').join(','), 'guard,basic', 'the held shield names the shield track\'s');
+    eq(skillSchools(REG, reaver.loadout, 'dualWield').join(','), 'blade,basic,guard', 'dual-wield reads both hands');
+    eq(skillSchools(REG, reaver.loadout, 'armour:heavy').length, 0, 'an armour track has no schools');
+    eq(skillSchools(REG, reaver.loadout, 'class:reaver').length, 0, 'nor a class track (phase 5b\'s tree)');
+    eq(skillSchools(REG, reaver.loadout, 'item:magic-focus').length, 0, 'a type no hand holds has no schools — its draft waits');
+    eq(skillSchools(REG, null, 'item:blade').length, 0, 'no loadout, no schools');
     // RARITY OPENS BY LEVEL, from the balance rows, level 0 opening nothing.
     eq(rarityUnlockedAt(REG, 0).length, 0); eq(rarityUnlockedAt(REG, c.rarityUnlock.common).join(','), 'common');
     eq(rarityUnlockedAt(REG, c.rarityUnlock.uncommon).join(','), 'common,uncommon'); eq(rarityUnlockedAt(REG, c.rarityUnlock.rare).join(','), 'common,uncommon,rare');
@@ -8664,7 +8665,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the card offer, and an empty pool draws nothing.
     const rogue = createRunState({ seed: 0x4b4b, classId: 'rogue', registries: REG });
     const pool = REG.classes.get('rogue').cardPool;
-    const bladeSchools = new Set(skillSchools(REG, rogue.loadout, 'rogue', 'item:blade'));
+    const bladeSchools = new Set(skillSchools(REG, rogue.loadout, 'item:blade'));
     const low = rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: 1 });
     eq(low.length, c.draftSize, 'a full draft'); eq(new Set(low).size, low.length, 'distinct cards');
     for (const id of low) {
@@ -8679,6 +8680,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const starseer = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: REG });
     eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
     eq(JSON.stringify(rngEmpty.getCounters()), beforeCounters, 'and draws nothing');
+    eq(rollSkillDraftIds(REG, createRng(7), { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:blade', level: 1 }).length, 0, 'a track whose type no hand holds rolls nothing');
+    eq(rollSkillDraftIds(REG, createRng(7), { classId: 'reaver', loadout: reaver.loadout, skillId: 'item:blade', level: 1, pool: 'boss' }).length, c.draftSize, 'a boss door rolls at its own odds');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'rogue', loadout: rogue.loadout, skillId: 'item:blade', level: 0 }).length, 0, 'level 0 has opened no rarity');
     // THE MENU: one keyed row per draft, ahead of the card row, each a choice
     // auto-collect resolves through the injected pick; NEW reads the draft's cards.
@@ -8737,6 +8740,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/chosenDraftCardIds\.skillDraft:item:blade:0 must name a card of that draft/.test(pending({ 'skillDraft:item:blade:0': 'taken' }, { 'skillDraft:item:blade:0': 'stomp' })));
     assert(/requires the draft's Taken state/.test(pending({}, { 'skillDraft:item:blade:0': low[0] })));
     assert(/Taken state requires its chosen card/.test(pending({ 'skillDraft:item:blade:0': 'taken' }, {})));
+    assert(/skillDrafts\[0\]\.cardIds must be a non-empty array/.test(pending({}, {}, [{ skillId: 'item:blade', level: 1, cardIds: 'strike' }])), 'a draft\'s shape is refused by name');
+    assert(/skillDrafts\[0\]\.level must be a non-negative integer/.test(pending({}, {}, [{ skillId: 'item:blade', level: -1, cardIds: ['strike'] }])));
     // The balance rows are refused by name.
     const said = (v) => v.errors.map((e) => `${e.path}: ${e.msg}`);
     const withSkill = (skill) => validateContent({ ...testBundle(), balance: { ...contentBundle.balance, skill: { ...contentBundle.balance.skill, ...skill } } });

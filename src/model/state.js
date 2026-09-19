@@ -830,6 +830,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           }
         }
       }
+      if (pending.rewards?.skillDrafts !== undefined) {
+        const drafts = pending.rewards.skillDrafts;
+        if (!Array.isArray(drafts)) problems.push('pendingReward.rewards.skillDrafts must be an array');
+        else drafts.forEach((d, i) => {
+          const p = `pendingReward.rewards.skillDrafts[${i}]`;
+          if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { skillId, level, cardIds }`); return; }
+          if (typeof d.skillId !== 'string' || !d.skillId) problems.push(`${p}.skillId must be a non-empty string`);
+          if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
+          if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+        });
+      }
       if (pending.chosenDraftCardIds !== undefined) {
         const chosen = pending.chosenDraftCardIds;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');

@@ -318,7 +318,12 @@ SCHOOL as distinct nodes, so "filter by group tag" had no single tag to
 filter by — the schools a track drafts from are DERIVED from the held
 piece's own card-domain tags in tagging.csv (`skillSchools`), falling back
 to every piece of the type; an authored relation could replace that
-derivation if the owner wants a tighter pool. (2) Reward rows gained a KEY
+derivation if the owner wants a tighter pool; the review round dropped
+the "every piece of the type" fallback — a type no hand holds drafts
+nothing and keeps its draft, since a union over the type handed a swordless
+blade track guard and blood cards. A draft rolls at the door's own odds
+(the boss's at a boss door, equal under Chaos Rewards) and still takes the
+card row's seat, as the plan says. (2) Reward rows gained a KEY
 (`rewardplan.js rowKey`) because one offer may carry several drafts and the
 old `states[kind]` could hold one; singleton kinds keep the kind as key, so
 saved offers still read. Co-op queues drafts and does not yet offer them

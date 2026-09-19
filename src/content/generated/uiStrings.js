@@ -234,17 +234,17 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "reward.kind.skillDraft",
-    "extends": "",
-    "short": "Skill draft",
-    "full": "",
-    "tip": ""
-  },
-  {
     "id": "reward.skillDraft.title",
     "extends": "",
     "short": "{skill} · level {level}",
     "full": "A level the fight bought: pick one card of the track's own schools.",
+    "tip": ""
+  },
+  {
+    "id": "reward.skillDraft.spent",
+    "extends": "",
+    "short": "This draft has already been spent. Go Back; the row stays as it is.",
+    "full": "",
     "tip": ""
   },
   {

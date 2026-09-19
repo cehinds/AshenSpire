@@ -176,7 +176,9 @@ export function mountRewards(app, {
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
     const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' ? {
-      deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, skills: structuredClone(run.skills || {}),
+      deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds },
+      // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
+      skills: row.kind === 'skillDraft' ? structuredClone(run.skills || {}) : null,
       checkpoint: checkpoint ? structuredClone(checkpoint) : null,
     } : null;
     if (!apply[row.kind](row)) return false;
@@ -192,7 +194,7 @@ export function mountRewards(app, {
         chosenCardId = cardBefore.chosenCardId;
         for (const key of Object.keys(chosenDraftCardIds)) delete chosenDraftCardIds[key];
         Object.assign(chosenDraftCardIds, cardBefore.chosenDraft);
-        run.skills = cardBefore.skills;
+        if (cardBefore.skills) run.skills = cardBefore.skills;
         delete states[row.key];
         if (checkpoint) {
           for (const key of Object.keys(checkpoint)) delete checkpoint[key];
@@ -582,7 +584,16 @@ export function mountRewards(app, {
       confirming = true;
       confirmButton.disabled = true;
       try {
-        take({ ...row, cardId: selectedCardId }, row.key);
+        // A take that lands returns true and re-renders the menu; one the
+        // door refuses (a draft the ledger has no draft queued for — an
+        // offer older than its ledger) returns false and must not leave the
+        // chooser armed but dead: say so and hand the button back.
+        if (!take({ ...row, cardId: selectedCardId }, row.key)) {
+          message.textContent = t(row.kind === 'skillDraft' ? 'reward.skillDraft.spent' : 'reward.card.alreadyTaken');
+          message.hidden = false;
+          confirming = false;
+          confirmButton.disabled = false;
+        }
       } catch {
         message.textContent = t('reward.card.saveFailed');
         message.hidden = false;

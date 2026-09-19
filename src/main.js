@@ -2090,7 +2090,7 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = rollSkillDrafts();
+    const bossDrafts = rollSkillDrafts('boss');
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
@@ -2106,7 +2106,7 @@ async function onCombatEnd(result, combat, enc) {
   // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
   // a level the fight bought is offered as a pick from the track's own
   // schools, and while one is on the table the class-card offer is not.
-  const drafts = rollSkillDrafts();
+  const drafts = rollSkillDrafts(enc.pool);
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
@@ -2128,16 +2128,16 @@ async function onCombatEnd(result, combat, enc) {
  * most balance.skill.draftsPerCombat per track per door (the rest wait for
  * the next fight); a track whose schools offer nothing rolls no row and keeps
  * its draft. Rolled on the 'cardRewards' stream the card offer would have
- * used.
+ * used, at the door's own odds (the boss's at a boss door).
  */
-function rollSkillDrafts() {
+function rollSkillDrafts(pool) {
   const perDoor = registries.balance.skill.draftsPerCombat;
   const out = [];
   for (const track of skillTracks(registries)) {
     const row = run.skills && run.skills[track.id];
     if (!row || !(row.pendingDrafts > 0)) continue;
     for (let i = 0; i < Math.min(perDoor, row.pendingDrafts); i++) {
-      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level });
+      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool, flatRarity: chaosRewardsOn() });
       if (cardIds.length) out.push({ skillId: track.id, level: row.level, cardIds });
     }
   }
@@ -2942,7 +2942,7 @@ if (shotState === 'combat-test') {
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
-    const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, run.class, 'item:blade')) : null;
+    const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,

@@ -106,7 +106,7 @@ export function awardSkillXp(registries, run, skillId, amount) {
   const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { skillId, before, after: before, levelUps: 0 };
+  if (gain <= 0) return { skillId, before, after: before, levelUps: 0, upgraded: [] };
   row.xp += gain;
   let cost = xpToNext(registries, kind, row.level);
   while (row.xp >= cost) {
@@ -131,15 +131,17 @@ function draftRows(registries) {
 }
 
 /**
- * skillSchools(registries, loadout, classId, skillId) → the card schools a
- * track drafts from, DERIVED, no second table: a weapon or focus track reads
- * the card-domain tags its held pieces of that item type carry in
- * tagging.csv (a greatsword: blade, heavy; a straight sword: blade, basic),
- * falling back to every piece of the type when none is held; dualWield reads
- * both hands; armour and class tracks have no schools (nothing to draft
- * until phase 5b's tree). "The sword you levelled drafts sword cards."
+ * skillSchools(registries, loadout, skillId) → the card schools a track
+ * drafts from, DERIVED, no second table: a weapon or focus track reads the
+ * card-domain tags the HELD pieces of that item type carry in tagging.csv (a
+ * greatsword: blade, heavy; a straight sword: blade, basic); dualWield reads
+ * both hands; a type no hand holds has no schools — the draft waits until
+ * one is held (a union over every piece of the type would hand a swordless
+ * blade track guard and blood cards); armour and class tracks have no
+ * schools (nothing to draft until phase 5b's tree). "The sword you levelled
+ * drafts sword cards."
  */
-export function skillSchools(registries, loadout, classId, skillId) {
+export function skillSchools(registries, loadout, skillId) {
   const kind = skillKindOf(registries, skillId);
   if (kind !== 'weapon' && kind !== 'focus' && kind !== 'dual') return [];
   const schools = new Set((Array.isArray(registries && registries.nodes) ? registries.nodes : [])
@@ -150,8 +152,7 @@ export function skillSchools(registries, loadout, classId, skillId) {
   const held = Object.values(HAND_SLOT_IDS).map((slotId) => activeIn(loadout, slotId))
     .map((id) => (id ? armaments.find((a) => a.id === id) : null)).filter(Boolean);
   const ofType = (piece) => (piece.itemTypeTags || []).includes(skillId);
-  let pieces = kind === 'dual' ? held : held.filter(ofType);
-  if (!pieces.length && kind !== 'dual') pieces = armaments.filter(ofType);
+  const pieces = kind === 'dual' ? held : held.filter(ofType);
   const out = [];
   for (const piece of pieces) {
     for (const tag of piece.tags || []) if (schools.has(tag) && !out.includes(tag)) out.push(tag);
@@ -187,7 +188,7 @@ export function skillUpgradesCards(registries, level) {
  * not counted.
  */
 export function applySkillUpgrades(registries, run, skillId) {
-  const schools = new Set(skillSchools(registries, run.loadout, run.class, skillId));
+  const schools = new Set(skillSchools(registries, run.loadout, skillId));
   if (!schools.size || !Array.isArray(run.deck)) return [];
   const cards = registries && registries.cards;
   const out = [];
