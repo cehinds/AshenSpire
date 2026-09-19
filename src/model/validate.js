@@ -517,9 +517,12 @@ function collectContentProblems(bundle, errors = []) {
   // What a rest restores (plan phase 7): the location rules read these rows
   // through their variable bindings, the door reads the mode. A retune that
   // names an unknown mode or a percent off the scale is refused by name.
-  if (b.balance && b.balance.rest !== undefined) {
+  // Both blocks are REQUIRED: the location rules bind to balance.rest and the
+  // journey door reads balance.atlas at run start, so a bundle without them
+  // would pass here and throw there.
+  if (b.balance) {
     const rest = b.balance.rest;
-    if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana }');
+    if (!rest || typeof rest !== 'object' || Array.isArray(rest)) err('balance.rest', 'must be an object { hpSmallPct, hpPartialPct, mana } — the location rules read it (plan phase 7)');
     else {
       for (const key of Object.keys(rest)) if (!['hpSmallPct', 'hpPartialPct', 'mana'].includes(key)) err(`balance.rest.${key}`, 'Unknown field');
       for (const key of ['hpSmallPct', 'hpPartialPct']) {
@@ -535,9 +538,9 @@ function collectContentProblems(bundle, errors = []) {
       }
     }
   }
-  if (b.balance && b.balance.atlas !== undefined) {
+  if (b.balance) {
     const atlas = b.balance.atlas;
-    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax }');
+    if (!atlas || typeof atlas !== 'object' || Array.isArray(atlas)) err('balance.atlas', 'must be an object { townsPerActMax } — the journey door reads it at run start (plan phase 7)');
     else {
       for (const key of Object.keys(atlas)) if (!['townsPerActMax'].includes(key)) err(`balance.atlas.${key}`, 'Unknown field');
       // Positive: every seeded route stops at its hub city, so a cap of 0

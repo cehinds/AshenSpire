@@ -9321,6 +9321,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(said(bal({ rest: { ...rest, hpPartialPct: 135 } })).some((e) => /balance\.rest\.hpPartialPct/.test(e)), 'a percent off the scale is refused by name');
     assert(said(bal({ atlas: { townsPerActMax: -1 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a negative town cap is refused by name');
     assert(said(bal({ atlas: { townsPerActMax: 0 } })).some((e) => /balance\.atlas\.townsPerActMax/.test(e)), 'a zero cap — no route could hold its hub — is refused by name');
+    const { atlas: _noAtlas, ...balanceSansAtlas } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansAtlas })).some((e) => /^balance\.atlas:/.test(e)), 'a bundle without the atlas block is refused by name, not at run start');
+    const { rest: _noRest, ...balanceSansRest } = contentBundle.balance;
+    assert(said(validateContent({ ...testBundle(), balance: balanceSansRest })).some((e) => /^balance\.rest:/.test(e)), 'a bundle without the rest block is refused by name');
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'shop', tagId: 'restHpFull' }])).some((e) => /tagging\.location\.shop/.test(e)), 'a service type no visit opens is not a location');
     assert(said(tagged([{ family: 'location', scope: '', objectId: 'camp', tagId: 'restManaFlat' }])).some((e) => /tagging\.location\.camp.*one rule/.test(e)), 'restMana beside a fixed-mode tag is refused by name');
     const overrideReg = createRegistries({ ...testBundle(), tagging: contentBundle.tagging.map((r) => (r.family === 'location' && r.objectId === 'camp' && r.tagId === 'restMana' ? { ...r, tagId: 'restManaFlat' } : r)) });
