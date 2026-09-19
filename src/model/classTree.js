@@ -38,6 +38,11 @@ function rule(registries, nodeId) {
  */
 export function classDraftPool(registries, classId, coreTags = [], level = 0) {
   const picked = new Set(coreTags || []);
+  // CONFLICTS_WITH is symmetric (nodeRelations.csv), but a rule's `excludes`
+  // is derived from the rows the node is the SOURCE of; the pool reads the
+  // relation both ways, so one subclass picked shuts the other whichever
+  // row named the pair.
+  const excludedByPicked = new Set([...picked].flatMap((id) => ((rule(registries, id) || {}).excludes) || []));
   return classTreeRows(registries, classId)
     .filter((row) => level >= tierOpensAt(registries, row.tier) && !picked.has(row.nodeId))
     .filter((row) => {
@@ -45,6 +50,7 @@ export function classDraftPool(registries, classId, coreTags = [], level = 0) {
       if (!r) return false;
       if ((r.requires || []).some((t) => !picked.has(t))) return false;
       if ((r.excludes || []).some((t) => picked.has(t))) return false;
+      if (excludedByPicked.has(row.nodeId)) return false;
       return true;
     })
     .map((row) => row.nodeId);
