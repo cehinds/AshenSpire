@@ -879,12 +879,6 @@ export const itemUpgradeChanges = [
     "value": 3
   },
   {
-    "itemRef": "armament/frostSpear",
-    "nextTier": 1,
-    "tag": "card:technique:effect:block",
-    "value": 2
-  },
-  {
     "itemRef": "armament/cinderAxe",
     "nextTier": 1,
     "tag": "upgrade:cost:smithing-stone",
@@ -903,12 +897,6 @@ export const itemUpgradeChanges = [
     "value": 3
   },
   {
-    "itemRef": "armament/cinderAxe",
-    "nextTier": 1,
-    "tag": "card:technique:effect:block",
-    "value": 2
-  },
-  {
     "itemRef": "armament/duskChime",
     "nextTier": 1,
     "tag": "upgrade:cost:smithing-stone",
@@ -925,11 +913,5 @@ export const itemUpgradeChanges = [
     "nextTier": 1,
     "tag": "card:guard:effect:block",
     "value": 3
-  },
-  {
-    "itemRef": "armament/duskChime",
-    "nextTier": 1,
-    "tag": "card:technique:effect:block",
-    "value": 2
   }
 ];

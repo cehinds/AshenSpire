@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { equipPiece, stampDeck } from '../src/model/loadout.js';
-import { itemUpgradeRows, resolveUpgradedEquipment } from '../src/model/itemUpgrades.js';
+import { itemUpgradeRows, parseItemUpgradeTag, resolveUpgradedEquipment } from '../src/model/itemUpgrades.js';
 import { armourMenuAsset, armourArtKey } from '../src/model/paintedOutfitArt.js';
 const r = createRegistries(contentBundle);
 const owns = { has: () => true };
@@ -22,12 +22,32 @@ for (const [id, art, status] of [['frostSpear', 'rimeThrust', 'frost'], ['cinder
   assert.ok(resolveCard(r, ref).effects.some(e => e.status === status));
   assert.ok(resolveCard(r, { ...ref, upgraded: true }).effects.some(e => e.status === status));
   assert.ok(itemUpgradeRows(r, `armament/${id}`, 1).length > 1);
+  // Every advertised card-effect upgrade must reach a real item-lent card.
+  // In particular, the signature Art is not a legacy technique-role card.
+  const upgradeTargets = itemUpgradeRows(r, `armament/${id}`, 1)
+    .filter(row => row.tag.startsWith('card:'))
+    .map(row => {
+      const descriptor = parseItemUpgradeTag(row.tag);
+      assert.equal(descriptor?.kind, 'cardEffect', `${id}: supported authored card upgrade`);
+      const targets = refs.filter(card => (card.kitRole || card.equipmentRole) === descriptor.role);
+      assert.ok(targets.length, `${id}: ${row.tag} reaches a granted role`);
+      return targets.map(card => {
+        const effects = resolveCard(r, card).effects.filter(effect => effect.op === descriptor.op);
+        assert.equal(effects.length, 1, `${id}: ${row.tag} reaches one effect`);
+        return { instanceId: card.instanceId, op: descriptor.op, before: effects[0].amount, delta: row.value };
+      });
+    }).flat();
   const attack = refs.find(c => c.kitRole === 'attack');
   const before = resolveCard(r, attack).effects.find(e => e.op === 'damage').amount;
   run.itemUpgradeLevels = { [`armament/${id}`]: 1 };
   stampDeck(r, run);
   const after = resolveCard(r, run.deck.find(c => c.instanceId === attack.instanceId)).effects.find(e => e.op === 'damage').amount;
   assert.ok(after > before, `${id}: smithing reaches generated attack`);
+  for (const target of upgradeTargets) {
+    const card = run.deck.find(card => card.instanceId === target.instanceId);
+    const effect = resolveCard(r, card).effects.find(effect => effect.op === target.op);
+    assert.equal(effect.amount, target.before + target.delta, `${id}: smithing applies the exact ${target.op} delta`);
+  }
 }
 for (const [classId, id, alias] of [['reaver', 'bastion', 'warden'], ['starseer', 'rimeweave', 'starlit'], ['rogue', 'waywatcher', 'nightveil']]) {
   const piece = r.equipment.armour.find(p => p.classId === classId && p.id === id);
