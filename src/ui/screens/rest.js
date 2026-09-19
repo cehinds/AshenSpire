@@ -95,11 +95,11 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
   });
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');

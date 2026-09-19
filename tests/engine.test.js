@@ -9134,6 +9134,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     awardLevelXp(REG, run, [6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0));
     eq(run.level.level, 11); eq(run.drawPerTurn, born.drawPerTurn + 1, 'level 11 draws one more'); eq(run.maxHp, born.maxHp + 2 * rules.hp.perLevel.gain);
     eq(characterLevel(run), 11, 'the readers read the ledger'); eq(playerLevel(REG, run), 11, 'and so does the hidden player level');
+    // THE PROJECTION SHOWS THE TERM IT COUNTS (the review of #1194): the
+    // formula's addends equal its result once the level term is non-zero.
+    const shown = statProjection(REG, run).derived.find((row) => row.id === 'hp');
+    eq(shown.levelBonus, 2 * rules.hp.perLevel.gain); assert(/\+ 10 level/.test(shown.formula), `the HP formula names the level term — ${shown.formula}`);
+    eq(shown.value, run.maxHp, 'and equals the pool'); eq(Number(shown.formula.split('= ').pop()), shown.value);
+    const drawShown = statProjection(REG, run).derived.find((row) => row.id === 'draw');
+    assert(/\+ 1 level = /.test(drawShown.formula), `the Hand formula names its one level card — ${drawShown.formula}`);
+    eq(statProjection(REG, createRunState({ seed: 3, classId: 'reaver', registries: REG })).derived.find((row) => row.id === 'hp').formula.includes('level'), false, 'and at level 1 there is no term to show');
 
     // THE LOAD DOOR accepts the bumped pools (they are the snapshot's own
     // arithmetic at the run's level) and refuses a malformed ledger by name.

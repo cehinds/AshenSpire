@@ -1883,9 +1883,9 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 .flask-increment > .as-row.setting > .as-labelstack { flex: 1 1 12rem; }
 .flask-increment-id .flask-identity { display: inline-flex; align-items: center; gap: 0.6rem; }
 .flask-increment > .as-status.flask-increment-total { display: block; margin-top: 0.6rem; text-align: center; }
-.level-cinder-preview { margin: 0; }
-.level-cinder-preview > .level-cinder-cost { color: var(--ember); font-weight: 600; }
-.level-cinder-result[hidden] { display: none; }
+.level-xp-preview { margin: 0; }
+.level-xp-preview > .level-points-waiting { color: var(--ember); font-weight: 600; }
+.level-points-result[hidden] { display: none; }
 /* A flask button carries a name AND a charge count. The COUNT holds — it is
    the number a player spends — and the NAME yields to an ellipsis inside the
    ladder's step. Measured on the co-op board at 1200x730, where "Crimson

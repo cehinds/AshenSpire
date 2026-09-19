@@ -217,48 +217,14 @@ export const balance = {
   // `content/derivedStats.js`, already: a CON point is +1 HP per five, a WIS
   // point is Mana. Nothing about the value of a level is authored here.
   //
-  //   firstCost   what the FIRST level of a run costs.
-  //   costStep    what each level adds to the next one's price. "cinders spent
-  //               past a threshold, scalable" — a linear ramp, and the ramp is
-  //               the scalable part: raise this and the run gets fewer levels
-  //               with no code touched.
-  //   pointsPerLevel  "they may increase a stat by 1 point". His number.
-  //   maxLevels   null = no ceiling but the cinders themselves. His range is an
-  //               ECONOMY, not a cap, and a cap would answer it by refusing
-  //               rather than by pricing.
+  //   pointsPerLevel  "they may increase a stat by 1 point". His number —
+  //               what a level GRANTS to the ledger (balance.levelUp below).
+  //   maxLevels   null = no ceiling. His range is an ECONOMY, not a cap.
   //
-  // WHY 20 AND 4, AND WHAT IS UNKNOWN ABOUT THEM. Cost(n) = 20 + 4(n−1), so a
-  // run's nth level costs 20, 24, 28 … and n levels cost 2n² + 18n cinders in
-  // total. Against a run's whole cinder budget that is 10 levels at 400, 13 at
-  // 600, 20 at 1200 — inside his 10–20 band across the entire plausible range,
-  // which is the property `tests/engine.test.js` asserts on this table.
-  // **WHAT IS NOT MEASURED IS THE BUDGET ITSELF.** Nobody here has simulated
-  // what a real climb actually earns, or what the shop takes out of it first.
-  // The curve is checked; the range it is checked over is an assumption, and it
-  // is stated as one rather than reported as balance.
+  // The cinder ladder that sat here (firstCost / costStep, "cinders spent
+  // past a threshold, scalable", measured at 20+4 and again at 50+10 against
+  // the tripled faucet) is GONE with plan phase 6: a level is earned, below.
   //
-  // ---- TWO DIALS HE ASKED FOR BY NAME, 2026-08-17 ---------------------------
-  //
-  //   "leave the level up value configurable. also, let's make the increment of
-  //    5 points for reasonable change be confurable as well. that way I can
-  //    test each."
-  //
-  // Only the LADDERS live here. `pointsPerLevel` is the level value's shipping
-  // default and this is its home. The TIER SIZE's default is deliberately NOT
-  // restated in this file — it is `derivedStatRules.defaults.pointsPerTier`,
-  // read at the settings row from its one home, because this file is exactly
-  // where a copy of it would drift. Adding a value he may pick is a row in
-  // these arrays and ZERO UI code (the `tapFloor` row's shape, and the Law 0
-  // falsifier for the dials themselves).
-  //
-  // WHAT THE TIER DIAL DOES NOT REACH, said out loud rather than discovered:
-  // THREE separate vocabularies in this tree carry a 5-point tier —
-  // derived stats (this dial), `equipment.basicCardProfiles[*].pointsPerTier`,
-  // and relic `resource.attributeTier` rows. His sentence is about what a stat
-  // point is WORTH, which is the derived-stat one and the one my HP finding was
-  // about. The other two are their own systems with their own tiers, and a
-  // single global reaching into all three would be collapsing three
-  // distinctions into one number because it is tidier.
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): XP from a
   // won fight and from each kill by the door's pool (and per quest once phase
   // 10a's door pays it), on the one curve shape every track shares —

@@ -795,8 +795,8 @@ step of the one curve every track shares, `xpToNext(n) = round(base × growth^(n
 on `balance.level.xp` (100 / 1.15 / 10), grants `balance.levelUp.pointsPerLevel` attribute points
 (the player's dial, read when the level is reached), which wait on the run's ledger until the
 player assigns them at a shrine. Curve receipt: the steps from level 1 cost 100, 120, 130, 150,
-170, 200, 230, 270, 310, 350 — 2,030 XP to level 11; a full run at the shipped awards lands near
-level 10–12, and `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
+170, 200, 230, 270, 310, 350 — 2,030 XP to level 11; a full run at the shipped awards earns about
+11–12 levels (measured: 11.5), and `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
 level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
 faucet) is gone with the purse.
 

@@ -318,6 +318,10 @@ export function createRegistries(contentBundle) {
       if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
     }
   }
+  // The label ceiling is the ATTRIBUTE term at the creation ceiling: the
+  // character level's own term (plan phase 6, derivedStats `perLevel`) is not
+  // added here — the trough's geometry reads the authored domainMax, and a
+  // long run's bumps at most widen a plate's number by a digit.
   const domainRows = registries.classes.all().map((classDef) => {
     const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
     return {

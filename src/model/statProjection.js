@@ -157,7 +157,10 @@ export function statProjection(registries, run) {
       value,
       equipmentBonus,
       adjustment,
+      // Every term the value has, so the arithmetic shown equals the result
+      // shown: the level's own term (plan phase 6) joins once it is non-zero.
       formula: `${receipt.base} + ${receipt.tier} tier × ${receipt.gainPerTier}`
+        + `${receipt.levelBonus ? ` + ${receipt.levelBonus} level` : ''}`
         + `${equipmentBonus ? ` + ${equipmentBonus} gear` : ''}`
         + `${adjustment ? ` ${adjustment > 0 ? '+' : '-'} ${Math.abs(adjustment)} permanent` : ''} = ${value}`,
       note: id === 'stamina' ? 'Spent by cards that ask for it (the dodge roll among them); an idle turn recovers some.' : id === 'draw' ? 'The current engine uses this for turn 1 and every later turn.' : '',
