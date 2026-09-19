@@ -540,7 +540,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
 /**
- * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror })
+ * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror, headId, handsId, feetId })
  * → element | null.
  *
  * The figure as LAYERS: a bare-handed body in the armour set's palette, with
@@ -555,7 +555,7 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
  * PNG per piece is 36 files. Any layer that fails to load just removes itself,
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
-export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
+export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false, headId = null, handsId = null, feetId = null }) {
   // NO PAINTED SHORT-CIRCUIT HERE, and the reason is the whole point of this
   // function. A `return paintedPresentation(classId, armourId, 'stand')` sat on
   // these two lines and returned a single standing frame, so the armament layers
@@ -593,8 +593,16 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
     el.appendChild(img);
   };
   layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
-  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2, leftMirror);
-  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3, rightMirror);
+  // The worn layers the slot split added (plan phase 3b): feet under hands
+  // under head, all over the body and under whatever is held. The file is
+  // `<slot>_<id>.webp`; when it does not exist the image's error handler above
+  // removes it, so a slot with a piece but no art draws nothing rather than a
+  // broken image — the fallback the plan asks for.
+  if (feetId) layer(assetUrl(`assets/equipment/feet_${feetId}.webp`), 2);
+  if (handsId) layer(assetUrl(`assets/equipment/hands_${handsId}.webp`), 3);
+  if (headId) layer(assetUrl(`assets/equipment/head_${headId}.webp`), 4);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 5, leftMirror);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 6, rightMirror);
   return el;
 }
 

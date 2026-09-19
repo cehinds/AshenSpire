@@ -28,6 +28,7 @@ import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
 // One home for the mechanic: src/model/healLedger.js.
 import { openLedger, closeLedger, note } from './healLedger.js';
+import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 
@@ -606,59 +607,10 @@ export const RUN_SHAPE = [
 // Zones (plan phase 3a) — the character as cards in zones, projected
 // ---------------------------------------------------------------------------
 
-/** The worn slots a zone map has, in order. `talisman` is the slot the slot
- * table already declares (content/source/equipmentSlots) and the plan's four
- * are the ones phase 3b splits armour into; all five are present so a save's
- * shape does not change again when the rows arrive. */
-export const WORN_ZONE_SLOTS = Object.freeze(['body', 'head', 'hands', 'feet', 'talisman']);
-
-const idOrNull = (v) => (typeof v === 'string' && v ? v : null);
-
-/** The item a loadout slot has ACTIVE, or null. */
-function activeIn(loadout, slotId) {
-  const sets = loadout && loadout.sets && loadout.sets[slotId];
-  if (!Array.isArray(sets)) return null;
-  const index = loadout.active && Number.isInteger(loadout.active[slotId]) ? loadout.active[slotId] : 0;
-  return idOrNull(sets[index]);
-}
-
-/**
- * projectZones(run) → { zones, collection }
- *
- * The character's cards, by zone, READ OFF THE FIELDS THAT OWN THEM TODAY:
- *   core     the class (phase 5 gives the class card content; the id is the
- *            class id, as the plan states)
- *   worn     body ← the active armour; head/hands/feet ← null until phase 3b
- *            authors the rows; talisman ← the active talisman
- *   hands    main ← the active right-hand piece, off ← the active left-hand
- *   passive  the relics, in the order held
- *   collection  every card instance the run owns — today exactly the deck,
- *            because nothing yet lets a card be owned and not decked
- *
- * Pure, and registry-free: a migration must be able to call it on a save
- * with no content in hand (DEVELOPER.md rule 1). It never reads `zones`.
- */
-export function projectZones(run) {
-  const loadout = run && run.loadout;
-  return {
-    zones: {
-      core: idOrNull(run && run.class),
-      worn: {
-        body: activeIn(loadout, 'armor'),
-        head: null,
-        hands: null,
-        feet: null,
-        talisman: activeIn(loadout, 'talisman'),
-      },
-      hands: {
-        main: activeIn(loadout, 'rightHand'),
-        off: activeIn(loadout, 'leftHand'),
-      },
-      passive: Array.isArray(run && run.relics) ? run.relics.filter((id) => typeof id === 'string' && id) : [],
-    },
-    collection: Array.isArray(run && run.deck) ? run.deck.filter(Boolean).map((card) => structuredClone(card)) : [],
-  };
-}
+// The zone map and the projection live in zones.js (a leaf) since phase 3b,
+// so the figure composer and the slot table's door read the same map this
+// run does. Re-exported here for the readers that learned them at 3a.
+export { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones };
 
 /**
  * syncZones(run) → true if the projection changed what the run carried.

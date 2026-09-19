@@ -21,6 +21,7 @@ import { resolveCard } from '../../model/registries.js';
 import {
   canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
   ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
+  loadoutLeaveRefusal,
 } from '../../model/loadout.js';
 import { armamentIntrinsicReceipt, equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
@@ -856,6 +857,19 @@ export function mountEquipment(host, {
   // One teardown home for the listener this mount owns outside its subtree.
   // The 2026-08-23 disclosure correction removed the hold grips and their
   // window listeners; Escape still has to leave through every close road.
+  // THE DECK'S FLOOR GATES EVERY ROAD THE PLAYER TAKES OUT (plan phase 3b,
+  // proposal §5): Back, the ✕, Escape and the tap outside all go through
+  // `leave`, which asks the model (loadoutLeaveRefusal) and shows its sentence
+  // in place instead of closing. `close` itself stays unconditional — it is
+  // also the teardown a host calls when a fight starts, and a door that can
+  // trap a host is not a rule. `enteredWith` is what the run held when the
+  // screen opened: a deck already under the floor on arrival may still leave.
+  const enteredWith = Array.isArray(run.deck) ? run.deck.length : 0;
+  const leave = () => {
+    const refusal = loadoutLeaveRefusal(registries, run, { enteredWith });
+    if (refusal) { notice = refusal; draw(); return; }
+    close();
+  };
   const close = () => {
     document.removeEventListener('keydown', onKey);
     if (paneObserver) paneObserver.disconnect();
@@ -885,7 +899,7 @@ export function mountEquipment(host, {
   // `ev.target === wrap` is load-bearing: a click that started on the panel
   // and bubbled must not close it.
   wrap.addEventListener('click', (ev) => {
-    if (ev.target === wrap) { close(); return; }
+    if (ev.target === wrap) { leave(); return; }
     if (!picking) return;
     // The footer's Back and action are outside the Inventory but are not a
     // "tap elsewhere": clearing the selection there would drop the action.
@@ -2012,7 +2026,7 @@ export function mountEquipment(host, {
     // W1e footer: Back bottom-left (leaves, like the ✕ and Escape); the
     // selected item's action bottom-right when there is one.
     const back = button({ label: t('common.back'), role: 'exit', className: 'armoury-back', attrs: { dataset: { focusable: 'true' } } });
-    back.addEventListener('click', close);
+    back.addEventListener('click', leave);
     const rendered = renderArmouryPanel(panelModel, wrap, { back });
     setFooterPrimary = rendered.setPrimary;
     armouryNav = rendered.nav;
@@ -2139,7 +2153,7 @@ export function mountEquipment(host, {
     const itemCollection = wrap.querySelector('.armoury-item-collection');
     if (itemCollection) itemCollection.scrollTop = previousCollectionScroll;
     notice = '';
-    wrap.querySelector('.armoury-close').addEventListener('click', close);
+    wrap.querySelector('.armoury-close').addEventListener('click', leave);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
         picking = null;
@@ -2170,7 +2184,7 @@ export function mountEquipment(host, {
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
   // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) close();
+    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) leave();
   };
   document.addEventListener('keydown', onKey);
 

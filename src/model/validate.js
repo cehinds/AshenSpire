@@ -39,6 +39,7 @@ import {
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
+import { wornZoneOf, handZoneOf } from './zones.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
@@ -503,6 +504,19 @@ function collectContentProblems(bundle, errors = []) {
   // always did) but when authored it must be whole, and the tag it names as
   // "extractable" must be a registered card-domain tag — otherwise nothing
   // could ever carry it and every mount would be sealed in silence.
+  // The deck's floor (plan phase 3b): balance.deck is read by model/loadout.js
+  // deckMinimum and nowhere else; the shape is held here so a retune that
+  // types a fraction or a negative is refused by name, never clamped.
+  if (b.balance && b.balance.deck !== undefined) {
+    const deck = b.balance.deck;
+    if (!deck || typeof deck !== 'object' || Array.isArray(deck)) err('balance.deck', 'must be an object { minimum, minimumStepLevels, minimumPerStep }');
+    else {
+      for (const key of Object.keys(deck)) if (!['minimum', 'minimumStepLevels', 'minimumPerStep'].includes(key)) err(`balance.deck.${key}`, 'Unknown field');
+      if (!Number.isInteger(deck.minimum) || deck.minimum < 0) err('balance.deck.minimum', `must be a non-negative integer, got ${JSON.stringify(deck.minimum)}`);
+      if (!Number.isInteger(deck.minimumStepLevels) || deck.minimumStepLevels < 1) err('balance.deck.minimumStepLevels', `must be a positive integer, got ${JSON.stringify(deck.minimumStepLevels)}`);
+      if (!Number.isInteger(deck.minimumPerStep) || deck.minimumPerStep < 0) err('balance.deck.minimumPerStep', `must be a non-negative integer, got ${JSON.stringify(deck.minimumPerStep)}`);
+    }
+  }
   if (b.balance && b.balance.equipment && b.balance.equipment.cardMounts !== undefined) {
     try {
       const rules = normalizeCardMountRules(b.balance.equipment.cardMounts);
@@ -775,6 +789,17 @@ function collectContentProblems(bundle, errors = []) {
         if (seen.has(key)) err(path, `Duplicate exact card/weapon pair '${key}'`);
         seen.add(key);
       }
+    }
+    // EVERY SLOT ROW IS A ZONE THE RUN CAN CARRY (plan phase 3b). zones.js is
+    // the one home of "which slot fills which zone"; a row here that it does
+    // not name would take a piece the player equipped and give it nowhere to
+    // ride in the save's `zones`, so it is refused by name at boot rather than
+    // discovered as a null in a projection.
+    for (const slot of Array.isArray(equipment.slots) ? equipment.slots : []) {
+      if (!slot || typeof slot.id !== 'string') continue;
+      const held = typeof slot.hand === 'string' && slot.hand !== '';
+      if (held && !handZoneOf(slot.id)) err(`equipment.slots.${slot.id}`, `is a hand slot that no hands zone names (model/zones.js HAND_SLOT_IDS) — the run could not carry what is put in it`);
+      if (!held && !wornZoneOf(slot.id)) err(`equipment.slots.${slot.id}`, `is a worn slot that no worn zone names (model/zones.js WORN_SLOT_IDS) — the run could not carry what is put in it`);
     }
     if (!Array.isArray(equipment.cardTagging)) err('equipment.cardTagging', 'Missing required registered cardTagging array');
   }

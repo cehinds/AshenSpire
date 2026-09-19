@@ -13,6 +13,7 @@ import { DAMAGE_SCHOOLS } from './schemas.js';
 import { note } from './healLedger.js';
 import { cumulativeRequirementDelta, resolveUpgradedEquipment } from './itemUpgrades.js';
 import { splitAuthoredWeaponArts } from '../framework/deck.js';
+import { projectZones, WORN_SLOT_IDS, HAND_SLOT_IDS, wornZoneOf } from './zones.js';
 
 const EQUIPMENT_PROFILE_SNAPSHOT_VERSION = 1;
 const EQUIPMENT_PROFILE_PATCH_FIELDS = Object.freeze(['baseValue', 'scalingStat', 'pointsPerTier', 'rounding', 'gainPerTier', 'cap']);
@@ -2282,15 +2283,29 @@ export function figureSpec(registries, loadout, classId) {
   const spec = {
     armourId: 'default', rightId: null, leftId: null,
     rightMirror: false, leftMirror: false,
+    // The three worn layers the slot split added (plan phase 3b). Art is keyed
+    // `<slot>_<id>` and a missing file draws nothing (assets.js equippedFigure),
+    // so a layer here is an id and never a promise that a picture exists.
+    headId: null, handsId: null, feetId: null,
   };
   if (!loadout) return spec;
-  for (const slot of slots) {
-    const piece = equippedIn(registries, loadout, classId, slot.id);
+  // THE ZONES ARE WHAT IS DRAWN. The projection reads the same loadout the
+  // run saves (zones.js projectZones, registry-free), so the figure and the
+  // save cannot disagree about what is worn or held: body ← zones.worn.body,
+  // the three new layers ← zones.worn.head/hands/feet, the hands ← zones.hands.
+  const { zones } = projectZones({ class: classId, loadout, relics: [], deck: [] });
+  if (zones.worn.body) spec.armourId = zones.worn.body;
+  spec.headId = zones.worn.head;
+  spec.handsId = zones.worn.hands;
+  spec.feetId = zones.worn.feet;
+  // The hands need the PIECE (art key, shield mirroring), so each hand zone
+  // resolves its slot's piece; the zone said which id, the table says how it
+  // is drawn.
+  for (const [zone, slotId] of Object.entries(HAND_SLOT_IDS)) {
+    if (!zones.hands[zone]) continue;
+    const slot = slots.find((s) => s.id === slotId);
+    const piece = slot ? equippedIn(registries, loadout, classId, slotId) : null;
     if (!piece) continue;
-    if (slot.kinds.includes('armor')) {
-      spec.armourId = piece.id;
-      continue;
-    }
     const hand = slotHand(slot);
     if (hand === 'right') {
       spec.rightId = piece.artKey || piece.id;
@@ -2299,10 +2314,42 @@ export function figureSpec(registries, loadout, classId) {
       spec.leftId = piece.artKey || piece.id;
       spec.leftMirror = piece.kind !== 'shield';
     }
-    // No hand: this slot is not held (a talisman), so there is nothing to draw
-    // in a hand for it. It used to land in the right hand as a weapon layer.
   }
   return spec;
+}
+
+/**
+ * deckMinimum(registries, run) → the fewest cards a run may leave the Armoury
+ * with (plan phase 3b, proposal §5). balance.deck is the one home of the
+ * numbers; character level (phase 6) is read as 0 until it exists.
+ */
+export function deckMinimum(registries, run) {
+  const cfg = (((registries || {}).balance || {}).deck) || {};
+  const level = run && Number.isInteger(run.characterLevel) && run.characterLevel > 0 ? run.characterLevel : 0;
+  const step = Number.isInteger(cfg.minimumStepLevels) && cfg.minimumStepLevels > 0 ? cfg.minimumStepLevels : 1;
+  const base = Number.isInteger(cfg.minimum) ? cfg.minimum : 0;
+  const perStep = Number.isInteger(cfg.minimumPerStep) ? cfg.minimumPerStep : 0;
+  return base + Math.floor(level / step) * perStep;
+}
+
+/**
+ * loadoutLeaveRefusal(registries, run, { enteredWith }) → '' when the player
+ * may leave the Armoury, else the sentence that says why not.
+ *
+ * THE FLOOR GATES THE DOOR, NOT THE ACT: unequipping is always allowed (the
+ * player may be mid-swap), and what is refused is LEAVING with the deck under
+ * `deckMinimum`. `enteredWith` is the deck size when the screen opened: a run
+ * that was already under the floor when it arrived (a shop removal took it
+ * there; nothing in this screen did) may leave, because a door that traps a
+ * player over a state it did not create is a defect, not a rule.
+ */
+export function loadoutLeaveRefusal(registries, run, { enteredWith } = {}) {
+  const held = Array.isArray(run && run.deck) ? run.deck.length : 0;
+  const floor = deckMinimum(registries, run);
+  if (held >= floor) return '';
+  if (Number.isInteger(enteredWith) && enteredWith < floor) return '';
+  const short = floor - held;
+  return `Your deck holds ${held} card${held === 1 ? '' : 's'} and the floor is ${floor}. Equip something that carries ${short} more, or put back what you took off, before you leave.`;
 }
 
 /** Tags granted by what you're wearing (deduplicated, slot order). */

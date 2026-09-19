@@ -193,6 +193,40 @@ plan's four because the slot table already declares it. SPEC §13.4a.
 | Deck minimum: `balance.deck.minimum`, `balance.deck.minimumPerLevel`; `deckMinimum(registries, run)` in `src/model/loadout.js`; the loadout screen's leave door refuses under-minimum by name | `src/ui/screens/equipment.js` |
 | `figureSpec` (`loadout.js:2280`) reads `zones.worn` and `zones.hands`; `equippedFigure` (`assets.js:558`) accepts head/hands/feet layer ids and falls back to nothing when art is missing | |
 
+**3b AS BUILT (2026-09-19):** the half of 3b that is feel-neutral shipped;
+the half that changes what an object IS did not, and is 3b-ii below.
+
+- The slot split is real: `equipSlots.csv` carries `head`, `hands`, `feet`
+  (kinds of the same names, one set, out-of-combat swap) and `model/zones.js`
+  is the one map from zone to slot, read by the projection, the figure and the
+  slot table's door. No head/hands/feet PIECES ship: the proposal's §4 layer
+  stats (typed resistance, evade charges, stamina recovery, impact dealt…) are
+  mod fields the engine does not yet compute, and a piece authored against a
+  field nothing reads is a number that does nothing. The pieces arrive with
+  the fields, in the phase that gives the fields a reader (8 for exposure; the
+  rest as their systems land).
+- `figureSpec` draws from `projectZones`; `equippedFigure` layers the three
+  new slots and draws nothing when the art is missing.
+- The deck floor is `balance.deck` + `deckMinimum` + `loadoutLeaveRefusal`, on
+  every player road out of the Armoury. It refuses what the screen did, never a
+  deficit the run arrived with (a shop removal), so a door cannot trap a
+  player. Measured before building: unequipping both hands takes a reaver from
+  10 cards to 4, so the floor is live on day one, not dormant.
+- The lock is `grantedBy`, which `canRemoveDeckCard` already refused; a
+  `locked: true` flag would be a second home for one fact (3NF), so none is
+  written. "Reconcile against `collection`" is a no-op while `collection` is a
+  projection of `deck`, and stays unwritten for the same reason 3a's note gives.
+
+**3b-ii (not built; needs the owner's call):** equipment rows joining the
+card registry with `cardType: 'equipment'` and a `zone` field. Under the tag
+tree every object states exactly one kind (`classification.armament`,
+`classification.armour`); making a piece ALSO a card is a classification
+decision — a second kind row per piece, or `card` becoming an ancestor of
+`armament` in `nodes.csv` — and it changes every reader of
+`registries.cards.all()` (rewards, shops, deck stamping, the 435-object
+equivalence). It should be decided as a tree change first and a registry
+change second, in its own PR.
+
 **PR 3c: dynamic tags at snapshot.**
 
 | Change | Where |
