@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-19",
     "summary": "Resting is now something a place does, not something the Shrine does",
     "detail": "Every stop on the road — the Shrine, a rough camp off an Unknown node, a town's inn, its chapel — carries its own set of what it restores: the Shrine heals part of your HP, refills your flasks on arrival and offers the Smith and Level-up; a camp heals less and offers nothing; an inn heals you and your Mana to full. Every rest recovers Mana now, by default to half your maximum or to full if you already stand there. Ember Fragment reads \"Resting heals 15% more\" and works everywhere; the Wyrm Heart still forbids the Shrine's rest but lets you sleep at an inn. Seeded routes hold at most one town per act.",
-    "build": "0.7.1.256",
+    "build": "0.7.1.258",
     "pullRequest": 1195,
     "url": "https://github.com/cehinds/AshenSpire/pull/1195"
+  },
+  {
+    "id": "pr-1200",
+    "date": "2026-09-19",
+    "group": "2026-09-19",
+    "summary": "The Reaver draws the approved greatsword poses when that weapon is equipped",
+    "detail": "A greatsword with an empty off hand now uses the new ready stance, the chosen nine-step attack, defensive and buff poses, casting, hurt reactions and portrait. Each weapon combination can name its animation and view references in one settings file, selected by class, armour and the group held in each hand. Other combinations keep their existing art. The labeled four-class sprite review gallery and four new relic-icon candidates are saved for review; those additional candidates are not activated in play.",
+    "build": "0.7.1.232",
+    "pullRequest": 1200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1200"
   },
   {
     "id": "pr-1199",

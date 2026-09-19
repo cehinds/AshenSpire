@@ -418,7 +418,7 @@ export function paintedFigure(classId, tint, sigil, armourId = 'default', pose =
 // "Blender PNG" until 2026-09-03, which stopped being true when the class art
 // was replaced — the same stale description as the lobby tooltip one file over.
 /** A tinted class sprite (rendered PNG, SVG fallback), or null if unknown. */
-export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default') {
+export function classSprite(classId, tint, sigil, tintId, style, figureId, armourId = 'default', presentation = {}) {
   const build = CLASS_SVG[classId];
   if (!build) return null;
   // THE SIGIL DOES NOT RIDE THE FIGURE. Owner's call, 2026-09-07: the chosen
@@ -433,8 +433,8 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   // measured by tools/sigil-medallion.mjs; nothing on a FIGURE calls it.
   const applyMedallion = () => {};
   if (style === 'animated' || style === 'rendered') {
-    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' });
-    const art = stage?.el || paintedPresentation(classId, armourId);
+    const stage = createPaintedStage(classId, armourId, { still: style === 'rendered' || Boolean(presentation.view), animation: presentation.animation, view: presentation.view || 'stand' });
+    const art = stage?.el || paintedPresentation(classId, armourId, presentation.view || 'stand', presentation.animation);
     if (art) {
       const host = document.createElement('div');
       host.className = 'class-sprite painted-outfit' + (stage && style === 'animated' ? ' animated' : '');
@@ -681,11 +681,11 @@ function animatedEquippedFigure(classId, equip) {
 // held-weapon overlay no longer show on the fighter. equippedFigure() still
 // exists and the Armoury preview (screens/equipment.js) still calls it, so the
 // composite is not dead — it is just no longer the combat figure.
-export function playerSprite(customization = {}, classId, armourId = 'default') {
+export function playerSprite(customization = {}, classId, armourId = 'default', presentation = {}) {
   const tint = tintCss(customization.tint);
   const style = customization.spriteStyle || DEFAULT_SPRITE_STYLE;
   if (spritesEnabled && style !== 'glyph' && CLASS_SVG[classId]) {
-    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId);
+    return classSprite(classId, tint, customization.glyph, customization.tint, style, customization.figureId, armourId, presentation);
   }
   const el = document.createElement('div');
   el.style.cssText =

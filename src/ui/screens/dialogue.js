@@ -132,7 +132,7 @@ export function mountDialogue(app, options) {
   const figure = figureSpec(registries, run.loadout, run.class);
   const playerSlot = portrait({
     side: first.player.side, wireframe: 'WGQ2', layer: 'playerPortrait', kind: 'art',
-    art: playerSprite(run.customization || {}, run.class, figure.armourId), name: t('dialogue.player'),
+    art: playerSprite(run.customization || {}, run.class, figure.armourId, { animation: equipmentAnimationForLoadout(registries, run.loadout, run.class), view: 'conversation' }), name: t('dialogue.player'),
   });
   const speakerSlot = portrait({
     side: first.speaker.side, wireframe: 'WGQ3', layer: 'npcPortrait', kind: first.speaker.portrait.kind,
@@ -322,3 +322,4 @@ export function mountDialogue(app, options) {
     generation: () => state.generation,
   };
 }
+import { equipmentAnimationForLoadout } from '../../model/equipmentAnimation.js';
