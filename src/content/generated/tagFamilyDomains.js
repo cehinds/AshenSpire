@@ -357,5 +357,9 @@ export const tagFamilyDomains = [
   {
     "family": "unlock",
     "domain": "property"
+  },
+  {
+    "family": "location",
+    "domain": "property"
   }
 ];

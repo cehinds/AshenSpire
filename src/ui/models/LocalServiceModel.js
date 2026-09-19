@@ -1,23 +1,33 @@
-import { shrineHealAmount } from '../../engine/encounters.js';
-import { passiveFlag } from '../../model/registries.js';
+import { createLocationVisit, previewRest, leaveLocation } from '../../engine/locations.js';
+import { resolveLocationId } from '../../model/locations.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { levelUpPlan } from '../../model/levelup.js';
 import { graceRefillPlan, flaskChargePlan, refillFlaskCharges } from '../../model/gracerefill.js';
 
 // Read-only projection of the same plans used when a service is activated.
 // No stock rolls, resource changes, completion writes, or node-specific rules.
-export function localServiceModel({ handlerId, registries, run, state = {}, healMult = 1, refillCounts = {} }) {
+export function localServiceModel({ handlerId, registries, run, state = {}, healMult = 1, refillCounts = {}, nodeId = null, serviceTypeId = null }) {
   const result = { benefit: '', facts: [], action: 'Inspect service', used: !!state.used };
   if (!registries) return { ...result, benefit: 'Open this service in an active run to see your benefits, costs, and availability.' };
   if (state.used) result.facts.push('This visit has been used.');
   if (handlerId === 'rest') {
-    const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
-    const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
+    // The place is a carrier (plan phase 7): the point's own row, else its
+    // service type's, else the classic Shrine. The preview runs its rules on
+    // a clone — the same answer the Rest button gives, nothing written.
+    const locationId = resolveLocationId(registries, { nodeId, serviceTypeId }) || 'shrine';
+    const visit = createLocationVisit({ run, registries, rng: null }, locationId, { healMult });
+    const noRest = !!visit.restDenied;
+    const rest = noRest ? null : previewRest(visit);
+    leaveLocation(visit);
+    const heal = rest ? rest.heal : 0;
+    const manaGain = rest ? Math.max(0, rest.manaAfter - run.mana) : 0;
     const level = levelUpPlan(registries, run);
-    const refill = state.refilled || run.flaskCharges ? null : graceRefillPlan(registries, run, { counts: refillCounts });
-    result.benefit = noRest ? 'Your relic prevents healing by resting.' : heal ? `Rest to recover ${heal} HP: ${run.hp} → ${run.hp + heal} / ${run.maxHp}.` : run.hp >= run.maxHp ? 'Your health is already full.' : 'Your current modifiers allow no healing from rest.';
+    const refills = visit.services.flasks;
+    const refill = !refills || state.refilled || run.flaskCharges ? null : graceRefillPlan(registries, run, { counts: refillCounts });
+    result.benefit = noRest ? `The ${registries.relics.get(visit.restDenied).name} will not let you rest here.` : heal ? `Rest to recover ${heal} HP: ${run.hp} → ${run.hp + heal} / ${run.maxHp}${manaGain ? ` and ${manaGain} Mana` : ''}.` : manaGain ? `Rest to recover ${manaGain} Mana: ${run.mana} → ${run.mana + manaGain} / ${run.maxMana}.` : run.hp >= run.maxHp ? 'Your health is already full.' : 'Your current modifiers allow no healing from rest.';
     result.facts.push('Rest costs no cinders. One visit at this site; other services show their own costs.');
-    if (run.flaskCharges && !state.refilled) {
+    if (!refills) result.facts.push('This place refills no flasks.');
+    else if (run.flaskCharges && !state.refilled) {
       const restored = refillFlaskCharges(structuredClone(run.flaskCharges));
       const pools = flaskChargePlan(registries, restored).rows.filter(row=>row.count>0);
       result.facts.push(`Entering refills your assigned flask charges: ${pools.map(row=>`${row.def?.name || row.kind} ${run.flaskCharges[`${row.kind}Current`]} → ${restored[`${row.kind}Current`]}`).join('; ')}.`);
@@ -25,9 +35,13 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     else if (refill?.total) result.facts.push(`Entering restores ${refill.total} flask${refill.total === 1 ? '' : 's'} in your available slots.`);
     else result.facts.push(state.refilled ? 'Arrival flask refill already received.' : 'No additional flasks would be granted with your current inventory and refill settings.');
     if (refill?.shortfalls.length) result.facts.push('Full flask slots limit the arrival refill.');
-    result.facts.push(level.offerable
-      ? `Level ${level.level}: ${level.points} attribute point${level.points === 1 ? '' : 's'} earned and waiting to be assigned.`
-      : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants attribute points to assign here.`);
+    // The level-up is a service the place carries (`levelUp`); a place without
+    // it promises no assignment here.
+    if (visit.services.levelUp) {
+      result.facts.push(level.offerable
+        ? `Level ${level.level}: ${level.points} attribute point${level.points === 1 ? '' : 's'} earned and waiting to be assigned.`
+        : level.capped ? `Level ${level.level}: the level cap.` : `Level ${level.level}: ${level.xp} / ${level.xpToNext} XP to the next level. Fights pay XP; each level grants attribute points to assign here.`);
+    }
     result.action = 'Enter rest services';
   } else if (handlerId === 'smith') {
     const plan = smithingPlan(registries, run);

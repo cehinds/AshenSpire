@@ -1759,3 +1759,23 @@ card,,zealotryCard,ritual
 card,,bloodHarvest,ritual
 card,,bloodOfferingRite,ritual
 card,,harbingerOfBlightCard,ritual
+# Locations (plan phase 7): what a place restores is the sum of its tags,
+# mounted from arrival to departure (engine/locations.js). `shrine` is the
+# classic node type, `camp` the Unknown node's rest outcome, `inn` and
+# `chapel` the atlas rest services' types (every point of the type shares the
+# set; a node id row would override it).
+location,,shrine,restHpPartial
+location,,shrine,restMana
+location,,shrine,restFlasks
+location,,shrine,smith
+location,,shrine,levelUp
+location,,camp,restHpSmall
+location,,camp,restMana
+location,,inn,restHpFull
+location,,inn,restManaFull
+location,,inn,restFlasks
+location,,inn,levelUp
+location,,chapel,restHpPartial
+location,,chapel,restMana
+location,,chapel,restFlasks
+location,,chapel,levelUp

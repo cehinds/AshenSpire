@@ -357,6 +357,66 @@ export const propertyRules = [
     "textTemplate": "Whenever an enemy dies, heal {heal}."
   },
   {
+    "tag": "restHpSmall",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Resting restores {pct}% of your max HP."
+  },
+  {
+    "tag": "restHpPartial",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Resting restores {pct}% of your max HP."
+  },
+  {
+    "tag": "restHpFull",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Resting restores your HP to full."
+  },
+  {
+    "tag": "restMana",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "restManaFlat",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Resting restores {restoreMana} Mana."
+  },
+  {
+    "tag": "restManaFloor",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Resting restores Mana to {floorPct}% of max, or to full if already there."
+  },
+  {
+    "tag": "restManaFull",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Resting restores your Mana to full."
+  },
+  {
+    "tag": "restFlasks",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Arriving refills your flask charges."
+  },
+  {
+    "tag": "smith",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "levelUp",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
     "tag": "warlord",
     "requires": "",
     "excludes": [
